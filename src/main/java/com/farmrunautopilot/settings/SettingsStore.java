@@ -25,6 +25,7 @@ public class SettingsStore
 	private final ConfigManager configManager;
 	private final Gson gson;
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
+	private final List<Runnable> saveListeners = new CopyOnWriteArrayList<>();
 
 	@Getter
 	private volatile RunConfig runConfig = new RunConfig();
@@ -49,6 +50,17 @@ public class SettingsStore
 		listeners.remove(listener);
 	}
 
+	/** Called after every save and reload, e.g. so the supply plan is recalculated. */
+	public void addSaveListener(Runnable listener)
+	{
+		saveListeners.add(listener);
+	}
+
+	public void removeSaveListener(Runnable listener)
+	{
+		saveListeners.remove(listener);
+	}
+
 	/** Whether there is an account profile to save to (i.e. the player has logged in). */
 	public boolean hasProfile()
 	{
@@ -61,6 +73,10 @@ public class SettingsStore
 		runConfig = read(RUN_CONFIG_KEY, RunConfig.class, new RunConfig()).sanitise();
 		account = read(ACCOUNT_KEY, AccountSettings.class, new AccountSettings()).sanitise();
 		notifyListeners();
+		for (Runnable listener : saveListeners)
+		{
+			listener.run();
+		}
 	}
 
 	public void saveRunConfig()
@@ -104,6 +120,10 @@ public class SettingsStore
 		if (hasProfile())
 		{
 			configManager.setRSProfileConfiguration(FarmRunAutopilotConfig.GROUP, key, gson.toJson(value));
+		}
+		for (Runnable listener : saveListeners)
+		{
+			listener.run();
 		}
 	}
 

@@ -65,6 +65,10 @@ public class RunConfig
 	private int energyMinTiles = DEFAULT_ENERGY_MIN_TILES;
 	private int staminaDoses = 0;
 
+	// Run tab
+	/** Supplies for every selected patch instead of only the due ones. */
+	private boolean supplyFullRun = false;
+
 	// Storage sources (SPEC 2: both default off)
 	private boolean useGroupStorage = false;
 	private boolean useSeedVault = false;

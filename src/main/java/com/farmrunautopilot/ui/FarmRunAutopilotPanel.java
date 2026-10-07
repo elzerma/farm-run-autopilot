@@ -2,12 +2,11 @@ package com.farmrunautopilot.ui;
 
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.settings.SettingsStore;
+import com.farmrunautopilot.supply.SupplyPlan;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import javax.inject.Inject;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
@@ -23,6 +22,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	/** Countdowns are shown to the minute, so a 10 second refresh is plenty. */
 	private static final int REFRESH_MILLIS = 10_000;
 
+	private final RunPanel runPanel;
 	private final SetupPanel setupPanel;
 	private final Timer refreshTimer;
 
@@ -36,6 +36,11 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		final JPanel display = new JPanel(new BorderLayout());
 		display.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
+		runPanel = new RunPanel(settings);
+		final JPanel run = new JPanel(new BorderLayout());
+		run.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		run.add(runPanel, BorderLayout.NORTH);
+
 		setupPanel = new SetupPanel(settings, accessChecker, patchTracker);
 		final JPanel setup = new JPanel(new BorderLayout());
 		setup.setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -44,7 +49,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(display);
 		tabGroup.setBorder(new EmptyBorder(0, 0, 10, 0));
 
-		final MaterialTab runTab = new MaterialTab("Run", tabGroup, placeholder("Your farm run will appear here."));
+		final MaterialTab runTab = new MaterialTab("Run", tabGroup, run);
 		final MaterialTab setupTab = new MaterialTab("Setup", tabGroup, setup);
 		tabGroup.addTab(runTab);
 		tabGroup.addTab(setupTab);
@@ -63,6 +68,12 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		setupPanel.refreshPatches();
 	}
 
+	/** Shows a new supply plan in the Run tab. Call on the Swing thread. */
+	public void updateRun(SupplyPlan plan, boolean loggedIn)
+	{
+		runPanel.update(plan, loggedIn);
+	}
+
 	/** Rebuilds the Setup tab from saved settings and account access. Call on the Swing thread. */
 	public void rebuildSetup()
 	{
@@ -72,16 +83,5 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	public void shutDown()
 	{
 		refreshTimer.stop();
-	}
-
-	private static JPanel placeholder(String text)
-	{
-		final JPanel panel = new JPanel(new BorderLayout());
-		panel.setBackground(ColorScheme.DARK_GRAY_COLOR);
-
-		final JLabel label = new JLabel(text, SwingConstants.CENTER);
-		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		panel.add(label, BorderLayout.NORTH);
-		return panel;
 	}
 }

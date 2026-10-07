@@ -590,13 +590,9 @@ class SetupPanel extends JPanel
 		return wrap(text, CONTROL_WIDTH - 20);
 	}
 
-	/**
-	 * HTML that wraps to {@code width} screen pixels, since plain Swing text never wraps. Swing's HTML
-	 * renderer scales CSS "px" by 1.3 (javax.swing.text.html.CSS), so divide that back out.
-	 */
 	private static String wrap(String text, int width)
 	{
-		return "<html><body style='width:" + (width * 10 / 13) + "px'>" + text + "</body></html>";
+		return UiText.wrap(text, width);
 	}
 
 	private static String title(String enumName)
