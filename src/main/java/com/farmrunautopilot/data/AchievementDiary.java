@@ -1,24 +1,57 @@
 package com.farmrunautopilot.data;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import net.runelite.api.gameval.VarbitID;
 
 @Getter
-@RequiredArgsConstructor
 public enum AchievementDiary
 {
-	ARDOUGNE("Ardougne"),
-	FALADOR("Falador"),
-	FREMENNIK("Fremennik"),
-	KANDARIN("Kandarin"),
-	KARAMJA("Karamja"),
-	KOUREND_KEBOS("Kourend & Kebos"),
-	LUMBRIDGE_DRAYNOR("Lumbridge & Draynor"),
-	MORYTANIA("Morytania"),
-	VARROCK("Varrock"),
-	WESTERN_PROVINCES("Western Provinces");
+	ARDOUGNE("Ardougne", VarbitID.ARDOUGNE_DIARY_EASY_COMPLETE, VarbitID.ARDOUGNE_DIARY_MEDIUM_COMPLETE,
+		VarbitID.ARDOUGNE_DIARY_HARD_COMPLETE, VarbitID.ARDOUGNE_DIARY_ELITE_COMPLETE),
+	DESERT("Desert", VarbitID.DESERT_DIARY_EASY_COMPLETE, VarbitID.DESERT_DIARY_MEDIUM_COMPLETE,
+		VarbitID.DESERT_DIARY_HARD_COMPLETE, VarbitID.DESERT_DIARY_ELITE_COMPLETE),
+	FALADOR("Falador", VarbitID.FALADOR_DIARY_EASY_COMPLETE, VarbitID.FALADOR_DIARY_MEDIUM_COMPLETE,
+		VarbitID.FALADOR_DIARY_HARD_COMPLETE, VarbitID.FALADOR_DIARY_ELITE_COMPLETE),
+	FREMENNIK("Fremennik", VarbitID.FREMENNIK_DIARY_EASY_COMPLETE, VarbitID.FREMENNIK_DIARY_MEDIUM_COMPLETE,
+		VarbitID.FREMENNIK_DIARY_HARD_COMPLETE, VarbitID.FREMENNIK_DIARY_ELITE_COMPLETE),
+	KANDARIN("Kandarin", VarbitID.KANDARIN_DIARY_EASY_COMPLETE, VarbitID.KANDARIN_DIARY_MEDIUM_COMPLETE,
+		VarbitID.KANDARIN_DIARY_HARD_COMPLETE, VarbitID.KANDARIN_DIARY_ELITE_COMPLETE),
+	// UNVERIFIED: Karamja easy/medium/hard use the "_DONE" varbits, assumed non-zero when complete.
+	KARAMJA("Karamja", VarbitID.ATJUN_EASY_DONE, VarbitID.ATJUN_MED_DONE,
+		VarbitID.ATJUN_HARD_DONE, VarbitID.KARAMJA_DIARY_ELITE_COMPLETE),
+	KOUREND_KEBOS("Kourend & Kebos", VarbitID.KOUREND_DIARY_EASY_COMPLETE, VarbitID.KOUREND_DIARY_MEDIUM_COMPLETE,
+		VarbitID.KOUREND_DIARY_HARD_COMPLETE, VarbitID.KOUREND_DIARY_ELITE_COMPLETE),
+	LUMBRIDGE_DRAYNOR("Lumbridge & Draynor", VarbitID.LUMBRIDGE_DIARY_EASY_COMPLETE,
+		VarbitID.LUMBRIDGE_DIARY_MEDIUM_COMPLETE, VarbitID.LUMBRIDGE_DIARY_HARD_COMPLETE,
+		VarbitID.LUMBRIDGE_DIARY_ELITE_COMPLETE),
+	MORYTANIA("Morytania", VarbitID.MORYTANIA_DIARY_EASY_COMPLETE, VarbitID.MORYTANIA_DIARY_MEDIUM_COMPLETE,
+		VarbitID.MORYTANIA_DIARY_HARD_COMPLETE, VarbitID.MORYTANIA_DIARY_ELITE_COMPLETE),
+	VARROCK("Varrock", VarbitID.VARROCK_DIARY_EASY_COMPLETE, VarbitID.VARROCK_DIARY_MEDIUM_COMPLETE,
+		VarbitID.VARROCK_DIARY_HARD_COMPLETE, VarbitID.VARROCK_DIARY_ELITE_COMPLETE),
+	WESTERN_PROVINCES("Western Provinces", VarbitID.WESTERN_DIARY_EASY_COMPLETE, VarbitID.WESTERN_DIARY_MEDIUM_COMPLETE,
+		VarbitID.WESTERN_DIARY_HARD_COMPLETE, VarbitID.WESTERN_DIARY_ELITE_COMPLETE),
+	WILDERNESS("Wilderness", VarbitID.WILDERNESS_DIARY_EASY_COMPLETE, VarbitID.WILDERNESS_DIARY_MEDIUM_COMPLETE,
+		VarbitID.WILDERNESS_DIARY_HARD_COMPLETE, VarbitID.WILDERNESS_DIARY_ELITE_COMPLETE);
 
 	private final String displayName;
+	/** Completion varbit per tier, indexed by {@link Tier#ordinal()}. */
+	private final int[] completeVarbits;
+
+	AchievementDiary(String displayName, int easy, int medium, int hard, int elite)
+	{
+		this.displayName = displayName;
+		this.completeVarbits = new int[]{easy, medium, hard, elite};
+	}
+
+	public int getCompleteVarbit(Tier tier)
+	{
+		return completeVarbits[tier.ordinal()];
+	}
+
+	public int[] getCompleteVarbits()
+	{
+		return completeVarbits.clone();
+	}
 
 	public enum Tier
 	{

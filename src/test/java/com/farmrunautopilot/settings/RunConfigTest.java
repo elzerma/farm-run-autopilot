@@ -1,0 +1,116 @@
+package com.farmrunautopilot.settings;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import com.farmrunautopilot.data.Crop;
+import com.farmrunautopilot.data.Location;
+import com.farmrunautopilot.data.Patch;
+import com.farmrunautopilot.data.PatchType;
+import com.farmrunautopilot.data.Unlock;
+import com.farmrunautopilot.data.poh.HousePortal;
+import com.farmrunautopilot.data.poh.PortalNexus;
+import com.farmrunautopilot.data.travel.TravelMethod;
+import com.google.gson.Gson;
+import org.junit.Test;
+
+public class RunConfigTest
+{
+	// The plugin uses RuneLite's injected Gson; a plain one behaves the same for these classes.
+	private final Gson gson = new Gson();
+
+	@Test
+	public void defaults()
+	{
+		final RunConfig config = new RunConfig().sanitise();
+		assertEquals(3, config.getEnabledTypes().size());
+		assertTrue(config.isPayWithNotes());
+		assertFalse(config.isUseGroupStorage());
+		assertFalse(config.isUseSeedVault());
+		assertEquals(Location.FARMING_GUILD, config.getStartLocation());
+		assertEquals(30, config.getEnergyThreshold());
+		assertEquals(15, config.getEnergyMinTiles());
+		assertEquals(Protection.PAY_GARDENER, config.protectionFor(Patch.TAVERLEY_TREE));
+		assertEquals(Compost.ULTRACOMPOST, config.getCompost().get(PatchType.HERB));
+	}
+
+	@Test
+	public void roundTripThroughJson()
+	{
+		final RunConfig config = new RunConfig();
+		config.getDisabledPatches().add(Patch.LUMBRIDGE_TREE);
+		config.getCrops().put(PatchType.HERB, Crop.RANARR);
+		config.getProtectionOverrides().put(Patch.FALADOR_TREE, Protection.COMPOST_ONLY);
+		config.getTravel().put(Location.CATHERBY, TravelMethod.CATHERBY_TELEPORT);
+		config.setRouteMode(RouteMode.META);
+		config.setStaminaDoses(4);
+
+		final RunConfig loaded = gson.fromJson(gson.toJson(config), RunConfig.class).sanitise();
+		assertEquals(config, loaded);
+		assertFalse(loaded.isPatchSelected(Patch.LUMBRIDGE_TREE));
+		assertEquals(Protection.COMPOST_ONLY, loaded.protectionFor(Patch.FALADOR_TREE));
+	}
+
+	@Test
+	public void sanitiseRepairsBadSaves()
+	{
+		// Unknown enum names, wrong crop for a type, a method for another location, nulls, out-of-range numbers.
+		final String json = "{\"enabledTypes\":[\"TREE\",\"NOT_A_TYPE\"],"
+			+ "\"crops\":{\"HERB\":\"MAGIC\",\"TREE\":\"YEW\"},"
+			+ "\"travel\":{\"CATHERBY\":\"FARMING_CAPE\",\"LLETYA\":\"TELEPORT_CRYSTAL_LLETYA\"},"
+			+ "\"protection\":null,\"routeMode\":\"GONE\",\"energyThreshold\":500,\"customOrder\":null}";
+		final RunConfig config = gson.fromJson(json, RunConfig.class).sanitise();
+
+		assertEquals(1, config.getEnabledTypes().size());
+		assertEquals(Crop.YEW, config.getCrops().get(PatchType.TREE));
+		assertFalse(config.getCrops().containsKey(PatchType.HERB));
+		assertFalse(config.getTravel().containsKey(Location.CATHERBY));
+		assertEquals(TravelMethod.TELEPORT_CRYSTAL_LLETYA, config.getTravel().get(Location.LLETYA));
+		assertEquals(Protection.PAY_GARDENER, config.getProtection().get(PatchType.TREE));
+		assertEquals(RouteMode.AUTOPILOT, config.getRouteMode());
+		assertEquals(100, config.getEnergyThreshold());
+		assertNotNull(config.getCustomOrder());
+	}
+
+	@Test
+	public void cropDefaultsToHighestPlantable()
+	{
+		final RunConfig config = new RunConfig();
+		assertEquals(Crop.MAGIC, config.cropFor(PatchType.TREE, 99));
+		assertEquals(Crop.MAPLE, config.cropFor(PatchType.TREE, 59));
+		assertEquals(Crop.OAK, config.cropFor(PatchType.TREE, 1));
+		assertEquals(Crop.HUASCA, config.cropFor(PatchType.HERB, 66));
+		config.getCrops().put(PatchType.TREE, Crop.WILLOW);
+		assertEquals(Crop.WILLOW, config.cropFor(PatchType.TREE, 99));
+	}
+
+	@Test
+	public void runesNotTabs()
+	{
+		final RunConfig config = new RunConfig();
+		assertFalse(config.useRunesAt(Location.CATHERBY));
+		config.getRunesNotTabsAt().add(Location.CATHERBY);
+		assertTrue(config.useRunesAt(Location.CATHERBY));
+		assertFalse(config.useRunesAt(Location.LUMBRIDGE));
+		config.setUseRunesNotTabs(true);
+		assertTrue(config.useRunesAt(Location.LUMBRIDGE));
+	}
+
+	@Test
+	public void accountSettingsRoundTrip()
+	{
+		final AccountSettings account = new AccountSettings();
+		account.getManualUnlocks().add(Unlock.FIRE_OF_NOURISHMENT);
+		account.getPoh().setPortal(HousePortal.TAVERLEY);
+		account.getPoh().getNexusDestinations().add(PortalNexus.Destination.WEISS);
+
+		final AccountSettings loaded = gson.fromJson(gson.toJson(account), AccountSettings.class).sanitise();
+		assertEquals(account, loaded);
+
+		final AccountSettings repaired = gson.fromJson("{\"poh\":null,\"manualUnlocks\":null}", AccountSettings.class)
+			.sanitise();
+		assertNotNull(repaired.getPoh());
+		assertTrue(repaired.getManualUnlocks().isEmpty());
+	}
+}

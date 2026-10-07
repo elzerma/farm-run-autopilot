@@ -1,5 +1,7 @@
 package com.farmrunautopilot.ui;
 
+import com.farmrunautopilot.access.AccessChecker;
+import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import javax.inject.Inject;
@@ -21,11 +23,11 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	/** Countdowns are shown to the minute, so a 10 second refresh is plenty. */
 	private static final int REFRESH_MILLIS = 10_000;
 
-	private final PatchDebugPanel patchDebugPanel;
+	private final SetupPanel setupPanel;
 	private final Timer refreshTimer;
 
 	@Inject
-	public FarmRunAutopilotPanel(PatchTracker patchTracker)
+	public FarmRunAutopilotPanel(SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker)
 	{
 		setLayout(new BorderLayout());
 		setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -34,10 +36,10 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		final JPanel display = new JPanel(new BorderLayout());
 		display.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		patchDebugPanel = new PatchDebugPanel(patchTracker);
+		setupPanel = new SetupPanel(settings, accessChecker, patchTracker);
 		final JPanel setup = new JPanel(new BorderLayout());
 		setup.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		setup.add(patchDebugPanel, BorderLayout.NORTH);
+		setup.add(setupPanel, BorderLayout.NORTH);
 
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(display);
 		tabGroup.setBorder(new EmptyBorder(0, 0, 10, 0));
@@ -58,7 +60,13 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	/** Re-reads patch predictions. Call on the Swing thread. */
 	public void refreshPatches()
 	{
-		patchDebugPanel.refresh();
+		setupPanel.refreshPatches();
+	}
+
+	/** Rebuilds the Setup tab from saved settings and account access. Call on the Swing thread. */
+	public void rebuildSetup()
+	{
+		setupPanel.rebuild();
 	}
 
 	public void shutDown()

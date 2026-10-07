@@ -22,7 +22,11 @@ public class Requirement
 		SKILL,
 		DIARY,
 		UNLOCK,
-		HOUSE_PORTAL
+		HOUSE_PORTAL,
+		/** {@link #getLevel()} in every skill (max cape). */
+		ALL_SKILLS,
+		/** Every achievement diary at {@link #getDiaryTier()} (achievement diary cape). */
+		ALL_DIARIES
 	}
 
 	Kind kind;
@@ -59,6 +63,16 @@ public class Requirement
 		return new Requirement(Kind.UNLOCK, null, null, 0, null, null, unlock, null);
 	}
 
+	public static Requirement allSkills(int level)
+	{
+		return new Requirement(Kind.ALL_SKILLS, null, null, level, null, null, null, null);
+	}
+
+	public static Requirement allDiaries(AchievementDiary.Tier tier)
+	{
+		return new Requirement(Kind.ALL_DIARIES, null, null, 0, null, tier, null, null);
+	}
+
 	public static Requirement housePortal(HousePortal portal)
 	{
 		return new Requirement(Kind.HOUSE_PORTAL, null, null, 0, null, null, null, portal);
@@ -83,6 +97,10 @@ public class Requirement
 				return "Needs " + unlock.getDescription();
 			case HOUSE_PORTAL:
 				return "Needs house portal in " + housePortal.getDisplayName();
+			case ALL_SKILLS:
+				return "Needs " + level + " in every skill";
+			case ALL_DIARIES:
+				return "Needs every " + capitalise(diaryTier.name()) + " diary";
 			default:
 				throw new IllegalStateException("Unhandled requirement kind " + kind);
 		}
