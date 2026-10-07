@@ -1,0 +1,18 @@
+Third-party notices for Farm Run Autopilot
+==========================================
+
+This file lists third-party material included in this project and the licence
+notices that come with it.
+
+No third-party code or data is included yet.
+
+When data is added, record it here with its source and full licence text.
+Expected entries:
+
+- RuneLite (https://github.com/runelite/runelite), BSD 2-Clause. Patch region
+  IDs, varbit assignments and patch-state value ranges copied from
+  timetracking/farming (FarmingWorld, PatchImplementation).
+
+- Farming-Helper (https://github.com/Speaax/Farming-Helper), BSD 2-Clause,
+  "Copyright (c) 2025, JThomasDevs". Only if location coordinates or
+  teleport data are reused from it.
