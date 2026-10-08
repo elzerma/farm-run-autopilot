@@ -9,6 +9,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
+import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 
 /**
@@ -22,8 +23,8 @@ public class HintArrowController
 	private final RunSession session;
 	private final SceneTracker scene;
 	private final FarmRunAutopilotConfig config;
-	/** The point our arrow is on, or null if we haven't set one. */
-	private WorldPoint shown;
+	/** Where our arrow is, or null if we haven't set one. */
+	private LocalPoint shown;
 
 	@Inject
 	HintArrowController(Client client, RunSession session, SceneTracker scene, FarmRunAutopilotConfig config)
@@ -38,7 +39,7 @@ public class HintArrowController
 	public void update()
 	{
 		final Patch patch = session.getView().getHighlights().getPatch();
-		final WorldPoint target = patch != null && config.hintArrow() ? pointFor(patch) : null;
+		final LocalPoint target = patch != null && config.hintArrow() ? pointFor(patch) : null;
 		if (Objects.equals(target, shown))
 		{
 			return;
@@ -52,12 +53,12 @@ public class HintArrowController
 		shown = target;
 	}
 
-	/** Remove our arrow, if it's still up. */
+	/** Remove our arrow, if it's still up and nothing else has replaced it with an NPC or player arrow. */
 	public void clear()
 	{
 		if (shown != null)
 		{
-			if (client.hasHintArrow() && shown.equals(client.getHintArrowPoint()))
+			if (client.hasHintArrow() && client.getHintArrowNpc() == null && client.getHintArrowPlayer() == null)
 			{
 				client.clearHintArrow();
 			}
@@ -65,9 +66,15 @@ public class HintArrowController
 		}
 	}
 
-	private WorldPoint pointFor(Patch patch)
+	/** The middle of the patch: a game object's location is its centre, so a 2x2 herb patch gets the middle of 4 tiles. */
+	private LocalPoint pointFor(Patch patch)
 	{
 		final List<GameObject> objects = scene.objectsFor(patch);
-		return objects.isEmpty() ? PatchPoints.of(patch) : objects.get(0).getWorldLocation();
+		if (!objects.isEmpty())
+		{
+			return objects.get(0).getLocalLocation();
+		}
+		final WorldPoint point = PatchPoints.of(patch);
+		return point == null ? null : LocalPoint.fromWorld(client.getTopLevelWorldView(), point);
 	}
 }

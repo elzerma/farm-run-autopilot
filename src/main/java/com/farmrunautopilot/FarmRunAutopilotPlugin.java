@@ -290,11 +290,16 @@ public class FarmRunAutopilotPlugin extends Plugin
 		}
 		else if (event.getGameState() == GameState.LOADING)
 		{
-			// Objects and NPCs are spawned again once the new scene loads
+			// Objects are spawned again once the new scene loads; NPCs nearby aren't, so keep those
+			sceneTracker.clearObjects();
+		}
+		else if (event.getGameState() == GameState.HOPPING)
+		{
 			sceneTracker.clear();
 		}
 		else if (event.getGameState() == GameState.LOGIN_SCREEN)
 		{
+			sceneTracker.clear();
 			showPlanLater(RunPlan.EMPTY, false);
 		}
 	}
@@ -386,9 +391,24 @@ public class FarmRunAutopilotPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		if (FarmRunAutopilotConfig.GROUP.equals(event.getGroup()) && "itemColour".equals(event.getKey()))
+		if (!FarmRunAutopilotConfig.GROUP.equals(event.getGroup()))
+		{
+			return;
+		}
+		if ("itemColour".equals(event.getKey()))
 		{
 			itemHighlightOverlay.clearCache();
+		}
+		else if (FarmRunAutopilotConfig.OPEN_SIDEBAR_KEY.equals(event.getKey()))
+		{
+			// The config panel has no buttons and doesn't redraw a box we untick, so any click on it opens the sidebar
+			SwingUtilities.invokeLater(() ->
+			{
+				if (navButton != null)
+				{
+					clientToolbar.openPanel(navButton);
+				}
+			});
 		}
 	}
 

@@ -12,12 +12,12 @@ import lombok.Value;
 @Value
 public class Highlights
 {
-	public static final Highlights NONE = new Highlights(null, -1, Collections.emptySet());
+	public static final Highlights NONE = new Highlights(null, false, Collections.emptySet());
 
 	/** The patch to outline and point the hint arrow at, or null while travelling. */
 	Patch patch;
-	/** The gardener NPC to outline (paying them), or -1. */
-	int npcId;
+	/** Outline the patch's gardener (paying them). */
+	boolean gardener;
 	/** Items to outline in the inventory and equipment. */
 	Set<Integer> itemIds;
 }

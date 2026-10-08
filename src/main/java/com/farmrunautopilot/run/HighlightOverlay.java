@@ -64,9 +64,9 @@ public class HighlightOverlay extends Overlay
 				outlines.drawOutline(object, OUTLINE_WIDTH, config.patchColour(), OUTLINE_FEATHER);
 			}
 		}
-		if (highlights.getNpcId() >= 0 && config.highlightGardener())
+		if (highlights.isGardener() && config.highlightGardener())
 		{
-			final NPC gardener = scene.gardener(highlights.getNpcId());
+			final NPC gardener = scene.gardener(highlights.getPatch());
 			if (gardener != null)
 			{
 				outlines.drawOutline(gardener, OUTLINE_WIDTH, config.npcColour(), OUTLINE_FEATHER);

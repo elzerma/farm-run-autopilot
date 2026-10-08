@@ -1,5 +1,6 @@
 package com.farmrunautopilot.ui;
 
+import com.farmrunautopilot.FarmRunAutopilotConfig;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Crop;
@@ -24,6 +25,7 @@ import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -71,10 +73,14 @@ class SetupPanel extends JPanel
 	private final AccessChecker accessChecker;
 	private final PatchDebugPanel patchDebugPanel;
 	private final Page page;
+	/** Run guidance settings, shown on the Rules page only (null on Setup). */
+	private final GuidanceSettings guidance;
 
-	SetupPanel(Page page, SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker)
+	SetupPanel(Page page, SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker,
+		GuidanceSettings guidance)
 	{
 		this.page = page;
+		this.guidance = guidance;
 		this.settings = settings;
 		this.accessChecker = accessChecker;
 		this.patchDebugPanel = new PatchDebugPanel(patchTracker);
@@ -119,6 +125,10 @@ class SetupPanel extends JPanel
 			add(pohSection(account));
 			add(unlocksSection(account, access));
 			add(routeSection(config));
+			if (guidance != null)
+			{
+				add(guidanceSection());
+			}
 			add(storageSection(config));
 
 			final CollapsibleSection debug = section("Testing & debug");
@@ -596,6 +606,49 @@ class SetupPanel extends JPanel
 		{
 			accessChecker.requestRefresh();
 		}
+	}
+
+	/** Highlights, hint arrow and colours shown during a run (SPEC 13.4). Global, not per account. */
+	private JComponent guidanceSection()
+	{
+		final CollapsibleSection s = section("Run guidance");
+		final FarmRunAutopilotConfig c = guidance.get();
+		s.addContent(checkBox("Highlight the patch", c.highlightPatch(), true,
+			"Outline the patch the current step is about", on -> guidance.set("highlightPatch", on)));
+		s.addContent(checkBox("Hint arrow to the patch", c.hintArrow(), true,
+			"The game's hint arrow over the patch, also shown on the minimap", on -> guidance.set("hintArrow", on)));
+		s.addContent(checkBox("Highlight the gardener", c.highlightGardener(), true,
+			"Outline the gardener when the step is to pay them", on -> guidance.set("highlightGardener", on)));
+		s.addContent(checkBox("Highlight items to use", c.highlightItems(), true,
+			"Outline the seed, compost, tool or teleport to use next in your inventory and equipment",
+			on -> guidance.set("highlightItems", on)));
+		s.addContent(colourRow("Patch colour", c.patchColour(), "patchColour"));
+		s.addContent(colourRow("Gardener colour", c.npcColour(), "npcColour"));
+		s.addContent(colourRow("Item colour", c.itemColour(), "itemColour"));
+		return s;
+	}
+
+	/** A label with a colour swatch that opens RuneLite's colour picker. */
+	private JComponent colourRow(String text, Color colour, String key)
+	{
+		final JPanel row = new JPanel(new BorderLayout(6, 0));
+		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		row.setBorder(new EmptyBorder(3, 0, 3, 0));
+		final JLabel label = new JLabel(text);
+		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setFont(FontManager.getRunescapeSmallFont());
+		final JButton swatch = new JButton();
+		swatch.setFocusPainted(false);
+		swatch.setBackground(colour);
+		swatch.setPreferredSize(new Dimension(40, 20));
+		swatch.setToolTipText("Change the " + text.toLowerCase());
+		swatch.addActionListener(e -> guidance.pickColour(this, text, swatch.getBackground(), key,
+			swatch::setBackground));
+		row.add(label, BorderLayout.CENTER);
+		row.add(swatch, BorderLayout.EAST);
+		row.setMaximumSize(new Dimension(CONTROL_WIDTH, row.getPreferredSize().height));
+		row.setAlignmentX(LEFT_ALIGNMENT);
+		return row;
 	}
 
 	/** Save, rename and delete named copies of the run settings (SPEC 13.5). */

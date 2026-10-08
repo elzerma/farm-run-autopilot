@@ -5,11 +5,11 @@ import com.farmrunautopilot.data.PatchPoints;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.NPC;
@@ -21,17 +21,24 @@ import net.runelite.api.coords.WorldPoint;
  * never by scanning the scene. Client thread only.
  *
  * <p>A patch object is recognised by the varbit that drives it (the patch's own FARMING_TRANSMIT varbit)
- * and being next to the patch's map point, so every look of every patch matches without an ID list.
+ * near the patch's map point, so every look of every patch matches without an ID list.
  */
+@Slf4j
 @Singleton
 public class SceneTracker
 {
-	/** How far a patch object can be from {@link PatchPoints} (the point is one tile of a 2x2 to 5x5 patch). */
-	private static final int PATCH_POINT_TILES = 4;
+	/**
+	 * How far a patch object can be from its {@link PatchPoints} entry. Generous, because some points are a few
+	 * tiles off (one was on the neighbouring flower patch); other patches nearby (flowers, allotments) use
+	 * different varbits, so they never match.
+	 */
+	private static final int PATCH_SEARCH_TILES = 30;
+	/** Gardeners wander a little around their patch. */
+	private static final int GARDENER_TILES = 20;
 
 	private final Client client;
 	private final Map<Patch, List<GameObject>> patchObjects = new EnumMap<>(Patch.class);
-	private final Map<Integer, NPC> gardeners = new HashMap<>();
+	private final Map<Patch, NPC> gardeners = new EnumMap<>(Patch.class);
 
 	@Inject
 	SceneTracker(Client client)
@@ -44,7 +51,14 @@ public class SceneTracker
 		final Patch patch = patchFor(object);
 		if (patch != null)
 		{
-			patchObjects.computeIfAbsent(patch, k -> new ArrayList<>()).add(object);
+			final List<GameObject> objects = patchObjects.computeIfAbsent(patch, k -> new ArrayList<>());
+			if (objects.isEmpty())
+			{
+				// For checking PatchPoints against where patches really are
+				log.debug("Patch object for {} at {} (map point {}, {} tiles off)", patch, object.getWorldLocation(),
+					PatchPoints.of(patch), PatchPoints.of(patch).distanceTo2D(object.getWorldLocation()));
+			}
+			objects.add(object);
 		}
 	}
 
@@ -56,13 +70,24 @@ public class SceneTracker
 		}
 	}
 
+	/**
+	 * Gardeners are matched by name as well as ID, because some have several IDs (Treznor has three), and only
+	 * near their own patch.
+	 */
 	public void onNpcSpawned(NPC npc)
 	{
+		final WorldPoint location = npc.getWorldLocation();
 		for (Patch patch : Patch.values())
 		{
-			if (patch.hasGardener() && patch.getGardenerNpcId() == npc.getId())
+			if (!patch.hasGardener())
 			{
-				gardeners.put(npc.getId(), npc);
+				continue;
+			}
+			final boolean same = patch.getGardenerNpcId() == npc.getId() || patch.getGardenerName().equals(npc.getName());
+			final WorldPoint point = PatchPoints.of(patch);
+			if (same && point.getPlane() == location.getPlane() && point.distanceTo2D(location) <= GARDENER_TILES)
+			{
+				gardeners.put(patch, npc);
 				return;
 			}
 		}
@@ -70,10 +95,19 @@ public class SceneTracker
 
 	public void onNpcDespawned(NPC npc)
 	{
-		gardeners.remove(npc.getId(), npc);
+		gardeners.values().removeIf(n -> n == npc);
 	}
 
-	/** The scene is reloading; objects and NPCs are spawned again afterwards. */
+	/**
+	 * The scene is reloading: objects are spawned again afterwards, but NPCs already nearby are not, so the
+	 * gardeners are kept (they're removed when they despawn).
+	 */
+	public void clearObjects()
+	{
+		patchObjects.clear();
+	}
+
+	/** Logged out or hopping: nothing is loaded any more. */
 	public void clear()
 	{
 		patchObjects.clear();
@@ -86,23 +120,28 @@ public class SceneTracker
 		return objects != null ? objects : Collections.emptyList();
 	}
 
-	public NPC gardener(int npcId)
+	/** The patch's gardener if loaded, or null. */
+	public NPC gardener(Patch patch)
 	{
-		return gardeners.get(npcId);
+		return gardeners.get(patch);
 	}
 
 	private Patch patchFor(GameObject object)
 	{
 		final WorldPoint location = object.getWorldLocation();
 		ObjectComposition composition = null;
+		Patch best = null;
+		int bestDistance = Integer.MAX_VALUE;
 		for (Map.Entry<Patch, WorldPoint> e : PatchPoints.all().entrySet())
 		{
 			final WorldPoint point = e.getValue();
-			if (point.getPlane() != location.getPlane() || point.distanceTo2D(location) > PATCH_POINT_TILES)
+			final int distance = point.getPlane() == location.getPlane() ? point.distanceTo2D(location)
+				: Integer.MAX_VALUE;
+			if (distance > PATCH_SEARCH_TILES || distance >= bestDistance)
 			{
 				continue;
 			}
-			// Only look the object up once something is near a patch
+			// Only look the object up once it's near a patch
 			if (composition == null)
 			{
 				composition = client.getObjectDefinition(object.getId());
@@ -113,9 +152,17 @@ public class SceneTracker
 			}
 			if (composition.getVarbitId() == e.getKey().getVarbitId())
 			{
-				return e.getKey();
+				best = e.getKey();
+				bestDistance = distance;
 			}
 		}
-		return null;
+		return best;
+	}
+
+	/** Where the patch really is: its loaded object if there is one, otherwise its map point. */
+	public WorldPoint locationOf(Patch patch)
+	{
+		final List<GameObject> objects = objectsFor(patch);
+		return objects.isEmpty() ? PatchPoints.of(patch) : objects.get(0).getWorldLocation();
 	}
 }

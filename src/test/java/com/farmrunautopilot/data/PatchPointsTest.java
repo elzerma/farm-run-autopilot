@@ -10,6 +10,23 @@ import org.junit.Test;
 public class PatchPointsTest
 {
 	@Test
+	public void patchesSharingAVarbitAreFarApart()
+	{
+		// The scene tracker matches patch objects by varbit within 30 tiles of a point, nearest first
+		for (Patch a : Patch.values())
+		{
+			for (Patch b : Patch.values())
+			{
+				if (a.ordinal() < b.ordinal() && a.getVarbitId() == b.getVarbitId())
+				{
+					final int distance = PatchPoints.of(a).distanceTo2D(PatchPoints.of(b));
+					assertTrue(a + " and " + b + " are only " + distance + " tiles apart", distance > 60);
+				}
+			}
+		}
+	}
+
+	@Test
 	public void everyPatchHasAPointInsideItsOwnRegion()
 	{
 		for (Patch patch : Patch.values())

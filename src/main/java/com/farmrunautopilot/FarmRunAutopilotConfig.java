@@ -5,29 +5,34 @@ import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
-import net.runelite.client.config.ConfigSection;
 
 /**
- * Simple global settings: run guidance highlights and colours (SPEC 13.4, 14). Everything else is set in the
- * sidebar and stored per account.
+ * Global settings. The run guidance highlights and colours (SPEC 13.4) are hidden here and edited in the sidebar's
+ * Rules tab with everything else; the only visible item opens the sidebar.
  */
 @ConfigGroup(FarmRunAutopilotConfig.GROUP)
 public interface FarmRunAutopilotConfig extends Config
 {
 	String GROUP = "farmrunautopilot";
+	String OPEN_SIDEBAR_KEY = "openSidebar";
 
-	@ConfigSection(
-		name = "Run guidance",
-		description = "Highlights and arrows shown during a run",
+	/** Works like a button: any click (tick or untick) opens the sidebar. */
+	@ConfigItem(
+		keyName = OPEN_SIDEBAR_KEY,
+		name = "Click to open the sidebar",
+		description = "All Farm Run Autopilot settings are in its sidebar panel. Each click here opens it.",
 		position = 0
 	)
-	String GUIDANCE = "guidance";
+	default boolean openSidebar()
+	{
+		return false;
+	}
 
 	@ConfigItem(
 		keyName = "highlightPatch",
 		name = "Highlight the patch",
 		description = "Outline the patch the current step is about",
-		section = GUIDANCE,
+		hidden = true,
 		position = 1
 	)
 	default boolean highlightPatch()
@@ -39,7 +44,7 @@ public interface FarmRunAutopilotConfig extends Config
 		keyName = "hintArrow",
 		name = "Hint arrow to the patch",
 		description = "Point the game's hint arrow (also on the minimap) at the patch",
-		section = GUIDANCE,
+		hidden = true,
 		position = 2
 	)
 	default boolean hintArrow()
@@ -51,7 +56,7 @@ public interface FarmRunAutopilotConfig extends Config
 		keyName = "highlightGardener",
 		name = "Highlight the gardener",
 		description = "Outline the gardener when the step is to pay them",
-		section = GUIDANCE,
+		hidden = true,
 		position = 3
 	)
 	default boolean highlightGardener()
@@ -63,7 +68,7 @@ public interface FarmRunAutopilotConfig extends Config
 		keyName = "highlightItems",
 		name = "Highlight items to use",
 		description = "Outline the seed, compost, tool or teleport to use next in your inventory and equipment",
-		section = GUIDANCE,
+		hidden = true,
 		position = 4
 	)
 	default boolean highlightItems()
@@ -76,7 +81,7 @@ public interface FarmRunAutopilotConfig extends Config
 		keyName = "patchColour",
 		name = "Patch colour",
 		description = "Outline colour for the patch",
-		section = GUIDANCE,
+		hidden = true,
 		position = 5
 	)
 	default Color patchColour()
@@ -89,7 +94,7 @@ public interface FarmRunAutopilotConfig extends Config
 		keyName = "npcColour",
 		name = "Gardener colour",
 		description = "Outline colour for the gardener",
-		section = GUIDANCE,
+		hidden = true,
 		position = 6
 	)
 	default Color npcColour()
@@ -102,7 +107,7 @@ public interface FarmRunAutopilotConfig extends Config
 		keyName = "itemColour",
 		name = "Item colour",
 		description = "Outline colour for items to use",
-		section = GUIDANCE,
+		hidden = true,
 		position = 7
 	)
 	default Color itemColour()

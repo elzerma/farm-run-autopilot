@@ -32,7 +32,7 @@ import com.farmrunautopilot.tracking.PatchTracker;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -79,6 +79,7 @@ public class RunSession
 	private final SettingsStore settings;
 	private final ShortestPathBridge shortestPath;
 	private final RunTimings timings;
+	private final SceneTracker scene;
 
 	private boolean running;
 	private RunPlan plan;
@@ -111,8 +112,10 @@ public class RunSession
 
 	@Inject
 	RunSession(Client client, RunService runService, PatchTracker patchTracker, HoldingsTracker holdingsTracker,
-		AccessChecker accessChecker, SettingsStore settings, ShortestPathBridge shortestPath, RunTimings timings)
+		AccessChecker accessChecker, SettingsStore settings, ShortestPathBridge shortestPath, RunTimings timings,
+		SceneTracker scene)
 	{
+		this.scene = scene;
 		this.client = client;
 		this.runService = runService;
 		this.patchTracker = patchTracker;
@@ -479,7 +482,7 @@ public class RunSession
 	private boolean farFrom(Patch patch)
 	{
 		final Player player = client.getLocalPlayer();
-		final WorldPoint point = PatchPoints.of(patch);
+		final WorldPoint point = scene.locationOf(patch);
 		return player != null && point != null && player.getWorldLocation().distanceTo(point) > NEAR_PATCH_TILES;
 	}
 
@@ -522,14 +525,16 @@ public class RunSession
 				status == RunView.StopStatus.CURRENT ? instruction : null,
 				plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList())));
 		}
+		final Highlights highlights = highlights();
 		return new RunView(RunView.State.RUNNING, startedAt, stopViews, instruction, false, null, null,
-			reminders(), highlights());
+			reminders(highlights), highlights);
 	}
 
 	/** What the current step points at: the patch and items to use there, or the teleport item while travelling. */
 	private Highlights highlights()
 	{
-		final Set<Integer> items = new HashSet<>();
+		// Main item first: reminders name it
+		final Set<Integer> items = new LinkedHashSet<>();
 		if (currentPatch == null || currentAction == null)
 		{
 			final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
@@ -537,10 +542,10 @@ public class RunSession
 			{
 				travelItems(stop.getMethod(), items);
 			}
-			return new Highlights(null, -1, items);
+			return new Highlights(null, false, items);
 		}
 
-		int npc = -1;
+		boolean gardener = false;
 		final Crop crop = plan.getSupplies().getPlantings().get(currentPatch);
 		switch (currentAction)
 		{
@@ -575,7 +580,7 @@ public class RunSession
 				items.add(ItemID.PLANT_CURE);
 				break;
 			case PAY:
-				npc = currentPatch.getGardenerNpcId();
+				gardener = true;
 				if (crop != null && crop.hasPayment())
 				{
 					items.add(crop.getPaymentItemId());
@@ -583,13 +588,13 @@ public class RunSession
 				}
 				break;
 			case PAY_TO_CLEAR:
-				npc = currentPatch.getGardenerNpcId();
+				gardener = true;
 				items.add(ItemID.COINS);
 				break;
 			default:
 				break;
 		}
-		return new Highlights(currentPatch, currentPatch.hasGardener() ? npc : -1, items);
+		return new Highlights(currentPatch, gardener && currentPatch.hasGardener(), items);
 	}
 
 	private void travelItems(TravelMethod method, Set<Integer> items)
@@ -618,6 +623,7 @@ public class RunSession
 		final Map<Integer, Integer> inventory = holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY);
 		final int weeds = inventory.getOrDefault(ItemID.WEEDS, 0);
 		final int pots = inventory.getOrDefault(ItemID.PLANTPOT_EMPTY, 0);
+		final int buckets = inventory.getOrDefault(ItemID.BUCKET_EMPTY, 0);
 		final List<String> parts = new ArrayList<>();
 		if (weeds > 0)
 		{
@@ -627,13 +633,31 @@ public class RunSession
 		{
 			parts.add(pots + (pots == 1 ? " empty plant pot" : " empty plant pots"));
 		}
-		return parts.isEmpty() ? null : "Drop " + String.join(" and ", parts);
+		if (buckets > 0)
+		{
+			parts.add(buckets + (buckets == 1 ? " empty bucket" : " empty buckets"));
+		}
+		if (parts.isEmpty())
+		{
+			return null;
+		}
+		String text = parts.get(0);
+		for (int i = 1; i < parts.size(); i++)
+		{
+			text += (i == parts.size() - 1 ? " and " : ", ") + parts.get(i);
+		}
+		return "Drop " + text;
 	}
 
 	/** Reminders shown under the step, one per line, or null when there are none. */
-	private String reminders()
+	private String reminders(Highlights highlights)
 	{
 		final List<String> lines = new ArrayList<>();
+		final String missing = missingItemReminder(highlights);
+		if (missing != null)
+		{
+			lines.add(missing);
+		}
 		final String drop = dropReminder();
 		if (drop != null)
 		{
@@ -650,6 +674,52 @@ public class RunSession
 			lines.add(space);
 		}
 		return lines.isEmpty() ? null : String.join("\n", lines);
+	}
+
+	/**
+	 * The item the current patch step needs isn't carried: take it from the tool leprechaun if it's stored
+	 * there, otherwise say it's missing.
+	 */
+	private String missingItemReminder(Highlights highlights)
+	{
+		if (currentPatch == null || currentAction == null)
+		{
+			return null;
+		}
+		final Set<Integer> needed = highlights.getItemIds();
+		if (needed.isEmpty())
+		{
+			return null;
+		}
+		final Holdings holdings = holdingsTracker.getHoldings();
+		final Map<Integer, Integer> inventory = holdings.in(Holdings.Source.INVENTORY);
+		final Map<Integer, Integer> worn = holdings.in(Holdings.Source.WORN);
+		final Map<Integer, Integer> leprechaun = holdings.in(Holdings.Source.LEPRECHAUN);
+		Integer stored = null;
+		for (int id : needed)
+		{
+			if (inventory.getOrDefault(id, 0) > 0 || worn.getOrDefault(id, 0) > 0)
+			{
+				return null;
+			}
+			if (stored == null && leprechaun.getOrDefault(id, 0) > 0)
+			{
+				stored = id;
+			}
+		}
+		if (stored != null)
+		{
+			final String name = runService.itemName(stored).toLowerCase();
+			final String article = currentAction == StepAdvisor.Action.COMPOST ? ""
+				: "aeiou".indexOf(name.charAt(0)) >= 0 ? "an " : "a ";
+			return "Take " + article + name + " from the tool leprechaun";
+		}
+		if (currentAction == StepAdvisor.Action.CHOP)
+		{
+			return "You aren't carrying an axe";
+		}
+		// The step's main item is listed first
+		return "You aren't carrying: " + runService.itemName(needed.iterator().next());
 	}
 
 	/**

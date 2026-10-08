@@ -1,5 +1,6 @@
 package com.farmrunautopilot.ui;
 
+import com.farmrunautopilot.FarmRunAutopilotConfig;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.route.RunOverrides;
@@ -15,8 +16,10 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.ui.components.colorpicker.ColorPickerManager;
 import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
 
@@ -36,7 +39,8 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	@Inject
 	public FarmRunAutopilotPanel(SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker,
 		RunOverrides runOverrides, RunService runService, RunSession runSession, ClientThread clientThread,
-		ShortestPathBridge shortestPath)
+		ShortestPathBridge shortestPath, FarmRunAutopilotConfig config, ConfigManager configManager,
+		ColorPickerManager colorPickers)
 	{
 		setLayout(new BorderLayout());
 		setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -82,8 +86,9 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		run.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		run.add(runPanel, BorderLayout.NORTH);
 
-		setupPanel = new SetupPanel(SetupPanel.Page.SETUP, settings, accessChecker, patchTracker);
-		rulesPanel = new SetupPanel(SetupPanel.Page.RULES, settings, accessChecker, patchTracker);
+		setupPanel = new SetupPanel(SetupPanel.Page.SETUP, settings, accessChecker, patchTracker, null);
+		rulesPanel = new SetupPanel(SetupPanel.Page.RULES, settings, accessChecker, patchTracker,
+			new GuidanceSettings(config, configManager, colorPickers));
 
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(display);
 		tabGroup.setBorder(new EmptyBorder(0, 0, 10, 0));
