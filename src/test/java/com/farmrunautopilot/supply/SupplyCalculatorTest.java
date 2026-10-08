@@ -78,6 +78,27 @@ public class SupplyCalculatorTest
 	}
 
 	@Test
+	public void inventoryFillsUpWhereTheHarvestNoLongerFits()
+	{
+		final java.util.List<Patch> patches = java.util.Arrays.asList(Patch.CATHERBY_HERB, Patch.ARDOUGNE_HERB,
+			Patch.FALADOR_HERB);
+		final Route route = new Route(java.util.Arrays.asList(
+			new com.farmrunautopilot.route.RouteStop(com.farmrunautopilot.data.Location.CATHERBY, null,
+				com.farmrunautopilot.route.Departure.DIRECT, 10, false),
+			new com.farmrunautopilot.route.RouteStop(com.farmrunautopilot.data.Location.ARDOUGNE_FARM, null,
+				com.farmrunautopilot.route.Departure.DIRECT, 10, false),
+			new com.farmrunautopilot.route.RouteStop(com.farmrunautopilot.data.Location.FALADOR_FARM, null,
+				com.farmrunautopilot.route.Departure.DIRECT, 10, false)),
+			com.farmrunautopilot.settings.RouteMode.AUTOPILOT, 30, 0);
+		final Function<Patch, PatchPrediction> ready = p -> prediction(p, PatchState.HARVESTABLE);
+		final RunConfig config = new RunConfig().sanitise();
+		// 8 + 8 herbs fit beside 10 starting slots, the third patch's 8 don't
+		assertEquals(com.farmrunautopilot.data.Location.FALADOR_FARM,
+			SupplyCalculator.fillsUpAt(route, patches, ready, Collections.emptyMap(), 10, config));
+		assertNull(SupplyCalculator.fillsUpAt(route, patches, ready, Collections.emptyMap(), 4, config));
+	}
+
+	@Test
 	public void herbRun()
 	{
 		final Map<Integer, Integer> bank = new HashMap<>();

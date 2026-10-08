@@ -1,8 +1,14 @@
 package com.farmrunautopilot.run;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
+import com.farmrunautopilot.data.Patch;
+import com.farmrunautopilot.data.PatchState;
+import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RouteStop;
@@ -64,6 +70,26 @@ public class RunSessionTest
 		assertTrue(RunSession.isReady(plan(java.util.Arrays.asList(
 			line(SupplyLine.Group.SEEDS, 1, 1, 0),
 			line(SupplyLine.Group.OPTIONAL, 4, 0, 0)))));
+	}
+
+	@Test
+	public void walkTilesComeFromTheMethodOrTheWalkLeg()
+	{
+		assertEquals(55, RunSession.walkTiles(
+			new RouteStop(Location.CATHERBY, TravelMethod.CAMELOT_TELEPORT, Departure.DIRECT, 20, false)));
+		assertEquals(100, RunSession.walkTiles(new RouteStop(Location.TAVERLEY, null, Departure.WALK, 30, false)));
+	}
+
+	@Test
+	public void harvestSpaceForHerbsAndFruit()
+	{
+		final PatchPrediction fruit = new PatchPrediction(Patch.CATHERBY_FRUIT_TREE, Crop.PAPAYA,
+			PatchState.HARVESTABLE, 4, 7, 0, 0, 0, PatchPrediction.Source.THIS_PLUGIN);
+		assertEquals(4, RunSession.expectedHarvest(Patch.CATHERBY_FRUIT_TREE, StepAdvisor.Action.PICK, fruit));
+		assertEquals(6, RunSession.expectedHarvest(Patch.CATHERBY_FRUIT_TREE, StepAdvisor.Action.CHECK_HEALTH, null));
+		assertEquals(8, RunSession.expectedHarvest(Patch.CATHERBY_HERB, StepAdvisor.Action.PICK, null));
+		assertEquals(0, RunSession.expectedHarvest(Patch.CATHERBY_HERB, StepAdvisor.Action.PLANT, null));
+		assertEquals(0, RunSession.expectedHarvest(Patch.TAVERLEY_TREE, StepAdvisor.Action.CHECK_HEALTH, null));
 	}
 
 	@Test

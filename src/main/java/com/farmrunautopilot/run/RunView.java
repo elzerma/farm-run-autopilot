@@ -50,7 +50,7 @@ public class RunView
 	String lastRun;
 	/** e.g. "Best for 6 herbs: 8:12, 8:40, 9:03", or null when there are none yet. */
 	String bestTimes;
-	/** e.g. "Drop 4 weeds and 2 empty plant pots", shown under the instruction, or null. */
+	/** Reminders under the instruction, one per line (e.g. "Drop 4 weeds"), or null. */
 	String reminder;
 	Highlights highlights;
 }

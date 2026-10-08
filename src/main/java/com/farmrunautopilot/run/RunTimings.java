@@ -2,11 +2,13 @@ package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.FarmRunAutopilotConfig;
 import com.farmrunautopilot.data.PatchType;
+import com.farmrunautopilot.route.LearnedTimes;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -63,8 +65,9 @@ public class RunTimings
 
 	private final ConfigManager configManager;
 	private final Gson gson;
-	/** Saved runs for {@link #cachedProfile}, so best times aren't re-read every tick. */
+	/** Saved runs and learned leg times for {@link #cachedProfile}, so they aren't re-read every tick. */
 	private List<Run> cachedRuns;
+	private LearnedTimes cachedLearned;
 	private String cachedProfile;
 
 	@Inject
@@ -84,18 +87,55 @@ public class RunTimings
 		savedRuns.add(run);
 		write(RUNS_KEY, trim(savedRuns, MAX_RUNS));
 		cachedRuns = null;
+		cachedLearned = null;
 	}
 
 	/** The fastest finished runs with this makeup, quickest first, at most {@code limit}. */
 	public List<Double> best(String makeup, int limit)
 	{
-		final String profile = configManager.getRSProfileKey();
-		if (cachedRuns == null || !Objects.equals(profile, cachedProfile))
+		checkProfile();
+		if (cachedRuns == null)
 		{
 			cachedRuns = read(RUNS_KEY, Run[].class);
-			cachedProfile = profile;
 		}
 		return best(cachedRuns, makeup, limit);
+	}
+
+	/** The player's recorded times for each way of reaching each stop. */
+	public LearnedTimes learned()
+	{
+		checkProfile();
+		if (cachedLearned == null)
+		{
+			cachedLearned = learned(read(LEGS_KEY, Leg[].class));
+		}
+		return cachedLearned;
+	}
+
+	public static LearnedTimes learned(List<Leg> legs)
+	{
+		final Map<String, List<Double>> samples = new HashMap<>();
+		for (Leg leg : legs)
+		{
+			// The trip to the first stop and walks between stops aren't samples of a travel method
+			if (leg.getMethod() != null && leg.getDeparture() != null && leg.getLocation() != null)
+			{
+				samples.computeIfAbsent(LearnedTimes.key(leg.getLocation(), leg.getMethod(), leg.getDeparture()),
+					k -> new ArrayList<>()).add(leg.getSeconds());
+			}
+		}
+		return new LearnedTimes(samples);
+	}
+
+	private void checkProfile()
+	{
+		final String profile = configManager.getRSProfileKey();
+		if (!Objects.equals(profile, cachedProfile))
+		{
+			cachedRuns = null;
+			cachedLearned = null;
+			cachedProfile = profile;
+		}
 	}
 
 	static List<Double> best(List<Run> runs, String makeup, int limit)

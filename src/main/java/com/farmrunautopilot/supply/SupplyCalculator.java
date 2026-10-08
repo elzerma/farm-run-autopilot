@@ -44,6 +44,9 @@ import net.runelite.api.gameval.ItemID;
 public final class SupplyCalculator
 {
 	private static final int INVENTORY_SLOTS = 28;
+	/** A typical herb harvest with compost (3 to 18 is possible). */
+	public static final int HERBS_PER_PATCH = 8;
+	public static final int FRUIT_PER_TREE = 6;
 	private static final int STAMINA_DOSES_PER_POTION = 4;
 	private static final String[] ORDINALS = {"1st", "2nd", "3rd"};
 
@@ -328,10 +331,84 @@ public final class SupplyCalculator
 		{
 			warnings.add("Needs about " + slots + " inventory slots, more than " + INVENTORY_SLOTS + ".");
 		}
+		else
+		{
+			final Location full = fillsUpAt(route, patches, predictions, plantings, slots, config);
+			if (full != null)
+			{
+				warnings.add("Inventory may fill up at " + full.getDisplayName()
+					+ ": note herbs and fruit on the tool leprechaun as you go.");
+			}
+		}
 
 		lines.sort((a, b) -> a.getGroup().compareTo(b.getGroup()));
 		return new SupplyPlan(Collections.unmodifiableList(lines), patchCounts, notDue, travelPlan, warnings, coins,
 			runes.summary, slots, Collections.unmodifiableMap(plantings));
+	}
+
+	/**
+	 * Walks the route with the starting inventory (SPEC 11.5): picked herbs and fruit are added, planted saplings
+	 * (empty pots dropped) and unnoted payments are used up.
+	 *
+	 * @return the first stop where the harvest won't fit, or null if it always does
+	 */
+	static Location fillsUpAt(Route route, List<Patch> patches, Function<Patch, PatchPrediction> predictions,
+		Map<Patch, Crop> plantings, int startSlots, RunConfig config)
+	{
+		int used = startSlots;
+		for (RouteStop stop : route.getStops())
+		{
+			for (Patch patch : patches)
+			{
+				if (patch.getLocation() != stop.getLocation())
+				{
+					continue;
+				}
+				final int harvest = expectedHarvest(patch, predictions.apply(patch));
+				if (used + harvest > INVENTORY_SLOTS)
+				{
+					return stop.getLocation();
+				}
+				used += harvest;
+				final Crop crop = plantings.get(patch);
+				if (crop != null && patch.getType().isProtectable())
+				{
+					used--;
+					if (!config.isPayWithNotes() && crop.hasPayment()
+						&& config.protectionFor(patch) == Protection.PAY_GARDENER)
+					{
+						used -= crop.getPaymentQuantity();
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	/** Slots the herbs or fruit picked at this patch will take. */
+	private static int expectedHarvest(Patch patch, PatchPrediction prediction)
+	{
+		if (prediction == null)
+		{
+			return 0;
+		}
+		if (patch.getType() == PatchType.HERB)
+		{
+			return prediction.getState() == PatchState.HARVESTABLE ? HERBS_PER_PATCH : 0;
+		}
+		if (patch.getType() == PatchType.FRUIT_TREE)
+		{
+			switch (prediction.getState())
+			{
+				case CHECK_HEALTH:
+					return FRUIT_PER_TREE;
+				case HARVESTABLE:
+					return prediction.getStage();
+				default:
+					return 0;
+			}
+		}
+		return 0;
 	}
 
 	/** One line for an outfit: pieces held (any variant of each piece) out of the full set. */

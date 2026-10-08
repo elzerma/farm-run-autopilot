@@ -4,6 +4,7 @@ import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
+import com.farmrunautopilot.run.RunTimings;
 import com.farmrunautopilot.run.StepAdvisor;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
@@ -41,6 +42,7 @@ public class RunService
 	private final PatchTracker patchTracker;
 	private final HoldingsTracker holdingsTracker;
 	private final RunOverrides overrides;
+	private final RunTimings timings;
 	/** Item names are fixed, so look each up once. */
 	private final Map<Integer, String> names = new HashMap<>();
 
@@ -51,8 +53,9 @@ public class RunService
 
 	@Inject
 	RunService(Client client, ItemManager itemManager, SettingsStore settings, AccessChecker accessChecker,
-		PatchTracker patchTracker, HoldingsTracker holdingsTracker, RunOverrides overrides)
+		PatchTracker patchTracker, HoldingsTracker holdingsTracker, RunOverrides overrides, RunTimings timings)
 	{
+		this.timings = timings;
 		this.client = client;
 		this.itemManager = itemManager;
 		this.settings = settings;
@@ -109,7 +112,7 @@ public class RunService
 		final RunSelection selection = RunSelector.select(config, access, patchTracker::predict,
 			Instant.now().getEpochSecond(), config.isSupplyFullRun(), overrides.get());
 		final Route route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
-			settings.getAccount().getPoh());
+			settings.getAccount().getPoh(), timings.learned());
 		final SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 			patchTracker::predict, this::itemName, itemManager::getItemPrice);
 

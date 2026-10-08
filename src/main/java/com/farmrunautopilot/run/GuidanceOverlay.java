@@ -68,7 +68,13 @@ public class GuidanceOverlay extends Overlay
 		}
 		if (view.getReminder() != null)
 		{
-			draw(graphics, player, view.getReminder(), REMINDER, line);
+			for (String reminder : view.getReminder().split("\n"))
+			{
+				for (String text : wrap(graphics.getFontMetrics(), reminder, maxWidth))
+				{
+					draw(graphics, player, text, REMINDER, line++);
+				}
+			}
 		}
 		return null;
 	}

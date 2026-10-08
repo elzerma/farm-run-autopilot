@@ -11,9 +11,11 @@ import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.SupplyItems;
+import com.farmrunautopilot.data.poh.PoolTier;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.route.Departure;
+import com.farmrunautopilot.route.RoutePlanner;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
@@ -23,6 +25,7 @@ import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
+import com.farmrunautopilot.supply.SupplyCalculator;
 import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchTracker;
@@ -38,8 +41,11 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ItemID;
 
 /**
@@ -63,6 +69,7 @@ public class RunSession
 	/** Further than this from a patch and the step starts with "Run to the ... patch". */
 	private static final int NEAR_PATCH_TILES = 7;
 	private static final int BEST_TIMES = 3;
+	private static final int INVENTORY_SLOTS = 28;
 
 	private final Client client;
 	private final RunService runService;
@@ -78,6 +85,8 @@ public class RunSession
 	private long startedAt;
 	private int stopIndex;
 	private boolean arrived;
+	/** The time for the leg to the current stop has been saved. */
+	private boolean legRecorded;
 	private long legStartedAt;
 	private Patch currentPatch;
 	/** What to do at {@link #currentPatch}, or null while travelling. */
@@ -172,6 +181,8 @@ public class RunSession
 		}
 		log.debug("Run ended: {}", lastRun);
 		plan = null;
+		// Replan with the newly learned leg times
+		runService.markDirty();
 		onGameTick();
 	}
 
@@ -281,6 +292,10 @@ public class RunSession
 			{
 				shortestPath.clear();
 			}
+			if (!legRecorded && nearAny(here))
+			{
+				recordLeg(now);
+			}
 
 			instruction = nextPatchStep(here);
 			if (instruction != null)
@@ -288,6 +303,10 @@ public class RunSession
 				break;
 			}
 			// Every patch here is done
+			if (!legRecorded)
+			{
+				recordLeg(now);
+			}
 			stopIndex++;
 			arrived = false;
 			legStartedAt = now;
@@ -400,6 +419,16 @@ public class RunSession
 	private void markArrived(long now)
 	{
 		arrived = true;
+		legRecorded = false;
+	}
+
+	/**
+	 * Save the time for the leg to the current stop. Recorded on reaching a patch rather than when its area
+	 * loads, to match the estimates, which include the walk from the teleport spot.
+	 */
+	private void recordLeg(long now)
+	{
+		legRecorded = true;
 		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
 		// The trip to the first stop is the player's own (any bank, Shortest Path), so it isn't a sample for
 		// learning our methods' times.
@@ -428,6 +457,18 @@ public class RunSession
 		for (Patch patch : here)
 		{
 			if (inRange.contains(patch))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean nearAny(List<Patch> here)
+	{
+		for (Patch patch : here)
+		{
+			if (!farFrom(patch))
 			{
 				return true;
 			}
@@ -482,7 +523,7 @@ public class RunSession
 				plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList())));
 		}
 		return new RunView(RunView.State.RUNNING, startedAt, stopViews, instruction, false, null, null,
-			dropReminder(), highlights());
+			reminders(), highlights());
 	}
 
 	/** What the current step points at: the patch and items to use there, or the teleport item while travelling. */
@@ -587,6 +628,134 @@ public class RunSession
 			parts.add(pots + (pots == 1 ? " empty plant pot" : " empty plant pots"));
 		}
 		return parts.isEmpty() ? null : "Drop " + String.join(" and ", parts);
+	}
+
+	/** Reminders shown under the step, one per line, or null when there are none. */
+	private String reminders()
+	{
+		final List<String> lines = new ArrayList<>();
+		final String drop = dropReminder();
+		if (drop != null)
+		{
+			lines.add(drop);
+		}
+		final String energy = energyReminder();
+		if (energy != null)
+		{
+			lines.add(energy);
+		}
+		final String space = spaceReminder();
+		if (space != null)
+		{
+			lines.add(space);
+		}
+		return lines.isEmpty() ? null : String.join("\n", lines);
+	}
+
+	/**
+	 * Low run energy before a long walk (SPEC 12.3): drink a stamina dose if carried, otherwise restore at the
+	 * house pool if it restores energy, otherwise just a warning.
+	 */
+	private String energyReminder()
+	{
+		final RunConfig config = settings.getRunConfig();
+		final int energy = client.getEnergy() / 100;
+		if (energy >= config.getEnergyThreshold())
+		{
+			return null;
+		}
+		// The walk ahead: to the current stop while travelling, or to the next stop once here
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		final int next = arrived ? stopIndex + 1 : stopIndex;
+		if (next >= stops.size() || walkTiles(stops.get(next)) < config.getEnergyMinTiles())
+		{
+			return null;
+		}
+		final Map<Integer, Integer> inventory = holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY);
+		for (int id : SupplyItems.STAMINA_DOSES.keySet())
+		{
+			if (inventory.getOrDefault(id, 0) > 0)
+			{
+				return "Run energy " + energy + "%: drink a stamina dose";
+			}
+		}
+		final PoolTier pool = settings.getAccount().getPoh().getPool();
+		if (pool != null && pool.isRestoresRunEnergy())
+		{
+			return "Run energy " + energy + "%: restore it at your house pool";
+		}
+		return "Run energy " + energy + "%: long walk ahead";
+	}
+
+	/** Roughly how far the player walks on this leg, in tiles. */
+	static int walkTiles(RouteStop stop)
+	{
+		if (stop.getDeparture() == Departure.WALK)
+		{
+			return (int) Math.round(stop.getLegSeconds() / RoutePlanner.SECONDS_PER_TILE);
+		}
+		final TravelMethod method = stop.getMethod();
+		return method != null && method.getWalk() != null ? method.getWalk().getEstimatedTiles() : 0;
+	}
+
+	/**
+	 * Not enough free inventory space for what's about to be picked here (SPEC 11.5). Herbs and fruit can be
+	 * noted by the tool leprechaun at every patch.
+	 */
+	private String spaceReminder()
+	{
+		if (currentPatch == null || currentAction == null)
+		{
+			return null;
+		}
+		final PatchPrediction live = patchTracker.predict(currentPatch);
+		final int expected = expectedHarvest(currentPatch, currentAction, live);
+		if (expected == 0)
+		{
+			return null;
+		}
+		final int free = freeInventorySlots();
+		if (free >= expected)
+		{
+			return null;
+		}
+		return "Only " + free + " free slot" + (free == 1 ? "" : "s") + ": note produce on the tool leprechaun";
+	}
+
+	/** Inventory slots the next harvest here will take (herbs and fruit), 0 if none. */
+	static int expectedHarvest(Patch patch, StepAdvisor.Action action, PatchPrediction live)
+	{
+		if (patch.getType() == PatchType.HERB)
+		{
+			return action == StepAdvisor.Action.PICK ? SupplyCalculator.HERBS_PER_PATCH : 0;
+		}
+		if (patch.getType() == PatchType.FRUIT_TREE)
+		{
+			if (action == StepAdvisor.Action.PICK && live != null)
+			{
+				return live.getStage();
+			}
+			return action == StepAdvisor.Action.CHECK_HEALTH ? SupplyCalculator.FRUIT_PER_TREE : 0;
+		}
+		return 0;
+	}
+
+	private int freeInventorySlots()
+	{
+		final ItemContainer inventory = client.getItemContainer(InventoryID.INV);
+		if (inventory == null)
+		{
+			return INVENTORY_SLOTS;
+		}
+		int used = 0;
+		for (Item item : inventory.getItems())
+		{
+			if (item.getId() > 0 && item.getQuantity() > 0)
+			{
+				used++;
+			}
+		}
+		return INVENTORY_SLOTS - used;
 	}
 
 	private RunView idleView()

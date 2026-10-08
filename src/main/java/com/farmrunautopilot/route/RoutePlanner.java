@@ -29,7 +29,7 @@ import java.util.Map;
 public final class RoutePlanner
 {
 	// Starting estimates, in seconds (UNVERIFIED; replaced by learned timings in M8)
-	static final double SECONDS_PER_TILE = 0.3;
+	public static final double SECONDS_PER_TILE = 0.3;
 	/** With "prefer walking" on, a walk up to this much slower than a teleport is chosen instead. */
 	static final double PREFER_WALKING_SECONDS = 20.0;
 	static final double TELEPORT = 3.0;
@@ -87,20 +87,30 @@ public final class RoutePlanner
 	private final AccessSnapshot access;
 	private final Holdings holdings;
 	private final PohSetup poh;
+	private final LearnedTimes learned;
 
-	private RoutePlanner(RunConfig config, AccessSnapshot access, Holdings holdings, PohSetup poh)
+	private RoutePlanner(RunConfig config, AccessSnapshot access, Holdings holdings, PohSetup poh,
+		LearnedTimes learned)
 	{
 		this.config = config;
 		this.access = access;
 		this.holdings = holdings;
 		this.poh = poh;
+		this.learned = learned;
+	}
+
+	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
+		PohSetup poh)
+	{
+		return plan(patches, config, access, holdings, poh, LearnedTimes.NONE);
 	}
 
 	/**
 	 * @param patches the patches in this run
+	 * @param learned the player's recorded leg times
 	 */
 	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
-		PohSetup poh)
+		PohSetup poh, LearnedTimes learned)
 	{
 		final List<Location> stops = new ArrayList<>();
 		for (Location location : Location.values())
@@ -118,7 +128,7 @@ public final class RoutePlanner
 		{
 			return new Route(new ArrayList<>(), config.getRouteMode(), 0, 0);
 		}
-		return new RoutePlanner(config, access, holdings, poh).plan(stops, patches.size());
+		return new RoutePlanner(config, access, holdings, poh, learned).plan(stops, patches.size());
 	}
 
 	private Route plan(List<Location> stops, int patchCount)
@@ -437,8 +447,9 @@ public final class RoutePlanner
 			for (Leg leg : options(method, from))
 			{
 				// Teleports carry the walking preference, so a walk that's only a little slower wins
-				final Leg scored = new Leg(leg.method, leg.departure, leg.seconds, leg.needsSupplies,
-					leg.seconds + teleportPreference());
+				final double seconds = learned.adjust(to, leg.method, leg.departure, leg.seconds);
+				final Leg scored = new Leg(leg.method, leg.departure, seconds, leg.needsSupplies,
+					seconds + teleportPreference());
 				if (best == null || scored.cost < best.cost)
 				{
 					best = scored;
