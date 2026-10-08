@@ -10,10 +10,14 @@ import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
+import com.farmrunautopilot.data.SupplyItems;
+import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
+import com.farmrunautopilot.settings.Compost;
 import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
@@ -25,6 +29,7 @@ import com.farmrunautopilot.tracking.PatchTracker;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -75,6 +80,8 @@ public class RunSession
 	private boolean arrived;
 	private long legStartedAt;
 	private Patch currentPatch;
+	/** What to do at {@link #currentPatch}, or null while travelling. */
+	private StepAdvisor.Action currentAction;
 	private final Map<Patch, Progress> progress = new EnumMap<>(Patch.class);
 	private final List<RunTimings.Leg> legs = new ArrayList<>();
 	private long finishedAt;
@@ -334,6 +341,7 @@ public class RunSession
 			if (advice.getAction() != StepAdvisor.Action.DONE)
 			{
 				currentPatch = patch;
+				currentAction = advice.getAction();
 				// The area loads well before the patch is reached, and some places have several patches
 				if (advice.getAction() != StepAdvisor.Action.INSPECT && farFrom(patch))
 				{
@@ -474,7 +482,89 @@ public class RunSession
 				plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList())));
 		}
 		return new RunView(RunView.State.RUNNING, startedAt, stopViews, instruction, false, null, null,
-			dropReminder());
+			dropReminder(), highlights());
+	}
+
+	/** What the current step points at: the patch and items to use there, or the teleport item while travelling. */
+	private Highlights highlights()
+	{
+		final Set<Integer> items = new HashSet<>();
+		if (currentPatch == null || currentAction == null)
+		{
+			final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
+			if (stopIndex > 0 && stop.getDeparture() == Departure.DIRECT && stop.getMethod() != null)
+			{
+				travelItems(stop.getMethod(), items);
+			}
+			return new Highlights(null, -1, items);
+		}
+
+		int npc = -1;
+		final Crop crop = plan.getSupplies().getPlantings().get(currentPatch);
+		switch (currentAction)
+		{
+			case PLANT:
+				if (crop != null)
+				{
+					items.add(crop.getPlantItemId());
+				}
+				break;
+			case COMPOST:
+				final Compost compost = settings.getRunConfig().getCompost().get(currentPatch.getType());
+				if (compost != null && compost != Compost.NONE)
+				{
+					items.add(compost.getItemId());
+				}
+				items.add(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED);
+				break;
+			case RAKE:
+				items.add(ItemID.RAKE);
+				break;
+			case CLEAR_DEAD:
+			case DIG_STUMP:
+				items.add(ItemID.SPADE);
+				break;
+			case CHOP:
+				for (int axe : SupplyItems.AXES)
+				{
+					items.add(axe);
+				}
+				break;
+			case CURE:
+				items.add(ItemID.PLANT_CURE);
+				break;
+			case PAY:
+				npc = currentPatch.getGardenerNpcId();
+				if (crop != null && crop.hasPayment())
+				{
+					items.add(crop.getPaymentItemId());
+					items.add(runService.notedId(crop.getPaymentItemId()));
+				}
+				break;
+			case PAY_TO_CLEAR:
+				npc = currentPatch.getGardenerNpcId();
+				items.add(ItemID.COINS);
+				break;
+			default:
+				break;
+		}
+		return new Highlights(currentPatch, currentPatch.hasGardener() ? npc : -1, items);
+	}
+
+	private void travelItems(TravelMethod method, Set<Integer> items)
+	{
+		if (method.getItem() != null)
+		{
+			for (int id : method.getItem().getItemIds())
+			{
+				items.add(id);
+			}
+		}
+		final Spell spell = method.getSpell();
+		if (spell != null && spell.hasTablet())
+		{
+			items.add(spell.getTabletItemId());
+		}
 	}
 
 	/** e.g. "Drop 4 weeds and 2 empty plant pots", or null when there's nothing to drop or it's turned off. */
@@ -513,7 +603,7 @@ public class RunSession
 			notice = "Ready - press Start run";
 		}
 		return new RunView(RunView.State.IDLE, 0, new ArrayList<>(), notice, ready, lastRun, bestTimes(current),
-			null);
+			null, Highlights.NONE);
 	}
 
 	/**

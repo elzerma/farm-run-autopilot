@@ -129,6 +129,13 @@ public class RunService
 		return true;
 	}
 
+	/** The noted version of an item (or the item itself if it has none). Client thread. */
+	public int notedId(int itemId)
+	{
+		final int noted = itemManager.getItemComposition(itemId).getLinkedNoteId();
+		return noted > 0 ? noted : itemId;
+	}
+
 	/** An item's name, looked up once. Client thread. */
 	public String itemName(int itemId)
 	{

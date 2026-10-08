@@ -11,8 +11,12 @@ import com.farmrunautopilot.route.RunOverrides;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.run.GuidanceOverlay;
+import com.farmrunautopilot.run.HighlightOverlay;
+import com.farmrunautopilot.run.HintArrowController;
+import com.farmrunautopilot.run.ItemHighlightOverlay;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
+import com.farmrunautopilot.run.SceneTracker;
 import com.farmrunautopilot.tracking.PatchTracker;
 import com.farmrunautopilot.ui.FarmRunAutopilotPanel;
 import com.google.inject.Provides;
@@ -26,11 +30,14 @@ import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.MenuOptionClicked;
+import net.runelite.api.events.NpcDespawned;
+import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.ScriptCallbackEvent;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.ScriptPreFired;
@@ -44,6 +51,7 @@ import net.runelite.api.widgets.WidgetModalMode;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.RuneScapeProfileChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -101,6 +109,18 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private GuidanceOverlay guidanceOverlay;
 
 	@Inject
+	private HighlightOverlay highlightOverlay;
+
+	@Inject
+	private ItemHighlightOverlay itemHighlightOverlay;
+
+	@Inject
+	private SceneTracker sceneTracker;
+
+	@Inject
+	private HintArrowController hintArrow;
+
+	@Inject
 	private OverlayManager overlayManager;
 
 	/** The session view last shown in the sidebar. */
@@ -130,6 +150,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 		clientThread.invoke(holdingsTracker::loadCaches);
 		farmBankTab.startUp(runService::getSupplies);
 		overlayManager.add(guidanceOverlay);
+		overlayManager.add(highlightOverlay);
+		overlayManager.add(itemHighlightOverlay);
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
 		navButton = NavigationButton.builder()
@@ -150,7 +172,15 @@ public class FarmRunAutopilotPlugin extends Plugin
 		settings.removeSaveListener(onSettingsSaved);
 		farmBankTab.shutDown();
 		overlayManager.remove(guidanceOverlay);
-		clientThread.invoke(() -> runSession.stop(false));
+		overlayManager.remove(highlightOverlay);
+		overlayManager.remove(itemHighlightOverlay);
+		itemHighlightOverlay.clearCache();
+		clientThread.invoke(() ->
+		{
+			runSession.stop(false);
+			hintArrow.clear();
+			sceneTracker.clear();
+		});
 		shownRunView = null;
 		clientToolbar.removeNavigation(navButton);
 		panel.shutDown();
@@ -188,6 +218,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		}
 
 		runSession.onGameTick();
+		hintArrow.update();
 		final RunView runView = runSession.getView();
 		if (!runView.equals(shownRunView))
 		{
@@ -256,6 +287,11 @@ public class FarmRunAutopilotPlugin extends Plugin
 			accessChecker.requestRefresh();
 			holdingsTracker.markDirty();
 			runService.reset();
+		}
+		else if (event.getGameState() == GameState.LOADING)
+		{
+			// Objects and NPCs are spawned again once the new scene loads
+			sceneTracker.clear();
 		}
 		else if (event.getGameState() == GameState.LOGIN_SCREEN)
 		{
@@ -326,6 +362,34 @@ public class FarmRunAutopilotPlugin extends Plugin
 	public void onGameObjectSpawned(GameObjectSpawned event)
 	{
 		pohDetector.onObjectSpawned(event.getGameObject().getId());
+		sceneTracker.onObjectSpawned(event.getGameObject());
+	}
+
+	@Subscribe
+	public void onGameObjectDespawned(GameObjectDespawned event)
+	{
+		sceneTracker.onObjectDespawned(event.getGameObject());
+	}
+
+	@Subscribe
+	public void onNpcSpawned(NpcSpawned event)
+	{
+		sceneTracker.onNpcSpawned(event.getNpc());
+	}
+
+	@Subscribe
+	public void onNpcDespawned(NpcDespawned event)
+	{
+		sceneTracker.onNpcDespawned(event.getNpc());
+	}
+
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event)
+	{
+		if (FarmRunAutopilotConfig.GROUP.equals(event.getGroup()) && "itemColour".equals(event.getKey()))
+		{
+			itemHighlightOverlay.clearCache();
+		}
 	}
 
 	private static String bankTabContents(SupplyPlan plan)

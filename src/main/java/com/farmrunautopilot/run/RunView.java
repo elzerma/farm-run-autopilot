@@ -36,7 +36,7 @@ public class RunView
 	}
 
 	public static final RunView IDLE_VIEW = new RunView(State.IDLE, 0, Collections.emptyList(), null, false, null,
-		null, null);
+		null, null, Highlights.NONE);
 
 	State state;
 	/** When the run started (epoch millis), 0 when idle. */
@@ -52,4 +52,5 @@ public class RunView
 	String bestTimes;
 	/** e.g. "Drop 4 weeds and 2 empty plant pots", shown under the instruction, or null. */
 	String reminder;
+	Highlights highlights;
 }
