@@ -6,6 +6,7 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
@@ -24,6 +25,8 @@ public class RunConfig
 	public static final int DEFAULT_DUE_THRESHOLD = 100;
 	public static final int DEFAULT_ENERGY_THRESHOLD = 30;
 	public static final int DEFAULT_ENERGY_MIN_TILES = 15;
+	/** 2nd and 3rd choice. */
+	public static final int MAX_BACKUP_CROPS = 2;
 
 	// Run types
 	private Set<PatchType> enabledTypes = EnumSet.allOf(PatchType.class);
@@ -33,8 +36,19 @@ public class RunConfig
 	// Patches and crops
 	/** Patches the player unticked. A manual untick always wins over detection. */
 	private Set<Patch> disabledPatches = EnumSet.noneOf(Patch.class);
-	/** Chosen crop per run type; a missing entry means "highest my Farming level allows". */
+	/** Chosen (1st choice) crop per run type; a missing entry means "highest my Farming level allows". */
 	private Map<PatchType, Crop> crops = new EnumMap<>(PatchType.class);
+	/** Plant 2nd/3rd choices when the player runs out of the 1st (changed from the spec's single choice). */
+	private boolean useBackupCrops = false;
+	/** 2nd and 3rd choice per run type, in order. */
+	private Map<PatchType, List<Crop>> backupCrops = new EnumMap<>(PatchType.class);
+	/** Use {@link #diseaseFreeHerbs}; when off the list is kept but ignored. */
+	private boolean prioritiseDiseaseFreeHerbs = false;
+	/**
+	 * Herbs reserved for disease-free patches: those patches get these first (most valuable first) and other
+	 * patches never get them.
+	 */
+	private Set<Crop> diseaseFreeHerbs = EnumSet.noneOf(Crop.class);
 
 	// Protection
 	private Map<PatchType, Protection> protection = defaultProtection();
@@ -86,6 +100,10 @@ public class RunConfig
 
 		crops = cleanMap(crops, PatchType.class);
 		crops.entrySet().removeIf(e -> e.getValue().getType() != e.getKey());
+		backupCrops = cleanMap(backupCrops, PatchType.class);
+		backupCrops.replaceAll((type, list) -> cleanBackups(type, list));
+		diseaseFreeHerbs = cleanSet(diseaseFreeHerbs, Crop.class, EnumSet.noneOf(Crop.class));
+		diseaseFreeHerbs.removeIf(c -> c.getType() != PatchType.HERB);
 		protectionOverrides = cleanMap(protectionOverrides, Patch.class);
 		travel = cleanMap(travel, Location.class);
 		travel.entrySet().removeIf(e -> e.getValue().getDestination() != e.getKey());
@@ -151,6 +169,27 @@ public class RunConfig
 		return best;
 	}
 
+	/**
+	 * The crops to plant for a run type, best first: the 1st choice, then the backups the player can plant
+	 * (only when backups are switched on).
+	 */
+	public List<Crop> cropChoices(PatchType type, int farmingLevel)
+	{
+		final List<Crop> choices = new ArrayList<>();
+		choices.add(cropFor(type, farmingLevel));
+		if (useBackupCrops)
+		{
+			for (Crop crop : backupCrops.getOrDefault(type, Collections.emptyList()))
+			{
+				if (crop.getFarmingLevel() <= farmingLevel && !choices.contains(crop))
+				{
+					choices.add(crop);
+				}
+			}
+		}
+		return choices;
+	}
+
 	public boolean useRunesAt(Location location)
 	{
 		return useRunesNotTabs || runesNotTabsAt.contains(location);
@@ -171,6 +210,19 @@ public class RunConfig
 		map.put(PatchType.FRUIT_TREE, Compost.NONE);
 		map.put(PatchType.HERB, Compost.ULTRACOMPOST);
 		return map;
+	}
+
+	private static List<Crop> cleanBackups(PatchType type, List<Crop> list)
+	{
+		final List<Crop> clean = new ArrayList<>();
+		for (Crop crop : list)
+		{
+			if (crop != null && crop.getType() == type && !clean.contains(crop) && clean.size() < MAX_BACKUP_CROPS)
+			{
+				clean.add(crop);
+			}
+		}
+		return clean;
 	}
 
 	static <E extends Enum<E>> Set<E> cleanSet(Set<E> set, Class<E> type, Set<E> fallback)

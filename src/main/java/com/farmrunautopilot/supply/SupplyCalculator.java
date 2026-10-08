@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.function.IntToLongFunction;
 import net.runelite.api.Skill;
 import net.runelite.api.gameval.ItemID;
 
@@ -49,9 +50,11 @@ public final class SupplyCalculator
 	 * @param predictions current prediction per patch (null for never-seen patches)
 	 * @param fullRun count every selected patch, not just the due ones
 	 * @param itemName display name for an item ID
+	 * @param price Grand Exchange price of an item ID, used to rank herbs for disease-free patches
 	 */
 	public static SupplyPlan calculate(RunConfig config, AccessSnapshot access, Holdings holdings,
-		Function<Patch, PatchPrediction> predictions, long now, boolean fullRun, IntFunction<String> itemName)
+		Function<Patch, PatchPrediction> predictions, long now, boolean fullRun, IntFunction<String> itemName,
+		IntToLongFunction price)
 	{
 		final List<SupplyLine> lines = new ArrayList<>();
 		final List<String> notDue = new ArrayList<>();
@@ -78,7 +81,7 @@ public final class SupplyCalculator
 		}
 		if (patches.isEmpty())
 		{
-			return new SupplyPlan(lines, patchCounts, notDue, travelPlan, warnings, 0, "", 0);
+			return new SupplyPlan(lines, patchCounts, notDue, travelPlan, warnings, 0, "", 0, Collections.emptyMap());
 		}
 
 		final int farming = access.isKnown() ? access.level(Skill.FARMING) : 99;
@@ -91,6 +94,27 @@ public final class SupplyCalculator
 		boolean anyWeeds = false;
 		final Map<Integer, Integer> payments = new LinkedHashMap<>();
 		final Map<Compost, Integer> compost = new EnumMap<>(Compost.class);
+
+		// Which crop goes where (1st choice, or backups when stock runs short)
+		final Map<Patch, Crop> plantings = new LinkedHashMap<>();
+		for (PatchType type : PatchType.values())
+		{
+			final List<Patch> ofType = new ArrayList<>();
+			for (Patch patch : patches)
+			{
+				if (patch.getType() == type)
+				{
+					ofType.add(patch);
+				}
+			}
+			if (!ofType.isEmpty())
+			{
+				plantings.putAll(CropAllocator.allocate(ofType, config.cropChoices(type, farming),
+					crop -> holdings.count(crop.getPlantItemId()),
+					patch -> isSafe(patch, config, access, faladorElite),
+					type == PatchType.HERB ? diseaseFreeHerbs(config, farming, price) : Collections.emptyList()));
+			}
+		}
 
 		for (Patch patch : patches)
 		{
@@ -113,7 +137,7 @@ public final class SupplyCalculator
 					}
 				}
 
-				final Crop crop = config.cropFor(type, farming);
+				final Crop crop = plantings.get(patch);
 				final boolean freeProtection = patch == Patch.FALADOR_TREE && faladorElite;
 				if (config.protectionFor(patch) == Protection.PAY_GARDENER && !freeProtection)
 				{
@@ -128,20 +152,19 @@ public final class SupplyCalculator
 			}
 		}
 
-		// Seeds and saplings
-		for (PatchType type : PatchType.values())
+		// Seeds and saplings, one line per crop
+		final Map<Crop, List<String>> plantedAt = new LinkedHashMap<>();
+		plantings.forEach((patch, crop) -> plantedAt.computeIfAbsent(crop, k -> new ArrayList<>())
+			.add(patch.getLocation().getDisplayName()));
+		plantedAt.forEach((crop, places) ->
 		{
-			final int n = patchCounts.getOrDefault(type, 0);
-			if (n == 0)
-			{
-				continue;
-			}
-			final Crop crop = config.cropFor(type, farming);
 			final int id = crop.getPlantItemId();
+			final int n = places.size();
 			// Seeds stack; saplings don't.
-			final int slots = type == PatchType.HERB ? 1 : n;
-			lines.add(line(SupplyLine.Group.SEEDS, itemName.apply(id), n, holdings, null, slots, id));
-		}
+			final int slots = crop.getType() == PatchType.HERB ? 1 : n;
+			lines.add(line(SupplyLine.Group.SEEDS, itemName.apply(id), n, holdings,
+				"Planting at: " + String.join(", ", places), slots, id));
+		});
 
 		// Payments
 		payments.forEach((id, qty) ->
@@ -300,7 +323,45 @@ public final class SupplyCalculator
 
 		lines.sort((a, b) -> a.getGroup().compareTo(b.getGroup()));
 		return new SupplyPlan(Collections.unmodifiableList(lines), patchCounts, notDue, travelPlan, warnings, coins,
-			runes.summary, slots);
+			runes.summary, slots, Collections.unmodifiableMap(plantings));
+	}
+
+	/** The player's herbs for disease-free patches that they can plant, most valuable seed first. */
+	static List<Crop> diseaseFreeHerbs(RunConfig config, int farming, IntToLongFunction price)
+	{
+		final List<Crop> herbs = new ArrayList<>();
+		if (!config.isPrioritiseDiseaseFreeHerbs())
+		{
+			return herbs;
+		}
+		for (Crop crop : config.getDiseaseFreeHerbs())
+		{
+			if (crop.getFarmingLevel() <= farming)
+			{
+				herbs.add(crop);
+			}
+		}
+		herbs.sort((a, b) -> Long.compare(price.applyAsLong(b.getPlantItemId()), price.applyAsLong(a.getPlantItemId())));
+		return herbs;
+	}
+
+	/**
+	 * Disease-free or protected: always disease-free, a disease-free unlock the player has, or paid for.
+	 * Unknown access counts as not having the unlock.
+	 */
+	static boolean isSafe(Patch patch, RunConfig config, AccessSnapshot access, boolean faladorElite)
+	{
+		if (patch.isAlwaysDiseaseFree())
+		{
+			return true;
+		}
+		final Requirement diseaseFree = patch.getDiseaseFreeRequirement();
+		if (diseaseFree != null && access.isKnown() && access.isMet(diseaseFree))
+		{
+			return true;
+		}
+		return patch.getType().isProtectable()
+			&& (config.protectionFor(patch) == Protection.PAY_GARDENER || (patch == Patch.FALADOR_TREE && faladorElite));
 	}
 
 	/** A patch is due unless it is still growing (SPEC 10). Never-seen patches count as due. */

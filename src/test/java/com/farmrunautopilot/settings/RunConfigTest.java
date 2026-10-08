@@ -86,6 +86,22 @@ public class RunConfigTest
 	}
 
 	@Test
+	public void backupCropChoices()
+	{
+		final String json = "{\"crops\":{\"HERB\":\"RANARR\"},\"useBackupCrops\":true,"
+			+ "\"backupCrops\":{\"HERB\":[\"RANARR\",\"TORSTOL\",\"TOADFLAX\",\"MAGIC\",\"GUAM\"]}}";
+		final RunConfig config = gson.fromJson(json, RunConfig.class).sanitise();
+		// Duplicates of the same crop and other run types' crops are dropped; at most two backups are kept.
+		assertEquals(java.util.Arrays.asList(Crop.RANARR, Crop.TORSTOL), config.getBackupCrops().get(PatchType.HERB));
+		// Torstol needs 85 Farming, so at 50 it is skipped.
+		assertEquals(java.util.Arrays.asList(Crop.RANARR), config.cropChoices(PatchType.HERB, 50));
+		assertEquals(java.util.Arrays.asList(Crop.RANARR, Crop.TORSTOL), config.cropChoices(PatchType.HERB, 99));
+
+		config.setUseBackupCrops(false);
+		assertEquals(java.util.Arrays.asList(Crop.RANARR), config.cropChoices(PatchType.HERB, 99));
+	}
+
+	@Test
 	public void runesNotTabs()
 	{
 		final RunConfig config = new RunConfig();

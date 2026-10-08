@@ -175,30 +175,124 @@ class SetupPanel extends JPanel
 	private JComponent cropsSection(RunConfig config, AccessSnapshot access)
 	{
 		final CollapsibleSection s = section("Crops");
-		s.addContent(note("One seed or sapling per run type."));
 		final int farming = access.isKnown() ? access.level(Skill.FARMING) : 99;
+		s.addContent(checkBox("Use backup choices if I run out", config.isUseBackupCrops(), true,
+			"Plant your 2nd, then 3rd choice once you run out of your 1st. Disease-free and protected patches get "
+				+ "the best crops first.",
+			on ->
+			{
+				saveRun(() -> config.setUseBackupCrops(on));
+				rebuild();
+			}));
+
 		for (PatchType type : PatchType.values())
 		{
-			final List<Choice<Crop>> choices = new ArrayList<>();
-			for (Crop crop : Crop.values())
+			s.addContent(subheader(type.getDisplayName()));
+			if (config.isUseBackupCrops())
 			{
-				if (crop.getType() == type)
-				{
-					final boolean canPlant = crop.getFarmingLevel() <= farming;
-					choices.add(new Choice<>(crop, crop.getDisplayName() + " (" + crop.getFarmingLevel() + ")", canPlant,
-						canPlant ? null : "Needs " + crop.getFarmingLevel() + " Farming"));
-				}
+				s.addContent(label("1st choice"));
 			}
-			s.addContent(label(type.getDisplayName()));
-			s.addContent(combo(choices, config.cropFor(type, farming),
+			s.addContent(combo(cropChoices(type, farming, false), config.cropFor(type, farming),
 				crop -> saveRun(() -> config.getCrops().put(type, crop))));
+			if (!config.isUseBackupCrops())
+			{
+				continue;
+			}
+
+			final List<Crop> backups = config.getBackupCrops().getOrDefault(type, new ArrayList<>());
+			for (int i = 0; i < RunConfig.MAX_BACKUP_CROPS; i++)
+			{
+				final int index = i;
+				s.addContent(label(i == 0 ? "2nd choice" : "3rd choice"));
+				s.addContent(combo(cropChoices(type, farming, true), index < backups.size() ? backups.get(index) : null,
+					crop ->
+					{
+						saveRun(() -> setBackup(config, type, index, crop));
+						// Setting or clearing one choice can shift the other
+						rebuild();
+					}));
+			}
+		}
+
+		s.addContent(subheader("Disease-free patches"));
+		s.addContent(checkBox("Prioritise herbs for disease-free patches", config.isPrioritiseDiseaseFreeHerbs(), true,
+			"Pick herbs that only go in disease-free patches",
+			on ->
+			{
+				saveRun(() -> config.setPrioritiseDiseaseFreeHerbs(on));
+				rebuild();
+			}));
+		if (!config.isPrioritiseDiseaseFreeHerbs())
+		{
+			return s;
+		}
+		s.addContent(note("Troll Stronghold, Weiss and Harmony Island, plus Hosidius and Civitas once their "
+			+ "unlock is done. They get these herbs first, most valuable first (by GE price); other patches never do."));
+		for (Crop crop : Crop.values())
+		{
+			if (crop.getType() != PatchType.HERB)
+			{
+				continue;
+			}
+			final boolean canPlant = crop.getFarmingLevel() <= farming;
+			s.addContent(checkBox(crop.getDisplayName() + " (" + crop.getFarmingLevel() + ")",
+				config.getDiseaseFreeHerbs().contains(crop), canPlant,
+				canPlant ? null : "Needs " + crop.getFarmingLevel() + " Farming",
+				on -> saveRun(() ->
+				{
+					if (on)
+					{
+						config.getDiseaseFreeHerbs().add(crop);
+					}
+					else
+					{
+						config.getDiseaseFreeHerbs().remove(crop);
+					}
+				})));
 		}
 		return s;
 	}
 
+	private static List<Choice<Crop>> cropChoices(PatchType type, int farming, boolean allowNone)
+	{
+		final List<Choice<Crop>> choices = new ArrayList<>();
+		if (allowNone)
+		{
+			choices.add(Choice.of(null, "None"));
+		}
+		for (Crop crop : Crop.values())
+		{
+			if (crop.getType() == type)
+			{
+				final boolean canPlant = crop.getFarmingLevel() <= farming;
+				choices.add(new Choice<>(crop, crop.getDisplayName() + " (" + crop.getFarmingLevel() + ")", canPlant,
+					canPlant ? null : "Needs " + crop.getFarmingLevel() + " Farming"));
+			}
+		}
+		return choices;
+	}
+
+	/** Sets the 2nd (index 0) or 3rd (index 1) choice; "None" clears it and anything after it. */
+	private static void setBackup(RunConfig config, PatchType type, int index, Crop crop)
+	{
+		final List<Crop> backups = new ArrayList<>(config.getBackupCrops().getOrDefault(type, new ArrayList<>()));
+		while (backups.size() > index)
+		{
+			backups.remove(backups.size() - 1);
+		}
+		if (crop != null)
+		{
+			backups.add(crop);
+		}
+		config.getBackupCrops().put(type, backups);
+	}
 	private JComponent protectionSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("Protection");
+		s.addContent(checkBox("Bring gardener payments noted (trees and fruit trees)", config.isPayWithNotes(), true,
+			"Gardeners accept noted payment; one inventory slot per item type",
+			on -> saveRun(() -> config.setPayWithNotes(on))));
+
 		for (PatchType type : PatchType.values())
 		{
 			if (!type.isProtectable())
@@ -208,7 +302,8 @@ class SetupPanel extends JPanel
 			s.addContent(subheader(type.getDisplayName() + " patches"));
 			s.addContent(combo(enumChoices(Protection.values()), config.getProtection().get(type),
 				p -> saveRun(() -> config.getProtection().put(type, p))));
-			s.addContent(checkBox("Pay 200 coins to clear grown trees", config.getPayToClear().contains(type), true,
+			s.addContent(checkBox("Pay 200 coins to clear grown " + type.getDisplayName().toLowerCase() + "s",
+				config.getPayToClear().contains(type), true,
 				"The gardener removes the old tree, so no axe is needed",
 				on -> saveRun(() ->
 				{
@@ -225,11 +320,8 @@ class SetupPanel extends JPanel
 			s.addContent(combo(enumChoices(Compost.values()), config.getCompost().get(type),
 				c -> saveRun(() -> config.getCompost().put(type, c))));
 		}
-		s.addContent(checkBox("Bring payments noted", config.isPayWithNotes(), true,
-			"Gardeners accept noted payment; one inventory slot per item type",
-			on -> saveRun(() -> config.setPayWithNotes(on))));
-
-		s.addContent(subheader("Per-patch overrides"));
+		final CollapsibleSection overrides = section("Per-patch overrides");
+		overrides.addContent(note("Use a different protection for single patches."));
 		for (Patch patch : Patch.values())
 		{
 			if (!patch.getType().isProtectable())
@@ -239,8 +331,8 @@ class SetupPanel extends JPanel
 			final List<Choice<Protection>> choices = new ArrayList<>();
 			choices.add(Choice.of(null, "Default"));
 			choices.addAll(enumChoices(Protection.values()));
-			s.addContent(label(patch.getDisplayName()));
-			s.addContent(combo(choices, config.getProtectionOverrides().get(patch),
+			overrides.addContent(label(patch.getDisplayName()));
+			overrides.addContent(combo(choices, config.getProtectionOverrides().get(patch),
 				p -> saveRun(() ->
 				{
 					if (p == null)
@@ -253,6 +345,7 @@ class SetupPanel extends JPanel
 					}
 				})));
 		}
+		s.addContent(overrides);
 
 		s.addContent(subheader("Herb patches"));
 		s.addContent(label("Compost"));

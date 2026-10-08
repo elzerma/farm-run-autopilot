@@ -46,7 +46,7 @@ A farming-run planner and guide for tree, fruit tree and herb runs that:
 | Later (not v1) | Hardwood/special trees (Fossil Island, Avium Savannah, calquat, celastrus, redwood, spirit tree), allotments/flowers/hops/bushes, seaweed/cactus/mushroom/belladonna. Design the data model so these can be added as new patch types without refactoring. |
 | Combined runs | **One combined route** across all due run types. |
 | Patch access | **Auto-detect** (quests, diaries, Farming level) and grey out locked patches; player can **untick any patch** manually. |
-| Seed choice | **One seed/sapling per run type** (no per-patch seed override). |
+| Seed choice | **One seed/sapling per run type** by default. Optional **backup choices** (1st/2nd/3rd) used when the player runs out of the 1st; disease-free and protected patches get the best crops first. Optional herb list **"Seeds for disease-free patches"** (multi-select): disease-free patches get those herbs first, most valuable first by GE price, and other patches never get them. (Changed by Sean, 2026-10-07.) |
 | Tree/fruit tree protection | Options: **Pay gardener**, **Compost only**, **Per-patch override**, **Pay with noted items** (gardeners accept noted payment — verified on the wiki Farming page). |
 | Clearing | Option to **pay gardener 200 coins** to remove a grown tree/fruit tree (verified on the wiki). Adds 200 coins per relevant patch. |
 | Herb extras | **Compost per herb patch** (with bottomless bucket charge counting), **equipment boosts** as optional "recommended" items (magic secateurs, farming cape/outfit), **plant cure / Cure Plant / Resurrect Crops** as optional backups. |
@@ -328,7 +328,7 @@ Build our own tracker (mirroring core Time Tracking — don't read its private c
 Runs whenever config, inventory, equipment, bank cache or route changes (debounce to once per tick). Output: a list of `SupplyLine {item, quantityNeeded, have{inv, equip, bank, leprechaun, groupStorage, seedVault}, status, slotsUsed, reason}`.
 
 ### 11.1 Seeds, saplings, payment
-- Per due patch of each type: 1 sapling (trees/fruit) or 1 seed (herbs) of the type's chosen crop.
+- Per due patch of each type: 1 sapling (trees/fruit) or 1 seed (herbs). With backup choices, patches are assigned crops by CropAllocator: safe patches first, each getting the best choice still in stock.
 - Payment per patch if protection = Pay (skip Falador tree with Elite Falador diary; skip if the patch is already protected — e.g. paid earlier and still growing).
 - "Pay with notes" → request noted payment items; slot count 1 per item type.
 
@@ -403,7 +403,7 @@ Record each leg from the moment the player leaves the previous stop (teleport an
 Collapsible sections:
 1. **Run types** — enable tree / fruit tree / herb; due threshold.
 2. **Patches** — per type, list with checkbox, lock icon + requirement tooltip.
-3. **Crops** — one seed/sapling per run type.
+3. **Crops** — one seed/sapling per run type, or 1st/2nd/3rd choices; herb multi-select for disease-free patches (see section 2).
 4. **Protection** — per type: Pay / Compost only; per-patch override; pay with notes; pay to clear; compost type; plant cure / Cure Plant / Resurrect Crops toggles; equipment boosts toggle.
 5. **Travel** — per location dropdown (Auto + owned/unlocked methods, locked ones greyed); "use runes instead of tabs" global + per location.
 6. **My POH** — portal location, nexus destinations, jewellery box tier, pool tier, fairy ring, spirit tree; "last detected on <date>" + Edit.

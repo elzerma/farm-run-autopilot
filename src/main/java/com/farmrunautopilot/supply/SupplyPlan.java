@@ -1,5 +1,7 @@
 package com.farmrunautopilot.supply;
 
+import com.farmrunautopilot.data.Crop;
+import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
 import java.util.Collections;
 import java.util.List;
@@ -13,7 +15,7 @@ import lombok.Value;
 public class SupplyPlan
 {
 	public static final SupplyPlan EMPTY = new SupplyPlan(Collections.emptyList(), Collections.emptyMap(),
-		Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), 0, "", 0);
+		Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), 0, "", 0, Collections.emptyMap());
 
 	List<SupplyLine> lines;
 	/** Patches in this run per type. */
@@ -28,6 +30,8 @@ public class SupplyPlan
 	String runeSummary;
 	/** Rough inventory slots needed at the start; M8 refines this with a full simulation. */
 	int slots;
+	/** Which crop goes in which patch (used by the step guide in M7). */
+	Map<Patch, Crop> plantings;
 
 	public int patchTotal()
 	{

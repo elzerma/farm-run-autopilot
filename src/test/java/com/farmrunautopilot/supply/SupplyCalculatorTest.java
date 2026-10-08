@@ -48,7 +48,8 @@ public class SupplyCalculatorTest
 	private static SupplyPlan plan(RunConfig config, AccessSnapshot access, Holdings holdings,
 		Function<Patch, PatchPrediction> predictions, boolean fullRun)
 	{
-		return SupplyCalculator.calculate(config, access, holdings, predictions, NOW, fullRun, id -> "item " + id);
+		return SupplyCalculator.calculate(config, access, holdings, predictions, NOW, fullRun, id -> "item " + id,
+			id -> 0);
 	}
 
 	private static SupplyLine find(SupplyPlan plan, String name)
@@ -197,6 +198,27 @@ public class SupplyCalculatorTest
 		assertTrue(SupplyCalculator.needsClearing(PatchState.STUMP));
 		assertFalse(SupplyCalculator.needsClearing(PatchState.EMPTY));
 		assertFalse(SupplyCalculator.needsClearing(PatchState.DEAD));
+	}
+
+	@Test
+	public void diseaseFreeHerbsAreRankedByPriceAndLevel()
+	{
+		final RunConfig config = new RunConfig();
+		config.getDiseaseFreeHerbs().add(Crop.RANARR);
+		config.getDiseaseFreeHerbs().add(Crop.SNAPDRAGON);
+		config.getDiseaseFreeHerbs().add(Crop.TORSTOL);
+		final Map<Integer, Integer> prices = new HashMap<>();
+		prices.put(ItemID.RANARR_SEED, 40_000);
+		prices.put(ItemID.SNAPDRAGON_SEED, 60_000);
+		prices.put(ItemID.TORSTOL_SEED, 50_000);
+
+		// Switched off: the list is ignored.
+		assertTrue(SupplyCalculator.diseaseFreeHerbs(config, 99, id -> prices.getOrDefault(id, 0)).isEmpty());
+
+		config.setPrioritiseDiseaseFreeHerbs(true);
+		// Farming 70: torstol (85) can't be planted yet.
+		assertEquals(java.util.Arrays.asList(Crop.SNAPDRAGON, Crop.RANARR),
+			SupplyCalculator.diseaseFreeHerbs(config, 70, id -> prices.getOrDefault(id, 0)));
 	}
 
 	@Test

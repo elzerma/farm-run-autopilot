@@ -86,7 +86,7 @@ public class SupplyService
 
 		final SupplyPlan next = SupplyCalculator.calculate(settings.getRunConfig(), accessChecker.getSnapshot(),
 			holdingsTracker.getHoldings(), patchTracker::predict, Instant.now().getEpochSecond(),
-			settings.getRunConfig().isSupplyFullRun(), this::itemName);
+			settings.getRunConfig().isSupplyFullRun(), this::itemName, itemManager::getItemPrice);
 		if (next.equals(plan))
 		{
 			return false;
