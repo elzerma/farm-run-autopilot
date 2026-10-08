@@ -539,9 +539,6 @@ class SetupPanel extends JPanel
 		s.addContent(combo(starts, config.getStartLocation(), l -> saveRun(() -> config.setStartLocation(l))));
 		s.addContent(checkBox("Finish near a bank", config.isEndNearBank(), true, null,
 			on -> saveRun(() -> config.setEndNearBank(on))));
-		s.addContent(checkBox("Directions to the first stop from Shortest Path", config.isUseShortestPath(), true,
-			"Needs the Shortest Path plugin from the Plugin Hub. Lets you start a run from any bank.",
-			on -> saveRun(() -> config.setUseShortestPath(on))));
 		s.addContent(checkBox("Walk when it's nearly as quick as teleporting", config.isPreferWalking(), true,
 			"A walk up to about 20 seconds slower is used instead of a teleport, saving charges and clicks "
 				+ "(e.g. one Falador Teleport for Falador Park and Taverley)",

@@ -39,8 +39,6 @@ The plugin never clicks, types or acts for you. It only shows information.
 - Steps tick off on their own (planting, composting, paying) and the run finishes itself after the last
   patch, showing your time and your best three times for that kind of run.
 - Route time estimates learn from your own runs.
-- Optional: if you have the Shortest Path plugin, it shows the way to your first stop, so you can start a run
-  from any bank.
 
 ![The patch outlined with the next step under the player](docs/guidance-patch.webp)
 

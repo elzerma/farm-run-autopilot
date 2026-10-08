@@ -77,8 +77,6 @@ public class RunConfig
 	private Outfit outfit = Outfit.NONE;
 	/** During a run, remind the player to drop weeds and empty plant pots. */
 	private boolean remindToDrop = true;
-	/** Ask the Shortest Path plugin for directions to the first stop. */
-	private boolean useShortestPath = true;
 	/** Walk instead of teleporting when the walk is only a little slower (saves charges and clicks). */
 	private boolean preferWalking = true;
 

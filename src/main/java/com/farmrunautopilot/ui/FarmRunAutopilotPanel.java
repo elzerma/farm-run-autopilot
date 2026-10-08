@@ -8,7 +8,6 @@ import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
-import com.farmrunautopilot.run.ShortestPathBridge;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import javax.inject.Inject;
@@ -39,7 +38,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	@Inject
 	public FarmRunAutopilotPanel(SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker,
 		RunOverrides runOverrides, RunService runService, RunSession runSession, ClientThread clientThread,
-		ShortestPathBridge shortestPath, FarmRunAutopilotConfig config, ConfigManager configManager,
+		FarmRunAutopilotConfig config, ConfigManager configManager,
 		ColorPickerManager colorPickers)
 	{
 		setLayout(new BorderLayout());
@@ -74,12 +73,6 @@ public class FarmRunAutopilotPanel extends PluginPanel
 				public void skip()
 				{
 					clientThread.invoke(runSession::skip);
-				}
-
-				@Override
-				public boolean shortestPathAvailable()
-				{
-					return shortestPath.isAvailable();
 				}
 			});
 		final JPanel run = new JPanel(new BorderLayout());

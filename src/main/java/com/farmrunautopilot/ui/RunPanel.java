@@ -84,8 +84,6 @@ class RunPanel extends JPanel
 		void stop();
 
 		void skip();
-
-		boolean shortestPathAvailable();
 	}
 
 	RunPanel(SettingsStore settings, RunOverrides overrides, Runnable replan, Runnable settingsChanged,
@@ -494,12 +492,6 @@ class RunPanel extends JPanel
 			return;
 		}
 		add(heading("Route (" + modeName(route.getMode()) + ")"));
-		if (settings.getRunConfig().isUseShortestPath())
-		{
-			add(note(controls.shortestPathAvailable()
-				? "Start from any bank: Shortest Path shows the way to the first stop."
-				: "Tip: install Shortest Path from the Plugin Hub to get directions to the first stop."));
-		}
 
 		final DefaultListModel<RouteStop> model = new DefaultListModel<>();
 		for (RouteStop stop : route.getStops())

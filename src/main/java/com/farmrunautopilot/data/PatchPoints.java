@@ -6,7 +6,7 @@ import java.util.Map;
 import net.runelite.api.coords.WorldPoint;
 
 /**
- * Where each patch is on the map, used for hint arrows and Shortest Path directions.
+ * Where each patch is on the map, used for the hint arrow until the patch object loads, and to recognise it.
  *
  * <p>Coordinates are from Farming-Helper (BSD-2, "Copyright (c) 2025, JThomasDevs", see THIRD_PARTY_NOTICES).
  * Each one is checked against the patch's RuneLite region by a unit test. All but Weiss and Harmony Island

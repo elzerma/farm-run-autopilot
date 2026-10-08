@@ -6,7 +6,6 @@ import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
-import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
@@ -50,8 +49,7 @@ import net.runelite.api.gameval.ItemID;
  * Runs a farm run from Start to Stop (SPEC 13.4): freezes the plan, works out the next step from live patch
  * states, notices when steps are done, records leg times, and finishes itself after the last step.
  *
- * <p>Shortest Path is only asked for directions to the first stop, so a run can start from any bank; our
- * route takes over after that. All methods except {@link #getView()} run on the client thread.
+ * <p>All methods except {@link #getView()} run on the client thread.
  */
 @Slf4j
 @Singleton
@@ -75,7 +73,6 @@ public class RunSession
 	private final HoldingsTracker holdingsTracker;
 	private final AccessChecker accessChecker;
 	private final SettingsStore settings;
-	private final ShortestPathBridge shortestPath;
 	private final RunTimings timings;
 	private final SceneTracker scene;
 
@@ -84,6 +81,8 @@ public class RunSession
 	private long startedAt;
 	private int stopIndex;
 	private boolean arrived;
+	/** When the player reached the current stop (epoch seconds); patches must be seen after this to count. */
+	private long arrivedAtSeconds;
 	/** The time for the leg to the current stop has been saved. */
 	private boolean legRecorded;
 	private long legStartedAt;
@@ -110,7 +109,7 @@ public class RunSession
 
 	@Inject
 	RunSession(Client client, RunService runService, PatchTracker patchTracker, HoldingsTracker holdingsTracker,
-		AccessChecker accessChecker, SettingsStore settings, ShortestPathBridge shortestPath, RunTimings timings,
+		AccessChecker accessChecker, SettingsStore settings, RunTimings timings,
 		SceneTracker scene)
 	{
 		this.scene = scene;
@@ -120,7 +119,6 @@ public class RunSession
 		this.holdingsTracker = holdingsTracker;
 		this.accessChecker = accessChecker;
 		this.settings = settings;
-		this.shortestPath = shortestPath;
 		this.timings = timings;
 	}
 
@@ -163,7 +161,6 @@ public class RunSession
 			return;
 		}
 		running = false;
-		shortestPath.clear();
 		final long now = System.currentTimeMillis();
 		final double seconds = (now - startedAt) / 1000.0;
 		final Map<PatchType, Integer> counts = plan.getSupplies().getPatchCounts();
@@ -274,19 +271,10 @@ public class RunSession
 				}
 				else
 				{
-					instruction = travelInstruction(stop);
-					// Shortest Path only for the first stop; our route covers the rest.
-					if (stopIndex == 0 && settings.getRunConfig().isUseShortestPath())
-					{
-						shortestPath.setTarget(PatchPoints.of(here.get(0)));
-					}
+					instruction = stop.describeTravel() + " to " + stop.getLocation().getDisplayName();
 					currentPatch = null;
 					break;
 				}
-			}
-			if (stopIndex == 0)
-			{
-				shortestPath.clear();
 			}
 			if (!legRecorded && nearAny(here))
 			{
@@ -316,16 +304,6 @@ public class RunSession
 		view = runningView(instruction);
 	}
 
-	private String travelInstruction(RouteStop stop)
-	{
-		final String place = stop.getLocation().getDisplayName();
-		if (stopIndex == 0)
-		{
-			return "Get to " + place + (settings.getRunConfig().isUseShortestPath() && shortestPath.isAvailable()
-				? " (Shortest Path shows the way)" : "");
-		}
-		return stop.describeTravel() + " to " + place;
-	}
 
 	/** The first unfinished step at this stop, or null when every patch here is done. */
 	private String nextPatchStep(List<Patch> here)
@@ -338,8 +316,15 @@ public class RunSession
 				continue;
 			}
 			final PatchPrediction live = patchTracker.predict(patch);
-			if (live != null && live.getState() != PatchState.GROWING
-				&& patchTracker.getPatchesInRange().contains(patch))
+			// Only trust a reading taken since arriving: an estimate from the last visit can say a tree is
+			// still growing when it's ready, which would skip the patch
+			if (live == null || live.getObservedAt() < arrivedAtSeconds)
+			{
+				currentPatch = patch;
+				currentAction = StepAdvisor.Action.INSPECT;
+				return "Walk to the " + patch.getDisplayName() + " patch";
+			}
+			if (live.getState() != PatchState.GROWING && patchTracker.getPatchesInRange().contains(patch))
 			{
 				p.sawUnplanted = true;
 			}
@@ -415,6 +400,7 @@ public class RunSession
 	private void markArrived(long now)
 	{
 		arrived = true;
+		arrivedAtSeconds = now / 1000;
 		legRecorded = false;
 	}
 
@@ -426,7 +412,7 @@ public class RunSession
 	{
 		legRecorded = true;
 		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
-		// The trip to the first stop is the player's own (any bank, Shortest Path), so it isn't a sample for
+		// The trip to the first stop starts from wherever the player banked, so it isn't a sample for
 		// learning our methods' times.
 		final boolean first = stopIndex == 0;
 		legs.add(new RunTimings.Leg(stop.getLocation().name(),
@@ -493,7 +479,7 @@ public class RunSession
 			final RouteStop stop = stops.get(i);
 			final RunView.StopStatus status = i < stopIndex ? RunView.StopStatus.DONE
 				: i == stopIndex ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
-			final String travel = i == 0 ? "From anywhere" : stop.describeTravel();
+			final String travel = stop.describeTravel();
 			stopViews.add(new RunView.Stop(stop.getLocation().getDisplayName(), travel, status,
 				status == RunView.StopStatus.CURRENT ? instruction : null,
 				plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList())));
