@@ -316,7 +316,8 @@ public final class SupplyCalculator
 			final int[] staminaIds = SupplyItems.STAMINA_DOSES.keySet().stream().mapToInt(Integer::intValue).toArray();
 			lines.add(new SupplyLine(SupplyLine.Group.OPTIONAL, "Stamina doses", config.getStaminaDoses(), doses,
 				carriedDoses, holdings.where(staminaIds), null,
-				(config.getStaminaDoses() + STAMINA_DOSES_PER_POTION - 1) / STAMINA_DOSES_PER_POTION, false, RUN_OPTIONS));
+				(config.getStaminaDoses() + STAMINA_DOSES_PER_POTION - 1) / STAMINA_DOSES_PER_POTION, false, RUN_OPTIONS,
+				staminaIds));
 		}
 
 		int slots = 0;
@@ -468,7 +469,7 @@ public final class SupplyCalculator
 			}
 			result.lines.add(new SupplyLine(SupplyLine.Group.RUNES, name, n, all.have.get(rune), onYou.have.get(rune),
 				holdings.where(rune.getItemId()), note, infinite || inPouch(holdings, rune) ? 0 : 1, false,
-				RUN_OPTIONS + " (runes or tablets), " + TRAVEL));
+				RUN_OPTIONS + " (runes or tablets), " + TRAVEL, new int[]{rune.getItemId()}));
 		});
 		all.comboUsed.forEach((id, n) -> free.add(n + " " + itemName.apply(id).toLowerCase()));
 		result.summary = String.join(", ", bring) + (free.isEmpty() ? "" : " (" + String.join("; ", free) + ")");
@@ -552,7 +553,7 @@ public final class SupplyCalculator
 		String note, int slots, int... itemIds)
 	{
 		return new SupplyLine(group, name, need, holdings.countAny(itemIds), carried.countAny(itemIds),
-			holdings.where(itemIds), note, slots, false, defaultChangeIn(group));
+			holdings.where(itemIds), note, slots, false, defaultChangeIn(group), itemIds.clone());
 	}
 
 	private static String defaultChangeIn(SupplyLine.Group group)
@@ -575,13 +576,13 @@ public final class SupplyCalculator
 	private static SupplyLine covered(SupplyLine line)
 	{
 		return new SupplyLine(line.getGroup(), line.getName(), line.getNeed(), line.getHave(), line.getCarried(),
-			line.getWhere(), line.getNote(), line.getSlots(), true, line.getChangeIn());
+			line.getWhere(), line.getNote(), line.getSlots(), true, line.getChangeIn(), line.getItemIds());
 	}
 
 	private static SupplyLine changeIn(SupplyLine line, String where)
 	{
 		return new SupplyLine(line.getGroup(), line.getName(), line.getNeed(), line.getHave(), line.getCarried(),
-			line.getWhere(), line.getNote(), line.getSlots(), line.isCoveredOtherwise(), where);
+			line.getWhere(), line.getNote(), line.getSlots(), line.isCoveredOtherwise(), where, line.getItemIds());
 	}
 	private static String title(String enumName)
 	{

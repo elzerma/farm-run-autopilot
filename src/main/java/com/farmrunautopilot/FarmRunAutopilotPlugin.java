@@ -1,9 +1,11 @@
 package com.farmrunautopilot;
 
 import com.farmrunautopilot.access.AccessChecker;
+import com.farmrunautopilot.bank.FarmBankTab;
 import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.HoldingsTracker;
+import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.supply.SupplyPlan;
 import com.farmrunautopilot.supply.SupplyService;
 import com.farmrunautopilot.tracking.PatchTracker;
@@ -21,9 +23,14 @@ import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.MenuOptionClicked;
+import net.runelite.api.events.ScriptCallbackEvent;
+import net.runelite.api.events.ScriptPostFired;
+import net.runelite.api.events.ScriptPreFired;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetClosed;
+import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetModalMode;
@@ -72,6 +79,12 @@ public class FarmRunAutopilotPlugin extends Plugin
 	@Inject
 	private ClientThread clientThread;
 
+	@Inject
+	private FarmBankTab farmBankTab;
+
+	/** What the bank tab last showed: each line, amount needed and colour (not exact counts held). */
+	private String bankTabContents = "";
+
 	private final Runnable onSettingsReloaded = this::rebuildSetupLater;
 	private final Runnable onSettingsSaved = () -> supplyService.markDirty();
 
@@ -91,6 +104,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		settings.addListener(onSettingsReloaded);
 		settings.addSaveListener(onSettingsSaved);
 		clientThread.invoke(holdingsTracker::loadCaches);
+		farmBankTab.startUp(supplyService::getPlan);
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
 		navButton = NavigationButton.builder()
@@ -109,6 +123,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	{
 		settings.removeListener(onSettingsReloaded);
 		settings.removeSaveListener(onSettingsSaved);
+		farmBankTab.shutDown();
 		clientToolbar.removeNavigation(navButton);
 		panel.shutDown();
 		navButton = null;
@@ -131,7 +146,16 @@ public class FarmRunAutopilotPlugin extends Plugin
 		}
 		if (supplyService.onGameTick())
 		{
-			showPlanLater(supplyService.getPlan(), true);
+			final SupplyPlan plan = supplyService.getPlan();
+			showPlanLater(plan, true);
+			// Redraw the bank tab when a line or its colour changes. The bank redraws itself on every withdrawal,
+			// but a tick before the plan catches up, so without this it would show the previous step.
+			final String contents = bankTabContents(plan);
+			if (!contents.equals(bankTabContents))
+			{
+				bankTabContents = contents;
+				farmBankTab.refresh();
+			}
 		}
 
 		// Patch varbits are only sent after leaving the post-login welcome screen
@@ -221,9 +245,50 @@ public class FarmRunAutopilotPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onWidgetLoaded(WidgetLoaded event)
+	{
+		farmBankTab.onWidgetLoaded(event);
+	}
+
+	@Subscribe
+	public void onScriptCallbackEvent(ScriptCallbackEvent event)
+	{
+		farmBankTab.onScriptCallbackEvent(event);
+	}
+
+	@Subscribe
+	public void onScriptPreFired(ScriptPreFired event)
+	{
+		farmBankTab.onScriptPreFired(event);
+	}
+
+	@Subscribe
+	public void onScriptPostFired(ScriptPostFired event)
+	{
+		farmBankTab.onScriptPostFired(event);
+	}
+
+	// After other plugins, so withdraw clicks are re-pointed last
+	@Subscribe(priority = -1)
+	public void onMenuOptionClicked(MenuOptionClicked event)
+	{
+		farmBankTab.onMenuOptionClicked(event);
+	}
+
+	@Subscribe
 	public void onGameObjectSpawned(GameObjectSpawned event)
 	{
 		pohDetector.onObjectSpawned(event.getGameObject().getId());
+	}
+
+	private static String bankTabContents(SupplyPlan plan)
+	{
+		final StringBuilder sb = new StringBuilder();
+		for (SupplyLine line : plan.getLines())
+		{
+			sb.append(line.getName()).append('=').append(line.getNeed()).append(':').append(line.getStatus()).append(';');
+		}
+		return sb.toString();
 	}
 
 	private void showPlanLater(SupplyPlan plan, boolean loggedIn)

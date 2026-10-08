@@ -116,7 +116,10 @@ class SetupPanel extends JPanel
 			add(routeSection(config));
 			add(storageSection(config));
 
-			final CollapsibleSection debug = section("Patch states (debug)");
+			final CollapsibleSection debug = section("Testing & debug");
+			debug.addContent(checkBox("Count every patch (full run)", config.isSupplyFullRun(), true,
+				"Supplies for every selected patch, not just the ones that are due. Handy for checking numbers.",
+				on -> saveRun(() -> config.setSupplyFullRun(on))));
 			debug.addContent(patchDebugPanel);
 			add(debug);
 		}

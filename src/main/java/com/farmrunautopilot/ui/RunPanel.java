@@ -86,17 +86,6 @@ class RunPanel extends JPanel
 		types.setMaximumSize(new Dimension(Integer.MAX_VALUE, types.getPreferredSize().height));
 		add(left(types));
 
-		final JCheckBox fullRun = new JCheckBox(UiText.wrap("Count every patch (full run)", TEXT_WIDTH - 30),
-			settings.getRunConfig().isSupplyFullRun());
-		fullRun.setToolTipText("Off: only patches that are ready, dead, diseased, empty or never seen");
-		fullRun.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		fullRun.setFont(FontManager.getRunescapeSmallFont());
-		fullRun.addActionListener(e ->
-		{
-			settings.getRunConfig().setSupplyFullRun(fullRun.isSelected());
-			settings.saveRunConfig();
-		});
-		add(left(fullRun));
 
 		if (!loggedIn)
 		{
@@ -107,6 +96,12 @@ class RunPanel extends JPanel
 
 		add(legend());
 		add(heading(summary()));
+		if (settings.getRunConfig().isSupplyFullRun())
+		{
+			final JLabel full = note("Counting every patch (full run is on in Rules > Testing & debug)");
+			full.setForeground(ColorScheme.BRAND_ORANGE);
+			add(full);
+		}
 		if (!plan.getNotDue().isEmpty())
 		{
 			final JLabel notDue = note(plan.getNotDue().size() + " selected patch"

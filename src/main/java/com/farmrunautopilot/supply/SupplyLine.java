@@ -58,6 +58,8 @@ public class SupplyLine
 	boolean coveredOtherwise;
 	/** Where to change this, e.g. "Setup > Crops", or null. */
 	String changeIn;
+	/** Items that satisfy this line (any of them), e.g. every charge of a ring. Used by the bank tab. */
+	int[] itemIds;
 
 	public boolean isMet()
 	{
