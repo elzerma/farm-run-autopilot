@@ -9,7 +9,8 @@ import net.runelite.api.coords.WorldPoint;
  * Where each patch is on the map, used for hint arrows and Shortest Path directions.
  *
  * <p>Coordinates are from Farming-Helper (BSD-2, "Copyright (c) 2025, JThomasDevs", see THIRD_PARTY_NOTICES).
- * Each one is checked against the patch's RuneLite region by a unit test.
+ * Each one is checked against the patch's RuneLite region by a unit test. Ortus Farm (Civitas) and the Farming
+ * Guild fruit tree were corrected from the patch objects' logged positions in game.
  */
 public final class PatchPoints
 {
@@ -30,7 +31,7 @@ public final class PatchPoints
 		POINTS.put(Patch.CATHERBY_FRUIT_TREE, new WorldPoint(2860, 3433, 0));
 		POINTS.put(Patch.BRIMHAVEN_FRUIT_TREE, new WorldPoint(2764, 3212, 0));
 		POINTS.put(Patch.LLETYA_FRUIT_TREE, new WorldPoint(2346, 3162, 0));
-		POINTS.put(Patch.FARMING_GUILD_FRUIT_TREE, new WorldPoint(1243, 3759, 0));
+		POINTS.put(Patch.FARMING_GUILD_FRUIT_TREE, new WorldPoint(1242, 3758, 0));
 		POINTS.put(Patch.KASTORI_FRUIT_TREE, new WorldPoint(1350, 3057, 0));
 
 		POINTS.put(Patch.FALADOR_HERB, new WorldPoint(3058, 3307, 0));
@@ -42,7 +43,7 @@ public final class PatchPoints
 		POINTS.put(Patch.HARMONY_ISLAND_HERB, new WorldPoint(3789, 2837, 0));
 		POINTS.put(Patch.WEISS_HERB, new WorldPoint(2847, 3931, 0));
 		POINTS.put(Patch.FARMING_GUILD_HERB, new WorldPoint(1238, 3726, 0));
-		POINTS.put(Patch.CIVITAS_HERB, new WorldPoint(1586, 3099, 0));
+		POINTS.put(Patch.CIVITAS_HERB, new WorldPoint(1581, 3094, 0));
 	}
 
 	private PatchPoints()
