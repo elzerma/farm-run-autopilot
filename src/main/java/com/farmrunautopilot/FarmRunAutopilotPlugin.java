@@ -7,7 +7,9 @@ import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.supply.SupplyPlan;
-import com.farmrunautopilot.supply.SupplyService;
+import com.farmrunautopilot.route.RunOverrides;
+import com.farmrunautopilot.route.RunPlan;
+import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.tracking.PatchTracker;
 import com.farmrunautopilot.ui.FarmRunAutopilotPanel;
 import com.google.inject.Provides;
@@ -74,7 +76,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private HoldingsTracker holdingsTracker;
 
 	@Inject
-	private SupplyService supplyService;
+	private RunService runService;
+
+	@Inject
+	private RunOverrides runOverrides;
 
 	@Inject
 	private ClientThread clientThread;
@@ -86,7 +91,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private String bankTabContents = "";
 
 	private final Runnable onSettingsReloaded = this::rebuildSetupLater;
-	private final Runnable onSettingsSaved = () -> supplyService.markDirty();
+	private final Runnable onSettingsSaved = () -> runService.markDirty();
 
 	private FarmRunAutopilotPanel panel;
 	private NavigationButton navButton;
@@ -104,7 +109,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		settings.addListener(onSettingsReloaded);
 		settings.addSaveListener(onSettingsSaved);
 		clientThread.invoke(holdingsTracker::loadCaches);
-		farmBankTab.startUp(supplyService::getPlan);
+		farmBankTab.startUp(runService::getSupplies);
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
 		navButton = NavigationButton.builder()
@@ -132,7 +137,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 		lastTickPostLogin = false;
 		patchTracker.reset();
 		accessChecker.reset();
-		supplyService.reset();
+		runService.reset();
+		runOverrides.clear();
 		log.debug("Farm Run Autopilot stopped");
 	}
 
@@ -142,15 +148,15 @@ public class FarmRunAutopilotPlugin extends Plugin
 		if (accessChecker.onGameTick())
 		{
 			rebuildSetupLater();
-			supplyService.markDirty();
+			runService.markDirty();
 		}
-		if (supplyService.onGameTick())
+		if (runService.onGameTick())
 		{
-			final SupplyPlan plan = supplyService.getPlan();
+			final RunPlan plan = runService.getPlan();
 			showPlanLater(plan, true);
 			// Redraw the bank tab when a line or its colour changes. The bank redraws itself on every withdrawal,
 			// but a tick before the plan catches up, so without this it would show the previous step.
-			final String contents = bankTabContents(plan);
+			final String contents = bankTabContents(plan.getSupplies());
 			if (!contents.equals(bankTabContents))
 			{
 				bankTabContents = contents;
@@ -183,7 +189,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 
 		if (patchTracker.update(location, client.getTickCount() - lastModalCloseTick))
 		{
-			supplyService.markDirty();
+			runService.markDirty();
 			final FarmRunAutopilotPanel p = panel;
 			SwingUtilities.invokeLater(p::refreshPatches);
 		}
@@ -204,7 +210,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		patchTracker.reset();
 		accessChecker.reset();
 		holdingsTracker.loadCaches();
-		supplyService.reset();
+		runService.reset();
 		// Reloading notifies onSettingsReloaded, which rebuilds the Setup tab
 		settings.load();
 		final FarmRunAutopilotPanel p = panel;
@@ -218,11 +224,11 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			accessChecker.requestRefresh();
 			holdingsTracker.markDirty();
-			supplyService.reset();
+			runService.reset();
 		}
 		else if (event.getGameState() == GameState.LOGIN_SCREEN)
 		{
-			showPlanLater(SupplyPlan.EMPTY, false);
+			showPlanLater(RunPlan.EMPTY, false);
 		}
 	}
 
@@ -291,7 +297,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		return sb.toString();
 	}
 
-	private void showPlanLater(SupplyPlan plan, boolean loggedIn)
+	private void showPlanLater(RunPlan plan, boolean loggedIn)
 	{
 		final FarmRunAutopilotPanel p = panel;
 		if (p != null)

@@ -1,7 +1,13 @@
-package com.farmrunautopilot.supply;
+package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.access.AccessChecker;
+import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
+import com.farmrunautopilot.supply.Holdings;
+import com.farmrunautopilot.supply.HoldingsTracker;
+import com.farmrunautopilot.supply.SupplyCalculator;
+import com.farmrunautopilot.supply.SupplyPlan;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.time.Instant;
 import java.util.HashMap;
@@ -13,11 +19,11 @@ import net.runelite.api.GameState;
 import net.runelite.client.game.ItemManager;
 
 /**
- * Recalculates the supply plan on the client thread, at most once per game tick, when something it
- * depends on changes (SPEC 11: "debounce to once per tick").
+ * Works out the next run on the client thread, at most once per game tick, when something it depends on
+ * changes: which patches (SPEC 10), the route (SPEC 12) and the supplies (SPEC 11).
  */
 @Singleton
-public class SupplyService
+public class RunService
 {
 	/** Patches become due as they grow, so recalculate about once a minute regardless. */
 	private static final int REFRESH_TICKS = 100;
@@ -28,17 +34,18 @@ public class SupplyService
 	private final AccessChecker accessChecker;
 	private final PatchTracker patchTracker;
 	private final HoldingsTracker holdingsTracker;
+	private final RunOverrides overrides;
 	/** Item names are fixed, so look each up once. */
 	private final Map<Integer, String> names = new HashMap<>();
 
 	private volatile boolean dirty = true;
 	/** Null until the first plan after login, so that one is always published. */
-	private volatile SupplyPlan plan;
+	private volatile RunPlan plan;
 	private int ticksSinceRefresh;
 
 	@Inject
-	SupplyService(Client client, ItemManager itemManager, SettingsStore settings, AccessChecker accessChecker,
-		PatchTracker patchTracker, HoldingsTracker holdingsTracker)
+	RunService(Client client, ItemManager itemManager, SettingsStore settings, AccessChecker accessChecker,
+		PatchTracker patchTracker, HoldingsTracker holdingsTracker, RunOverrides overrides)
 	{
 		this.client = client;
 		this.itemManager = itemManager;
@@ -46,12 +53,18 @@ public class SupplyService
 		this.accessChecker = accessChecker;
 		this.patchTracker = patchTracker;
 		this.holdingsTracker = holdingsTracker;
+		this.overrides = overrides;
 	}
 
-	public SupplyPlan getPlan()
+	public RunPlan getPlan()
 	{
-		final SupplyPlan current = plan;
-		return current != null ? current : SupplyPlan.EMPTY;
+		final RunPlan current = plan;
+		return current != null ? current : RunPlan.EMPTY;
+	}
+
+	public SupplyPlan getSupplies()
+	{
+		return getPlan().getSupplies();
 	}
 
 	/** Forget the last plan (login, account switch) so the next one is always published. Any thread. */
@@ -84,9 +97,17 @@ public class SupplyService
 		dirty = false;
 		ticksSinceRefresh = 0;
 
-		final SupplyPlan next = SupplyCalculator.calculate(settings.getRunConfig(), accessChecker.getSnapshot(),
-			holdingsTracker.getHoldings(), patchTracker::predict, Instant.now().getEpochSecond(),
-			settings.getRunConfig().isSupplyFullRun(), this::itemName, itemManager::getItemPrice);
+		final RunConfig config = settings.getRunConfig();
+		final AccessSnapshot access = accessChecker.getSnapshot();
+		final Holdings holdings = holdingsTracker.getHoldings();
+		final RunSelection selection = RunSelector.select(config, access, patchTracker::predict,
+			Instant.now().getEpochSecond(), config.isSupplyFullRun(), overrides.get());
+		final Route route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
+			settings.getAccount().getPoh());
+		final SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
+			patchTracker::predict, this::itemName, itemManager::getItemPrice);
+
+		final RunPlan next = new RunPlan(selection, route, supplies);
 		if (next.equals(plan))
 		{
 			return false;

@@ -2,7 +2,9 @@ package com.farmrunautopilot.ui;
 
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.settings.SettingsStore;
-import com.farmrunautopilot.supply.SupplyPlan;
+import com.farmrunautopilot.route.RunOverrides;
+import com.farmrunautopilot.route.RunPlan;
+import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import javax.inject.Inject;
@@ -28,7 +30,8 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	private final Timer refreshTimer;
 
 	@Inject
-	public FarmRunAutopilotPanel(SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker)
+	public FarmRunAutopilotPanel(SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker,
+		RunOverrides runOverrides, RunService runService)
 	{
 		setLayout(new BorderLayout());
 		setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -37,7 +40,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		final JPanel display = new JPanel(new BorderLayout());
 		display.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		runPanel = new RunPanel(settings);
+		runPanel = new RunPanel(settings, runOverrides, runService::markDirty, this::rebuildSetup);
 		final JPanel run = new JPanel(new BorderLayout());
 		run.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		run.add(runPanel, BorderLayout.NORTH);
@@ -70,7 +73,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	}
 
 	/** Shows a new supply plan in the Run tab. Call on the Swing thread. */
-	public void updateRun(SupplyPlan plan, boolean loggedIn)
+	public void updateRun(RunPlan plan, boolean loggedIn)
 	{
 		runPanel.update(plan, loggedIn);
 	}

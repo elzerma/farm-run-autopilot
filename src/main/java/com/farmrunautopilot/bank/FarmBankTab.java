@@ -2,8 +2,6 @@ package com.farmrunautopilot.bank;
 
 import static net.runelite.client.plugins.banktags.BankTagsPlugin.BANK_ITEM_HEIGHT;
 import static net.runelite.client.plugins.banktags.BankTagsPlugin.BANK_ITEM_WIDTH;
-import static net.runelite.client.plugins.banktags.BankTagsPlugin.BANK_ITEM_X_PADDING;
-import static net.runelite.client.plugins.banktags.BankTagsPlugin.BANK_ITEM_Y_PADDING;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.supply.SupplyPlan;

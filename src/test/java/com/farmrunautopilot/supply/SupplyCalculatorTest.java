@@ -12,7 +12,12 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.travel.Rune;
+import com.farmrunautopilot.route.Route;
+import com.farmrunautopilot.route.RoutePlanner;
+import com.farmrunautopilot.route.RunSelection;
+import com.farmrunautopilot.route.RunSelector;
 import com.farmrunautopilot.settings.Compost;
+import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.tracking.PatchPrediction;
 import java.util.Collections;
@@ -48,7 +53,10 @@ public class SupplyCalculatorTest
 	private static SupplyPlan plan(RunConfig config, AccessSnapshot access, Holdings holdings,
 		Function<Patch, PatchPrediction> predictions, boolean fullRun)
 	{
-		return SupplyCalculator.calculate(config, access, holdings, predictions, NOW, fullRun, id -> "item " + id,
+		final RunSelection selection = RunSelector.select(config, access, predictions, NOW, fullRun,
+			Collections.emptyMap());
+		final Route route = RoutePlanner.plan(selection.getPatches(), config, access, holdings, new PohSetup());
+		return SupplyCalculator.calculate(config, access, holdings, selection, route, predictions, id -> "item " + id,
 			id -> 0);
 	}
 
@@ -105,7 +113,13 @@ public class SupplyCalculatorTest
 		final Function<Patch, PatchPrediction> predictions = p ->
 			p == Patch.CATHERBY_HERB || p == Patch.ARDOUGNE_HERB ? prediction(p, PatchState.GROWING)
 				: prediction(p, PatchState.HARVESTABLE);
-		final SupplyPlan due = plan(onlyType(PatchType.HERB), AccessSnapshot.UNKNOWN, Holdings.EMPTY, predictions, false);
+		// At the default 100% threshold the herb run waits until every patch is due.
+		assertEquals(0, plan(onlyType(PatchType.HERB), AccessSnapshot.UNKNOWN, Holdings.EMPTY, predictions, false)
+			.patchTotal());
+
+		final RunConfig half = onlyType(PatchType.HERB);
+		half.setDueThresholdPercent(50);
+		final SupplyPlan due = plan(half, AccessSnapshot.UNKNOWN, Holdings.EMPTY, predictions, false);
 		assertEquals(8, due.patchTotal());
 		assertEquals(2, due.getNotDue().size());
 
@@ -197,9 +211,9 @@ public class SupplyCalculatorTest
 	@Test
 	public	void dueAndClearingRules()
 	{
-		assertTrue(SupplyCalculator.isDue(null));
-		assertFalse(SupplyCalculator.isDue(prediction(Patch.CATHERBY_HERB, PatchState.GROWING)));
-		assertTrue(SupplyCalculator.isDue(prediction(Patch.CATHERBY_HERB, PatchState.DEAD)));
+		assertTrue(RunSelector.isDue(null));
+		assertFalse(RunSelector.isDue(prediction(Patch.CATHERBY_HERB, PatchState.GROWING)));
+		assertTrue(RunSelector.isDue(prediction(Patch.CATHERBY_HERB, PatchState.DEAD)));
 		assertTrue(SupplyCalculator.needsClearing(PatchState.CHECK_HEALTH));
 		assertTrue(SupplyCalculator.needsClearing(PatchState.STUMP));
 		assertFalse(SupplyCalculator.needsClearing(PatchState.EMPTY));

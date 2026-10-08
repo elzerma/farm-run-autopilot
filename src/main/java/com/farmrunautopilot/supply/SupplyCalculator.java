@@ -15,11 +15,14 @@ import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.route.Departure;
+import com.farmrunautopilot.route.Route;
+import com.farmrunautopilot.route.RouteStop;
+import com.farmrunautopilot.route.RunSelection;
 import com.farmrunautopilot.settings.Compost;
 import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.tracking.PatchPrediction;
-import com.farmrunautopilot.tracking.PatchStatusText;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -54,43 +57,31 @@ public final class SupplyCalculator
 	}
 
 	/**
+	 * @param selection the patches in this run
+	 * @param route how each stop is reached
 	 * @param predictions current prediction per patch (null for never-seen patches)
-	 * @param fullRun count every selected patch, not just the due ones
 	 * @param itemName display name for an item ID
 	 * @param price Grand Exchange price of an item ID, used to rank herbs for disease-free patches
 	 */
 	public static SupplyPlan calculate(RunConfig config, AccessSnapshot access, Holdings holdings,
-		Function<Patch, PatchPrediction> predictions, long now, boolean fullRun, IntFunction<String> itemName,
-		IntToLongFunction price)
+		RunSelection selection, Route route, Function<Patch, PatchPrediction> predictions,
+		IntFunction<String> itemName, IntToLongFunction price)
 	{
 		final List<SupplyLine> lines = new ArrayList<>();
-		final List<String> notDue = new ArrayList<>();
+		final List<String> notDue = new ArrayList<>(selection.getNotDue());
 		final List<String> travelPlan = new ArrayList<>();
 		final List<String> warnings = new ArrayList<>();
 		final Map<PatchType, Integer> patchCounts = new EnumMap<>(PatchType.class);
 
-		// Which patches are in this run
-		final List<Patch> patches = new ArrayList<>();
-		for (Patch patch : Patch.values())
+		final List<Patch> patches = selection.getPatches();
+		for (Patch patch : patches)
 		{
-			if (!config.isPatchSelected(patch) || !access.missingFor(patch).isEmpty())
-			{
-				continue;
-			}
-			final PatchPrediction prediction = predictions.apply(patch);
-			if (!fullRun && !isDue(prediction))
-			{
-				notDue.add(patch.getDisplayName() + ": " + PatchStatusText.describe(prediction, now));
-				continue;
-			}
-			patches.add(patch);
 			patchCounts.merge(patch.getType(), 1, Integer::sum);
 		}
 		if (patches.isEmpty())
 		{
 			return new SupplyPlan(lines, patchCounts, notDue, travelPlan, warnings, 0, "", 0, Collections.emptyMap());
 		}
-
 		final Holdings carried = holdings.carriedOnly();
 		final int farming = access.isKnown() ? access.level(Skill.FARMING) : 99;
 		// Before access is known, assume no diary: better to bring one payment too many.
@@ -184,56 +175,55 @@ public final class SupplyCalculator
 				"Gardener protection payment", config.isPayWithNotes() ? 1 : qty, id));
 		});
 
-		// Travel
+		// Travel, following the route
 		final Map<TravelItem, Integer> travelItems = new LinkedHashMap<>();
 		final Map<Integer, Integer> tablets = new LinkedHashMap<>();
 		boolean fairyRing = false;
-		for (Location location : Location.values())
+		for (RouteStop stop : route.getStops())
 		{
-			if (!hasPatchAt(patches, location))
-			{
-				continue;
-			}
-			final TravelMethod method = TravelChooser.choose(location, config, access, holdings);
-			if (method == null)
+			final Location location = stop.getLocation();
+			final TravelMethod method = stop.getMethod();
+			final Departure departure = stop.getDeparture();
+			if (departure == Departure.NONE)
 			{
 				warnings.add("No unlocked way to reach " + location.getDisplayName());
 				continue;
 			}
-			coins += method.getCoins();
-			final boolean auto = config.getTravel().get(location) != method;
-			String how = method.getDisplayName();
 
-			final Spell spell = method.getSpell();
-			if (spell != null)
+			String extra = "";
+			if (departure.isViaHouse())
 			{
-				final boolean tablet = spell.hasTablet() && !config.useRunesAt(location)
-					&& (holdings.count(spell.getTabletItemId()) > 0 || !access.canCast(spell));
-				if (tablet)
+				// Teleport to House by cape if the player has one, otherwise tablet or runes
+				if (holdings.countAny(TravelItem.CONSTRUCTION_CAPE.getItemIds()) > 0)
 				{
-					tablets.merge(spell.getTabletItemId(), 1, Integer::sum);
-					how += " (tablet)";
+					travelItems.merge(TravelItem.CONSTRUCTION_CAPE, 1, Integer::sum);
+				}
+				else if (holdings.countAny(TravelItem.MAX_CAPE.getItemIds()) > 0)
+				{
+					travelItems.merge(TravelItem.MAX_CAPE, 1, Integer::sum);
 				}
 				else
 				{
-					for (RuneAmount amount : spell.getRunes())
-					{
-						runeNeed.merge(amount.getRune(), amount.getQuantity(), Integer::sum);
-					}
-					how += " (runes, " + title(spell.getSpellbook().name()) + " spellbook)";
+					extra = addSpell(Spell.TELEPORT_TO_HOUSE, location, config, access, holdings, tablets, runeNeed);
 				}
+				fairyRing |= departure == Departure.POH_FAIRY_RING;
 			}
-			if (method.getItem() != null)
+			else if (departure == Departure.DIRECT)
 			{
-				travelItems.merge(method.getItem(), 1, Integer::sum);
+				coins += method.getCoins();
+				if (method.getSpell() != null)
+				{
+					extra = addSpell(method.getSpell(), location, config, access, holdings, tablets, runeNeed);
+				}
+				if (method.getItem() != null)
+				{
+					travelItems.merge(method.getItem(), 1, Integer::sum);
+				}
+				fairyRing |= method.getKind() == TravelKind.FAIRY_RING;
 			}
-			if (method.getKind() == TravelKind.FAIRY_RING)
-			{
-				fairyRing = true;
-			}
-			travelPlan.add(location.getDisplayName() + ": " + how + (auto ? " (auto)" : ""));
-		}
-		tablets.forEach((id, n) -> lines.add(line(SupplyLine.Group.TRAVEL, itemName.apply(id), n, holdings, carried,
+			final boolean auto = method != null && config.getTravel().get(location) != method;
+			travelPlan.add(location.getDisplayName() + ": " + stop.describeTravel() + extra + (auto ? " (auto)" : ""));
+		}		tablets.forEach((id, n) -> lines.add(line(SupplyLine.Group.TRAVEL, itemName.apply(id), n, holdings, carried,
 			null, 1, id)));
 		travelItems.forEach((item, stops) -> lines.add(line(SupplyLine.Group.TRAVEL, item.getDisplayName(), 1, holdings, carried,
 			stops > 1 ? "Used at " + stops + " stops; charges aren't checked" : "Charges aren't checked", 1,
@@ -397,12 +387,24 @@ public final class SupplyCalculator
 			&& (config.protectionFor(patch) == Protection.PAY_GARDENER || (patch == Patch.FALADOR_TREE && faladorElite));
 	}
 
-	/** A patch is due unless it is still growing (SPEC 10). Never-seen patches count as due. */
-	static boolean isDue(PatchPrediction prediction)
+	/**
+	 * Adds a spell's tablet (preferred, if owned or the spell can't be cast) or runes.
+	 *
+	 * @return how it will be done, e.g. " (tablet)"
+	 */
+	private static String addSpell(Spell spell, Location location, RunConfig config, AccessSnapshot access,
+		Holdings holdings, Map<Integer, Integer> tablets, Map<Rune, Integer> runeNeed)
 	{
-		return prediction == null || prediction.getState() != PatchState.GROWING;
+		final boolean tablet = spell.hasTablet() && !config.useRunesAt(location)
+			&& (holdings.count(spell.getTabletItemId()) > 0 || !access.canCast(spell));
+		if (tablet)
+		{
+			tablets.merge(spell.getTabletItemId(), 1, Integer::sum);
+			return " (tablet)";
+		}
+		addRunes(runeNeed, spell);
+		return " (runes, " + title(spell.getSpellbook().name()) + " spellbook)";
 	}
-
 	/** A grown tree or its stump must be cleared before replanting; unknown patches are assumed grown. */
 	static boolean needsClearing(PatchState state)
 	{
@@ -535,18 +537,6 @@ public final class SupplyCalculator
 		{
 			need.merge(amount.getRune(), amount.getQuantity(), Integer::sum);
 		}
-	}
-
-	private static boolean hasPatchAt(List<Patch> patches, Location location)
-	{
-		for (Patch patch : patches)
-		{
-			if (patch.getLocation() == location)
-			{
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private static SupplyLine line(SupplyLine.Group group, String name, int need, Holdings holdings, Holdings carried,

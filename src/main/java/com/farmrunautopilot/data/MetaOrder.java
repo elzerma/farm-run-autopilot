@@ -20,9 +20,12 @@ import static com.farmrunautopilot.data.Location.TREE_GNOME_VILLAGE;
 import static com.farmrunautopilot.data.Location.TROLL_STRONGHOLD;
 import static com.farmrunautopilot.data.Location.VARROCK;
 import static com.farmrunautopilot.data.Location.WEISS;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The OSRS Wiki "Farming runs" orders for each run type (SPEC 8.5), used by Meta route mode.
@@ -41,6 +44,20 @@ public final class MetaOrder
 
 	private MetaOrder()
 	{
+	}
+
+	/**
+	 * The tree, fruit tree and herb orders merged into one: each location appears once, at its first
+	 * position (SPEC 8.5).
+	 */
+	public static List<Location> combined()
+	{
+		final Set<Location> merged = new LinkedHashSet<>();
+		for (PatchType type : PatchType.values())
+		{
+			merged.addAll(forType(type));
+		}
+		return Collections.unmodifiableList(new ArrayList<>(merged));
 	}
 
 	public static List<Location> forType(PatchType type)
