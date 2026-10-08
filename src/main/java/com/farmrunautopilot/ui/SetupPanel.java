@@ -546,10 +546,6 @@ class SetupPanel extends JPanel
 			"A walk up to about 20 seconds slower is used instead of a teleport, saving charges and clicks "
 				+ "(e.g. one Falador Teleport for Falador Park and Taverley)",
 			on -> saveRun(() -> config.setPreferWalking(on))));
-		s.addContent(spinnerRow("Restore run energy below (%)", spinner(config.getEnergyThreshold(), 0, 100, 5,
-			v -> saveRun(() -> config.setEnergyThreshold(v)))));
-		s.addContent(spinnerRow("...before a walk of at least (tiles)", spinner(config.getEnergyMinTiles(), 0, 200, 5,
-			v -> saveRun(() -> config.setEnergyMinTiles(v)))));
 		s.addContent(spinnerRow("Include a run type when this % of its patches are due",
 			spinner(config.getDueThresholdPercent(), 1, 100, 5, v -> saveRun(() -> config.setDueThresholdPercent(v)))));
 		return s;

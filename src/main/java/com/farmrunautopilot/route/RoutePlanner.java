@@ -29,7 +29,7 @@ import java.util.Map;
 public final class RoutePlanner
 {
 	// Starting estimates, in seconds (UNVERIFIED; replaced by learned timings in M8)
-	public static final double SECONDS_PER_TILE = 0.3;
+	static final double SECONDS_PER_TILE = 0.3;
 	/** With "prefer walking" on, a walk up to this much slower than a teleport is chosen instead. */
 	static final double PREFER_WALKING_SECONDS = 20.0;
 	static final double TELEPORT = 3.0;

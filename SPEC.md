@@ -381,6 +381,8 @@ For each leg that uses a spell:
 - **Auto teleport choice:** for each location, "Auto" picks the cheapest owned + unlocked method given leg context.
 
 ### 12.3 Run energy (live)
+**Dropped (Sean, 2026-10-08):** not wanted for v1; the reminder and its two Route settings were removed. Kept here for reference.
+
 At each step transition: if run energy < **30%** (setting) and the next leg's walk ≥ **15 tiles** (setting):
 1. If stamina potion in inventory → step "Drink a stamina dose".
 2. Else insert a restore step: POH pool (only if pool tier ≥ revitalisation) or Ferox Enclave (ring of dueling / POH jewellery box) — whichever adds less time; Explorer's ring charge if available.

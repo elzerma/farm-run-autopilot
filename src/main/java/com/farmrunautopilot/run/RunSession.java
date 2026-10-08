@@ -11,11 +11,9 @@ import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.SupplyItems;
-import com.farmrunautopilot.data.poh.PoolTier;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.route.Departure;
-import com.farmrunautopilot.route.RoutePlanner;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
@@ -663,11 +661,6 @@ public class RunSession
 		{
 			lines.add(drop);
 		}
-		final String energy = energyReminder();
-		if (energy != null)
-		{
-			lines.add(energy);
-		}
 		final String space = spaceReminder();
 		if (space != null)
 		{
@@ -720,52 +713,6 @@ public class RunSession
 		}
 		// The step's main item is listed first
 		return "You aren't carrying: " + runService.itemName(needed.iterator().next());
-	}
-
-	/**
-	 * Low run energy before a long walk (SPEC 12.3): drink a stamina dose if carried, otherwise restore at the
-	 * house pool if it restores energy, otherwise just a warning.
-	 */
-	private String energyReminder()
-	{
-		final RunConfig config = settings.getRunConfig();
-		final int energy = client.getEnergy() / 100;
-		if (energy >= config.getEnergyThreshold())
-		{
-			return null;
-		}
-		// The walk ahead: to the current stop while travelling, or to the next stop once here
-		final List<RouteStop> stops = plan.getRoute().getStops();
-		final int next = arrived ? stopIndex + 1 : stopIndex;
-		if (next >= stops.size() || walkTiles(stops.get(next)) < config.getEnergyMinTiles())
-		{
-			return null;
-		}
-		final Map<Integer, Integer> inventory = holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY);
-		for (int id : SupplyItems.STAMINA_DOSES.keySet())
-		{
-			if (inventory.getOrDefault(id, 0) > 0)
-			{
-				return "Run energy " + energy + "%: drink a stamina dose";
-			}
-		}
-		final PoolTier pool = settings.getAccount().getPoh().getPool();
-		if (pool != null && pool.isRestoresRunEnergy())
-		{
-			return "Run energy " + energy + "%: restore it at your house pool";
-		}
-		return "Run energy " + energy + "%: long walk ahead";
-	}
-
-	/** Roughly how far the player walks on this leg, in tiles. */
-	static int walkTiles(RouteStop stop)
-	{
-		if (stop.getDeparture() == Departure.WALK)
-		{
-			return (int) Math.round(stop.getLegSeconds() / RoutePlanner.SECONDS_PER_TILE);
-		}
-		final TravelMethod method = stop.getMethod();
-		return method != null && method.getWalk() != null ? method.getWalk().getEstimatedTiles() : 0;
 	}
 
 	/**

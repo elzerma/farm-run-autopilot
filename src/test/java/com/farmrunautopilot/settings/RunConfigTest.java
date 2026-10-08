@@ -45,8 +45,6 @@ public class RunConfigTest
 		assertFalse(config.isUseGroupStorage());
 		assertFalse(config.isUseSeedVault());
 		assertEquals(Location.FARMING_GUILD, config.getStartLocation());
-		assertEquals(30, config.getEnergyThreshold());
-		assertEquals(15, config.getEnergyMinTiles());
 		assertEquals(Protection.PAY_GARDENER, config.protectionFor(Patch.TAVERLEY_TREE));
 		assertEquals(Compost.ULTRACOMPOST, config.getCompost().get(PatchType.HERB));
 	}
@@ -71,7 +69,8 @@ public class RunConfigTest
 	@Test
 	public void sanitiseRepairsBadSaves()
 	{
-		// Unknown enum names, wrong crop for a type, a method for another location, nulls, out-of-range numbers.
+		// Unknown enum names, wrong crop for a type, a method for another location, nulls, a setting that no longer
+		// exists (energyThreshold).
 		final String json = "{\"enabledTypes\":[\"TREE\",\"NOT_A_TYPE\"],"
 			+ "\"crops\":{\"HERB\":\"MAGIC\",\"TREE\":\"YEW\"},"
 			+ "\"travel\":{\"CATHERBY\":\"FARMING_CAPE\",\"LLETYA\":\"TELEPORT_CRYSTAL_LLETYA\"},"
@@ -85,7 +84,6 @@ public class RunConfigTest
 		assertEquals(TravelMethod.TELEPORT_CRYSTAL_LLETYA, config.getTravel().get(Location.LLETYA));
 		assertEquals(Protection.PAY_GARDENER, config.getProtection().get(PatchType.TREE));
 		assertEquals(RouteMode.AUTOPILOT, config.getRouteMode());
-		assertEquals(100, config.getEnergyThreshold());
 		assertNotNull(config.getCustomOrder());
 	}
 

@@ -7,7 +7,6 @@ import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchState;
-import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.Route;
@@ -70,14 +69,6 @@ public class RunSessionTest
 		assertTrue(RunSession.isReady(plan(java.util.Arrays.asList(
 			line(SupplyLine.Group.SEEDS, 1, 1, 0),
 			line(SupplyLine.Group.OPTIONAL, 4, 0, 0)))));
-	}
-
-	@Test
-	public void walkTilesComeFromTheMethodOrTheWalkLeg()
-	{
-		assertEquals(55, RunSession.walkTiles(
-			new RouteStop(Location.CATHERBY, TravelMethod.CAMELOT_TELEPORT, Departure.DIRECT, 20, false)));
-		assertEquals(100, RunSession.walkTiles(new RouteStop(Location.TAVERLEY, null, Departure.WALK, 30, false)));
 	}
 
 	@Test

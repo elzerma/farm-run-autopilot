@@ -23,8 +23,6 @@ import lombok.Data;
 public class RunConfig
 {
 	public static final int DEFAULT_DUE_THRESHOLD = 100;
-	public static final int DEFAULT_ENERGY_THRESHOLD = 30;
-	public static final int DEFAULT_ENERGY_MIN_TILES = 15;
 	/** 2nd and 3rd choice. */
 	public static final int MAX_BACKUP_CROPS = 2;
 
@@ -75,8 +73,6 @@ public class RunConfig
 	private List<Location> customOrder = new ArrayList<>();
 	private Location startLocation = Location.FARMING_GUILD;
 	private boolean endNearBank = true;
-	private int energyThreshold = DEFAULT_ENERGY_THRESHOLD;
-	private int energyMinTiles = DEFAULT_ENERGY_MIN_TILES;
 	private int staminaDoses = 0;
 	private Outfit outfit = Outfit.NONE;
 	/** During a run, remind the player to drop weeds and empty plant pots. */
@@ -141,8 +137,6 @@ public class RunConfig
 		}
 
 		dueThresholdPercent = clamp(dueThresholdPercent, 1, 100);
-		energyThreshold = clamp(energyThreshold, 0, 100);
-		energyMinTiles = clamp(energyMinTiles, 0, 200);
 		staminaDoses = clamp(staminaDoses, 0, 40);
 		plantCureDoses = clamp(plantCureDoses, 0, 40);
 		return this;
