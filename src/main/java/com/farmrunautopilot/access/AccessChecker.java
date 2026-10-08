@@ -4,7 +4,9 @@ import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.Unlock;
+import com.farmrunautopilot.data.poh.PohAltar;
 import com.farmrunautopilot.data.travel.Spell;
+import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.AccountSettings;
@@ -25,6 +27,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
 import net.runelite.api.Skill;
+import net.runelite.api.gameval.VarbitID;
 
 /**
  * Reads quests, diaries and skill levels on the client thread and publishes an {@link AccessSnapshot}
@@ -180,8 +183,38 @@ public class AccessChecker
 			unlocks.add(Unlock.SPIRIT_TREES);
 		}
 
+		final PohAltar altar = account.getPoh().getAltar();
 		return new AccessSnapshot(true, Collections.unmodifiableMap(quests), Collections.unmodifiableMap(levels),
-			Collections.unmodifiableSet(diaries), Collections.unmodifiableSet(unlocks), account.getPoh().getPortal());
+			Collections.unmodifiableSet(diaries), Collections.unmodifiableSet(unlocks), account.getPoh().getPortal(),
+			spellbook(client.getVarbitValue(VarbitID.SPELLBOOK)),
+			altar != null ? altar.getSpellbooks() : Collections.emptySet());
+	}
+
+	/** The SPELLBOOK varbit: 0 standard, 1 ancient, 2 lunar, 3 arceuus; null for anything else. */
+	static Spellbook spellbook(int value)
+	{
+		switch (value)
+		{
+			case 0:
+				return Spellbook.STANDARD;
+			case 1:
+				return Spellbook.ANCIENT;
+			case 2:
+				return Spellbook.LUNAR;
+			case 3:
+				return Spellbook.ARCEUUS;
+			default:
+				return null;
+		}
+	}
+
+	/** Re-read soon if the varbit is the spellbook. Client thread. */
+	public void onVarbitChanged(int varbitId)
+	{
+		if (varbitId == VarbitID.SPELLBOOK)
+		{
+			refreshRequested = true;
+		}
 	}
 
 	/** Unlocks that are worked out automatically, so Setup shows them as detected rather than a toggle. */

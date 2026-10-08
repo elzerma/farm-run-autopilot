@@ -2,6 +2,9 @@ package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.data.Location;
+import com.farmrunautopilot.data.Patch;
+import com.farmrunautopilot.run.StepAdvisor;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
@@ -10,7 +13,10 @@ import com.farmrunautopilot.supply.SupplyCalculator;
 import com.farmrunautopilot.supply.SupplyPlan;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -107,7 +113,14 @@ public class RunService
 		final SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 			patchTracker::predict, this::itemName, itemManager::getItemPrice);
 
-		final RunPlan next = new RunPlan(selection, route, supplies);
+		final Map<Location, List<String>> objectives = new EnumMap<>(Location.class);
+		for (Patch patch : selection.getPatches())
+		{
+			objectives.computeIfAbsent(patch.getLocation(), k -> new ArrayList<>()).add(StepAdvisor.objectives(
+				patch, patchTracker.predict(patch), supplies.getPlantings().get(patch)));
+		}
+
+		final RunPlan next = new RunPlan(selection, route, supplies, objectives);
 		if (next.equals(plan))
 		{
 			return false;
@@ -116,7 +129,8 @@ public class RunService
 		return true;
 	}
 
-	private String itemName(int itemId)
+	/** An item's name, looked up once. Client thread. */
+	public String itemName(int itemId)
 	{
 		return names.computeIfAbsent(itemId, id -> itemManager.getItemComposition(id).getName());
 	}

@@ -260,6 +260,20 @@ public class SupplyCalculatorTest
 	}
 
 	@Test
+	public void outfitCountsPiecesOfAnyColour()
+	{
+		final Map<Integer, Integer> bank = new HashMap<>();
+		bank.put(ItemID.GRACEFUL_HOOD, 1);
+		bank.put(ItemID.ZEAH_GRACEFUL_TOP_ARCEUUS, 1);
+		bank.put(ItemID.GRACEFUL_BOOTS_WYRM, 1);
+		final SupplyLine line = SupplyCalculator.outfitLine(com.farmrunautopilot.settings.Outfit.GRACEFUL,
+			holdings(bank, Collections.emptySet()), Holdings.EMPTY);
+		assertEquals(6, line.getNeed());
+		assertEquals(3, line.getHave());
+		assertEquals(0, line.getCarried());
+	}
+
+	@Test
 	public void leprechaunCountsCombine()
 	{
 		assertEquals(5, LeprechaunItem.combine(5, 0, 8));

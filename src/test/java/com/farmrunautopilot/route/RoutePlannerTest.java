@@ -137,6 +137,21 @@ public class RoutePlannerTest
 	}
 
 	@Test
+	public void preferWalkingPairsFaladorParkAndTaverley()
+	{
+		final RunConfig config = new RunConfig().sanitise();
+		config.setStartLocation(Location.VARROCK);
+		final List<Patch> patches = Arrays.asList(Patch.VARROCK_TREE, Patch.FALADOR_TREE, Patch.TAVERLEY_TREE);
+		final Route walking = RoutePlanner.plan(patches, config, AccessSnapshot.UNKNOWN, Holdings.EMPTY, new PohSetup());
+		// One teleport into the pair, then a walk between them
+		assertEquals(Departure.WALK, walking.getStops().get(2).getDeparture());
+
+		config.setPreferWalking(false);
+		final Route fastest = RoutePlanner.plan(patches, config, AccessSnapshot.UNKNOWN, Holdings.EMPTY, new PohSetup());
+		assertEquals(Departure.DIRECT, fastest.getStops().get(2).getDeparture());
+	}
+
+	@Test
 	public void metaModeUsesTheWikiOrderAndStartsAtTheStart()
 	{
 		final RunConfig config = new RunConfig().sanitise();

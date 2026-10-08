@@ -1,6 +1,7 @@
 package com.farmrunautopilot.access;
 
 import com.farmrunautopilot.data.poh.JewelleryBoxTier;
+import com.farmrunautopilot.data.poh.PohAltar;
 import com.farmrunautopilot.data.poh.PoolTier;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.SettingsStore;
@@ -40,16 +41,17 @@ public class PohDetector
 		final PoolTier pool = poolFor(objectId);
 		final boolean fairyRing = objectId == ObjectID.POH_FAIRY_RING || objectId == ObjectID.POH_SPIRIT_RING;
 		final boolean spiritTree = objectId == ObjectID.POH_SPIRIT_TREE || objectId == ObjectID.POH_SPIRIT_RING;
-		if (box == null && pool == null && !fairyRing && !spiritTree)
+		final PohAltar altar = altarFor(objectId);
+		if (box == null && pool == null && altar == null && !fairyRing && !spiritTree)
 		{
 			return;
 		}
 
 		// Settings are only changed on the Swing thread.
-		SwingUtilities.invokeLater(() -> apply(box, pool, fairyRing, spiritTree));
+		SwingUtilities.invokeLater(() -> apply(box, pool, altar, fairyRing, spiritTree));
 	}
 
-	private void apply(JewelleryBoxTier box, PoolTier pool, boolean fairyRing, boolean spiritTree)
+	private void apply(JewelleryBoxTier box, PoolTier pool, PohAltar altar, boolean fairyRing, boolean spiritTree)
 	{
 		final PohSetup poh = settings.getAccount().getPoh();
 		boolean changed = false;
@@ -61,6 +63,12 @@ public class PohDetector
 		if (pool != null && (poh.getPool() == null || pool.ordinal() > poh.getPool().ordinal()))
 		{
 			poh.setPool(pool);
+			changed = true;
+		}
+		// The occult altar covers every spellbook, so it beats the others
+		if (altar != null && poh.getAltar() != altar && poh.getAltar() != PohAltar.OCCULT)
+		{
+			poh.setAltar(altar);
 			changed = true;
 		}
 		if (fairyRing && !poh.isFairyRing())
@@ -77,7 +85,8 @@ public class PohDetector
 		poh.setLastDetected(Instant.now().getEpochSecond());
 		if (changed)
 		{
-			log.debug("Detected POH furniture: box={} pool={} fairyRing={} spiritTree={}", box, pool, fairyRing, spiritTree);
+			log.debug("Detected POH furniture: box={} pool={} altar={} fairyRing={} spiritTree={}", box, pool, altar, fairyRing,
+				spiritTree);
 		}
 		// Always save so "last detected" updates; refresh the tab only when something new was found.
 		settings.saveAccount(changed);
@@ -97,6 +106,27 @@ public class PohDetector
 				return JewelleryBoxTier.FANCY;
 			case ObjectID.POH_JEWELLERY_BOX_3:
 				return JewelleryBoxTier.ORNATE;
+			default:
+				return null;
+		}
+	}
+
+	static PohAltar altarFor(int objectId)
+	{
+		switch (objectId)
+		{
+			case ObjectID.POH_ALTAR_ANCIENT:
+				return PohAltar.ANCIENT;
+			case ObjectID.POH_ALTAR_LUNAR:
+				return PohAltar.LUNAR;
+			case ObjectID.POH_ALTAR_DARK:
+				return PohAltar.DARK;
+			case ObjectID.POH_ALTAR_OCCULT:
+			case ObjectID.POH_ALTAR_OCCULT_STANDARD:
+			case ObjectID.POH_ALTAR_OCCULT_ANCIENT:
+			case ObjectID.POH_ALTAR_OCCULT_LUNAR:
+			case ObjectID.POH_ALTAR_OCCULT_ARCEUUS:
+				return PohAltar.OCCULT;
 			default:
 				return null;
 		}

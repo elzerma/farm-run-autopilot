@@ -30,6 +30,8 @@ public final class RoutePlanner
 {
 	// Starting estimates, in seconds (UNVERIFIED; replaced by learned timings in M8)
 	static final double SECONDS_PER_TILE = 0.3;
+	/** With "prefer walking" on, a walk up to this much slower than a teleport is chosen instead. */
+	static final double PREFER_WALKING_SECONDS = 20.0;
 	static final double TELEPORT = 3.0;
 	static final double ITEM_TELEPORT = 3.6;
 	static final double HOME_TELEPORT = 10.5;
@@ -40,6 +42,8 @@ public final class RoutePlanner
 	static final double HOUSE_DOOR = 5.0;
 	/** Walking from the house's arrival point to the nexus, jewellery box, fairy ring or spirit tree. */
 	static final double HOUSE_WALK = 2.0;
+	/** Switching spellbook at a house altar and back again later (two trips to the altar). */
+	static final double SPELLBOOK_SWAP = 2 * (TELEPORT + HOUSE_WALK + 3.0);
 	/** Getting to an ordinary fairy ring when the player has none at home. */
 	static final int FAIRY_RING_WALK_TILES = 40;
 	/** Used when the player doesn't own what a method needs, so owned methods win when close. */
@@ -69,6 +73,8 @@ public final class RoutePlanner
 		PLANTED_SPIRIT_TREES.put(Location.BRIMHAVEN, Unlock.SPIRIT_TREE_BRIMHAVEN);
 		PLANTED_SPIRIT_TREES.put(Location.FALADOR_FARM, Unlock.SPIRIT_TREE_PORT_SARIM);
 		walk(Location.FALADOR_PARK, Location.FALADOR_FARM, 75);
+		// Out of Falador's west gate and up through Taverley's south gate (estimated), so one Falador Teleport covers both
+		walk(Location.FALADOR_PARK, Location.TAVERLEY, 100);
 	}
 
 	private static void walk(Location a, Location b, int tiles)
@@ -183,7 +189,7 @@ public final class RoutePlanner
 		{
 			if (start < 0 || j == start)
 			{
-				best[1 << j][j] = firstLeg[j].seconds;
+				best[1 << j][j] = firstLeg[j].cost;
 				from[1 << j][j] = -1;
 			}
 		}
@@ -202,7 +208,7 @@ public final class RoutePlanner
 						continue;
 					}
 					final int next = mask | (1 << k);
-					final double cost = best[mask][j] + legs[j][k].seconds;
+					final double cost = best[mask][j] + legs[j][k].cost;
 					if (cost < best[next][k])
 					{
 						best[next][k] = cost;
@@ -247,7 +253,7 @@ public final class RoutePlanner
 			current = 0;
 			for (int j = 1; j < n; j++)
 			{
-				if (firstLeg[j].seconds < firstLeg[current].seconds)
+				if (firstLeg[j].cost < firstLeg[current].cost)
 				{
 					current = j;
 				}
@@ -260,7 +266,7 @@ public final class RoutePlanner
 			int next = -1;
 			for (int j = 0; j < n; j++)
 			{
-				if (!used[j] && (next < 0 || legs[current][j].seconds < legs[current][next].seconds))
+				if (!used[j] && (next < 0 || legs[current][j].cost < legs[current][next].cost))
 				{
 					next = j;
 				}
@@ -297,10 +303,10 @@ public final class RoutePlanner
 
 	private static double cost(int[] order, Leg[] firstLeg, Leg[][] legs, double[] endCost)
 	{
-		double total = firstLeg[order[0]].seconds;
+		double total = firstLeg[order[0]].cost;
 		for (int k = 1; k < order.length; k++)
 		{
-			total += legs[order[k - 1]][order[k]].seconds;
+			total += legs[order[k - 1]][order[k]].cost;
 		}
 		return total + endCost[order[order.length - 1]];
 	}
@@ -366,16 +372,31 @@ public final class RoutePlanner
 	{
 		final TravelMethod method;
 		final Departure departure;
+		/** Estimated time, as shown to the player. */
 		final double seconds;
 		final boolean needsSupplies;
+		/** What the route ordering minimises: the time plus any preference against teleporting. */
+		final double cost;
 
 		Leg(TravelMethod method, Departure departure, double seconds, boolean needsSupplies)
+		{
+			this(method, departure, seconds, needsSupplies, seconds);
+		}
+
+		Leg(TravelMethod method, Departure departure, double seconds, boolean needsSupplies, double cost)
 		{
 			this.method = method;
 			this.departure = departure;
 			this.seconds = seconds;
 			this.needsSupplies = needsSupplies;
+			this.cost = cost;
 		}
+	}
+
+	/** Extra cost on each teleport when the player prefers walking: saves charges and clicks for little time. */
+	private double teleportPreference()
+	{
+		return config.isPreferWalking() ? PREFER_WALKING_SECONDS : 0;
 	}
 
 	/**
@@ -415,9 +436,12 @@ public final class RoutePlanner
 		{
 			for (Leg leg : options(method, from))
 			{
-				if (best == null || leg.seconds < best.seconds)
+				// Teleports carry the walking preference, so a walk that's only a little slower wins
+				final Leg scored = new Leg(leg.method, leg.departure, leg.seconds, leg.needsSupplies,
+					leg.seconds + teleportPreference());
+				if (best == null || scored.cost < best.cost)
 				{
-					best = leg;
+					best = scored;
 				}
 			}
 		}
@@ -451,7 +475,7 @@ public final class RoutePlanner
 			case SPELL:
 				if (canTeleport(method.getSpell()))
 				{
-					legs.add(direct(method, baseSeconds(method) + walk));
+					legs.add(direct(method, baseSeconds(method) + walk + spellbookSwap(method.getSpell())));
 				}
 				break;
 			case HOUSE_PORTAL:
@@ -540,6 +564,16 @@ public final class RoutePlanner
 			return null;
 		}
 		return tiles;
+	}
+
+	/**
+	 * Extra time when the spell is on another spellbook and has to be cast after switching at a house altar.
+	 * A tablet the player owns needs no switch.
+	 */
+	private double spellbookSwap(Spell spell)
+	{
+		final boolean tablet = spell.hasTablet() && holdings.count(spell.getTabletItemId()) > 0;
+		return tablet || access.isOnSpellbook(spell) ? 0 : SPELLBOOK_SWAP;
 	}
 
 	private boolean canTeleport(Spell spell)

@@ -8,6 +8,8 @@ import com.farmrunautopilot.route.RunOverrides;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunSelection;
 import com.farmrunautopilot.route.TypeOverride;
+import com.farmrunautopilot.run.GuidanceOverlay;
+import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.settings.RouteMode;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
@@ -37,6 +39,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
+import javax.swing.Timer;
 import javax.swing.TransferHandler;
 import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
@@ -61,18 +64,54 @@ class RunPanel extends JPanel
 	private final Runnable replan;
 	/** Tell the other tabs a setting changed here (route mode after a reorder). */
 	private final Runnable settingsChanged;
+	private final RunControls controls;
 	private RunPlan plan = RunPlan.EMPTY;
 	private boolean loggedIn;
+	/** The running timer, updated every second without rebuilding the panel. */
+	private JLabel clockLabel;
+	private final Timer clockTimer;
 
-	RunPanel(SettingsStore settings, RunOverrides overrides, Runnable replan, Runnable settingsChanged)
+	/** Start, stop and skip, plus the session's current view. */
+	interface RunControls
+	{
+		RunView view();
+
+		void start();
+
+		void stop();
+
+		void skip();
+
+		boolean shortestPathAvailable();
+	}
+
+	RunPanel(SettingsStore settings, RunOverrides overrides, Runnable replan, Runnable settingsChanged,
+		RunControls controls)
 	{
 		this.settings = settings;
 		this.overrides = overrides;
 		this.replan = replan;
 		this.settingsChanged = settingsChanged;
+		this.controls = controls;
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
+		clockTimer = new Timer(1000, e -> updateClock());
+		clockTimer.start();
 		rebuild();
+	}
+
+	void shutDown()
+	{
+		clockTimer.stop();
+	}
+
+	private void updateClock()
+	{
+		final RunView view = controls.view();
+		if (clockLabel != null && view.getState() == RunView.State.RUNNING)
+		{
+			clockLabel.setText("Running " + GuidanceOverlay.clock((System.currentTimeMillis() - view.getStartedAtMillis()) / 1000));
+		}
 	}
 
 	/** Show a new plan. Call on the Swing thread. */
@@ -96,6 +135,15 @@ class RunPanel extends JPanel
 		}
 
 		final SupplyPlan supplies = plan.getSupplies();
+		final RunView view = controls.view();
+		clockLabel = null;
+		if (view.getState() == RunView.State.RUNNING)
+		{
+			addRunning(view);
+			finish();
+			return;
+		}
+		addStart(view);
 		add(heading(summary(supplies)));
 		if (settings.getRunConfig().isSupplyFullRun())
 		{
@@ -119,7 +167,13 @@ class RunPanel extends JPanel
 		}
 
 		addRoute(plan.getRoute());
+		addSupplies(supplies);
+		addTotals(supplies);
+		finish();
+	}
 
+	private void addSupplies(SupplyPlan supplies)
+	{
 		if (!supplies.getLines().isEmpty())
 		{
 			add(legend());
@@ -134,7 +188,10 @@ class RunPanel extends JPanel
 			}
 			add(row(line));
 		}
+	}
 
+	private void addTotals(SupplyPlan supplies)
+	{
 		if (!supplies.getLines().isEmpty())
 		{
 			final Route route = plan.getRoute();
@@ -148,7 +205,106 @@ class RunPanel extends JPanel
 			}
 			add(note("Starting inventory: about " + supplies.getSlots() + " / 28 slots"));
 		}
-		finish();
+	}
+
+	// Start and running
+
+	private void addStart(RunView view)
+	{
+		final JButton start = new JButton("Start run");
+		start.setEnabled(!plan.getRoute().getStops().isEmpty());
+		start.setFocusPainted(false);
+		start.addActionListener(e -> controls.start());
+		start.setAlignmentX(LEFT_ALIGNMENT);
+		start.setMaximumSize(new Dimension(Integer.MAX_VALUE, start.getPreferredSize().height));
+		add(start);
+		if (!plan.getRoute().getStops().isEmpty())
+		{
+			final JLabel ready = note(view.isReady() ? "Ready: everything is with you or at the leprechaun."
+				: "Grab the yellow and red items first, or start anyway.");
+			ready.setForeground(view.isReady() ? CARRIED : IN_STORAGE);
+			add(ready);
+		}
+		if (view.getLastRun() != null)
+		{
+			add(note(view.getLastRun()));
+		}
+		if (view.getBestTimes() != null)
+		{
+			add(note(view.getBestTimes()));
+		}
+	}
+
+	/** Hover text for a stop: the plan for each patch there. */
+	private static String objectivesTooltip(List<String> objectives)
+	{
+		return objectives == null || objectives.isEmpty() ? null
+			: "<html>" + String.join("<br>", escapeAll(objectives)) + "</html>";
+	}
+
+	private void addRunning(RunView view)
+	{
+		final JPanel bar = new JPanel(new BorderLayout(6, 0));
+		bar.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		clockLabel = new JLabel();
+		clockLabel.setForeground(ColorScheme.BRAND_ORANGE);
+		updateClock();
+		final JPanel buttons = new JPanel(new GridLayout(1, 2, 4, 0));
+		buttons.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		final JButton skip = new JButton("Skip step");
+		skip.setFocusPainted(false);
+		skip.setFont(FontManager.getRunescapeSmallFont());
+		skip.addActionListener(e -> controls.skip());
+		final JButton stop = new JButton("Stop");
+		stop.setFocusPainted(false);
+		stop.setFont(FontManager.getRunescapeSmallFont());
+		stop.addActionListener(e -> controls.stop());
+		buttons.add(skip);
+		buttons.add(stop);
+		bar.add(clockLabel, BorderLayout.CENTER);
+		bar.add(buttons, BorderLayout.EAST);
+		bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, bar.getPreferredSize().height));
+		add(left(bar));
+
+		add(heading("Route"));
+		int number = 1;
+		for (RunView.Stop routeStop : view.getStops())
+		{
+			add(runningStop(number++, routeStop));
+		}
+	}
+
+	/** A stop while running: struck through when done, highlighted with its next step when current. */
+	private JComponent runningStop(int number, RunView.Stop stop)
+	{
+		final JPanel cell = new JPanel(new BorderLayout());
+		final boolean current = stop.getStatus() == RunView.StopStatus.CURRENT;
+		cell.setBackground(current ? ColorScheme.DARK_GRAY_HOVER_COLOR : ColorScheme.DARKER_GRAY_COLOR);
+		cell.setBorder(new EmptyBorder(3, 6, 3, 6));
+
+		final String name = UiText.escape(number + ". " + stop.getLocation());
+		final JLabel title = new JLabel(stop.getStatus() == RunView.StopStatus.DONE
+			? "<html><s>" + name + "</s></html>" : "<html>" + name + "</html>");
+		title.setForeground(stop.getStatus() == RunView.StopStatus.DONE ? ColorScheme.MEDIUM_GRAY_COLOR
+			: current ? ColorScheme.BRAND_ORANGE : ColorScheme.TEXT_COLOR);
+		title.setFont(FontManager.getRunescapeSmallFont());
+		cell.add(title, BorderLayout.NORTH);
+
+		if (stop.getStatus() != RunView.StopStatus.DONE)
+		{
+			final JLabel detail = new JLabel(UiText.wrap(current && stop.getInstruction() != null
+				? stop.getInstruction() : stop.getTravel(), TEXT_WIDTH - 20));
+			detail.setForeground(current ? IN_STORAGE : ColorScheme.LIGHT_GRAY_COLOR);
+			detail.setFont(FontManager.getRunescapeSmallFont());
+			cell.add(detail, BorderLayout.CENTER);
+		}
+
+		final JPanel wrapper = new JPanel(new BorderLayout());
+		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		wrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
+		wrapper.add(cell, BorderLayout.CENTER);
+		wrapper.setToolTipText(objectivesTooltip(stop.getObjectives()));
+		return left(wrapper);
 	}
 
 	// Run types
@@ -280,6 +436,12 @@ class RunPanel extends JPanel
 			return;
 		}
 		add(heading("Route (" + modeName(route.getMode()) + ")"));
+		if (settings.getRunConfig().isUseShortestPath())
+		{
+			add(note(controls.shortestPathAvailable()
+				? "Start from any bank: Shortest Path shows the way to the first stop."
+				: "Tip: install Shortest Path from the Plugin Hub to get directions to the first stop."));
+		}
 
 		final DefaultListModel<RouteStop> model = new DefaultListModel<>();
 		for (RouteStop stop : route.getStops())
@@ -335,7 +497,7 @@ class RunPanel extends JPanel
 		settingsChanged.run();
 	}
 
-	private static final class StopRenderer implements ListCellRenderer<RouteStop>
+	private final class StopRenderer implements ListCellRenderer<RouteStop>
 	{
 		@Override
 		public Component getListCellRendererComponent(JList<? extends RouteStop> list, RouteStop stop, int index,
@@ -359,6 +521,8 @@ class RunPanel extends JPanel
 			wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
 			wrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
 			wrapper.add(cell);
+			// JList shows the renderer's tooltip for the hovered row
+			wrapper.setToolTipText(objectivesTooltip(plan.getObjectives().get(stop.getLocation())));
 			return wrapper;
 		}
 	}

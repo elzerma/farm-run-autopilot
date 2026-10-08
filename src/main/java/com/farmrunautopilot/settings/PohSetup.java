@@ -2,6 +2,7 @@ package com.farmrunautopilot.settings;
 
 import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.poh.JewelleryBoxTier;
+import com.farmrunautopilot.data.poh.PohAltar;
 import com.farmrunautopilot.data.poh.PoolTier;
 import com.farmrunautopilot.data.poh.PortalNexus;
 import java.util.EnumSet;
@@ -24,6 +25,8 @@ public class PohSetup
 	private JewelleryBoxTier jewelleryBox;
 	/** Null if none built. */
 	private PoolTier pool;
+	/** Spellbook altar, or null if none. */
+	private PohAltar altar;
 	private boolean fairyRing;
 	private boolean spiritTree;
 	/** Epoch seconds of the last automatic detection, 0 if never. */

@@ -104,7 +104,8 @@ public enum TravelMethod
 
 	// Tree Gnome Village
 	SPIRIT_TREE_TREE_GNOME_VILLAGE(spiritTree(Location.TREE_GNOME_VILLAGE, "Spirit tree (Tree Gnome Village)", MEDIUM)
-		.primaryFor(FRUIT_TREE).note("Squeeze through the loose railing and follow Elkoy")),
+		.primaryFor(FRUIT_TREE).note("Lands in the village; follow Elkoy out of the maze to the patch")
+		.directions("Talk to Elkoy and follow him out of the maze")),
 	FAIRY_RING_CIQ(fairyRing(Location.TREE_GNOME_VILLAGE, "CIQ", MEDIUM)),
 
 	// Catherby (herb + fruit tree)
@@ -223,6 +224,8 @@ public enum TravelMethod
 	/** Fairy ring code for FAIRY_RING methods, otherwise null. */
 	private final String fairyRingCode;
 	private final String note;
+	/** What to do after arriving to reach the patch, shown in the run guide; null if it's just a walk. */
+	private final String directions;
 	/** Requirements beyond the spell's own and owning the item. */
 	private final List<Requirement> requirements;
 	private final Set<PatchType> primaryFor;
@@ -242,6 +245,7 @@ public enum TravelMethod
 		this.coins = def.coins;
 		this.fairyRingCode = def.fairyRingCode;
 		this.note = def.note;
+		this.directions = def.directions;
 		this.requirements = Collections.unmodifiableList(def.requirements);
 		this.primaryFor = Collections.unmodifiableSet(def.primaryFor);
 		this.nexus = def.nexus;
@@ -310,6 +314,7 @@ public enum TravelMethod
 		private int coins;
 		private String fairyRingCode;
 		private String note;
+		private String directions;
 		private final List<Requirement> requirements = new ArrayList<>();
 		private final Set<PatchType> primaryFor = EnumSet.noneOf(PatchType.class);
 		private PortalNexus.Destination nexus;
@@ -344,6 +349,12 @@ public enum TravelMethod
 		Def note(String text)
 		{
 			note = text;
+			return this;
+		}
+
+		Def directions(String text)
+		{
+			directions = text;
 			return this;
 		}
 

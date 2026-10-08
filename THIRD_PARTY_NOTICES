@@ -10,13 +10,15 @@ RuneLite
 Source: https://github.com/runelite/runelite
 Used in: src/main/java/com/farmrunautopilot/data/Patch.java,
          src/main/java/com/farmrunautopilot/data/Crop.java,
-         src/main/java/com/farmrunautopilot/data/PatchStateDecoder.java
+         src/main/java/com/farmrunautopilot/data/PatchStateDecoder.java,
+         src/main/java/com/farmrunautopilot/run/RunSession.java
 
 Patch region IDs, extra region IDs, varbit assignments, gardener NPCs and the
 Catherby / Falador bounds rules were copied from
 runelite-client/.../timetracking/farming/FarmingWorld.java. Patch-state value
 ranges were copied from PatchImplementation.java, and crop growth tick rates and
-stage counts from Produce.java.
+stage counts from Produce.java. The compost chat message patterns in
+RunSession follow CompostTracker.java.
 
 Copyright (c) 2018, NotFoxtrot <https://github.com/NotFoxtrot>
 Copyright (c) 2018, 2019 Abex
@@ -76,8 +78,33 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Not yet included
-----------------
-- Farming-Helper (https://github.com/Speaax/Farming-Helper), BSD 2-Clause,
-  "Copyright (c) 2025, JThomasDevs". Add its notice here if location
-  coordinates or teleport data are ever reused from it.
+Farming-Helper
+--------------
+Source: https://github.com/Speaax/Farming-Helper
+Used in: src/main/java/com/farmrunautopilot/data/PatchPoints.java
+
+Patch map coordinates (one WorldPoint per patch) were taken from
+Farming-Helper's location data classes.
+
+Copyright (c) 2025, JThomasDevs
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

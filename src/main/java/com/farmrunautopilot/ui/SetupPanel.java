@@ -10,11 +10,13 @@ import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.poh.JewelleryBoxTier;
+import com.farmrunautopilot.data.poh.PohAltar;
 import com.farmrunautopilot.data.poh.PoolTier;
 import com.farmrunautopilot.data.poh.PortalNexus;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.Compost;
+import com.farmrunautopilot.settings.Outfit;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RouteMode;
@@ -416,7 +418,7 @@ class SetupPanel extends JPanel
 		s.addContent(note(poh.getLastDetected() > 0
 			? "Furniture last detected " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
 			.format(new Date(poh.getLastDetected() * 1000)) + ". Edit anything below."
-			: "Enter your house to detect the jewellery box, pool, fairy ring and spirit tree. "
+			: "Enter your house to detect the jewellery box, pool, altar, fairy ring and spirit tree. "
 			+ "Set the portal location and nexus by hand."));
 
 		final List<Choice<HousePortal>> portals = new ArrayList<>();
@@ -449,6 +451,14 @@ class SetupPanel extends JPanel
 		s.addContent(label("Pool"));
 		s.addContent(combo(pools, poh.getPool(), p -> saveAccount(() -> poh.setPool(p), false)));
 
+		final List<Choice<PohAltar>> altars = new ArrayList<>();
+		altars.add(Choice.of(null, "None"));
+		for (PohAltar altar : PohAltar.values())
+		{
+			altars.add(Choice.of(altar, altar.getDisplayName()));
+		}
+		s.addContent(label("Spellbook altar"));
+		s.addContent(combo(altars, poh.getAltar(), a -> saveAccount(() -> poh.setAltar(a), true)));
 		s.addContent(checkBox("Fairy ring", poh.isFairyRing(), true, null,
 			on -> saveAccount(() -> poh.setFairyRing(on), false)));
 		s.addContent(checkBox("Spirit tree", poh.isSpiritTree(), true, null,
@@ -515,6 +525,13 @@ class SetupPanel extends JPanel
 		s.addContent(combo(starts, config.getStartLocation(), l -> saveRun(() -> config.setStartLocation(l))));
 		s.addContent(checkBox("Finish near a bank", config.isEndNearBank(), true, null,
 			on -> saveRun(() -> config.setEndNearBank(on))));
+		s.addContent(checkBox("Directions to the first stop from Shortest Path", config.isUseShortestPath(), true,
+			"Needs the Shortest Path plugin from the Plugin Hub. Lets you start a run from any bank.",
+			on -> saveRun(() -> config.setUseShortestPath(on))));
+		s.addContent(checkBox("Walk when it's nearly as quick as teleporting", config.isPreferWalking(), true,
+			"A walk up to about 20 seconds slower is used instead of a teleport, saving charges and clicks "
+				+ "(e.g. one Falador Teleport for Falador Park and Taverley)",
+			on -> saveRun(() -> config.setPreferWalking(on))));
 		s.addContent(spinnerRow("Restore run energy below (%)", spinner(config.getEnergyThreshold(), 0, 100, 5,
 			v -> saveRun(() -> config.setEnergyThreshold(v)))));
 		s.addContent(spinnerRow("...before a walk of at least (tiles)", spinner(config.getEnergyMinTiles(), 0, 200, 5,
@@ -533,6 +550,11 @@ class SetupPanel extends JPanel
 		s.addContent(checkBox("Runes instead of tablets everywhere", config.isUseRunesNotTabs(), true,
 			"Per-location choices are in Rules > Travel",
 			on -> saveRun(() -> config.setUseRunesNotTabs(on))));
+		s.addContent(label("Outfit to bring"));
+		s.addContent(combo(enumChoices(Outfit.values()), config.getOutfit(), o -> saveRun(() -> config.setOutfit(o))));
+		s.addContent(checkBox("Remind me to drop weeds and pots", config.isRemindToDrop(), true,
+			"During a run, a reminder under your character while you carry weeds or empty plant pots",
+			on -> saveRun(() -> config.setRemindToDrop(on))));
 		s.addContent(spinnerRow("Stamina doses to bring", spinner(config.getStaminaDoses(), 0, 40, 1,
 			v -> saveRun(() -> config.setStaminaDoses(v)))));
 		s.addContent(spinnerRow("Plant cures to bring (backup)", spinner(config.getPlantCureDoses(), 0, 40, 1,

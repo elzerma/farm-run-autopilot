@@ -6,6 +6,7 @@ import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.travel.Spell;
+import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,6 +45,31 @@ public class AccessSnapshot
 	Set<Unlock> unlocks;
 	/** House portal location from My POH, or null. */
 	HousePortal housePortal;
+	/** The spellbook the player is on, or null if unknown. */
+	Spellbook spellbook;
+	/** Spellbooks a POH altar can switch to (empty without one). */
+	Set<Spellbook> altarSpellbooks;
+
+	public AccessSnapshot(boolean known, Map<Quest, QuestState> quests, Map<Skill, Integer> realLevels,
+		Set<String> completedDiaries, Set<Unlock> unlocks, HousePortal housePortal, Spellbook spellbook,
+		Set<Spellbook> altarSpellbooks)
+	{
+		this.known = known;
+		this.quests = quests;
+		this.realLevels = realLevels;
+		this.completedDiaries = completedDiaries;
+		this.unlocks = unlocks;
+		this.housePortal = housePortal;
+		this.spellbook = spellbook;
+		this.altarSpellbooks = altarSpellbooks;
+	}
+
+	/** Without spellbook information: any book counts as usable. */
+	public AccessSnapshot(boolean known, Map<Quest, QuestState> quests, Map<Skill, Integer> realLevels,
+		Set<String> completedDiaries, Set<Unlock> unlocks, HousePortal housePortal)
+	{
+		this(known, quests, realLevels, completedDiaries, unlocks, housePortal, null, Collections.emptySet());
+	}
 
 	public static String diaryKey(AchievementDiary diary, AchievementDiary.Tier tier)
 	{
@@ -147,10 +173,20 @@ public class AccessSnapshot
 		return missing(all);
 	}
 
-	/** Whether the player can cast this spell rather than needing its tablet. */
+	/**
+	 * Whether the player can cast this spell rather than needing its tablet: Magic level, quest, and being on
+	 * its spellbook (or able to switch with a house altar). Sean asked not to hop spellbooks otherwise.
+	 */
 	public boolean canCast(Spell spell)
 	{
-		return !known || (level(Skill.MAGIC) >= spell.getMagicLevel() && missing(spell.getRequirements()).isEmpty());
+		return !known || (level(Skill.MAGIC) >= spell.getMagicLevel() && missing(spell.getRequirements()).isEmpty()
+			&& (isOnSpellbook(spell) || altarSpellbooks.contains(spell.getSpellbook())));
+	}
+
+	/** On the spell's spellbook right now (or the spellbook isn't known). */
+	public boolean isOnSpellbook(Spell spell)
+	{
+		return spellbook == null || spellbook == spell.getSpellbook();
 	}
 
 	/** Tooltip text listing what's missing, e.g. "Needs 65 Farming, Needs Priest in Peril". */

@@ -78,6 +78,13 @@ public class RunConfig
 	private int energyThreshold = DEFAULT_ENERGY_THRESHOLD;
 	private int energyMinTiles = DEFAULT_ENERGY_MIN_TILES;
 	private int staminaDoses = 0;
+	private Outfit outfit = Outfit.NONE;
+	/** During a run, remind the player to drop weeds and empty plant pots. */
+	private boolean remindToDrop = true;
+	/** Ask the Shortest Path plugin for directions to the first stop. */
+	private boolean useShortestPath = true;
+	/** Walk instead of teleporting when the walk is only a little slower (saves charges and clicks). */
+	private boolean preferWalking = true;
 
 	// Run tab
 	/** Supplies for every selected patch instead of only the due ones. */
@@ -120,6 +127,10 @@ public class RunConfig
 			customOrder = new ArrayList<>();
 		}
 		customOrder.removeIf(l -> l == null);
+		if (outfit == null)
+		{
+			outfit = Outfit.NONE;
+		}
 		if (routeMode == null)
 		{
 			routeMode = RouteMode.AUTOPILOT;

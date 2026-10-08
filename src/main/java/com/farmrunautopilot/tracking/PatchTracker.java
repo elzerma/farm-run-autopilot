@@ -72,6 +72,12 @@ public class PatchTracker
 		this.configManager = configManager;
 	}
 
+	/** Patches whose varbits the game is sending right now, i.e. the player is next to them. Client thread. */
+	public Set<Patch> getPatchesInRange()
+	{
+		return lastPatches;
+	}
+
 	/** Forget per-session state, e.g. after logging in to another account. */
 	public void reset()
 	{

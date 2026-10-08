@@ -5,12 +5,16 @@ import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.route.RunOverrides;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
+import com.farmrunautopilot.run.RunSession;
+import com.farmrunautopilot.run.RunView;
+import com.farmrunautopilot.run.ShortestPathBridge;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import javax.inject.Inject;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.materialtabs.MaterialTab;
@@ -31,7 +35,8 @@ public class FarmRunAutopilotPanel extends PluginPanel
 
 	@Inject
 	public FarmRunAutopilotPanel(SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker,
-		RunOverrides runOverrides, RunService runService)
+		RunOverrides runOverrides, RunService runService, RunSession runSession, ClientThread clientThread,
+		ShortestPathBridge shortestPath)
 	{
 		setLayout(new BorderLayout());
 		setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -40,7 +45,39 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		final JPanel display = new JPanel(new BorderLayout());
 		display.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		runPanel = new RunPanel(settings, runOverrides, runService::markDirty, this::rebuildSetup);
+		runPanel = new RunPanel(settings, runOverrides, runService::markDirty, this::rebuildSetup,
+			new RunPanel.RunControls()
+			{
+				@Override
+				public RunView view()
+				{
+					return runSession.getView();
+				}
+
+				@Override
+				public void start()
+				{
+					clientThread.invoke(runSession::start);
+				}
+
+				@Override
+				public void stop()
+				{
+					clientThread.invoke(() -> runSession.stop(false));
+				}
+
+				@Override
+				public void skip()
+				{
+					clientThread.invoke(runSession::skip);
+				}
+
+				@Override
+				public boolean shortestPathAvailable()
+				{
+					return shortestPath.isAvailable();
+				}
+			});
 		final JPanel run = new JPanel(new BorderLayout());
 		run.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		run.add(runPanel, BorderLayout.NORTH);
@@ -97,5 +134,6 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	public void shutDown()
 	{
 		refreshTimer.stop();
+		runPanel.shutDown();
 	}
 }

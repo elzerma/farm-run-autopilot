@@ -10,6 +10,9 @@ import com.farmrunautopilot.supply.SupplyPlan;
 import com.farmrunautopilot.route.RunOverrides;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
+import com.farmrunautopilot.run.GuidanceOverlay;
+import com.farmrunautopilot.run.RunSession;
+import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.tracking.PatchTracker;
 import com.farmrunautopilot.ui.FarmRunAutopilotPanel;
 import com.google.inject.Provides;
@@ -21,6 +24,8 @@ import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.ChatMessageType;
+import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
@@ -44,6 +49,8 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
+import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.Text;
 import net.runelite.client.util.ImageUtil;
 
 @Slf4j
@@ -87,6 +94,18 @@ public class FarmRunAutopilotPlugin extends Plugin
 	@Inject
 	private FarmBankTab farmBankTab;
 
+	@Inject
+	private RunSession runSession;
+
+	@Inject
+	private GuidanceOverlay guidanceOverlay;
+
+	@Inject
+	private OverlayManager overlayManager;
+
+	/** The session view last shown in the sidebar. */
+	private RunView shownRunView;
+
 	/** What the bank tab last showed: each line, amount needed and colour (not exact counts held). */
 	private String bankTabContents = "";
 
@@ -110,6 +129,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		settings.addSaveListener(onSettingsSaved);
 		clientThread.invoke(holdingsTracker::loadCaches);
 		farmBankTab.startUp(runService::getSupplies);
+		overlayManager.add(guidanceOverlay);
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
 		navButton = NavigationButton.builder()
@@ -129,6 +149,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 		settings.removeListener(onSettingsReloaded);
 		settings.removeSaveListener(onSettingsSaved);
 		farmBankTab.shutDown();
+		overlayManager.remove(guidanceOverlay);
+		clientThread.invoke(() -> runSession.stop(false));
+		shownRunView = null;
 		clientToolbar.removeNavigation(navButton);
 		panel.shutDown();
 		navButton = null;
@@ -162,6 +185,14 @@ public class FarmRunAutopilotPlugin extends Plugin
 				bankTabContents = contents;
 				farmBankTab.refresh();
 			}
+		}
+
+		runSession.onGameTick();
+		final RunView runView = runSession.getView();
+		if (!runView.equals(shownRunView))
+		{
+			shownRunView = runView;
+			showPlanLater(runService.getPlan(), client.getGameState() == GameState.LOGGED_IN);
 		}
 
 		// Patch varbits are only sent after leaving the post-login welcome screen
@@ -248,6 +279,16 @@ public class FarmRunAutopilotPlugin extends Plugin
 	public void onVarbitChanged(VarbitChanged event)
 	{
 		holdingsTracker.onVarbitChanged(event.getVarbitId());
+		accessChecker.onVarbitChanged(event.getVarbitId());
+	}
+
+	@Subscribe
+	public void onChatMessage(ChatMessage event)
+	{
+		if (event.getType() == ChatMessageType.GAMEMESSAGE || event.getType() == ChatMessageType.SPAM)
+		{
+			runSession.onChatMessage(Text.removeTags(event.getMessage()));
+		}
 	}
 
 	@Subscribe

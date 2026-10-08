@@ -20,6 +20,7 @@ import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.route.RunSelection;
 import com.farmrunautopilot.settings.Compost;
+import com.farmrunautopilot.settings.Outfit;
 import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.tracking.PatchPrediction;
@@ -289,6 +290,10 @@ public final class SupplyCalculator
 			lines.add(changeIn(line(SupplyLine.Group.OPTIONAL, "Magic secateurs", 1, holdings, carried,
 				"+10% herb yield; can be worn", 0, SupplyItems.MAGIC_SECATEURS), PROTECTION));
 		}
+		if (config.getOutfit() != Outfit.NONE)
+		{
+			lines.add(outfitLine(config.getOutfit(), holdings, carried));
+		}
 		if (config.getPlantCureDoses() > 0)
 		{
 			lines.add(line(SupplyLine.Group.OPTIONAL, "Plant cure", config.getPlantCureDoses(), holdings, carried,
@@ -327,6 +332,27 @@ public final class SupplyCalculator
 		lines.sort((a, b) -> a.getGroup().compareTo(b.getGroup()));
 		return new SupplyPlan(Collections.unmodifiableList(lines), patchCounts, notDue, travelPlan, warnings, coins,
 			runes.summary, slots, Collections.unmodifiableMap(plantings));
+	}
+
+	/** One line for an outfit: pieces held (any variant of each piece) out of the full set. */
+	static SupplyLine outfitLine(Outfit outfit, Holdings holdings, Holdings carried)
+	{
+		final int[][] pieces = outfit.getPieces();
+		int have = 0;
+		int worn = 0;
+		final List<Integer> ids = new ArrayList<>();
+		for (int[] variants : pieces)
+		{
+			have += holdings.countAny(variants) > 0 ? 1 : 0;
+			worn += carried.countAny(variants) > 0 ? 1 : 0;
+			for (int id : variants)
+			{
+				ids.add(id);
+			}
+		}
+		final int[] all = ids.stream().mapToInt(Integer::intValue).toArray();
+		return new SupplyLine(SupplyLine.Group.OPTIONAL, outfit.getDisplayName(), pieces.length, have, worn,
+			holdings.where(all), "Pieces held, any colour. Wear it for the run.", 0, false, RUN_OPTIONS, all);
 	}
 
 	/**
@@ -403,7 +429,8 @@ public final class SupplyCalculator
 			return " (tablet)";
 		}
 		addRunes(runeNeed, spell);
-		return " (runes, " + title(spell.getSpellbook().name()) + " spellbook)";
+		return " (runes, " + title(spell.getSpellbook().name()) + " spellbook"
+			+ (access.isOnSpellbook(spell) ? "" : "; switch at your house altar") + ")";
 	}
 	/** A grown tree or its stump must be cleared before replanting; unknown patches are assumed grown. */
 	static boolean needsClearing(PatchState state)
