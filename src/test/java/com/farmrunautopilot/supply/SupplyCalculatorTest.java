@@ -171,8 +171,9 @@ public class SupplyCalculatorTest
 		bank.put(Rune.AIR.getItemId(), 2);
 		bank.put(ItemID.DUSTRUNE, 3);
 
-		final SupplyCalculator.RuneResult result = SupplyCalculator.runes(need,
-			holdings(bank, EnumSet.of(Rune.FIRE)), id -> "rune " + id);
+		final Holdings held = holdings(bank, EnumSet.of(Rune.FIRE));
+		final SupplyCalculator.RuneResult result = SupplyCalculator.runes(need, held, held.carriedOnly(),
+			id -> "rune " + id);
 		final Map<String, SupplyLine> byName = new HashMap<>();
 		for (SupplyLine line : result.lines)
 		{
@@ -186,6 +187,11 @@ public class SupplyCalculatorTest
 		assertTrue(fire.isMet());
 		assertEquals(0, fire.getSlots());
 		assertTrue(result.summary.contains("staff covers Fire"));
+
+		// Everything is in the bank, so nothing is carried: air is short, earth is in storage, fire is carried.
+		assertEquals(SupplyLine.Status.MISSING, byName.get("rune " + Rune.AIR.getItemId()).getStatus());
+		assertEquals(SupplyLine.Status.IN_STORAGE, byName.get("rune " + Rune.EARTH.getItemId()).getStatus());
+		assertEquals(SupplyLine.Status.CARRIED, fire.getStatus());
 	}
 
 	@Test
@@ -219,6 +225,24 @@ public class SupplyCalculatorTest
 		// Farming 70: torstol (85) can't be planted yet.
 		assertEquals(java.util.Arrays.asList(Crop.SNAPDRAGON, Crop.RANARR),
 			SupplyCalculator.diseaseFreeHerbs(config, 70, id -> prices.getOrDefault(id, 0)));
+	}
+
+	@Test
+	public void cropRolesShowChoiceAndDiseaseFree()
+	{
+		final RunConfig config = new RunConfig();
+		config.getCrops().put(PatchType.HERB, Crop.RANARR);
+		config.setUseBackupCrops(true);
+		config.getBackupCrops().put(PatchType.HERB, java.util.Arrays.asList(Crop.AVANTOE));
+		final java.util.List<Crop> reserved = java.util.Arrays.asList(Crop.RANARR, Crop.KWUARM);
+
+		assertEquals("1st choice, disease-free only", SupplyCalculator.cropRole(Crop.RANARR, config, 99, reserved));
+		assertEquals("2nd choice", SupplyCalculator.cropRole(Crop.AVANTOE, config, 99, reserved));
+		assertEquals("disease-free only", SupplyCalculator.cropRole(Crop.KWUARM, config, 99, reserved));
+
+		// Single choice and nothing reserved: no label needed.
+		config.setUseBackupCrops(false);
+		assertEquals("", SupplyCalculator.cropRole(Crop.RANARR, config, 99, java.util.Collections.emptyList()));
 	}
 
 	@Test

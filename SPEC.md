@@ -61,7 +61,7 @@ A farming-run planner and guide for tree, fruit tree and herb runs that:
 | Due detection | **Auto-skip run types that aren't ready** (e.g. fruit trees on their 16h cycle when only trees/herbs are due). |
 | Run energy | **Live threshold**: if energy is **below 30%** before a walk of **15+ tiles**, the next step becomes "drink a stamina dose" if you have one, otherwise a restore stop (POH pool or Ferox — whichever is quicker from there). Optional stamina doses in the supply list. |
 | Leg timings | **Ship estimates, then self-learn** from the player's actual leg times. |
-| Sidebar | **Run tab + Setup tab.** |
+| Sidebar | **Run tab + Setup tab + Rules tab.** Run is operated before each run (run types, full-run toggle, checklist); Setup holds occasional changes (crops, run options); Rules holds set-once settings (patches, protection, travel, POH, unlocks, route details, storage). Checklist colours: green carried, yellow in storage, red missing. (Changed by Sean, 2026-10-07.) |
 | Notifications | **None.** |
 
 ---

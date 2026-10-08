@@ -99,6 +99,15 @@ public class Holdings
 		return where;
 	}
 
+	/** Only what the player is carrying: inventory (with rune pouch) and worn items. */
+	public Holdings carriedOnly()
+	{
+		final Map<Source, Map<Integer, Integer>> carried = new EnumMap<>(Source.class);
+		carried.put(Source.INVENTORY, in(Source.INVENTORY));
+		carried.put(Source.WORN, in(Source.WORN));
+		return new Holdings(carried, runePouch, infiniteRunes, bankKnown, autoweedOn);
+	}
+
 	public Map<Integer, Integer> in(Source source)
 	{
 		return items.getOrDefault(source, Collections.emptyMap());

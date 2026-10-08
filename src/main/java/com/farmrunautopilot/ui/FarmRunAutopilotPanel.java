@@ -24,6 +24,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 
 	private final RunPanel runPanel;
 	private final SetupPanel setupPanel;
+	private final SetupPanel rulesPanel;
 	private final Timer refreshTimer;
 
 	@Inject
@@ -41,18 +42,18 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		run.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		run.add(runPanel, BorderLayout.NORTH);
 
-		setupPanel = new SetupPanel(settings, accessChecker, patchTracker);
-		final JPanel setup = new JPanel(new BorderLayout());
-		setup.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		setup.add(setupPanel, BorderLayout.NORTH);
+		setupPanel = new SetupPanel(SetupPanel.Page.SETUP, settings, accessChecker, patchTracker);
+		rulesPanel = new SetupPanel(SetupPanel.Page.RULES, settings, accessChecker, patchTracker);
 
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(display);
 		tabGroup.setBorder(new EmptyBorder(0, 0, 10, 0));
 
 		final MaterialTab runTab = new MaterialTab("Run", tabGroup, run);
-		final MaterialTab setupTab = new MaterialTab("Setup", tabGroup, setup);
+		final MaterialTab setupTab = new MaterialTab("Setup", tabGroup, top(setupPanel));
+		final MaterialTab rulesTab = new MaterialTab("Rules", tabGroup, top(rulesPanel));
 		tabGroup.addTab(runTab);
 		tabGroup.addTab(setupTab);
+		tabGroup.addTab(rulesTab);
 		tabGroup.select(runTab);
 
 		add(tabGroup, BorderLayout.NORTH);
@@ -65,7 +66,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	/** Re-reads patch predictions. Call on the Swing thread. */
 	public void refreshPatches()
 	{
-		setupPanel.refreshPatches();
+		rulesPanel.refreshPatches();
 	}
 
 	/** Shows a new supply plan in the Run tab. Call on the Swing thread. */
@@ -78,6 +79,16 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	public void rebuildSetup()
 	{
 		setupPanel.rebuild();
+		rulesPanel.rebuild();
+	}
+
+	/** Pins a page to the top of its tab instead of stretching it. */
+	private static JPanel top(JPanel page)
+	{
+		final JPanel wrapper = new JPanel(new BorderLayout());
+		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		wrapper.add(page, BorderLayout.NORTH);
+		return wrapper;
 	}
 
 	public void shutDown()

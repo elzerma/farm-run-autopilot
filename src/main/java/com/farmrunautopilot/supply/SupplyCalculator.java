@@ -41,6 +41,13 @@ public final class SupplyCalculator
 {
 	private static final int INVENTORY_SLOTS = 28;
 	private static final int STAMINA_DOSES_PER_POTION = 4;
+	private static final String[] ORDINALS = {"1st", "2nd", "3rd"};
+
+	// Where each kind of line is changed, shown in its tooltip
+	private static final String CROPS = "Setup > Crops";
+	private static final String RUN_OPTIONS = "Setup > Run options";
+	private static final String PROTECTION = "Rules > Protection";
+	private static final String TRAVEL = "Rules > Travel";
 
 	private SupplyCalculator()
 	{
@@ -84,6 +91,7 @@ public final class SupplyCalculator
 			return new SupplyPlan(lines, patchCounts, notDue, travelPlan, warnings, 0, "", 0, Collections.emptyMap());
 		}
 
+		final Holdings carried = holdings.carriedOnly();
 		final int farming = access.isKnown() ? access.level(Skill.FARMING) : 99;
 		// Before access is known, assume no diary: better to bring one payment too many.
 		final boolean faladorElite = access.isKnown()
@@ -97,6 +105,7 @@ public final class SupplyCalculator
 
 		// Which crop goes where (1st choice, or backups when stock runs short)
 		final Map<Patch, Crop> plantings = new LinkedHashMap<>();
+		final List<Crop> reservedHerbs = diseaseFreeHerbs(config, farming, price);
 		for (PatchType type : PatchType.values())
 		{
 			final List<Patch> ofType = new ArrayList<>();
@@ -112,7 +121,7 @@ public final class SupplyCalculator
 				plantings.putAll(CropAllocator.allocate(ofType, config.cropChoices(type, farming),
 					crop -> holdings.count(crop.getPlantItemId()),
 					patch -> isSafe(patch, config, access, faladorElite),
-					type == PatchType.HERB ? diseaseFreeHerbs(config, farming, price) : Collections.emptyList()));
+					type == PatchType.HERB ? reservedHerbs : Collections.emptyList()));
 			}
 		}
 
@@ -162,15 +171,16 @@ public final class SupplyCalculator
 			final int n = places.size();
 			// Seeds stack; saplings don't.
 			final int slots = crop.getType() == PatchType.HERB ? 1 : n;
-			lines.add(line(SupplyLine.Group.SEEDS, itemName.apply(id), n, holdings,
-				"Planting at: " + String.join(", ", places), slots, id));
+			final String role = cropRole(crop, config, farming, reservedHerbs);
+			lines.add(line(SupplyLine.Group.SEEDS, itemName.apply(id) + (role.isEmpty() ? "" : " - " + role), n, holdings,
+				carried, "Planting at: " + String.join(", ", places), slots, id));
 		});
 
 		// Payments
 		payments.forEach((id, qty) ->
 		{
 			final String name = itemName.apply(id) + (config.isPayWithNotes() ? " (noted)" : "");
-			lines.add(line(SupplyLine.Group.PAYMENTS, name, qty, holdings,
+			lines.add(line(SupplyLine.Group.PAYMENTS, name, qty, holdings, carried,
 				"Gardener protection payment", config.isPayWithNotes() ? 1 : qty, id));
 		});
 
@@ -223,15 +233,15 @@ public final class SupplyCalculator
 			}
 			travelPlan.add(location.getDisplayName() + ": " + how + (auto ? " (auto)" : ""));
 		}
-		tablets.forEach((id, n) -> lines.add(line(SupplyLine.Group.TRAVEL, itemName.apply(id), n, holdings,
+		tablets.forEach((id, n) -> lines.add(line(SupplyLine.Group.TRAVEL, itemName.apply(id), n, holdings, carried,
 			null, 1, id)));
-		travelItems.forEach((item, stops) -> lines.add(line(SupplyLine.Group.TRAVEL, item.getDisplayName(), 1, holdings,
+		travelItems.forEach((item, stops) -> lines.add(line(SupplyLine.Group.TRAVEL, item.getDisplayName(), 1, holdings, carried,
 			stops > 1 ? "Used at " + stops + " stops; charges aren't checked" : "Charges aren't checked", 1,
 			item.getItemIds())));
 		if (fairyRing && !(access.isKnown()
 			&& access.isMet(Requirement.diary(AchievementDiary.LUMBRIDGE_DRAYNOR, AchievementDiary.Tier.ELITE))))
 		{
-			lines.add(line(SupplyLine.Group.TRAVEL, "Dramen or lunar staff", 1, holdings,
+			lines.add(line(SupplyLine.Group.TRAVEL, "Dramen or lunar staff", 1, holdings, carried,
 				"Needed for fairy rings until the Elite Lumbridge & Draynor diary", 0, SupplyItems.FAIRY_RING_STAFFS));
 		}
 
@@ -247,64 +257,66 @@ public final class SupplyCalculator
 		}
 
 		// Runes
-		final RuneResult runes = runes(runeNeed, holdings, itemName);
+		final RuneResult runes = runes(runeNeed, holdings, carried, itemName);
 		lines.addAll(runes.lines);
 
 		// Coins
 		if (coins > 0)
 		{
-			lines.add(line(SupplyLine.Group.PAYMENTS, "Coins", coins, holdings,
+			lines.add(line(SupplyLine.Group.PAYMENTS, "Coins", coins, holdings, carried,
 				"200 per tree cleared by the gardener, plus travel fares", 1, ItemID.COINS));
 		}
 
 		// Tools and compost
-		lines.add(line(SupplyLine.Group.TOOLS, "Spade", 1, holdings, null, 1, ItemID.SPADE));
+		lines.add(line(SupplyLine.Group.TOOLS, "Spade", 1, holdings, carried, null, 1, ItemID.SPADE));
 		if (!holdings.isAutoweedOn() || anyWeeds)
 		{
-			lines.add(line(SupplyLine.Group.TOOLS, "Rake", 1, holdings,
+			lines.add(line(SupplyLine.Group.TOOLS, "Rake", 1, holdings, carried,
 				holdings.isAutoweedOn() ? "Some patches have weeds" : "Not needed once Tithe Farm Auto-weed is on",
 				1, ItemID.RAKE));
 		}
 		if (herbs > 0)
 		{
-			lines.add(line(SupplyLine.Group.TOOLS, "Seed dibber", 1, holdings, null, 1, ItemID.DIBBER));
+			lines.add(line(SupplyLine.Group.TOOLS, "Seed dibber", 1, holdings, carried, null, 1, ItemID.DIBBER));
 		}
 		if (needAxe)
 		{
-			lines.add(line(SupplyLine.Group.TOOLS, "Axe", 1, holdings, "To chop grown trees (pay-to-clear is off)", 1,
-				SupplyItems.AXES));
+			lines.add(changeIn(line(SupplyLine.Group.TOOLS, "Axe", 1, holdings, carried,
+				"To chop grown trees (pay-to-clear is off)", 1, SupplyItems.AXES), PROTECTION));
 		}
 		final boolean bottomless = holdings.count(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED) > 0;
 		compost.forEach((c, n) ->
 		{
-			final SupplyLine buckets = line(SupplyLine.Group.TOOLS, c.getDisplayName(), n, holdings,
+			final SupplyLine buckets = line(SupplyLine.Group.TOOLS, c.getDisplayName(), n, holdings, carried,
 				bottomless ? "You have a filled bottomless bucket (its type and charges aren't checked)" : null,
 				bottomless ? 1 : n, c.getItemId());
-			lines.add(bottomless ? covered(buckets) : buckets);
+			lines.add(changeIn(bottomless ? covered(buckets) : buckets, PROTECTION));
 		});
 
 		// Optional
 		if (config.isRecommendEquipmentBoosts() && herbs > 0)
 		{
-			lines.add(line(SupplyLine.Group.OPTIONAL, "Magic secateurs", 1, holdings, "+10% herb yield; can be worn", 0,
-				SupplyItems.MAGIC_SECATEURS));
+			lines.add(changeIn(line(SupplyLine.Group.OPTIONAL, "Magic secateurs", 1, holdings, carried,
+				"+10% herb yield; can be worn", 0, SupplyItems.MAGIC_SECATEURS), PROTECTION));
 		}
 		if (config.getPlantCureDoses() > 0)
 		{
-			lines.add(line(SupplyLine.Group.OPTIONAL, "Plant cure", config.getPlantCureDoses(), holdings,
+			lines.add(line(SupplyLine.Group.OPTIONAL, "Plant cure", config.getPlantCureDoses(), holdings, carried,
 				"Backup for diseased patches", config.getPlantCureDoses(), ItemID.PLANT_CURE));
 		}
 		if (config.getStaminaDoses() > 0)
 		{
 			int doses = 0;
+			int carriedDoses = 0;
 			for (Map.Entry<Integer, Integer> e : SupplyItems.STAMINA_DOSES.entrySet())
 			{
 				doses += holdings.count(e.getKey()) * e.getValue();
+				carriedDoses += carried.count(e.getKey()) * e.getValue();
 			}
 			final int[] staminaIds = SupplyItems.STAMINA_DOSES.keySet().stream().mapToInt(Integer::intValue).toArray();
 			lines.add(new SupplyLine(SupplyLine.Group.OPTIONAL, "Stamina doses", config.getStaminaDoses(), doses,
-				holdings.where(staminaIds), null,
-				(config.getStaminaDoses() + STAMINA_DOSES_PER_POTION - 1) / STAMINA_DOSES_PER_POTION, false));
+				carriedDoses, holdings.where(staminaIds), null,
+				(config.getStaminaDoses() + STAMINA_DOSES_PER_POTION - 1) / STAMINA_DOSES_PER_POTION, false, RUN_OPTIONS));
 		}
 
 		int slots = 0;
@@ -324,6 +336,26 @@ public final class SupplyCalculator
 		lines.sort((a, b) -> a.getGroup().compareTo(b.getGroup()));
 		return new SupplyPlan(Collections.unmodifiableList(lines), patchCounts, notDue, travelPlan, warnings, coins,
 			runes.summary, slots, Collections.unmodifiableMap(plantings));
+	}
+
+	/**
+	 * How a crop got on the list, e.g. "1st choice" or "disease-free only". Empty with a single choice and no
+	 * disease-free herbs, where there's nothing to explain.
+	 */
+	static String cropRole(Crop crop, RunConfig config, int farming, List<Crop> reservedHerbs)
+	{
+		final List<Crop> choices = config.cropChoices(crop.getType(), farming);
+		final List<String> parts = new ArrayList<>();
+		final int index = choices.indexOf(crop);
+		if (index >= 0 && (choices.size() > 1 || !reservedHerbs.isEmpty()))
+		{
+			parts.add(ORDINALS[Math.min(index, ORDINALS.length - 1)] + " choice");
+		}
+		if (reservedHerbs.contains(crop))
+		{
+			parts.add("disease-free only");
+		}
+		return String.join(", ", parts);
 	}
 
 	/** The player's herbs for disease-free patches that they can plant, most valuable seed first. */
@@ -391,53 +423,27 @@ public final class SupplyCalculator
 		String summary = "";
 	}
 
+	/** Runes held after free sources, and the combination runes spent to get there. */
+	private static final class RuneAllocation
+	{
+		final Map<Rune, Integer> have = new EnumMap<>(Rune.class);
+		final Map<Integer, Integer> comboUsed = new LinkedHashMap<>();
+	}
+
 	/**
 	 * Rune lines after free sources: equipped staves cover their runes completely, then combination runes
-	 * are spent on the biggest shortfalls first (SPEC 11.3).
+	 * are spent on the biggest shortfalls first (SPEC 11.3). Worked out twice: for everything held, and for
+	 * what is carried.
 	 */
-	static RuneResult runes(Map<Rune, Integer> need, Holdings holdings, IntFunction<String> itemName)
+	static RuneResult runes(Map<Rune, Integer> need, Holdings holdings, Holdings carried, IntFunction<String> itemName)
 	{
 		final RuneResult result = new RuneResult();
 		if (need.isEmpty())
 		{
 			return result;
 		}
-
-		final Map<Rune, Integer> have = new EnumMap<>(Rune.class);
-		final Map<Rune, Integer> shortfall = new EnumMap<>(Rune.class);
-		need.forEach((rune, n) ->
-		{
-			final int held = holdings.getInfiniteRunes().contains(rune) ? n : holdings.count(rune.getItemId());
-			have.put(rune, held);
-			shortfall.put(rune, Math.max(0, n - held));
-		});
-
-		final List<Map.Entry<Integer, Set<Rune>>> combos = new ArrayList<>(SupplyItems.COMBINATION_RUNES.entrySet());
-		combos.sort((a, b) -> Integer.compare(covers(b.getValue(), shortfall), covers(a.getValue(), shortfall)));
-		final Map<Integer, Integer> comboUsed = new LinkedHashMap<>();
-		for (Map.Entry<Integer, Set<Rune>> combo : combos)
-		{
-			int largest = 0;
-			for (Rune rune : combo.getValue())
-			{
-				largest = Math.max(largest, shortfall.getOrDefault(rune, 0));
-			}
-			final int use = Math.min(holdings.count(combo.getKey()), largest);
-			if (use <= 0)
-			{
-				continue;
-			}
-			comboUsed.put(combo.getKey(), use);
-			for (Rune rune : combo.getValue())
-			{
-				if (shortfall.containsKey(rune))
-				{
-					final int covered = Math.min(use, shortfall.get(rune));
-					shortfall.merge(rune, -covered, Integer::sum);
-					have.merge(rune, covered, Integer::sum);
-				}
-			}
-		}
+		final RuneAllocation all = allocateRunes(need, holdings);
+		final RuneAllocation onYou = allocateRunes(need, carried);
 
 		final List<String> bring = new ArrayList<>();
 		final List<String> free = new ArrayList<>();
@@ -460,14 +466,53 @@ public final class SupplyCalculator
 					note = "Rune pouch has " + inPouch;
 				}
 			}
-			result.lines.add(new SupplyLine(SupplyLine.Group.RUNES, name, n, have.get(rune),
-				holdings.where(rune.getItemId()), note, infinite || inPouch(holdings, rune) ? 0 : 1, false));
+			result.lines.add(new SupplyLine(SupplyLine.Group.RUNES, name, n, all.have.get(rune), onYou.have.get(rune),
+				holdings.where(rune.getItemId()), note, infinite || inPouch(holdings, rune) ? 0 : 1, false,
+				RUN_OPTIONS + " (runes or tablets), " + TRAVEL));
 		});
-		comboUsed.forEach((id, n) -> free.add(n + " " + itemName.apply(id).toLowerCase()));
+		all.comboUsed.forEach((id, n) -> free.add(n + " " + itemName.apply(id).toLowerCase()));
 		result.summary = String.join(", ", bring) + (free.isEmpty() ? "" : " (" + String.join("; ", free) + ")");
 		return result;
 	}
 
+	private static RuneAllocation allocateRunes(Map<Rune, Integer> need, Holdings holdings)
+	{
+		final RuneAllocation result = new RuneAllocation();
+		final Map<Rune, Integer> shortfall = new EnumMap<>(Rune.class);
+		need.forEach((rune, n) ->
+		{
+			final int held = holdings.getInfiniteRunes().contains(rune) ? n : holdings.count(rune.getItemId());
+			result.have.put(rune, held);
+			shortfall.put(rune, Math.max(0, n - held));
+		});
+
+		final List<Map.Entry<Integer, Set<Rune>>> combos = new ArrayList<>(SupplyItems.COMBINATION_RUNES.entrySet());
+		combos.sort((a, b) -> Integer.compare(covers(b.getValue(), shortfall), covers(a.getValue(), shortfall)));
+		for (Map.Entry<Integer, Set<Rune>> combo : combos)
+		{
+			int largest = 0;
+			for (Rune rune : combo.getValue())
+			{
+				largest = Math.max(largest, shortfall.getOrDefault(rune, 0));
+			}
+			final int use = Math.min(holdings.count(combo.getKey()), largest);
+			if (use <= 0)
+			{
+				continue;
+			}
+			result.comboUsed.put(combo.getKey(), use);
+			for (Rune rune : combo.getValue())
+			{
+				if (shortfall.containsKey(rune))
+				{
+					final int covered = Math.min(use, shortfall.get(rune));
+					shortfall.merge(rune, -covered, Integer::sum);
+					result.have.merge(rune, covered, Integer::sum);
+				}
+			}
+		}
+		return result;
+	}
 	private static boolean inPouch(Holdings holdings, Rune rune)
 	{
 		return holdings.getRunePouch().getOrDefault(rune.getItemId(), 0) > 0;
@@ -503,18 +548,41 @@ public final class SupplyCalculator
 		return false;
 	}
 
-	private static SupplyLine line(SupplyLine.Group group, String name, int need, Holdings holdings, String note,
-		int slots, int... itemIds)
+	private static SupplyLine line(SupplyLine.Group group, String name, int need, Holdings holdings, Holdings carried,
+		String note, int slots, int... itemIds)
 	{
-		return new SupplyLine(group, name, need, holdings.countAny(itemIds), holdings.where(itemIds), note, slots, false);
+		return new SupplyLine(group, name, need, holdings.countAny(itemIds), carried.countAny(itemIds),
+			holdings.where(itemIds), note, slots, false, defaultChangeIn(group));
+	}
+
+	private static String defaultChangeIn(SupplyLine.Group group)
+	{
+		switch (group)
+		{
+			case TRAVEL:
+				return TRAVEL;
+			case SEEDS:
+				return CROPS;
+			case PAYMENTS:
+				return PROTECTION;
+			case OPTIONAL:
+				return RUN_OPTIONS;
+			default:
+				return null;
+		}
 	}
 
 	private static SupplyLine covered(SupplyLine line)
 	{
-		return new SupplyLine(line.getGroup(), line.getName(), line.getNeed(), line.getHave(), line.getWhere(),
-			line.getNote(), line.getSlots(), true);
+		return new SupplyLine(line.getGroup(), line.getName(), line.getNeed(), line.getHave(), line.getCarried(),
+			line.getWhere(), line.getNote(), line.getSlots(), true, line.getChangeIn());
 	}
 
+	private static SupplyLine changeIn(SupplyLine line, String where)
+	{
+		return new SupplyLine(line.getGroup(), line.getName(), line.getNeed(), line.getHave(), line.getCarried(),
+			line.getWhere(), line.getNote(), line.getSlots(), line.isCoveredOtherwise(), where);
+	}
 	private static String title(String enumName)
 	{
 		final String lower = enumName.toLowerCase();

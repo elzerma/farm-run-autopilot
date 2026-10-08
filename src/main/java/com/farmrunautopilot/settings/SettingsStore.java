@@ -3,7 +3,10 @@ package com.farmrunautopilot.settings;
 import com.farmrunautopilot.FarmRunAutopilotConfig;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -21,6 +24,9 @@ public class SettingsStore
 {
 	private static final String RUN_CONFIG_KEY = "runConfig";
 	private static final String ACCOUNT_KEY = "account";
+	private static final String OPEN_SECTIONS_KEY = "ui.openSections";
+	/** Open the first time: the ones changed most often. */
+	private static final List<String> DEFAULT_OPEN_SECTIONS = Arrays.asList("Crops", "Run options");
 
 	private final ConfigManager configManager;
 	private final Gson gson;
@@ -59,6 +65,37 @@ public class SettingsStore
 	public void removeSaveListener(Runnable listener)
 	{
 		saveListeners.remove(listener);
+	}
+
+	/**
+	 * Whether a sidebar section is open. Stored once for the whole client (not per account), as a
+	 * comma-separated list of open section titles.
+	 */
+	public boolean isSectionOpen(String title)
+	{
+		final String open = configManager.getConfiguration(FarmRunAutopilotConfig.GROUP, OPEN_SECTIONS_KEY);
+		if (open == null)
+		{
+			return DEFAULT_OPEN_SECTIONS.contains(title);
+		}
+		return Arrays.asList(open.split(",")).contains(title);
+	}
+
+	public void setSectionOpen(String title, boolean isOpen)
+	{
+		final String saved = configManager.getConfiguration(FarmRunAutopilotConfig.GROUP, OPEN_SECTIONS_KEY);
+		final Set<String> open = new LinkedHashSet<>(saved == null ? DEFAULT_OPEN_SECTIONS
+			: Arrays.asList(saved.split(",")));
+		open.remove("");
+		if (isOpen)
+		{
+			open.add(title);
+		}
+		else
+		{
+			open.remove(title);
+		}
+		configManager.setConfiguration(FarmRunAutopilotConfig.GROUP, OPEN_SECTIONS_KEY, String.join(",", open));
 	}
 
 	/** Whether there is an account profile to save to (i.e. the player has logged in). */

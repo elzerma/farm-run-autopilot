@@ -21,12 +21,12 @@ import com.farmrunautopilot.settings.RouteMode;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.tracking.PatchTracker;
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -48,22 +48,29 @@ import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 
 /**
- * The Setup tab (SPEC 13.2). Rebuilt from the saved settings whenever they reload or the account's
- * access changes; every edit is saved straight away.
+ * The Setup and Rules tabs (SPEC 13.2, split by Sean 2026-10-07): Setup holds what changes now and then,
+ * Rules what is set once. Rebuilt from the saved settings whenever they reload or the account's access
+ * changes; every edit is saved straight away.
  */
 class SetupPanel extends JPanel
 {
+	enum Page
+	{
+		SETUP,
+		RULES
+	}
+
 	/** Room left for controls after the sidebar's and sections' borders. */
 	private static final int CONTROL_WIDTH = PluginPanel.PANEL_WIDTH - 40;
 
 	private final SettingsStore settings;
 	private final AccessChecker accessChecker;
 	private final PatchDebugPanel patchDebugPanel;
-	/** Which sections are open, remembered across rebuilds. All start closed. */
-	private final Map<String, Boolean> expanded = new HashMap<>();
+	private final Page page;
 
-	SetupPanel(SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker)
+	SetupPanel(Page page, SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker)
 	{
+		this.page = page;
 		this.settings = settings;
 		this.accessChecker = accessChecker;
 		this.patchDebugPanel = new PatchDebugPanel(patchTracker);
@@ -94,49 +101,31 @@ class SetupPanel extends JPanel
 			add(note("Checking your quests, diaries and levels... nothing is greyed out until that's done."));
 		}
 
-		add(runTypesSection(config));
-		add(patchesSection(config, access));
-		add(cropsSection(config, access));
-		add(protectionSection(config));
-		add(travelSection(config, access));
-		add(pohSection(account));
-		add(unlocksSection(account, access));
-		add(routeSection(config));
-		add(storageSection(config));
+		if (page == Page.SETUP)
+		{
+			add(cropsSection(config, access));
+			add(runOptionsSection(config));
+		}
+		else
+		{
+			add(patchesSection(config, access));
+			add(protectionSection(config));
+			add(travelSection(config, access));
+			add(pohSection(account));
+			add(unlocksSection(account, access));
+			add(routeSection(config));
+			add(storageSection(config));
 
-		final CollapsibleSection debug = section("Patch states (debug)");
-		debug.addContent(patchDebugPanel);
-		add(debug);
+			final CollapsibleSection debug = section("Patch states (debug)");
+			debug.addContent(patchDebugPanel);
+			add(debug);
+		}
 
 		revalidate();
 		repaint();
 	}
 
 	// Sections
-
-	private JComponent runTypesSection(RunConfig config)
-	{
-		final CollapsibleSection s = section("Run types");
-		for (PatchType type : PatchType.values())
-		{
-			s.addContent(checkBox(type.getDisplayName() + " runs", config.getEnabledTypes().contains(type), true, null,
-				on -> saveRun(() ->
-				{
-					if (on)
-					{
-						config.getEnabledTypes().add(type);
-					}
-					else
-					{
-						config.getEnabledTypes().remove(type);
-					}
-				})));
-		}
-		s.addContent(label("Include a run type when this % of its patches are due:"));
-		s.addContent(spinner(config.getDueThresholdPercent(), 1, 100, 5,
-			v -> saveRun(() -> config.setDueThresholdPercent(v))));
-		return s;
-	}
 
 	private JComponent patchesSection(RunConfig config, AccessSnapshot access)
 	{
@@ -351,8 +340,6 @@ class SetupPanel extends JPanel
 		s.addContent(label("Compost"));
 		s.addContent(combo(enumChoices(Compost.values()), config.getCompost().get(PatchType.HERB),
 			c -> saveRun(() -> config.getCompost().put(PatchType.HERB, c))));
-		s.addContent(label("Plant cure doses to bring (backup):"));
-		s.addContent(spinner(config.getPlantCureDoses(), 0, 40, 1, v -> saveRun(() -> config.setPlantCureDoses(v))));
 		s.addContent(checkBox("Use Cure Plant (Lunar)", config.isUseCurePlant(), true, null,
 			on -> saveRun(() -> config.setUseCurePlant(on))));
 		s.addContent(checkBox("Use Resurrect Crops (Arceuus)", config.isUseResurrectCrops(), true, null,
@@ -367,8 +354,7 @@ class SetupPanel extends JPanel
 	{
 		final CollapsibleSection s = section("Travel");
 		s.addContent(note("Auto picks the fastest method you have. Locked methods show what they need."));
-		s.addContent(checkBox("Use runes instead of tabs everywhere", config.isUseRunesNotTabs(), true, null,
-			on -> saveRun(() -> config.setUseRunesNotTabs(on))));
+		s.addContent(note("\"Runes instead of tablets everywhere\" is in Setup > Run options."));
 
 		for (Location location : Location.values())
 		{
@@ -404,7 +390,7 @@ class SetupPanel extends JPanel
 			if (hasSpell)
 			{
 				s.addContent(checkBox("Runes instead of tabs here", config.getRunesNotTabsAt().contains(location),
-					!config.isUseRunesNotTabs(), null,
+					true, "Setup > Run options can switch this on for every location",
 					on -> saveRun(() ->
 					{
 						if (on)
@@ -518,10 +504,6 @@ class SetupPanel extends JPanel
 	private JComponent routeSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("Route");
-		s.addContent(label("Route optimisation"));
-		s.addContent(combo(enumChoices(RouteMode.values()), config.getRouteMode(),
-			m -> saveRun(() -> config.setRouteMode(m))));
-
 		final List<Choice<Location>> starts = new ArrayList<>();
 		for (Location location : Location.values())
 		{
@@ -531,12 +513,28 @@ class SetupPanel extends JPanel
 		s.addContent(combo(starts, config.getStartLocation(), l -> saveRun(() -> config.setStartLocation(l))));
 		s.addContent(checkBox("Finish near a bank", config.isEndNearBank(), true, null,
 			on -> saveRun(() -> config.setEndNearBank(on))));
-		s.addContent(label("Restore run energy below (%):"));
-		s.addContent(spinner(config.getEnergyThreshold(), 0, 100, 5, v -> saveRun(() -> config.setEnergyThreshold(v))));
-		s.addContent(label("...before a walk of at least (tiles):"));
-		s.addContent(spinner(config.getEnergyMinTiles(), 0, 200, 5, v -> saveRun(() -> config.setEnergyMinTiles(v))));
-		s.addContent(label("Stamina doses to bring:"));
-		s.addContent(spinner(config.getStaminaDoses(), 0, 40, 1, v -> saveRun(() -> config.setStaminaDoses(v))));
+		s.addContent(spinnerRow("Restore run energy below (%)", spinner(config.getEnergyThreshold(), 0, 100, 5,
+			v -> saveRun(() -> config.setEnergyThreshold(v)))));
+		s.addContent(spinnerRow("...before a walk of at least (tiles)", spinner(config.getEnergyMinTiles(), 0, 200, 5,
+			v -> saveRun(() -> config.setEnergyMinTiles(v)))));
+		s.addContent(spinnerRow("Include a run type when this % of its patches are due",
+			spinner(config.getDueThresholdPercent(), 1, 100, 5, v -> saveRun(() -> config.setDueThresholdPercent(v)))));
+		return s;
+	}
+
+	private JComponent runOptionsSection(RunConfig config)
+	{
+		final CollapsibleSection s = section("Run options");
+		s.addContent(label("Route"));
+		s.addContent(combo(enumChoices(RouteMode.values()), config.getRouteMode(),
+			m -> saveRun(() -> config.setRouteMode(m))));
+		s.addContent(checkBox("Runes instead of tablets everywhere", config.isUseRunesNotTabs(), true,
+			"Per-location choices are in Rules > Travel",
+			on -> saveRun(() -> config.setUseRunesNotTabs(on))));
+		s.addContent(spinnerRow("Stamina doses to bring", spinner(config.getStaminaDoses(), 0, 40, 1,
+			v -> saveRun(() -> config.setStaminaDoses(v)))));
+		s.addContent(spinnerRow("Plant cures to bring (backup)", spinner(config.getPlantCureDoses(), 0, 40, 1,
+			v -> saveRun(() -> config.setPlantCureDoses(v)))));
 		return s;
 	}
 
@@ -574,9 +572,25 @@ class SetupPanel extends JPanel
 
 	// Building blocks
 
+	/** Sections remember being open or closed between sessions. */
 	private CollapsibleSection section(String title)
 	{
-		return new CollapsibleSection(title, expanded.getOrDefault(title, false), open -> expanded.put(title, open));
+		return new CollapsibleSection(title, settings.isSectionOpen(title), open -> settings.setSectionOpen(title, open));
+	}
+
+	/** A short label with its number box on the same line. */
+	private static JComponent spinnerRow(String text, JSpinner spinner)
+	{
+		final JPanel row = new JPanel(new BorderLayout(6, 0));
+		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		row.setBorder(new EmptyBorder(3, 0, 3, 0));
+		final JLabel label = new JLabel(wrap(text, CONTROL_WIDTH - 85));
+		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setFont(FontManager.getRunescapeSmallFont());
+		row.add(label, BorderLayout.CENTER);
+		row.add(spinner, BorderLayout.EAST);
+		row.setMaximumSize(new Dimension(CONTROL_WIDTH, row.getPreferredSize().height));
+		return row;
 	}
 
 	private static JCheckBox checkBox(String text, boolean selected, boolean enabled, String tooltip,
