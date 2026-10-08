@@ -1,20 +1,69 @@
 # Farm Run Autopilot
 
-A RuneLite plugin that plans and guides combined tree, fruit tree and herb farming runs.
-
-Planned features:
-
-- Choose which patches you have, what to plant, how to protect each patch and how to travel to each location.
-- A live checklist and generated bank tab showing exactly what to bring: coins, runes or tabs, seeds and saplings, gardener payments, compost and tools.
-- One combined route across every run type that is due, skipping run types that aren't ready yet.
-- Step-by-step guidance with highlights and arrows, plus run-energy restore suggestions.
+Plans and guides combined tree, fruit tree and herb farming runs: what's due, the fastest route, exactly what
+to bring, and step-by-step guidance at every patch.
 
 The plugin never clicks, types or acts for you. It only shows information.
 
-## Status
+## Features
 
-Early development. The sidebar has an empty Run tab and Setup tab; features are being added in small milestones (see `SPEC.md`).
+**Run tab**
+- Shows which run types are due (trees, fruit trees, herbs) and counts down to the ones that aren't, with
+  buttons to include or skip a type for this run.
+- Plans one route across every due patch, using the teleports, items and unlocks you actually have. Pick the
+  fastest route, the wiki order, or drag stops into your own order.
+- A supply checklist: seeds and saplings, gardener payments (noted is fine), compost, tools, coins, runes or
+  tablets, and travel items. Green is carried, yellow is in your bank or at the tool leprechaun, red is
+  missing.
+- Backup crop choices for when you run out, and your most valuable herbs sent to disease-free patches first.
+
+**Bank**
+- A "Farm run" button in the bank shows just the items you need, with how many of each.
+
+**During a run**
+- Press Start run for a timer and step-by-step instructions under your character: where to go next, then
+  what to do at each patch (pick, check health, clear, rake, compost, plant, pay the gardener).
+- The patch is outlined with a hint arrow over it; the gardener is outlined when it's time to pay; the seed,
+  compost, tool or teleport to use next is outlined in your inventory.
+- Reminders to drop weeds, empty plant pots and buckets, to take an item from the tool leprechaun, or to note
+  produce when your inventory is nearly full.
+- Steps tick off on their own (planting, composting, paying) and the run finishes itself after the last
+  patch, showing your time and your best three times for that kind of run.
+- Route time estimates learn from your own runs.
+- Optional: if you have the Shortest Path plugin, it shows the way to your first stop, so you can start a run
+  from any bank.
+
+**Setup**
+- Choose your patches, crops, protection (pay the gardener or compost only), compost, travel method per
+  location, outfit (Graceful or Farmer's), house (portal, nexus, jewellery box, spirit tree, fairy ring,
+  spellbook altar) and unlocks.
+- Quests, diaries, levels and house furniture are detected automatically; anything you haven't unlocked is
+  greyed out with what it needs.
+- Save settings as presets (e.g. "Quick herbs") and switch between them from the Run tab.
+
+## How to use
+
+1. Open the Farm Run Autopilot sidebar (the seedling icon).
+2. On the Setup tab, pick your crops and run options. The Rules tab has patches, protection, travel, your
+   house, unlocks and the run guidance highlights.
+3. Open your bank and click the "Farm run" button to withdraw what you need.
+4. Press **Start run** on the Run tab and follow the instructions under your character.
+
+Patches are tracked as you visit them. Until then, the plugin uses RuneLite's Time Tracking data if it has
+any.
+
+## Privacy
+
+Everything is stored in your RuneLite profile. The plugin makes no network requests.
+
+## Credits
+
+- Generated bank tab approach adapted from [Quest Helper](https://github.com/Zoinkwiz/quest-helper).
+- Patch coordinates from [Farming-Helper](https://github.com/Speaax/Farming-Helper).
+- Built on [RuneLite](https://github.com/runelite/runelite).
+
+See `THIRD_PARTY_NOTICES` for their licences.
 
 ## Licence
 
-BSD 2-Clause, see `LICENSE`. Third-party notices are in `THIRD_PARTY_NOTICES`.
+BSD 2-Clause, see `LICENSE`.

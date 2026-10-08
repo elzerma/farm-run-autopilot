@@ -129,11 +129,6 @@ public class RunSession
 		return view;
 	}
 
-	public boolean isRunning()
-	{
-		return running;
-	}
-
 	/** Freeze the current plan and start guiding. */
 	public void start()
 	{
@@ -487,26 +482,6 @@ public class RunSession
 	private Progress progress(Patch patch)
 	{
 		return progress.computeIfAbsent(patch, k -> new Progress());
-	}
-
-	/** The patch the current step is about, for highlights (M7b). */
-	public WorldPoint currentTarget()
-	{
-		if (!running || plan == null)
-		{
-			return null;
-		}
-		if (currentPatch != null)
-		{
-			return PatchPoints.of(currentPatch);
-		}
-		final List<RouteStop> stops = plan.getRoute().getStops();
-		if (stopIndex < stops.size())
-		{
-			final List<Patch> here = patchesAt(stops.get(stopIndex).getLocation());
-			return here.isEmpty() ? null : PatchPoints.of(here.get(0));
-		}
-		return null;
 	}
 
 	private RunView runningView(String instruction)

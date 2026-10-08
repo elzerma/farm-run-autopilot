@@ -40,16 +40,4 @@ public enum LeprechaunItem
 	{
 		return base + (extra << bitsInBase);
 	}
-
-	public static LeprechaunItem forItem(int itemId)
-	{
-		for (LeprechaunItem item : values())
-		{
-			if (item.itemId == itemId)
-			{
-				return item;
-			}
-		}
-		return null;
-	}
 }

@@ -54,11 +54,6 @@ public enum Location
 		this.internalWalk = internalWalk;
 	}
 
-	public boolean hasBank()
-	{
-		return bankWalk != null;
-	}
-
 	public List<Patch> getPatches()
 	{
 		final List<Patch> patches = new ArrayList<>();
