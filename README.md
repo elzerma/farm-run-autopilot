@@ -5,6 +5,8 @@ to bring, and step-by-step guidance at every patch.
 
 The plugin never clicks, types or acts for you. It only shows information.
 
+![Paying a gardener: the gardener and the payment are outlined, with the step under the player](docs/guidance-gardener.webp)
+
 ## Features
 
 **Run tab**
@@ -17,8 +19,15 @@ The plugin never clicks, types or acts for you. It only shows information.
   missing.
 - Backup crop choices for when you run out, and your most valuable herbs sent to disease-free patches first.
 
+<p>
+  <img src="docs/run-tab.png" alt="Run tab: what's due and the route" width="300">
+  <img src="docs/supplies.png" alt="Supply checklist with carried, in storage and missing colours" width="300">
+</p>
+
 **Bank**
 - A "Farm run" button in the bank shows just the items you need, with how many of each.
+
+<img src="docs/bank-tab.png" alt="The Farm run bank tab" width="500">
 
 **During a run**
 - Press Start run for a timer and step-by-step instructions under your character: where to go next, then
@@ -33,6 +42,10 @@ The plugin never clicks, types or acts for you. It only shows information.
 - Optional: if you have the Shortest Path plugin, it shows the way to your first stop, so you can start a run
   from any bank.
 
+![The patch outlined with the next step under the player](docs/guidance-patch.webp)
+
+![Composting: the compost is outlined in the inventory and finished stops are struck through](docs/guidance-compost.webp)
+
 **Setup**
 - Choose your patches, crops, protection (pay the gardener or compost only), compost, travel method per
   location, outfit (Graceful or Farmer's), house (portal, nexus, jewellery box, spirit tree, fairy ring,
@@ -40,6 +53,8 @@ The plugin never clicks, types or acts for you. It only shows information.
 - Quests, diaries, levels and house furniture are detected automatically; anything you haven't unlocked is
   greyed out with what it needs.
 - Save settings as presets (e.g. "Quick herbs") and switch between them from the Run tab.
+
+<img src="docs/setup-crops.png" alt="Setup tab: crop choices and disease-free herbs" width="300">
 
 ## How to use
 
