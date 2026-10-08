@@ -3,6 +3,7 @@ package com.farmrunautopilot.settings;
 import com.farmrunautopilot.FarmRunAutopilotConfig;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,6 +26,7 @@ public class SettingsStore
 	private static final String RUN_CONFIG_KEY = "runConfig";
 	private static final String ACCOUNT_KEY = "account";
 	private static final String OPEN_SECTIONS_KEY = "ui.openSections";
+	private static final String PRESETS_KEY = "presets";
 	/** Open the first time: the ones changed most often. */
 	private static final List<String> DEFAULT_OPEN_SECTIONS = Arrays.asList("Crops", "Run options");
 
@@ -37,6 +39,8 @@ public class SettingsStore
 	private volatile RunConfig runConfig = new RunConfig();
 	@Getter
 	private volatile AccountSettings account = new AccountSettings();
+	/** Replaced, never changed in place. */
+	private volatile List<Preset> presets = new ArrayList<>();
 
 	@Inject
 	SettingsStore(ConfigManager configManager, Gson gson)
@@ -104,11 +108,21 @@ public class SettingsStore
 		return configManager.getRSProfileKey() != null;
 	}
 
-	/** Reloads both from the current profile, e.g. after login or switching accounts. */
+	/** Reloads everything from the current profile, e.g. after login or switching accounts. */
 	public void load()
 	{
 		runConfig = read(RUN_CONFIG_KEY, RunConfig.class, new RunConfig()).sanitise();
 		account = read(ACCOUNT_KEY, AccountSettings.class, new AccountSettings()).sanitise();
+		final List<Preset> loaded = new ArrayList<>();
+		for (Preset preset : read(PRESETS_KEY, Preset[].class, new Preset[0]))
+		{
+			if (preset != null && preset.getName() != null && preset.getConfig() != null)
+			{
+				preset.getConfig().sanitise();
+				loaded.add(preset);
+			}
+		}
+		presets = loaded;
 		notifyListeners();
 		for (Runnable listener : saveListeners)
 		{
@@ -119,6 +133,105 @@ public class SettingsStore
 	public void saveRunConfig()
 	{
 		write(RUN_CONFIG_KEY, runConfig);
+	}
+
+	// Presets (SPEC 13.5). Swing thread.
+
+	public List<String> presetNames()
+	{
+		final List<String> names = new ArrayList<>();
+		for (Preset preset : presets)
+		{
+			names.add(preset.getName());
+		}
+		return names;
+	}
+
+	/** The preset the current settings match exactly, or null if they've been changed since. */
+	public String activePreset()
+	{
+		for (Preset preset : presets)
+		{
+			if (preset.getConfig().equals(runConfig))
+			{
+				return preset.getName();
+			}
+		}
+		return null;
+	}
+
+	/** Save the current settings under this name, replacing a preset with the same name. */
+	public void savePreset(String name)
+	{
+		final List<Preset> updated = new ArrayList<>(presets);
+		final Preset preset = new Preset(name, copy(runConfig));
+		final int index = indexOf(name);
+		if (index >= 0)
+		{
+			updated.set(index, preset);
+		}
+		else
+		{
+			updated.add(preset);
+		}
+		writePresets(updated);
+	}
+
+	/** Switch the current settings to this preset. */
+	public void applyPreset(String name)
+	{
+		final int index = indexOf(name);
+		if (index < 0)
+		{
+			return;
+		}
+		runConfig = copy(presets.get(index).getConfig());
+		saveRunConfig();
+		notifyListeners();
+	}
+
+	public void renamePreset(String from, String to)
+	{
+		final int index = indexOf(from);
+		if (index < 0 || indexOf(to) >= 0)
+		{
+			return;
+		}
+		final List<Preset> updated = new ArrayList<>(presets);
+		updated.set(index, new Preset(to, presets.get(index).getConfig()));
+		writePresets(updated);
+	}
+
+	public void deletePreset(String name)
+	{
+		final List<Preset> updated = new ArrayList<>(presets);
+		updated.removeIf(p -> p.getName().equals(name));
+		writePresets(updated);
+	}
+
+	private int indexOf(String name)
+	{
+		for (int i = 0; i < presets.size(); i++)
+		{
+			if (presets.get(i).getName().equals(name))
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	private void writePresets(List<Preset> updated)
+	{
+		presets = updated;
+		write(PRESETS_KEY, updated.toArray(new Preset[0]));
+		notifyListeners();
+	}
+
+	/** A deep copy, so editing the current settings never changes a saved preset. */
+	private RunConfig copy(RunConfig config)
+	{
+		return gson.fromJson(gson.toJson(config), RunConfig.class).sanitise();
 	}
 
 	/**

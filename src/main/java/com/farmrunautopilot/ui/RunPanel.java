@@ -33,6 +33,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -57,6 +58,8 @@ class RunPanel extends JPanel
 	private static final Color MISSING = new Color(0xE0, 0x55, 0x55);
 	/** Run type labels short enough for three across the sidebar, in {@link PatchType} order. */
 	private static final String[] SHORT_TYPE_NAMES = {"Trees", "Fruit", "Herbs"};
+	/** Shown in the preset picker when the settings no longer match any preset. */
+	private static final String EDITED_PRESET = "Custom (changed)";
 
 	private final SettingsStore settings;
 	private final RunOverrides overrides;
@@ -122,9 +125,20 @@ class RunPanel extends JPanel
 		rebuild();
 	}
 
+	/** Redraw from the current settings (e.g. a preset was picked). Call on the Swing thread. */
+	void refresh()
+	{
+		rebuild();
+	}
+
 	private void rebuild()
 	{
 		removeAll();
+		final JComponent presets = presetPicker();
+		if (presets != null)
+		{
+			add(presets);
+		}
 		add(runTypeToggles());
 
 		if (!loggedIn)
@@ -305,6 +319,50 @@ class RunPanel extends JPanel
 		wrapper.add(cell, BorderLayout.CENTER);
 		wrapper.setToolTipText(objectivesTooltip(stop.getObjectives()));
 		return left(wrapper);
+	}
+
+	// Presets
+
+	/** One-click switch between saved presets (SPEC 13.5), or null if none are saved. */
+	private JComponent presetPicker()
+	{
+		final List<String> names = settings.presetNames();
+		if (names.isEmpty() || controls.view().getState() == RunView.State.RUNNING)
+		{
+			return null;
+		}
+		final String active = settings.activePreset();
+		final JComboBox<String> combo = new JComboBox<>();
+		if (active == null)
+		{
+			combo.addItem(EDITED_PRESET);
+		}
+		for (String name : names)
+		{
+			combo.addItem(name);
+		}
+		combo.setSelectedItem(active != null ? active : EDITED_PRESET);
+		combo.setFont(FontManager.getRunescapeSmallFont());
+		combo.setToolTipText("Switch to a saved preset. Save and manage presets in Setup > Presets.");
+		combo.addActionListener(e ->
+		{
+			final Object picked = combo.getSelectedItem();
+			if (picked != null && !EDITED_PRESET.equals(picked) && !picked.equals(active))
+			{
+				settings.applyPreset((String) picked);
+			}
+		});
+
+		final JPanel row = new JPanel(new BorderLayout(6, 0));
+		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		row.setBorder(new EmptyBorder(0, 0, 4, 0));
+		final JLabel label = new JLabel("Preset");
+		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setFont(FontManager.getRunescapeSmallFont());
+		row.add(label, BorderLayout.WEST);
+		row.add(combo, BorderLayout.CENTER);
+		row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
+		return left(row);
 	}
 
 	// Run types

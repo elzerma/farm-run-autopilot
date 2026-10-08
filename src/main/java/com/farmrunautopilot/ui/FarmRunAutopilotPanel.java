@@ -120,6 +120,8 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	{
 		setupPanel.rebuild();
 		rulesPanel.rebuild();
+		// The Run tab shows the run types and preset from the same settings
+		runPanel.refresh();
 	}
 
 	/** Pins a page to the top of its tab instead of stretching it. */

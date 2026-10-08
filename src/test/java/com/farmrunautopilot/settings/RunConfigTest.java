@@ -21,6 +21,22 @@ public class RunConfigTest
 	private final Gson gson = new Gson();
 
 	@Test
+	public void presetCopiesMatchTheSettingsTheyWereSavedFrom()
+	{
+		// SettingsStore.activePreset() relies on a saved copy comparing equal to the live settings
+		final RunConfig config = new RunConfig().sanitise();
+		config.getEnabledTypes().remove(PatchType.TREE);
+		config.getCrops().put(PatchType.HERB, Crop.TORSTOL);
+		config.setOutfit(Outfit.GRACEFUL);
+		final Preset preset = new Preset("Quick herbs", gson.fromJson(gson.toJson(config), RunConfig.class).sanitise());
+		final Preset[] saved = gson.fromJson(gson.toJson(new Preset[]{preset}), Preset[].class);
+		assertEquals(config, saved[0].getConfig().sanitise());
+
+		config.setStaminaDoses(4);
+		assertFalse(config.equals(saved[0].getConfig()));
+	}
+
+	@Test
 	public void defaults()
 	{
 		final RunConfig config = new RunConfig().sanitise();

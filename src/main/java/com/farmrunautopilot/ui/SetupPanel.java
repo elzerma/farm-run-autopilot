@@ -26,6 +26,7 @@ import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,11 +35,13 @@ import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
@@ -106,6 +109,7 @@ class SetupPanel extends JPanel
 		{
 			add(cropsSection(config, access));
 			add(runOptionsSection(config));
+			add(presetsSection());
 		}
 		else
 		{
@@ -592,6 +596,94 @@ class SetupPanel extends JPanel
 		{
 			accessChecker.requestRefresh();
 		}
+	}
+
+	/** Save, rename and delete named copies of the run settings (SPEC 13.5). */
+	private JComponent presetsSection()
+	{
+		final CollapsibleSection s = section("Presets");
+		s.addContent(note("Save these settings under a name (e.g. \"Quick herbs\") and switch between them at the "
+			+ "top of the Run tab. Presets cover crops, rules, travel and route; My POH and unlocks are shared."));
+		final JButton save = smallButton("Save current settings as...");
+		save.addActionListener(e ->
+		{
+			final String name = askName("Name for this preset:", settings.activePreset());
+			if (name == null)
+			{
+				return;
+			}
+			if (settings.presetNames().contains(name) && JOptionPane.showConfirmDialog(this,
+				"Replace the preset \"" + name + "\" with the current settings?", "Farm Run Autopilot",
+				JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
+			{
+				return;
+			}
+			settings.savePreset(name);
+		});
+		s.addContent(save);
+
+		final String active = settings.activePreset();
+		for (String name : settings.presetNames())
+		{
+			s.addContent(subheader(name + (name.equals(active) ? " (in use)" : "")));
+			final JPanel buttons = new JPanel(new GridLayout(1, 3, 4, 0));
+			buttons.setBackground(ColorScheme.DARK_GRAY_COLOR);
+			final JButton use = smallButton("Use");
+			use.setEnabled(!name.equals(active));
+			use.addActionListener(e -> settings.applyPreset(name));
+			final JButton rename = smallButton("Rename");
+			rename.addActionListener(e ->
+			{
+				final String to = askName("New name for \"" + name + "\":", name);
+				if (to != null && !to.equals(name))
+				{
+					if (settings.presetNames().contains(to))
+					{
+						JOptionPane.showMessageDialog(this, "There's already a preset called \"" + to + "\".");
+						return;
+					}
+					settings.renamePreset(name, to);
+				}
+			});
+			final JButton delete = smallButton("Delete");
+			delete.addActionListener(e ->
+			{
+				if (JOptionPane.showConfirmDialog(this, "Delete the preset \"" + name + "\"?", "Farm Run Autopilot",
+					JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
+				{
+					settings.deletePreset(name);
+				}
+			});
+			buttons.add(use);
+			buttons.add(rename);
+			buttons.add(delete);
+			buttons.setMaximumSize(new Dimension(CONTROL_WIDTH, buttons.getPreferredSize().height));
+			buttons.setAlignmentX(LEFT_ALIGNMENT);
+			s.addContent(buttons);
+		}
+		return s;
+	}
+
+	/** A trimmed, non-empty name from the player, or null if they cancelled. */
+	private String askName(String prompt, String initial)
+	{
+		final Object input = JOptionPane.showInputDialog(this, prompt, "Farm Run Autopilot",
+			JOptionPane.PLAIN_MESSAGE, null, null, initial);
+		if (input == null)
+		{
+			return null;
+		}
+		final String name = input.toString().trim();
+		return name.isEmpty() ? null : name;
+	}
+
+	private static JButton smallButton(String text)
+	{
+		final JButton button = new JButton(text);
+		button.setFont(FontManager.getRunescapeSmallFont());
+		button.setFocusPainted(false);
+		button.setAlignmentX(LEFT_ALIGNMENT);
+		return button;
 	}
 
 	// Building blocks
