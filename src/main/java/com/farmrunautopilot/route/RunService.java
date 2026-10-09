@@ -4,6 +4,7 @@ import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
+import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.run.RunTimings;
 import com.farmrunautopilot.run.StepAdvisor;
 import com.farmrunautopilot.settings.RunConfig;
@@ -23,6 +24,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.Player;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.game.ItemManager;
 
 /**
@@ -34,6 +37,8 @@ public class RunService
 {
 	/** Patches become due as they grow, so recalculate about once a minute regardless. */
 	private static final int REFRESH_TICKS = 100;
+	/** Within this many tiles of a patch counts as standing at its stop. */
+	private static final int STANDING_TILES = 25;
 
 	private final Client client;
 	private final ItemManager itemManager;
@@ -50,6 +55,8 @@ public class RunService
 	/** Null until the first plan after login, so that one is always published. */
 	private volatile RunPlan plan;
 	private int ticksSinceRefresh;
+	/** The stop the player was standing at on the last tick, or null. */
+	private Location here;
 
 	@Inject
 	RunService(Client client, ItemManager itemManager, SettingsStore settings, AccessChecker accessChecker,
@@ -99,7 +106,10 @@ public class RunService
 			return false;
 		}
 		final boolean holdingsChanged = holdingsTracker.rebuildIfDirty();
-		if (!holdingsChanged && !dirty && ++ticksSinceRefresh < REFRESH_TICKS)
+		final Location nowAt = standingAt();
+		final boolean moved = nowAt != here;
+		here = nowAt;
+		if (!holdingsChanged && !moved && !dirty && ++ticksSinceRefresh < REFRESH_TICKS)
 		{
 			return false;
 		}
@@ -112,7 +122,7 @@ public class RunService
 		final RunSelection selection = RunSelector.select(config, access, patchTracker::predict,
 			Instant.now().getEpochSecond(), config.isSupplyFullRun(), overrides.get());
 		final Route route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
-			settings.getAccount().getPoh(), timings.learned());
+			settings.getAccount().getPoh(), timings.learned(), here);
 		final SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 			patchTracker::predict, this::itemName, itemManager::getItemPrice);
 
@@ -130,6 +140,26 @@ public class RunService
 		}
 		plan = next;
 		return true;
+	}
+
+	/** The stop the player is standing at (near one of its patches), or null. Client thread. */
+	private Location standingAt()
+	{
+		final Player player = client.getLocalPlayer();
+		if (player == null)
+		{
+			return null;
+		}
+		final WorldPoint location = player.getWorldLocation();
+		for (Map.Entry<Patch, WorldPoint> e : PatchPoints.all().entrySet())
+		{
+			final WorldPoint point = e.getValue();
+			if (point.getPlane() == location.getPlane() && point.distanceTo2D(location) <= STANDING_TILES)
+			{
+				return e.getKey().getLocation();
+			}
+		}
+		return null;
 	}
 
 	/** The noted version of an item (or the item itself if it has none). Client thread. */

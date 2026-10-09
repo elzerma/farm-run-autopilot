@@ -10,6 +10,7 @@ import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
+import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
@@ -102,15 +103,16 @@ public final class RoutePlanner
 	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
 		PohSetup poh)
 	{
-		return plan(patches, config, access, holdings, poh, LearnedTimes.NONE);
+		return plan(patches, config, access, holdings, poh, LearnedTimes.NONE, null);
 	}
 
 	/**
 	 * @param patches the patches in this run
 	 * @param learned the player's recorded leg times
+	 * @param here the stop the player is standing at, or null: the run starts there with no travel (GitHub #1)
 	 */
 	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
-		PohSetup poh, LearnedTimes learned)
+		PohSetup poh, LearnedTimes learned, Location here)
 	{
 		final List<Location> stops = new ArrayList<>();
 		for (Location location : Location.values())
@@ -128,10 +130,10 @@ public final class RoutePlanner
 		{
 			return new Route(new ArrayList<>(), config.getRouteMode(), 0, 0);
 		}
-		return new RoutePlanner(config, access, holdings, poh, learned).plan(stops, patches.size());
+		return new RoutePlanner(config, access, holdings, poh, learned).plan(stops, patches.size(), here);
 	}
 
-	private Route plan(List<Location> stops, int patchCount)
+	private Route plan(List<Location> stops, int patchCount, Location here)
 	{
 		final int n = stops.size();
 		final Leg[] firstLeg = new Leg[n];
@@ -152,7 +154,13 @@ public final class RoutePlanner
 		{
 			endCost[j] = config.isEndNearBank() ? bankTiles(stops.get(j)) * SECONDS_PER_TILE : 0;
 		}
-		final int start = stops.indexOf(config.getStartLocation());
+		// Already standing at a stop: start there, with nothing to travel or bring for it
+		final int standingAt = here == null ? -1 : stops.indexOf(here);
+		if (standingAt >= 0)
+		{
+			firstLeg[standingAt] = new Leg(null, Departure.WALK, 0, false);
+		}
+		final int start = standingAt >= 0 ? standingAt : stops.indexOf(config.getStartLocation());
 
 		final int[] order;
 		switch (config.getRouteMode())
@@ -464,6 +472,12 @@ public final class RoutePlanner
 		// Nothing usable: take the quickest unlocked method anyway and let the supply list ask for it.
 		for (TravelMethod method : candidates)
 		{
+			// Only suggest something the player could actually get: a spell they can't cast needs a tablet to buy
+			final Spell spell = method.getSpell();
+			if (method.getKind() == TravelKind.SPELL && !access.canCast(spell) && !spell.hasTablet())
+			{
+				continue;
+			}
 			final double seconds = baseSeconds(method) + walkSeconds(method) + MISSING_PENALTY;
 			if (best == null || seconds < best.seconds)
 			{

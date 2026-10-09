@@ -498,14 +498,21 @@ public final class SupplyCalculator
 	private static String addSpell(Spell spell, Location location, RunConfig config, AccessSnapshot access,
 		Holdings holdings, Map<Integer, Integer> tablets, Map<Rune, Integer> runeNeed)
 	{
-		final boolean tablet = spell.hasTablet() && !config.useRunesAt(location)
-			&& (holdings.count(spell.getTabletItemId()) > 0 || !access.canCast(spell));
+		// A spell the player can't cast (wrong spellbook with no altar, Magic level, quest) needs its tablet, even
+		// when runes are preferred (GitHub #2)
+		final boolean castable = access.canCast(spell);
+		final boolean tablet = spell.hasTablet() && (!castable
+			|| (!config.useRunesAt(location) && holdings.count(spell.getTabletItemId()) > 0));
 		if (tablet)
 		{
 			tablets.merge(spell.getTabletItemId(), 1, Integer::sum);
 			return " (tablet)";
 		}
 		addRunes(runeNeed, spell);
+		if (!castable)
+		{
+			return " (runes, " + title(spell.getSpellbook().name()) + " spellbook; you can't cast it yet)";
+		}
 		return " (runes, " + title(spell.getSpellbook().name()) + " spellbook"
 			+ (access.isOnSpellbook(spell) ? "" : "; switch at your house altar") + ")";
 	}

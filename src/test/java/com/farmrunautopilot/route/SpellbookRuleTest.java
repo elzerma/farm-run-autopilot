@@ -13,6 +13,8 @@ import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.supply.Holdings;
+import com.farmrunautopilot.supply.SupplyCalculator;
+import com.farmrunautopilot.supply.SupplyPlan;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
@@ -54,6 +56,48 @@ public class SpellbookRuleTest
 		final AccessSnapshot withAltar = onBook(Spellbook.STANDARD, PohAltar.DARK.getSpellbooks());
 		assertTrue(withAltar.canCast(Spell.FENKENSTRAINS_CASTLE_TELEPORT));
 		assertFalse(withAltar.isOnSpellbook(Spell.FENKENSTRAINS_CASTLE_TELEPORT));
+	}
+
+	@Test
+	public void unreachableSpellIsATabletNotAnAltarSwitch()
+	{
+		// GitHub #2: standard book, no altar, runes preferred, and Port Phasmatys set to an Arceuus spell
+		final RunConfig config = new RunConfig().sanitise();
+		config.setEnabledTypes(java.util.EnumSet.of(com.farmrunautopilot.data.PatchType.HERB));
+		for (Patch patch : Patch.values())
+		{
+			if (patch != Patch.PORT_PHASMATYS_HERB)
+			{
+				config.getDisabledPatches().add(patch);
+			}
+		}
+		config.getTravel().put(Location.PORT_PHASMATYS, TravelMethod.FENKENSTRAINS_CASTLE_TELEPORT);
+		config.setUseRunesNotTabs(true);
+		final AccessSnapshot access = onBook(Spellbook.STANDARD, Collections.emptySet());
+
+		final RunSelection selection = RunSelector.select(config, access, p -> null, 0, true, Collections.emptyMap());
+		final Route route = RoutePlanner.plan(selection.getPatches(), config, access, Holdings.EMPTY, new PohSetup());
+		final SupplyPlan supplies = SupplyCalculator.calculate(config, access, Holdings.EMPTY, selection, route,
+			p -> null, id -> "item " + id, id -> 0);
+
+		final String travel = String.join(" | ", supplies.getTravelPlan());
+		assertTrue(travel, travel.contains("tablet"));
+		assertFalse(travel, travel.contains("altar"));
+	}
+
+	@Test
+	public void standingAtAStopStartsThereWithNoTravel()
+	{
+		// GitHub #1: already in Catherby, so no teleport there even though the start location is elsewhere
+		final RunConfig config = new RunConfig().sanitise();
+		config.setStartLocation(Location.FARMING_GUILD);
+		final AccessSnapshot access = onBook(Spellbook.STANDARD, Collections.emptySet());
+		final Route route = RoutePlanner.plan(java.util.Arrays.asList(Patch.CATHERBY_HERB, Patch.FARMING_GUILD_HERB,
+			Patch.ARDOUGNE_HERB), config, access, Holdings.EMPTY, new PohSetup(), LearnedTimes.NONE, Location.CATHERBY);
+		final RouteStop first = route.getStops().get(0);
+		assertEquals(Location.CATHERBY, first.getLocation());
+		assertEquals(Departure.WALK, first.getDeparture());
+		assertEquals(0, first.getLegSeconds(), 1e-9);
 	}
 
 	@Test
