@@ -224,6 +224,11 @@ class SetupPanel extends JPanel
 						"Every piece you have, in your bank, inventory and worn, added together");
 				}
 			}
+			// TEMPORARY, to confirm in game: the raw game values assumed to count today's uses
+			addDetected("Daily teleports used (checking)", "Ardougne cloak farm "
+					+ held.getUsedToday().getOrDefault(TravelMethod.ARDOUGNE_CLOAK_FARM, 0) + ", cabbage patch "
+					+ held.getUsedToday().getOrDefault(TravelMethod.EXPLORERS_RING_CABBAGE_PATCH, 0),
+				"Should match how many times you've used each today; remove once confirmed");
 			addDetected("Tool leprechaun", stored.isEmpty() ? "Nothing stored" : String.join(", ", stored),
 				"What's stored with the tool leprechaun counts as yours for the supply list");
 			if (held.isAutoweedOn())
@@ -828,6 +833,13 @@ class SetupPanel extends JPanel
 			return new Choice<>(way, method.getDisplayName() + " (tablet only: " + why + ")", true,
 				"You can't cast this right now (" + why + "). It's used if you carry its teleport tablet; "
 					+ "otherwise another way is picked.");
+		}
+		// Uses left today (Ardougne cloak 2/3, Explorer's ring 2)
+		final Integer today = way.getHow() == Departure.DIRECT ? ChargeBudget.leftToday(method, holdings.get()) : null;
+		if (today != null)
+		{
+			return new Choice<>(way, wayLabel(way, location) + (today == 0 ? " (used up today)"
+				: " (" + today + " left today)"), true, "Limited per day; resets each day");
 		}
 		// Charges held, pooled across every piece of the item
 		final TravelItem item = way.getHow() == Departure.DIRECT ? method.getItem() : null;

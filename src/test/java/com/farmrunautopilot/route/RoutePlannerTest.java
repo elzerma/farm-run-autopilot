@@ -248,4 +248,21 @@ public class RoutePlannerTest
 		// An eternal version never runs out
 		assertEquals(null, ChargeBudget.held(TravelItem.SLAYER_RING, bank(ItemID.SLAYER_RING_ETERNAL, 1)));
 	}
+
+	@Test
+	public void dailyLimitsCountTodaysUses()
+	{
+		final Map<Holdings.Source, Map<Integer, Integer>> items = new EnumMap<>(Holdings.Source.class);
+		items.put(Holdings.Source.WORN, Collections.singletonMap(ItemID.ARDY_CAPE_MEDIUM, 1));
+		// Cloak 2: three a day, two used
+		final Holdings twoUsed = new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false, -1,
+			null, Collections.singletonMap(TravelMethod.ARDOUGNE_CLOAK_FARM, 2));
+		assertEquals(Integer.valueOf(1), ChargeBudget.leftToday(TravelMethod.ARDOUGNE_CLOAK_FARM, twoUsed));
+		final Holdings allUsed = new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false, -1,
+			null, Collections.singletonMap(TravelMethod.ARDOUGNE_CLOAK_FARM, 3));
+		assertEquals(Integer.valueOf(0), ChargeBudget.leftToday(TravelMethod.ARDOUGNE_CLOAK_FARM, allUsed));
+		// Cloak 4 is unlimited
+		assertEquals(null, ChargeBudget.leftToday(TravelMethod.ARDOUGNE_CLOAK_FARM,
+			bank(ItemID.ARDY_CAPE_ELITE, 1)));
+	}
 }

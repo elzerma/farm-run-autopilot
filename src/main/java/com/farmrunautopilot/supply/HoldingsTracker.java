@@ -4,6 +4,8 @@ import com.farmrunautopilot.FarmRunAutopilotConfig;
 import com.farmrunautopilot.data.DataConstants;
 import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.travel.Rune;
+import com.farmrunautopilot.data.travel.DailyLimits;
+import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.google.gson.Gson;
@@ -79,6 +81,7 @@ public class HoldingsTracker
 		WATCHED_VARBITS.add(VarbitID.FARMING_BLOCKWEEDS);
 		WATCHED_VARBITS.add(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE);
 		WATCHED_VARBITS.add(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_QUANTITY);
+		WATCHED_VARBITS.addAll(DailyLimits.usedTodayVarbits().values());
 	}
 
 	private final Client client;
@@ -209,7 +212,7 @@ public class HoldingsTracker
 		final Holdings next = new Holdings(Collections.unmodifiableMap(items), readRunePouch(inventory),
 			Collections.unmodifiableSet(infinite), bank != null,
 			client.getVarbitValue(VarbitID.FARMING_BLOCKWEEDS) == AUTOWEED_ON,
-			bucket.getUses(), bucket.getCompost());
+			bucket.getUses(), bucket.getCompost(), readUsedToday());
 		if (next.equals(holdings))
 		{
 			return false;
@@ -295,6 +298,14 @@ public class HoldingsTracker
 			}
 		}
 		return counts;
+	}
+
+	/** Today's uses of each teleport limited per day. */
+	private Map<TravelMethod, Integer> readUsedToday()
+	{
+		final Map<TravelMethod, Integer> used = new EnumMap<>(TravelMethod.class);
+		DailyLimits.usedTodayVarbits().forEach((method, varbit) -> used.put(method, client.getVarbitValue(varbit)));
+		return Collections.unmodifiableMap(used);
 	}
 
 	private int bitsIn(int varbitId)

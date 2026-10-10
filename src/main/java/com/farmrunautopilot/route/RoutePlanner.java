@@ -97,6 +97,8 @@ public final class RoutePlanner
 	private final ChargeBudget startCharges;
 	/** Items whose charges ran out earlier in the run being planned. */
 	private final Set<TravelItem> usedUp = EnumSet.noneOf(TravelItem.class);
+	/** Daily-limited teleports with no uses left today, found while planning. */
+	private final Set<TravelMethod> usedUpToday = EnumSet.noneOf(TravelMethod.class);
 
 	private RoutePlanner(RunConfig config, AccessSnapshot access, Holdings holdings, PohSetup poh,
 		LearnedTimes learned)
@@ -595,7 +597,8 @@ public final class RoutePlanner
 				}
 				break;
 			default:
-				if (method.getItem() != null && owns(method.getItem()))
+				if (method.getItem() != null && owns(method.getItem()) && startCharges.hasUseToday(method)
+					&& !usedUpToday.contains(method))
 				{
 					legs.add(direct(method, baseSeconds(method) + walk));
 				}
@@ -770,25 +773,33 @@ public final class RoutePlanner
 			final Location from = k == 0 ? null : stops.get(order[k - 1]);
 			final Location to = stops.get(order[k]);
 			Leg leg = k == 0 ? first : legs[order[k - 1]][order[k]];
-			TravelItem item = itemUsed(leg);
-			while (item != null && !budget.hasCharge(item))
+			while (true)
 			{
-				usedUp.add(item);
-				final Leg next = bestLeg(from, to);
-				final TravelItem nextItem = itemUsed(next);
-				if (nextItem != null && usedUp.contains(nextItem))
+				final TravelItem item = itemUsed(leg);
+				final TravelMethod daily = leg.departure == Departure.DIRECT ? leg.method : null;
+				final boolean itemOut = item != null && !budget.hasCharge(item);
+				final boolean dailyOut = daily != null && !budget.hasUseToday(daily);
+				if (!itemOut && !dailyOut)
 				{
-					// Nothing else gets there: keep it, as something to go and get more charges for
-					leg = new Leg(next.method, next.departure, next.seconds, true);
-					item = null;
+					if (item != null)
+					{
+						budget.spend(item);
+					}
+					if (daily != null)
+					{
+						budget.spendUseToday(daily);
+					}
 					break;
 				}
-				leg = next;
-				item = nextItem;
-			}
-			if (item != null)
-			{
-				budget.spend(item);
+				// Rule out what ran out and plan this stop again; each pass rules out something new, so this ends
+				final boolean ruledOut = (itemOut && usedUp.add(item)) | (dailyOut && usedUpToday.add(daily));
+				if (!ruledOut)
+				{
+					// Nothing else gets there: keep it, as something to recharge or come back to tomorrow
+					leg = new Leg(leg.method, leg.departure, leg.seconds, true);
+					break;
+				}
+				leg = bestLeg(from, to);
 			}
 			chosen[k] = leg;
 		}

@@ -1,6 +1,7 @@
 package com.farmrunautopilot.supply;
 
 import com.farmrunautopilot.data.travel.Rune;
+import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.Compost;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -54,9 +55,12 @@ public class Holdings
 	int bucketUses;
 	/** What the bottomless compost bucket holds, or null if not known. */
 	Compost bucketCompost;
+	/** Today's uses of teleports limited per day (Ardougne cloak, Explorer's ring, Rada's blessing). */
+	Map<TravelMethod, Integer> usedToday;
 
 	public Holdings(Map<Source, Map<Integer, Integer>> items, Map<Integer, Integer> runePouch, Set<Rune> infiniteRunes,
-		boolean bankKnown, boolean autoweedOn, int bucketUses, Compost bucketCompost)
+		boolean bankKnown, boolean autoweedOn, int bucketUses, Compost bucketCompost,
+		Map<TravelMethod, Integer> usedToday)
 	{
 		this.items = items;
 		this.runePouch = runePouch;
@@ -65,6 +69,14 @@ public class Holdings
 		this.autoweedOn = autoweedOn;
 		this.bucketUses = bucketUses;
 		this.bucketCompost = bucketCompost;
+		this.usedToday = usedToday;
+	}
+
+	public Holdings(Map<Source, Map<Integer, Integer>> items, Map<Integer, Integer> runePouch, Set<Rune> infiniteRunes,
+		boolean bankKnown, boolean autoweedOn, int bucketUses, Compost bucketCompost)
+	{
+		this(items, runePouch, infiniteRunes, bankKnown, autoweedOn, bucketUses, bucketCompost,
+			Collections.emptyMap());
 	}
 
 	/** Without anything known about a bottomless compost bucket. */
@@ -129,7 +141,8 @@ public class Holdings
 		final Map<Source, Map<Integer, Integer>> carried = new EnumMap<>(Source.class);
 		carried.put(Source.INVENTORY, in(Source.INVENTORY));
 		carried.put(Source.WORN, in(Source.WORN));
-		return new Holdings(carried, runePouch, infiniteRunes, bankKnown, autoweedOn, bucketUses, bucketCompost);
+		return new Holdings(carried, runePouch, infiniteRunes, bankKnown, autoweedOn, bucketUses, bucketCompost,
+			usedToday);
 	}
 
 	public Map<Integer, Integer> in(Source source)
