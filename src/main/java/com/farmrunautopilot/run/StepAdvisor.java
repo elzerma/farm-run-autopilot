@@ -79,7 +79,12 @@ public final class StepAdvisor
 		switch (live.getState())
 		{
 			case GROWING:
-				// Only ask for payment if it was planted this run; otherwise it was already growing.
+				// Compost and payment are only asked for if it was planted this run; otherwise it was already
+				// growing. Compost works before or after planting, so planting first still leaves it to do.
+				if (goal.isPlantedThisRun() && wantsCompost(goal))
+				{
+					return compost(goal);
+				}
 				if (goal.isPlantedThisRun() && goal.isProtectionNeeded() && !goal.isPaid())
 				{
 					return new Advice(Action.PAY, "Pay " + gardener + ": " + goal.getPaymentText());
@@ -110,10 +115,9 @@ public final class StepAdvisor
 			case WEEDS:
 				return new Advice(Action.RAKE, "Rake the patch");
 			case EMPTY:
-				if (goal.getCompost() != null && goal.getCompost() != Compost.NONE && !goal.isComposted())
+				if (wantsCompost(goal))
 				{
-					return new Advice(Action.COMPOST, "Use " + goal.getCompost().getDisplayName().toLowerCase()
-						+ " on the patch");
+					return compost(goal);
 				}
 				return new Advice(Action.PLANT, "Plant: " + goal.getPlantName());
 			default:
@@ -190,6 +194,16 @@ public final class StepAdvisor
 			text += (i == steps.size() - 1 ? " and " : ", ") + steps.get(i);
 		}
 		return patch.getType().getDisplayName() + ": " + text;
+	}
+
+	private static boolean wantsCompost(PatchGoal goal)
+	{
+		return goal.getCompost() != null && goal.getCompost() != Compost.NONE && !goal.isComposted();
+	}
+
+	private static Advice compost(PatchGoal goal)
+	{
+		return new Advice(Action.COMPOST, "Use " + goal.getCompost().getDisplayName().toLowerCase() + " on the patch");
 	}
 
 	private static Advice clearTree(PatchGoal goal, String gardener)

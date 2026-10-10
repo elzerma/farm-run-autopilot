@@ -46,6 +46,17 @@ public class StepAdvisorTest
 	}
 
 	@Test
+	public void compostAfterPlantingIsStillAskedFor()
+	{
+		final Patch p = Patch.CATHERBY_HERB;
+		assertEquals(StepAdvisor.Action.COMPOST, action(herb(false), live(p, Crop.RANARR, PatchState.GROWING, 0)));
+		// Already growing before this run: nothing to do
+		final StepAdvisor.PatchGoal alreadyGrowing = new StepAdvisor.PatchGoal(p, Crop.RANARR, "Ranarr seed",
+			Compost.ULTRACOMPOST, false, null, false, false, false, false);
+		assertEquals(StepAdvisor.Action.DONE, action(alreadyGrowing, live(p, Crop.RANARR, PatchState.GROWING, 1)));
+	}
+
+	@Test
 	public void treeRunSequence()
 	{
 		final Patch p = Patch.TAVERLEY_TREE;
