@@ -35,6 +35,16 @@ final class GuidanceSettings
 		configManager.setConfiguration(FarmRunAutopilotConfig.GROUP, key, value);
 	}
 
+	/** Highlights and colours back to their defaults. */
+	void resetDefaults()
+	{
+		for (String key : new String[]{"highlightPatch", "hintArrow", "highlightGardener", "highlightItems",
+			"highlightSpell", "patchColour", "npcColour", "itemColour"})
+		{
+			configManager.unsetConfiguration(FarmRunAutopilotConfig.GROUP, key);
+		}
+	}
+
 	/** Opens RuneLite's colour picker; each change is saved as it's made. */
 	void pickColour(Component parent, String title, Color current, String key, Consumer<Color> onChange)
 	{

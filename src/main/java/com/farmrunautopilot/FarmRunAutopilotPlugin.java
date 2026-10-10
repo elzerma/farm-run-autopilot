@@ -142,7 +142,17 @@ public class FarmRunAutopilotPlugin extends Plugin
 	/** What the bank tab last showed: each line, amount needed and colour (not exact counts held). */
 	private String bankTabContents = "";
 
-	private final Runnable onSettingsReloaded = this::rebuildSetupLater;
+	private final Runnable onSettingsReloaded = () ->
+	{
+		rebuildSetupLater();
+		// e.g. after "Reset to defaults" in the sidebar, which also clears the saved charges and bucket count
+		clientThread.invoke(() ->
+		{
+			bottomlessBucket.reload();
+			itemCharges.reload();
+			holdingsTracker.markDirty();
+		});
+	};
 	private final Runnable onSettingsSaved = () -> runService.markDirty();
 
 	private FarmRunAutopilotPanel panel;

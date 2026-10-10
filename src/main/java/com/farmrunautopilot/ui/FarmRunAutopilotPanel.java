@@ -7,6 +7,7 @@ import com.farmrunautopilot.route.RunOverrides;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.run.RunSession;
+import com.farmrunautopilot.run.RunTimings;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.tracking.PatchTracker;
@@ -42,7 +43,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	public FarmRunAutopilotPanel(SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker,
 		RunOverrides runOverrides, RunService runService, RunSession runSession, ClientThread clientThread,
 		FarmRunAutopilotConfig config, ConfigManager configManager,
-		ColorPickerManager colorPickers, HoldingsTracker holdingsTracker)
+		ColorPickerManager colorPickers, HoldingsTracker holdingsTracker, RunTimings timings)
 	{
 		this.runSession = runSession;
 		setLayout(new BorderLayout());
@@ -110,9 +111,20 @@ public class FarmRunAutopilotPanel extends PluginPanel
 			this::rebuildSetup, null);
 		travelPanel = new SetupPanel(SetupPanel.Page.TRAVEL, settings, accessChecker, patchTracker,
 			this::rebuildSetup, null);
+		final GuidanceSettings guidance = new GuidanceSettings(config, configManager, colorPickers);
 		accountPanel = new SetupPanel(SetupPanel.Page.ACCOUNT, settings, accessChecker, patchTracker,
-			this::rebuildSetup,
-			new GuidanceSettings(config, configManager, colorPickers));
+			this::rebuildSetup, guidance);
+		final Runnable resetRunSettings = () ->
+		{
+			settings.resetRunConfig();
+			guidance.resetDefaults();
+		};
+		accountPanel.setResetActions(resetRunSettings, () ->
+		{
+			resetRunSettings.run();
+			settings.resetAccountAndPresets();
+			timings.clear();
+		});
 		accountPanel.showHoldings(holdingsTracker::getHoldings);
 		travelPanel.showHoldings(holdingsTracker::getHoldings);
 		travelPanel.showAutoPicks(runService);

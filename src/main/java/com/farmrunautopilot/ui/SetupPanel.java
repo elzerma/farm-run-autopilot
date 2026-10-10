@@ -114,6 +114,9 @@ class SetupPanel extends JPanel
 	private RunService runService;
 	/** The picks the Travel page was last drawn with, to redraw only when they change. */
 	private Map<Location, TravelPick> shownPicks = Collections.emptyMap();
+	/** What the Reset button does (Account page); null elsewhere. */
+	private Runnable resetRunSettings;
+	private Runnable resetEverything;
 	/** Run guidance settings, shown on the Account page only (null elsewhere). */
 	private final GuidanceSettings guidance;
 
@@ -1024,9 +1027,45 @@ class SetupPanel extends JPanel
 		s.addContent(checkBox("Count every patch (full run)", config.isSupplyFullRun(), true,
 			"Supplies for every selected patch, not just the ones that are due. Handy for checking numbers.",
 			on -> saveRun(() -> config.setSupplyFullRun(on))));
+		if (resetRunSettings != null)
+		{
+			final JButton reset = smallButton("Reset to defaults...");
+			reset.setToolTipText("Put this plugin's settings back to how they were when it was installed");
+			reset.addActionListener(e -> askReset());
+			s.addContent(reset);
+		}
 		s.addContent(subheader("Patch details"));
 		s.addContent(patchDebugPanel);
 		return s;
+	}
+
+	/** Set what the Reset button does (Account page). */
+	void setResetActions(Runnable runSettings, Runnable everything)
+	{
+		this.resetRunSettings = runSettings;
+		this.resetEverything = everything;
+		rebuild();
+	}
+
+	private void askReset()
+	{
+		final String runOnly = "Run settings";
+		final String all = "Everything";
+		final Object[] options = {runOnly, all, "Cancel"};
+		final int choice = JOptionPane.showOptionDialog(this,
+			"<html>Run settings: the Farm and Travel tabs and the highlights.<br>"
+				+ "Everything: also your house, unlocks, presets, tracked charges and learned run times.<br><br>"
+				+ "This can't be undone.</html>",
+			"Reset Farm Run Autopilot", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options,
+			options[2]);
+		if (choice == 0)
+		{
+			resetRunSettings.run();
+		}
+		else if (choice == 1)
+		{
+			resetEverything.run();
+		}
 	}
 
 	private JComponent storageSection(RunConfig config)

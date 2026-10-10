@@ -135,6 +135,37 @@ public class SettingsStore
 		write(RUN_CONFIG_KEY, runConfig);
 	}
 
+	/** Farm and Travel tab settings back to defaults. Swing thread. */
+	public void resetRunConfig()
+	{
+		runConfig = new RunConfig().sanitise();
+		saveRunConfig();
+		changedEverywhere();
+	}
+
+	/**
+	 * Also this account's house, unlocks, tracked charges and presets, as if freshly installed (learned times
+	 * are cleared separately). Swing thread.
+	 */
+	public void resetAccountAndPresets()
+	{
+		account = new AccountSettings().sanitise();
+		presets = new ArrayList<>();
+		write(ACCOUNT_KEY, account);
+		write(PRESETS_KEY, new Preset[0]);
+		changedEverywhere();
+	}
+
+	/** Tell the tabs to redraw and the plan to be redone. */
+	private void changedEverywhere()
+	{
+		notifyListeners();
+		for (Runnable listener : saveListeners)
+		{
+			listener.run();
+		}
+	}
+
 	// Presets (SPEC 13.5). Swing thread.
 
 	public List<String> presetNames()

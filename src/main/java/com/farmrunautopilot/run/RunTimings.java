@@ -182,6 +182,15 @@ public class RunTimings
 		return String.join(", ", parts);
 	}
 
+	/** Forget every recorded leg and run (learned times and best times) for this account. */
+	public void clear()
+	{
+		configManager.unsetRSProfileConfiguration(FarmRunAutopilotConfig.GROUP, LEGS_KEY);
+		configManager.unsetRSProfileConfiguration(FarmRunAutopilotConfig.GROUP, RUNS_KEY);
+		cachedRuns = null;
+		cachedLearned = null;
+	}
+
 	public List<Leg> legs()
 	{
 		return read(LEGS_KEY, Leg[].class);
