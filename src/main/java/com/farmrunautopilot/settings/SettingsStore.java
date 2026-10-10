@@ -102,6 +102,24 @@ public class SettingsStore
 		configManager.setConfiguration(FarmRunAutopilotConfig.GROUP, OPEN_SECTIONS_KEY, String.join(",", open));
 	}
 
+	/** A value kept once for the whole client (not per account), e.g. "help.<item>"; null if never set. */
+	public String getClientValue(String key)
+	{
+		return configManager.getConfiguration(FarmRunAutopilotConfig.GROUP, key);
+	}
+
+	public void setClientValue(String key, String value)
+	{
+		if (value == null || value.isEmpty())
+		{
+			configManager.unsetConfiguration(FarmRunAutopilotConfig.GROUP, key);
+		}
+		else
+		{
+			configManager.setConfiguration(FarmRunAutopilotConfig.GROUP, key, value);
+		}
+	}
+
 	/** Whether there is an account profile to save to (i.e. the player has logged in). */
 	public boolean hasProfile()
 	{
