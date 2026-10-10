@@ -17,6 +17,8 @@ public class AccountSettings
 {
 	/** Unlocks the player ticked in Setup. Only used for unlocks with no automatic detection. */
 	private Set<Unlock> manualUnlocks = EnumSet.noneOf(Unlock.class);
+	/** The player has checked the unlocks the plugin can't read, so the Run tab stops asking. */
+	private boolean unlocksReviewed;
 	private PohSetup poh = new PohSetup();
 	/** Beta: detect house furniture on entering the house. Off until the player ticks it. */
 	private boolean autoDetectHouse;

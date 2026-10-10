@@ -44,6 +44,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Rectangle;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -98,6 +99,8 @@ class SetupPanel extends JPanel
 	private static final int CONTROL_WIDTH = PluginPanel.PANEL_WIDTH - 40;
 	/** Remembered like an open section: the Locations list shows every location. */
 	private static final String SHOW_ALL_LOCATIONS = "Show every location";
+	/** The Unlocks section's title, which is also how the Run tab opens it. */
+	static final String UNLOCKS = "Unlocks";
 	private static final String ISSUES_URL = "https://github.com/elzerma/farm-run-autopilot/issues";
 
 	private final SettingsStore settings;
@@ -118,6 +121,8 @@ class SetupPanel extends JPanel
 	/** What the Reset button does (Account page); null elsewhere. */
 	private Runnable resetRunSettings;
 	private Runnable resetEverything;
+	/** The Unlocks section as last drawn (Account page), to scroll to it; null elsewhere. */
+	private JComponent unlocksSectionShown;
 	/** Run guidance settings, shown on the Account page only (null elsewhere). */
 	private final GuidanceSettings guidance;
 
@@ -141,6 +146,21 @@ class SetupPanel extends JPanel
 	void refreshPatches()
 	{
 		patchDebugPanel.refresh();
+	}
+
+	/** Open the Unlocks section and scroll to it (Account page). Swing thread. */
+	void revealUnlocks()
+	{
+		settings.setSectionOpen(UNLOCKS, true);
+		rebuild();
+		SwingUtilities.invokeLater(() ->
+		{
+			final JComponent section = unlocksSectionShown;
+			if (section != null)
+			{
+				section.scrollRectToVisible(new Rectangle(0, 0, section.getWidth(), section.getHeight()));
+			}
+		});
 	}
 
 	/** Show Auto (best)'s picks on the Travel page. */
@@ -314,7 +334,8 @@ class SetupPanel extends JPanel
 			case ACCOUNT:
 				add(detectedSection());
 				add(pohSection(account));
-				add(unlocksSection(account));
+				unlocksSectionShown = unlocksSection(account);
+				add(unlocksSectionShown);
 				add(storageSection(config));
 				add(displaySection(config));
 				add(debugSection(config));
@@ -963,9 +984,13 @@ class SetupPanel extends JPanel
 
 	private JComponent unlocksSection(AccountSettings account)
 	{
+		final AccessSnapshot access = accessChecker.getSnapshot();
+		final List<Unlock> review = AccessChecker.toReview(settings.getRunConfig(), account);
 		final int ticked = account.getManualUnlocks().size();
-		final CollapsibleSection s = section("Unlocks", ticked == 0 ? null : ticked + " ticked");
-		s.addContent(note("Things the plugin can't detect. Tick the ones you have."));
+		final CollapsibleSection s = section(UNLOCKS, !review.isEmpty() ? review.size() + " to check"
+			: ticked == 0 ? null : ticked + " ticked");
+		s.addContent(note("Ticked for you where the game shows it. Tick the rest that you have; the plugin can't "
+			+ "see them until you do."));
 		for (Unlock unlock : Unlock.values())
 		{
 			if (AccessChecker.isDetected(unlock))
@@ -973,7 +998,18 @@ class SetupPanel extends JPanel
 				// Shown in Detected
 				continue;
 			}
-			s.addContent(checkBox(unlock.getDescription(), account.getManualUnlocks().contains(unlock), true, null,
+			if (unlock.hasVarbit() && access.getUnlocks().contains(unlock) && !account.getManualUnlocks().contains(unlock))
+			{
+				s.addContent(checkBox(unlock.getDescription() + " (detected)", true, false,
+					"Read from the game", on ->
+					{
+					}));
+				continue;
+			}
+			final boolean flagged = review.contains(unlock);
+			s.addContent(checkBox(unlock.getDescription() + (flagged ? " (check)" : ""),
+				account.getManualUnlocks().contains(unlock), true,
+				flagged ? "Your run has a patch or a way to one that needs this" : null,
 				on -> saveAccount(() ->
 				{
 					if (on)
@@ -985,6 +1021,13 @@ class SetupPanel extends JPanel
 						account.getManualUnlocks().remove(unlock);
 					}
 				}, true)));
+		}
+		if (!account.isUnlocksReviewed())
+		{
+			final JButton done = smallButton("These are right");
+			done.setToolTipText("Stop asking on the Run tab; you can still change these any time");
+			done.addActionListener(e -> saveAccount(() -> account.setUnlocksReviewed(true), true));
+			s.addContent(done);
 		}
 		return s;
 	}

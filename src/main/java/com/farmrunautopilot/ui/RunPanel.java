@@ -5,6 +5,7 @@ import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
+import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.route.RunOverrides;
@@ -26,11 +27,14 @@ import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -101,6 +105,9 @@ class RunPanel extends JPanel
 		void stop();
 
 		void skip();
+
+		/** Show Account > Unlocks. */
+		void openUnlocks();
 	}
 
 	RunPanel(SettingsStore settings, RunOverrides overrides, Runnable replan, Runnable settingsChanged,
@@ -197,6 +204,7 @@ class RunPanel extends JPanel
 		if (view.getState() == RunView.State.OFF)
 		{
 			addOff(view);
+			addUnlocksToCheck();
 			finish();
 			return;
 		}
@@ -222,11 +230,45 @@ class RunPanel extends JPanel
 			label.setForeground(ColorScheme.BRAND_ORANGE);
 			add(label);
 		}
+		addUnlocksToCheck();
 
 		addRoute(plan.getRoute());
 		addSupplies(supplies);
 		addTotals(supplies);
 		finish();
+	}
+
+	/**
+	 * Unlocks the plugin can't read that would change this run: one orange line that opens Account > Unlocks,
+	 * until the player has checked them.
+	 */
+	private void addUnlocksToCheck()
+	{
+		final List<Unlock> review = AccessChecker.toReview(settings.getRunConfig(), settings.getAccount());
+		if (review.isEmpty())
+		{
+			return;
+		}
+		final JLabel label = note("Check your unlocks: " + review.size() + (review.size() == 1 ? " needs" : " need")
+			+ " ticking by hand (click to open)");
+		label.setForeground(ColorScheme.BRAND_ORANGE);
+		final List<String> names = new ArrayList<>();
+		for (Unlock unlock : review)
+		{
+			names.add(unlock.getDescription());
+		}
+		label.setToolTipText("<html>The plugin can't read these from the game:<br>" + String.join("<br>", escapeAll(names))
+			+ "</html>");
+		label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		label.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				controls.openUnlocks();
+			}
+		});
+		add(label);
 	}
 
 	private void addSupplies(SupplyPlan supplies)

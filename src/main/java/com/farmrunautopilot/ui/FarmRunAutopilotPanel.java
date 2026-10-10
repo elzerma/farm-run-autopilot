@@ -36,6 +36,8 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	private final SetupPanel farmPanel;
 	private final SetupPanel travelPanel;
 	private final SetupPanel accountPanel;
+	/** Built after the Run tab, which can switch to the Account tab. */
+	private TabBar tabs;
 	private final RunSession runSession;
 	private final Timer refreshTimer;
 
@@ -92,6 +94,13 @@ public class FarmRunAutopilotPanel extends PluginPanel
 				{
 					clientThread.invoke(runSession::skip);
 				}
+
+				@Override
+				public void openUnlocks()
+				{
+					accountPanel.revealUnlocks();
+					tabs.select("Account");
+				}
 			});
 		// Presets cover Farm and Travel, so they're managed under the Run tab's preset picker
 		presetsPanel = new SetupPanel(SetupPanel.Page.PRESETS, settings, accessChecker, patchTracker,
@@ -129,7 +138,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		travelPanel.showHoldings(holdingsTracker::getHoldings);
 		travelPanel.showAutoPicks(runService);
 
-		final TabBar tabs = new TabBar(display);
+		tabs = new TabBar(display);
 		tabs.setBorder(new EmptyBorder(0, 0, 10, 0));
 		tabs.addTab("Run", run);
 		tabs.addTab("Farm", top(farmPanel));

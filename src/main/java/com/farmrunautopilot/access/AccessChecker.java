@@ -1,6 +1,7 @@
 package com.farmrunautopilot.access;
 
 import com.farmrunautopilot.data.AchievementDiary;
+import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.Unlock;
@@ -10,6 +11,7 @@ import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.AccountSettings;
+import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -183,6 +185,13 @@ public class AccessChecker
 		{
 			unlocks.add(Unlock.SPIRIT_TREES);
 		}
+		for (Unlock unlock : Unlock.values())
+		{
+			if (unlock.hasVarbit() && client.getVarbitValue(unlock.getVarbit()) > 0)
+			{
+				unlocks.add(unlock);
+			}
+		}
 
 		final PohAltar altar = account.getPoh().getAltar();
 		return new AccessSnapshot(true, Collections.unmodifiableMap(quests), Collections.unmodifiableMap(levels),
@@ -224,5 +233,58 @@ public class AccessChecker
 	public static boolean isDetected(Unlock unlock)
 	{
 		return unlock == Unlock.FAIRY_RINGS || unlock == Unlock.SPIRIT_TREES;
+	}
+
+	/**
+	 * Unlocks the plugin can't read from the game, not ticked, that would change this run: a patch or a way to
+	 * a patch that's switched on needs them. Empty once the player has checked their unlocks.
+	 */
+	public static List<Unlock> toReview(RunConfig config, AccountSettings account)
+	{
+		final List<Unlock> review = new ArrayList<>();
+		if (account.isUnlocksReviewed())
+		{
+			return review;
+		}
+		final Set<Location> locations = EnumSet.noneOf(Location.class);
+		final Set<Unlock> needed = EnumSet.noneOf(Unlock.class);
+		for (Patch patch : Patch.values())
+		{
+			if (config.getEnabledTypes().contains(patch.getType()) && !config.getDisabledPatches().contains(patch))
+			{
+				locations.add(patch.getLocation());
+				addUnlocks(patch.getRequirements(), needed);
+				if (patch.getDiseaseFreeRequirement() != null)
+				{
+					addUnlocks(Collections.singletonList(patch.getDiseaseFreeRequirement()), needed);
+				}
+			}
+		}
+		for (TravelMethod method : TravelMethod.values())
+		{
+			if (locations.contains(method.getDestination()))
+			{
+				addUnlocks(method.getRequirements(), needed);
+			}
+		}
+		for (Unlock unlock : needed)
+		{
+			if (!isDetected(unlock) && !unlock.hasVarbit() && !account.getManualUnlocks().contains(unlock))
+			{
+				review.add(unlock);
+			}
+		}
+		return review;
+	}
+
+	private static void addUnlocks(List<Requirement> requirements, Set<Unlock> into)
+	{
+		for (Requirement requirement : requirements)
+		{
+			if (requirement.getKind() == Requirement.Kind.UNLOCK)
+			{
+				into.add(requirement.getUnlock());
+			}
+		}
 	}
 }
