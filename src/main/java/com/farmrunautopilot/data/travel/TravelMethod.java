@@ -208,7 +208,7 @@ public enum TravelMethod
 	HUNTER_CAPE(item(Location.CIVITAS_ILLA_FORTIS, "Hunter cape", MEDIUM, TravelKind.CAPE, TravelItem.HUNTER_CAPE)),
 	MAX_CAPE_HUNTER_GUILD(item(Location.CIVITAS_ILLA_FORTIS, "Max cape (Hunter Guild)", MEDIUM,
 		TravelKind.CAPE, TravelItem.MAX_CAPE)),
-	CIVITAS_ILLA_FORTIS_TELEPORT(spell(Location.CIVITAS_ILLA_FORTIS, MEDIUM, Spell.CIVITAS_ILLA_FORTIS_TELEPORT)
+	CIVITAS_ILLA_FORTIS_TELEPORT(spell(Location.CIVITAS_ILLA_FORTIS, LONG, Spell.CIVITAS_ILLA_FORTIS_TELEPORT)
 		.nexus(PortalNexus.Destination.CIVITAS_ILLA_FORTIS).note("Then the quetzal to the Hunter Guild")),
 	FAIRY_RING_AJP(fairyRing(Location.CIVITAS_ILLA_FORTIS, "AJP", MEDIUM));
 
