@@ -41,7 +41,7 @@ public class RouteStop
 			case FAIRY_RING_ARDOUGNE_CLOAK:
 			case FAIRY_RING_SLAYER_RING:
 			case FAIRY_RING_QUEST_CAPE:
-				return departure.getFairyRingAccess().getDisplayName() + ": " + method.getDisplayName();
+				return method.getDisplayName() + " (" + departure.getFairyRingAccess().getVia() + ")";
 			default:
 				return method.getDisplayName();
 		}

@@ -14,23 +14,29 @@ import lombok.Getter;
 public enum FairyRingAccess
 {
 	/** The ring next to the stop just finished, walking the same distance as arriving there by ring. */
-	NEARBY("Fairy ring by the last stop", 0),
+	NEARBY("Fairy ring by the last stop", "from the ring by the last stop", 0),
 	// Every cloak tier teleports to the Monastery as often as wanted
-	ARDOUGNE_CLOAK("Ardougne cloak (Monastery), ring DJP", 51, TravelItem.ARDOUGNE_CLOAK,
+	ARDOUGNE_CLOAK("Ardougne cloak (Monastery), ring DJP", "from DJP by Ardougne cloak", 51,
+		TravelItem.ARDOUGNE_CLOAK,
 		TravelItem.ARDOUGNE_CLOAK_1),
-	SLAYER_RING("Slayer ring (Fremennik Slayer Dungeon), ring AJR", 16, TravelItem.SLAYER_RING),
-	QUEST_CAPE("Quest point cape (Legends' Guild), ring BLR", 12, TravelItem.QUEST_POINT_CAPE);
+	SLAYER_RING("Slayer ring (Fremennik Slayer Dungeon), ring AJR", "from AJR by slayer ring", 16,
+		TravelItem.SLAYER_RING),
+	QUEST_CAPE("Quest point cape (Legends' Guild), ring BLR", "from BLR by quest point cape", 12,
+		TravelItem.QUEST_POINT_CAPE);
 
 	/** Which teleport to use and the ring it reaches. */
 	private final String displayName;
+	/** Short, after the ring being travelled to, e.g. "Fairy ring CIR (from AJR by slayer ring)". */
+	private final String via;
 	/** Walk from the teleport's arrival to the ring. */
 	private final int tiles;
 	/** Teleport items that work, best first; empty for walking. */
 	private final List<TravelItem> items;
 
-	FairyRingAccess(String displayName, int tiles, TravelItem... items)
+	FairyRingAccess(String displayName, String via, int tiles, TravelItem... items)
 	{
 		this.displayName = displayName;
+		this.via = via;
 		this.tiles = tiles;
 		this.items = Collections.unmodifiableList(Arrays.asList(items));
 	}

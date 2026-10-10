@@ -201,7 +201,7 @@ final class HelpWanted
 		add(panel, start);
 		if (!missing.isEmpty())
 		{
-			add(panel, text("Needs: " + String.join("; ", missing), ColorScheme.MEDIUM_GRAY_COLOR, 0));
+			add(panel, text("Needs: " + String.join("; ", missing), ColorScheme.LIGHT_GRAY_COLOR, 0));
 		}
 		add(panel, text("", ColorScheme.MEDIUM_GRAY_COLOR, 6));
 	}

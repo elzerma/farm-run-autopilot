@@ -1482,7 +1482,7 @@ class SetupPanel extends JPanel
 	private static JLabel note(String text)
 	{
 		final JLabel label = new JLabel(wrap(text));
-		label.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
+		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		label.setFont(FontManager.getRunescapeSmallFont());
 		label.setBorder(new EmptyBorder(0, 0, 6, 0));
 		label.setAlignmentX(LEFT_ALIGNMENT);

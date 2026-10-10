@@ -156,7 +156,7 @@ public class RoutePlannerTest
 		}
 		final RouteStop stop = new RouteStop(Location.FARMING_GUILD, TravelMethod.FAIRY_RING_CIR,
 			Departure.FAIRY_RING_SLAYER_RING, 30, false);
-		assertEquals("Slayer ring (Fremennik Slayer Dungeon), ring AJR: Fairy ring CIR", stop.describeTravel());
+		assertEquals("Fairy ring CIR (from AJR by slayer ring)", stop.describeTravel());
 	}
 
 	@Test
