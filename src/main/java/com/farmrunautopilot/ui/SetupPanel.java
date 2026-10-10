@@ -59,16 +59,19 @@ import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 
 /**
- * The Setup and Rules tabs (SPEC 13.2, split by Sean 2026-10-07): Setup holds what changes now and then,
- * Rules what is set once. Rebuilt from the saved settings whenever they reload or the account's access
+ * The Farm, Travel and Account tabs, and preset management on the Run tab (SPEC 13.2; layout in
+ * docs/plans/sidebar-ux.md). Rebuilt from the saved settings whenever they reload or the account's access
  * changes; every edit is saved straight away.
  */
 class SetupPanel extends JPanel
 {
+	/** One tab per question: what to grow, how to get around, what the account has; presets sit on the Run tab. */
 	enum Page
 	{
-		SETUP,
-		RULES
+		FARM,
+		TRAVEL,
+		ACCOUNT,
+		PRESETS
 	}
 
 	/** Room left for controls after the sidebar's and sections' borders. */
@@ -78,7 +81,7 @@ class SetupPanel extends JPanel
 	private final AccessChecker accessChecker;
 	private final PatchDebugPanel patchDebugPanel;
 	private final Page page;
-	/** Run guidance settings, shown on the Rules page only (null on Setup). */
+	/** Run guidance settings, shown on the Account page only (null elsewhere). */
 	private final GuidanceSettings guidance;
 
 	SetupPanel(Page page, SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker,
@@ -116,32 +119,30 @@ class SetupPanel extends JPanel
 			add(note("Checking your quests, diaries and levels... nothing is greyed out until that's done."));
 		}
 
-		if (page == Page.SETUP)
+		switch (page)
 		{
-			add(cropsSection(config, access));
-			add(runOptionsSection(config));
-			add(presetsSection());
-		}
-		else
-		{
-			add(patchesSection(config, access));
-			add(protectionSection(config));
-			add(travelSection(config, access));
-			add(pohSection(account));
-			add(unlocksSection(account, access));
-			add(routeSection(config));
-			if (guidance != null)
-			{
-				add(guidanceSection());
-			}
-			add(storageSection(config));
-
-			final CollapsibleSection debug = section("Testing & debug");
-			debug.addContent(checkBox("Count every patch (full run)", config.isSupplyFullRun(), true,
-				"Supplies for every selected patch, not just the ones that are due. Handy for checking numbers.",
-				on -> saveRun(() -> config.setSupplyFullRun(on))));
-			debug.addContent(patchDebugPanel);
-			add(debug);
+			case FARM:
+				add(runTypesSection(config));
+				add(patchesSection(config, access));
+				add(cropsSection(config, access));
+				add(protectionSection(config));
+				add(extrasSection(config));
+				break;
+			case TRAVEL:
+				add(travelDefaultsSection(config, access));
+				add(routeSection(config));
+				add(travelSection(config, access));
+				break;
+			case ACCOUNT:
+				add(pohSection(account));
+				add(unlocksSection(account, access));
+				add(storageSection(config));
+				add(displaySection(config));
+				add(debugSection(config));
+				break;
+			default:
+				add(presetsSection());
+				break;
 		}
 
 		revalidate();
@@ -300,7 +301,7 @@ class SetupPanel extends JPanel
 	}
 	private JComponent protectionSection(RunConfig config)
 	{
-		final CollapsibleSection s = section("Protection");
+		final CollapsibleSection s = section("Protection and compost");
 		s.addContent(checkBox("Bring gardener payments noted (trees and fruit trees)", config.isPayWithNotes(), true,
 			"Gardeners accept noted payment; one inventory slot per item type",
 			on -> saveRun(() -> config.setPayWithNotes(on))));
@@ -363,23 +364,53 @@ class SetupPanel extends JPanel
 		s.addContent(label("Compost"));
 		s.addContent(combo(enumChoices(Compost.values()), config.getCompost().get(PatchType.HERB),
 			c -> saveRun(() -> config.getCompost().put(PatchType.HERB, c))));
+
+		s.addContent(subheader("Disease"));
 		s.addContent(checkBox("Use Cure Plant (Lunar)", config.isUseCurePlant(), true, null,
 			on -> saveRun(() -> config.setUseCurePlant(on))));
 		s.addContent(checkBox("Use Resurrect Crops (Arceuus)", config.isUseResurrectCrops(), true, null,
 			on -> saveRun(() -> config.setUseResurrectCrops(on))));
+		s.addContent(spinnerRow("Plant cures to bring (backup)", spinner(config.getPlantCureDoses(), 0, 40, 1,
+			v -> saveRun(() -> config.setPlantCureDoses(v)))));
+		return s;
+	}
+
+	/** Which ticked run types are included; the ticks themselves are on the Run tab. */
+	private JComponent runTypesSection(RunConfig config)
+	{
+		final CollapsibleSection s = section("Run types");
+		s.addContent(note("Tick trees, fruit trees and herbs at the top of the Run tab. A ticked type joins a run "
+			+ "once enough of its patches are due."));
+		s.addContent(spinnerRow("Include a run type when this % of its patches are due",
+			spinner(config.getDueThresholdPercent(), 1, 100, 5, v -> saveRun(() -> config.setDueThresholdPercent(v)))));
+		return s;
+	}
+
+	/** Optional things to bring that help but aren't needed. */
+	private JComponent extrasSection(RunConfig config)
+	{
+		final CollapsibleSection s = section("Extras to bring");
+		s.addContent(label("Outfit"));
+		s.addContent(combo(enumChoices(Outfit.values()), config.getOutfit(), o -> saveRun(() -> config.setOutfit(o))));
 		s.addContent(checkBox("Suggest yield boosts", config.isRecommendEquipmentBoosts(), true,
 			"Magic secateurs and Farming cape/outfit as optional items",
 			on -> saveRun(() -> config.setRecommendEquipmentBoosts(on))));
 		return s;
 	}
 
-	private JComponent travelSection(RunConfig config, AccessSnapshot access)
+	/** Settings for every stop; each location below can override its own teleport. */
+	private JComponent travelDefaultsSection(RunConfig config, AccessSnapshot access)
 	{
-		final CollapsibleSection s = section("Travel");
-		s.addContent(note("Auto picks the fastest method you have. Locked methods show what they need."));
-		s.addContent(note("\"Runes instead of tablets everywhere\" is in Setup > Run options."));
-		s.addContent(note("Fairy rings: pick how you get to a ring. The ring by the stop you just finished is "
-			+ "used whenever it's quicker, and your house ring is set in My POH."));
+		final CollapsibleSection s = section("Defaults for every stop");
+		s.addContent(checkBox("Runes instead of tablets", config.isUseRunesNotTabs(), true,
+			"Cast teleports from runes rather than using tablets. A location below can switch this on just for itself.",
+			on -> saveRun(() -> config.setUseRunesNotTabs(on))));
+		s.addContent(checkBox("Walk when it's nearly as quick as teleporting", config.isPreferWalking(), true,
+			"A walk up to about 20 seconds slower is used instead of a teleport, saving charges and clicks "
+				+ "(e.g. one Falador Teleport for Falador Park and Taverley)",
+			on -> saveRun(() -> config.setPreferWalking(on))));
+		s.addContent(spinnerRow("Stamina doses to bring", spinner(config.getStaminaDoses(), 0, 40, 1,
+			v -> saveRun(() -> config.setStaminaDoses(v)))));
 
 		final List<Choice<FairyRingAccess>> ways = new ArrayList<>();
 		ways.add(Choice.of(null, "Auto (best)"));
@@ -405,9 +436,19 @@ class SetupPanel extends JPanel
 			ways.add(new Choice<>(way, way.getDisplayName() + (locked ? " (locked)" : ""), !locked,
 				locked ? AccessSnapshot.describe(missing) : needs));
 		}
-		s.addContent(subheader("Fairy rings"));
+		s.addContent(label("Way to a fairy ring"));
 		s.addContent(combo(ways, config.getFairyRingWay(), w -> saveRun(() -> config.setFairyRingWay(w))));
+		s.addContent(note("The ring by the stop you just finished is used whenever it's quicker, and your house "
+			+ "ring is set in Account > My house."));
+		return s;
+	}
 
+	/** One entry per location: which teleport, and its runes override. */
+	private JComponent travelSection(RunConfig config, AccessSnapshot access)
+	{
+		final CollapsibleSection s = section("Locations");
+		s.addContent(note("Auto picks the fastest way you have. Settings here override the defaults above for "
+			+ "that stop. Locked methods show what they need."));
 		for (Location location : Location.values())
 		{
 			final List<Choice<TravelMethod>> choices = new ArrayList<>();
@@ -452,8 +493,9 @@ class SetupPanel extends JPanel
 				})));
 			if (hasSpell)
 			{
-				s.addContent(checkBox("Runes instead of tabs here", config.getRunesNotTabsAt().contains(location),
-					true, "Setup > Run options can switch this on for every location",
+				s.addContent(checkBox("Override: runes instead of tablets here",
+					config.isUseRunesNotTabs() || config.getRunesNotTabsAt().contains(location), !config.isUseRunesNotTabs(),
+					config.isUseRunesNotTabs() ? "Already on for every stop in the defaults above" : null,
 					on -> saveRun(() ->
 					{
 						if (on)
@@ -473,7 +515,7 @@ class SetupPanel extends JPanel
 	private JComponent pohSection(AccountSettings account)
 	{
 		final PohSetup poh = account.getPoh();
-		final CollapsibleSection s = section("My POH");
+		final CollapsibleSection s = section("My house");
 		s.addContent(note(poh.getLastDetected() > 0
 			? "Furniture last detected " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
 			.format(new Date(poh.getLastDetected() * 1000)) + ". Edit anything below."
@@ -587,6 +629,10 @@ class SetupPanel extends JPanel
 	private JComponent routeSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("Route");
+		s.addContent(label("Order"));
+		s.addContent(combo(enumChoices(RouteMode.values()), config.getRouteMode(),
+			m -> saveRun(() -> config.setRouteMode(m))));
+		s.addContent(note("Off keeps your own order: drag the stops in the route list on the Run tab."));
 		final List<Choice<Location>> starts = new ArrayList<>();
 		for (Location location : Location.values())
 		{
@@ -596,33 +642,31 @@ class SetupPanel extends JPanel
 		s.addContent(combo(starts, config.getStartLocation(), l -> saveRun(() -> config.setStartLocation(l))));
 		s.addContent(checkBox("Finish near a bank", config.isEndNearBank(), true, null,
 			on -> saveRun(() -> config.setEndNearBank(on))));
-		s.addContent(checkBox("Walk when it's nearly as quick as teleporting", config.isPreferWalking(), true,
-			"A walk up to about 20 seconds slower is used instead of a teleport, saving charges and clicks "
-				+ "(e.g. one Falador Teleport for Falador Park and Taverley)",
-			on -> saveRun(() -> config.setPreferWalking(on))));
-		s.addContent(spinnerRow("Include a run type when this % of its patches are due",
-			spinner(config.getDueThresholdPercent(), 1, 100, 5, v -> saveRun(() -> config.setDueThresholdPercent(v)))));
 		return s;
 	}
 
-	private JComponent runOptionsSection(RunConfig config)
+	/** How the run is shown in game: highlights, colours and reminders. */
+	private JComponent displaySection(RunConfig config)
 	{
-		final CollapsibleSection s = section("Run options");
-		s.addContent(label("Route"));
-		s.addContent(combo(enumChoices(RouteMode.values()), config.getRouteMode(),
-			m -> saveRun(() -> config.setRouteMode(m))));
-		s.addContent(checkBox("Runes instead of tablets everywhere", config.isUseRunesNotTabs(), true,
-			"Per-location choices are in Rules > Travel",
-			on -> saveRun(() -> config.setUseRunesNotTabs(on))));
-		s.addContent(label("Outfit to bring"));
-		s.addContent(combo(enumChoices(Outfit.values()), config.getOutfit(), o -> saveRun(() -> config.setOutfit(o))));
+		final CollapsibleSection s = section("Display");
+		if (guidance != null)
+		{
+			addGuidance(s);
+		}
 		s.addContent(checkBox("Remind me to drop weeds and pots", config.isRemindToDrop(), true,
 			"During a run, a reminder under your character while you carry weeds or empty plant pots",
 			on -> saveRun(() -> config.setRemindToDrop(on))));
-		s.addContent(spinnerRow("Stamina doses to bring", spinner(config.getStaminaDoses(), 0, 40, 1,
-			v -> saveRun(() -> config.setStaminaDoses(v)))));
-		s.addContent(spinnerRow("Plant cures to bring (backup)", spinner(config.getPlantCureDoses(), 0, 40, 1,
-			v -> saveRun(() -> config.setPlantCureDoses(v)))));
+		return s;
+	}
+
+	private JComponent debugSection(RunConfig config)
+	{
+		final CollapsibleSection s = section("Testing & debug");
+		s.addContent(checkBox("Count every patch (full run)", config.isSupplyFullRun(), true,
+			"Supplies for every selected patch, not just the ones that are due. Handy for checking numbers.",
+			on -> saveRun(() -> config.setSupplyFullRun(on))));
+		s.addContent(subheader("Patch details"));
+		s.addContent(patchDebugPanel);
 		return s;
 	}
 
@@ -659,9 +703,8 @@ class SetupPanel extends JPanel
 	}
 
 	/** Highlights, hint arrow and colours shown during a run (SPEC 13.4). Global, not per account. */
-	private JComponent guidanceSection()
+	private void addGuidance(CollapsibleSection s)
 	{
-		final CollapsibleSection s = section("Run guidance");
 		final FarmRunAutopilotConfig c = guidance.get();
 		s.addContent(checkBox("Highlight the patch", c.highlightPatch(), true,
 			"Outline the patch the current step is about", on -> guidance.set("highlightPatch", on)));
@@ -675,7 +718,6 @@ class SetupPanel extends JPanel
 		s.addContent(colourRow("Patch colour", c.patchColour(), "patchColour"));
 		s.addContent(colourRow("Gardener colour", c.npcColour(), "npcColour"));
 		s.addContent(colourRow("Item colour", c.itemColour(), "itemColour"));
-		return s;
 	}
 
 	/** A label with a colour swatch that opens RuneLite's colour picker. */
@@ -704,7 +746,7 @@ class SetupPanel extends JPanel
 	/** Save, rename and delete named copies of the run settings (SPEC 13.5). */
 	private JComponent presetsSection()
 	{
-		final CollapsibleSection s = section("Presets");
+		final CollapsibleSection s = section("Manage presets");
 		s.addContent(note("Save these settings under a name (e.g. \"Quick herbs\") and switch between them at the "
 			+ "top of the Run tab. Presets cover crops, rules, travel and route; My POH and unlocks are shared."));
 		final JButton save = smallButton("Save current settings as...");

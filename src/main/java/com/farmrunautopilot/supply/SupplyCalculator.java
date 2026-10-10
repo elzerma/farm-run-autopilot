@@ -52,12 +52,13 @@ public final class SupplyCalculator
 	private static final String[] ORDINALS = {"1st", "2nd", "3rd"};
 
 	// Where each kind of line is changed, shown in its tooltip
-	private static final String CROPS = "Setup > Crops";
-	private static final String RUN_OPTIONS = "Setup > Run options";
-	private static final String PROTECTION = "Rules > Protection";
+	private static final String CROPS = "Farm > Crops";
+	private static final String RUN_OPTIONS = "Farm > Extras to bring";
+	private static final String TRAVEL_DEFAULTS = "Travel > Defaults for every stop";
+	private static final String PROTECTION = "Farm > Protection and compost";
 	/** Compost lines: the setting is the compost type, not anything about a bucket. */
-	private static final String COMPOST_TYPE = "Rules > Protection (compost type)";
-	private static final String TRAVEL = "Rules > Travel";
+	private static final String COMPOST_TYPE = "Farm > Protection and compost (compost type)";
+	private static final String TRAVEL = "Travel > Locations";
 
 	private SupplyCalculator()
 	{
@@ -315,8 +316,8 @@ public final class SupplyCalculator
 		}
 		if (config.getPlantCureDoses() > 0)
 		{
-			lines.add(line(SupplyLine.Group.OPTIONAL, "Plant cure", config.getPlantCureDoses(), holdings, carried,
-				"Backup for diseased patches", config.getPlantCureDoses(), ItemID.PLANT_CURE));
+			lines.add(changeIn(line(SupplyLine.Group.OPTIONAL, "Plant cure", config.getPlantCureDoses(), holdings, carried,
+				"Backup for diseased patches", config.getPlantCureDoses(), ItemID.PLANT_CURE), PROTECTION));
 		}
 		if (config.getStaminaDoses() > 0)
 		{
@@ -330,7 +331,7 @@ public final class SupplyCalculator
 			final int[] staminaIds = SupplyItems.STAMINA_DOSES.keySet().stream().mapToInt(Integer::intValue).toArray();
 			lines.add(new SupplyLine(SupplyLine.Group.OPTIONAL, "Stamina doses", config.getStaminaDoses(), doses,
 				carriedDoses, holdings.where(staminaIds), null,
-				(config.getStaminaDoses() + STAMINA_DOSES_PER_POTION - 1) / STAMINA_DOSES_PER_POTION, false, RUN_OPTIONS,
+				(config.getStaminaDoses() + STAMINA_DOSES_PER_POTION - 1) / STAMINA_DOSES_PER_POTION, false, TRAVEL_DEFAULTS,
 				staminaIds));
 		}
 
@@ -598,7 +599,7 @@ public final class SupplyCalculator
 			}
 			result.lines.add(new SupplyLine(SupplyLine.Group.RUNES, name, n, all.have.get(rune), onYou.have.get(rune),
 				holdings.where(rune.getItemId()), note, infinite || inPouch(holdings, rune) ? 0 : 1, false,
-				RUN_OPTIONS + " (runes or tablets), " + TRAVEL, new int[]{rune.getItemId()}));
+				TRAVEL_DEFAULTS + " (runes or tablets), " + TRAVEL, new int[]{rune.getItemId()}));
 		});
 		all.comboUsed.forEach((id, n) -> free.add(n + " " + itemName.apply(id).toLowerCase()));
 		result.summary = String.join(", ", bring) + (free.isEmpty() ? "" : " (" + String.join("; ", free) + ")");
@@ -735,7 +736,7 @@ public final class SupplyCalculator
 			if (holds != null && replaced.isEmpty())
 			{
 				warnings.add("Your bottomless compost bucket holds " + holds.getDisplayName().toLowerCase()
-					+ ", which this run doesn't use (Rules > Protection, compost type)");
+					+ ", which this run doesn't use (Farm > Protection and compost)");
 			}
 			if (!replaced.isEmpty())
 			{

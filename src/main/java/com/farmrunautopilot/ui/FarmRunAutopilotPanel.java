@@ -11,6 +11,7 @@ import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import javax.inject.Inject;
+import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
@@ -23,7 +24,7 @@ import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
 
 /**
- * Sidebar root: a Run tab and a Setup tab (SPEC section 13).
+ * Sidebar root: Run, Farm, Travel and Account tabs (SPEC section 13, docs/plans/sidebar-ux.md).
  */
 public class FarmRunAutopilotPanel extends PluginPanel
 {
@@ -31,8 +32,11 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	private static final int REFRESH_MILLIS = 10_000;
 
 	private final RunPanel runPanel;
-	private final SetupPanel setupPanel;
-	private final SetupPanel rulesPanel;
+	private final SetupPanel presetsPanel;
+	private final SetupPanel farmPanel;
+	private final SetupPanel travelPanel;
+	private final SetupPanel accountPanel;
+	private final RunSession runSession;
 	private final Timer refreshTimer;
 
 	@Inject
@@ -41,6 +45,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		FarmRunAutopilotConfig config, ConfigManager configManager,
 		ColorPickerManager colorPickers)
 	{
+		this.runSession = runSession;
 		setLayout(new BorderLayout());
 		setBorder(new EmptyBorder(10, 10, 10, 10));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -88,23 +93,32 @@ public class FarmRunAutopilotPanel extends PluginPanel
 					clientThread.invoke(runSession::skip);
 				}
 			});
+		// Presets cover Farm and Travel, so they're managed under the Run tab's preset picker
+		presetsPanel = new SetupPanel(SetupPanel.Page.PRESETS, settings, accessChecker, patchTracker, null);
+		final JPanel runStack = new JPanel();
+		runStack.setLayout(new BoxLayout(runStack, BoxLayout.Y_AXIS));
+		runStack.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		runPanel.setAlignmentX(LEFT_ALIGNMENT);
+		presetsPanel.setAlignmentX(LEFT_ALIGNMENT);
+		runStack.add(runPanel);
+		runStack.add(presetsPanel);
 		final JPanel run = new JPanel(new BorderLayout());
 		run.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		run.add(runPanel, BorderLayout.NORTH);
+		run.add(runStack, BorderLayout.NORTH);
 
-		setupPanel = new SetupPanel(SetupPanel.Page.SETUP, settings, accessChecker, patchTracker, null);
-		rulesPanel = new SetupPanel(SetupPanel.Page.RULES, settings, accessChecker, patchTracker,
+		farmPanel = new SetupPanel(SetupPanel.Page.FARM, settings, accessChecker, patchTracker, null);
+		travelPanel = new SetupPanel(SetupPanel.Page.TRAVEL, settings, accessChecker, patchTracker, null);
+		accountPanel = new SetupPanel(SetupPanel.Page.ACCOUNT, settings, accessChecker, patchTracker,
 			new GuidanceSettings(config, configManager, colorPickers));
 
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(display);
 		tabGroup.setBorder(new EmptyBorder(0, 0, 10, 0));
 
 		final MaterialTab runTab = new MaterialTab("Run", tabGroup, run);
-		final MaterialTab setupTab = new MaterialTab("Setup", tabGroup, top(setupPanel));
-		final MaterialTab rulesTab = new MaterialTab("Rules", tabGroup, top(rulesPanel));
 		tabGroup.addTab(runTab);
-		tabGroup.addTab(setupTab);
-		tabGroup.addTab(rulesTab);
+		tabGroup.addTab(new MaterialTab("Farm", tabGroup, top(farmPanel)));
+		tabGroup.addTab(new MaterialTab("Travel", tabGroup, top(travelPanel)));
+		tabGroup.addTab(new MaterialTab("Account", tabGroup, top(accountPanel)));
 		tabGroup.select(runTab);
 
 		add(tabGroup, BorderLayout.NORTH);
@@ -117,7 +131,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	/** Re-reads patch predictions. Call on the Swing thread. */
 	public void refreshPatches()
 	{
-		rulesPanel.refreshPatches();
+		accountPanel.refreshPatches();
 		runPanel.refreshPatches();
 	}
 
@@ -125,13 +139,17 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	public void updateRun(RunPlan plan, boolean loggedIn)
 	{
 		runPanel.update(plan, loggedIn);
+		// Managing presets is for between runs
+		presetsPanel.setVisible(loggedIn && runSession.getView().getState() == RunView.State.OFF);
 	}
 
-	/** Rebuilds the Setup tab from saved settings and account access. Call on the Swing thread. */
+	/** Rebuilds the settings tabs from saved settings and account access. Call on the Swing thread. */
 	public void rebuildSetup()
 	{
-		setupPanel.rebuild();
-		rulesPanel.rebuild();
+		farmPanel.rebuild();
+		travelPanel.rebuild();
+		accountPanel.rebuild();
+		presetsPanel.rebuild();
 		// The Run tab shows the run types and preset from the same settings
 		runPanel.refresh();
 	}

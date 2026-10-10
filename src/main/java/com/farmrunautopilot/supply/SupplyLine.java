@@ -56,7 +56,7 @@ public class SupplyLine
 	int slots;
 	/** Covered some other way (e.g. a bottomless compost bucket), even if {@link #have} is short. */
 	boolean coveredOtherwise;
-	/** Where to change this, e.g. "Setup > Crops", or null. */
+	/** Where to change this, e.g. "Farm > Crops", or null. */
 	String changeIn;
 	/** Items that satisfy this line (any of them), e.g. every charge of a ring. Used by the bank tab. */
 	int[] itemIds;

@@ -204,7 +204,7 @@ class RunPanel extends JPanel
 		add(heading(summary(supplies)));
 		if (settings.getRunConfig().isSupplyFullRun())
 		{
-			final JLabel full = note("Counting every patch (full run is on in Rules > Testing & debug)");
+			final JLabel full = note("Counting every patch (full run is on in Account > Testing & debug)");
 			full.setForeground(ColorScheme.BRAND_ORANGE);
 			add(full);
 		}
@@ -501,7 +501,7 @@ class RunPanel extends JPanel
 		}
 		combo.setSelectedItem(active != null ? active : EDITED_PRESET);
 		combo.setFont(FontManager.getRunescapeSmallFont());
-		combo.setToolTipText("Switch to a saved preset. Save and manage presets in Setup > Presets.");
+		combo.setToolTipText("Switch to a saved preset. Save and manage presets under Manage presets below.");
 		combo.addActionListener(e ->
 		{
 			final Object picked = combo.getSelectedItem();
@@ -668,7 +668,7 @@ class RunPanel extends JPanel
 		add(left(list));
 
 		add(note(route.getMode() == RouteMode.OFF
-			? "Your own order. Drag stops to change it; switch back in Setup > Run options."
+			? "Your own order. Drag stops to change it; switch back in Travel > Route."
 			: "Drag a stop to reorder (switches to your own order)."));
 	}
 
