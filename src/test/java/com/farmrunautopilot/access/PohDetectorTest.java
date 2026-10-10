@@ -6,6 +6,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import com.farmrunautopilot.data.poh.JewelleryBoxTier;
 import com.farmrunautopilot.data.poh.PoolTier;
+import com.farmrunautopilot.settings.SettingsStore;
+import com.google.gson.Gson;
 import net.runelite.api.gameval.ObjectID;
 import org.junit.Test;
 
@@ -43,7 +45,9 @@ public class PohDetectorTest
 	@Test
 	public void onlyLooksInsideAHouse()
 	{
-		final PohDetector detector = new PohDetector(null, null, null);
+		final SettingsStore settings = new SettingsStore(null, new Gson());
+		settings.getAccount().setAutoDetectHouse(true);
+		final PohDetector detector = new PohDetector(null, settings, null);
 		// Outside a house, even a matching object is ignored
 		detector.onObjectSpawned(ObjectID.POH_FAIRY_RING);
 		assertFalse(detector.hasFound());
@@ -58,6 +62,14 @@ public class PohDetectorTest
 		detector.reset();
 		detector.onHouseLoading();
 		detector.onSceneLoading(false);
+		detector.onObjectSpawned(ObjectID.POH_FAIRY_RING);
+		assertFalse(detector.hasFound());
+
+		// Beta switched off: even the player's own house isn't scanned
+		settings.getAccount().setAutoDetectHouse(false);
+		detector.reset();
+		detector.onHouseLoading();
+		detector.onSceneLoading(true);
 		detector.onObjectSpawned(ObjectID.POH_FAIRY_RING);
 		assertFalse(detector.hasFound());
 	}

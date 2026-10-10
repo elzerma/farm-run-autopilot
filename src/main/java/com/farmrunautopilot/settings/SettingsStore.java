@@ -43,7 +43,7 @@ public class SettingsStore
 	private volatile List<Preset> presets = new ArrayList<>();
 
 	@Inject
-	SettingsStore(ConfigManager configManager, Gson gson)
+	public SettingsStore(ConfigManager configManager, Gson gson)
 	{
 		this.configManager = configManager;
 		this.gson = gson;

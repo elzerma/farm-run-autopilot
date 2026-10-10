@@ -67,6 +67,7 @@ import net.runelite.api.gameval.ItemID;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.util.LinkBrowser;
 
 /**
  * The Farm, Travel and You tabs, and preset management on the Run tab (SPEC 13.2; layout in
@@ -88,6 +89,7 @@ class SetupPanel extends JPanel
 	private static final int CONTROL_WIDTH = PluginPanel.PANEL_WIDTH - 40;
 	/** Remembered like an open section: the Locations list shows every location. */
 	private static final String SHOW_ALL_LOCATIONS = "Show every location";
+	private static final String ISSUES_URL = "https://github.com/elzerma/farm-run-autopilot/issues";
 
 	private final SettingsStore settings;
 	private final AccessChecker accessChecker;
@@ -193,7 +195,8 @@ class SetupPanel extends JPanel
 				addDetected("Auto-weed", "On", "Tithe Farm Auto-weed: no rake needed for weeds");
 			}
 			final long scanned = settings.getAccount().getPoh().getLastDetected();
-			addDetected("House", scanned > 0 ? "Scanned " + DateFormat.getDateInstance(DateFormat.SHORT)
+			addDetected("House", !settings.getAccount().isAutoDetectHouse() ? "Detection off (beta)"
+					: scanned > 0 ? "Scanned " + DateFormat.getDateInstance(DateFormat.SHORT)
 					.format(new Date(scanned * 1000)) : "Not scanned yet",
 				"Enter your house to detect its furniture; Rescan is in My house");
 		}
@@ -703,23 +706,34 @@ class SetupPanel extends JPanel
 	{
 		final PohSetup poh = account.getPoh();
 		final CollapsibleSection s = section("My house");
-		s.addContent(note(poh.getLastDetected() > 0
-			? "Furniture last detected " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
-			.format(new Date(poh.getLastDetected() * 1000)) + ". Edit anything below."
-			: "Enter your house (or leave and come back in) to detect the jewellery box, pool, altar, fairy ring "
-			+ "and spirit tree. "
-			+ "Set the portal location and nexus by hand."));
-		final JButton rescan = smallButton("Rescan house");
-		rescan.setToolTipText("<html>Detection only adds furniture. If you removed or downgraded something, rescan:<br>"
-			+ "this clears the detected furniture and your next house visit fills it in again.<br>"
-			+ "The portal location and nexus destinations are kept.</html>");
-		rescan.addActionListener(e ->
+		s.addContent(checkBox("Detect furniture when I enter my house (beta)", account.isAutoDetectHouse(), true,
+			"Fills in the jewellery box, pool, altar, fairy ring and spirit tree below from your house",
+			on -> saveAccount(() -> account.setAutoDetectHouse(on), false)));
+		if (account.isAutoDetectHouse())
 		{
-			PohDetector.clearDetected(poh);
-			settings.saveAccount(true);
-			accessChecker.requestRefresh();
-		});
-		s.addContent(rescan);
+			s.addContent(note("Beta: it skips other players' houses by how you got in, which can't be fully checked "
+				+ "yet. If it gets your house wrong, please report it."));
+			final JButton report = smallButton("Report a problem");
+			report.setToolTipText("Opens the plugin's GitHub issues page");
+			report.addActionListener(e -> LinkBrowser.browse(ISSUES_URL));
+			s.addContent(report);
+			s.addContent(note(poh.getLastDetected() > 0
+				? "Furniture last detected " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+				.format(new Date(poh.getLastDetected() * 1000)) + ". Edit anything below."
+				: "Enter your house (or leave and come back in) to detect its furniture."));
+			final JButton rescan = smallButton("Rescan house");
+			rescan.setToolTipText("<html>Detection only adds furniture. If you removed or downgraded something, "
+				+ "rescan:<br>this clears the detected furniture and your next house visit fills it in again.<br>"
+				+ "The portal location and nexus destinations are kept.</html>");
+			rescan.addActionListener(e ->
+			{
+				PohDetector.clearDetected(poh);
+				settings.saveAccount(true);
+				accessChecker.requestRefresh();
+			});
+			s.addContent(rescan);
+		}
+		s.addContent(note("Set the portal location and nexus destinations by hand."));
 
 		final List<Choice<HousePortal>> portals = new ArrayList<>();
 		portals.add(Choice.of(null, "Unknown / no house"));
