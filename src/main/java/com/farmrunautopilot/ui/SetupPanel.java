@@ -101,7 +101,6 @@ class SetupPanel extends JPanel
 	private static final String SHOW_ALL_LOCATIONS = "Show every location";
 	/** The Unlocks section's title, which is also how the Run tab opens it. */
 	static final String UNLOCKS = "Unlocks";
-	private static final String ISSUES_URL = "https://github.com/elzerma/farm-run-autopilot/issues";
 
 	private final SettingsStore settings;
 	private final AccessChecker accessChecker;
@@ -900,7 +899,7 @@ class SetupPanel extends JPanel
 				+ "yet. If it gets your house wrong, please report it."));
 			final JButton report = smallButton("Report a problem");
 			report.setToolTipText("Opens the plugin's GitHub issues page");
-			report.addActionListener(e -> LinkBrowser.browse(ISSUES_URL));
+			report.addActionListener(e -> LinkBrowser.browse(HelpWanted.ISSUES_URL));
 			s.addContent(report);
 			s.addContent(note(poh.getLastDetected() > 0
 				? "Furniture last detected " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)

@@ -14,6 +14,7 @@ import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import javax.inject.Inject;
 import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
@@ -112,6 +113,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		presetsPanel.setAlignmentX(LEFT_ALIGNMENT);
 		runStack.add(runPanel);
 		runStack.add(presetsPanel);
+		runStack.add(HelpWanted.section(HelpWanted.Tab.RUN, settings));
 		final JPanel run = new JPanel(new BorderLayout());
 		run.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		run.add(runStack, BorderLayout.NORTH);
@@ -141,9 +143,9 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		tabs = new TabBar(display);
 		tabs.setBorder(new EmptyBorder(0, 0, 10, 0));
 		tabs.addTab("Run", run);
-		tabs.addTab("Farm", top(farmPanel));
-		tabs.addTab("Travel", top(travelPanel));
-		tabs.addTab("Account", top(accountPanel));
+		tabs.addTab("Farm", top(farmPanel, HelpWanted.section(HelpWanted.Tab.FARM, settings)));
+		tabs.addTab("Travel", top(travelPanel, HelpWanted.section(HelpWanted.Tab.TRAVEL, settings)));
+		tabs.addTab("Account", top(accountPanel, HelpWanted.section(HelpWanted.Tab.ACCOUNT, settings)));
 
 		add(tabs, BorderLayout.NORTH);
 		add(display, BorderLayout.CENTER);
@@ -181,12 +183,19 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		runPanel.refresh();
 	}
 
-	/** Pins a page to the top of its tab instead of stretching it. */
-	private static JPanel top(JPanel page)
+	/** Pins a page, with its help section under it, to the top of its tab instead of stretching it. */
+	private static JPanel top(JPanel page, JComponent help)
 	{
+		final JPanel stack = new JPanel();
+		stack.setLayout(new BoxLayout(stack, BoxLayout.Y_AXIS));
+		stack.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		page.setAlignmentX(LEFT_ALIGNMENT);
+		help.setAlignmentX(LEFT_ALIGNMENT);
+		stack.add(page);
+		stack.add(help);
 		final JPanel wrapper = new JPanel(new BorderLayout());
 		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		wrapper.add(page, BorderLayout.NORTH);
+		wrapper.add(stack, BorderLayout.NORTH);
 		return wrapper;
 	}
 
