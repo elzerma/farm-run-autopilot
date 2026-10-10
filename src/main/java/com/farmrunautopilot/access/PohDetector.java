@@ -69,7 +69,7 @@ public class PohDetector
 	/** The "Loading house" screen opened: the house's objects spawn next. Scan only the player's own. */
 	public void onHouseLoading()
 	{
-		// Beta, ticked in You > My house
+		// Beta, ticked in Account > My house
 		inHouse = settings.getAccount().isAutoDetectHouse() && (!visiting || soloIronman());
 		log.debug("Entering a house: {}", inHouse ? "own, scanning" : "someone else's, not scanning");
 	}

@@ -8,7 +8,7 @@ import net.runelite.client.config.ConfigItem;
 
 /**
  * Global settings. The run guidance highlights and colours (SPEC 13.4) are hidden here and edited in the sidebar's
- * You tab with everything else; the only visible item opens the sidebar.
+ * Account tab with everything else; the only visible item opens the sidebar.
  */
 @ConfigGroup(FarmRunAutopilotConfig.GROUP)
 public interface FarmRunAutopilotConfig extends Config

@@ -70,7 +70,7 @@ import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.LinkBrowser;
 
 /**
- * The Farm, Travel and You tabs, and preset management on the Run tab (SPEC 13.2; layout in
+ * The Farm, Travel and Account tabs, and preset management on the Run tab (SPEC 13.2; layout in
  * docs/plans/sidebar-ux.md). Rebuilt from the saved settings whenever they reload or the account's access
  * changes; every edit is saved straight away.
  */
@@ -585,7 +585,7 @@ class SetupPanel extends JPanel
 		s.addContent(label("Way to a fairy ring"));
 		s.addContent(combo(ways, config.getFairyRingWay(), w -> saveRun(() -> config.setFairyRingWay(w))));
 		s.addContent(note("The ring by the stop you just finished is used whenever it's quicker, and your house "
-			+ "ring is set in You > My house."));
+			+ "ring is set in Account > My house."));
 		return s;
 	}
 

@@ -204,7 +204,7 @@ class RunPanel extends JPanel
 		add(heading(summary(supplies)));
 		if (settings.getRunConfig().isSupplyFullRun())
 		{
-			final JLabel full = note("Counting every patch (full run is on in You > Testing & debug)");
+			final JLabel full = note("Counting every patch (full run is on in Account > Testing & debug)");
 			full.setForeground(ColorScheme.BRAND_ORANGE);
 			add(full);
 		}

@@ -11,7 +11,6 @@ import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import javax.inject.Inject;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
@@ -22,11 +21,9 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.colorpicker.ColorPickerManager;
-import net.runelite.client.ui.components.materialtabs.MaterialTab;
-import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
 
 /**
- * Sidebar root: Run, Farm, Travel and You tabs (SPEC section 13, docs/plans/sidebar-ux.md).
+ * Sidebar root: Run, Farm, Travel and Account tabs (SPEC section 13, docs/plans/sidebar-ux.md).
  */
 public class FarmRunAutopilotPanel extends PluginPanel
 {
@@ -113,23 +110,19 @@ public class FarmRunAutopilotPanel extends PluginPanel
 			this::rebuildSetup, null);
 		travelPanel = new SetupPanel(SetupPanel.Page.TRAVEL, settings, accessChecker, patchTracker,
 			this::rebuildSetup, null);
-		accountPanel = new SetupPanel(SetupPanel.Page.ACCOUNT, settings, accessChecker, patchTracker, this::rebuildSetup,
+		accountPanel = new SetupPanel(SetupPanel.Page.ACCOUNT, settings, accessChecker, patchTracker,
+			this::rebuildSetup,
 			new GuidanceSettings(config, configManager, colorPickers));
 		accountPanel.showHoldings(holdingsTracker::getHoldings);
 
-		final MaterialTabGroup tabGroup = new MaterialTabGroup(display);
-		tabGroup.setBorder(new EmptyBorder(0, 0, 10, 0));
-		// Four tabs only fit the sidebar with tight gaps (RuneLite spaces them 8px apart)
-		tabGroup.setLayout(new FlowLayout(FlowLayout.CENTER, 2, 0));
+		final TabBar tabs = new TabBar(display);
+		tabs.setBorder(new EmptyBorder(0, 0, 10, 0));
+		tabs.addTab("Run", run);
+		tabs.addTab("Farm", top(farmPanel));
+		tabs.addTab("Travel", top(travelPanel));
+		tabs.addTab("Account", top(accountPanel));
 
-		final MaterialTab runTab = new MaterialTab("Run", tabGroup, run);
-		tabGroup.addTab(runTab);
-		tabGroup.addTab(new MaterialTab("Farm", tabGroup, top(farmPanel)));
-		tabGroup.addTab(new MaterialTab("Travel", tabGroup, top(travelPanel)));
-		tabGroup.addTab(new MaterialTab("You", tabGroup, top(accountPanel)));
-		tabGroup.select(runTab);
-
-		add(tabGroup, BorderLayout.NORTH);
+		add(tabs, BorderLayout.NORTH);
 		add(display, BorderLayout.CENTER);
 
 		refreshTimer = new Timer(REFRESH_MILLIS, e -> refreshPatches());

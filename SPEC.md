@@ -61,7 +61,7 @@ A farming-run planner and guide for tree, fruit tree and herb runs that:
 | Due detection | **Auto-skip run types that aren't ready** (e.g. fruit trees on their 16h cycle when only trees/herbs are due). |
 | Run energy | **Live threshold**: if energy is **below 30%** before a walk of **15+ tiles**, the next step becomes "drink a stamina dose" if you have one, otherwise a restore stop (POH pool or Ferox — whichever is quicker from there). Optional stamina doses in the supply list. |
 | Leg timings | **Ship estimates, then self-learn** from the player's actual leg times. |
-| Sidebar | **Run, Farm, Travel and You tabs** (Sean, 2026-10-10; layout in docs/plans/sidebar-ux.md). Run: run types, stages, route, checklist, presets. Farm: what to grow, when, and how to protect it. Travel: defaults for every stop, route, per-location overrides. You: what the plugin detected, house, unlocks, storage, display. Checklist colours: green carried, yellow in storage, red missing. |
+| Sidebar | **Run, Farm, Travel and Account tabs** (Sean, 2026-10-10; layout in docs/plans/sidebar-ux.md). Run: run types, stages, route, checklist, presets. Farm: what to grow, when, and how to protect it. Travel: defaults for every stop, route, per-location overrides. Account: what the plugin detected, house, unlocks, storage, display. Checklist colours: green carried, yellow in storage, red missing. |
 | Notifications | **None.** |
 
 ---
@@ -402,7 +402,7 @@ Record each leg from the moment the player leaves the previous stop (teleport an
 - **Supply checklist** (Quest Helper style): green ✔ / red ✘ "have 3 / need 5", grouped Travel · Runes · Seeds & saplings · Payments · Tools · Optional; hover shows where items are (bank / inventory / leprechaun / group storage / vault).
 - **Totals footer**: coins, runes, estimated run time, starting inventory slots.
 
-### 13.2 Sidebar — Farm, Travel and You tabs (original Setup tab list; see docs/plans/sidebar-ux.md for where each item lives now)
+### 13.2 Sidebar — Farm, Travel and Account tabs (original Setup tab list; see docs/plans/sidebar-ux.md for where each item lives now)
 Collapsible sections:
 1. **Run types** — enable tree / fruit tree / herb; due threshold.
 2. **Patches** — per type, list with checkbox, lock icon + requirement tooltip.
