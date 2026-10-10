@@ -405,7 +405,7 @@ public final class RoutePlanner
 		return order;
 	}
 
-	private static int bankTiles(Location location)
+	static int bankTiles(Location location)
 	{
 		return location.getBankWalk() != null ? location.getBankWalk().getEstimatedTiles() : NO_BANK_TILES;
 	}

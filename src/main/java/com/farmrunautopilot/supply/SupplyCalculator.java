@@ -45,7 +45,7 @@ import net.runelite.api.gameval.ItemID;
  */
 public final class SupplyCalculator
 {
-	private static final int INVENTORY_SLOTS = 28;
+	public static final int INVENTORY_SLOTS = 28;
 	/** A typical herb harvest with compost (3 to 18 is possible). */
 	public static final int HERBS_PER_PATCH = 8;
 	public static final int FRUIT_PER_TREE = 6;

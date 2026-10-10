@@ -17,6 +17,8 @@ The plugin never clicks, types or acts for you. It only shows information.
 - A supply checklist: seeds and saplings, gardener payments (noted is fine), compost, tools, coins, runes or
   tablets, and travel items. Green is carried, yellow is in your bank or at the tool leprechaun, red is
   missing.
+- Big runs that don't fit in one inventory get a bank stop partway, at the bank that adds the least time:
+  you bring the first half, deposit what's outlined, and take the rest from the Farm run bank tab.
 - Backup crop choices for when you run out, and your most valuable herbs sent to disease-free patches first.
 
 <p>

@@ -6,6 +6,7 @@ import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Unlock;
+import com.farmrunautopilot.route.BankStop;
 import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.route.RunOverrides;
@@ -251,6 +252,7 @@ class RunPanel extends JPanel
 		addUnlocksToCheck();
 
 		addRoute(plan.getRoute());
+		addBankStop(plan);
 		addSupplies(supplies);
 		addTotals(supplies);
 		finish();
@@ -824,6 +826,33 @@ class RunPanel extends JPanel
 		add(note(route.getMode() == RouteMode.OFF
 			? "Your own order. Drag stops to change it; switch back in Travel > Route."
 			: "Drag a stop to reorder (switches to your own order)."));
+	}
+
+	/** A run too big for one inventory: where it banks partway, and what to take there. */
+	private void addBankStop(RunPlan plan)
+	{
+		final BankStop bank = plan.getBankStop();
+		if (bank == null)
+		{
+			return;
+		}
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		add(heading("Bank stop"));
+		add(note("Everything doesn't fit in one inventory, so the run banks near "
+			+ bank.getLocation().getDisplayName() + " after stop " + (bank.getAfterStop() + 1) + ". The supply list "
+			+ "below is for the stops before it; at the bank, deposit what's outlined and take the rest from the "
+			+ "Farm run bank tab:"));
+		for (SupplyLine line : bank.getSupplies().getLines())
+		{
+			if (line.getGroup() != SupplyLine.Group.OPTIONAL && !line.isCoveredOtherwise())
+			{
+				add(note("- " + line.getNeed() + " x " + line.getName()));
+			}
+		}
+		if (bank.getAfterStop() + 1 < stops.size())
+		{
+			add(note("Then on to " + stops.get(bank.getAfterStop() + 1).getLocation().getDisplayName() + "."));
+		}
 	}
 
 	private static String modeName(RouteMode mode)

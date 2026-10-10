@@ -17,10 +17,13 @@ import com.farmrunautopilot.supply.SupplyPlan;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
@@ -125,8 +128,16 @@ public class RunService
 			Instant.now().getEpochSecond(), config.isSupplyFullRun(), overrides.get());
 		final Route route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
 			settings.getAccount().getPoh(), timings.learned(), here);
-		final SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
+		SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 			patchTracker::predict, this::itemName, itemManager::getItemPrice);
+		// Too much for one inventory: bank partway
+		final Split split = supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS
+			? split(config, access, holdings, selection, route) : null;
+		final BankStop bankStop = split != null ? split.bankStop : null;
+		if (split != null)
+		{
+			supplies = split.before;
+		}
 
 		final Map<Location, List<String>> objectives = new EnumMap<>(Location.class);
 		for (Patch patch : selection.getPatches())
@@ -148,13 +159,85 @@ public class RunService
 		final boolean picksChanged = !picks.equals(autoPicks);
 		autoPicks = picks;
 
-		final RunPlan next = new RunPlan(selection, route, supplies, objectives);
+		final RunPlan next = new RunPlan(selection, route, supplies, objectives, bankStop);
 		if (next.equals(plan) && !picksChanged)
 		{
 			return false;
 		}
 		plan = next;
 		return true;
+	}
+
+	/** A run split by a bank stop: what to bring before it, and the stop itself. */
+	private static final class Split
+	{
+		final SupplyPlan before;
+		final BankStop bankStop;
+
+		Split(SupplyPlan before, BankStop bankStop)
+		{
+			this.before = before;
+			this.bankStop = bankStop;
+		}
+	}
+
+	/**
+	 * Where to bank in a run too big for one inventory: after the stop whose bank adds the least walking,
+	 * among the splits where both halves fit. Null if no split fits (the plan then warns as before).
+	 */
+	private Split split(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
+		Route route)
+	{
+		final List<RouteStop> stops = route.getStops();
+		Split best = null;
+		int bestTiles = Integer.MAX_VALUE;
+		for (int k = 1; k < stops.size(); k++)
+		{
+			final Location bankAt = stops.get(k - 1).getLocation();
+			final int tiles = RoutePlanner.bankTiles(bankAt);
+			if (tiles >= bestTiles)
+			{
+				continue;
+			}
+			final SupplyPlan before = half(config, access, holdings, selection, route, stops.subList(0, k));
+			if (before.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
+			{
+				// Banking later only makes the first half bigger
+				break;
+			}
+			final SupplyPlan after = half(config, access, holdings, selection, route,
+				stops.subList(k, stops.size()));
+			if (after.getSlots() <= SupplyCalculator.INVENTORY_SLOTS)
+			{
+				best = new Split(before, new BankStop(k - 1, bankAt, after));
+				bestTiles = tiles;
+			}
+		}
+		return best;
+	}
+
+	/** The supplies for some of the route's stops on their own. */
+	private SupplyPlan half(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
+		Route route, List<RouteStop> stops)
+	{
+		final Set<Location> at = EnumSet.noneOf(Location.class);
+		for (RouteStop stop : stops)
+		{
+			at.add(stop.getLocation());
+		}
+		final List<Patch> patches = new ArrayList<>();
+		for (Patch patch : selection.getPatches())
+		{
+			if (at.contains(patch.getLocation()))
+			{
+				patches.add(patch);
+			}
+		}
+		final RunSelection part = new RunSelection(patches, selection.getIncludedTypes(),
+			selection.getSkippedTypes(), Collections.emptyList(), selection.getDueCounts());
+		final Route partRoute = new Route(new ArrayList<>(stops), route.getMode(), 0, 0);
+		return SupplyCalculator.calculate(config, access, holdings, part, partRoute, patchTracker::predict,
+			this::itemName, itemManager::getItemPrice);
 	}
 
 	/** Auto (best)'s pick for each location, from anywhere. Any thread. */

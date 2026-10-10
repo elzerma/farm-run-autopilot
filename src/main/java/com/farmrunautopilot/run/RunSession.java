@@ -14,6 +14,7 @@ import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.route.BankStop;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.route.RunPlan;
@@ -31,6 +32,7 @@ import com.farmrunautopilot.tracking.PatchTracker;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -97,6 +99,10 @@ public class RunSession
 	private WorldPoint lastLocation;
 	private int stopIndex;
 	private boolean arrived;
+	/** At the plan's bank stop, restocking for the rest of the run. */
+	private boolean banking;
+	/** The bank stop is done (or skipped). */
+	private boolean banked;
 	/** When the player reached the current stop (epoch seconds); patches must be seen after this to count. */
 	private long arrivedAtSeconds;
 	/** Teleported close to the current stop but its patch hasn't loaded yet. */
@@ -218,6 +224,8 @@ public class RunSession
 		progress.clear();
 		legs.clear();
 		lastRun = null;
+		banking = false;
+		banked = false;
 		final Player player = client.getLocalPlayer();
 		lastLocation = player != null ? player.getWorldLocation() : null;
 		log.debug("Run armed with {} stops", plan.getRoute().getStops().size());
@@ -367,7 +375,13 @@ public class RunSession
 		{
 			return;
 		}
-		if (!arrived)
+		if (banking)
+		{
+			// Carry on without everything from the bank
+			banked = true;
+			banking = false;
+		}
+		else if (!arrived)
 		{
 			markArrived(System.currentTimeMillis());
 		}
@@ -471,6 +485,22 @@ public class RunSession
 			if (!legRecorded)
 			{
 				recordLeg(now);
+			}
+			// A bank visit after this stop: the rest of the run didn't fit in one inventory
+			final BankStop bank = plan.getBankStop();
+			if (bank != null && bank.getAfterStop() == stopIndex && !banked)
+			{
+				if (!isReady(runService.getPlan()))
+				{
+					banking = true;
+					currentPatch = null;
+					instruction = "Bank near " + bank.getLocation().getDisplayName() + ": deposit the outlined items, "
+						+ "then take what the Farm run bank tab shows";
+					break;
+				}
+				banked = true;
+				banking = false;
+				legStartedAt = now;
 			}
 			stopIndex++;
 			arrived = false;
@@ -697,12 +727,21 @@ public class RunSession
 		for (int i = 0; i < stops.size(); i++)
 		{
 			final RouteStop stop = stops.get(i);
-			final RunView.StopStatus status = i < stopIndex ? RunView.StopStatus.DONE
+			final RunView.StopStatus status = i < stopIndex || (i == stopIndex && banking) ? RunView.StopStatus.DONE
 				: i == stopIndex ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
 			final String travel = stop.describeTravel();
 			stopViews.add(new RunView.Stop(stop.getLocation().getDisplayName(), travel, status,
 				status == RunView.StopStatus.CURRENT ? instruction : null,
 				plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList())));
+			final BankStop bank = plan.getBankStop();
+			if (bank != null && bank.getAfterStop() == i)
+			{
+				final RunView.StopStatus bankStatus = banked || i < stopIndex ? RunView.StopStatus.DONE
+					: banking ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
+				stopViews.add(new RunView.Stop("Bank near " + bank.getLocation().getDisplayName(),
+					"Restock for the rest of the run", bankStatus,
+					bankStatus == RunView.StopStatus.CURRENT ? instruction : null, Collections.emptyList()));
+			}
 		}
 		if (instruction == null)
 		{
@@ -716,6 +755,10 @@ public class RunSession
 	/** What the current step points at: the patch and items to use there, or the teleport item while travelling. */
 	private Highlights highlights()
 	{
+		if (banking)
+		{
+			return new Highlights(null, false, null, toDeposit(), null);
+		}
 		// Main item first: reminders name it
 		final Set<Integer> items = new LinkedHashSet<>();
 		if (currentPatch == null || currentAction == null)
@@ -811,6 +854,31 @@ public class RunSession
 				break;
 		}
 		return new Highlights(currentPatch, gardener && currentPatch.hasGardener(), null, items, spell);
+	}
+
+	/**
+	 * At the bank stop: inventory items the rest of the run doesn't need (produce, empty buckets, what's left
+	 * of the first half's seeds and payments), to deposit.
+	 */
+	private Set<Integer> toDeposit()
+	{
+		final Set<Integer> needed = new HashSet<>();
+		for (SupplyLine line : runService.getPlan().getSupplies().getLines())
+		{
+			for (int id : line.getItemIds())
+			{
+				needed.add(id);
+			}
+		}
+		final Set<Integer> deposit = new LinkedHashSet<>();
+		for (int id : holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY).keySet())
+		{
+			if (!needed.contains(id))
+			{
+				deposit.add(id);
+			}
+		}
+		return deposit;
 	}
 
 	/** The spell if it can be cast from the spellbook the player is on right now, otherwise null. */
