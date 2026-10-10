@@ -180,6 +180,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 			runSession.stop(false);
 			hintArrow.clear();
 			sceneTracker.clear();
+			pohDetector.reset();
 		});
 		shownRunView = null;
 		clientToolbar.removeNavigation(navButton);
@@ -198,6 +199,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick tick)
 	{
+		pohDetector.onGameTick();
 		if (accessChecker.onGameTick())
 		{
 			rebuildSetupLater();

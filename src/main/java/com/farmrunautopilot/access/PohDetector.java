@@ -17,8 +17,11 @@ import net.runelite.api.gameval.ObjectID;
  * spawn events, never by scanning the scene.
  *
  * <p>Detection only ever adds or upgrades, because objects in another player's house look the same
- * and a partly loaded house would otherwise wipe settings. The house portal location and nexus
- * destinations can't be read this way and stay manual.
+ * and a partly loaded house would otherwise wipe settings. Removed furniture is picked up with Rescan
+ * house in My POH, which clears what was detected so the next house visit fills it in again. The house
+ * portal location and nexus destinations can't be read this way and stay manual.
+ *
+ * <p>Furniture found while a house loads is collected and saved once, on the next game tick.
  */
 @Slf4j
 @Singleton
@@ -26,6 +29,14 @@ public class PohDetector
 {
 	private final SettingsStore settings;
 	private final AccessChecker accessChecker;
+
+	// Found since the last tick (client thread)
+	private boolean found;
+	private JewelleryBoxTier foundBox;
+	private PoolTier foundPool;
+	private PohAltar foundAltar;
+	private boolean foundFairyRing;
+	private boolean foundSpiritTree;
 
 	@Inject
 	PohDetector(SettingsStore settings, AccessChecker accessChecker)
@@ -47,8 +58,63 @@ public class PohDetector
 			return;
 		}
 
+		found = true;
+		if (box != null && (foundBox == null || box.ordinal() > foundBox.ordinal()))
+		{
+			foundBox = box;
+		}
+		if (pool != null && (foundPool == null || pool.ordinal() > foundPool.ordinal()))
+		{
+			foundPool = pool;
+		}
+		if (altar != null && foundAltar != PohAltar.OCCULT)
+		{
+			foundAltar = altar;
+		}
+		foundFairyRing |= fairyRing;
+		foundSpiritTree |= spiritTree;
+	}
+
+	/** Save what the house that just loaded had. Call every game tick. */
+	public void onGameTick()
+	{
+		if (!found)
+		{
+			return;
+		}
+		final JewelleryBoxTier box = foundBox;
+		final PoolTier pool = foundPool;
+		final PohAltar altar = foundAltar;
+		final boolean fairyRing = foundFairyRing;
+		final boolean spiritTree = foundSpiritTree;
+		reset();
 		// Settings are only changed on the Swing thread.
 		SwingUtilities.invokeLater(() -> apply(box, pool, altar, fairyRing, spiritTree));
+	}
+
+	/** Forget anything found but not yet saved. */
+	public void reset()
+	{
+		found = false;
+		foundBox = null;
+		foundPool = null;
+		foundAltar = null;
+		foundFairyRing = false;
+		foundSpiritTree = false;
+	}
+
+	/**
+	 * Clear the detected furniture so the next house visit records exactly what's there, removals included.
+	 * The portal location, teleport-outside and nexus destinations are kept. Call on the Swing thread.
+	 */
+	public static void clearDetected(PohSetup poh)
+	{
+		poh.setJewelleryBox(null);
+		poh.setPool(null);
+		poh.setAltar(null);
+		poh.setFairyRing(false);
+		poh.setSpiritTree(false);
+		poh.setLastDetected(0);
 	}
 
 	private void apply(JewelleryBoxTier box, PoolTier pool, PohAltar altar, boolean fairyRing, boolean spiritTree)

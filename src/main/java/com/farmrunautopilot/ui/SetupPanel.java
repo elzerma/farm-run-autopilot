@@ -3,6 +3,7 @@ package com.farmrunautopilot.ui;
 import com.farmrunautopilot.FarmRunAutopilotConfig;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
@@ -456,8 +457,20 @@ class SetupPanel extends JPanel
 		s.addContent(note(poh.getLastDetected() > 0
 			? "Furniture last detected " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
 			.format(new Date(poh.getLastDetected() * 1000)) + ". Edit anything below."
-			: "Enter your house to detect the jewellery box, pool, altar, fairy ring and spirit tree. "
+			: "Enter your house (or leave and come back in) to detect the jewellery box, pool, altar, fairy ring "
+			+ "and spirit tree. "
 			+ "Set the portal location and nexus by hand."));
+		final JButton rescan = smallButton("Rescan house");
+		rescan.setToolTipText("<html>Detection only adds furniture. If you removed or downgraded something, rescan:<br>"
+			+ "this clears the detected furniture and your next house visit fills it in again.<br>"
+			+ "The portal location and nexus destinations are kept.</html>");
+		rescan.addActionListener(e ->
+		{
+			PohDetector.clearDetected(poh);
+			settings.saveAccount(true);
+			accessChecker.requestRefresh();
+		});
+		s.addContent(rescan);
 
 		final List<Choice<HousePortal>> portals = new ArrayList<>();
 		portals.add(Choice.of(null, "Unknown / no house"));
