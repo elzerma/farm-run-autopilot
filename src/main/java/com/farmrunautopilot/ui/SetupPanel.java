@@ -4,11 +4,13 @@ import com.farmrunautopilot.FarmRunAutopilotConfig;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.access.PohDetector;
+import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
+import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.poh.JewelleryBoxTier;
@@ -28,6 +30,8 @@ import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RouteMode;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
+import com.farmrunautopilot.supply.Holdings;
+import com.farmrunautopilot.supply.LeprechaunItem;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -39,9 +43,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
+import java.util.function.Supplier;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
@@ -57,6 +63,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
 import net.runelite.api.Skill;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
@@ -88,6 +95,9 @@ class SetupPanel extends JPanel
 	private final Page page;
 	/** Redraws every tab after a change, so summaries and Override tags stay current. */
 	private final Runnable changed;
+	/** The Detected lines (Account page), refilled without rebuilding the page. */
+	private final JPanel detected = new JPanel();
+	private Supplier<Holdings> holdings = () -> Holdings.EMPTY;
 	/** Run guidance settings, shown on the Account page only (null elsewhere). */
 	private final GuidanceSettings guidance;
 
@@ -102,6 +112,8 @@ class SetupPanel extends JPanel
 		this.accessChecker = accessChecker;
 		this.patchDebugPanel = new PatchDebugPanel(patchTracker);
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		detected.setLayout(new BoxLayout(detected, BoxLayout.Y_AXIS));
+		detected.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 		rebuild();
 	}
@@ -109,6 +121,112 @@ class SetupPanel extends JPanel
 	void refreshPatches()
 	{
 		patchDebugPanel.refresh();
+	}
+
+	/** What the player holds, for the Detected section (Account page). */
+	void showHoldings(Supplier<Holdings> holdings)
+	{
+		this.holdings = holdings;
+		refreshDetected();
+	}
+
+	/** Re-read what the plugin has detected, without rebuilding the page. Call on the Swing thread. */
+	void refreshDetected()
+	{
+		if (page != Page.ACCOUNT)
+		{
+			return;
+		}
+		detected.removeAll();
+		final AccessSnapshot access = accessChecker.getSnapshot();
+		final Holdings held = holdings.get();
+		if (!access.isKnown())
+		{
+			detected.add(note("Log in to see what's been detected."));
+		}
+		else
+		{
+			addDetected("Spellbook", access.getSpellbook() != null ? title(access.getSpellbook().name()) : "Unknown",
+				"Read from the game; teleports on another spellbook are used as tablets");
+
+			final boolean rings = access.getUnlocks().contains(Unlock.FAIRY_RINGS);
+			final boolean elite = access.isMet(Requirement.diary(AchievementDiary.LUMBRIDGE_DRAYNOR,
+				AchievementDiary.Tier.ELITE));
+			addDetected("Fairy rings", !rings ? "Not unlocked" : elite ? "Unlocked, no staff needed"
+					: held.countAny(SupplyItems.FAIRY_RING_STAFFS) > 0 ? "Unlocked, staff owned" : "Unlocked, no staff found",
+				"From Fairytale II; a dramen or lunar staff is needed until the Elite Lumbridge & Draynor diary");
+			addDetected("Spirit trees", access.getUnlocks().contains(Unlock.SPIRIT_TREES) ? "Unlocked" : "Not unlocked",
+				"From Tree Gnome Village");
+			addDetected("Quest points", access.getQuestPoints() + (access.getMaxQuestPoints() > 0
+					? " of " + access.getMaxQuestPoints() : ""),
+				"The quest point cape only works with every quest done");
+
+			final boolean filled = held.count(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED) > 0;
+			final boolean empty = held.count(ItemID.BOTTOMLESS_COMPOST_BUCKET) > 0;
+			if (filled || empty)
+			{
+				final int uses = held.getBucketUses();
+				final String holds = held.getBucketCompost() != null
+					? " of " + held.getBucketCompost().getDisplayName().toLowerCase() : "";
+				addDetected("Bottomless bucket", !filled ? "Empty" : uses >= 0 ? uses + " uses" + holds
+						: "Uses not known yet",
+					"Kept from the game's messages. Right-click the bucket and choose Check to update it");
+			}
+
+			final List<String> stored = new ArrayList<>();
+			final Map<Integer, Integer> leprechaun = held.in(Holdings.Source.LEPRECHAUN);
+			for (LeprechaunItem item : LeprechaunItem.values())
+			{
+				final int n = leprechaun.getOrDefault(item.getItemId(), 0);
+				if (n > 0)
+				{
+					final String name = item.name().replace('_', ' ').toLowerCase();
+					stored.add(n > 1 ? n + " " + name : name);
+				}
+			}
+			addDetected("Tool leprechaun", stored.isEmpty() ? "Nothing stored" : String.join(", ", stored),
+				"What's stored with the tool leprechaun counts as yours for the supply list");
+			if (held.isAutoweedOn())
+			{
+				addDetected("Auto-weed", "On", "Tithe Farm Auto-weed: no rake needed for weeds");
+			}
+			final long scanned = settings.getAccount().getPoh().getLastDetected();
+			addDetected("House", scanned > 0 ? "Scanned " + DateFormat.getDateInstance(DateFormat.SHORT)
+					.format(new Date(scanned * 1000)) : "Not scanned yet",
+				"Enter your house to detect its furniture; Rescan is in My house");
+		}
+		detected.revalidate();
+		detected.repaint();
+	}
+
+	/** One read-only line: what was detected and its value. */
+	private void addDetected(String what, String value, String tooltip)
+	{
+		final JPanel row = new JPanel(new BorderLayout(6, 0));
+		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		row.setBorder(new EmptyBorder(2, 0, 2, 0));
+		final JLabel name = new JLabel(what);
+		name.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		name.setFont(FontManager.getRunescapeSmallFont());
+		final JLabel shown = new JLabel(wrap(value, CONTROL_WIDTH - 90));
+		shown.setForeground(ColorScheme.TEXT_COLOR);
+		shown.setFont(FontManager.getRunescapeSmallFont());
+		row.add(name, BorderLayout.WEST);
+		row.add(shown, BorderLayout.EAST);
+		row.setToolTipText(tooltip);
+		row.setAlignmentX(LEFT_ALIGNMENT);
+		row.setMaximumSize(new Dimension(CONTROL_WIDTH, row.getPreferredSize().height));
+		detected.add(row);
+	}
+
+	/** What the plugin worked out by itself: nothing to set here. */
+	private JComponent detectedSection()
+	{
+		final CollapsibleSection s = section("Detected");
+		s.addContent(note("Worked out from your account and what you hold. Hover a line to see how."));
+		s.addContent(detected);
+		refreshDetected();
+		return s;
 	}
 
 	/** Rebuilds every control from the current settings and access. Call on the Swing thread. */
@@ -143,8 +261,9 @@ class SetupPanel extends JPanel
 				add(travelSection(config, access));
 				break;
 			case ACCOUNT:
+				add(detectedSection());
 				add(pohSection(account));
-				add(unlocksSection(account, access));
+				add(unlocksSection(account));
 				add(storageSection(config));
 				add(displaySection(config));
 				add(debugSection(config));
@@ -650,7 +769,7 @@ class SetupPanel extends JPanel
 		return s;
 	}
 
-	private JComponent unlocksSection(AccountSettings account, AccessSnapshot access)
+	private JComponent unlocksSection(AccountSettings account)
 	{
 		final int ticked = account.getManualUnlocks().size();
 		final CollapsibleSection s = section("Unlocks", ticked == 0 ? null : ticked + " ticked");
@@ -659,10 +778,7 @@ class SetupPanel extends JPanel
 		{
 			if (AccessChecker.isDetected(unlock))
 			{
-				final boolean has = access.isKnown() && access.getUnlocks().contains(unlock);
-				s.addContent(checkBox(unlock.getDescription(), has, false, "Detected from your quests", on ->
-				{
-				}));
+				// Shown in Detected
 				continue;
 			}
 			s.addContent(checkBox(unlock.getDescription(), account.getManualUnlocks().contains(unlock), true, null,

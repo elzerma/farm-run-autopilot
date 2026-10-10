@@ -8,6 +8,7 @@ import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
+import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import javax.inject.Inject;
@@ -43,7 +44,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	public FarmRunAutopilotPanel(SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker,
 		RunOverrides runOverrides, RunService runService, RunSession runSession, ClientThread clientThread,
 		FarmRunAutopilotConfig config, ConfigManager configManager,
-		ColorPickerManager colorPickers)
+		ColorPickerManager colorPickers, HoldingsTracker holdingsTracker)
 	{
 		this.runSession = runSession;
 		setLayout(new BorderLayout());
@@ -113,6 +114,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 			this::rebuildSetup, null);
 		accountPanel = new SetupPanel(SetupPanel.Page.ACCOUNT, settings, accessChecker, patchTracker, this::rebuildSetup,
 			new GuidanceSettings(config, configManager, colorPickers));
+		accountPanel.showHoldings(holdingsTracker::getHoldings);
 
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(display);
 		tabGroup.setBorder(new EmptyBorder(0, 0, 10, 0));
@@ -142,6 +144,8 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	public void updateRun(RunPlan plan, boolean loggedIn)
 	{
 		runPanel.update(plan, loggedIn);
+		// The supply plan is redone when holdings change, so the Detected lines may have too
+		accountPanel.refreshDetected();
 		// Managing presets is for between runs
 		presetsPanel.setVisible(loggedIn && runSession.getView().getState() == RunView.State.OFF);
 	}
