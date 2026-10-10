@@ -4,6 +4,7 @@ import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.bank.FarmBankTab;
 import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.settings.SettingsStore;
+import com.farmrunautopilot.supply.BottomlessBucketTracker;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.supply.SupplyPlan;
@@ -46,6 +47,7 @@ import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetClosed;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetModalMode;
 import net.runelite.client.callback.ClientThread;
@@ -89,6 +91,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 
 	@Inject
 	private HoldingsTracker holdingsTracker;
+
+	@Inject
+	private BottomlessBucketTracker bottomlessBucket;
 
 	@Inject
 	private RunService runService;
@@ -143,6 +148,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		settings.load();
+		bottomlessBucket.reload();
 		accessChecker.requestRefresh();
 		panel = injector.getInstance(FarmRunAutopilotPanel.class);
 		settings.addListener(onSettingsReloaded);
@@ -275,6 +281,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 		runService.reset();
 		// Reloading notifies onSettingsReloaded, which rebuilds the Setup tab
 		settings.load();
+		bottomlessBucket.reload();
+		holdingsTracker.markDirty();
 		final FarmRunAutopilotPanel p = panel;
 		SwingUtilities.invokeLater(p::refreshPatches);
 	}
@@ -314,6 +322,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 	public void onItemContainerChanged(ItemContainerChanged event)
 	{
 		holdingsTracker.onItemContainerChanged(event.getContainerId(), event.getItemContainer());
+		if (event.getContainerId() == InventoryID.INV && bottomlessBucket.onInventoryChanged(event.getItemContainer()))
+		{
+			holdingsTracker.markDirty();
+		}
 	}
 
 	@Subscribe
@@ -321,6 +333,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 	{
 		holdingsTracker.onVarbitChanged(event.getVarbitId());
 		accessChecker.onVarbitChanged(event.getVarbitId());
+		if (bottomlessBucket.onVarbitChanged(event.getVarbitId()))
+		{
+			holdingsTracker.markDirty();
+		}
 	}
 
 	@Subscribe
@@ -328,7 +344,12 @@ public class FarmRunAutopilotPlugin extends Plugin
 	{
 		if (event.getType() == ChatMessageType.GAMEMESSAGE || event.getType() == ChatMessageType.SPAM)
 		{
-			runSession.onChatMessage(Text.removeTags(event.getMessage()));
+			final String message = Text.removeTags(event.getMessage());
+			runSession.onChatMessage(message);
+			if (bottomlessBucket.onChatMessage(message))
+			{
+				holdingsTracker.markDirty();
+			}
 		}
 	}
 
@@ -360,6 +381,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	@Subscribe(priority = -1)
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
+		bottomlessBucket.onMenuOptionClicked(event);
 		farmBankTab.onMenuOptionClicked(event);
 	}
 

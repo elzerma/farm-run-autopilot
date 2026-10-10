@@ -280,7 +280,7 @@ public final class SupplyCalculator
 			lines.add(changeIn(line(SupplyLine.Group.TOOLS, "Axe", 1, holdings, carried,
 				"To chop grown trees (pay-to-clear is off)", 1, SupplyItems.AXES), PROTECTION));
 		}
-		lines.addAll(compostLines(compost, holdings, carried));
+		lines.addAll(compostLines(compost, holdings, carried, warnings));
 
 		// Optional
 		if (config.isRecommendEquipmentBoosts() && herbs > 0)
@@ -670,53 +670,64 @@ public final class SupplyCalculator
 	}
 
 	/**
-	 * Buckets of each compost type, or one line for a filled bottomless compost bucket, which does every patch
-	 * (GitHub #3). Its compost type and charges aren't checked.
+	 * Buckets of each compost type, or one line for a filled bottomless compost bucket (GitHub #3). The bucket
+	 * holds one type: it replaces the buckets of that type (or all of them while its type isn't known), and its
+	 * uses are checked against the patches when known. Warnings go to {@code warnings}.
 	 */
-	static List<SupplyLine> compostLines(Map<Compost, Integer> compost, Holdings holdings, Holdings carried)
+	static List<SupplyLine> compostLines(Map<Compost, Integer> compost, Holdings holdings, Holdings carried,
+		List<String> warnings)
 	{
 		final List<SupplyLine> lines = new ArrayList<>();
 		if (compost.isEmpty())
 		{
 			return lines;
 		}
+		final Map<Compost, Integer> buckets = new EnumMap<>(compost);
 		if (holdings.count(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED) > 0)
 		{
-			final List<String> types = new ArrayList<>();
-			compost.keySet().forEach(c -> types.add(c.getDisplayName().toLowerCase()));
-			String note = "Used instead of buckets of " + String.join(" and ", types)
-				+ ". Its compost type and charges aren't checked";
-			if (holdings.getLeprechaunBucketUses() > 0)
+			final Compost holds = holdings.getBucketCompost();
+			int usesNeeded = 0;
+			final List<String> replaced = new ArrayList<>();
+			for (Map.Entry<Compost, Integer> e : compost.entrySet())
 			{
-				final Compost stored = bucketCompost(holdings.getLeprechaunBucketType());
-				note += ". At the leprechaun it holds " + (stored != null ? stored.getDisplayName().toLowerCase() + ", " : "")
-					+ holdings.getLeprechaunBucketUses() + " uses";
+				if (holds == null || holds == e.getKey())
+				{
+					usesNeeded += e.getValue();
+					replaced.add(e.getKey().getDisplayName().toLowerCase());
+					buckets.remove(e.getKey());
+				}
 			}
-			lines.add(changeIn(line(SupplyLine.Group.TOOLS, "Bottomless compost bucket", 1, holdings, carried, note, 1,
-				ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED), COMPOST_TYPE));
-			return lines;
+
+			final int uses = holdings.getBucketUses();
+			String note = "Used instead of buckets of " + String.join(" and ", replaced) + "; this run needs "
+				+ usesNeeded + (usesNeeded == 1 ? " use" : " uses");
+			if (uses < 0)
+			{
+				note += ". Uses left aren't known yet";
+				warnings.add("Right-click your bottomless compost bucket and choose Check, so its uses are known");
+			}
+			else if (uses < usesNeeded)
+			{
+				warnings.add("Your bottomless compost bucket has " + uses + (uses == 1 ? " use" : " uses")
+					+ " left; this run needs " + usesNeeded);
+			}
+			if (holds != null && replaced.isEmpty())
+			{
+				warnings.add("Your bottomless compost bucket holds " + holds.getDisplayName().toLowerCase()
+					+ ", which this run doesn't use (Rules > Protection, compost type)");
+			}
+			if (!replaced.isEmpty())
+			{
+				final String name = "Bottomless compost bucket" + (uses >= 0 ? " (" + uses + (uses == 1 ? " use)" : " uses)") : "");
+				lines.add(changeIn(line(SupplyLine.Group.TOOLS, name, 1, holdings, carried, note, 1,
+					ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED), COMPOST_TYPE));
+			}
 		}
 		final boolean emptyBucket = holdings.count(ItemID.BOTTOMLESS_COMPOST_BUCKET) > 0;
-		compost.forEach((c, n) -> lines.add(changeIn(line(SupplyLine.Group.TOOLS, c.getDisplayName(), n, holdings,
+		buckets.forEach((c, n) -> lines.add(changeIn(line(SupplyLine.Group.TOOLS, c.getDisplayName(), n, holdings,
 			carried, emptyBucket ? "Fill your bottomless compost bucket with " + c.getDisplayName().toLowerCase()
 				+ " to use it instead" : null, n, c.getItemId()), COMPOST_TYPE)));
 		return lines;
-	}
-
-	/** The leprechaun's bucket type value; UNVERIFIED: assumed 1 compost, 2 super, 3 ultra. Null if unknown. */
-	static Compost bucketCompost(int type)
-	{
-		switch (type)
-		{
-			case 1:
-				return Compost.COMPOST;
-			case 2:
-				return Compost.SUPERCOMPOST;
-			case 3:
-				return Compost.ULTRACOMPOST;
-			default:
-				return null;
-		}
 	}
 
 	private static SupplyLine changeIn(SupplyLine line, String where)

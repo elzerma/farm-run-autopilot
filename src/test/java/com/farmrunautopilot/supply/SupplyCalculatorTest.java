@@ -308,46 +308,93 @@ public class SupplyCalculatorTest
 		return compost;
 	}
 
-	private static Holdings in(Holdings.Source source, int itemId)
+	private static Holdings in(Holdings.Source source, int itemId, int uses, Compost holds)
 	{
 		final Map<Holdings.Source, Map<Integer, Integer>> items = new EnumMap<>(Holdings.Source.class);
 		items.put(source, Collections.singletonMap(itemId, 1));
-		return new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false);
+		return new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false, uses, holds);
+	}
+
+	private static java.util.List<SupplyLine> compost(Map<Compost, Integer> compost, Holdings holdings,
+		java.util.List<String> warnings)
+	{
+		return SupplyCalculator.compostLines(compost, holdings, holdings.carriedOnly(), warnings);
 	}
 
 	@Test
 	public void filledBottomlessBucketReplacesCompostBuckets()
 	{
 		// GitHub #3: one line for the bucket, coloured by where it is, instead of a vague "ok"
-		final Holdings banked = in(Holdings.Source.BANK, ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED);
-		final java.util.List<SupplyLine> inBank = SupplyCalculator.compostLines(ultracompostFor(6), banked,
-			banked.carriedOnly());
+		final java.util.List<String> warnings = new java.util.ArrayList<>();
+		final java.util.List<SupplyLine> inBank = compost(ultracompostFor(6),
+			in(Holdings.Source.BANK, ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED, 120, Compost.ULTRACOMPOST), warnings);
 		assertEquals(1, inBank.size());
 		final SupplyLine line = inBank.get(0);
-		assertEquals("Bottomless compost bucket", line.getName());
+		assertEquals("Bottomless compost bucket (120 uses)", line.getName());
 		assertEquals(1, line.getNeed());
 		assertEquals(SupplyLine.Status.IN_STORAGE, line.getStatus());
 		assertEquals(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED, line.getItemIds()[0]);
-		assertTrue(line.getNote(), line.getNote().contains("ultracompost"));
+		assertTrue(line.getNote(), line.getNote().contains("this run needs 6 uses"));
 		assertTrue(line.getChangeIn().contains("compost type"));
+		assertTrue(warnings.toString(), warnings.isEmpty());
 
-		final Holdings carried = in(Holdings.Source.INVENTORY, ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED);
-		assertEquals(SupplyLine.Status.CARRIED,
-			SupplyCalculator.compostLines(ultracompostFor(6), carried, carried.carriedOnly()).get(0).getStatus());
+		final java.util.List<SupplyLine> carried = compost(ultracompostFor(6),
+			in(Holdings.Source.INVENTORY, ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED, 120, Compost.ULTRACOMPOST), warnings);
+		assertEquals(SupplyLine.Status.CARRIED, carried.get(0).getStatus());
+	}
+
+	@Test
+	public void bottomlessBucketUsesUnknownOrShort()
+	{
+		// Not checked yet: ask for a Check
+		final java.util.List<String> unknown = new java.util.ArrayList<>();
+		final java.util.List<SupplyLine> lines = compost(ultracompostFor(6),
+			in(Holdings.Source.INVENTORY, ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED, -1, null), unknown);
+		assertEquals("Bottomless compost bucket", lines.get(0).getName());
+		assertEquals(1, unknown.size());
+		assertTrue(unknown.get(0), unknown.get(0).contains("choose Check"));
+
+		// Too few uses for the run
+		final java.util.List<String> shortWarnings = new java.util.ArrayList<>();
+		compost(ultracompostFor(6),
+			in(Holdings.Source.INVENTORY, ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED, 4, Compost.ULTRACOMPOST), shortWarnings);
+		assertEquals(Collections.singletonList("Your bottomless compost bucket has 4 uses left; this run needs 6"),
+			shortWarnings);
+	}
+
+	@Test
+	public void bottomlessBucketOnlyReplacesItsOwnCompost()
+	{
+		// Holds supercompost; the run wants ultracompost for herbs and supercompost for trees
+		final Map<Compost, Integer> both = ultracompostFor(6);
+		both.put(Compost.SUPERCOMPOST, 3);
+		final java.util.List<SupplyLine> lines = compost(both,
+			in(Holdings.Source.INVENTORY, ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED, 50, Compost.SUPERCOMPOST),
+			new java.util.ArrayList<>());
+		assertEquals(2, lines.size());
+		assertTrue(lines.get(0).getNote(), lines.get(0).getNote().contains("supercompost; this run needs 3 uses"));
+		assertEquals("Ultracompost", lines.get(1).getName());
+		assertEquals(6, lines.get(1).getNeed());
+
+		// Holds a type the run doesn't use at all: buckets as normal, plus a warning
+		final java.util.List<String> warnings = new java.util.ArrayList<>();
+		final java.util.List<SupplyLine> other = compost(ultracompostFor(6),
+			in(Holdings.Source.INVENTORY, ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED, 50, Compost.COMPOST), warnings);
+		assertEquals("Ultracompost", other.get(0).getName());
+		assertTrue(warnings.toString(), warnings.get(0).contains("holds compost"));
 	}
 
 	@Test
 	public void emptyBottomlessBucketKeepsTheBucketsWithAHint()
 	{
-		final Holdings empty = in(Holdings.Source.BANK, ItemID.BOTTOMLESS_COMPOST_BUCKET);
-		final java.util.List<SupplyLine> lines = SupplyCalculator.compostLines(ultracompostFor(6), empty,
-			empty.carriedOnly());
+		final java.util.List<SupplyLine> lines = compost(ultracompostFor(6),
+			in(Holdings.Source.BANK, ItemID.BOTTOMLESS_COMPOST_BUCKET, -1, null), new java.util.ArrayList<>());
 		assertEquals(1, lines.size());
 		assertEquals("Ultracompost", lines.get(0).getName());
 		assertEquals(6, lines.get(0).getNeed());
 		assertTrue(lines.get(0).getNote().startsWith("Fill your bottomless compost bucket"));
 
 		// No bucket at all: plain buckets, no note
-		assertNull(SupplyCalculator.compostLines(ultracompostFor(6), Holdings.EMPTY, Holdings.EMPTY).get(0).getNote());
+		assertNull(compost(ultracompostFor(6), Holdings.EMPTY, new java.util.ArrayList<>()).get(0).getNote());
 	}
 }
