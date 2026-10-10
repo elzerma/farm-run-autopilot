@@ -728,6 +728,15 @@ public class RunSession
 			else if (stop.getDeparture().isViaHouse())
 			{
 				spell = Spell.TELEPORT_TO_HOUSE;
+				// Whatever gets the player home: construction cape, max cape or a house tablet
+				for (TravelItem cape : new TravelItem[]{TravelItem.CONSTRUCTION_CAPE, TravelItem.MAX_CAPE})
+				{
+					for (int id : cape.getItemIds())
+					{
+						items.add(id);
+					}
+				}
+				items.add(Spell.TELEPORT_TO_HOUSE.getTabletItemId());
 			}
 			return new Highlights(null, false, items, castableNow(spell));
 		}
