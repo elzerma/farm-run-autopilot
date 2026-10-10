@@ -42,8 +42,8 @@ public class TestView
 			? "Done, and it looks like it works. "
 			: "Done, and something needs attention. ")
 			+ "Last step: open the GitHub issue form. Your results are already filled in. Sign in to GitHub if it "
-			+ "asks, add anything else you noticed at the bottom, then press \"Create\" (or \"Submit new issue\") to send it. Nothing is "
-			+ "sent until you do. Your settings are already back to how they were.",
+			+ "asks, add anything else you noticed at the bottom, then press \"Create\" (or \"Submit new issue\") "
+			+ "to send it. Nothing is sent until you do. Your settings are already back to how they were.",
 			false, false, Collections.emptyList(), reportUrl);
 	}
 }

@@ -35,7 +35,8 @@ final class HelpWanted
 		"4. When it's done, your settings go back to how they were.",
 		"5. Last step: press \"Open GitHub issues with prefilled test results\". Your results are already filled "
 			+ "in. Sign in to GitHub (a free account) if it asks, add anything else you noticed, and press "
-			+ "\"Create\" (or \"Submit new issue\"). Nothing is sent until you press it, and it never includes your character name.",
+			+ "\"Create\" (or \"Submit new issue\"). Nothing is sent until you press it, and it never includes "
+			+ "your character name.",
 	};
 
 	private HelpWanted()
