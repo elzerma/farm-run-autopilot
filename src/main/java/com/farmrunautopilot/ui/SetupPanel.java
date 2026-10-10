@@ -366,11 +366,13 @@ class SetupPanel extends JPanel
 		switch (page)
 		{
 			case FARM:
-				add(runTypesSection(config));
 				add(patchesSection(config, access));
 				add(cropsSection(config, access));
+				add(diseaseFreeSection(config, access));
 				add(protectionSection(config));
+				add(compostSection(config));
 				add(extrasSection(config));
+				add(advancedFarmSection(config));
 				break;
 			case TRAVEL:
 				add(travelDefaultsSection(config, access));
@@ -410,7 +412,8 @@ class SetupPanel extends JPanel
 			}
 		}
 		final CollapsibleSection s = section("Patches", ticked + " of " + usable + " ticked");
-		s.addContent(note("Untick patches you don't want in your runs. Locked patches show what they need."));
+		s.addContent(note("Untick patches you don't want in your runs; locked ones show what they need. Choose trees, "
+			+ "fruit trees and herbs at the top of the Run tab: each joins a run once its patches are due."));
 		for (PatchType type : PatchType.values())
 		{
 			s.addContent(subheader(type.getDisplayName() + " patches"));
@@ -483,7 +486,15 @@ class SetupPanel extends JPanel
 			}
 		}
 
-		s.addContent(subheader("Disease-free patches"));
+		return s;
+	}
+
+	/** Which herbs go in the patches that never get diseased. */
+	private JComponent diseaseFreeSection(RunConfig config, AccessSnapshot access)
+	{
+		final CollapsibleSection s = section("Disease-free herbs",
+			config.isPrioritiseDiseaseFreeHerbs() ? config.getDiseaseFreeHerbs().size() + " picked" : "off");
+		final int farming = access.isKnown() ? access.level(Skill.FARMING) : 99;
 		s.addContent(checkBox("Prioritise herbs for disease-free patches", config.isPrioritiseDiseaseFreeHerbs(), true,
 			"Pick herbs that only go in disease-free patches",
 			on ->
@@ -555,10 +566,11 @@ class SetupPanel extends JPanel
 		}
 		config.getBackupCrops().put(type, backups);
 	}
+	/** Paying the gardener to protect trees and fruit trees. */
 	private JComponent protectionSection(RunConfig config)
 	{
-		final CollapsibleSection s = section("Protection and compost", overrides(config.getProtectionOverrides().size()));
-		s.addContent(checkBox("Bring gardener payments noted (trees and fruit trees)", config.isPayWithNotes(), true,
+		final CollapsibleSection s = section("Protection", overrides(config.getProtectionOverrides().size()));
+		s.addContent(checkBox("Bring gardener payments noted", config.isPayWithNotes(), true,
 			"Gardeners accept noted payment; one inventory slot per item type",
 			on -> saveRun(() -> config.setPayWithNotes(on))));
 
@@ -585,14 +597,41 @@ class SetupPanel extends JPanel
 						config.getPayToClear().remove(type);
 					}
 				})));
-			s.addContent(label("Compost"));
+		}
+		s.addContent(note("Single patches can differ: Advanced > Per-patch protection."));
+		return s;
+	}
+
+	/** Compost for each patch type, and what to do about disease. */
+	private JComponent compostSection(RunConfig config)
+	{
+		final CollapsibleSection s = section("Compost and cures");
+		for (PatchType type : PatchType.values())
+		{
+			s.addContent(label(type.getDisplayName() + " patches"));
 			s.addContent(combo(enumChoices(Compost.values()), config.getCompost().get(type),
 				c -> saveRun(() -> config.getCompost().put(type, c))));
 		}
-		final CollapsibleSection overrides = section("Per-patch overrides",
-			overrides(config.getProtectionOverrides().size()));
-		overrides.addContent(note("Use a different protection for single patches. Anything but Default overrides "
-			+ "the setting for its patch type above."));
+		s.addContent(subheader("Disease"));
+		s.addContent(checkBox("Use Cure Plant (Lunar)", config.isUseCurePlant(), true, null,
+			on -> saveRun(() -> config.setUseCurePlant(on))));
+		s.addContent(checkBox("Use Resurrect Crops (Arceuus)", config.isUseResurrectCrops(), true, null,
+			on -> saveRun(() -> config.setUseResurrectCrops(on))));
+		s.addContent(spinnerRow("Plant cures to bring (backup)", spinner(config.getPlantCureDoses(), 0, 40, 1,
+			v -> saveRunQuietly(() -> config.setPlantCureDoses(v)))));
+		return s;
+	}
+
+	/** Settings most players never need to change. */
+	private JComponent advancedFarmSection(RunConfig config)
+	{
+		final CollapsibleSection s = section("Advanced", overrides(config.getProtectionOverrides().size()));
+		s.addContent(spinnerRow("Include a run type when this % of its patches are due",
+			spinner(config.getDueThresholdPercent(), 1, 100, 5,
+				v -> saveRunQuietly(() -> config.setDueThresholdPercent(v)))));
+		s.addContent(subheader("Per-patch protection"));
+		s.addContent(note("Use a different protection for single patches. Anything but Default overrides the "
+			+ "setting for its patch type in Protection."));
 		for (Patch patch : Patch.values())
 		{
 			if (!patch.getType().isProtectable())
@@ -602,8 +641,8 @@ class SetupPanel extends JPanel
 			final List<Choice<Protection>> choices = new ArrayList<>();
 			choices.add(Choice.of(null, "Default"));
 			choices.addAll(enumChoices(Protection.values()));
-			overrides.addContent(label(patch.getDisplayName()));
-			overrides.addContent(combo(choices, config.getProtectionOverrides().get(patch),
+			s.addContent(label(patch.getDisplayName()));
+			s.addContent(combo(choices, config.getProtectionOverrides().get(patch),
 				p -> saveRun(() ->
 				{
 					if (p == null)
@@ -616,32 +655,6 @@ class SetupPanel extends JPanel
 					}
 				})));
 		}
-		s.addContent(overrides);
-
-		s.addContent(subheader("Herb patches"));
-		s.addContent(label("Compost"));
-		s.addContent(combo(enumChoices(Compost.values()), config.getCompost().get(PatchType.HERB),
-			c -> saveRun(() -> config.getCompost().put(PatchType.HERB, c))));
-
-		s.addContent(subheader("Disease"));
-		s.addContent(checkBox("Use Cure Plant (Lunar)", config.isUseCurePlant(), true, null,
-			on -> saveRun(() -> config.setUseCurePlant(on))));
-		s.addContent(checkBox("Use Resurrect Crops (Arceuus)", config.isUseResurrectCrops(), true, null,
-			on -> saveRun(() -> config.setUseResurrectCrops(on))));
-		s.addContent(spinnerRow("Plant cures to bring (backup)", spinner(config.getPlantCureDoses(), 0, 40, 1,
-			v -> saveRunQuietly(() -> config.setPlantCureDoses(v)))));
-		return s;
-	}
-
-	/** Which ticked run types are included; the ticks themselves are on the Run tab. */
-	private JComponent runTypesSection(RunConfig config)
-	{
-		final CollapsibleSection s = section("Run types");
-		s.addContent(note("Tick trees, fruit trees and herbs at the top of the Run tab. A ticked type joins a run "
-			+ "once enough of its patches are due."));
-		s.addContent(spinnerRow("Include a run type when this % of its patches are due",
-			spinner(config.getDueThresholdPercent(), 1, 100, 5,
-				v -> saveRunQuietly(() -> config.setDueThresholdPercent(v)))));
 		return s;
 	}
 
