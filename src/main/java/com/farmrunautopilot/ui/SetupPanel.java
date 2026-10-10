@@ -69,7 +69,7 @@ import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 
 /**
- * The Farm, Travel and Account tabs, and preset management on the Run tab (SPEC 13.2; layout in
+ * The Farm, Travel and You tabs, and preset management on the Run tab (SPEC 13.2; layout in
  * docs/plans/sidebar-ux.md). Rebuilt from the saved settings whenever they reload or the account's access
  * changes; every edit is saved straight away.
  */
@@ -98,6 +98,8 @@ class SetupPanel extends JPanel
 	/** The Detected lines (Account page), refilled without rebuilding the page. */
 	private final JPanel detected = new JPanel();
 	private Supplier<Holdings> holdings = () -> Holdings.EMPTY;
+	/** Location rows the player has open, kept across redraws (Travel page). */
+	private final Set<Location> openRows = EnumSet.noneOf(Location.class);
 	/** Run guidance settings, shown on the Account page only (null elsewhere). */
 	private final GuidanceSettings guidance;
 
@@ -511,7 +513,7 @@ class SetupPanel extends JPanel
 		s.addContent(checkBox("Use Resurrect Crops (Arceuus)", config.isUseResurrectCrops(), true, null,
 			on -> saveRun(() -> config.setUseResurrectCrops(on))));
 		s.addContent(spinnerRow("Plant cures to bring (backup)", spinner(config.getPlantCureDoses(), 0, 40, 1,
-			v -> saveRun(() -> config.setPlantCureDoses(v)))));
+			v -> saveRunQuietly(() -> config.setPlantCureDoses(v)))));
 		return s;
 	}
 
@@ -522,7 +524,8 @@ class SetupPanel extends JPanel
 		s.addContent(note("Tick trees, fruit trees and herbs at the top of the Run tab. A ticked type joins a run "
 			+ "once enough of its patches are due."));
 		s.addContent(spinnerRow("Include a run type when this % of its patches are due",
-			spinner(config.getDueThresholdPercent(), 1, 100, 5, v -> saveRun(() -> config.setDueThresholdPercent(v)))));
+			spinner(config.getDueThresholdPercent(), 1, 100, 5,
+				v -> saveRunQuietly(() -> config.setDueThresholdPercent(v)))));
 		return s;
 	}
 
@@ -550,7 +553,7 @@ class SetupPanel extends JPanel
 				+ "(e.g. one Falador Teleport for Falador Park and Taverley)",
 			on -> saveRun(() -> config.setPreferWalking(on))));
 		s.addContent(spinnerRow("Stamina doses to bring", spinner(config.getStaminaDoses(), 0, 40, 1,
-			v -> saveRun(() -> config.setStaminaDoses(v)))));
+			v -> saveRunQuietly(() -> config.setStaminaDoses(v)))));
 
 		final List<Choice<FairyRingAccess>> ways = new ArrayList<>();
 		ways.add(Choice.of(null, "Auto (best)"));
@@ -579,7 +582,7 @@ class SetupPanel extends JPanel
 		s.addContent(label("Way to a fairy ring"));
 		s.addContent(combo(ways, config.getFairyRingWay(), w -> saveRun(() -> config.setFairyRingWay(w))));
 		s.addContent(note("The ring by the stop you just finished is used whenever it's quicker, and your house "
-			+ "ring is set in Account > My house."));
+			+ "ring is set in You > My house."));
 		return s;
 	}
 
@@ -650,7 +653,18 @@ class SetupPanel extends JPanel
 			final boolean runesHere = config.getRunesNotTabsAt().contains(location) && !config.isUseRunesNotTabs();
 			final ExpandableRow row = new ExpandableRow(location.getDisplayName(),
 				(chosen != null ? chosen.getDisplayName() : "Auto") + (runesHere ? ", runes" : ""),
-				isOverridden(config, location), CONTROL_WIDTH);
+				isOverridden(config, location), CONTROL_WIDTH, openRows.contains(location),
+				open ->
+				{
+					if (open)
+					{
+						openRows.add(location);
+					}
+					else
+					{
+						openRows.remove(location);
+					}
+				});
 			s.addContent(row);
 			row.addContent(combo(choices, chosen,
 				m -> saveRun(() ->
@@ -861,6 +875,13 @@ class SetupPanel extends JPanel
 		SwingUtilities.invokeLater(changed);
 	}
 
+	/** Saves without redrawing the tabs: number boxes would lose focus on every click, and they change no summary. */
+	private void saveRunQuietly(Runnable change)
+	{
+		change.run();
+		settings.saveRunConfig();
+	}
+
 	/**
 	 * @param affectsAccess the change can lock or unlock patches or methods, so re-check access
 	 */
@@ -923,7 +944,7 @@ class SetupPanel extends JPanel
 	{
 		final CollapsibleSection s = section("Manage presets");
 		s.addContent(note("Save these settings under a name (e.g. \"Quick herbs\") and switch between them at the "
-			+ "top of the Run tab. Presets cover crops, rules, travel and route; My POH and unlocks are shared."));
+			+ "top of the Run tab. Presets cover the Farm and Travel tabs; your house and unlocks are shared."));
 		final JButton save = smallButton("Save current settings as...");
 		save.addActionListener(e ->
 		{

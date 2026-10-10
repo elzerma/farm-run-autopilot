@@ -11,6 +11,7 @@ import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import javax.inject.Inject;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
@@ -25,7 +26,7 @@ import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
 
 /**
- * Sidebar root: Run, Farm, Travel and Account tabs (SPEC section 13, docs/plans/sidebar-ux.md).
+ * Sidebar root: Run, Farm, Travel and You tabs (SPEC section 13, docs/plans/sidebar-ux.md).
  */
 public class FarmRunAutopilotPanel extends PluginPanel
 {
@@ -118,12 +119,14 @@ public class FarmRunAutopilotPanel extends PluginPanel
 
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(display);
 		tabGroup.setBorder(new EmptyBorder(0, 0, 10, 0));
+		// Four tabs only fit the sidebar with tight gaps (RuneLite spaces them 8px apart)
+		tabGroup.setLayout(new FlowLayout(FlowLayout.CENTER, 2, 0));
 
 		final MaterialTab runTab = new MaterialTab("Run", tabGroup, run);
 		tabGroup.addTab(runTab);
 		tabGroup.addTab(new MaterialTab("Farm", tabGroup, top(farmPanel)));
 		tabGroup.addTab(new MaterialTab("Travel", tabGroup, top(travelPanel)));
-		tabGroup.addTab(new MaterialTab("Account", tabGroup, top(accountPanel)));
+		tabGroup.addTab(new MaterialTab("You", tabGroup, top(accountPanel)));
 		tabGroup.select(runTab);
 
 		add(tabGroup, BorderLayout.NORTH);

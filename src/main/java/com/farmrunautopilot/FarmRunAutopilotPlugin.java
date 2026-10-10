@@ -291,7 +291,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		accessChecker.reset();
 		holdingsTracker.loadCaches();
 		runService.reset();
-		// Reloading notifies onSettingsReloaded, which rebuilds the Setup tab
+		// Reloading notifies onSettingsReloaded, which rebuilds the settings tabs
 		settings.load();
 		bottomlessBucket.reload();
 		holdingsTracker.markDirty();

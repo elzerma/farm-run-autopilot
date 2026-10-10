@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.function.Consumer;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -29,7 +30,12 @@ class ExpandableRow extends JPanel
 	private final int width;
 	private boolean expanded;
 
-	ExpandableRow(String name, String summary, boolean overridden, int width)
+	/**
+	 * @param expanded open to start with
+	 * @param onToggle told the new state, so it can be kept across redraws
+	 */
+	ExpandableRow(String name, String summary, boolean overridden, int width, boolean expanded,
+		Consumer<Boolean> onToggle)
 	{
 		this.name = name;
 		this.summary = summary;
@@ -51,7 +57,8 @@ class ExpandableRow extends JPanel
 			@Override
 			public void mouseClicked(MouseEvent e)
 			{
-				setExpanded(!expanded);
+				setExpanded(!ExpandableRow.this.expanded);
+				onToggle.accept(ExpandableRow.this.expanded);
 			}
 		});
 
@@ -61,7 +68,7 @@ class ExpandableRow extends JPanel
 
 		add(header, BorderLayout.NORTH);
 		add(content, BorderLayout.CENTER);
-		setExpanded(false);
+		setExpanded(expanded);
 	}
 
 	void addContent(JComponent component)

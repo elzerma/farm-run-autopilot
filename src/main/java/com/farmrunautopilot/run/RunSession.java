@@ -703,13 +703,13 @@ public class RunSession
 		if (currentPatch == null || currentAction == null)
 		{
 			final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
-			if (stopIndex > 0 && stop.getDeparture() == Departure.DIRECT && stop.getMethod() != null)
+			if (stop.getDeparture() == Departure.DIRECT && stop.getMethod() != null)
 			{
 				travelItems(stop.getMethod(), items);
 			}
 			// The item that gets the player to the fairy ring
 			final FairyRingAccess way = stop.getDeparture().getFairyRingAccess();
-			if (stopIndex > 0 && way != null)
+			if (way != null)
 			{
 				for (TravelItem item : way.getItems())
 				{
@@ -721,11 +721,11 @@ public class RunSession
 			}
 			// The spell to cast: the teleport itself, or Teleport to House for routes through the house
 			Spell spell = null;
-			if (stopIndex > 0 && stop.getDeparture() == Departure.DIRECT && stop.getMethod() != null)
+			if (stop.getDeparture() == Departure.DIRECT && stop.getMethod() != null)
 			{
 				spell = stop.getMethod().getSpell();
 			}
-			else if (stopIndex > 0 && stop.getDeparture().isViaHouse())
+			else if (stop.getDeparture().isViaHouse())
 			{
 				spell = Spell.TELEPORT_TO_HOUSE;
 			}

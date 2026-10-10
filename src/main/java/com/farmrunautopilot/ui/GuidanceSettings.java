@@ -9,7 +9,7 @@ import net.runelite.client.ui.components.colorpicker.ColorPickerManager;
 import net.runelite.client.ui.components.colorpicker.RuneliteColorPicker;
 
 /**
- * Reads and writes the run guidance settings (highlights and colours) for the Rules tab. They're RuneLite
+ * Reads and writes the run guidance settings (highlights and colours) for the You tab. They're RuneLite
  * config items, global for the client, so changes reach the overlays straight away.
  */
 final class GuidanceSettings
