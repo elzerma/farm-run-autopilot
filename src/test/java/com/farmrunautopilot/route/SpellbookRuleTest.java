@@ -111,4 +111,37 @@ public class SpellbookRuleTest
 		assertEquals(TravelMethod.FENKENSTRAINS_CASTLE_TELEPORT, arceuus.getMethod());
 		assertFalse(arceuus.isNeedsSupplies());
 	}
+
+	private static RouteStop catherby(Holdings holdings)
+	{
+		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
+		quests.put(Quest.LUNAR_DIPLOMACY, QuestState.FINISHED);
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		levels.put(Skill.MAGIC, 99);
+		levels.put(Skill.FARMING, 99);
+		final AccessSnapshot standard = new AccessSnapshot(true, quests, levels, Collections.emptySet(),
+			Collections.emptySet(), null, Spellbook.STANDARD, Collections.emptySet());
+		final RunConfig config = new RunConfig().sanitise();
+		config.setStartLocation(Location.CATHERBY);
+		config.getTravel().put(Location.CATHERBY, TravelMethod.CATHERBY_TELEPORT);
+		return RoutePlanner.plan(Collections.singletonList(Patch.CATHERBY_HERB), config, standard, holdings,
+			new PohSetup()).getStops().get(0);
+	}
+
+	@Test
+	public void chosenSpellOffTheBookFallsBackToOneThatCanBeCast()
+	{
+		// GitHub #2: Catherby set to Catherby Teleport (Lunar) on the standard book, no altar, no tablet
+		final RouteStop noTablet = catherby(Holdings.EMPTY);
+		assertEquals(TravelMethod.CAMELOT_TELEPORT, noTablet.getMethod());
+		assertFalse(noTablet.isNeedsSupplies());
+
+		// With the tablet the chosen teleport still works
+		final Map<Holdings.Source, Map<Integer, Integer>> items = new EnumMap<>(Holdings.Source.class);
+		items.put(Holdings.Source.INVENTORY, Collections.singletonMap(Spell.CATHERBY_TELEPORT.getTabletItemId(), 1));
+		final RouteStop tablet = catherby(new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true,
+			false));
+		assertEquals(TravelMethod.CATHERBY_TELEPORT, tablet.getMethod());
+		assertFalse(tablet.isNeedsSupplies());
+	}
 }

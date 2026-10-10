@@ -300,4 +300,54 @@ public class SupplyCalculatorTest
 		assertEquals(5, LeprechaunItem.combine(5, 0, 8));
 		assertEquals(256 + 5, LeprechaunItem.combine(5, 1, 8));
 	}
+
+	private static Map<Compost, Integer> ultracompostFor(int patches)
+	{
+		final Map<Compost, Integer> compost = new EnumMap<>(Compost.class);
+		compost.put(Compost.ULTRACOMPOST, patches);
+		return compost;
+	}
+
+	private static Holdings in(Holdings.Source source, int itemId)
+	{
+		final Map<Holdings.Source, Map<Integer, Integer>> items = new EnumMap<>(Holdings.Source.class);
+		items.put(source, Collections.singletonMap(itemId, 1));
+		return new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false);
+	}
+
+	@Test
+	public void filledBottomlessBucketReplacesCompostBuckets()
+	{
+		// GitHub #3: one line for the bucket, coloured by where it is, instead of a vague "ok"
+		final Holdings banked = in(Holdings.Source.BANK, ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED);
+		final java.util.List<SupplyLine> inBank = SupplyCalculator.compostLines(ultracompostFor(6), banked,
+			banked.carriedOnly());
+		assertEquals(1, inBank.size());
+		final SupplyLine line = inBank.get(0);
+		assertEquals("Bottomless compost bucket", line.getName());
+		assertEquals(1, line.getNeed());
+		assertEquals(SupplyLine.Status.IN_STORAGE, line.getStatus());
+		assertEquals(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED, line.getItemIds()[0]);
+		assertTrue(line.getNote(), line.getNote().contains("ultracompost"));
+		assertTrue(line.getChangeIn().contains("compost type"));
+
+		final Holdings carried = in(Holdings.Source.INVENTORY, ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED);
+		assertEquals(SupplyLine.Status.CARRIED,
+			SupplyCalculator.compostLines(ultracompostFor(6), carried, carried.carriedOnly()).get(0).getStatus());
+	}
+
+	@Test
+	public void emptyBottomlessBucketKeepsTheBucketsWithAHint()
+	{
+		final Holdings empty = in(Holdings.Source.BANK, ItemID.BOTTOMLESS_COMPOST_BUCKET);
+		final java.util.List<SupplyLine> lines = SupplyCalculator.compostLines(ultracompostFor(6), empty,
+			empty.carriedOnly());
+		assertEquals(1, lines.size());
+		assertEquals("Ultracompost", lines.get(0).getName());
+		assertEquals(6, lines.get(0).getNeed());
+		assertTrue(lines.get(0).getNote().startsWith("Fill your bottomless compost bucket"));
+
+		// No bucket at all: plain buckets, no note
+		assertNull(SupplyCalculator.compostLines(ultracompostFor(6), Holdings.EMPTY, Holdings.EMPTY).get(0).getNote());
+	}
 }

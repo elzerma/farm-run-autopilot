@@ -14,6 +14,8 @@ import com.farmrunautopilot.data.poh.JewelleryBoxTier;
 import com.farmrunautopilot.data.poh.PohAltar;
 import com.farmrunautopilot.data.poh.PoolTier;
 import com.farmrunautopilot.data.poh.PortalNexus;
+import com.farmrunautopilot.data.travel.Spell;
+import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.Compost;
@@ -388,8 +390,17 @@ class SetupPanel extends JPanel
 				hasSpell |= method.getSpell() != null;
 				final List<Requirement> missing = access.missingFor(method);
 				final boolean locked = !missing.isEmpty();
-				choices.add(new Choice<>(method, method.getDisplayName() + (locked ? " (locked)" : ""), !locked,
-					locked ? AccessSnapshot.describe(missing) : method.getNote()));
+				// A spell that can't be cast from here still works as a tablet, so it's information, not a lock
+				final Spell spell = method.getSpell();
+				final boolean tabletOnly = !locked && method.getKind() == TravelKind.SPELL && access.isKnown()
+					&& !access.canCast(spell);
+				final String tooltip = locked ? AccessSnapshot.describe(missing)
+					: tabletOnly ? (!access.isOnSpellbook(spell)
+						? title(spell.getSpellbook().name()) + " spellbook: you'd need its tablet"
+						: "Can't be cast yet: you'd need its tablet")
+					: method.getNote();
+				choices.add(new Choice<>(method, method.getDisplayName()
+					+ (locked ? " (locked)" : tabletOnly ? " (tablet only)" : ""), !locked, tooltip));
 			}
 
 			s.addContent(subheader(location.getDisplayName()));

@@ -25,6 +25,7 @@ import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.VarbitComposition;
 import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.game.ItemManager;
@@ -76,6 +77,8 @@ public class HoldingsTracker
 			}
 		}
 		WATCHED_VARBITS.add(VarbitID.FARMING_BLOCKWEEDS);
+		WATCHED_VARBITS.add(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE);
+		WATCHED_VARBITS.add(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_QUANTITY);
 	}
 
 	private final Client client;
@@ -201,9 +204,13 @@ public class HoldingsTracker
 			}
 		}
 
+		final int bucketType = client.getVarbitValue(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE);
+		final int bucketUses = client.getVarbitValue(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_QUANTITY);
+		final boolean bucketStored = bucketType > 0 && bucketUses > 0;
 		final Holdings next = new Holdings(Collections.unmodifiableMap(items), readRunePouch(inventory),
 			Collections.unmodifiableSet(infinite), bank != null,
-			client.getVarbitValue(VarbitID.FARMING_BLOCKWEEDS) == AUTOWEED_ON);
+			client.getVarbitValue(VarbitID.FARMING_BLOCKWEEDS) == AUTOWEED_ON,
+			bucketStored ? bucketType : 0, bucketStored ? bucketUses : 0);
 		if (next.equals(holdings))
 		{
 			return false;
@@ -272,6 +279,12 @@ public class HoldingsTracker
 			{
 				counts.put(item.getItemId(), total);
 			}
+		}
+		// A filled bottomless compost bucket stored here: a type and a number of uses
+		if (client.getVarbitValue(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE) > 0
+			&& client.getVarbitValue(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_QUANTITY) > 0)
+		{
+			counts.put(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED, 1);
 		}
 		// The secateurs slot holds magic secateurs when this flag is set.
 		if (client.getVarbitValue(LeprechaunItem.MAGIC_SECATEURS.getBaseVarbit()) > 0)

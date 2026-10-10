@@ -49,6 +49,29 @@ public class Holdings
 	boolean bankKnown;
 	/** Tithe Farm Auto-weed is owned and switched on. */
 	boolean autoweedOn;
+	/** The compost type in a bottomless bucket stored at the tool leprechaun (game value), 0 if none. */
+	int leprechaunBucketType;
+	/** Uses left in that bucket, 0 if none. */
+	int leprechaunBucketUses;
+
+	public Holdings(Map<Source, Map<Integer, Integer>> items, Map<Integer, Integer> runePouch, Set<Rune> infiniteRunes,
+		boolean bankKnown, boolean autoweedOn, int leprechaunBucketType, int leprechaunBucketUses)
+	{
+		this.items = items;
+		this.runePouch = runePouch;
+		this.infiniteRunes = infiniteRunes;
+		this.bankKnown = bankKnown;
+		this.autoweedOn = autoweedOn;
+		this.leprechaunBucketType = leprechaunBucketType;
+		this.leprechaunBucketUses = leprechaunBucketUses;
+	}
+
+	/** Without a bucket at the leprechaun. */
+	public Holdings(Map<Source, Map<Integer, Integer>> items, Map<Integer, Integer> runePouch, Set<Rune> infiniteRunes,
+		boolean bankKnown, boolean autoweedOn)
+	{
+		this(items, runePouch, infiniteRunes, bankKnown, autoweedOn, 0, 0);
+	}
 
 	public int count(int itemId)
 	{
@@ -105,7 +128,7 @@ public class Holdings
 		final Map<Source, Map<Integer, Integer>> carried = new EnumMap<>(Source.class);
 		carried.put(Source.INVENTORY, in(Source.INVENTORY));
 		carried.put(Source.WORN, in(Source.WORN));
-		return new Holdings(carried, runePouch, infiniteRunes, bankKnown, autoweedOn);
+		return new Holdings(carried, runePouch, infiniteRunes, bankKnown, autoweedOn, 0, 0);
 	}
 
 	public Map<Integer, Integer> in(Source source)

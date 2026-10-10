@@ -16,6 +16,7 @@ import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.supply.Holdings;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -418,39 +419,75 @@ public final class RoutePlanner
 	}
 
 	/**
-	 * The quickest way from {@code from} (null at the start of the run) to {@code to}: the player's chosen
-	 * method if set, otherwise every unlocked method, directly or through the house. Methods the player
-	 * lacks the item or tablet for only win if nothing else is possible.
+	 * The quickest way from {@code from} (null at the start of the run) to {@code to}. The player's chosen
+	 * method is a preference: it's used whenever it can be (cast, or its item or tablet owned), otherwise every
+	 * unlocked method is considered, directly or through the house (GitHub #2: a Lunar spell chosen on the
+	 * standard book). Methods the player lacks the item or tablet for only win if nothing else is possible.
 	 */
 	Leg bestLeg(Location from, Location to)
 	{
 		final TravelMethod chosen = config.getTravel().get(to);
-		final List<TravelMethod> candidates = new ArrayList<>();
-		if (chosen != null && access.missingFor(chosen).isEmpty())
+		final boolean chosenUnlocked = chosen != null && access.missingFor(chosen).isEmpty();
+		if (chosenUnlocked)
 		{
-			candidates.add(chosen);
-		}
-		else
-		{
-			for (TravelMethod method : TravelMethod.values())
+			final Leg leg = quickest(Collections.singletonList(chosen), from, to, null);
+			if (leg != null)
 			{
-				if (method.getDestination() == to && access.missingFor(method).isEmpty())
-				{
-					candidates.add(method);
-				}
+				return leg;
 			}
 		}
 
-		Leg best = null;
-		if (chosen == null && from != null)
+		final List<TravelMethod> candidates = new ArrayList<>();
+		for (TravelMethod method : TravelMethod.values())
+		{
+			if (method.getDestination() == to && access.missingFor(method).isEmpty())
+			{
+				candidates.add(method);
+			}
+		}
+		Leg walk = null;
+		if (from != null)
 		{
 			final Integer tiles = WALKS.getOrDefault(from, new EnumMap<>(Location.class)).get(to);
 			if (tiles != null)
 			{
-				best = new Leg(null, Departure.WALK, tiles * SECONDS_PER_TILE, false);
+				walk = new Leg(null, Departure.WALK, tiles * SECONDS_PER_TILE, false);
 			}
 		}
+		final Leg best = quickest(candidates, from, to, walk);
+		if (best != null)
+		{
+			return best;
+		}
+
+		// Nothing usable: take the chosen method, or the quickest unlocked one, and let the supply list ask for it
+		Leg fallback = null;
 		for (TravelMethod method : candidates)
+		{
+			// Only suggest something the player could actually get: a spell they can't cast needs a tablet to buy
+			final Spell spell = method.getSpell();
+			if (method.getKind() == TravelKind.SPELL && !access.canCast(spell) && !spell.hasTablet())
+			{
+				continue;
+			}
+			final double seconds = baseSeconds(method) + walkSeconds(method) + MISSING_PENALTY;
+			final Leg leg = new Leg(method, Departure.DIRECT, seconds, true);
+			if (method == chosen)
+			{
+				return leg;
+			}
+			if (fallback == null || seconds < fallback.seconds)
+			{
+				fallback = leg;
+			}
+		}
+		return fallback != null ? fallback : new Leg(null, Departure.NONE, MISSING_PENALTY * 5, false);
+	}
+
+	/** The cheapest usable leg using these methods (or {@code best}, e.g. a walk), or null if there's none. */
+	private Leg quickest(List<TravelMethod> methods, Location from, Location to, Leg best)
+	{
+		for (TravelMethod method : methods)
 		{
 			for (Leg leg : options(method, from))
 			{
@@ -464,27 +501,7 @@ public final class RoutePlanner
 				}
 			}
 		}
-		if (best != null)
-		{
-			return best;
-		}
-
-		// Nothing usable: take the quickest unlocked method anyway and let the supply list ask for it.
-		for (TravelMethod method : candidates)
-		{
-			// Only suggest something the player could actually get: a spell they can't cast needs a tablet to buy
-			final Spell spell = method.getSpell();
-			if (method.getKind() == TravelKind.SPELL && !access.canCast(spell) && !spell.hasTablet())
-			{
-				continue;
-			}
-			final double seconds = baseSeconds(method) + walkSeconds(method) + MISSING_PENALTY;
-			if (best == null || seconds < best.seconds)
-			{
-				best = new Leg(method, Departure.DIRECT, seconds, true);
-			}
-		}
-		return best != null ? best : new Leg(null, Departure.NONE, MISSING_PENALTY * 5, false);
+		return best;
 	}
 
 	/** Every usable way of travelling with this method from here. */

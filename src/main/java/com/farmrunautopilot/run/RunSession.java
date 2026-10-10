@@ -708,7 +708,9 @@ public class RunSession
 		if (stored != null)
 		{
 			final String name = runService.itemName(stored).toLowerCase();
-			final String article = currentAction == StepAdvisor.Action.COMPOST ? ""
+			// "Take ultracompost", but "Take a bottomless compost bucket"
+			final String article = currentAction == StepAdvisor.Action.COMPOST
+				&& stored != ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED ? ""
 				: "aeiou".indexOf(name.charAt(0)) >= 0 ? "an " : "a ";
 			return "Take " + article + name + " from the tool leprechaun";
 		}
