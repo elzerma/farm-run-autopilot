@@ -46,15 +46,37 @@ The plugin never clicks, types or acts for you. It only shows information.
 
 ![Composting: the compost is outlined in the inventory and finished stops are struck through](docs/guidance-compost.webp)
 
-**Setup**
-- Choose your patches, crops, protection (pay the gardener or compost only), compost, travel method per
-  location, outfit (Graceful or Farmer's), house (portal, nexus, jewellery box, spirit tree, fairy ring,
-  spellbook altar) and unlocks.
-- Quests, diaries, levels and house furniture are detected automatically; anything you haven't unlocked is
-  greyed out with what it needs.
+**Farm tab**
+- Choose your patches, crops (with backups), protection (pay the gardener or compost only), compost and
+  plant cures.
 - Save settings as presets (e.g. "Quick herbs") and switch between them from the Run tab.
 
-<img src="docs/setup-crops.png" alt="Setup tab: crop choices and disease-free herbs" width="300">
+<img src="docs/farm-tab.png" alt="Farm tab: crop choices and disease-free herbs" width="300">
+
+**Travel tab**
+- Every stop shows what **Auto (best)** picked, such as "Camelot Teleport (tablet)", and a dropdown to choose
+  the teleport and how to use it yourself: directly, through your house's portal nexus or jewellery box,
+  or by fairy ring.
+- Pick how Auto chooses: Fastest, Prefer free, Save charges, or Fewest items to bring.
+- Tablets come first; tick "Use runes instead" for any stop. Spells from another spellbook are only planned
+  when your house altar or Lunar's Spellbook Swap can reach them.
+- Charges are tracked across the whole run: jewellery charges, daily-limited teleports (Ardougne cloak,
+  Explorer's ring) and items charged by hand (quetzal whistle, Xeric's talisman, pendant of Ates). When
+  one runs out partway, Auto picks the next best way.
+
+<p>
+  <img src="docs/travel-tab.png" alt="Travel tab: how Auto (best) picks, and defaults for every stop" width="300">
+  <img src="docs/travel-locations.png" alt="Travel tab: each stop's Auto (best) pick, and an override" width="300">
+</p>
+
+**Account tab**
+- Quests, diaries, levels, spellbook, charges and some unlocks are detected automatically; anything you
+  haven't unlocked is greyed out with what it needs.
+- Your house (portal, nexus, jewellery box, spirit tree, fairy ring, spellbook altar), unlocks the game
+  doesn't show, highlights and colours.
+- **I NEED YOUR HELP!** Some features couldn't be tested by the author. Each one has a guided test: the
+  Run tab walks you through it, your settings are put back afterwards, and at the end a button opens a
+  GitHub issue with the results filled in for you to check and send.
 
 ## How to use
 
@@ -72,7 +94,9 @@ any.
 
 ## Privacy
 
-Everything is stored in your RuneLite profile. The plugin makes no network requests.
+Everything is stored in your RuneLite profile. The plugin makes no network requests. A guided test's GitHub
+report only opens in your browser when you press its button, nothing is sent unless you submit it there,
+and it never includes your character name.
 
 ## Credits
 
