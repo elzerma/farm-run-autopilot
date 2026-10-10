@@ -124,7 +124,7 @@ final class HelpWanted
 		final CollapsibleSection s = new CollapsibleSection(TITLE, toTry == 0 ? "all good" : toTry + " to try",
 			settings.isSectionOpen(TITLE), open -> settings.setSectionOpen(TITLE, open));
 		s.addContent(text("I can't test these myself. If you can, try them and pick how it went. For anything "
-			+ "that needs attention, add a note or open an issue.", ColorScheme.LIGHT_GRAY_COLOR, 6));
+			+ "that needs attention, add a note or open an issue.", Color.WHITE, 6));
 		for (Item item : items)
 		{
 			addItem(s, item, settings);
@@ -140,8 +140,10 @@ final class HelpWanted
 
 	private static void addItem(CollapsibleSection s, Item item, SettingsStore settings)
 	{
-		s.addContent(text(item.title, ColorScheme.BRAND_ORANGE, 2));
-		s.addContent(text(item.howToTry, ColorScheme.MEDIUM_GRAY_COLOR, 4));
+		final JLabel title = text(item.title, ColorScheme.BRAND_ORANGE, 2);
+		title.setFont(FontManager.getRunescapeBoldFont());
+		s.addContent(title);
+		s.addContent(text(item.howToTry, ColorScheme.LIGHT_GRAY_COLOR, 4));
 
 		final String saved = settings.getClientValue(item.key());
 		final JComboBox<String> result = new JComboBox<>(RESULTS);
@@ -214,7 +216,7 @@ final class HelpWanted
 		final JLabel label = new JLabel(text.isEmpty() ? " " : "<html><div style='width:" + TEXT_WIDTH + "px'>"
 			+ text.replace("&", "&amp;").replace("<", "&lt;") + "</div></html>");
 		label.setForeground(colour);
-		label.setFont(FontManager.getRunescapeSmallFont());
+		label.setFont(FontManager.getRunescapeFont());
 		label.setBorder(new EmptyBorder(0, 0, gapBelow, 0));
 		return label;
 	}
