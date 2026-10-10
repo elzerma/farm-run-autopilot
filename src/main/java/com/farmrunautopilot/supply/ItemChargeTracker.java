@@ -16,6 +16,7 @@ import javax.inject.Singleton;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.events.MenuOptionClicked;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.util.Text;
 
 /**
@@ -118,6 +119,17 @@ public class ItemChargeTracker
 	}
 
 	/**
+	 * The pendant of Ates keeps its charges in a varbit (UNVERIFIED: picked by its name), which is exact, so it
+	 * replaces the chat and click counting for the pendant whenever it changes.
+	 *
+	 * @return whether a charge count changed
+	 */
+	public boolean onVarbitChanged(int varbitId, int value)
+	{
+		return varbitId == VarbitID.CHARGES_PENDANT_OF_ATES_QUANTITY && record(TravelItem.PENDANT_OF_ATES, value);
+	}
+
+	/**
 	 * A teleport chosen from one of these items uses a charge.
 	 *
 	 * @return whether a charge count changed
@@ -131,6 +143,11 @@ public class ItemChargeTracker
 		}
 		for (TravelItem item : TRACKED)
 		{
+			if (item == TravelItem.PENDANT_OF_ATES)
+			{
+				// Its varbit says when the charge is really used (a cancelled teleport uses none)
+				continue;
+			}
 			final Integer left = charges.get(item);
 			if (left != null && left > 0 && Arrays.stream(item.getItemIds()).anyMatch(id -> id == itemId))
 			{

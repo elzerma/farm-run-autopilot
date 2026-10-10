@@ -370,7 +370,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 	{
 		holdingsTracker.onVarbitChanged(event.getVarbitId());
 		accessChecker.onVarbitChanged(event.getVarbitId());
-		if (bottomlessBucket.onVarbitChanged(event.getVarbitId()))
+		if (bottomlessBucket.onVarbitChanged(event.getVarbitId())
+			| itemCharges.onVarbitChanged(event.getVarbitId(), event.getValue()))
 		{
 			holdingsTracker.markDirty();
 		}
