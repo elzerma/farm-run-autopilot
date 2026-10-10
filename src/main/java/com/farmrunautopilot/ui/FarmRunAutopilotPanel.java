@@ -17,7 +17,6 @@ import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -48,7 +47,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	private final RunSession runSession;
 	private final Timer refreshTimer;
 	private final SettingsStore settings;
-	private final boolean developerMode;
+	private final TestRunner testRunner;
 	/** The "I NEED YOUR HELP!" button at the bottom of each tab, whose count changes as tests are run. */
 	private final List<JButton> helpButtons = new ArrayList<>();
 
@@ -57,11 +56,11 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		RunOverrides runOverrides, RunService runService, RunSession runSession, ClientThread clientThread,
 		FarmRunAutopilotConfig config, ConfigManager configManager,
 		ColorPickerManager colorPickers, HoldingsTracker holdingsTracker, RunTimings timings,
-		TestRunner testRunner, @Named("developerMode") boolean developerMode)
+		TestRunner testRunner)
 	{
 		this.runSession = runSession;
 		this.settings = settings;
-		this.developerMode = developerMode;
+		this.testRunner = testRunner;
 		setLayout(new BorderLayout());
 		setBorder(new EmptyBorder(10, 10, 10, 10));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -186,7 +185,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 			settings.resetAccountAndPresets();
 			timings.clear();
 		});
-		accountPanel.showHelpList(developerMode, testRunner, () -> tabs.select("Run"));
+		accountPanel.showHelpList(testRunner, () -> tabs.select("Run"));
 		accountPanel.showHoldings(holdingsTracker::getHoldings);
 		travelPanel.showHoldings(holdingsTracker::getHoldings);
 		travelPanel.showAutoPicks(runService);
@@ -234,13 +233,13 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		runPanel.refresh();
 		for (JButton button : helpButtons)
 		{
-			HelpWanted.refresh(button, settings, developerMode);
+			HelpWanted.refresh(button, settings, testRunner.asDeveloper());
 		}
 	}
 
 	private JButton helpButton()
 	{
-		final JButton button = HelpWanted.button(settings, developerMode, this::openHelp);
+		final JButton button = HelpWanted.button(settings, testRunner.asDeveloper(), this::openHelp);
 		helpButtons.add(button);
 		return button;
 	}

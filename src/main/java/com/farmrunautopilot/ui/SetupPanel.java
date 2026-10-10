@@ -124,8 +124,7 @@ class SetupPanel extends JPanel
 	private Runnable resetEverything;
 	/** The Unlocks section as last drawn (Account page), to scroll to it; null elsewhere. */
 	private JComponent unlocksSectionShown;
-	/** Show the help list in Testing & debug (Account page); with result pickers when developer is true. */
-	private Boolean helpDeveloper;
+	/** Runs guided tests for the help list in Testing & debug (Account page); null elsewhere. */
 	private TestRunner testRunner;
 	private Runnable showRunTab;
 	/** The help list as last drawn, to scroll to it. */
@@ -171,9 +170,8 @@ class SetupPanel extends JPanel
 	}
 
 	/** Show the help list in Testing & debug (Account page). */
-	void showHelpList(boolean developer, TestRunner testRunner, Runnable showRunTab)
+	void showHelpList(TestRunner testRunner, Runnable showRunTab)
 	{
-		helpDeveloper = developer;
 		this.testRunner = testRunner;
 		this.showRunTab = showRunTab;
 		rebuild();
@@ -1100,9 +1098,19 @@ class SetupPanel extends JPanel
 	private JComponent debugSection(RunConfig config)
 	{
 		final CollapsibleSection s = section(DEBUG);
-		if (helpDeveloper != null)
+		if (testRunner != null)
 		{
-			helpListShown = HelpWanted.list(settings, helpDeveloper, testRunner, showRunTab);
+			if (testRunner.isDeveloperMode())
+			{
+				// Dev client only: see the help list and the end of a test the way players do
+				s.addContent(checkBox("Preview as a player", !testRunner.asDeveloper(), true,
+					"Show the help list and test reports the way players see them (dev client only)", on ->
+					{
+						testRunner.setPreviewAsPlayer(on);
+						SwingUtilities.invokeLater(changed);
+					}));
+			}
+			helpListShown = HelpWanted.list(settings, testRunner.asDeveloper(), testRunner, showRunTab);
 			s.addContent(helpListShown);
 			s.addContent(subheader("Tools"));
 		}

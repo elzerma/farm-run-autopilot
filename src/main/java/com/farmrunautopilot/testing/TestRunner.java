@@ -40,6 +40,8 @@ public class TestRunner
 	/** Result names shared with the "I NEED YOUR HELP!" list. */
 	public static final String GOOD = "Good to go";
 	public static final String ATTENTION = "Needs attention";
+	/** Dev client only: show the player view of the help list and tests. */
+	private static final String PREVIEW_AS_PLAYER = "help.previewAsPlayer";
 
 	private final Client client;
 	private final ClientThread clientThread;
@@ -95,6 +97,24 @@ public class TestRunner
 	public boolean isBusy()
 	{
 		return busy;
+	}
+
+	/** The dev client (RuneLite developer mode), whether or not it's previewing the player view. */
+	public boolean isDeveloperMode()
+	{
+		return developerMode;
+	}
+
+	/** The dev client, not previewing as a player: results go to the clipboard instead of GitHub. */
+	public boolean asDeveloper()
+	{
+		return developerMode && !Boolean.parseBoolean(settings.getClientValue(PREVIEW_AS_PLAYER));
+	}
+
+	/** In the dev client, show what players see. Swing thread. */
+	public void setPreviewAsPlayer(boolean preview)
+	{
+		settings.setClientValue(PREVIEW_AS_PLAYER, preview ? "true" : null);
 	}
 
 	/** Open the pre-filled GitHub issue from a finished test's last step. Swing thread. */
@@ -338,7 +358,7 @@ public class TestRunner
 		if (report)
 		{
 			log.info(summary);
-			if (developerMode)
+			if (asDeveloper())
 			{
 				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Farm Run Autopilot: test "
 					+ (passed ? "passed" : "needs attention") + ". The result is on your clipboard to paste to Claude.",
@@ -360,7 +380,7 @@ public class TestRunner
 			}
 			final String body = TestReport.body(done, passed, RuneLiteProperties.getVersion(), steps, captured,
 				problems);
-			if (developerMode)
+			if (asDeveloper())
 			{
 				// The developer pastes the summary to Claude, who reads the full report from the log
 				log.info("Guided test report: {}\n{}", done.name(), body);
