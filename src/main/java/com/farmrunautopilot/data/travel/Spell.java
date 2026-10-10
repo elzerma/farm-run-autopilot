@@ -3,6 +3,7 @@ package com.farmrunautopilot.data.travel;
 import static com.farmrunautopilot.data.DataConstants.NONE;
 import static com.farmrunautopilot.data.travel.Rune.AIR;
 import static com.farmrunautopilot.data.travel.Rune.ASTRAL;
+import static com.farmrunautopilot.data.travel.Rune.COSMIC;
 import static com.farmrunautopilot.data.travel.Rune.BLOOD;
 import static com.farmrunautopilot.data.travel.Rune.EARTH;
 import static com.farmrunautopilot.data.travel.Rune.FIRE;
@@ -71,7 +72,10 @@ public enum Spell
 		of(10, WATER), of(3, ASTRAL), of(3, LAW)),
 	CATHERBY_TELEPORT("Catherby Teleport", Spellbook.LUNAR, 87, ItemID.LUNAR_TABLET_CATHERBY_TELEPORT,
 		Quest.LUNAR_DIPLOMACY,
-		of(10, WATER), of(3, ASTRAL), of(3, LAW));
+		of(10, WATER), of(3, ASTRAL), of(3, LAW)),
+	/** One cast from another spellbook, only while on Lunar (lasts one spell or two minutes). */
+	SPELLBOOK_SWAP("Spellbook Swap", Spellbook.LUNAR, 96, NONE, Quest.DREAM_MENTOR,
+		of(3, ASTRAL), of(2, COSMIC), of(1, LAW));
 
 	private final String displayName;
 	private final Spellbook spellbook;

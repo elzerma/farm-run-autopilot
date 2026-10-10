@@ -174,4 +174,62 @@ public class SpellbookRuleTest
 		assertEquals(TravelMethod.CATHERBY_TELEPORT, auto.getMethod());
 		assertEquals(Departure.POH_NEXUS, auto.getDeparture());
 	}
+
+	private static AccessSnapshot lunarCaster(Spellbook book, int magic)
+	{
+		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
+		quests.put(Quest.LUNAR_DIPLOMACY, QuestState.FINISHED);
+		quests.put(Quest.DREAM_MENTOR, QuestState.FINISHED);
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		levels.put(Skill.MAGIC, magic);
+		levels.put(Skill.FARMING, 99);
+		return new AccessSnapshot(true, quests, levels, Collections.emptySet(), Collections.emptySet(), null, book,
+			Collections.emptySet());
+	}
+
+	@Test
+	public void spellbookSwapOnlyFromLunar()
+	{
+		// On Lunar with 96 Magic and Dream Mentor: a standard spell is castable with one Spellbook Swap
+		final AccessSnapshot lunar = lunarCaster(Spellbook.LUNAR, 96);
+		assertTrue(lunar.canCast(Spell.CAMELOT_TELEPORT));
+		assertTrue(lunar.needsLunarSwap(Spell.CAMELOT_TELEPORT));
+		assertFalse(lunar.needsLunarSwap(Spell.CATHERBY_TELEPORT));
+		// Below 96 Magic there's no Swap
+		assertFalse(lunarCaster(Spellbook.LUNAR, 95).canCast(Spell.CAMELOT_TELEPORT));
+		// On the standard book, Spellbook Swap never counts: Lunar spells stay tablet or nexus only
+		final AccessSnapshot standard = lunarCaster(Spellbook.STANDARD, 99);
+		assertFalse(standard.canCast(Spell.CATHERBY_TELEPORT));
+		assertFalse(standard.needsLunarSwap(Spell.CATHERBY_TELEPORT));
+		// An altar for the book means no Swap is needed
+		final AccessSnapshot altar = new AccessSnapshot(true, Collections.emptyMap(), Collections.singletonMap(
+			Skill.MAGIC, 99), Collections.emptySet(), Collections.emptySet(), null, Spellbook.LUNAR,
+			java.util.EnumSet.of(Spellbook.STANDARD));
+		assertFalse(altar.needsLunarSwap(Spell.CAMELOT_TELEPORT));
+	}
+
+	@Test
+	public void swapRunesAndWarningOnTheSupplyList()
+	{
+		final RunConfig config = new RunConfig().sanitise();
+		config.setEnabledTypes(java.util.EnumSet.of(com.farmrunautopilot.data.PatchType.HERB));
+		for (Patch patch : Patch.values())
+		{
+			if (patch != Patch.CATHERBY_HERB)
+			{
+				config.getDisabledPatches().add(patch);
+			}
+		}
+		config.setStartLocation(Location.FARMING_GUILD);
+		config.getTravel().put(Location.CATHERBY, TravelMethod.CAMELOT_TELEPORT);
+		config.getTravelHow().put(Location.CATHERBY, Departure.DIRECT);
+		final AccessSnapshot lunar = lunarCaster(Spellbook.LUNAR, 99);
+		final RunSelection selection = RunSelector.select(config, lunar, p -> null, 0, true, Collections.emptyMap());
+		final Route route = RoutePlanner.plan(selection.getPatches(), config, lunar, Holdings.EMPTY, new PohSetup());
+		final SupplyPlan supplies = SupplyCalculator.calculate(config, lunar, Holdings.EMPTY, selection, route,
+			p -> null, id -> "item " + id, id -> 0);
+		final String warnings = String.join(" | ", supplies.getWarnings());
+		assertTrue(warnings, warnings.contains("Spellbook Swap"));
+		assertTrue(supplies.getRuneSummary(), supplies.getRuneSummary().toLowerCase().contains("cosmic"));
+	}
 }

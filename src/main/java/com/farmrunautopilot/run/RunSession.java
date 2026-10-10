@@ -790,6 +790,11 @@ public class RunSession
 	private Spell castableNow(Spell spell)
 	{
 		final AccessSnapshot access = accessChecker.getSnapshot();
+		// On Lunar, a spell from another book starts with Spellbook Swap
+		if (spell != null && access.needsLunarSwap(spell))
+		{
+			return Spell.SPELLBOOK_SWAP;
+		}
 		return spell != null && access.canCast(spell) && access.isOnSpellbook(spell) ? spell : null;
 	}
 

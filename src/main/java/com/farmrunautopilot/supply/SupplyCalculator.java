@@ -221,7 +221,8 @@ public final class SupplyCalculator
 				}
 				else
 				{
-					extra = addSpell(Spell.TELEPORT_TO_HOUSE, location, config, access, holdings, tablets, runeNeed);
+					extra = addSpell(Spell.TELEPORT_TO_HOUSE, location, config, access, holdings, tablets, runeNeed,
+						warnings);
 				}
 				fairyRing |= departure == Departure.POH_FAIRY_RING;
 			}
@@ -230,7 +231,8 @@ public final class SupplyCalculator
 				coins += method.getCoins();
 				if (method.getSpell() != null)
 				{
-					extra = addSpell(method.getSpell(), location, config, access, holdings, tablets, runeNeed);
+					extra = addSpell(method.getSpell(), location, config, access, holdings, tablets, runeNeed,
+						warnings);
 				}
 				if (method.getItem() != null)
 				{
@@ -533,7 +535,7 @@ public final class SupplyCalculator
 	}
 
 	private static String addSpell(Spell spell, Location location, RunConfig config, AccessSnapshot access,
-		Holdings holdings, Map<Integer, Integer> tablets, Map<Rune, Integer> runeNeed)
+		Holdings holdings, Map<Integer, Integer> tablets, Map<Rune, Integer> runeNeed, List<String> warnings)
 	{
 		// A spell the player can't cast (wrong spellbook with no altar, Magic level, quest) needs its tablet, even
 		// when runes are preferred (GitHub #2)
@@ -544,12 +546,26 @@ public final class SupplyCalculator
 			return " (tablet)";
 		}
 		addRunes(runeNeed, spell);
+		final String book = title(spell.getSpellbook().name()) + " spellbook";
 		if (!castable)
 		{
-			return " (runes, " + title(spell.getSpellbook().name()) + " spellbook; you can't cast it yet)";
+			return " (runes, " + book + "; you can't cast it yet)";
 		}
-		return " (runes, " + title(spell.getSpellbook().name()) + " spellbook"
-			+ (access.isOnSpellbook(spell) ? "" : "; switch at your house altar") + ")";
+		if (access.isOnSpellbook(spell))
+		{
+			return " (runes, " + book + ")";
+		}
+		// Off the current book: one Spellbook Swap cast on Lunar, otherwise a trip to the house altar
+		if (access.needsLunarSwap(spell))
+		{
+			addRunes(runeNeed, Spell.SPELLBOOK_SWAP);
+			warnings.add(location.getDisplayName() + ": cast Spellbook Swap (to " + book + ") just before "
+				+ spell.getDisplayName());
+			return " (runes, " + book + "; Spellbook Swap first)";
+		}
+		warnings.add(location.getDisplayName() + ": " + spell.getDisplayName() + " is on the " + book
+			+ "; switch at your house altar first, and back again after");
+		return " (runes, " + book + "; switch at your house altar)";
 	}
 	/** A grown tree or its stump must be cleared before replanting; unknown patches are assumed grown. */
 	static boolean needsClearing(PatchState state)

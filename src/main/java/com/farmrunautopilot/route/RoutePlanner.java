@@ -692,7 +692,12 @@ public final class RoutePlanner
 	private double spellbookSwap(Spell spell)
 	{
 		final boolean tablet = spell.hasTablet() && holdings.count(spell.getTabletItemId()) > 0;
-		return tablet || access.isOnSpellbook(spell) ? 0 : SPELLBOOK_SWAP;
+		if (tablet || access.isOnSpellbook(spell))
+		{
+			return 0;
+		}
+		// On Lunar, Spellbook Swap is one more cast; otherwise it's two trips to the house altar
+		return access.needsLunarSwap(spell) ? TELEPORT : SPELLBOOK_SWAP;
 	}
 
 	private boolean canTeleport(Spell spell)

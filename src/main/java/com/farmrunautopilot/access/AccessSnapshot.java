@@ -202,7 +202,24 @@ public class AccessSnapshot
 	public boolean canCast(Spell spell)
 	{
 		return !known || (level(Skill.MAGIC) >= spell.getMagicLevel() && missing(spell.getRequirements()).isEmpty()
-			&& (isOnSpellbook(spell) || altarSpellbooks.contains(spell.getSpellbook())));
+			&& (isOnSpellbook(spell) || altarSpellbooks.contains(spell.getSpellbook()) || canSwapFor(spell)));
+	}
+
+	/**
+	 * The spell is on another book that the house altar can't switch to, but the player is on Lunar and can cast
+	 * Spellbook Swap for it (one cast). Never true off Lunar.
+	 */
+	public boolean needsLunarSwap(Spell spell)
+	{
+		return known && !isOnSpellbook(spell) && !altarSpellbooks.contains(spell.getSpellbook()) && canSwapFor(spell);
+	}
+
+	/** Spellbook Swap only exists on Lunar: 96 Magic and Dream Mentor. */
+	private boolean canSwapFor(Spell spell)
+	{
+		return spellbook == Spellbook.LUNAR && spell.getSpellbook() != Spellbook.LUNAR
+			&& level(Skill.MAGIC) >= Spell.SPELLBOOK_SWAP.getMagicLevel()
+			&& missing(Spell.SPELLBOOK_SWAP.getRequirements()).isEmpty();
 	}
 
 	/** On the spell's spellbook right now (or the spellbook isn't known). */

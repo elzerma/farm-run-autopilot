@@ -48,6 +48,7 @@ public class SpellHighlightOverlay extends Overlay
 		BUTTONS.put(Spell.FERTILE_SOIL, InterfaceID.MagicSpellbook.FERTILE_SOIL);
 		BUTTONS.put(Spell.FISHING_GUILD_TELEPORT, InterfaceID.MagicSpellbook.TELE_FISH);
 		BUTTONS.put(Spell.CATHERBY_TELEPORT, InterfaceID.MagicSpellbook.TELE_CATHER);
+		BUTTONS.put(Spell.SPELLBOOK_SWAP, InterfaceID.MagicSpellbook.SPELLBOOK_SWAP);
 	}
 
 	private final Client client;
