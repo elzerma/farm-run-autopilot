@@ -8,6 +8,8 @@ import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.BottomlessBucketTracker;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.supply.ItemChargeTracker;
+import com.farmrunautopilot.testing.TestRunner;
+import com.farmrunautopilot.testing.TestView;
 import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.supply.SupplyPlan;
 import com.farmrunautopilot.route.RunOverrides;
@@ -105,6 +107,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private UnlockSpotter unlockSpotter;
 
 	@Inject
+	private TestRunner testRunner;
+
+	@Inject
 	private RunService runService;
 
 	@Inject
@@ -142,6 +147,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 
 	/** The session view last shown in the sidebar. */
 	private RunView shownRunView;
+	/** The guided test as the Run tab last showed it. */
+	private TestView shownTestView = TestView.NONE;
 
 	/** What the bank tab last showed: each line, amount needed and colour (not exact counts held). */
 	private String bankTabContents = "";
@@ -251,8 +258,15 @@ public class FarmRunAutopilotPlugin extends Plugin
 		}
 
 		runSession.onGameTick();
+		testRunner.onGameTick();
 		hintArrow.update();
 		final RunView runView = runSession.getView();
+		final TestView testView = testRunner.getView();
+		if (!testView.equals(shownTestView))
+		{
+			shownTestView = testView;
+			showPlanLater(runService.getPlan(), client.getGameState() == GameState.LOGGED_IN);
+		}
 		if (!runView.equals(shownRunView))
 		{
 			if (shownRunView == null || shownRunView.getState() != runView.getState())
@@ -306,6 +320,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 	@Subscribe
 	public void onRuneScapeProfileChanged(RuneScapeProfileChanged event)
 	{
+		// A guided test belongs to the account it started on
+		testRunner.onLoggedOut();
 		patchTracker.reset();
 		accessChecker.reset();
 		holdingsTracker.loadCaches();
@@ -343,6 +359,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			// A run being built or waiting to leave is dropped; one already timing carries on after relogging
 			runSession.cancelIfNotRunning();
+			testRunner.onLoggedOut();
 			sceneTracker.clear();
 			pohDetector.reset();
 			showPlanLater(RunPlan.EMPTY, false);
@@ -388,6 +405,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 			{
 				holdingsTracker.markDirty();
 			}
+			// After the trackers, so a guided test sees their new counts
+			testRunner.onChatMessage(message);
 		}
 	}
 

@@ -10,6 +10,8 @@ import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunTimings;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.supply.HoldingsTracker;
+import com.farmrunautopilot.testing.TestRunner;
+import com.farmrunautopilot.testing.TestView;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import javax.inject.Inject;
@@ -48,7 +50,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		RunOverrides runOverrides, RunService runService, RunSession runSession, ClientThread clientThread,
 		FarmRunAutopilotConfig config, ConfigManager configManager,
 		ColorPickerManager colorPickers, HoldingsTracker holdingsTracker, RunTimings timings,
-		@Named("developerMode") boolean developerMode)
+		TestRunner testRunner, @Named("developerMode") boolean developerMode)
 	{
 		this.runSession = runSession;
 		setLayout(new BorderLayout());
@@ -104,6 +106,30 @@ public class FarmRunAutopilotPanel extends PluginPanel
 					accountPanel.revealUnlocks();
 					tabs.select("Account");
 				}
+
+				@Override
+				public TestView testView()
+				{
+					return testRunner.getView();
+				}
+
+				@Override
+				public void answerTest(boolean yes)
+				{
+					testRunner.answer(yes);
+				}
+
+				@Override
+				public void skipTestStep()
+				{
+					testRunner.skip();
+				}
+
+				@Override
+				public void cancelTest()
+				{
+					testRunner.cancel();
+				}
 			});
 		// Presets cover Farm and Travel, so they're managed under the Run tab's preset picker
 		presetsPanel = new SetupPanel(SetupPanel.Page.PRESETS, settings, accessChecker, patchTracker,
@@ -138,7 +164,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 			settings.resetAccountAndPresets();
 			timings.clear();
 		});
-		accountPanel.showHelpList(developerMode);
+		accountPanel.showHelpList(developerMode, testRunner, () -> tabs.select("Run"));
 		accountPanel.showHoldings(holdingsTracker::getHoldings);
 		travelPanel.showHoldings(holdingsTracker::getHoldings);
 		travelPanel.showAutoPicks(runService);

@@ -36,10 +36,10 @@ public class ItemChargeTracker
 	public static final Set<TravelItem> TRACKED = Collections.unmodifiableSet(EnumSet.of(
 		TravelItem.QUETZAL_WHISTLE, TravelItem.XERICS_TALISMAN, TravelItem.PENDANT_OF_ATES));
 	private static final String COUNT = "(no|one|[\\d,]+)";
-	static final Pattern WHISTLE_CHECK = Pattern.compile("Your quetzal whistle has " + COUNT + " charges? remaining\\.");
-	static final Pattern TALISMAN_CHECK = Pattern.compile("The talisman has " + COUNT + " charges?\\.");
+	public static final Pattern WHISTLE_CHECK = Pattern.compile("Your quetzal whistle has " + COUNT + " charges? remaining\\.");
+	public static final Pattern TALISMAN_CHECK = Pattern.compile("The talisman has " + COUNT + " charges?\\.");
 	static final Pattern TALISMAN_CHARGED = Pattern.compile("Your talisman now has ([\\d,]+) charges?\\.");
-	static final Pattern PENDANT_CHECK = Pattern.compile("The pendant has " + COUNT + " charges?\\.");
+	public static final Pattern PENDANT_CHECK = Pattern.compile("The pendant has " + COUNT + " charges?\\.");
 	static final Pattern PENDANT_CHARGED = Pattern.compile(".*It now has ([\\d,]+) charges?\\.");
 	private static final int FULL = 1000;
 	/** Menu options on these items that aren't a teleport. */
@@ -157,7 +157,7 @@ public class ItemChargeTracker
 		return false;
 	}
 
-	static int count(String text)
+	public static int count(String text)
 	{
 		if (text.equals("no"))
 		{

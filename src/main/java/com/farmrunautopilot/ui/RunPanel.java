@@ -21,6 +21,7 @@ import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.supply.SupplyPlan;
+import com.farmrunautopilot.testing.TestView;
 import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchStatusText;
 import com.farmrunautopilot.tracking.PatchTracker;
@@ -41,6 +42,7 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
@@ -108,6 +110,15 @@ class RunPanel extends JPanel
 
 		/** Show Account > Unlocks. */
 		void openUnlocks();
+
+		/** The guided test in progress, or {@link TestView#NONE}. */
+		TestView testView();
+
+		void answerTest(boolean yes);
+
+		void skipTestStep();
+
+		void cancelTest();
 	}
 
 	RunPanel(SettingsStore settings, RunOverrides overrides, Runnable replan, Runnable settingsChanged,
@@ -177,6 +188,7 @@ class RunPanel extends JPanel
 	private void rebuild()
 	{
 		removeAll();
+		addTest(controls.testView());
 		final JComponent presets = presetPicker();
 		if (presets != null)
 		{
@@ -236,6 +248,70 @@ class RunPanel extends JPanel
 		addSupplies(supplies);
 		addTotals(supplies);
 		finish();
+	}
+
+	/** The guided test in progress at the top of the tab: its step, Yes/No when it asks, and what to bring. */
+	private void addTest(TestView test)
+	{
+		if (!test.isActive())
+		{
+			return;
+		}
+		final JPanel box = new JPanel();
+		box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
+		box.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		box.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createMatteBorder(2, 2, 2, 2, ColorScheme.BRAND_ORANGE), new EmptyBorder(6, 6, 6, 6)));
+		box.setAlignmentX(LEFT_ALIGNMENT);
+
+		final JLabel title = testText("TEST: " + test.getTitle(), ColorScheme.BRAND_ORANGE);
+		title.setFont(FontManager.getRunescapeBoldFont());
+		box.add(title);
+		box.add(testText("Step " + test.getStep() + " of " + test.getSteps(), ColorScheme.LIGHT_GRAY_COLOR));
+		box.add(testText(test.getText(), Color.WHITE));
+		for (String line : test.getBring())
+		{
+			box.add(testText("Bring " + line, ColorScheme.LIGHT_GRAY_COLOR));
+		}
+
+		final JPanel buttons = new JPanel(new GridLayout(1, 0, 4, 0));
+		buttons.setOpaque(false);
+		buttons.setAlignmentX(LEFT_ALIGNMENT);
+		if (test.isQuestion())
+		{
+			buttons.add(testButton("Yes", () -> controls.answerTest(true)));
+			buttons.add(testButton("No", () -> controls.answerTest(false)));
+		}
+		if (test.isOptional())
+		{
+			buttons.add(testButton("Skip", controls::skipTestStep));
+		}
+		buttons.add(testButton("Cancel", controls::cancelTest));
+		box.add(buttons);
+		add(box);
+		final JLabel gap = new JLabel(" ");
+		gap.setAlignmentX(LEFT_ALIGNMENT);
+		add(gap);
+	}
+
+	private static JLabel testText(String text, Color colour)
+	{
+		final JLabel label = new JLabel("<html><div style='width:" + (TEXT_WIDTH - 20) + "px'>"
+			+ text.replace("&", "&amp;").replace("<", "&lt;") + "</div></html>");
+		label.setForeground(colour);
+		label.setFont(FontManager.getRunescapeFont());
+		label.setBorder(new EmptyBorder(0, 0, 4, 0));
+		label.setAlignmentX(LEFT_ALIGNMENT);
+		return label;
+	}
+
+	private static JButton testButton(String text, Runnable action)
+	{
+		final JButton button = new JButton(text);
+		button.setFont(FontManager.getRunescapeSmallFont());
+		button.setFocusPainted(false);
+		button.addActionListener(e -> action.run());
+		return button;
 	}
 
 	/**

@@ -38,6 +38,7 @@ import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.settings.TravelStyle;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.LeprechaunItem;
+import com.farmrunautopilot.testing.TestRunner;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -125,6 +126,8 @@ class SetupPanel extends JPanel
 	private JComponent unlocksSectionShown;
 	/** Show the help list in Testing & debug (Account page); with result pickers when developer is true. */
 	private Boolean helpDeveloper;
+	private TestRunner testRunner;
+	private Runnable showRunTab;
 	/** The help list as last drawn, to scroll to it. */
 	private JComponent helpListShown;
 	/** Run guidance settings, shown on the Account page only (null elsewhere). */
@@ -168,9 +171,11 @@ class SetupPanel extends JPanel
 	}
 
 	/** Show the help list in Testing & debug (Account page). */
-	void showHelpList(boolean developer)
+	void showHelpList(boolean developer, TestRunner testRunner, Runnable showRunTab)
 	{
 		helpDeveloper = developer;
+		this.testRunner = testRunner;
+		this.showRunTab = showRunTab;
 		rebuild();
 	}
 
@@ -1097,7 +1102,7 @@ class SetupPanel extends JPanel
 		final CollapsibleSection s = section(DEBUG);
 		if (helpDeveloper != null)
 		{
-			helpListShown = HelpWanted.list(settings, helpDeveloper);
+			helpListShown = HelpWanted.list(settings, helpDeveloper, testRunner, showRunTab);
 			s.addContent(helpListShown);
 			s.addContent(subheader("Tools"));
 		}

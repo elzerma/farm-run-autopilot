@@ -1,11 +1,14 @@
 package com.farmrunautopilot.ui;
 
 import com.farmrunautopilot.settings.SettingsStore;
+import com.farmrunautopilot.testing.TestItem;
+import com.farmrunautopilot.testing.TestRunner;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -33,82 +36,9 @@ final class HelpWanted
 	private static final int TEXT_WIDTH = 160;
 	private static final int CONTROL_WIDTH = 190;
 	private static final String NOT_TRIED = "Not tried yet";
-	private static final String GOOD = "Good to go";
-	private static final String ATTENTION = "Needs attention";
+	private static final String GOOD = TestRunner.GOOD;
+	private static final String ATTENTION = TestRunner.ATTENTION;
 	private static final String[] RESULTS = {NOT_TRIED, GOOD, ATTENTION};
-
-	enum Tab
-	{
-		RUN("Run"), FARM("Farm"), TRAVEL("Travel"), ACCOUNT("Account");
-
-		private final String label;
-
-		Tab(String label)
-		{
-			this.label = label;
-		}
-	}
-
-	/** One thing to try. The key names its saved result, so don't change it once released. */
-	enum Item
-	{
-		CIVITAS_QUETZAL(Tab.RUN, "Quetzal after the Civitas teleport",
-			"Set Travel > Civitas illa Fortis (Ortus Farm) to Civitas illa Fortis Teleport and start a run with the "
-				+ "Civitas herb patch. Once you land in the city, the step should say \"Take the quetzal to the "
-				+ "Hunter Guild\" and the quetzal nearby should be outlined. After the ride, the step should switch "
-				+ "to walking to the patch."),
-		SPELLBOOK_SWAP(Tab.RUN, "Spellbook Swap",
-			"On the Lunar spellbook (96 Magic, Dream Mentor done) with no house altar for the other spellbook, "
-				+ "plan a stop whose teleport is from another spellbook and that you have no tablet for. The Run "
-				+ "tab should warn that you need Spellbook Swap, its runes should be on the supply list, and the "
-				+ "spell should be outlined in your spellbook on that step."),
-		WEISS_FIRE(Tab.FARM, "Fire of Nourishment at Weiss",
-			"If you've built the Fire of Nourishment, untick it in Account > Unlocks, then go to Weiss. It should "
-				+ "tick itself once the fire is in view, and the Weiss herb patch should join your herb runs."),
-		FORTIS_CHAMPION(Tab.FARM, "Civitas herbs and the Colosseum",
-			"With \"Champion rank at the Fortis Colosseum\" ticked in Account > Unlocks, the Civitas herb patch "
-				+ "should count as disease-free: no plant cure or protection asked for it."),
-		ATES_CHARGES(Tab.TRAVEL, "Pendant of Ates charges",
-			"With the pendant on you, Account > Detected should show the same charges as its Check. Teleport once "
-				+ "and it should drop by one. Start a teleport and cancel it: it shouldn't change."),
-		CHAT_CHARGES(Tab.TRAVEL, "Xeric's talisman and quetzal whistle charges",
-			"Check the talisman or whistle. Account > Detected should show the same number. Teleport once and it "
-				+ "should drop by one. At 0 charges, Auto (best) should stop picking it."),
-		DAILY_TELEPORTS(Tab.TRAVEL, "Teleports left today",
-			"With an Ardougne cloak 2 or 3, or Explorer's ring 2 or 3: Account > Detected has a \"Daily teleports "
-				+ "used (checking)\" line. Use a farm or cabbage teleport and note how its numbers change. Once "
-				+ "the day's uses are gone, Auto (best) should stop picking it."),
-		KHARYRLL(Tab.TRAVEL, "Kharyrll Teleport highlight",
-			"On the Ancient spellbook with Kharyrll Teleport planned for Port Phasmatys (and no tablet), the "
-				+ "spell should be outlined in your spellbook on that step."),
-		VARBIT_UNLOCKS(Tab.ACCOUNT, "Kastori quetzal and statues of Ates",
-			"If you've built the Kastori quetzal landing site or activated a statue of Ates (Nemus Retreat, north "
-				+ "of Kastori), Account > Unlocks should show it ticked with \"(detected)\". An unticked box means "
-				+ "it wasn't detected."),
-		SPIRIT_TREES(Tab.ACCOUNT, "Planted spirit trees",
-			"Untick your planted spirit tree in Account > Unlocks, then go to it (Port Sarim, Brimhaven or the "
-				+ "Farming Guild). It should tick itself once the grown tree is in view."),
-		HOUSE_SCAN(Tab.ACCOUNT, "House scanning (beta)",
-			"Tick \"Detect furniture when I enter my house\" in Account > My house, then enter your house: your "
-				+ "portal nexus, jewellery box, pool and altar should fill in. Then visit someone else's house: "
-				+ "nothing of yours should change.");
-
-		private final Tab tab;
-		private final String title;
-		private final String howToTry;
-
-		Item(Tab tab, String title, String howToTry)
-		{
-			this.tab = tab;
-			this.title = title;
-			this.howToTry = howToTry;
-		}
-
-		String key()
-		{
-			return "help." + name();
-		}
-	}
 
 	private HelpWanted()
 	{
@@ -118,7 +48,7 @@ final class HelpWanted
 	static int toTry(SettingsStore settings, boolean developer)
 	{
 		int count = 0;
-		for (Item item : Item.values())
+		for (TestItem item : TestItem.values())
 		{
 			count += developer && GOOD.equals(settings.getClientValue(item.key())) ? 0 : 1;
 		}
@@ -143,7 +73,7 @@ final class HelpWanted
 	 * The list for Account > Testing & debug: every item with steps to try it, grouped by tab. The developer
 	 * (running the dev client) gets a result to pick for each; everyone else gets the issues button.
 	 */
-	static JPanel list(SettingsStore settings, boolean developer)
+	static JPanel list(SettingsStore settings, boolean developer, TestRunner runner, Runnable showRun)
 	{
 		final JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -152,25 +82,24 @@ final class HelpWanted
 		final JLabel heading = text(TITLE, ColorScheme.BRAND_ORANGE, 4);
 		heading.setFont(FontManager.getRunescapeBoldFont());
 		add(panel, heading);
-		add(panel, text(developer
-			? "Try each one and pick how it went. For anything that needs attention, add a note."
-			: "I can't test these myself. If you can, please try them and tell me how it went on GitHub, "
-				+ "especially if something's wrong.", Color.WHITE, 6));
-		for (Tab tab : Tab.values())
+		add(panel, text("I can't test these myself. If you can, press Start test: the Run tab walks you through it, "
+			+ "your settings are put back afterwards, and a GitHub issue opens with the results ready to submit.",
+			Color.WHITE, 6));
+		for (TestItem.Tab tab : TestItem.Tab.values())
 		{
 			boolean first = true;
-			for (Item item : Item.values())
+			for (TestItem item : TestItem.values())
 			{
-				if (item.tab != tab)
+				if (item.getTab() != tab)
 				{
 					continue;
 				}
 				if (first)
 				{
-					add(panel, text(tab.label + " tab", Color.WHITE, 4));
+					add(panel, text(tab.getLabel() + " tab", Color.WHITE, 4));
 					first = false;
 				}
-				addItem(panel, item, settings, developer);
+				addItem(panel, item, settings, developer, runner, showRun);
 			}
 		}
 		final JButton report = new JButton("Open GitHub issues");
@@ -188,12 +117,31 @@ final class HelpWanted
 		panel.add(component);
 	}
 
-	private static void addItem(JPanel panel, Item item, SettingsStore settings, boolean developer)
+	private static void addItem(JPanel panel, TestItem item, SettingsStore settings, boolean developer,
+		TestRunner runner, Runnable showRun)
 	{
-		final JLabel title = text(item.title, ColorScheme.BRAND_ORANGE, 2);
+		final JLabel title = text(item.getTitle(), ColorScheme.BRAND_ORANGE, 2);
 		title.setFont(FontManager.getRunescapeBoldFont());
 		add(panel, title);
-		add(panel, text(item.howToTry, ColorScheme.LIGHT_GRAY_COLOR, developer ? 4 : 8));
+		add(panel, text(item.getHowToTry(), ColorScheme.LIGHT_GRAY_COLOR, 4));
+		final List<String> missing = runner.missing(item);
+		final JButton start = new JButton("Start test");
+		start.setFont(FontManager.getRunescapeSmallFont());
+		start.setFocusPainted(false);
+		start.setEnabled(missing.isEmpty());
+		start.setToolTipText(missing.isEmpty() ? "Walks you through it on the Run tab"
+			: "<html>Needs:<br>" + String.join("<br>", missing).replace("&", "&amp;") + "</html>");
+		start.addActionListener(e ->
+		{
+			runner.start(item);
+			showRun.run();
+		});
+		add(panel, start);
+		if (!missing.isEmpty())
+		{
+			add(panel, text("Needs: " + String.join("; ", missing), ColorScheme.MEDIUM_GRAY_COLOR, 0));
+		}
+		add(panel, text("", ColorScheme.MEDIUM_GRAY_COLOR, developer ? 0 : 6));
 		if (!developer)
 		{
 			return;
@@ -248,12 +196,12 @@ final class HelpWanted
 		});
 	}
 
-	private static String noteOf(Item item, SettingsStore settings)
+	private static String noteOf(TestItem item, SettingsStore settings)
 	{
 		return valueOr(settings.getClientValue(item.key() + ".note"), "");
 	}
 
-	private static String noteSuffix(Item item, SettingsStore settings)
+	private static String noteSuffix(TestItem item, SettingsStore settings)
 	{
 		final String note = noteOf(item, settings);
 		return note.isEmpty() ? "" : " (note: " + note + ")";

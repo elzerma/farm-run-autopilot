@@ -66,6 +66,18 @@ public class PohDetector
 		this.accessChecker = accessChecker;
 	}
 
+	/** In the player's own house, with scanning on. Client thread. */
+	public boolean isScanningHouse()
+	{
+		return inHouse;
+	}
+
+	/** The last house entered was someone else's. Client thread. */
+	public boolean isVisiting()
+	{
+		return visiting;
+	}
+
 	/** The "Loading house" screen opened: the house's objects spawn next. Scan only the player's own. */
 	public void onHouseLoading()
 	{

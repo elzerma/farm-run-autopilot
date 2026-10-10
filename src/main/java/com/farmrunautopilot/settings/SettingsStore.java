@@ -9,6 +9,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.Getter;
@@ -27,6 +28,9 @@ public class SettingsStore
 	private static final String ACCOUNT_KEY = "account";
 	private static final String OPEN_SECTIONS_KEY = "ui.openSections";
 	private static final String PRESETS_KEY = "presets";
+	/** The player's own settings while a guided test uses its own. */
+	private static final String TEST_BACKUP_RUN = "test.backup.runConfig";
+	private static final String TEST_BACKUP_ACCOUNT = "test.backup.account";
 	/** Open the first time: the ones changed most often. */
 	private static final List<String> DEFAULT_OPEN_SECTIONS = Arrays.asList("Crops", "Defaults for every stop", "Detected");
 
@@ -129,6 +133,16 @@ public class SettingsStore
 	/** Reloads everything from the current profile, e.g. after login or switching accounts. */
 	public void load()
 	{
+		if (isTesting())
+		{
+			// A guided test was cut short (the client closed): put the player's own settings back first
+			log.debug("Putting settings back after an unfinished guided test");
+			runConfig = read(RUN_CONFIG_KEY, RunConfig.class, new RunConfig()).sanitise();
+			account = read(ACCOUNT_KEY, AccountSettings.class, new AccountSettings()).sanitise();
+			endTest((kept, during) ->
+			{
+			});
+		}
 		runConfig = read(RUN_CONFIG_KEY, RunConfig.class, new RunConfig()).sanitise();
 		account = read(ACCOUNT_KEY, AccountSettings.class, new AccountSettings()).sanitise();
 		final List<Preset> loaded = new ArrayList<>();
@@ -171,6 +185,64 @@ public class SettingsStore
 		presets = new ArrayList<>();
 		write(ACCOUNT_KEY, account);
 		write(PRESETS_KEY, new Preset[0]);
+		changedEverywhere();
+	}
+
+	/** Whether a guided test's settings are in use (a backup is waiting to be put back). */
+	public boolean isTesting()
+	{
+		return configManager.getRSProfileConfiguration(FarmRunAutopilotConfig.GROUP, TEST_BACKUP_RUN) != null;
+	}
+
+	/**
+	 * Back up the run and account settings, then change them for a guided test. Needs a logged-in account.
+	 * Swing thread.
+	 */
+	public void startTest(BiConsumer<RunConfig, AccountSettings> setUp)
+	{
+		if (!hasProfile())
+		{
+			return;
+		}
+		if (!isTesting())
+		{
+			configManager.setRSProfileConfiguration(FarmRunAutopilotConfig.GROUP, TEST_BACKUP_RUN, gson.toJson(runConfig));
+			configManager.setRSProfileConfiguration(FarmRunAutopilotConfig.GROUP, TEST_BACKUP_ACCOUNT, gson.toJson(account));
+		}
+		final RunConfig testConfig = copy(runConfig);
+		final AccountSettings testAccount = gson.fromJson(gson.toJson(account), AccountSettings.class).sanitise();
+		setUp.accept(testConfig, testAccount);
+		runConfig = testConfig;
+		account = testAccount;
+		write(RUN_CONFIG_KEY, runConfig);
+		write(ACCOUNT_KEY, account);
+		changedEverywhere();
+	}
+
+	/**
+	 * Put back the settings from before a guided test. What the trackers saw during it (charges, the
+	 * bottomless bucket) is kept; {@code keep} can keep more, e.g. an unlock the test spotted. Swing thread.
+	 */
+	public void endTest(BiConsumer<AccountSettings, AccountSettings> keep)
+	{
+		final RunConfig savedRun = read(TEST_BACKUP_RUN, RunConfig.class, null);
+		final AccountSettings savedAccount = read(TEST_BACKUP_ACCOUNT, AccountSettings.class, null);
+		configManager.unsetRSProfileConfiguration(FarmRunAutopilotConfig.GROUP, TEST_BACKUP_RUN);
+		configManager.unsetRSProfileConfiguration(FarmRunAutopilotConfig.GROUP, TEST_BACKUP_ACCOUNT);
+		if (savedRun == null || savedAccount == null)
+		{
+			return;
+		}
+		final AccountSettings during = account;
+		savedAccount.sanitise();
+		savedAccount.setItemCharges(during.getItemCharges());
+		savedAccount.setBottomlessUses(during.getBottomlessUses());
+		savedAccount.setBottomlessCompost(during.getBottomlessCompost());
+		keep.accept(savedAccount, during);
+		runConfig = savedRun.sanitise();
+		account = savedAccount;
+		write(RUN_CONFIG_KEY, runConfig);
+		write(ACCOUNT_KEY, account);
 		changedEverywhere();
 	}
 
