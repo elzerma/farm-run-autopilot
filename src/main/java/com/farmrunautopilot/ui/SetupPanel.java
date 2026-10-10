@@ -989,7 +989,8 @@ class SetupPanel extends JPanel
 		final int ticked = account.getManualUnlocks().size();
 		final CollapsibleSection s = section(UNLOCKS, !review.isEmpty() ? review.size() + " to check"
 			: ticked == 0 ? null : ticked + " ticked");
-		s.addContent(note("Ticked for you where the game shows it. Tick the rest that you have; the plugin can't "
+		s.addContent(note("Ticked for you where the game shows it, or once you pass a planted spirit tree or the Weiss "
+			+ "fire. Tick the rest that you have; the plugin can't "
 			+ "see them until you do."));
 		for (Unlock unlock : Unlock.values())
 		{

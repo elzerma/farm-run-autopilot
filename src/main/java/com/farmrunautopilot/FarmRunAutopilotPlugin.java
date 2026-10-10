@@ -3,6 +3,7 @@ package com.farmrunautopilot;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.bank.FarmBankTab;
 import com.farmrunautopilot.access.PohDetector;
+import com.farmrunautopilot.access.UnlockSpotter;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.BottomlessBucketTracker;
 import com.farmrunautopilot.supply.HoldingsTracker;
@@ -99,6 +100,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 
 	@Inject
 	private ItemChargeTracker itemCharges;
+
+	@Inject
+	private UnlockSpotter unlockSpotter;
 
 	@Inject
 	private RunService runService;
@@ -433,6 +437,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	{
 		pohDetector.onObjectSpawned(event.getGameObject().getId());
 		sceneTracker.onObjectSpawned(event.getGameObject());
+		unlockSpotter.onObjectSpawned(event.getGameObject());
 	}
 
 	@Subscribe

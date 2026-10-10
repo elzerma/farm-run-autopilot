@@ -249,15 +249,15 @@ class RunPanel extends JPanel
 		{
 			return;
 		}
-		final JLabel label = note("Check your unlocks: " + review.size() + (review.size() == 1 ? " needs" : " need")
-			+ " ticking by hand (click to open)");
+		final JLabel label = note("Check your unlocks: " + review.size() + " not seen yet"
+			+ " (click to open)");
 		label.setForeground(ColorScheme.BRAND_ORANGE);
 		final List<String> names = new ArrayList<>();
 		for (Unlock unlock : review)
 		{
 			names.add(unlock.getDescription());
 		}
-		label.setToolTipText("<html>The plugin can't read these from the game:<br>" + String.join("<br>", escapeAll(names))
+		label.setToolTipText("<html>Spirit trees and the Weiss fire tick when you pass them; tick the rest by hand:<br>" + String.join("<br>", escapeAll(names))
 			+ "</html>");
 		label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		label.addMouseListener(new MouseAdapter()
