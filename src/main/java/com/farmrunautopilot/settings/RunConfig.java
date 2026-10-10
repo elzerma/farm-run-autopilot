@@ -4,6 +4,7 @@ import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
+import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,6 +68,8 @@ public class RunConfig
 	private Map<Location, TravelMethod> travel = new EnumMap<>(Location.class);
 	private boolean useRunesNotTabs = false;
 	private Set<Location> runesNotTabsAt = EnumSet.noneOf(Location.class);
+	/** Ways of reaching a fairy ring the player switched off; the rest are used whenever they own what's needed. */
+	private Set<FairyRingAccess> fairyRingAccessOff = EnumSet.noneOf(FairyRingAccess.class);
 
 	// Route
 	private RouteMode routeMode = RouteMode.AUTOPILOT;
@@ -98,6 +101,7 @@ public class RunConfig
 		disabledPatches = cleanSet(disabledPatches, Patch.class, EnumSet.noneOf(Patch.class));
 		payToClear = cleanSet(payToClear, PatchType.class, EnumSet.noneOf(PatchType.class));
 		runesNotTabsAt = cleanSet(runesNotTabsAt, Location.class, EnumSet.noneOf(Location.class));
+		fairyRingAccessOff = cleanSet(fairyRingAccessOff, FairyRingAccess.class, EnumSet.noneOf(FairyRingAccess.class));
 
 		crops = cleanMap(crops, PatchType.class);
 		crops.entrySet().removeIf(e -> e.getValue().getType() != e.getKey());

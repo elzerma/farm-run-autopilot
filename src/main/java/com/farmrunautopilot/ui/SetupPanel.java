@@ -14,6 +14,7 @@ import com.farmrunautopilot.data.poh.JewelleryBoxTier;
 import com.farmrunautopilot.data.poh.PohAltar;
 import com.farmrunautopilot.data.poh.PoolTier;
 import com.farmrunautopilot.data.poh.PortalNexus;
+import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.Compost;
@@ -373,6 +374,29 @@ class SetupPanel extends JPanel
 		final CollapsibleSection s = section("Travel");
 		s.addContent(note("Auto picks the fastest method you have. Locked methods show what they need."));
 		s.addContent(note("\"Runes instead of tablets everywhere\" is in Setup > Run options."));
+
+		s.addContent(subheader("Fairy ring access"));
+		s.addContent(note("Ways to get to a fairy ring before dialling a code. Each is used when you have what it "
+			+ "needs. Your house ring is set in My POH."));
+		for (FairyRingAccess way : FairyRingAccess.values())
+		{
+			s.addContent(checkBox(way.getDisplayName(), !config.getFairyRingAccessOff().contains(way), true,
+				!way.getItems().isEmpty() ? "Needs: " + way.getItems().get(way.getItems().size() - 1).getDisplayName()
+					+ (way.getItems().size() > 1 ? " or higher" : "")
+					: way.getSpell() != null ? "Needs: " + way.getSpell().getDisplayName() + " (spell or tablet)"
+					: "Walk to the ring next to the stop you just finished",
+				on -> saveRun(() ->
+				{
+					if (on)
+					{
+						config.getFairyRingAccessOff().remove(way);
+					}
+					else
+					{
+						config.getFairyRingAccessOff().add(way);
+					}
+				})));
+		}
 
 		for (Location location : Location.values())
 		{

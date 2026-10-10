@@ -36,6 +36,13 @@ public class RouteStop
 				return "House fairy ring: " + method.getDisplayName();
 			case POH_SPIRIT_TREE:
 				return "House spirit tree: " + method.getDisplayName();
+			case FAIRY_RING_NEARBY:
+				return "Walk to the fairy ring here: " + method.getDisplayName();
+			case FAIRY_RING_ARDOUGNE_CLOAK:
+			case FAIRY_RING_SLAYER_RING:
+			case FAIRY_RING_QUEST_CAPE:
+			case FAIRY_RING_LUMBRIDGE:
+				return departure.getFairyRingAccess().getDisplayName() + ": " + method.getDisplayName();
 			default:
 				return method.getDisplayName();
 		}

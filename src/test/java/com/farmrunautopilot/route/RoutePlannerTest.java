@@ -7,6 +7,7 @@ import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.MetaOrder;
 import com.farmrunautopilot.data.Patch;
+import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RouteMode;
@@ -134,6 +135,25 @@ public class RoutePlannerTest
 		final RouteStop village = gnomes.getStops().get(1);
 		assertEquals(Location.TREE_GNOME_VILLAGE, village.getLocation());
 		assertEquals(TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, village.getMethod());
+	}
+
+	@Test
+	public void ringByAStopIsAsFarAsArrivingThereByRing()
+	{
+		assertEquals(Integer.valueOf(28), RoutePlanner.ringWalkTiles(Location.FARMING_GUILD));
+		assertEquals(null, RoutePlanner.ringWalkTiles(Location.TAVERLEY));
+	}
+
+	@Test
+	public void everyWayToAFairyRingHasADeparture()
+	{
+		for (FairyRingAccess way : FairyRingAccess.values())
+		{
+			assertEquals(way, Departure.of(way).getFairyRingAccess());
+		}
+		final RouteStop stop = new RouteStop(Location.FARMING_GUILD, TravelMethod.FAIRY_RING_CIR,
+			Departure.FAIRY_RING_SLAYER_RING, 30, false);
+		assertEquals("Slayer ring (Fremennik Slayer Dungeon), ring AJR: Fairy ring CIR", stop.describeTravel());
 	}
 
 	@Test

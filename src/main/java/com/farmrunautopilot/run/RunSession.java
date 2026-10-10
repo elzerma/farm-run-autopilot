@@ -10,7 +10,9 @@ import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.SupplyItems;
+import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.Spell;
+import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.RouteStop;
@@ -660,6 +662,22 @@ public class RunSession
 			if (stopIndex > 0 && stop.getDeparture() == Departure.DIRECT && stop.getMethod() != null)
 			{
 				travelItems(stop.getMethod(), items);
+			}
+			// The item or tablet that gets the player to the fairy ring
+			final FairyRingAccess way = stop.getDeparture().getFairyRingAccess();
+			if (stopIndex > 0 && way != null)
+			{
+				for (TravelItem item : way.getItems())
+				{
+					for (int id : item.getItemIds())
+					{
+						items.add(id);
+					}
+				}
+				if (way.getSpell() != null && way.getSpell().hasTablet())
+				{
+					items.add(way.getSpell().getTabletItemId());
+				}
 			}
 			return new Highlights(null, false, items);
 		}

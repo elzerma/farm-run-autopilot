@@ -8,8 +8,10 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.Unlock;
+import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
+import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
@@ -44,8 +46,6 @@ public final class RoutePlanner
 	static final double HOUSE_WALK = 2.0;
 	/** Switching spellbook at a house altar and back again later (two trips to the altar). */
 	static final double SPELLBOOK_SWAP = 2 * (TELEPORT + HOUSE_WALK + 3.0);
-	/** Getting to an ordinary fairy ring when the player has none at home. */
-	static final int FAIRY_RING_WALK_TILES = 40;
 	/** Used when the player doesn't own what a method needs, so owned methods win when close. */
 	static final double MISSING_PENALTY = 60;
 	/** Rough time at each patch (harvest, clear, plant, pay). */
@@ -502,7 +502,15 @@ public final class RoutePlanner
 					{
 						legs.add(new Leg(method, Departure.POH_FAIRY_RING, viaHouse + FAIRY_RING + walk, false));
 					}
-					legs.add(direct(method, FAIRY_RING_WALK_TILES * SECONDS_PER_TILE + FAIRY_RING + walk));
+					// No unnamed "some ring nearby": only rings the player has a known way to reach
+					for (FairyRingAccess way : FairyRingAccess.values())
+					{
+						final Double reach = config.getFairyRingAccessOff().contains(way) ? null : reachRing(way, from);
+						if (reach != null)
+						{
+							legs.add(new Leg(method, Departure.of(way), reach + FAIRY_RING + walk, false));
+						}
+					}
 				}
 				break;
 			case SPIRIT_TREE:
@@ -564,6 +572,48 @@ public final class RoutePlanner
 	private static double walkSeconds(TravelMethod method)
 	{
 		return method.getWalk().getEstimatedTiles() * SECONDS_PER_TILE;
+	}
+
+	/** Seconds to get to a fairy ring this way, or null if the player can't. */
+	private Double reachRing(FairyRingAccess way, Location from)
+	{
+		final double walk = way.getTiles() * SECONDS_PER_TILE;
+		if (way == FairyRingAccess.NEARBY)
+		{
+			final Integer tiles = from == null ? null : ringWalkTiles(from);
+			return tiles == null ? null : tiles * SECONDS_PER_TILE;
+		}
+		if (!way.getItems().isEmpty())
+		{
+			for (TravelItem item : way.getItems())
+			{
+				if (owns(item))
+				{
+					return ITEM_TELEPORT + walk;
+				}
+			}
+			return null;
+		}
+		final Spell spell = way.getSpell();
+		return canTeleport(spell) ? TELEPORT + spellbookSwap(spell) + walk : null;
+	}
+
+	/**
+	 * How far the fairy ring by a stop is from its patches: the walk the other way when arriving there by
+	 * ring. Null if the stop has no fairy ring.
+	 */
+	static Integer ringWalkTiles(Location location)
+	{
+		Integer tiles = null;
+		for (TravelMethod method : TravelMethod.values())
+		{
+			if (method.getKind() == TravelKind.FAIRY_RING && method.getDestination() == location)
+			{
+				final int walk = method.getWalk().getEstimatedTiles();
+				tiles = tiles == null ? walk : Math.min(tiles, walk);
+			}
+		}
+		return tiles;
 	}
 
 	private Integer spiritTreeWalk(Location from)

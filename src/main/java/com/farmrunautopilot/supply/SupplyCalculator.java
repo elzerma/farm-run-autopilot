@@ -9,6 +9,7 @@ import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.SupplyItems;
+import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.Rune;
 import com.farmrunautopilot.data.travel.RuneAmount;
 import com.farmrunautopilot.data.travel.Spell;
@@ -224,6 +225,30 @@ public final class SupplyCalculator
 					travelItems.merge(method.getItem(), 1, Integer::sum);
 				}
 				fairyRing |= method.getKind() == TravelKind.FAIRY_RING;
+			}
+			else if (departure.getFairyRingAccess() != null)
+			{
+				// The way to the ring (cloak, slayer ring, ...); walking to a nearby ring needs nothing
+				final FairyRingAccess way = departure.getFairyRingAccess();
+				if (!way.getItems().isEmpty())
+				{
+					// The one the player has (cloak 2+ shares a line with the Ardougne farm teleport)
+					TravelItem item = way.getItems().get(0);
+					for (TravelItem candidate : way.getItems())
+					{
+						if (holdings.countAny(candidate.getItemIds()) > 0)
+						{
+							item = candidate;
+							break;
+						}
+					}
+					travelItems.merge(item, 1, Integer::sum);
+				}
+				if (way.getSpell() != null)
+				{
+					extra = addSpell(way.getSpell(), location, config, access, holdings, tablets, runeNeed);
+				}
+				fairyRing = true;
 			}
 			final boolean auto = method != null && config.getTravel().get(location) != method;
 			travelPlan.add(location.getDisplayName() + ": " + stop.describeTravel() + extra + (auto ? " (auto)" : ""));
