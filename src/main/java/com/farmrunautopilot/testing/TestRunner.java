@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,8 @@ public class TestRunner
 	private final RunService runService;
 	private final SceneTracker scene;
 	private final PohDetector pohDetector;
+	/** The dev client: the whole report also goes to the log, to be read back without submitting it. */
+	private final boolean developerMode;
 
 	// Client thread
 	private TestItem item;
@@ -66,7 +69,7 @@ public class TestRunner
 	@Inject
 	TestRunner(Client client, ClientThread clientThread, SettingsStore settings, AccessChecker accessChecker,
 		HoldingsTracker holdingsTracker, ItemChargeTracker itemCharges, RunSession runSession, RunService runService,
-		SceneTracker scene, PohDetector pohDetector)
+		SceneTracker scene, PohDetector pohDetector, @Named("developerMode") boolean developerMode)
 	{
 		this.client = client;
 		this.clientThread = clientThread;
@@ -78,6 +81,7 @@ public class TestRunner
 		this.runService = runService;
 		this.scene = scene;
 		this.pohDetector = pohDetector;
+		this.developerMode = developerMode;
 	}
 
 	public TestView getView()
@@ -324,6 +328,10 @@ public class TestRunner
 			settings.setClientValue(done.key(), passed ? GOOD : ATTENTION);
 			final String body = TestReport.body(done, passed, RuneLiteProperties.getVersion(), steps, captured,
 				problems);
+			if (developerMode)
+			{
+				log.info("Guided test report: {}\n{}", done.name(), body);
+			}
 			LinkBrowser.browse(TestReport.url(TestReport.title(done, passed), body));
 		});
 	}

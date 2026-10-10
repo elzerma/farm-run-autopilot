@@ -12,7 +12,7 @@
 - Put each item on the tab where the player would see the feature.
 - Mention any change to the list when reporting back.
 
-**Reading the results:** every change is logged at INFO as `Help list: <ITEM> = <result> (note: ...)`, and guided tests log `Guided test finished: <ITEM> = <result> [problems]`. At the start of a session, and whenever the user says they've been testing, search the client log (`~/.runelite/logs/client.log`, and the dated `client_*.log` files) for `Help list:` and `Guided test`. The latest line per item wins. Then:
+**Reading the results:** every change is logged at INFO as `Help list: <ITEM> = <result> (note: ...)`, and guided tests log `Guided test finished: <ITEM> = <result> [problems]`, followed in the dev client by `Guided test report: <ITEM>` with the full report (steps, problems, captured values). At the start of a session, and whenever the user says they've been testing, search the client log (`~/.runelite/logs/client.log`, and the dated `client_*.log` files) for `Help list:` and `Guided test`. The latest line per item wins. Then:
 
 - **Needs attention:** ask the user about it, starting from their note, and fix it.
 - **Good to go:** offer to remove the item and its UNVERIFIED comment.

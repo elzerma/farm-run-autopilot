@@ -451,7 +451,7 @@ public class RunSession
 						transferred = true;
 					}
 					instruction = !teleported ? stop.describeTravel() + " to " + stop.getLocation().getDisplayName()
-						: transferNpc(stop) != -1 ? stop.getMethod().getTransferText()
+						: transferNpc(stop) != null ? stop.getMethod().getTransferText()
 						: walkInstruction(stop, here.get(0));
 					currentPatch = null;
 					break;
@@ -652,11 +652,11 @@ public class RunSession
 		return from != null && to != null && (from.getPlane() != to.getPlane() || from.distanceTo2D(to) > JUMP_TILES);
 	}
 
-	/** The NPC to ride now, after teleporting and before walking (the Civitas quetzal), or -1. */
-	private int transferNpc(RouteStop stop)
+	/** The name of the NPC to ride now, after teleporting and before walking (the Civitas quetzal), or null. */
+	private String transferNpc(RouteStop stop)
 	{
 		final TravelMethod method = stop.getMethod();
-		return teleported && !transferred && !arrived && method != null ? method.getTransferNpcId() : -1;
+		return teleported && !transferred && !arrived && method != null ? method.getTransferNpcName() : null;
 	}
 
 	/** After teleporting: the way on from the landing spot, e.g. "Walk to the Troll Stronghold herb patch". */
@@ -810,7 +810,7 @@ public class RunSession
 			default:
 				break;
 		}
-		return new Highlights(currentPatch, gardener && currentPatch.hasGardener(), -1, items, spell);
+		return new Highlights(currentPatch, gardener && currentPatch.hasGardener(), null, items, spell);
 	}
 
 	/** The spell if it can be cast from the spellbook the player is on right now, otherwise null. */

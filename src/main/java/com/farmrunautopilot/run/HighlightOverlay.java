@@ -72,10 +72,10 @@ public class HighlightOverlay extends Overlay
 				outlines.drawOutline(gardener, OUTLINE_WIDTH, config.npcColour(), OUTLINE_FEATHER);
 			}
 		}
-		if (highlights.getTravelNpcId() != -1 && config.highlightGardener())
+		if (highlights.getTravelNpc() != null && config.highlightGardener())
 		{
 			// The ride after the teleport, e.g. the Civitas quetzal
-			final NPC ride = scene.transferNpc(highlights.getTravelNpcId());
+			final NPC ride = scene.transferNpc(highlights.getTravelNpc());
 			if (ride != null)
 			{
 				outlines.drawOutline(ride, OUTLINE_WIDTH, config.npcColour(), OUTLINE_FEATHER);

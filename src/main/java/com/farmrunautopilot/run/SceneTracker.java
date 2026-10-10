@@ -44,9 +44,9 @@ public class SceneTracker
 	private final Client client;
 	private final Map<Patch, List<GameObject>> patchObjects = new EnumMap<>(Patch.class);
 	private final Map<Patch, NPC> gardeners = new EnumMap<>(Patch.class);
-	/** NPCs ridden after a teleport (the Civitas quetzal), by ID. */
-	private static final Set<Integer> TRANSFER_NPC_IDS = transferNpcIds();
-	private final Map<Integer, NPC> transfers = new HashMap<>();
+	/** NPCs ridden after a teleport (Renu, the Civitas quetzal), by name. */
+	private static final Set<String> TRANSFER_NPC_NAMES = transferNpcNames();
+	private final Map<String, NPC> transfers = new HashMap<>();
 
 	@Inject
 	SceneTracker(Client client)
@@ -84,9 +84,10 @@ public class SceneTracker
 	 */
 	public void onNpcSpawned(NPC npc)
 	{
-		if (TRANSFER_NPC_IDS.contains(npc.getId()))
+		if (npc.getName() != null && TRANSFER_NPC_NAMES.contains(npc.getName()))
 		{
-			transfers.put(npc.getId(), npc);
+			log.debug("Ride NPC {} #{} at {}", npc.getName(), npc.getId(), npc.getWorldLocation());
+			transfers.put(npc.getName(), npc);
 			return;
 		}
 		final WorldPoint location = npc.getWorldLocation();
@@ -152,23 +153,23 @@ public class SceneTracker
 		return null;
 	}
 
-	/** The loaded NPC with this ID that a travel method rides, or null. */
-	public NPC transferNpc(int id)
+	/** The loaded NPC with this name that a travel method rides, or null. */
+	public NPC transferNpc(String name)
 	{
-		return transfers.get(id);
+		return transfers.get(name);
 	}
 
-	private static Set<Integer> transferNpcIds()
+	private static Set<String> transferNpcNames()
 	{
-		final Set<Integer> ids = new HashSet<>();
+		final Set<String> names = new HashSet<>();
 		for (TravelMethod method : TravelMethod.values())
 		{
-			if (method.getTransferNpcId() != -1)
+			if (method.getTransferNpcName() != null)
 			{
-				ids.add(method.getTransferNpcId());
+				names.add(method.getTransferNpcName());
 			}
 		}
-		return ids;
+		return names;
 	}
 
 	/** The patch's gardener if loaded, or null. */

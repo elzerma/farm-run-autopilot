@@ -29,7 +29,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.runelite.api.Quest;
 import net.runelite.api.Skill;
-import net.runelite.api.gameval.NpcID;
 import net.runelite.api.gameval.VarbitID;
 import static com.farmrunautopilot.testing.GuidedTest.Step.ask;
 import static com.farmrunautopilot.testing.GuidedTest.Step.doThis;
@@ -205,8 +204,9 @@ final class GuidedTests
 					.onDone(ctx ->
 					{
 						ctx.capture("Landed at", ctx.location());
+						ctx.capture("Renu loaded", ctx.npcsNamed("Renu"));
 						ctx.capture("Quetzals loaded", ctx.npcsNamed("Quetzal"));
-						ctx.capture("Outlined quetzal found", ctx.getScene().transferNpc(NpcID.QUETZAL_FORTIS) != null);
+						ctx.capture("Renu tracked for the outline", ctx.getScene().transferNpc("Renu") != null);
 					})
 					.orAskAfter(DO_TICKS, "Have you landed in Civitas illa Fortis? (The step should have changed to "
 						+ "\"" + TRANSFER + "\".)")
