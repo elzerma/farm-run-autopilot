@@ -41,8 +41,8 @@ public final class TestReport
 		b.append("### Steps\n");
 		for (String[] step : steps)
 		{
-			b.append("- [").append(step[1].startsWith("Answered No") ? ' ' : 'x').append("] ")
-				.append(step[0]).append(" (").append(step[1]).append(")\n");
+			// A plain list: an unticked box next to a "No" answer read like a failure when it wasn't one
+			b.append("- ").append(step[0]).append(" **").append(step[1]).append("**\n");
 		}
 		if (!problems.isEmpty())
 		{

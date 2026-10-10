@@ -50,7 +50,7 @@ final class GuidedTests
 		TESTS.put(TestItem.ATES_CHARGES, new AtesCharges());
 		TESTS.put(TestItem.TALISMAN_CHARGES, new TalismanCharges());
 		TESTS.put(TestItem.KHARYRLL, new Kharyrll());
-		TESTS.put(TestItem.VARBIT_UNLOCKS, new VarbitUnlocks());
+		TESTS.put(TestItem.ATES_STATUES, new AtesStatues());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
 		TESTS.put(TestItem.HOUSE_SCAN, new HouseScan());
 	}
@@ -458,7 +458,7 @@ final class GuidedTests
 		}
 	}
 
-	private static final class VarbitUnlocks extends GuidedTest
+	private static final class AtesStatues extends GuidedTest
 	{
 		private static Step have(Unlock unlock, String question)
 		{
@@ -478,7 +478,6 @@ final class GuidedTests
 		public List<Step> steps()
 		{
 			return Arrays.asList(
-				have(Unlock.QUETZAL_KASTORI, "Have you built the quetzal landing site at Kastori?"),
 				have(Unlock.ATES_STATUE_NEMUS_RETREAT, "Have you activated the statue of Ates at Nemus Retreat?"),
 				have(Unlock.ATES_STATUE_NORTH_KASTORI, "Have you activated the statue of Ates north of Kastori?"));
 		}

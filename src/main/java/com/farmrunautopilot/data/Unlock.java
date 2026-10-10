@@ -15,8 +15,9 @@ public enum Unlock
 	SPIRIT_TREE_PORT_SARIM("Spirit tree planted at Port Sarim (83 Farming)"),
 	SPIRIT_TREE_BRIMHAVEN("Spirit tree planted at Brimhaven (83 Farming)"),
 	SPIRIT_TREE_FARMING_GUILD("Spirit tree planted at the Farming Guild (85 Farming)"),
-	// The varbits below are UNVERIFIED (picked by name; non-zero taken as unlocked)
+	// Confirmed in game: 1 once the landing site is built
 	QUETZAL_KASTORI("Kastori quetzal landing site built", VarbitID.QUETZAL_KASTORI),
+	// UNVERIFIED (picked by name; non-zero taken as activated)
 	ATES_STATUE_NEMUS_RETREAT("Statue of Ates activated at Nemus Retreat", VarbitID.PENDANT_OF_ATES_AUBURN_FOUND),
 	ATES_STATUE_NORTH_KASTORI("Statue of Ates activated north of Kastori", VarbitID.PENDANT_OF_ATES_TLATI_FOUND),
 	FIRE_OF_NOURISHMENT("Fire of Nourishment built at Weiss"),
