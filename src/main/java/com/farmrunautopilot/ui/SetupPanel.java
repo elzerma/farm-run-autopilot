@@ -376,13 +376,11 @@ class SetupPanel extends JPanel
 		final CollapsibleSection s = section("Travel");
 		s.addContent(note("Auto picks the fastest method you have. Locked methods show what they need."));
 		s.addContent(note("\"Runes instead of tablets everywhere\" is in Setup > Run options."));
+		s.addContent(note("Fairy rings: pick how you get to a ring. The ring by the stop you just finished is "
+			+ "used whenever it's quicker, and your house ring is set in My POH."));
 
-		s.addContent(subheader("Fairy ring access"));
-		s.addContent(note("How to get to a fairy ring before dialling a code. If your pick can't be used (not "
-			+ "carried or owned), Auto chooses. The ring by the stop you just finished is used whenever it's "
-			+ "quicker. Your house ring is set in My POH."));
 		final List<Choice<FairyRingAccess>> ways = new ArrayList<>();
-		ways.add(Choice.of(null, "Auto (fastest)"));
+		ways.add(Choice.of(null, "Auto (best)"));
 		for (FairyRingAccess way : FairyRingAccess.values())
 		{
 			if (way == FairyRingAccess.NEARBY)
@@ -405,7 +403,7 @@ class SetupPanel extends JPanel
 			ways.add(new Choice<>(way, way.getDisplayName() + (locked ? " (locked)" : ""), !locked,
 				locked ? AccessSnapshot.describe(missing) : needs));
 		}
-		s.addContent(label("Way to a fairy ring"));
+		s.addContent(subheader("Fairy rings"));
 		s.addContent(combo(ways, config.getFairyRingWay(), w -> saveRun(() -> config.setFairyRingWay(w))));
 
 		for (Location location : Location.values())

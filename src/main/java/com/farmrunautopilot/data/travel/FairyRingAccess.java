@@ -21,6 +21,7 @@ public enum FairyRingAccess
 	SLAYER_RING("Slayer ring (Fremennik Slayer Dungeon), ring AJR", 16, TravelItem.SLAYER_RING),
 	QUEST_CAPE("Quest point cape (Legends' Guild), ring BLR", 12, TravelItem.QUEST_POINT_CAPE);
 
+	/** Which teleport to use and the ring it reaches. */
 	private final String displayName;
 	/** Walk from the teleport's arrival to the ring. */
 	private final int tiles;
