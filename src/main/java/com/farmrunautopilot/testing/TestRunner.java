@@ -130,7 +130,7 @@ public class TestRunner
 	/** Close a finished test's last step. Swing thread. */
 	public void closeReport()
 	{
-		if (view.isReporting())
+		if (view.isFinished())
 		{
 			view = TestView.NONE;
 		}
@@ -285,6 +285,11 @@ public class TestRunner
 
 	private void nextStep()
 	{
+		if (context.getCannotTest() != null)
+		{
+			cannotTest();
+			return;
+		}
 		stepIndex++;
 		stepTicks = 0;
 		if (stepIndex >= steps.size())
@@ -306,7 +311,7 @@ public class TestRunner
 		final GuidedTest.Step step = steps.get(stepIndex);
 		final String text = asking && step.check != null ? step.question : step.text;
 		view = new TestView(item, item.getTitle(), stepIndex + 1, steps.size(), text, asking, step.optional,
-			bringLines(), null);
+			bringLines(), false, null);
 	}
 
 	private List<String> bringLines()
@@ -336,6 +341,45 @@ public class TestRunner
 	/**
 	 * @param report open the GitHub issue (not when cancelled)
 	 */
+	/**
+	 * The player doesn't have what the test needs: stop without a result. Nothing is reported or saved, so the
+	 * test stays on the list for later.
+	 */
+	private void cannotTest()
+	{
+		final TestItem done = item;
+		final GuidedTest finished = test;
+		final String needs = context.getCannotTest();
+		if (finished.usesRun())
+		{
+			runSession.cancel();
+		}
+		item = null;
+		test = null;
+		this.steps = null;
+		context = null;
+		view = TestView.NONE;
+		final String summary = "Guided test not possible: " + done.name() + " (needs " + needs + ")";
+		log.info(summary);
+		final boolean developer = asDeveloper();
+		if (developer)
+		{
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Farm Run Autopilot: this test couldn't be done. "
+				+ "The result is on your clipboard to paste to Claude.", null);
+		}
+		SwingUtilities.invokeLater(() ->
+		{
+			busy = false;
+			settings.endTest(finished::keep);
+			if (developer)
+			{
+				Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(summary), null);
+			}
+			view = TestView.finished(done, "This test needs " + needs + ", so there's nothing to report yet. Your "
+				+ "settings are back to how they were. Come back to it once you have it.", null);
+		});
+	}
+
 	private void finish(boolean report, boolean passed)
 	{
 		final TestItem done = item;

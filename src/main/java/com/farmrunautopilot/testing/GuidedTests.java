@@ -245,8 +245,13 @@ final class GuidedTests
 					.orAskAfter(SPOT_TICKS, "The plugin hasn't spotted the fire. Have you built it?")
 					.onAnswer((ctx, yes) ->
 					{
+						if (!yes)
+						{
+							ctx.cannotTest("the Fire of Nourishment built");
+							return;
+						}
 						ctx.capture("Fires loaded", ctx.objectsNamed("Fire"));
-						ctx.problem(yes ? "The built fire wasn't spotted" : "Couldn't test: the fire isn't built");
+						ctx.problem("The built fire wasn't spotted");
 					}));
 		}
 
@@ -281,7 +286,13 @@ final class GuidedTests
 		{
 			return Arrays.asList(
 				ask("Do you have the Champion rank at the Fortis Colosseum?")
-					.onAnswer((ctx, yes) -> ctx.capture("Has the rank", yes)),
+					.onAnswer((ctx, yes) ->
+					{
+						if (!yes)
+						{
+							ctx.cannotTest("the Champion rank at the Fortis Colosseum");
+						}
+					}),
 				ask("On the Run tab, is there no plant cure on the supply list for the Civitas herb patch?")
 					.onStart(ctx -> ctx.capture("Supply list", supplyNames(ctx))),
 				ask("Has your Civitas herb patch ever caught disease since you got the rank?")
@@ -478,6 +489,15 @@ final class GuidedTests
 		public List<Step> steps()
 		{
 			return Arrays.asList(
+				// Without one, both values read 0 whether or not they're the right ones, which proves nothing
+				ask("Have you activated a statue of Ates, at Nemus Retreat or north of Kastori?")
+					.onAnswer((ctx, yes) ->
+					{
+						if (!yes)
+						{
+							ctx.cannotTest("a statue of Ates you've activated");
+						}
+					}),
 				have(Unlock.ATES_STATUE_NEMUS_RETREAT, "Have you activated the statue of Ates at Nemus Retreat?"),
 				have(Unlock.ATES_STATUE_NORTH_KASTORI, "Have you activated the statue of Ates north of Kastori?"));
 		}
@@ -525,10 +545,14 @@ final class GuidedTests
 					.orAskAfter(SPOT_TICKS, "The plugin hasn't spotted it. Is your spirit tree here fully grown?")
 					.onAnswer((ctx, yes) ->
 					{
+						if (!yes)
+						{
+							ctx.cannotTest("a fully grown spirit tree you've planted");
+							return;
+						}
 						ctx.capture("Spirit trees loaded", ctx.objectsNamed("Spirit tree"));
 						ctx.capture("Standing at", ctx.location());
-						ctx.problem(yes ? "The grown spirit tree wasn't spotted"
-							: "Couldn't test: the spirit tree here isn't grown");
+						ctx.problem("The grown spirit tree wasn't spotted");
 					}));
 		}
 

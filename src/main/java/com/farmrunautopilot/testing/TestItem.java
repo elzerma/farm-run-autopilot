@@ -33,7 +33,7 @@ public enum TestItem
 			+ "spell should be outlined in your spellbook on that step."),
 	ATES_STATUES(Tab.ACCOUNT, "Statues of Ates",
 		"If you've activated a statue of Ates (Nemus Retreat, or north of Kastori), Account > Unlocks should "
-			+ "show it ticked with \"(detected)\". An unticked box means it wasn't detected."),
+			+ "show it ticked with \"(detected)\". An unticked box means it wasn't detected.", 2),
 	SPIRIT_TREES(Tab.ACCOUNT, "Planted spirit trees",
 		"Untick your planted spirit tree in Account > Unlocks, then go to it (Port Sarim, Brimhaven or the "
 			+ "Farming Guild). It should tick itself once the grown tree is in view."),

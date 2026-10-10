@@ -273,12 +273,16 @@ class RunPanel extends JPanel
 		final JLabel title = testText("TEST: " + test.getTitle(), ColorScheme.BRAND_ORANGE);
 		title.setFont(FontManager.getRunescapeBoldFont());
 		box.add(title);
-		if (test.isReporting())
+		if (test.isFinished())
 		{
-			// The last step: the player sends the report themselves
 			box.add(testText(test.getText(), Color.WHITE));
-			box.add(testButtons(testButton("<html><center>Open GitHub issues with<br>prefilled test results</center></html>",
-				controls::openTestReport)));
+			if (test.isReporting())
+			{
+				// The last step: the player sends the report themselves
+				box.add(testButtons(testButton(
+					"<html><center>Open GitHub issues with<br>prefilled test results</center></html>",
+					controls::openTestReport)));
+			}
 			box.add(testButtons(testButton("Close", controls::closeTestReport)));
 			box.setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH - 20, Integer.MAX_VALUE));
 			add(box);

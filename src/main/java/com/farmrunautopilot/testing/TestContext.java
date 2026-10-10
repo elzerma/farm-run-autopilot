@@ -56,6 +56,8 @@ public class TestContext
 	private final Map<String, String> captured = new LinkedHashMap<>();
 	@Getter
 	private final List<String> problems = new ArrayList<>();
+	/** Set when the player lacks what the test needs. */
+	private String cannotTest;
 	/** Anything a test wants to remember between steps. */
 	private final Map<String, Object> memory = new HashMap<>();
 
@@ -98,6 +100,23 @@ public class TestContext
 	public void problem(String text)
 	{
 		problems.add(text);
+	}
+
+	/**
+	 * The player doesn't have what the test needs, so it stops without a result (nothing reported, and it can
+	 * be run again later).
+	 *
+	 * @param needs what's missing, e.g. "a statue of Ates you've activated"
+	 */
+	public void cannotTest(String needs)
+	{
+		cannotTest = needs;
+	}
+
+	/** What the player was missing, or null. */
+	public String getCannotTest()
+	{
+		return cannotTest;
 	}
 
 	public void remember(String key, Object value)
