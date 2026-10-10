@@ -36,6 +36,7 @@ public class ItemChargeTracker
 	public static final Set<TravelItem> TRACKED = Collections.unmodifiableSet(EnumSet.of(
 		TravelItem.QUETZAL_WHISTLE, TravelItem.XERICS_TALISMAN, TravelItem.PENDANT_OF_ATES));
 	private static final String COUNT = "(no|one|[\\d,]+)";
+	/** Confirmed in game. */
 	public static final Pattern WHISTLE_CHECK = Pattern.compile("Your quetzal whistle has " + COUNT + " charges? remaining\\.");
 	public static final Pattern TALISMAN_CHECK = Pattern.compile("The talisman has " + COUNT + " charges?\\.");
 	static final Pattern TALISMAN_CHARGED = Pattern.compile("Your talisman now has ([\\d,]+) charges?\\.");

@@ -49,7 +49,7 @@ final class GuidedTests
 		TESTS.put(TestItem.WEISS_FIRE, new WeissFire());
 		TESTS.put(TestItem.FORTIS_CHAMPION, new FortisChampion());
 		TESTS.put(TestItem.ATES_CHARGES, new AtesCharges());
-		TESTS.put(TestItem.CHAT_CHARGES, new ChatCharges());
+		TESTS.put(TestItem.TALISMAN_CHARGES, new TalismanCharges());
 		TESTS.put(TestItem.DAILY_TELEPORTS, new DailyTeleports());
 		TESTS.put(TestItem.KHARYRLL, new Kharyrll());
 		TESTS.put(TestItem.VARBIT_UNLOCKS, new VarbitUnlocks());
@@ -356,37 +356,29 @@ final class GuidedTests
 		}
 	}
 
-	private static final class ChatCharges extends GuidedTest
+	/** Xeric's talisman. (The quetzal whistle's messages, which work the same way, passed this test in game.) */
+	private static final class TalismanCharges extends GuidedTest
 	{
 		@Override
 		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
 		{
-			return owns(holdings, "a Xeric's talisman or quetzal whistle", TravelItem.XERICS_TALISMAN,
-				TravelItem.QUETZAL_WHISTLE);
+			return owns(holdings, "a Xeric's talisman", TravelItem.XERICS_TALISMAN);
 		}
 
 		@Override
 		public List<Need> bring()
 		{
-			return Arrays.asList(new Need("Xeric's talisman", TravelItem.XERICS_TALISMAN.getItemIds()),
-				new Need("or quetzal whistle", TravelItem.QUETZAL_WHISTLE.getItemIds()));
-		}
-
-		private static TravelItem carried(TestContext ctx)
-		{
-			return ctx.carries(TravelItem.XERICS_TALISMAN.getItemIds()) ? TravelItem.XERICS_TALISMAN
-				: ctx.carries(TravelItem.QUETZAL_WHISTLE.getItemIds()) ? TravelItem.QUETZAL_WHISTLE : null;
+			return Collections.singletonList(new Need("Xeric's talisman", TravelItem.XERICS_TALISMAN.getItemIds()));
 		}
 
 		private static boolean checked(TestContext ctx, String label)
 		{
-			final Integer said = chatCount(ctx, ItemChargeTracker.TALISMAN_CHECK, ItemChargeTracker.WHISTLE_CHECK);
+			final Integer said = chatCount(ctx, ItemChargeTracker.TALISMAN_CHECK);
 			if (said == null)
 			{
 				return false;
 			}
-			final TravelItem item = ctx.recall("item");
-			final Integer plugin = ctx.charges(item);
+			final Integer plugin = ctx.charges(TravelItem.XERICS_TALISMAN);
 			ctx.capture(label + ": Check said", said);
 			ctx.capture(label + ": plugin count", plugin);
 			if (plugin == null || plugin.intValue() != said)
@@ -400,20 +392,16 @@ final class GuidedTests
 		public List<Step> steps()
 		{
 			return Arrays.asList(
-				doThis("Take your Xeric's talisman or quetzal whistle out of the bank", ctx -> carried(ctx) != null)
-					.onDone(ctx ->
-					{
-						ctx.remember("item", carried(ctx));
-						ctx.capture("Item", carried(ctx));
-					}),
+				doThis("Take your Xeric's talisman out of the bank",
+					ctx -> ctx.carries(TravelItem.XERICS_TALISMAN.getItemIds())),
 				doThis("Right-click it and pick Check", ctx -> checked(ctx, "First check")),
 				doThis("Teleport with it once", ctx ->
 				{
-					final Integer now = ctx.charges(ctx.recall("item"));
+					final Integer now = ctx.charges(TravelItem.XERICS_TALISMAN);
 					final Integer before = ctx.recall("before");
 					return now != null && before != null && now < before;
 				})
-					.onStart(ctx -> ctx.remember("before", ctx.charges(ctx.recall("item"))))
+					.onStart(ctx -> ctx.remember("before", ctx.charges(TravelItem.XERICS_TALISMAN)))
 					.orAskAfter(DO_TICKS, "Have you teleported with it?")
 					.onAnswer((ctx, yes) ->
 					{
@@ -439,7 +427,7 @@ final class GuidedTests
 		public List<Need> bring()
 		{
 			return Arrays.asList(new Need("Ardougne cloak 2 or 3", TravelItem.ARDOUGNE_CLOAK.getItemIds()),
-				new Need("or Explorer's ring 2 or 3", TravelItem.EXPLORERS_RING.getItemIds()));
+				new Need("Explorer's ring 2 or 3", TravelItem.EXPLORERS_RING.getItemIds()));
 		}
 
 		private static String values(TestContext ctx)

@@ -277,46 +277,58 @@ class RunPanel extends JPanel
 		{
 			// The last step: the player sends the report themselves
 			box.add(testText(test.getText(), Color.WHITE));
-			final JButton open = testButton("<html><center>Open GitHub issues with<br>prefilled test results</center></html>",
-				controls::openTestReport);
-			open.setAlignmentX(LEFT_ALIGNMENT);
-			box.add(open);
-			final JButton close = testButton("Close", controls::closeTestReport);
-			close.setAlignmentX(LEFT_ALIGNMENT);
-			box.add(close);
+			box.add(testButtons(testButton("<html><center>Open GitHub issues with<br>prefilled test results</center></html>",
+				controls::openTestReport)));
+			box.add(testButtons(testButton("Close", controls::closeTestReport)));
+			box.setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH - 20, Integer.MAX_VALUE));
 			add(box);
 			return;
 		}
 		box.add(testText("Step " + test.getStep() + " of " + test.getSteps(), ColorScheme.LIGHT_GRAY_COLOR));
 		box.add(testText(test.getText(), Color.WHITE));
-		for (String line : test.getBring())
+		if (!test.getBring().isEmpty())
 		{
-			box.add(testText("Bring " + line, ColorScheme.LIGHT_GRAY_COLOR));
+			// Any one of the items will do
+			box.add(testText(test.getBring().size() == 1 ? "Bring:" : "Bring one of:", ColorScheme.LIGHT_GRAY_COLOR));
+			for (String line : test.getBring())
+			{
+				box.add(testText("- " + line, ColorScheme.LIGHT_GRAY_COLOR));
+			}
 		}
 
-		final JPanel buttons = new JPanel(new GridLayout(1, 0, 4, 0));
-		buttons.setOpaque(false);
-		buttons.setAlignmentX(LEFT_ALIGNMENT);
 		if (test.isQuestion())
 		{
-			buttons.add(testButton("Yes", () -> controls.answerTest(true)));
-			buttons.add(testButton("No", () -> controls.answerTest(false)));
+			box.add(testButtons(testButton("Yes", () -> controls.answerTest(true)),
+				testButton("No", () -> controls.answerTest(false))));
 		}
-		if (test.isOptional())
-		{
-			buttons.add(testButton("Skip", controls::skipTestStep));
-		}
-		buttons.add(testButton("Cancel", controls::cancelTest));
-		box.add(buttons);
+		box.add(test.isOptional()
+			? testButtons(testButton("Skip", controls::skipTestStep), testButton("Cancel", controls::cancelTest))
+			: testButtons(testButton("Cancel", controls::cancelTest)));
+		box.setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH - 20, Integer.MAX_VALUE));
 		add(box);
 		final JLabel gap = new JLabel(" ");
 		gap.setAlignmentX(LEFT_ALIGNMENT);
 		add(gap);
 	}
 
+	/** A row of buttons sharing the box's width. */
+	private static JPanel testButtons(JButton... buttons)
+	{
+		final JPanel row = new JPanel(new GridLayout(1, 0, 4, 0));
+		row.setOpaque(false);
+		row.setAlignmentX(LEFT_ALIGNMENT);
+		row.setBorder(new EmptyBorder(0, 0, 4, 0));
+		for (JButton button : buttons)
+		{
+			row.add(button);
+		}
+		return row;
+	}
+
 	private static JLabel testText(String text, Color colour)
 	{
-		final JLabel label = new JLabel("<html><div style='width:" + (TEXT_WIDTH - 20) + "px'>"
+		// Narrower than the box: the orange border, padding and scroll bar take about 50px
+		final JLabel label = new JLabel("<html><div style='width:" + (TEXT_WIDTH - 55) + "px'>"
 			+ text.replace("&", "&amp;").replace("<", "&lt;") + "</div></html>");
 		label.setForeground(colour);
 		label.setFont(FontManager.getRunescapeFont());

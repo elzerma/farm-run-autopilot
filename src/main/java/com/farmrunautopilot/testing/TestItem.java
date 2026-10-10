@@ -25,9 +25,9 @@ public enum TestItem
 	ATES_CHARGES(Tab.TRAVEL, "Pendant of Ates charges",
 		"With the pendant on you, Account > Detected should show the same charges as its Check. Teleport once "
 			+ "and it should drop by one. Start a teleport and cancel it: it shouldn't change."),
-	CHAT_CHARGES(Tab.TRAVEL, "Xeric's talisman and quetzal whistle charges",
-		"Check the talisman or whistle. Account > Detected should show the same number. Teleport once and it "
-			+ "should drop by one. At 0 charges, Auto (best) should stop picking it."),
+	TALISMAN_CHARGES(Tab.TRAVEL, "Xeric's talisman charges",
+		"Check the talisman. Account > Detected should show the same number. Teleport once and it should drop "
+			+ "by one. At 0 charges, Auto (best) should stop picking it."),
 	DAILY_TELEPORTS(Tab.TRAVEL, "Teleports left today",
 		"With an Ardougne cloak 2 or 3, or Explorer's ring 2 or 3: Account > Detected has a \"Daily teleports "
 			+ "used (checking)\" line. Use a farm or cabbage teleport and note how its numbers change. Once "
