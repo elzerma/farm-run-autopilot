@@ -22,6 +22,7 @@ import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.route.ChargeBudget;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.route.RunService;
@@ -212,6 +213,15 @@ class SetupPanel extends JPanel
 				{
 					final String name = item.name().replace('_', ' ').toLowerCase();
 					stored.add(n > 1 ? n + " " + name : name);
+				}
+			}
+			for (TravelItem item : TravelItem.values())
+			{
+				final Integer charges = ChargeBudget.held(item, held);
+				if (charges != null && charges > 0)
+				{
+					addDetected(item.getDisplayName(), charges + (charges == 1 ? " charge" : " charges"),
+						"Every piece you have, in your bank, inventory and worn, added together");
 				}
 			}
 			addDetected("Tool leprechaun", stored.isEmpty() ? "Nothing stored" : String.join(", ", stored),
@@ -574,6 +584,10 @@ class SetupPanel extends JPanel
 	private JComponent travelDefaultsSection(RunConfig config, AccessSnapshot access)
 	{
 		final CollapsibleSection s = section("Defaults for every stop");
+		s.addContent(checkBox("Keep the last charge of my rechargeable jewellery", config.isKeepLastCharge(), true,
+			"Off: every charge is used. On: the last charge of your last skills necklace, glory, ring of wealth, combat "
+				+ "bracelet or teleport crystal is kept back, and another way is used instead",
+			on -> saveRun(() -> config.setKeepLastCharge(on))));
 		s.addContent(checkBox("Walk when it's nearly as quick as teleporting", config.isPreferWalking(), true,
 			"A walk up to about 20 seconds slower is used instead of a teleport, saving charges and clicks "
 				+ "(e.g. one Falador Teleport for Falador Park and Taverley)",
@@ -814,6 +828,15 @@ class SetupPanel extends JPanel
 			return new Choice<>(way, method.getDisplayName() + " (tablet only: " + why + ")", true,
 				"You can't cast this right now (" + why + "). It's used if you carry its teleport tablet; "
 					+ "otherwise another way is picked.");
+		}
+		// Charges held, pooled across every piece of the item
+		final TravelItem item = way.getHow() == Departure.DIRECT ? method.getItem() : null;
+		final Integer charges = item != null ? ChargeBudget.held(item, holdings.get()) : null;
+		if (charges != null)
+		{
+			return new Choice<>(way, wayLabel(way, location) + (charges == 0 ? " (no charges)"
+				: " (" + charges + (charges == 1 ? " charge)" : " charges)")), true,
+				"Charges are shared by every teleport this item has, across the whole run");
 		}
 		return new Choice<>(way, wayLabel(way, location), true, method.getNote());
 	}

@@ -19,8 +19,10 @@ import com.farmrunautopilot.supply.Holdings;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Orders the stops and picks how to reach each one (SPEC 12).
@@ -91,6 +93,10 @@ public final class RoutePlanner
 	private final LearnedTimes learned;
 	/** Work out Auto's own pick, ignoring any teleport the player chose (for showing "Auto (best)"). */
 	private boolean ignoreChoices;
+	/** Charges held before the run, for ruling out items with none to spare. */
+	private final ChargeBudget startCharges;
+	/** Items whose charges ran out earlier in the run being planned. */
+	private final Set<TravelItem> usedUp = EnumSet.noneOf(TravelItem.class);
 
 	private RoutePlanner(RunConfig config, AccessSnapshot access, Holdings holdings, PohSetup poh,
 		LearnedTimes learned)
@@ -100,6 +106,7 @@ public final class RoutePlanner
 		this.holdings = holdings;
 		this.poh = poh;
 		this.learned = learned;
+		this.startCharges = new ChargeBudget(holdings, config.isKeepLastCharge());
 	}
 
 	/**
@@ -193,11 +200,12 @@ public final class RoutePlanner
 				break;
 		}
 
+		final Leg[] chosen = spendCharges(stops, order, firstLeg[order[0]], legs);
 		final List<RouteStop> result = new ArrayList<>();
 		double travel = 0;
 		for (int k = 0; k < order.length; k++)
 		{
-			final Leg leg = k == 0 ? firstLeg[order[0]] : legs[order[k - 1]][order[k]];
+			final Leg leg = chosen[k];
 			result.add(new RouteStop(stops.get(order[k]), leg.method, leg.departure, leg.seconds, leg.needsSupplies));
 			travel += leg.seconds;
 		}
@@ -718,8 +726,72 @@ public final class RoutePlanner
 			|| holdings.countAny(SupplyItems.FAIRY_RING_STAFFS) > 0;
 	}
 
+	/** Held, with a charge to spare, and not already used up earlier in this run. */
 	private boolean owns(TravelItem item)
 	{
-		return holdings.countAny(item.getItemIds()) > 0;
+		return holdings.countAny(item.getItemIds()) > 0 && startCharges.hasCharge(item) && !usedUp.contains(item);
+	}
+
+	/** The charged item a leg uses up a charge of, or null (spells, walking, the house, unlimited items). */
+	private TravelItem itemUsed(Leg leg)
+	{
+		if (leg.method == null)
+		{
+			return null;
+		}
+		if (leg.departure == Departure.DIRECT && leg.method.getItem() != null)
+		{
+			return leg.method.getItem();
+		}
+		final FairyRingAccess way = leg.departure.getFairyRingAccess();
+		if (way != null)
+		{
+			for (TravelItem item : way.getItems())
+			{
+				if (owns(item))
+				{
+					return item;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Walk the planned order spending charges, pooled per item; a leg whose item has none left is planned again
+	 * without that item (e.g. a slayer ring with one charge covers one stop, not two).
+	 */
+	private Leg[] spendCharges(List<Location> stops, int[] order, Leg first, Leg[][] legs)
+	{
+		final ChargeBudget budget = new ChargeBudget(holdings, config.isKeepLastCharge());
+		final Leg[] chosen = new Leg[order.length];
+		for (int k = 0; k < order.length; k++)
+		{
+			final Location from = k == 0 ? null : stops.get(order[k - 1]);
+			final Location to = stops.get(order[k]);
+			Leg leg = k == 0 ? first : legs[order[k - 1]][order[k]];
+			TravelItem item = itemUsed(leg);
+			while (item != null && !budget.hasCharge(item))
+			{
+				usedUp.add(item);
+				final Leg next = bestLeg(from, to);
+				final TravelItem nextItem = itemUsed(next);
+				if (nextItem != null && usedUp.contains(nextItem))
+				{
+					// Nothing else gets there: keep it, as something to go and get more charges for
+					leg = new Leg(next.method, next.departure, next.seconds, true);
+					item = null;
+					break;
+				}
+				leg = next;
+				item = nextItem;
+			}
+			if (item != null)
+			{
+				budget.spend(item);
+			}
+			chosen[k] = leg;
+		}
+		return chosen;
 	}
 }

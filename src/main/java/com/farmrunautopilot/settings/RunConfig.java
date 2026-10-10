@@ -73,6 +73,8 @@ public class RunConfig
 	private boolean useRunesNotTabs = false;
 	/** Stops that cast from runes even when a tablet is held (tablets are used first otherwise). */
 	private Set<Location> runesNotTabsAt = EnumSet.noneOf(Location.class);
+	/** Hold back the last charge of rechargeable jewellery (skills necklace, glory, ring of wealth, ...). */
+	private boolean keepLastCharge = false;
 	/** Preferred way to get to a fairy ring; null means Auto (the fastest one the player has). */
 	private FairyRingAccess fairyRingWay;
 

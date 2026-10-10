@@ -8,6 +8,7 @@ import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.MetaOrder;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
+import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RouteMode;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import net.runelite.api.Skill;
+import net.runelite.api.gameval.ItemID;
 import org.junit.Test;
 
 public class RoutePlannerTest
@@ -194,5 +196,56 @@ public class RoutePlannerTest
 		assertEquals(Location.TAVERLEY, route.getStops().get(0).getLocation());
 		assertEquals(Location.LUMBRIDGE, route.getStops().get(1).getLocation());
 		assertEquals(Location.FARMING_GUILD, route.getStops().get(2).getLocation());
+	}
+
+	private static long stopsUsing(Holdings holdings, boolean keepLast)
+	{
+		final RunConfig config = new RunConfig().sanitise();
+		config.setStartLocation(Location.LUMBRIDGE);
+		config.setKeepLastCharge(keepLast);
+		// No spells to cast, so the skills necklace is the way to the Farming Guild, Falador Park and Varrock
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		levels.put(Skill.MAGIC, 1);
+		levels.put(Skill.FARMING, 99);
+		final AccessSnapshot access = new AccessSnapshot(true, Collections.emptyMap(), levels,
+			Collections.emptySet(), Collections.emptySet(), null);
+		final Route route = RoutePlanner.plan(Arrays.asList(Patch.FARMING_GUILD_TREE, Patch.FALADOR_TREE,
+			Patch.VARROCK_TREE), config, access, holdings, new PohSetup());
+		return route.getStops().stream()
+			.filter(s -> s.getMethod() != null && s.getMethod().getItem() == TravelItem.SKILLS_NECKLACE
+				&& s.getDeparture() == Departure.DIRECT && !s.isNeedsSupplies())
+			.count();
+	}
+
+	private static Holdings bank(int itemId, int count)
+	{
+		final Map<Holdings.Source, Map<Integer, Integer>> items = new EnumMap<>(Holdings.Source.class);
+		items.put(Holdings.Source.BANK, Collections.singletonMap(itemId, count));
+		return new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false);
+	}
+
+	@Test
+	public void chargesArePooledAcrossTheRun()
+	{
+		// One charge covers one stop, not every stop the necklace could reach
+		assertEquals(1, stopsUsing(bank(ItemID.JEWL_NECKLACE_OF_SKILLS_1, 1), false));
+		// Two necklaces (1) give two charges
+		assertTrue(stopsUsing(bank(ItemID.JEWL_NECKLACE_OF_SKILLS_1, 2), false) <= 2);
+		// Keeping the last charge of rechargeable jewellery: a single (1) isn't used at all
+		assertEquals(0, stopsUsing(bank(ItemID.JEWL_NECKLACE_OF_SKILLS_1, 1), true));
+	}
+
+	@Test
+	public void chargesHeldAddUpAcrossPieces()
+	{
+		final Map<Holdings.Source, Map<Integer, Integer>> items = new EnumMap<>(Holdings.Source.class);
+		final Map<Integer, Integer> bank = new java.util.HashMap<>();
+		bank.put(ItemID.NECKLACE_OF_MINIGAMES_8, 1);
+		bank.put(ItemID.NECKLACE_OF_MINIGAMES_3, 2);
+		items.put(Holdings.Source.BANK, bank);
+		final Holdings holdings = new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false);
+		assertEquals(Integer.valueOf(14), ChargeBudget.held(TravelItem.GAMES_NECKLACE, holdings));
+		// An eternal version never runs out
+		assertEquals(null, ChargeBudget.held(TravelItem.SLAYER_RING, bank(ItemID.SLAYER_RING_ETERNAL, 1)));
 	}
 }

@@ -114,6 +114,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 			this::rebuildSetup,
 			new GuidanceSettings(config, configManager, colorPickers));
 		accountPanel.showHoldings(holdingsTracker::getHoldings);
+		travelPanel.showHoldings(holdingsTracker::getHoldings);
 		travelPanel.showAutoPicks(runService);
 
 		final TabBar tabs = new TabBar(display);
