@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -1304,7 +1305,7 @@ class SetupPanel extends JPanel
 		for (Choice<T> choice : choices)
 		{
 			combo.addItem(choice);
-			if (choice.getValue() == selected)
+			if (Objects.equals(choice.getValue(), selected))
 			{
 				current = choice;
 			}
