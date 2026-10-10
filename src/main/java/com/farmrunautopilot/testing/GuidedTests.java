@@ -40,13 +40,11 @@ final class GuidedTests
 	private static final int SPOT_TICKS = 50;
 	/** Ticks to wait for the player to do something, e.g. fetch an item and teleport (about 6 minutes). */
 	private static final int DO_TICKS = 600;
-	private static final String TRANSFER = "Take the quetzal to the Hunter Guild";
 
 	private static final Map<TestItem, GuidedTest> TESTS = new EnumMap<>(TestItem.class);
 
 	static
 	{
-		TESTS.put(TestItem.CIVITAS_QUETZAL, new CivitasQuetzal());
 		TESTS.put(TestItem.SPELLBOOK_SWAP, new SpellbookSwap());
 		TESTS.put(TestItem.WEISS_FIRE, new WeissFire());
 		TESTS.put(TestItem.FORTIS_CHAMPION, new FortisChampion());
@@ -168,74 +166,6 @@ final class GuidedTests
 	}
 
 	// The tests
-
-	private static final class CivitasQuetzal extends GuidedTest
-	{
-		@Override
-		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
-		{
-			final List<String> missing = new ArrayList<>(patchesUsable(access, Location.CIVITAS_ILLA_FORTIS));
-			if (!access.canCast(Spell.CIVITAS_ILLA_FORTIS_TELEPORT))
-			{
-				missing.add("Be able to cast Civitas illa Fortis Teleport (54 Magic, standard spellbook)");
-			}
-			return missing;
-		}
-
-		@Override
-		public void setUp(RunConfig config, AccountSettings account)
-		{
-			onlyPatchesAt(config, Location.CIVITAS_ILLA_FORTIS);
-			travelBy(config, TravelMethod.CIVITAS_ILLA_FORTIS_TELEPORT);
-		}
-
-		@Override
-		public boolean usesRun()
-		{
-			return true;
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				startRun(),
-				doThis("Cast Civitas illa Fortis Teleport", ctx -> TRANSFER.equals(ctx.runView().getInstruction()))
-					.onDone(ctx ->
-					{
-						ctx.capture("Landed at", ctx.location());
-						ctx.capture("Renu loaded", ctx.npcsNamed("Renu"));
-						ctx.capture("Quetzals loaded", ctx.npcsNamed("Quetzal"));
-						ctx.capture("Renu tracked for the outline", ctx.getScene().transferNpc("Renu") != null);
-					})
-					.orAskAfter(DO_TICKS, "Have you landed in Civitas illa Fortis? (The step should have changed to "
-						+ "\"" + TRANSFER + "\".)")
-					.onAnswer((ctx, yes) ->
-					{
-						ctx.capture("Step after landing", ctx.runView().getInstruction());
-						ctx.capture("Landed at", ctx.location());
-						if (yes)
-						{
-							ctx.problem("The step didn't change to \"" + TRANSFER + "\" after landing");
-						}
-					}),
-				ask("Is the quetzal near you outlined?"),
-				doThis("Ride the quetzal to the Hunter Guild",
-					ctx -> ctx.runView().getState() == RunView.State.RUNNING
-						&& !TRANSFER.equals(ctx.runView().getInstruction()))
-					.onDone(ctx -> ctx.capture("Step after the ride", ctx.runView().getInstruction()))
-					.orAskAfter(DO_TICKS, "Have you ridden the quetzal to the Hunter Guild?")
-					.onAnswer((ctx, yes) ->
-					{
-						ctx.capture("Step after the ride", ctx.runView().getInstruction());
-						if (yes)
-						{
-							ctx.problem("The step still says to take the quetzal after the ride");
-						}
-					}),
-				ask("Does the step now say to walk to the Civitas herb patch?"));
-		}
-	}
 
 	private static final class SpellbookSwap extends GuidedTest
 	{

@@ -34,13 +34,13 @@ public class GuidedTestsTest
 	{
 		final List<String[]> steps = Arrays.asList(new String[]{"Teleport", "Detected"},
 			new String[]{"Is it outlined?", "Answered No"});
-		final String body = TestReport.body(TestItem.CIVITAS_QUETZAL, false, "1.11.0", steps,
+		final String body = TestReport.body(TestItem.SPELLBOOK_SWAP, false, "1.11.0", steps,
 			Collections.singletonMap("Quetzals loaded", "none"), Collections.singletonList("Answered No: Is it outlined?"));
 		assertTrue(body.contains("- [x] Teleport (Detected)"));
 		assertTrue(body.contains("- [ ] Is it outlined? (Answered No)"));
 		assertTrue(body.contains("**Quetzals loaded:** `none`"));
-		final String url = TestReport.url(TestReport.title(TestItem.CIVITAS_QUETZAL, false), body);
-		assertTrue(url.startsWith("https://github.com/elzerma/farm-run-autopilot/issues/new?title=Test%3A+Quetzal"));
+		final String url = TestReport.url(TestReport.title(TestItem.SPELLBOOK_SWAP, false), body);
+		assertTrue(url.startsWith("https://github.com/elzerma/farm-run-autopilot/issues/new?title=Test%3A+Spellbook"));
 		assertTrue(url.contains("&body="));
 		assertFalse(url.contains(" "));
 	}

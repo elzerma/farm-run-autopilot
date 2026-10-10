@@ -16,6 +16,13 @@ public final class TestReport
 	{
 	}
 
+	/** One line for the log and the developer's clipboard, e.g. "Guided test finished: X = Good to go". */
+	public static String summary(TestItem item, boolean passed, List<String> problems)
+	{
+		return "Guided test finished: " + item.name() + " = " + (passed ? TestRunner.GOOD : TestRunner.ATTENTION)
+			+ (problems.isEmpty() ? "" : " " + problems) + " (full report in the client log)";
+	}
+
 	public static String title(TestItem item, boolean passed)
 	{
 		return "Test: " + item.getTitle() + " - " + (passed ? "works" : "needs attention");

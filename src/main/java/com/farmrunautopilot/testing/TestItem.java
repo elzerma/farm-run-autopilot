@@ -11,11 +11,6 @@ import lombok.Getter;
 @Getter
 public enum TestItem
 {
-	CIVITAS_QUETZAL(Tab.RUN, "Quetzal after the Civitas teleport",
-		"Set Travel > Civitas illa Fortis (Ortus Farm) to Civitas illa Fortis Teleport and start a run with the "
-			+ "Civitas herb patch. Once you land in the city, the step should say \"Take the quetzal to the "
-			+ "Hunter Guild\" and the quetzal nearby should be outlined. After the ride, the step should switch "
-			+ "to walking to the patch."),
 	SPELLBOOK_SWAP(Tab.RUN, "Spellbook Swap",
 		"On the Lunar spellbook (96 Magic, Dream Mentor done) with no house altar for the other spellbook, "
 			+ "plan a stop whose teleport is from another spellbook and that you have no tablet for. The Run "

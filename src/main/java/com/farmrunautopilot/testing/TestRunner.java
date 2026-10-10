@@ -10,6 +10,8 @@ import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.supply.ItemChargeTracker;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +21,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.client.RuneLiteProperties;
 import net.runelite.client.callback.ClientThread;
@@ -312,10 +315,16 @@ public class TestRunner
 		this.steps = null;
 		context = null;
 		view = TestView.NONE;
+		final String summary = TestReport.summary(done, passed, problems);
 		if (report)
 		{
-			log.info("Guided test finished: {} = {}{}", done.name(), passed ? GOOD : ATTENTION,
-				problems.isEmpty() ? "" : " " + problems);
+			log.info(summary);
+			if (developerMode)
+			{
+				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Farm Run Autopilot: test "
+					+ (passed ? "passed" : "needs attention") + ". The result is on your clipboard to paste to Claude.",
+					null);
+			}
 		}
 		SwingUtilities.invokeLater(() ->
 		{
@@ -330,9 +339,14 @@ public class TestRunner
 				problems);
 			if (developerMode)
 			{
+				// The developer pastes the summary to Claude, who reads the full report from the log
 				log.info("Guided test report: {}\n{}", done.name(), body);
+				Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(summary), null);
 			}
-			LinkBrowser.browse(TestReport.url(TestReport.title(done, passed), body));
+			else
+			{
+				LinkBrowser.browse(TestReport.url(TestReport.title(done, passed), body));
+			}
 		});
 	}
 }

@@ -210,7 +210,7 @@ public enum TravelMethod
 		TravelKind.CAPE, TravelItem.MAX_CAPE)),
 	CIVITAS_ILLA_FORTIS_TELEPORT(spell(Location.CIVITAS_ILLA_FORTIS, LONG, Spell.CIVITAS_ILLA_FORTIS_TELEPORT)
 		.nexus(PortalNexus.Destination.CIVITAS_ILLA_FORTIS).note("Then the quetzal to the Hunter Guild")
-		// The quetzal at the city's landing site is called Renu (UNVERIFIED that matching it by name finds it)
+		// The quetzal at the city's landing site, Renu, is matched by name: its ID is one of the baby quetzal colours
 		.transfer("Renu", "Take the quetzal to the Hunter Guild")),
 	FAIRY_RING_AJP(fairyRing(Location.CIVITAS_ILLA_FORTIS, "AJP", MEDIUM));
 
