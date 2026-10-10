@@ -404,6 +404,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	{
 		runSession.onMenuOptionClicked(event);
 		bottomlessBucket.onMenuOptionClicked(event);
+		pohDetector.onMenuOptionClicked(event);
 		farmBankTab.onMenuOptionClicked(event);
 	}
 

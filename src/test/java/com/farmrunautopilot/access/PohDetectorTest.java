@@ -23,9 +23,27 @@ public class PohDetectorTest
 	}
 
 	@Test
+	public void tellsSomeoneElsesHouseFromHowThePlayerGotIn()
+	{
+		// Someone else's
+		assertEquals(Boolean.TRUE, PohDetector.someoneElsesHouse("Friend's house", "Portal", null));
+		assertEquals(Boolean.TRUE, PohDetector.someoneElsesHouse("View", "House Advertisement", null));
+		assertEquals(Boolean.TRUE, PohDetector.someoneElsesHouse("Continue", "", "Go to a friend's house."));
+		// The player's own
+		assertEquals(Boolean.FALSE, PohDetector.someoneElsesHouse("Home", "Portal", null));
+		assertEquals(Boolean.FALSE, PohDetector.someoneElsesHouse("Build mode", "Portal", null));
+		assertEquals(Boolean.FALSE, PohDetector.someoneElsesHouse("Break", "Teleport to house", null));
+		assertEquals(Boolean.FALSE, PohDetector.someoneElsesHouse("Cast", "Teleport to House", null));
+		assertEquals(Boolean.FALSE, PohDetector.someoneElsesHouse("Tele to POH", "Construct. cape", null));
+		assertEquals(Boolean.FALSE, PohDetector.someoneElsesHouse("Continue", "", "Go to your house."));
+		// Anything else says nothing
+		assertNull(PohDetector.someoneElsesHouse("Walk here", "", null));
+	}
+
+	@Test
 	public void onlyLooksInsideAHouse()
 	{
-		final PohDetector detector = new PohDetector(null, null);
+		final PohDetector detector = new PohDetector(null, null, null);
 		// Outside a house, even a matching object is ignored
 		detector.onObjectSpawned(ObjectID.POH_FAIRY_RING);
 		assertFalse(detector.hasFound());

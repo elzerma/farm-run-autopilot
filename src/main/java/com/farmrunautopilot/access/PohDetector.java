@@ -10,30 +10,46 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Client;
+import net.runelite.api.events.MenuOptionClicked;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.ObjectID;
+import net.runelite.api.gameval.VarbitID;
+import net.runelite.api.widgets.Widget;
+import net.runelite.client.util.Text;
 
 /**
- * Fills in My POH from house furniture as it loads (SPEC 2 "auto-detect on visit"). Driven by object
+ * Fills in My house from house furniture as it loads (SPEC 2 "auto-detect on visit"). Driven by object
  * spawn events, never by scanning the scene.
  *
  * <p>Detection only ever adds or upgrades, because objects in another player's house look the same
  * and a partly loaded house would otherwise wipe settings. Removed furniture is picked up with Rescan
- * house in My POH, which clears what was detected so the next house visit fills it in again. The house
+ * house in My house, which clears what was detected so the next house visit fills it in again. The house
  * portal location and nexus destinations can't be read this way and stay manual.
  *
- * <p>Only objects in a house are looked at: from the "Loading house" screen (shown a tick before the house's
- * objects spawn) until a scene outside an instance loads. Furniture found is collected and saved once, on
- * the next game tick.
+ * <p>Only objects in the player's own house are looked at: from the "Loading house" screen (shown a tick
+ * before the house's objects spawn) until a scene outside an instance loads. The game doesn't say whose house
+ * it is, so it's worked out from how the player got in: a friend's house or the advertisement board means
+ * someone else's, and the house is skipped until the player goes home again. Solo ironmen can't visit other
+ * houses, so theirs is always scanned. Furniture found is collected and saved once, on the next game tick.
  */
 @Slf4j
 @Singleton
 public class PohDetector
 {
+	/** The friend's-name prompt within this many ticks of using a house portal means visiting a friend. */
+	private static final int NAME_PROMPT_TICKS = 50;
+
+	private final Client client;
 	private final SettingsStore settings;
 	private final AccessChecker accessChecker;
 
-	/** In a house (client thread). */
+	/** In the player's own house (client thread). */
 	private boolean inHouse;
+	/** The last way into a house was someone else's (client thread). */
+	private boolean visiting;
+	/** When a house portal was last used, for spotting the friend's-name prompt. */
+	private int portalUsedTick = -NAME_PROMPT_TICKS;
 	// Found since the last tick (client thread)
 	private boolean found;
 	private JewelleryBoxTier foundBox;
@@ -43,16 +59,83 @@ public class PohDetector
 	private boolean foundSpiritTree;
 
 	@Inject
-	PohDetector(SettingsStore settings, AccessChecker accessChecker)
+	PohDetector(Client client, SettingsStore settings, AccessChecker accessChecker)
 	{
+		this.client = client;
 		this.settings = settings;
 		this.accessChecker = accessChecker;
 	}
 
-	/** The "Loading house" screen opened: the house's objects spawn next. */
+	/** The "Loading house" screen opened: the house's objects spawn next. Scan only the player's own. */
 	public void onHouseLoading()
 	{
-		inHouse = true;
+		inHouse = !visiting || soloIronman();
+		log.debug("Entering a house: {}", inHouse ? "own, scanning" : "someone else's, not scanning");
+	}
+
+	/** Note how the player is getting into a house. */
+	public void onMenuOptionClicked(MenuOptionClicked event)
+	{
+		final String option = Text.removeTags(event.getMenuOption());
+		final String target = Text.removeTags(event.getMenuTarget());
+		final Widget widget = event.getWidget();
+		final Boolean someoneElses = someoneElsesHouse(option, target,
+			widget != null && widget.getText() != null ? Text.removeTags(widget.getText()) : null);
+		if (someoneElses != null)
+		{
+			visiting = someoneElses;
+		}
+		if (target.contains("Portal"))
+		{
+			portalUsedTick = client.getTickCount();
+		}
+	}
+
+	/**
+	 * Whether a click leads into someone else's house (true), the player's own (false), or neither (null).
+	 *
+	 * @param dialogText the text of a clicked dialogue option or other widget, or null
+	 */
+	static Boolean someoneElsesHouse(String option, String target, String dialogText)
+	{
+		final String text = dialogText != null ? dialogText.toLowerCase() : "";
+		if (option.equalsIgnoreCase("Friend's house") || target.contains("House Advertisement")
+			|| text.contains("friend's house"))
+		{
+			return true;
+		}
+		if (option.equalsIgnoreCase("Home") || option.equalsIgnoreCase("Build mode") || option.contains("POH")
+			|| target.toLowerCase().contains("teleport to house") || text.contains("your house")
+			|| text.contains("build mode"))
+		{
+			return false;
+		}
+		return null;
+	}
+
+	/**
+	 * Chosen "a friend's house" from the portal by keyboard: no click to see, but the game then asks for the
+	 * friend's name. UNVERIFIED: the prompt is assumed to contain "Enter name".
+	 */
+	private void checkNamePrompt()
+	{
+		if (client.getTickCount() - portalUsedTick > NAME_PROMPT_TICKS)
+		{
+			return;
+		}
+		final Widget prompt = client.getWidget(InterfaceID.Chatbox.MES_TEXT);
+		if (prompt != null && !prompt.isHidden() && prompt.getText() != null
+			&& prompt.getText().contains("Enter name"))
+		{
+			visiting = true;
+		}
+	}
+
+	/** Normal, hardcore and ultimate ironmen can't enter other players' houses. Group ironmen can. */
+	private boolean soloIronman()
+	{
+		final int type = client.getVarbitValue(VarbitID.IRONMAN);
+		return type >= 1 && type <= 3;
 	}
 
 	/** A new scene is loading; anything but an instance means the player has left the house. */
@@ -101,6 +184,7 @@ public class PohDetector
 	/** Save what the house that just loaded had. Call every game tick. */
 	public void onGameTick()
 	{
+		checkNamePrompt();
 		if (!found)
 		{
 			return;
