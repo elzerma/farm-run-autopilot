@@ -97,6 +97,25 @@ public class TestRunner
 		return busy;
 	}
 
+	/** Open the pre-filled GitHub issue from a finished test's last step. Swing thread. */
+	public void openReport()
+	{
+		final TestView shown = view;
+		if (shown.isReporting())
+		{
+			LinkBrowser.browse(shown.getReportUrl());
+		}
+	}
+
+	/** Close a finished test's last step. Swing thread. */
+	public void closeReport()
+	{
+		if (view.isReporting())
+		{
+			view = TestView.NONE;
+		}
+	}
+
 	/** Why this test can't be started now; empty if it can. Swing thread. */
 	public List<String> missing(TestItem item)
 	{
@@ -267,7 +286,7 @@ public class TestRunner
 		final GuidedTest.Step step = steps.get(stepIndex);
 		final String text = asking && step.check != null ? step.question : step.text;
 		view = new TestView(item, item.getTitle(), stepIndex + 1, steps.size(), text, asking, step.optional,
-			bringLines());
+			bringLines(), null);
 	}
 
 	private List<String> bringLines()
@@ -349,7 +368,8 @@ public class TestRunner
 			}
 			else
 			{
-				LinkBrowser.browse(TestReport.url(TestReport.title(done, passed), body));
+				// The last step on the Run tab: the player opens it and submits it themselves
+				view = TestView.reporting(done, passed, TestReport.url(TestReport.title(done, passed), body));
 			}
 		});
 	}

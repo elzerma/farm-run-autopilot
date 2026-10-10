@@ -119,6 +119,12 @@ class RunPanel extends JPanel
 		void skipTestStep();
 
 		void cancelTest();
+
+		/** Open a finished test's pre-filled GitHub issue. */
+		void openTestReport();
+
+		/** Close a finished test's last step. */
+		void closeTestReport();
 	}
 
 	RunPanel(SettingsStore settings, RunOverrides overrides, Runnable replan, Runnable settingsChanged,
@@ -267,6 +273,20 @@ class RunPanel extends JPanel
 		final JLabel title = testText("TEST: " + test.getTitle(), ColorScheme.BRAND_ORANGE);
 		title.setFont(FontManager.getRunescapeBoldFont());
 		box.add(title);
+		if (test.isReporting())
+		{
+			// The last step: the player sends the report themselves
+			box.add(testText(test.getText(), Color.WHITE));
+			final JButton open = testButton("<html><center>Open GitHub issues with<br>prefilled test results</center></html>",
+				controls::openTestReport);
+			open.setAlignmentX(LEFT_ALIGNMENT);
+			box.add(open);
+			final JButton close = testButton("Close", controls::closeTestReport);
+			close.setAlignmentX(LEFT_ALIGNMENT);
+			box.add(close);
+			add(box);
+			return;
+		}
 		box.add(testText("Step " + test.getStep() + " of " + test.getSteps(), ColorScheme.LIGHT_GRAY_COLOR));
 		box.add(testText(test.getText(), Color.WHITE));
 		for (String line : test.getBring())

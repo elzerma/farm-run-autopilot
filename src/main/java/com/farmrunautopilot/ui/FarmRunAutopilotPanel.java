@@ -139,6 +139,19 @@ public class FarmRunAutopilotPanel extends PluginPanel
 				{
 					testRunner.cancel();
 				}
+
+				@Override
+				public void openTestReport()
+				{
+					testRunner.openReport();
+				}
+
+				@Override
+				public void closeTestReport()
+				{
+					testRunner.closeReport();
+					runPanel.refresh();
+				}
 			});
 		// Presets cover Farm and Travel, so they're managed under the Run tab's preset picker
 		presetsPanel = new SetupPanel(SetupPanel.Page.PRESETS, settings, accessChecker, patchTracker,

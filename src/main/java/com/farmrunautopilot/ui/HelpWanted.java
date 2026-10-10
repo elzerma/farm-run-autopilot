@@ -26,6 +26,17 @@ final class HelpWanted
 	static final String ISSUES_URL = "https://github.com/elzerma/farm-run-autopilot/issues";
 	private static final String TITLE = "I NEED YOUR HELP!";
 	private static final int TEXT_WIDTH = 160;
+	/** How a guided test goes, for players, so they finish by sending the GitHub issue. */
+	private static final String[] HOW_IT_WORKS = {
+		"1. Press Start test on one below. If it's greyed out, it says what you still need.",
+		"2. Your plugin settings are saved and changed just for the test.",
+		"3. A box at the top of the Run tab tells you what to do. It notices most steps by itself and asks "
+			+ "Yes or No for the rest. Cancel stops it at any time.",
+		"4. When it's done, your settings go back to how they were.",
+		"5. Last step: press \"Open GitHub issues with prefilled test results\". Your results are already filled "
+			+ "in. Sign in to GitHub (a free account) if it asks, add anything else you noticed, and press "
+			+ "\"Create\" (or \"Submit new issue\"). Nothing is sent until you press it, and it never includes your character name.",
+	};
 
 	private HelpWanted()
 	{
@@ -83,12 +94,20 @@ final class HelpWanted
 		final JLabel heading = text(TITLE, ColorScheme.BRAND_ORANGE, 4);
 		heading.setFont(FontManager.getRunescapeBoldFont());
 		add(panel, heading);
-		add(panel, text(developer
-			? "Press Start test: the Run tab walks you through it and your settings are put back afterwards. The "
-				+ "result is copied to your clipboard to paste to Claude."
-			: "I can't test these myself. If you can, press Start test: the Run tab walks you through it, your "
-				+ "settings are put back afterwards, and a GitHub issue opens with the results ready to submit.",
-			Color.WHITE, 6));
+		if (developer)
+		{
+			add(panel, text("Press Start test: the Run tab walks you through it and your settings are put back "
+				+ "afterwards. The result is copied to your clipboard to paste to Claude.", Color.WHITE, 6));
+		}
+		else
+		{
+			add(panel, text("I can't test these myself, so your results really help. How it works:", Color.WHITE, 4));
+			for (String step : HOW_IT_WORKS)
+			{
+				add(panel, text(step, ColorScheme.LIGHT_GRAY_COLOR, 3));
+			}
+			add(panel, text("", ColorScheme.LIGHT_GRAY_COLOR, 3));
+		}
 		if (toTry(settings) == 0)
 		{
 			add(panel, text("You've run every test. Thank you!", ColorScheme.PROGRESS_COMPLETE_COLOR, 6));

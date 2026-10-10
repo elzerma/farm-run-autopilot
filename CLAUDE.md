@@ -7,7 +7,7 @@
 `src/main/java/com/farmrunautopilot/testing/TestItem.java` (shown by `ui/HelpWanted.java`) lists the features that couldn't be tried in development and need feedback, grouped by the sidebar tab they belong to. It is shown in Account > Testing & debug; every tab has an "I NEED YOUR HELP!" button that opens it. Each item has a title, full "how to try it" steps, and a guided test in `testing/GuidedTests.java`: settings it applies (the player's are backed up and put back), items to bring, steps it detects or asks Yes/No about, and values it captures for the report. When a test finishes:
 
 - **Dev client (RuneLite developer mode, i.e. the user):** the full report is logged as `Guided test report: <ITEM>`, a one-line summary (`Guided test finished: <ITEM> = <result> [problems] (full report in the client log)`) is copied to the clipboard, and a game chat message says so. The user pastes that summary to you.
-- **Everyone else:** a pre-filled GitHub issue opens with the report.
+- **Everyone else:** the Run tab box ends with an "Open GitHub issues with prefilled test results" button (never opened automatically) and how to submit it; the help list explains the whole process to players.
 
 The user uses this list as their test checklist. Keep it current without being asked:
 
