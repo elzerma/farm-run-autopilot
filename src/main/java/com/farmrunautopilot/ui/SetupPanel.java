@@ -379,7 +379,8 @@ class SetupPanel extends JPanel
 
 		s.addContent(subheader("Fairy ring access"));
 		s.addContent(note("How to get to a fairy ring before dialling a code. If your pick can't be used (not "
-			+ "carried or owned), Auto chooses. Your house ring is set in My POH."));
+			+ "carried or owned), Auto chooses. The ring by the stop you just finished is used whenever it's "
+			+ "quicker. Your house ring is set in My POH."));
 		final List<Choice<FairyRingAccess>> ways = new ArrayList<>();
 		ways.add(Choice.of(null, "Auto (fastest)"));
 		for (FairyRingAccess way : FairyRingAccess.values())
@@ -399,18 +400,13 @@ class SetupPanel extends JPanel
 				}
 			}
 			final boolean locked = !missing.isEmpty();
-			final String needs = !way.getItems().isEmpty()
-				? "Needs: " + way.getItems().get(way.getItems().size() - 1).getDisplayName()
-				+ (way.getItems().size() > 1 ? " or higher" : "")
-				: "Needs: " + way.getSpell().getDisplayName() + " (spell or tablet)";
+			final String needs = "Needs: " + way.getItems().get(way.getItems().size() - 1).getDisplayName()
+				+ (way.getItems().size() > 1 ? " or higher" : "");
 			ways.add(new Choice<>(way, way.getDisplayName() + (locked ? " (locked)" : ""), !locked,
 				locked ? AccessSnapshot.describe(missing) : needs));
 		}
 		s.addContent(label("Way to a fairy ring"));
 		s.addContent(combo(ways, config.getFairyRingWay(), w -> saveRun(() -> config.setFairyRingWay(w))));
-		s.addContent(checkBox("Use the ring by the last stop when quicker", config.isUseNearbyFairyRing(), true,
-			"Walk to the fairy ring next to the stop you just finished (e.g. CIR after the Farming Guild)",
-			on -> saveRun(() -> config.setUseNearbyFairyRing(on))));
 
 		for (Location location : Location.values())
 		{

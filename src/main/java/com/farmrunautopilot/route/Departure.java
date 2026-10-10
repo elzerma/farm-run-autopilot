@@ -25,7 +25,6 @@ public enum Departure
 	FAIRY_RING_ARDOUGNE_CLOAK(false, FairyRingAccess.ARDOUGNE_CLOAK),
 	FAIRY_RING_SLAYER_RING(false, FairyRingAccess.SLAYER_RING),
 	FAIRY_RING_QUEST_CAPE(false, FairyRingAccess.QUEST_CAPE),
-	FAIRY_RING_LUMBRIDGE(false, FairyRingAccess.LUMBRIDGE),
 	/** Just walk from the previous stop. */
 	WALK(false, null),
 	/** No unlocked way to get there. */

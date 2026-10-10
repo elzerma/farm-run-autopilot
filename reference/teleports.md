@@ -107,7 +107,6 @@ How to read this:
 - POH fairy ring: 85 Construction.
 - Codes used below are taken from each patch's wiki page. A wiki summary of the main Fairy ring page gave some contradictory placements (e.g. CIQ described as Gnome Stronghold); the patch pages were used instead.
 - Getting to a ring (`FairyRingAccess`), from the wiki Fairy ring page's quick-access table (tiles from arrival to the ring): Ardougne cloak, any tier, unlimited Kandarin Monastery teleport -> DJP, 51 tiles east past the Tower of Life; Slayer ring (Fremennik Slayer Dungeon) -> AJR, 16 tiles; Quest point cape -> BLR, 12 tiles east of the Legends' Guild. Also on that table but not used yet: Achievement diary cape (Le-sabrè) -> CKS 20, Arceuus Library -> CIS 34, Necklace of passage (Wizards' Tower) -> DIS 39, Battlefront Teleport -> CIR 42, Ring of wealth (Miscellania) -> CIP 48.
-- Lumbridge Teleport, then the Lumbridge Swamp shed into Zanaris, then its ring: about 95 tiles in all (**UNVERIFIED** estimate).
 - The ring by a stop is taken to be as far from the patch as the walk when arriving there by that ring.
 
 ### Gnome gliders (need The Grand Tree)

@@ -70,8 +70,6 @@ public class RunConfig
 	private Set<Location> runesNotTabsAt = EnumSet.noneOf(Location.class);
 	/** Preferred way to get to a fairy ring; null means Auto (the fastest one the player has). */
 	private FairyRingAccess fairyRingWay;
-	/** Walk to the ring by the stop just finished when that's quicker. */
-	private boolean useNearbyFairyRing = true;
 
 	// Route
 	private RouteMode routeMode = RouteMode.AUTOPILOT;

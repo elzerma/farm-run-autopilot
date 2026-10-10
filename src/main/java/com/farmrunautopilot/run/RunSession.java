@@ -663,7 +663,7 @@ public class RunSession
 			{
 				travelItems(stop.getMethod(), items);
 			}
-			// The item or tablet that gets the player to the fairy ring
+			// The item that gets the player to the fairy ring
 			final FairyRingAccess way = stop.getDeparture().getFairyRingAccess();
 			if (stopIndex > 0 && way != null)
 			{
@@ -673,10 +673,6 @@ public class RunSession
 					{
 						items.add(id);
 					}
-				}
-				if (way.getSpell() != null && way.getSpell().hasTablet())
-				{
-					items.add(way.getSpell().getTabletItemId());
 				}
 			}
 			return new Highlights(null, false, items);

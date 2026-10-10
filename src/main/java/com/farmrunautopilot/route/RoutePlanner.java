@@ -503,13 +503,13 @@ public final class RoutePlanner
 						legs.add(new Leg(method, Departure.POH_FAIRY_RING, viaHouse + FAIRY_RING + walk, false));
 					}
 					// No unnamed "some ring nearby": only rings the player has a known way to reach. The chosen way
-					// is a preference: if it can't be used, Auto picks from the rest.
+					// is a preference: if it can't be used, Auto picks from the rest. The ring by the last stop is
+					// always considered, since it needs nothing.
 					final FairyRingAccess chosen = config.getFairyRingWay();
 					final boolean chosenUsable = chosen != null && reachRing(chosen, from) != null;
 					for (FairyRingAccess way : FairyRingAccess.values())
 					{
-						final boolean allowed = way == FairyRingAccess.NEARBY ? config.isUseNearbyFairyRing()
-							: !chosenUsable || way == chosen;
+						final boolean allowed = way == FairyRingAccess.NEARBY || !chosenUsable || way == chosen;
 						final Double reach = allowed ? reachRing(way, from) : null;
 						if (reach != null)
 						{
@@ -588,20 +588,15 @@ public final class RoutePlanner
 			final Integer tiles = from == null ? null : ringWalkTiles(from);
 			return tiles == null ? null : tiles * SECONDS_PER_TILE;
 		}
-		if (!way.getItems().isEmpty())
+		for (TravelItem item : way.getItems())
 		{
-			for (TravelItem item : way.getItems())
+			// Owning isn't always enough: the quest point cape also needs every quest done
+			if (owns(item) && access.missing(item.getRequirements()).isEmpty())
 			{
-				// Owning isn't always enough: the quest point cape also needs every quest done
-				if (owns(item) && access.missing(item.getRequirements()).isEmpty())
-				{
-					return ITEM_TELEPORT + walk;
-				}
+				return ITEM_TELEPORT + walk;
 			}
-			return null;
 		}
-		final Spell spell = way.getSpell();
-		return canTeleport(spell) ? TELEPORT + spellbookSwap(spell) + walk : null;
+		return null;
 	}
 
 	/**

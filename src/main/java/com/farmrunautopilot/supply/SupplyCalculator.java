@@ -244,10 +244,6 @@ public final class SupplyCalculator
 					}
 					travelItems.merge(item, 1, Integer::sum);
 				}
-				if (way.getSpell() != null)
-				{
-					extra = addSpell(way.getSpell(), location, config, access, holdings, tablets, runeNeed);
-				}
 				fairyRing = true;
 			}
 			final boolean auto = method != null && config.getTravel().get(location) != method;
