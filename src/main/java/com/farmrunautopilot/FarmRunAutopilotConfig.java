@@ -54,8 +54,8 @@ public interface FarmRunAutopilotConfig extends Config
 
 	@ConfigItem(
 		keyName = "highlightGardener",
-		name = "Highlight the gardener",
-		description = "Outline the gardener when the step is to pay them",
+		name = "Highlight NPCs",
+		description = "Outline the gardener when paying them, and the quetzal after the Civitas teleport",
 		hidden = true,
 		position = 3
 	)

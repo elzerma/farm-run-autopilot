@@ -2,11 +2,15 @@ package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
+import com.farmrunautopilot.data.travel.TravelMethod;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +44,9 @@ public class SceneTracker
 	private final Client client;
 	private final Map<Patch, List<GameObject>> patchObjects = new EnumMap<>(Patch.class);
 	private final Map<Patch, NPC> gardeners = new EnumMap<>(Patch.class);
+	/** NPCs ridden after a teleport (the Civitas quetzal), by ID. */
+	private static final Set<Integer> TRANSFER_NPC_IDS = transferNpcIds();
+	private final Map<Integer, NPC> transfers = new HashMap<>();
 
 	@Inject
 	SceneTracker(Client client)
@@ -77,6 +84,11 @@ public class SceneTracker
 	 */
 	public void onNpcSpawned(NPC npc)
 	{
+		if (TRANSFER_NPC_IDS.contains(npc.getId()))
+		{
+			transfers.put(npc.getId(), npc);
+			return;
+		}
 		final WorldPoint location = npc.getWorldLocation();
 		for (Patch patch : Patch.values())
 		{
@@ -97,6 +109,7 @@ public class SceneTracker
 	public void onNpcDespawned(NPC npc)
 	{
 		gardeners.values().removeIf(n -> n == npc);
+		transfers.values().removeIf(n -> n == npc);
 	}
 
 	/**
@@ -113,6 +126,7 @@ public class SceneTracker
 	{
 		patchObjects.clear();
 		gardeners.clear();
+		transfers.clear();
 	}
 
 	public List<GameObject> objectsFor(Patch patch)
@@ -136,6 +150,25 @@ public class SceneTracker
 			}
 		}
 		return null;
+	}
+
+	/** The loaded NPC with this ID that a travel method rides, or null. */
+	public NPC transferNpc(int id)
+	{
+		return transfers.get(id);
+	}
+
+	private static Set<Integer> transferNpcIds()
+	{
+		final Set<Integer> ids = new HashSet<>();
+		for (TravelMethod method : TravelMethod.values())
+		{
+			if (method.getTransferNpcId() != -1)
+			{
+				ids.add(method.getTransferNpcId());
+			}
+		}
+		return ids;
 	}
 
 	/** The patch's gardener if loaded, or null. */

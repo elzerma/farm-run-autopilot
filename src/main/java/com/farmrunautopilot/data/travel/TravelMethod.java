@@ -24,6 +24,7 @@ import java.util.Set;
 import lombok.Getter;
 import net.runelite.api.Quest;
 import net.runelite.api.Skill;
+import net.runelite.api.gameval.NpcID;
 
 /**
  * Ways to reach each location (SPEC 8.2). Walk distances are starting estimates (UNVERIFIED); M8
@@ -209,7 +210,9 @@ public enum TravelMethod
 	MAX_CAPE_HUNTER_GUILD(item(Location.CIVITAS_ILLA_FORTIS, "Max cape (Hunter Guild)", MEDIUM,
 		TravelKind.CAPE, TravelItem.MAX_CAPE)),
 	CIVITAS_ILLA_FORTIS_TELEPORT(spell(Location.CIVITAS_ILLA_FORTIS, LONG, Spell.CIVITAS_ILLA_FORTIS_TELEPORT)
-		.nexus(PortalNexus.Destination.CIVITAS_ILLA_FORTIS).note("Then the quetzal to the Hunter Guild")),
+		.nexus(PortalNexus.Destination.CIVITAS_ILLA_FORTIS).note("Then the quetzal to the Hunter Guild")
+		// The city's quetzal (UNVERIFIED that this ID is the one by where the teleport lands)
+		.transfer(NpcID.QUETZAL_FORTIS, "Take the quetzal to the Hunter Guild")),
 	FAIRY_RING_AJP(fairyRing(Location.CIVITAS_ILLA_FORTIS, "AJP", MEDIUM));
 
 	private final Location destination;
@@ -226,6 +229,13 @@ public enum TravelMethod
 	private final String note;
 	/** What to do after arriving to reach the patch, shown in the run guide; null if it's just a walk. */
 	private final String directions;
+	/**
+	 * An NPC to ride after landing and before walking to the patch (the Civitas quetzal), or -1. It's faster
+	 * than running, so the guide says to take it and outlines it.
+	 */
+	private final int transferNpcId;
+	/** What to do with {@link #transferNpcId}, e.g. "Take the quetzal to the Hunter Guild"; null if none. */
+	private final String transferText;
 	/** Requirements beyond the spell's own and owning the item. */
 	private final List<Requirement> requirements;
 	private final Set<PatchType> primaryFor;
@@ -246,6 +256,8 @@ public enum TravelMethod
 		this.fairyRingCode = def.fairyRingCode;
 		this.note = def.note;
 		this.directions = def.directions;
+		this.transferNpcId = def.transferNpcId;
+		this.transferText = def.transferText;
 		this.requirements = Collections.unmodifiableList(def.requirements);
 		this.primaryFor = Collections.unmodifiableSet(def.primaryFor);
 		this.nexus = def.nexus;
@@ -315,6 +327,8 @@ public enum TravelMethod
 		private String fairyRingCode;
 		private String note;
 		private String directions;
+		private int transferNpcId = -1;
+		private String transferText;
 		private final List<Requirement> requirements = new ArrayList<>();
 		private final Set<PatchType> primaryFor = EnumSet.noneOf(PatchType.class);
 		private PortalNexus.Destination nexus;
@@ -355,6 +369,13 @@ public enum TravelMethod
 		Def directions(String text)
 		{
 			directions = text;
+			return this;
+		}
+
+		Def transfer(int npcId, String text)
+		{
+			transferNpcId = npcId;
+			transferText = text;
 			return this;
 		}
 

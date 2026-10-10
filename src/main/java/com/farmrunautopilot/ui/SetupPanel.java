@@ -1118,15 +1118,16 @@ class SetupPanel extends JPanel
 			"Outline the patch the current step is about", on -> guidance.set("highlightPatch", on)));
 		s.addContent(checkBox("Hint arrow to the patch", c.hintArrow(), true,
 			"The game's hint arrow over the patch, also shown on the minimap", on -> guidance.set("hintArrow", on)));
-		s.addContent(checkBox("Highlight the gardener", c.highlightGardener(), true,
-			"Outline the gardener when the step is to pay them", on -> guidance.set("highlightGardener", on)));
+		s.addContent(checkBox("Highlight NPCs", c.highlightGardener(), true,
+			"Outline the gardener when paying them, and the quetzal after the Civitas teleport",
+			on -> guidance.set("highlightGardener", on)));
 		s.addContent(checkBox("Highlight items to use", c.highlightItems(), true,
 			"Outline the seed, compost, tool or teleport to use next in your inventory and equipment",
 			on -> guidance.set("highlightItems", on)));
 		s.addContent(checkBox("Highlight the spell to cast", c.highlightSpell(), true,
 			"Outline the teleport (or Cure Plant) to cast next in your spellbook", on -> guidance.set("highlightSpell", on)));
 		s.addContent(colourRow("Patch colour", c.patchColour(), "patchColour"));
-		s.addContent(colourRow("Gardener colour", c.npcColour(), "npcColour"));
+		s.addContent(colourRow("NPC colour", c.npcColour(), "npcColour"));
 		s.addContent(colourRow("Item colour", c.itemColour(), "itemColour"));
 	}
 

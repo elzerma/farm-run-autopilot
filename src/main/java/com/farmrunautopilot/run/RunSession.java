@@ -101,6 +101,8 @@ public class RunSession
 	private long arrivedAtSeconds;
 	/** Teleported close to the current stop but its patch hasn't loaded yet. */
 	private boolean teleported;
+	/** Took the ride after the teleport (the Civitas quetzal), for travel methods that have one. */
+	private boolean transferred;
 	/** The player's position last tick, to spot teleports. */
 	private WorldPoint lastPosition;
 	/** The time for the leg to the current stop has been saved. */
@@ -210,6 +212,7 @@ public class RunSession
 		stopIndex = 0;
 		arrived = false;
 		teleported = false;
+		transferred = false;
 		lastPosition = null;
 		currentPatch = null;
 		progress.clear();
@@ -442,8 +445,14 @@ public class RunSession
 					{
 						teleported = true;
 					}
-					instruction = teleported ? walkInstruction(stop, here.get(0))
-						: stop.describeTravel() + " to " + stop.getLocation().getDisplayName();
+					else if (teleported && !transferred && jumped(previous, position))
+					{
+						// The ride after the teleport
+						transferred = true;
+					}
+					instruction = !teleported ? stop.describeTravel() + " to " + stop.getLocation().getDisplayName()
+						: transferNpc(stop) != -1 ? stop.getMethod().getTransferText()
+						: walkInstruction(stop, here.get(0));
 					currentPatch = null;
 					break;
 				}
@@ -466,6 +475,7 @@ public class RunSession
 			stopIndex++;
 			arrived = false;
 			teleported = false;
+			transferred = false;
 			legStartedAt = now;
 		}
 
@@ -631,14 +641,22 @@ public class RunSession
 	 */
 	private boolean jumpedTowards(WorldPoint from, WorldPoint to, Patch patch)
 	{
-		if (from == null || to == null)
-		{
-			return false;
-		}
-		final boolean jumped = from.getPlane() != to.getPlane() || from.distanceTo2D(to) > JUMP_TILES;
 		final WorldPoint target = scene.locationOf(patch);
-		return jumped && target != null && target.getPlane() == to.getPlane()
+		return jumped(from, to) && target != null && target.getPlane() == to.getPlane()
 			&& target.distanceTo2D(to) <= LANDED_NEAR_TILES;
+	}
+
+	/** The position changed by more than running could in one tick: a teleport, ride or plane change. */
+	private static boolean jumped(WorldPoint from, WorldPoint to)
+	{
+		return from != null && to != null && (from.getPlane() != to.getPlane() || from.distanceTo2D(to) > JUMP_TILES);
+	}
+
+	/** The NPC to ride now, after teleporting and before walking (the Civitas quetzal), or -1. */
+	private int transferNpc(RouteStop stop)
+	{
+		final TravelMethod method = stop.getMethod();
+		return teleported && !transferred && !arrived && method != null ? method.getTransferNpcId() : -1;
 	}
 
 	/** After teleporting: the way on from the landing spot, e.g. "Walk to the Troll Stronghold herb patch". */
@@ -738,7 +756,7 @@ public class RunSession
 				}
 				items.add(Spell.TELEPORT_TO_HOUSE.getTabletItemId());
 			}
-			return new Highlights(null, false, items, castableNow(spell));
+			return new Highlights(null, false, transferNpc(stop), items, castableNow(spell));
 		}
 
 		boolean gardener = false;
@@ -792,7 +810,7 @@ public class RunSession
 			default:
 				break;
 		}
-		return new Highlights(currentPatch, gardener && currentPatch.hasGardener(), items, spell);
+		return new Highlights(currentPatch, gardener && currentPatch.hasGardener(), -1, items, spell);
 	}
 
 	/** The spell if it can be cast from the spellbook the player is on right now, otherwise null. */
