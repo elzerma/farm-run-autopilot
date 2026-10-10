@@ -94,6 +94,7 @@ public class FarmBankTab
 	private final Map<Widget, SupplyLine> lineByWidget = new HashMap<>();
 	private int originalContainerChildren = -1;
 	private Supplier<SupplyPlan> plan = () -> SupplyPlan.EMPTY;
+	private boolean enabled;
 
 	@Inject
 	FarmBankTab(Client client, ClientThread clientThread, ChatMessageManager chatMessageManager,
@@ -108,21 +109,38 @@ public class FarmBankTab
 	public void startUp(Supplier<SupplyPlan> plan)
 	{
 		this.plan = plan;
-		clientThread.invokeLater(button::init);
 	}
 
 	public void shutDown()
 	{
-		clientThread.invokeLater(() ->
+		clientThread.invokeLater(() -> setEnabled(false));
+	}
+
+	/**
+	 * Show the bank button only while a run is being built or done, as Quest Helper does while a quest is
+	 * selected. Takes effect at once if the bank is open.
+	 */
+	public void setEnabled(boolean enabled)
+	{
+		if (this.enabled == enabled)
+		{
+			return;
+		}
+		this.enabled = enabled;
+		if (enabled)
+		{
+			button.init();
+		}
+		else
 		{
 			button.destroy();
 			removeAddedWidgets();
-		});
+		}
 	}
 
 	public void onWidgetLoaded(WidgetLoaded event)
 	{
-		if (event.getGroupId() == InterfaceID.BANKMAIN)
+		if (enabled && event.getGroupId() == InterfaceID.BANKMAIN)
 		{
 			button.init();
 		}

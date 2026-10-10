@@ -25,12 +25,14 @@ The plugin never clicks, types or acts for you. It only shows information.
 </p>
 
 **Bank**
-- A "Farm run" button in the bank shows just the items you need, with how many of each.
+- After you press Build run, a "Farm run" button in the bank shows just the items you need, with how many
+  of each. It stays hidden while you aren't planning a run.
 
 <img src="docs/bank-tab.png" alt="The Farm run bank tab" width="500">
 
 **During a run**
-- Press Start run for a timer and step-by-step instructions under your character: where to go next, then
+- Once you have everything (tools at the tool leprechaun count), the run starts itself with step-by-step
+  instructions under your character: where to go next, then
   what to do at each patch (pick, check health, clear, rake, compost, plant, pay the gardener).
 - The patch is outlined with a hint arrow over it; the gardener is outlined when it's time to pay; the seed,
   compost, tool or teleport to use next is outlined in your inventory.
@@ -59,8 +61,11 @@ The plugin never clicks, types or acts for you. It only shows information.
 1. Open the Farm Run Autopilot sidebar (the seedling icon).
 2. On the Setup tab, pick your crops and run options. The Rules tab has patches, protection, travel, your
    house, unlocks and the run guidance highlights.
-3. Open your bank and click the "Farm run" button to withdraw what you need.
-4. Press **Start run** on the Run tab and follow the instructions under your character.
+3. Tick the run types on the Run tab, which also shows what's due and your patch timers, and press
+   **Build run**.
+4. Open your bank and click the "Farm run" button to withdraw what you need. The run starts itself once you
+   have everything; the timer starts when you teleport or click your first patch (or press **Start now**).
+5. Follow the instructions under your character.
 
 Patches are tracked as you visit them. Until then, the plugin uses RuneLite's Time Tracking data if it has
 any.

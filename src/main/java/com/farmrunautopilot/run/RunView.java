@@ -10,9 +10,15 @@ import lombok.Value;
 @Value
 public class RunView
 {
+	/**
+	 * Off until Build run is pressed; armed once everything is gathered; running from the first teleport or
+	 * patch click.
+	 */
 	public enum State
 	{
-		IDLE,
+		OFF,
+		BUILDING,
+		ARMED,
 		RUNNING
 	}
 
@@ -35,17 +41,17 @@ public class RunView
 		List<String> objectives;
 	}
 
-	public static final RunView IDLE_VIEW = new RunView(State.IDLE, 0, Collections.emptyList(), null, false, null,
+	public static final RunView OFF_VIEW = new RunView(State.OFF, 0, Collections.emptyList(), null, false, null,
 		null, null, Highlights.NONE);
 
 	State state;
-	/** When the run started (epoch millis), 0 when idle. */
+	/** When the run timer started (epoch millis), 0 until it has. */
 	long startedAtMillis;
 	List<Stop> stops;
 	/** The next thing to do, shown under the player, or null. */
 	String instruction;
-	/** Everything needed is in the inventory, so the run can start. */
-	boolean ready;
+	/** The player is already at the first stop, so there's no travelling to it. */
+	boolean atFirstStop;
 	/** e.g. "Run finished in 12:30", or null. */
 	String lastRun;
 	/** e.g. "Best for 6 herbs: 8:12, 8:40, 9:03", or null when there are none yet. */

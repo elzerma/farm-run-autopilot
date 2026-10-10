@@ -14,6 +14,7 @@ import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.NPC;
 import net.runelite.api.ObjectComposition;
+import net.runelite.api.Point;
 import net.runelite.api.coords.WorldPoint;
 
 /**
@@ -118,6 +119,23 @@ public class SceneTracker
 	{
 		final List<GameObject> objects = patchObjects.get(patch);
 		return objects != null ? objects : Collections.emptyList();
+	}
+
+	/** The patch whose loaded object has this ID and scene position (as in a menu entry), or null. */
+	public Patch patchAt(int objectId, int sceneX, int sceneY)
+	{
+		for (Map.Entry<Patch, List<GameObject>> e : patchObjects.entrySet())
+		{
+			for (GameObject object : e.getValue())
+			{
+				final Point min = object.getSceneMinLocation();
+				if (object.getId() == objectId && min.getX() == sceneX && min.getY() == sceneY)
+				{
+					return e.getKey();
+				}
+			}
+		}
+		return null;
 	}
 
 	/** The patch's gardener if loaded, or null. */

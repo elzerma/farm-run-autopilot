@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import net.runelite.api.coords.WorldPoint;
 import org.junit.Test;
 
 public class RunSessionTest
@@ -87,5 +88,24 @@ public class RunSessionTest
 	public void notReadyWithNoRoute()
 	{
 		assertFalse(RunSession.isReady(RunPlan.EMPTY));
+	}
+
+	@Test
+	public void countsOnlyRequiredLinesStillInTheBank()
+	{
+		assertEquals(2, RunSession.missingCount(plan(java.util.Arrays.asList(
+			line(SupplyLine.Group.SEEDS, 8, 3, 0),
+			line(SupplyLine.Group.TRAVEL, 1, 0, 0),
+			line(SupplyLine.Group.TOOLS, 1, 0, 1),
+			line(SupplyLine.Group.OPTIONAL, 4, 0, 0)))));
+	}
+
+	@Test
+	public void teleportIsALongJumpInOneTick()
+	{
+		final WorldPoint bank = new WorldPoint(3092, 3245, 0);
+		assertFalse(RunSession.isTeleport(bank, new WorldPoint(3094, 3245, 0)));
+		assertFalse(RunSession.isTeleport(null, bank));
+		assertTrue(RunSession.isTeleport(bank, new WorldPoint(2813, 3463, 0)));
 	}
 }

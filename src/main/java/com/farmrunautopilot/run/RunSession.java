@@ -40,14 +40,18 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
+import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ItemID;
 
 /**
- * Runs a farm run from Start to Stop (SPEC 13.4): freezes the plan, works out the next step from live patch
- * states, notices when steps are done, records leg times, and finishes itself after the last step.
+ * Runs a farm run (SPEC 13.4): off until Build run, building while supplies are gathered, armed (plan frozen,
+ * first step shown) once they are, and running from the first teleport or patch click. While running it works
+ * out the next step from live patch states, notices when steps are done, records leg times, and finishes
+ * itself after the last step.
  *
  * <p>All methods except {@link #getView()} run on the client thread.
  */
@@ -66,6 +70,8 @@ public class RunSession
 	private static final int NEAR_PATCH_TILES = 7;
 	private static final int BEST_TIMES = 3;
 	private static final int INVENTORY_SLOTS = 28;
+	/** Moving further than this in one tick can only be a teleport. */
+	private static final int TELEPORT_TILES = 30;
 
 	private final Client client;
 	private final RunService runService;
@@ -76,9 +82,13 @@ public class RunSession
 	private final RunTimings timings;
 	private final SceneTracker scene;
 
-	private boolean running;
+	private RunView.State stage = RunView.State.OFF;
+	/** Frozen when the run arms; null while off or building. */
 	private RunPlan plan;
+	/** When the timer started (epoch millis), 0 until the player leaves. */
 	private long startedAt;
+	/** Where the player was last tick, to notice a teleport while armed. */
+	private WorldPoint lastLocation;
 	private int stopIndex;
 	private boolean arrived;
 	/** When the player reached the current stop (epoch seconds); patches must be seen after this to count. */
@@ -93,7 +103,7 @@ public class RunSession
 	private final List<RunTimings.Leg> legs = new ArrayList<>();
 	private long finishedAt;
 	private String lastRun;
-	private volatile RunView view = RunView.IDLE_VIEW;
+	private volatile RunView view = RunView.OFF_VIEW;
 
 	/** What has happened at a patch during this run. */
 	private static final class Progress
@@ -127,40 +137,155 @@ public class RunSession
 		return view;
 	}
 
-	/** Freeze the current plan and start guiding. */
-	public void start()
+	/** Start gathering supplies: the bank tab and the "get N items" reminder appear. */
+	public void build()
 	{
-		final RunPlan current = runService.getPlan();
-		if (running || current.getRoute().getStops().isEmpty())
+		if (stage != RunView.State.OFF)
 		{
 			return;
 		}
+		stage = RunView.State.BUILDING;
+		lastRun = null;
+		log.debug("Building a run");
+		evaluate();
+	}
+
+	/** Back to off from building or armed, without saving anything. A running run is stopped instead. */
+	public void cancel()
+	{
+		if (stage == RunView.State.RUNNING)
+		{
+			stop(false);
+			return;
+		}
+		if (stage == RunView.State.OFF)
+		{
+			return;
+		}
+		stage = RunView.State.OFF;
+		plan = null;
+		currentPatch = null;
+		log.debug("Run cancelled");
+		evaluate();
+	}
+
+	/** Logged out: drop a run that is being built or waiting to leave. */
+	public void cancelIfNotRunning()
+	{
+		if (stage != RunView.State.RUNNING)
+		{
+			cancel();
+		}
+	}
+
+	/** Start the timer now rather than waiting for a teleport or patch click; arms first if still building. */
+	public void startNow()
+	{
+		if (stage == RunView.State.BUILDING && !runService.getPlan().getRoute().getStops().isEmpty())
+		{
+			arm(runService.getPlan());
+		}
+		if (stage == RunView.State.ARMED)
+		{
+			startClock(System.currentTimeMillis());
+		}
+	}
+
+	/** Freeze the plan and show the first step; the timer waits for the player to leave. */
+	private void arm(RunPlan current)
+	{
 		plan = current;
-		running = true;
-		startedAt = System.currentTimeMillis();
-		legStartedAt = startedAt;
+		stage = RunView.State.ARMED;
+		startedAt = 0;
 		stopIndex = 0;
 		arrived = false;
 		currentPatch = null;
 		progress.clear();
 		legs.clear();
 		lastRun = null;
-		log.debug("Run started with {} stops", plan.getRoute().getStops().size());
-		onGameTick();
+		final Player player = client.getLocalPlayer();
+		lastLocation = player != null ? player.getWorldLocation() : null;
+		log.debug("Run armed with {} stops", plan.getRoute().getStops().size());
+	}
+
+	private void startClock(long now)
+	{
+		if (stage != RunView.State.ARMED)
+		{
+			return;
+		}
+		stage = RunView.State.RUNNING;
+		startedAt = now;
+		legStartedAt = now;
+		log.debug("Run timer started");
+		evaluate();
+	}
+
+	/** A jump this far in one tick is a teleport: walking and running cover at most two tiles. */
+	static boolean isTeleport(WorldPoint from, WorldPoint to)
+	{
+		return from != null && to != null && from.distanceTo2D(to) > TELEPORT_TILES;
 	}
 
 	/**
-	 * End the run and save its timings.
+	 * Start the timer on the first click on a patch in this run, or on its gardener, for players who start
+	 * right next to their first patch.
+	 */
+	public void onMenuOptionClicked(MenuOptionClicked event)
+	{
+		if (stage != RunView.State.ARMED)
+		{
+			return;
+		}
+		final List<Patch> patches = plan.getSelection().getPatches();
+		switch (event.getMenuAction())
+		{
+			case GAME_OBJECT_FIRST_OPTION:
+			case GAME_OBJECT_SECOND_OPTION:
+			case GAME_OBJECT_THIRD_OPTION:
+			case GAME_OBJECT_FOURTH_OPTION:
+			case GAME_OBJECT_FIFTH_OPTION:
+			case WIDGET_TARGET_ON_GAME_OBJECT:
+				final Patch patch = scene.patchAt(event.getId(), event.getParam0(), event.getParam1());
+				if (patch != null && patches.contains(patch))
+				{
+					startClock(System.currentTimeMillis());
+				}
+				break;
+			case NPC_FIRST_OPTION:
+			case NPC_SECOND_OPTION:
+			case NPC_THIRD_OPTION:
+			case NPC_FOURTH_OPTION:
+			case NPC_FIFTH_OPTION:
+			case WIDGET_TARGET_ON_NPC:
+				final NPC npc = event.getMenuEntry().getNpc();
+				for (Patch p : patches)
+				{
+					if (npc != null && scene.gardener(p) == npc)
+					{
+						startClock(System.currentTimeMillis());
+						break;
+					}
+				}
+				break;
+			default:
+				break;
+		}
+	}
+
+	/**
+	 * End the run and save its timings. Before the timer has started this just goes back to off.
 	 *
 	 * @param finished every stop was completed
 	 */
 	public void stop(boolean finished)
 	{
-		if (!running)
+		if (stage != RunView.State.RUNNING)
 		{
+			cancel();
 			return;
 		}
-		running = false;
+		stage = RunView.State.OFF;
 		final long now = System.currentTimeMillis();
 		final double seconds = (now - startedAt) / 1000.0;
 		final Map<PatchType, Integer> counts = plan.getSupplies().getPatchCounts();
@@ -176,7 +301,7 @@ public class RunSession
 		plan = null;
 		// Replan with the newly learned leg times
 		runService.markDirty();
-		onGameTick();
+		evaluate();
 	}
 
 	/** e.g. " - new best for 6 herbs!" or " - 2nd best for 6 herbs"; empty outside the top times. */
@@ -223,7 +348,7 @@ public class RunSession
 	/** Skip whatever the next step is (arriving, or the current patch). */
 	public void skip()
 	{
-		if (!running)
+		if (stage != RunView.State.RUNNING)
 		{
 			return;
 		}
@@ -235,29 +360,55 @@ public class RunSession
 		{
 			progress(currentPatch).skipped = true;
 		}
-		onGameTick();
+		evaluate();
 	}
 
 	public void onChatMessage(String message)
 	{
-		if (running && currentPatch != null
+		if ((stage == RunView.State.ARMED || stage == RunView.State.RUNNING) && currentPatch != null
 			&& (COMPOST_USED.matcher(message).matches() || ALREADY_COMPOSTED.matcher(message).matches()))
 		{
 			progress(currentPatch).composted = true;
 		}
 	}
 
-	/** Re-evaluate the run. Call every game tick. */
+	/** Re-evaluate the run, and start the timer if the player just teleported. Call every game tick. */
 	public void onGameTick()
 	{
-		if (!running)
+		final Player player = client.getLocalPlayer();
+		final WorldPoint location = player != null ? player.getWorldLocation() : null;
+		if (stage == RunView.State.ARMED && isTeleport(lastLocation, location))
 		{
-			view = idleView();
+			lastLocation = location;
+			startClock(System.currentTimeMillis());
 			return;
+		}
+		lastLocation = location;
+		evaluate();
+	}
+
+	private void evaluate()
+	{
+		if (stage == RunView.State.OFF)
+		{
+			view = offView();
+			return;
+		}
+		if (stage == RunView.State.BUILDING)
+		{
+			final RunPlan current = runService.getPlan();
+			if (!isReady(current))
+			{
+				view = buildingView(current);
+				return;
+			}
+			arm(current);
 		}
 
 		final List<RouteStop> stops = plan.getRoute().getStops();
 		final long now = System.currentTimeMillis();
+		// Armed shows the first step but doesn't time legs or move on until the timer starts
+		final boolean timing = stage == RunView.State.RUNNING;
 		String instruction = null;
 		while (stopIndex < stops.size())
 		{
@@ -276,13 +427,13 @@ public class RunSession
 					break;
 				}
 			}
-			if (!legRecorded && nearAny(here))
+			if (timing && !legRecorded && nearAny(here))
 			{
 				recordLeg(now);
 			}
 
 			instruction = nextPatchStep(here);
-			if (instruction != null)
+			if (instruction != null || !timing)
 			{
 				break;
 			}
@@ -422,6 +573,11 @@ public class RunSession
 
 	private List<Patch> patchesAt(Location location)
 	{
+		return patchesAt(plan, location);
+	}
+
+	private static List<Patch> patchesAt(RunPlan plan, Location location)
+	{
 		final List<Patch> here = new ArrayList<>();
 		for (Patch patch : plan.getSelection().getPatches())
 		{
@@ -484,8 +640,12 @@ public class RunSession
 				status == RunView.StopStatus.CURRENT ? instruction : null,
 				plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList())));
 		}
+		if (instruction == null)
+		{
+			instruction = "Head to your next stop";
+		}
 		final Highlights highlights = highlights();
-		return new RunView(RunView.State.RUNNING, startedAt, stopViews, instruction, false, null, null,
+		return new RunView(stage, startedAt, stopViews, instruction, false, null, null,
 			reminders(highlights), highlights);
 	}
 
@@ -736,21 +896,30 @@ public class RunSession
 		return INVENTORY_SLOTS - used;
 	}
 
-	private RunView idleView()
+	/** Nothing in game, apart from how the last run went for a few seconds. */
+	private RunView offView()
 	{
 		final RunPlan current = runService.getPlan();
-		final boolean ready = isReady(current);
-		String notice = null;
-		if (lastRun != null && System.currentTimeMillis() - finishedAt < FINISHED_NOTICE_MILLIS)
-		{
-			notice = lastRun;
-		}
-		else if (ready)
-		{
-			notice = "Ready - press Start run";
-		}
-		return new RunView(RunView.State.IDLE, 0, new ArrayList<>(), notice, ready, lastRun, bestTimes(current),
+		final String notice = lastRun != null && System.currentTimeMillis() - finishedAt < FINISHED_NOTICE_MILLIS
+			? lastRun : null;
+		return new RunView(RunView.State.OFF, 0, new ArrayList<>(), notice, false, lastRun, bestTimes(current),
 			null, Highlights.NONE);
+	}
+
+	/** Gathering supplies: how many items are still to get. */
+	private RunView buildingView(RunPlan current)
+	{
+		String notice = null;
+		if (!current.getRoute().getStops().isEmpty())
+		{
+			final int missing = missingCount(current);
+			notice = "Farm run: get " + missing + (missing == 1 ? " item" : " items") + " from the bank";
+		}
+		final List<RouteStop> stops = current.getRoute().getStops();
+		final boolean atFirstStop = !stops.isEmpty()
+			&& inRange(patchesAt(current, stops.get(0).getLocation()));
+		return new RunView(RunView.State.BUILDING, 0, new ArrayList<>(), notice, atFirstStop, null,
+			bestTimes(current), null, Highlights.NONE);
 	}
 
 	/**
@@ -759,10 +928,13 @@ public class RunSession
 	 */
 	static boolean isReady(RunPlan plan)
 	{
-		if (plan.getRoute().getStops().isEmpty())
-		{
-			return false;
-		}
+		return !plan.getRoute().getStops().isEmpty() && missingCount(plan) == 0;
+	}
+
+	/** Required lines that are neither carried nor stored at the tool leprechaun. */
+	static int missingCount(RunPlan plan)
+	{
+		int missing = 0;
 		for (SupplyLine line : plan.getSupplies().getLines())
 		{
 			if (line.getGroup() == SupplyLine.Group.OPTIONAL || line.isCoveredOtherwise())
@@ -772,9 +944,9 @@ public class RunSession
 			final int leprechaun = line.getWhere().getOrDefault(Holdings.Source.LEPRECHAUN, 0);
 			if (line.getCarried() + leprechaun < line.getNeed())
 			{
-				return false;
+				missing++;
 			}
 		}
-		return true;
+		return missing;
 	}
 }

@@ -1,21 +1,28 @@
 package com.farmrunautopilot.ui;
 
+import com.farmrunautopilot.access.AccessChecker;
+import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Location;
+import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.route.RunOverrides;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunSelection;
+import com.farmrunautopilot.route.RunSelector;
 import com.farmrunautopilot.route.TypeOverride;
 import com.farmrunautopilot.run.GuidanceOverlay;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.settings.RouteMode;
+import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.supply.SupplyPlan;
+import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchStatusText;
+import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -26,6 +33,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.BoxLayout;
@@ -68,18 +77,26 @@ class RunPanel extends JPanel
 	/** Tell the other tabs a setting changed here (route mode after a reorder). */
 	private final Runnable settingsChanged;
 	private final RunControls controls;
+	private final PatchTracker patchTracker;
+	private final AccessChecker accessChecker;
 	private RunPlan plan = RunPlan.EMPTY;
 	private boolean loggedIn;
 	/** The running timer, updated every second without rebuilding the panel. */
 	private JLabel clockLabel;
 	private final Timer clockTimer;
+	/** Patch timers while off, refreshed without rebuilding the panel; null otherwise. */
+	private JPanel patchTimers;
 
-	/** Start, stop and skip, plus the session's current view. */
+	/** Build, cancel, start, stop and skip, plus the session's current view. */
 	interface RunControls
 	{
 		RunView view();
 
-		void start();
+		void build();
+
+		void cancel();
+
+		void startNow();
 
 		void stop();
 
@@ -87,12 +104,14 @@ class RunPanel extends JPanel
 	}
 
 	RunPanel(SettingsStore settings, RunOverrides overrides, Runnable replan, Runnable settingsChanged,
-		RunControls controls)
+		PatchTracker patchTracker, AccessChecker accessChecker, RunControls controls)
 	{
 		this.settings = settings;
 		this.overrides = overrides;
 		this.replan = replan;
 		this.settingsChanged = settingsChanged;
+		this.patchTracker = patchTracker;
+		this.accessChecker = accessChecker;
 		this.controls = controls;
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -109,9 +128,28 @@ class RunPanel extends JPanel
 	private void updateClock()
 	{
 		final RunView view = controls.view();
-		if (clockLabel != null && view.getState() == RunView.State.RUNNING)
+		if (clockLabel == null)
+		{
+			return;
+		}
+		if (view.getState() == RunView.State.RUNNING)
 		{
 			clockLabel.setText("Running " + GuidanceOverlay.clock((System.currentTimeMillis() - view.getStartedAtMillis()) / 1000));
+		}
+		else if (view.getState() == RunView.State.ARMED)
+		{
+			clockLabel.setText("Armed");
+			clockLabel.setToolTipText("The timer starts when you teleport or click your first patch");
+		}
+	}
+
+	/** Re-read the patch timers shown while off. Call on the Swing thread. */
+	void refreshPatches()
+	{
+		if (patchTimers != null)
+		{
+			fillPatchTimers(patchTimers);
+			finish();
 		}
 	}
 
@@ -149,13 +187,20 @@ class RunPanel extends JPanel
 		final SupplyPlan supplies = plan.getSupplies();
 		final RunView view = controls.view();
 		clockLabel = null;
-		if (view.getState() == RunView.State.RUNNING)
+		patchTimers = null;
+		if (view.getState() == RunView.State.RUNNING || view.getState() == RunView.State.ARMED)
 		{
 			addRunning(view);
 			finish();
 			return;
 		}
-		addStart(view);
+		if (view.getState() == RunView.State.OFF)
+		{
+			addOff(view);
+			finish();
+			return;
+		}
+		addBuilding();
 		add(heading(summary(supplies)));
 		if (settings.getRunConfig().isSupplyFullRun())
 		{
@@ -219,23 +264,33 @@ class RunPanel extends JPanel
 		}
 	}
 
-	// Start and running
+	// Off, building and running
 
-	private void addStart(RunView view)
+	/** Not planning a run: what's due, patch timers and a Build run button. Nothing shows in game. */
+	private void addOff(RunView view)
 	{
-		final JButton start = new JButton("Start run");
-		start.setEnabled(!plan.getRoute().getStops().isEmpty());
-		start.setFocusPainted(false);
-		start.addActionListener(e -> controls.start());
-		start.setAlignmentX(LEFT_ALIGNMENT);
-		start.setMaximumSize(new Dimension(Integer.MAX_VALUE, start.getPreferredSize().height));
-		add(start);
-		if (!plan.getRoute().getStops().isEmpty())
+		final JButton build = new JButton("Build run");
+		build.setEnabled(!plan.getRoute().getStops().isEmpty());
+		build.setFocusPainted(false);
+		build.setToolTipText("Show the farm run bank tab and gather supplies. The run starts itself once you have them.");
+		build.addActionListener(e -> controls.build());
+		build.setAlignmentX(LEFT_ALIGNMENT);
+		build.setMaximumSize(new Dimension(Integer.MAX_VALUE, build.getPreferredSize().height));
+		add(build);
+
+		add(heading(summary(plan.getSupplies())));
+		addRunTypeStatus(plan.getSelection());
+
+		add(heading("Patch timers"));
+		patchTimers = new JPanel();
+		patchTimers.setLayout(new BoxLayout(patchTimers, BoxLayout.Y_AXIS));
+		patchTimers.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		fillPatchTimers(patchTimers);
+		add(left(patchTimers));
+
+		if (view.getLastRun() != null || view.getBestTimes() != null)
 		{
-			final JLabel ready = note(view.isReady() ? "Ready: everything is with you or at the leprechaun."
-				: "Grab the yellow and red items first, or start anyway.");
-			ready.setForeground(view.isReady() ? CARRIED : IN_STORAGE);
-			add(ready);
+			add(heading("Times"));
 		}
 		if (view.getLastRun() != null)
 		{
@@ -244,6 +299,101 @@ class RunPanel extends JPanel
 		if (view.getBestTimes() != null)
 		{
 			add(note(view.getBestTimes()));
+		}
+	}
+
+	/** Every usable, selected patch of each ticked type, soonest ready first. */
+	private void fillPatchTimers(JPanel panel)
+	{
+		panel.removeAll();
+		final RunConfig config = settings.getRunConfig();
+		final AccessSnapshot access = accessChecker.getSnapshot();
+		final long now = Instant.now().getEpochSecond();
+		boolean any = false;
+		for (PatchType type : PatchType.values())
+		{
+			if (!config.getEnabledTypes().contains(type))
+			{
+				continue;
+			}
+			final List<Patch> patches = new ArrayList<>();
+			final Map<Patch, PatchPrediction> predictions = new EnumMap<>(Patch.class);
+			for (Patch patch : Patch.values())
+			{
+				if (patch.getType() == type && config.isPatchSelected(patch) && access.missingFor(patch).isEmpty())
+				{
+					patches.add(patch);
+					predictions.put(patch, patchTracker.predict(patch));
+				}
+			}
+			if (patches.isEmpty())
+			{
+				continue;
+			}
+			// Due patches first, then by when they'll be ready
+			patches.sort(Comparator.comparingLong(p -> RunSelector.isDue(predictions.get(p))
+				? Long.MIN_VALUE : predictions.get(p).getDoneAt()));
+			final JLabel title = new JLabel(type.getDisplayName() + "s");
+			title.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+			title.setFont(FontManager.getRunescapeSmallFont());
+			title.setBorder(new EmptyBorder(any ? 6 : 0, 0, 2, 0));
+			panel.add(left(title));
+			for (Patch patch : patches)
+			{
+				panel.add(patchTimer(patch, predictions.get(patch), now));
+			}
+			any = true;
+		}
+		if (!any)
+		{
+			panel.add(note("No patches selected"));
+		}
+	}
+
+	private static JComponent patchTimer(Patch patch, PatchPrediction prediction, long now)
+	{
+		final JPanel cell = new JPanel(new BorderLayout());
+		cell.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		cell.setBorder(new EmptyBorder(3, 6, 3, 6));
+		final JLabel name = new JLabel(UiText.wrap(patch.getLocation().getDisplayName(), TEXT_WIDTH - 20));
+		name.setForeground(ColorScheme.TEXT_COLOR);
+		name.setFont(FontManager.getRunescapeSmallFont());
+		final JLabel status = new JLabel(UiText.wrap(PatchStatusText.describe(prediction, now), TEXT_WIDTH - 20));
+		status.setForeground(RunSelector.isDue(prediction) ? CARRIED : ColorScheme.LIGHT_GRAY_COLOR);
+		status.setFont(FontManager.getRunescapeSmallFont());
+		cell.add(name, BorderLayout.NORTH);
+		cell.add(status, BorderLayout.CENTER);
+
+		final JPanel wrapper = new JPanel(new BorderLayout());
+		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		wrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
+		wrapper.add(cell, BorderLayout.CENTER);
+		return left(wrapper);
+	}
+
+	/** Gathering supplies: cancel, or start without everything. */
+	private void addBuilding()
+	{
+		final JPanel buttons = new JPanel(new GridLayout(1, 2, 4, 0));
+		buttons.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		final JButton startNow = new JButton("Start now");
+		startNow.setFocusPainted(false);
+		startNow.setEnabled(!plan.getRoute().getStops().isEmpty());
+		startNow.setToolTipText("Start the run and its timer without everything");
+		startNow.addActionListener(e -> controls.startNow());
+		final JButton cancel = new JButton("Cancel");
+		cancel.setFocusPainted(false);
+		cancel.addActionListener(e -> controls.cancel());
+		buttons.add(startNow);
+		buttons.add(cancel);
+		buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, buttons.getPreferredSize().height));
+		add(left(buttons));
+		if (!plan.getRoute().getStops().isEmpty())
+		{
+			final JLabel ready = note("Grab the yellow and red items. The run starts itself once you have them; "
+				+ "the timer starts when you teleport or click your first patch.");
+			ready.setForeground(IN_STORAGE);
+			add(ready);
 		}
 	}
 
@@ -263,16 +413,16 @@ class RunPanel extends JPanel
 		updateClock();
 		final JPanel buttons = new JPanel(new GridLayout(1, 2, 4, 0));
 		buttons.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		final JButton skip = new JButton("Skip step");
-		skip.setFocusPainted(false);
-		skip.setFont(FontManager.getRunescapeSmallFont());
-		skip.addActionListener(e -> controls.skip());
-		final JButton stop = new JButton("Stop");
-		stop.setFocusPainted(false);
-		stop.setFont(FontManager.getRunescapeSmallFont());
-		stop.addActionListener(e -> controls.stop());
-		buttons.add(skip);
-		buttons.add(stop);
+		if (view.getState() == RunView.State.ARMED)
+		{
+			buttons.add(smallButton("Start now", controls::startNow));
+			buttons.add(smallButton("Cancel", controls::cancel));
+		}
+		else
+		{
+			buttons.add(smallButton("Skip step", controls::skip));
+			buttons.add(smallButton("Stop", controls::stop));
+		}
 		bar.add(clockLabel, BorderLayout.CENTER);
 		bar.add(buttons, BorderLayout.EAST);
 		bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, bar.getPreferredSize().height));
@@ -284,6 +434,15 @@ class RunPanel extends JPanel
 		{
 			add(runningStop(number++, routeStop));
 		}
+	}
+
+	private static JButton smallButton(String text, Runnable onClick)
+	{
+		final JButton button = new JButton(text);
+		button.setFocusPainted(false);
+		button.setFont(FontManager.getRunescapeSmallFont());
+		button.addActionListener(e -> onClick.run());
+		return button;
 	}
 
 	/** A stop while running: struck through when done, highlighted with its next step when current. */
@@ -325,7 +484,8 @@ class RunPanel extends JPanel
 	private JComponent presetPicker()
 	{
 		final List<String> names = settings.presetNames();
-		if (names.isEmpty() || controls.view().getState() == RunView.State.RUNNING)
+		final RunView.State state = controls.view().getState();
+		if (names.isEmpty() || state == RunView.State.ARMED || state == RunView.State.RUNNING)
 		{
 			return null;
 		}
@@ -560,7 +720,8 @@ class RunPanel extends JPanel
 			final JLabel name = new JLabel((index + 1) + ". " + stop.getLocation().getDisplayName());
 			name.setForeground(ColorScheme.TEXT_COLOR);
 			name.setFont(FontManager.getRunescapeSmallFont());
-			final JLabel travel = new JLabel(UiText.wrap(stop.describeTravel()
+			final boolean here = index == 0 && controls.view().isAtFirstStop();
+			final JLabel travel = new JLabel(UiText.wrap(here ? "You're here" : stop.describeTravel()
 				+ " - about " + PatchStatusText.duration((long) stop.getLegSeconds()), TEXT_WIDTH - 20));
 			travel.setForeground(stop.isNeedsSupplies() ? IN_STORAGE : ColorScheme.LIGHT_GRAY_COLOR);
 			travel.setFont(FontManager.getRunescapeSmallFont());

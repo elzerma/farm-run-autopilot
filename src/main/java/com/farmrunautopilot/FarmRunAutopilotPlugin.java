@@ -222,6 +222,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 		final RunView runView = runSession.getView();
 		if (!runView.equals(shownRunView))
 		{
+			if (shownRunView == null || shownRunView.getState() != runView.getState())
+			{
+				farmBankTab.setEnabled(runView.getState() != RunView.State.OFF);
+			}
 			shownRunView = runView;
 			showPlanLater(runService.getPlan(), client.getGameState() == GameState.LOGGED_IN);
 		}
@@ -299,6 +303,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 		}
 		else if (event.getGameState() == GameState.LOGIN_SCREEN)
 		{
+			// A run being built or waiting to leave is dropped; one already timing carries on after relogging
+			runSession.cancelIfNotRunning();
 			sceneTracker.clear();
 			showPlanLater(RunPlan.EMPTY, false);
 		}
@@ -360,6 +366,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	@Subscribe(priority = -1)
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
+		runSession.onMenuOptionClicked(event);
 		farmBankTab.onMenuOptionClicked(event);
 	}
 

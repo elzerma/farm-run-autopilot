@@ -395,7 +395,8 @@ Record each leg from the moment the player leaves the previous stop (teleport an
 ## 13. User interface
 
 ### 13.1 Sidebar — Run tab
-- Preset picker + **Start run** / **Stop** buttons.
+- Stages: **Off** (default; due summary, run-type status and patch timers; nothing shown in game) → **Build run** → **Building** (bank tab button, checklist, "get N items" under the player) → **Armed** automatically once every required item is carried or at the leprechaun (plan frozen, first step shown) → **Running** when the player teleports or clicks a route patch or its gardener (or presses **Start now**); the timer starts here. Finishing or **Stop** returns to Off. **Cancel** leaves Building/Armed. Logging out drops Building/Armed.
+- Preset picker + **Build run** / **Start now** / **Cancel** / **Skip step** / **Stop** buttons.
 - **Due summary**: "This run: Trees (7), Herbs (9). Fruit trees ready in 5h 12m [include anyway]".
 - **Route list** (drag to reorder): each stop shows the travel method icon, patches there with state icons, and estimated time; current step highlighted.
 - **Supply checklist** (Quest Helper style): green ✔ / red ✘ "have 3 / need 5", grouped Travel · Runes · Seeds & saplings · Payments · Tools · Optional; hover shows where items are (bank / inventory / leprechaun / group storage / vault).

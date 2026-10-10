@@ -62,6 +62,10 @@ public class GuidanceOverlay extends Overlay
 			final long seconds = (System.currentTimeMillis() - view.getStartedAtMillis()) / 1000;
 			draw(graphics, player, clock(seconds), TIMER, line++);
 		}
+		else if (view.getState() == RunView.State.ARMED)
+		{
+			draw(graphics, player, "Timer starts when you leave", TIMER, line++);
+		}
 		for (String text : wrap(graphics.getFontMetrics(), instruction, maxWidth))
 		{
 			draw(graphics, player, text, INSTRUCTION, line++);

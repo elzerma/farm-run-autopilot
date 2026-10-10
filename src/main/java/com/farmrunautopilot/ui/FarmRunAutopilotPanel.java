@@ -49,6 +49,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		display.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
 		runPanel = new RunPanel(settings, runOverrides, runService::markDirty, this::rebuildSetup,
+			patchTracker, accessChecker,
 			new RunPanel.RunControls()
 			{
 				@Override
@@ -58,9 +59,21 @@ public class FarmRunAutopilotPanel extends PluginPanel
 				}
 
 				@Override
-				public void start()
+				public void build()
 				{
-					clientThread.invoke(runSession::start);
+					clientThread.invoke(runSession::build);
+				}
+
+				@Override
+				public void cancel()
+				{
+					clientThread.invoke(runSession::cancel);
+				}
+
+				@Override
+				public void startNow()
+				{
+					clientThread.invoke(runSession::startNow);
 				}
 
 				@Override
@@ -105,6 +118,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	public void refreshPatches()
 	{
 		rulesPanel.refreshPatches();
+		runPanel.refreshPatches();
 	}
 
 	/** Shows a new supply plan in the Run tab. Call on the Swing thread. */
