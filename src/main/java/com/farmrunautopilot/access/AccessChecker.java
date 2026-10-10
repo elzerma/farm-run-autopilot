@@ -189,7 +189,7 @@ public class AccessChecker
 			Collections.unmodifiableSet(diaries), Collections.unmodifiableSet(unlocks), account.getPoh().getPortal(),
 			spellbook(client.getVarbitValue(VarbitID.SPELLBOOK)),
 			altar != null ? altar.getSpellbooks() : Collections.emptySet(),
-			// UNVERIFIED: QP_MAX is assumed to be the quest points available in the game (shown in Rules > Unlocks)
+			// QP_MAX is the quest points available in the game (checked in-game)
 			client.getVarpValue(VarPlayerID.QP), client.getVarbitValue(VarbitID.QP_MAX));
 	}
 

@@ -551,13 +551,6 @@ class SetupPanel extends JPanel
 	{
 		final CollapsibleSection s = section("Unlocks");
 		s.addContent(note("Things the plugin can't detect. Tick the ones you have."));
-		if (access.isKnown())
-		{
-			// Also a check that the game's quest point total is read right
-			s.addContent(note("Quest points: " + access.getQuestPoints() + " / "
-				+ (access.getMaxQuestPoints() > 0 ? access.getMaxQuestPoints() : "unknown")
-				+ (access.isMet(Requirement.allQuests()) ? " (quest point cape usable)" : "")));
-		}
 		for (Unlock unlock : Unlock.values())
 		{
 			if (AccessChecker.isDetected(unlock))
