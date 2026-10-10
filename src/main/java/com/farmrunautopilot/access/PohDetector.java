@@ -21,7 +21,9 @@ import net.runelite.api.gameval.ObjectID;
  * house in My POH, which clears what was detected so the next house visit fills it in again. The house
  * portal location and nexus destinations can't be read this way and stay manual.
  *
- * <p>Furniture found while a house loads is collected and saved once, on the next game tick.
+ * <p>Only objects in a house are looked at: from the "Loading house" screen (shown a tick before the house's
+ * objects spawn) until a scene outside an instance loads. Furniture found is collected and saved once, on
+ * the next game tick.
  */
 @Slf4j
 @Singleton
@@ -30,6 +32,8 @@ public class PohDetector
 	private final SettingsStore settings;
 	private final AccessChecker accessChecker;
 
+	/** In a house (client thread). */
+	private boolean inHouse;
 	// Found since the last tick (client thread)
 	private boolean found;
 	private JewelleryBoxTier foundBox;
@@ -45,9 +49,28 @@ public class PohDetector
 		this.accessChecker = accessChecker;
 	}
 
-	/** Call for every spawned game object. Cheap for objects that aren't POH furniture. */
+	/** The "Loading house" screen opened: the house's objects spawn next. */
+	public void onHouseLoading()
+	{
+		inHouse = true;
+	}
+
+	/** A new scene is loading; anything but an instance means the player has left the house. */
+	public void onSceneLoading(boolean instance)
+	{
+		if (!instance)
+		{
+			inHouse = false;
+		}
+	}
+
+	/** Call for every spawned game object. Does nothing outside a house. */
 	public void onObjectSpawned(int objectId)
 	{
+		if (!inHouse)
+		{
+			return;
+		}
 		final JewelleryBoxTier box = jewelleryBoxFor(objectId);
 		final PoolTier pool = poolFor(objectId);
 		final boolean fairyRing = objectId == ObjectID.POH_FAIRY_RING || objectId == ObjectID.POH_SPIRIT_RING;
@@ -87,13 +110,25 @@ public class PohDetector
 		final PohAltar altar = foundAltar;
 		final boolean fairyRing = foundFairyRing;
 		final boolean spiritTree = foundSpiritTree;
-		reset();
+		clearFound();
 		// Settings are only changed on the Swing thread.
 		SwingUtilities.invokeLater(() -> apply(box, pool, altar, fairyRing, spiritTree));
 	}
 
-	/** Forget anything found but not yet saved. */
+	/** Forget anything found but not yet saved, and that the player was in a house. */
 	public void reset()
+	{
+		inHouse = false;
+		clearFound();
+	}
+
+	/** Furniture was found and not yet saved (for tests). */
+	boolean hasFound()
+	{
+		return found;
+	}
+
+	private void clearFound()
 	{
 		found = false;
 		foundBox = null;

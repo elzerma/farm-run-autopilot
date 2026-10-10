@@ -298,16 +298,19 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			// Objects are spawned again once the new scene loads; NPCs nearby aren't, so keep those
 			sceneTracker.clearObjects();
+			pohDetector.onSceneLoading(client.getTopLevelWorldView().isInstance());
 		}
 		else if (event.getGameState() == GameState.HOPPING)
 		{
 			sceneTracker.clear();
+			pohDetector.reset();
 		}
 		else if (event.getGameState() == GameState.LOGIN_SCREEN)
 		{
 			// A run being built or waiting to leave is dropped; one already timing carries on after relogging
 			runSession.cancelIfNotRunning();
 			sceneTracker.clear();
+			pohDetector.reset();
 			showPlanLater(RunPlan.EMPTY, false);
 		}
 	}
@@ -343,6 +346,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 	@Subscribe
 	public void onWidgetLoaded(WidgetLoaded event)
 	{
+		if (event.getGroupId() == InterfaceID.POH_LOADING)
+		{
+			pohDetector.onHouseLoading();
+		}
 		farmBankTab.onWidgetLoaded(event);
 	}
 
