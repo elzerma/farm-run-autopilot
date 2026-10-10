@@ -17,6 +17,7 @@ import com.farmrunautopilot.data.poh.JewelleryBoxTier;
 import com.farmrunautopilot.data.poh.PohAltar;
 import com.farmrunautopilot.data.poh.PoolTier;
 import com.farmrunautopilot.data.poh.PortalNexus;
+import com.farmrunautopilot.data.travel.DailyLimits;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.Spell;
@@ -278,11 +279,15 @@ class SetupPanel extends JPanel
 						"Every piece you have, in your bank, inventory and worn, added together");
 				}
 			}
-			// TEMPORARY, to confirm in game: the raw game values assumed to count today's uses
-			addDetected("Daily teleports used (checking)", "Ardougne cloak farm "
-					+ held.getUsedToday().getOrDefault(TravelMethod.ARDOUGNE_CLOAK_FARM, 0) + ", cabbage patch "
-					+ held.getUsedToday().getOrDefault(TravelMethod.EXPLORERS_RING_CABBAGE_PATCH, 0),
-				"Should match how many times you've used each today; remove once confirmed");
+			for (TravelMethod method : DailyLimits.usedTodayVarbits().keySet())
+			{
+				final Integer left = ChargeBudget.leftToday(method, held);
+				if (left != null)
+				{
+					addDetected(method.getDisplayName(), left + " left today",
+						"This teleport can only be used a few times a day with the item you have");
+				}
+			}
 			addDetected("Tool leprechaun", stored.isEmpty() ? "Nothing stored" : String.join(", ", stored),
 				"What's stored with the tool leprechaun counts as yours for the supply list");
 			if (held.isAutoweedOn())

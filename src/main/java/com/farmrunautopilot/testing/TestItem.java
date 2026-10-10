@@ -28,10 +28,10 @@ public enum TestItem
 	TALISMAN_CHARGES(Tab.TRAVEL, "Xeric's talisman charges",
 		"Check the talisman. Account > Detected should show the same number. Teleport once and it should drop "
 			+ "by one. At 0 charges, Auto (best) should stop picking it."),
-	DAILY_TELEPORTS(Tab.TRAVEL, "Teleports left today",
-		"With an Ardougne cloak 2 or 3, or Explorer's ring 2 or 3: Account > Detected has a \"Daily teleports "
-			+ "used (checking)\" line. Use a farm or cabbage teleport and note how its numbers change. Once "
-			+ "the day's uses are gone, Auto (best) should stop picking it."),
+	EXPLORERS_RING_DAILY(Tab.TRAVEL, "Explorer's ring cabbage teleports left today",
+		"With an Explorer's ring 2, Account > Detected shows how many cabbage patch teleports you have left "
+			+ "today. Use one: the count should go down by one and match what the game says. Once they're gone, "
+			+ "Auto (best) should stop picking it."),
 	KHARYRLL(Tab.TRAVEL, "Kharyrll Teleport highlight",
 		"On the Ancient spellbook with Kharyrll Teleport planned for Port Phasmatys (and no tablet), the "
 			+ "spell should be outlined in your spellbook on that step."),

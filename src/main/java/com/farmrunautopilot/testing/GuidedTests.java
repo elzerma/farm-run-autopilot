@@ -29,6 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.runelite.api.Quest;
 import net.runelite.api.Skill;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
 import static com.farmrunautopilot.testing.GuidedTest.Step.ask;
 import static com.farmrunautopilot.testing.GuidedTest.Step.doThis;
@@ -50,7 +51,7 @@ final class GuidedTests
 		TESTS.put(TestItem.FORTIS_CHAMPION, new FortisChampion());
 		TESTS.put(TestItem.ATES_CHARGES, new AtesCharges());
 		TESTS.put(TestItem.TALISMAN_CHARGES, new TalismanCharges());
-		TESTS.put(TestItem.DAILY_TELEPORTS, new DailyTeleports());
+		TESTS.put(TestItem.EXPLORERS_RING_DAILY, new ExplorersRingDaily());
 		TESTS.put(TestItem.KHARYRLL, new Kharyrll());
 		TESTS.put(TestItem.VARBIT_UNLOCKS, new VarbitUnlocks());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
@@ -414,57 +415,82 @@ final class GuidedTests
 		}
 	}
 
-	private static final class DailyTeleports extends GuidedTest
+	/**
+	 * The Explorer's ring's daily cabbage patch teleports. (The Ardougne cloak's farm teleports passed this test:
+	 * the game said "You have used 1 of your 3 Ardougne Farm teleports for today." and its value went 0 to 1.)
+	 */
+	private static final class ExplorersRingDaily extends GuidedTest
 	{
+		/** The game's message after a limited teleport, e.g. "You have used 1 of your 3 ... teleports for today." */
+		private static final Pattern USED = Pattern.compile("You have used (\\d+) of your (\\d+) .*today\\.?");
+		/** Ticks to wait after the message for the game value to catch up. */
+		private static final int CATCH_UP_TICKS = 5;
+
+		private static int used(TestContext ctx)
+		{
+			return ctx.varbit(DailyLimits.usedTodayVarbits().get(TravelMethod.EXPLORERS_RING_CABBAGE_PATCH));
+		}
+
 		@Override
 		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
 		{
-			return owns(holdings, "an Ardougne cloak 2 or 3, or Explorer's ring 2 or 3", TravelItem.ARDOUGNE_CLOAK,
-				TravelItem.EXPLORERS_RING);
+			return holdings.count(ItemID.LUMBRIDGE_RING_MEDIUM) > 0 ? Collections.emptyList()
+				: Collections.singletonList("Have an Explorer's ring 2 (higher tiers have no daily limit)");
 		}
 
 		@Override
 		public List<Need> bring()
 		{
-			return Arrays.asList(new Need("Ardougne cloak 2 or 3", TravelItem.ARDOUGNE_CLOAK.getItemIds()),
-				new Need("Explorer's ring 2 or 3", TravelItem.EXPLORERS_RING.getItemIds()));
-		}
-
-		private static String values(TestContext ctx)
-		{
-			final List<String> values = new ArrayList<>();
-			for (Map.Entry<TravelMethod, Integer> e : DailyLimits.usedTodayVarbits().entrySet())
-			{
-				values.add(e.getKey().getDisplayName() + " = " + ctx.varbit(e.getValue()));
-			}
-			return String.join(", ", values);
+			return Collections.singletonList(new Need("Explorer's ring 2", new int[]{ItemID.LUMBRIDGE_RING_MEDIUM}));
 		}
 
 		@Override
 		public List<Step> steps()
 		{
 			return Arrays.asList(
-				doThis("Take your Ardougne cloak or Explorer's ring out of the bank",
-					ctx -> ctx.carries(TravelItem.ARDOUGNE_CLOAK.getItemIds())
-						|| ctx.carries(TravelItem.EXPLORERS_RING.getItemIds())),
-				doThis("Use its farm teleport (cloak) or cabbage patch teleport (ring)",
-					ctx -> !values(ctx).equals(ctx.recall("before")))
-					.onStart(ctx ->
+				doThis("Take your Explorer's ring 2 out of the bank",
+					ctx -> ctx.carries(new int[]{ItemID.LUMBRIDGE_RING_MEDIUM})),
+				doThis("Use its cabbage patch teleport", ctx ->
+				{
+					for (String message : ctx.chat())
 					{
-						ctx.remember("before", values(ctx));
-						ctx.capture("Game values before", values(ctx));
-					})
-					.onDone(ctx -> ctx.capture("Game values after", values(ctx)))
-					.orAskAfter(DO_TICKS, "Have you used the teleport?")
+						final Matcher m = USED.matcher(message);
+						if (m.matches())
+						{
+							ctx.capture("Game message", message);
+							ctx.remember("said", Integer.parseInt(m.group(1)));
+							ctx.remember("waited", 0);
+						}
+					}
+					final Integer said = ctx.recall("said");
+					if (said == null)
+					{
+						return false;
+					}
+					final int value = used(ctx);
+					final int waited = ctx.<Integer>recall("waited") + 1;
+					ctx.remember("waited", waited);
+					if (value != said && waited < CATCH_UP_TICKS)
+					{
+						return false;
+					}
+					ctx.capture("Game value after", value);
+					if (value != said)
+					{
+						ctx.problem("The game value (" + value + ") isn't the number used today (" + said + ")");
+					}
+					return true;
+				})
+					.onStart(ctx -> ctx.capture("Game value before", used(ctx)))
+					.orAskAfter(DO_TICKS, "Have you used the cabbage patch teleport?")
 					.onAnswer((ctx, yes) ->
 					{
+						ctx.capture("Game value after", used(ctx));
 						if (yes)
 						{
-							ctx.problem("The game values didn't change after the teleport");
+							ctx.problem("No \"You have used N of your M\" message was seen after the teleport");
 						}
-					}),
-				ask("Did the game say how many teleports you have left today, and does that match uses left?")
-					.onStart(ctx -> ctx.capture("Game values now", values(ctx))));
+					}));
 		}
 	}
 
