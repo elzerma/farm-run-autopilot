@@ -26,7 +26,12 @@ public class Requirement
 		/** {@link #getLevel()} in every skill (max cape). */
 		ALL_SKILLS,
 		/** Every achievement diary at {@link #getDiaryTier()} (achievement diary cape). */
-		ALL_DIARIES
+		ALL_DIARIES,
+		/**
+		 * Every quest point there is (quest point cape). The cape is taken off and can't be used again when a
+		 * new quest comes out, until it's done.
+		 */
+		ALL_QUESTS
 	}
 
 	Kind kind;
@@ -73,6 +78,11 @@ public class Requirement
 		return new Requirement(Kind.ALL_DIARIES, null, null, 0, null, tier, null, null);
 	}
 
+	public static Requirement allQuests()
+	{
+		return new Requirement(Kind.ALL_QUESTS, null, null, 0, null, null, null, null);
+	}
+
 	public static Requirement housePortal(HousePortal portal)
 	{
 		return new Requirement(Kind.HOUSE_PORTAL, null, null, 0, null, null, null, portal);
@@ -101,6 +111,8 @@ public class Requirement
 				return "Needs " + level + " in every skill";
 			case ALL_DIARIES:
 				return "Needs every " + capitalise(diaryTier.name()) + " diary";
+			case ALL_QUESTS:
+				return "Needs every quest done, including any new ones";
 			default:
 				throw new IllegalStateException("Unhandled requirement kind " + kind);
 		}

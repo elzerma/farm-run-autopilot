@@ -49,10 +49,14 @@ public class AccessSnapshot
 	Spellbook spellbook;
 	/** Spellbooks a POH altar can switch to (empty without one). */
 	Set<Spellbook> altarSpellbooks;
+	/** The player's quest points. */
+	int questPoints;
+	/** Quest points available in the game right now; 0 if unknown. */
+	int maxQuestPoints;
 
 	public AccessSnapshot(boolean known, Map<Quest, QuestState> quests, Map<Skill, Integer> realLevels,
 		Set<String> completedDiaries, Set<Unlock> unlocks, HousePortal housePortal, Spellbook spellbook,
-		Set<Spellbook> altarSpellbooks)
+		Set<Spellbook> altarSpellbooks, int questPoints, int maxQuestPoints)
 	{
 		this.known = known;
 		this.quests = quests;
@@ -62,6 +66,16 @@ public class AccessSnapshot
 		this.housePortal = housePortal;
 		this.spellbook = spellbook;
 		this.altarSpellbooks = altarSpellbooks;
+		this.questPoints = questPoints;
+		this.maxQuestPoints = maxQuestPoints;
+	}
+
+	/** Without quest point information: the quest point cape counts as unusable. */
+	public AccessSnapshot(boolean known, Map<Quest, QuestState> quests, Map<Skill, Integer> realLevels,
+		Set<String> completedDiaries, Set<Unlock> unlocks, HousePortal housePortal, Spellbook spellbook,
+		Set<Spellbook> altarSpellbooks)
+	{
+		this(known, quests, realLevels, completedDiaries, unlocks, housePortal, spellbook, altarSpellbooks, 0, 0);
 	}
 
 	/** Without spellbook information: any book counts as usable. */
@@ -117,9 +131,17 @@ public class AccessSnapshot
 					}
 				}
 				return true;
+			case ALL_QUESTS:
+				return hasAllQuests(questPoints, maxQuestPoints);
 			default:
 				return false;
 		}
+	}
+
+	/** Every quest point in the game; an unknown maximum (0) counts as not. */
+	static boolean hasAllQuests(int questPoints, int maxQuestPoints)
+	{
+		return maxQuestPoints > 0 && questPoints >= maxQuestPoints;
 	}
 
 	public int level(Skill skill)

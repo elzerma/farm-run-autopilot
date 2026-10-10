@@ -27,6 +27,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
 import net.runelite.api.Skill;
+import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
 
 /**
@@ -187,7 +188,9 @@ public class AccessChecker
 		return new AccessSnapshot(true, Collections.unmodifiableMap(quests), Collections.unmodifiableMap(levels),
 			Collections.unmodifiableSet(diaries), Collections.unmodifiableSet(unlocks), account.getPoh().getPortal(),
 			spellbook(client.getVarbitValue(VarbitID.SPELLBOOK)),
-			altar != null ? altar.getSpellbooks() : Collections.emptySet());
+			altar != null ? altar.getSpellbooks() : Collections.emptySet(),
+			// UNVERIFIED: QP_MAX is assumed to be the quest points available in the game (shown in Rules > Unlocks)
+			client.getVarpValue(VarPlayerID.QP), client.getVarbitValue(VarbitID.QP_MAX));
 	}
 
 	/** The SPELLBOOK varbit: 0 standard, 1 ancient, 2 lunar, 3 arceuus; null for anything else. */

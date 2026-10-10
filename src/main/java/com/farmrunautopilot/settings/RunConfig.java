@@ -68,8 +68,10 @@ public class RunConfig
 	private Map<Location, TravelMethod> travel = new EnumMap<>(Location.class);
 	private boolean useRunesNotTabs = false;
 	private Set<Location> runesNotTabsAt = EnumSet.noneOf(Location.class);
-	/** Ways of reaching a fairy ring the player switched off; the rest are used whenever they own what's needed. */
-	private Set<FairyRingAccess> fairyRingAccessOff = EnumSet.noneOf(FairyRingAccess.class);
+	/** Preferred way to get to a fairy ring; null means Auto (the fastest one the player has). */
+	private FairyRingAccess fairyRingWay;
+	/** Walk to the ring by the stop just finished when that's quicker. */
+	private boolean useNearbyFairyRing = true;
 
 	// Route
 	private RouteMode routeMode = RouteMode.AUTOPILOT;
@@ -101,7 +103,11 @@ public class RunConfig
 		disabledPatches = cleanSet(disabledPatches, Patch.class, EnumSet.noneOf(Patch.class));
 		payToClear = cleanSet(payToClear, PatchType.class, EnumSet.noneOf(PatchType.class));
 		runesNotTabsAt = cleanSet(runesNotTabsAt, Location.class, EnumSet.noneOf(Location.class));
-		fairyRingAccessOff = cleanSet(fairyRingAccessOff, FairyRingAccess.class, EnumSet.noneOf(FairyRingAccess.class));
+		if (fairyRingWay == FairyRingAccess.NEARBY)
+		{
+			// The nearby ring has its own switch
+			fairyRingWay = null;
+		}
 
 		crops = cleanMap(crops, PatchType.class);
 		crops.entrySet().removeIf(e -> e.getValue().getType() != e.getKey());

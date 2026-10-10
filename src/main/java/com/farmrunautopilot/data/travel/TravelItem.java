@@ -49,7 +49,8 @@ public enum TravelItem
 	/** Teleports to Kandarin Monastery only; the higher cloaks above also reach the farm. */
 	ARDOUGNE_CLOAK_1("Ardougne cloak 1",
 		needs(Requirement.diary(AchievementDiary.ARDOUGNE, AchievementDiary.Tier.EASY)), ItemID.ARDY_CAPE_EASY),
-	QUEST_POINT_CAPE("Quest point cape", ItemID.SKILLCAPE_QP, ItemID.SKILLCAPE_QP_TRIMMED),
+	QUEST_POINT_CAPE("Quest point cape", needs(Requirement.allQuests()), ItemID.SKILLCAPE_QP,
+		ItemID.SKILLCAPE_QP_TRIMMED),
 	RADAS_BLESSING("Rada's blessing 3/4",
 		needs(Requirement.diary(AchievementDiary.KOUREND_KEBOS, AchievementDiary.Tier.HARD)),
 		ItemID.ZEAH_BLESSING_HARD, ItemID.ZEAH_BLESSING_ELITE),

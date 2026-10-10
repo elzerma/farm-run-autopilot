@@ -43,6 +43,19 @@ public class AccessSnapshotTest
 	}
 
 	@Test
+	public void questPointCapeNeedsEveryQuestPoint()
+	{
+		assertTrue(AccessSnapshot.hasAllQuests(343, 343));
+		// A new quest came out: the cape can't be used until it's done
+		assertFalse(AccessSnapshot.hasAllQuests(343, 345));
+		// Maximum not read: don't trust the cape
+		assertFalse(AccessSnapshot.hasAllQuests(343, 0));
+		final AccessSnapshot newQuest = new AccessSnapshot(true, Collections.emptyMap(), Collections.emptyMap(),
+			Collections.emptySet(), Collections.emptySet(), null, null, Collections.emptySet(), 343, 345);
+		assertFalse(newQuest.isMet(Requirement.allQuests()));
+	}
+
+	@Test
 	public void unknownSnapshotLocksNothing()
 	{
 		for (Patch patch : Patch.values())

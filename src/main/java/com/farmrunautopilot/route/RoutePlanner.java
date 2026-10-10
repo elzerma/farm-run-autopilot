@@ -502,10 +502,15 @@ public final class RoutePlanner
 					{
 						legs.add(new Leg(method, Departure.POH_FAIRY_RING, viaHouse + FAIRY_RING + walk, false));
 					}
-					// No unnamed "some ring nearby": only rings the player has a known way to reach
+					// No unnamed "some ring nearby": only rings the player has a known way to reach. The chosen way
+					// is a preference: if it can't be used, Auto picks from the rest.
+					final FairyRingAccess chosen = config.getFairyRingWay();
+					final boolean chosenUsable = chosen != null && reachRing(chosen, from) != null;
 					for (FairyRingAccess way : FairyRingAccess.values())
 					{
-						final Double reach = config.getFairyRingAccessOff().contains(way) ? null : reachRing(way, from);
+						final boolean allowed = way == FairyRingAccess.NEARBY ? config.isUseNearbyFairyRing()
+							: !chosenUsable || way == chosen;
+						final Double reach = allowed ? reachRing(way, from) : null;
 						if (reach != null)
 						{
 							legs.add(new Leg(method, Departure.of(way), reach + FAIRY_RING + walk, false));
@@ -587,7 +592,8 @@ public final class RoutePlanner
 		{
 			for (TravelItem item : way.getItems())
 			{
-				if (owns(item))
+				// Owning isn't always enough: the quest point cape also needs every quest done
+				if (owns(item) && access.missing(item.getRequirements()).isEmpty())
 				{
 					return ITEM_TELEPORT + walk;
 				}

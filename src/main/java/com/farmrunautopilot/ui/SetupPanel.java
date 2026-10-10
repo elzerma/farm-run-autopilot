@@ -16,6 +16,7 @@ import com.farmrunautopilot.data.poh.PohAltar;
 import com.farmrunautopilot.data.poh.PoolTier;
 import com.farmrunautopilot.data.poh.PortalNexus;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
+import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.Compost;
@@ -377,27 +378,39 @@ class SetupPanel extends JPanel
 		s.addContent(note("\"Runes instead of tablets everywhere\" is in Setup > Run options."));
 
 		s.addContent(subheader("Fairy ring access"));
-		s.addContent(note("Ways to get to a fairy ring before dialling a code. Each is used when you have what it "
-			+ "needs. Your house ring is set in My POH."));
+		s.addContent(note("How to get to a fairy ring before dialling a code. If your pick can't be used (not "
+			+ "carried or owned), Auto chooses. Your house ring is set in My POH."));
+		final List<Choice<FairyRingAccess>> ways = new ArrayList<>();
+		ways.add(Choice.of(null, "Auto (fastest)"));
 		for (FairyRingAccess way : FairyRingAccess.values())
 		{
-			s.addContent(checkBox(way.getDisplayName(), !config.getFairyRingAccessOff().contains(way), true,
-				!way.getItems().isEmpty() ? "Needs: " + way.getItems().get(way.getItems().size() - 1).getDisplayName()
-					+ (way.getItems().size() > 1 ? " or higher" : "")
-					: way.getSpell() != null ? "Needs: " + way.getSpell().getDisplayName() + " (spell or tablet)"
-					: "Walk to the ring next to the stop you just finished",
-				on -> saveRun(() ->
+			if (way == FairyRingAccess.NEARBY)
+			{
+				continue;
+			}
+			// Locked when no item for it can be used (the quest point cape also needs every quest done)
+			List<Requirement> missing = new ArrayList<>();
+			for (TravelItem item : way.getItems())
+			{
+				missing = access.missing(item.getRequirements());
+				if (missing.isEmpty())
 				{
-					if (on)
-					{
-						config.getFairyRingAccessOff().remove(way);
-					}
-					else
-					{
-						config.getFairyRingAccessOff().add(way);
-					}
-				})));
+					break;
+				}
+			}
+			final boolean locked = !missing.isEmpty();
+			final String needs = !way.getItems().isEmpty()
+				? "Needs: " + way.getItems().get(way.getItems().size() - 1).getDisplayName()
+				+ (way.getItems().size() > 1 ? " or higher" : "")
+				: "Needs: " + way.getSpell().getDisplayName() + " (spell or tablet)";
+			ways.add(new Choice<>(way, way.getDisplayName() + (locked ? " (locked)" : ""), !locked,
+				locked ? AccessSnapshot.describe(missing) : needs));
 		}
+		s.addContent(label("Way to a fairy ring"));
+		s.addContent(combo(ways, config.getFairyRingWay(), w -> saveRun(() -> config.setFairyRingWay(w))));
+		s.addContent(checkBox("Use the ring by the last stop when quicker", config.isUseNearbyFairyRing(), true,
+			"Walk to the fairy ring next to the stop you just finished (e.g. CIR after the Farming Guild)",
+			on -> saveRun(() -> config.setUseNearbyFairyRing(on))));
 
 		for (Location location : Location.values())
 		{
@@ -538,6 +551,13 @@ class SetupPanel extends JPanel
 	{
 		final CollapsibleSection s = section("Unlocks");
 		s.addContent(note("Things the plugin can't detect. Tick the ones you have."));
+		if (access.isKnown())
+		{
+			// Also a check that the game's quest point total is read right
+			s.addContent(note("Quest points: " + access.getQuestPoints() + " / "
+				+ (access.getMaxQuestPoints() > 0 ? access.getMaxQuestPoints() : "unknown")
+				+ (access.isMet(Requirement.allQuests()) ? " (quest point cape usable)" : "")));
+		}
 		for (Unlock unlock : Unlock.values())
 		{
 			if (AccessChecker.isDetected(unlock))
