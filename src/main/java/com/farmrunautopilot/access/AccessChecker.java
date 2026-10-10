@@ -174,7 +174,14 @@ public class AccessChecker
 
 		final AccountSettings account = settings.getAccount();
 		final Set<Unlock> unlocks = EnumSet.noneOf(Unlock.class);
-		unlocks.addAll(account.getManualUnlocks());
+		for (Unlock unlock : account.getManualUnlocks())
+		{
+			// An old tick on an unlock now read from the game doesn't count: the game value is right
+			if (!isDetected(unlock))
+			{
+				unlocks.add(unlock);
+			}
+		}
 		// A dramen or lunar staff is also needed unless the Elite Lumbridge diary is done; the supply
 		// calculator (M4) checks for the staff.
 		if (quests.get(Quest.FAIRYTALE_II__CURE_A_QUEEN) != QuestState.NOT_STARTED)
@@ -232,7 +239,7 @@ public class AccessChecker
 	/** Unlocks that are worked out automatically, so Setup shows them as detected rather than a toggle. */
 	public static boolean isDetected(Unlock unlock)
 	{
-		return unlock == Unlock.FAIRY_RINGS || unlock == Unlock.SPIRIT_TREES;
+		return unlock == Unlock.FAIRY_RINGS || unlock == Unlock.SPIRIT_TREES || unlock.isReadFromGame();
 	}
 
 	/**

@@ -243,6 +243,15 @@ class SetupPanel extends JPanel
 				"From Fairytale II; a dramen or lunar staff is needed until the Elite Lumbridge & Draynor diary");
 			addDetected("Spirit trees", access.getUnlocks().contains(Unlock.SPIRIT_TREES) ? "Unlocked" : "Not unlocked",
 				"From Tree Gnome Village");
+			for (Unlock unlock : Unlock.values())
+			{
+				// Confirmed game values, so these aren't in Unlocks to tick
+				if (unlock.isReadFromGame())
+				{
+					addDetected(unlock.getDescription(), access.getUnlocks().contains(unlock) ? "Yes" : "No",
+						"Read from the game");
+				}
+			}
 			addDetected("Quest points", access.getQuestPoints() + (access.getMaxQuestPoints() > 0
 					? " of " + access.getMaxQuestPoints() : ""),
 				"The quest point cape only works with every quest done");

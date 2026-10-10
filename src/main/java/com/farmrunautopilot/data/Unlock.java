@@ -16,7 +16,7 @@ public enum Unlock
 	SPIRIT_TREE_BRIMHAVEN("Spirit tree planted at Brimhaven (83 Farming)"),
 	SPIRIT_TREE_FARMING_GUILD("Spirit tree planted at the Farming Guild (85 Farming)"),
 	// Confirmed in game: 1 once the landing site is built
-	QUETZAL_KASTORI("Kastori quetzal landing site built", VarbitID.QUETZAL_KASTORI),
+	QUETZAL_KASTORI("Kastori quetzal landing site built", VarbitID.QUETZAL_KASTORI, true),
 	// UNVERIFIED (picked by name; non-zero taken as activated)
 	ATES_STATUE_NEMUS_RETREAT("Statue of Ates activated at Nemus Retreat", VarbitID.PENDANT_OF_ATES_AUBURN_FOUND),
 	ATES_STATUE_NORTH_KASTORI("Statue of Ates activated north of Kastori", VarbitID.PENDANT_OF_ATES_TLATI_FOUND),
@@ -26,16 +26,33 @@ public enum Unlock
 	private final String description;
 	/** Non-zero once unlocked, or -1 if the game has no value the plugin can read. */
 	private final int varbit;
+	/**
+	 * The varbit has been checked in game, so it's the only source: shown in Detected, with no tickbox. An
+	 * unconfirmed one keeps a tickbox in case it's the wrong value.
+	 */
+	private final boolean confirmed;
 
 	Unlock(String description)
 	{
-		this(description, -1);
+		this(description, -1, false);
 	}
 
 	Unlock(String description, int varbit)
 	{
+		this(description, varbit, false);
+	}
+
+	Unlock(String description, int varbit, boolean confirmed)
+	{
 		this.description = description;
 		this.varbit = varbit;
+		this.confirmed = confirmed;
+	}
+
+	/** Read from a game value checked in game: never ticked by hand. */
+	public boolean isReadFromGame()
+	{
+		return hasVarbit() && confirmed;
 	}
 
 	public boolean hasVarbit()
