@@ -144,4 +144,34 @@ public class SpellbookRuleTest
 		assertEquals(TravelMethod.CATHERBY_TELEPORT, tablet.getMethod());
 		assertFalse(tablet.isNeedsSupplies());
 	}
+
+	@Test
+	public void chosenHowIsFollowedAndAutoIgnoresTheChoice()
+	{
+		// Standard book, no tablet, Catherby on the nexus; the player picks Camelot Teleport cast directly
+		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
+		quests.put(Quest.LUNAR_DIPLOMACY, QuestState.FINISHED);
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		levels.put(Skill.MAGIC, 99);
+		levels.put(Skill.FARMING, 99);
+		final AccessSnapshot standard = new AccessSnapshot(true, quests, levels, Collections.emptySet(),
+			Collections.emptySet(), null, Spellbook.STANDARD, Collections.emptySet());
+		final RunConfig config = new RunConfig().sanitise();
+		config.setStartLocation(Location.FARMING_GUILD);
+		config.getTravel().put(Location.CATHERBY, TravelMethod.CAMELOT_TELEPORT);
+		config.getTravelHow().put(Location.CATHERBY, Departure.DIRECT);
+		final PohSetup poh = new PohSetup();
+		poh.getNexusDestinations().add(com.farmrunautopilot.data.poh.PortalNexus.Destination.CATHERBY);
+
+		final RouteStop stop = RoutePlanner.plan(Collections.singletonList(Patch.CATHERBY_HERB), config, standard,
+			Holdings.EMPTY, poh).getStops().get(0);
+		assertEquals(TravelMethod.CAMELOT_TELEPORT, stop.getMethod());
+		assertEquals(Departure.DIRECT, stop.getDeparture());
+
+		// Auto (best) shown for the row ignores the choice: the nexus is quicker than Camelot's walk
+		final RouteStop auto = RoutePlanner.autoPick(Location.CATHERBY, config, standard, Holdings.EMPTY, poh,
+			LearnedTimes.NONE);
+		assertEquals(TravelMethod.CATHERBY_TELEPORT, auto.getMethod());
+		assertEquals(Departure.POH_NEXUS, auto.getDeparture());
+	}
 }

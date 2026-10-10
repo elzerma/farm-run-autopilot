@@ -22,6 +22,10 @@ import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.route.Departure;
+import com.farmrunautopilot.route.RouteStop;
+import com.farmrunautopilot.route.RunService;
+import com.farmrunautopilot.route.TravelPick;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.Compost;
 import com.farmrunautopilot.settings.Outfit;
@@ -40,6 +44,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
@@ -62,6 +67,7 @@ import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
+import lombok.Value;
 import net.runelite.api.Skill;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.client.ui.ColorScheme;
@@ -102,6 +108,10 @@ class SetupPanel extends JPanel
 	private Supplier<Holdings> holdings = () -> Holdings.EMPTY;
 	/** Location rows the player has open, kept across redraws (Travel page). */
 	private final Set<Location> openRows = EnumSet.noneOf(Location.class);
+	/** Auto (best)'s picks, for the Travel page; null elsewhere. */
+	private RunService runService;
+	/** The picks the Travel page was last drawn with, to redraw only when they change. */
+	private Map<Location, TravelPick> shownPicks = Collections.emptyMap();
 	/** Run guidance settings, shown on the Account page only (null elsewhere). */
 	private final GuidanceSettings guidance;
 
@@ -125,6 +135,22 @@ class SetupPanel extends JPanel
 	void refreshPatches()
 	{
 		patchDebugPanel.refresh();
+	}
+
+	/** Show Auto (best)'s picks on the Travel page. */
+	void showAutoPicks(RunService runService)
+	{
+		this.runService = runService;
+		rebuild();
+	}
+
+	/** Redraw the Travel page if Auto (best)'s picks changed. Call on the Swing thread. */
+	void refreshAutoPicks()
+	{
+		if (page == Page.TRAVEL && runService != null && !runService.getAutoPicks().equals(shownPicks))
+		{
+			rebuild();
+		}
 	}
 
 	/** What the player holds, for the Detected section (Account page). */
@@ -548,9 +574,6 @@ class SetupPanel extends JPanel
 	private JComponent travelDefaultsSection(RunConfig config, AccessSnapshot access)
 	{
 		final CollapsibleSection s = section("Defaults for every stop");
-		s.addContent(checkBox("Runes instead of tablets", config.isUseRunesNotTabs(), true,
-			"Cast teleports from runes rather than using tablets. A location below can switch this on just for itself.",
-			on -> saveRun(() -> config.setUseRunesNotTabs(on))));
 		s.addContent(checkBox("Walk when it's nearly as quick as teleporting", config.isPreferWalking(), true,
 			"A walk up to about 20 seconds slower is used instead of a teleport, saving charges and clicks "
 				+ "(e.g. one Falador Teleport for Falador Park and Taverley)",
@@ -589,7 +612,18 @@ class SetupPanel extends JPanel
 		return s;
 	}
 
-	/** One entry per location: which teleport, and its runes override. */
+	/** A teleport and how it's used (directly, or through the house), as a dropdown entry. */
+	@Value
+	private static class Way
+	{
+		TravelMethod method;
+		Departure how;
+	}
+
+	/**
+	 * One row per location: Auto (best)'s pick, or the teleport and how the player chose, and whether a spell
+	 * is cast from runes instead of its tablet.
+	 */
 	private JComponent travelSection(RunConfig config, AccessSnapshot access)
 	{
 		// Stops a run can include: a ticked, unlocked patch of a ticked run type
@@ -608,10 +642,13 @@ class SetupPanel extends JPanel
 			overridden += isOverridden(config, location) ? 1 : 0;
 		}
 		final boolean showAll = settings.isSectionOpen(SHOW_ALL_LOCATIONS);
+		final Map<Location, TravelPick> picks = runService != null ? runService.getAutoPicks()
+			: Collections.emptyMap();
+		shownPicks = picks;
 
 		final CollapsibleSection s = section("Locations", overrides(overridden));
-		s.addContent(note("Auto picks the fastest way you have. Click a stop to change it; anything you set there "
-			+ "overrides the defaults above for that stop."));
+		s.addContent(note("Auto (best) shows what it picked for each stop. Click a stop to choose a teleport and "
+			+ "how to use it instead; that overrides Auto for that stop. Tablets are used before runes."));
 		s.addContent(checkBox("Show every location", showAll, true,
 			"Off: only stops your runs can include, plus any you've changed",
 			on ->
@@ -625,37 +662,27 @@ class SetupPanel extends JPanel
 			{
 				continue;
 			}
-			final List<Choice<TravelMethod>> choices = new ArrayList<>();
-			choices.add(Choice.of(null, "Auto (best)"));
-			boolean hasSpell = false;
+			final TravelPick pick = picks.get(location);
+			final String auto = pick != null ? pick.describe() : null;
+			final List<Choice<Way>> choices = new ArrayList<>();
+			choices.add(Choice.of(null, auto != null ? "Auto (best): " + auto : "Auto (best)"));
 			for (TravelMethod method : TravelMethod.values())
 			{
-				if (method.getDestination() != location)
+				if (method.getDestination() == location)
 				{
-					continue;
+					for (Departure how : waysToUse(method))
+					{
+						choices.add(wayChoice(new Way(method, how), location, access));
+					}
 				}
-				hasSpell |= method.getSpell() != null;
-				final List<Requirement> missing = access.missingFor(method);
-				final boolean locked = !missing.isEmpty();
-				// A spell that can't be cast right now still works as a tablet, so say why rather than lock it
-				final Spell spell = method.getSpell();
-				final boolean cantCast = !locked && method.getKind() == TravelKind.SPELL && access.isKnown()
-					&& !access.canCast(spell);
-				final String why = !cantCast ? null : !access.isOnSpellbook(spell)
-					? title(spell.getSpellbook().name()) + " spellbook"
-					: "needs " + spell.getMagicLevel() + " Magic";
-				final String tooltip = locked ? AccessSnapshot.describe(missing)
-					: cantCast ? "You can't cast this right now (" + why + "). It's used if you carry its teleport "
-					+ "tablet; otherwise another way is picked."
-					: method.getNote();
-				choices.add(new Choice<>(method, method.getDisplayName()
-					+ (locked ? " (locked)" : cantCast ? " (" + why + ")" : ""), !locked, tooltip));
 			}
 
 			final TravelMethod chosen = config.getTravel().get(location);
-			final boolean runesHere = config.getRunesNotTabsAt().contains(location) && !config.isUseRunesNotTabs();
+			final Departure chosenHow = config.getTravelHow().get(location);
+			final Way selected = chosen != null ? new Way(chosen, chosenHow != null ? chosenHow : Departure.DIRECT)
+				: null;
 			final ExpandableRow row = new ExpandableRow(location.getDisplayName(),
-				(chosen != null ? chosen.getDisplayName() : "Auto") + (runesHere ? ", runes" : ""),
+				selected != null ? wayLabel(selected, location) : auto != null ? "Auto: " + auto : "Auto",
 				isOverridden(config, location), CONTROL_WIDTH, openRows.contains(location),
 				open ->
 				{
@@ -669,23 +696,31 @@ class SetupPanel extends JPanel
 					}
 				});
 			s.addContent(row);
-			row.addContent(combo(choices, chosen,
-				m -> saveRun(() ->
+			row.addContent(combo(choices, selected,
+				w -> saveRun(() ->
 				{
-					if (m == null)
+					if (w == null)
 					{
 						config.getTravel().remove(location);
+						config.getTravelHow().remove(location);
 					}
 					else
 					{
-						config.getTravel().put(location, m);
+						config.getTravel().put(location, w.getMethod());
+						config.getTravelHow().put(location, w.getHow());
 					}
 				})));
-			if (hasSpell)
+
+			// Tablets come first; a spell the player can cast may use runes here instead
+			final Spell spell = selected != null
+				? (selected.getHow() == Departure.DIRECT ? selected.getMethod().getSpell() : null)
+				: pick != null && pick.getStop().getDeparture() == Departure.DIRECT && pick.getStop().getMethod() != null
+				? pick.getStop().getMethod().getSpell() : null;
+			final boolean runesHere = config.getRunesNotTabsAt().contains(location);
+			if (runesHere || (spell != null && spell.hasTablet() && access.canCast(spell)))
 			{
-				row.addContent(checkBox("Runes instead of tablets here",
-					config.isUseRunesNotTabs() || config.getRunesNotTabsAt().contains(location), !config.isUseRunesNotTabs(),
-					config.isUseRunesNotTabs() ? "Already on for every stop in the defaults above" : null,
+				row.addContent(checkBox("Use runes instead of a tablet", runesHere, true,
+					"Cast this stop's teleport from runes even when you have its tablet",
 					on -> saveRun(() ->
 					{
 						if (on)
@@ -700,6 +735,87 @@ class SetupPanel extends JPanel
 			}
 		}
 		return s;
+	}
+
+	/** Every way a method can be used: directly, and through the house where the house has it. */
+	private static List<Departure> waysToUse(TravelMethod method)
+	{
+		final List<Departure> ways = new ArrayList<>();
+		ways.add(Departure.DIRECT);
+		if (method.getNexus() != null)
+		{
+			ways.add(Departure.POH_NEXUS);
+		}
+		if (method.getJewelleryBox() != null)
+		{
+			ways.add(Departure.POH_JEWELLERY_BOX);
+		}
+		if (method.getKind() == TravelKind.FAIRY_RING)
+		{
+			ways.add(Departure.POH_FAIRY_RING);
+		}
+		if (method.getKind() == TravelKind.SPIRIT_TREE)
+		{
+			ways.add(Departure.POH_SPIRIT_TREE);
+		}
+		return ways;
+	}
+
+	/** e.g. "Camelot Teleport (tablet)", "House portal nexus: Catherby Teleport". */
+	private String wayLabel(Way way, Location location)
+	{
+		final Spell spell = way.getMethod().getSpell();
+		final boolean tablet = spell != null && way.getHow() == Departure.DIRECT && runService != null
+			&& runService.usesTablet(spell, location);
+		return new TravelPick(new RouteStop(location, way.getMethod(), way.getHow(), 0, false), tablet).describe();
+	}
+
+	/** A dropdown entry, greyed out with the reason when it can't be used. */
+	private Choice<Way> wayChoice(Way way, Location location, AccessSnapshot access)
+	{
+		final TravelMethod method = way.getMethod();
+		final List<Requirement> missing = access.missingFor(method);
+		if (!missing.isEmpty())
+		{
+			return new Choice<>(way, wayLabel(way, location) + " (locked)", false, AccessSnapshot.describe(missing));
+		}
+		final PohSetup poh = settings.getAccount().getPoh();
+		final boolean inHouse;
+		switch (way.getHow())
+		{
+			case POH_NEXUS:
+				inHouse = poh.getNexusDestinations().contains(method.getNexus());
+				break;
+			case POH_JEWELLERY_BOX:
+				inHouse = poh.getJewelleryBox() != null && poh.getJewelleryBox().includes(method.getJewelleryBox());
+				break;
+			case POH_FAIRY_RING:
+				inHouse = poh.isFairyRing();
+				break;
+			case POH_SPIRIT_TREE:
+				inHouse = poh.isSpiritTree();
+				break;
+			default:
+				inHouse = true;
+				break;
+		}
+		if (!inHouse)
+		{
+			return new Choice<>(way, wayLabel(way, location) + " (not in your house)", false,
+				"Set your house's furniture in Account > My house");
+		}
+		// A spell that can't be cast right now still works as a tablet, so say why rather than lock it
+		final Spell spell = method.getSpell();
+		if (way.getHow() == Departure.DIRECT && method.getKind() == TravelKind.SPELL && access.isKnown()
+			&& !access.canCast(spell))
+		{
+			final String why = !access.isOnSpellbook(spell) ? title(spell.getSpellbook().name()) + " spellbook"
+				: "needs " + spell.getMagicLevel() + " Magic";
+			return new Choice<>(way, method.getDisplayName() + " (tablet only: " + why + ")", true,
+				"You can't cast this right now (" + why + "). It's used if you carry its teleport tablet; "
+					+ "otherwise another way is picked.");
+		}
+		return new Choice<>(way, wayLabel(way, location), true, method.getNote());
 	}
 
 	private JComponent pohSection(AccountSettings account)
@@ -1056,11 +1172,10 @@ class SetupPanel extends JPanel
 			open -> settings.setSectionOpen(title, open));
 	}
 
-	/** A chosen teleport, or runes where the default is tablets. */
+	/** A chosen teleport, or runes instead of a tablet at this stop. */
 	private static boolean isOverridden(RunConfig config, Location location)
 	{
-		return config.getTravel().containsKey(location)
-			|| (!config.isUseRunesNotTabs() && config.getRunesNotTabsAt().contains(location));
+		return config.getTravel().containsKey(location) || config.getRunesNotTabsAt().contains(location);
 	}
 
 	/** e.g. "2 overrides", or null for none. */

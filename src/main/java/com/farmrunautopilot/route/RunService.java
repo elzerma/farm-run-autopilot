@@ -5,6 +5,7 @@ import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
+import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.run.RunTimings;
 import com.farmrunautopilot.run.StepAdvisor;
 import com.farmrunautopilot.settings.RunConfig;
@@ -54,6 +55,7 @@ public class RunService
 	private volatile boolean dirty = true;
 	/** Null until the first plan after login, so that one is always published. */
 	private volatile RunPlan plan;
+	private volatile Map<Location, TravelPick> autoPicks = new EnumMap<>(Location.class);
 	private int ticksSinceRefresh;
 	/** The stop the player was standing at on the last tick, or null. */
 	private Location here;
@@ -133,13 +135,42 @@ public class RunService
 				patch, patchTracker.predict(patch), supplies.getPlantings().get(patch)));
 		}
 
+		// What Auto (best) picks for every location, from anywhere, for the Travel tab
+		final Map<Location, TravelPick> picks = new EnumMap<>(Location.class);
+		for (Location location : Location.values())
+		{
+			final RouteStop pick = RoutePlanner.autoPick(location, config, access, holdings,
+				settings.getAccount().getPoh(), timings.learned());
+			final boolean tablet = pick.getMethod() != null && pick.getMethod().getSpell() != null
+				&& SupplyCalculator.usesTablet(pick.getMethod().getSpell(), location, config, access, holdings);
+			picks.put(location, new TravelPick(pick, tablet));
+		}
+		final boolean picksChanged = !picks.equals(autoPicks);
+		autoPicks = picks;
+
 		final RunPlan next = new RunPlan(selection, route, supplies, objectives);
-		if (next.equals(plan))
+		if (next.equals(plan) && !picksChanged)
 		{
 			return false;
 		}
 		plan = next;
 		return true;
+	}
+
+	/** Auto (best)'s pick for each location, from anywhere. Any thread. */
+	public Map<Location, TravelPick> getAutoPicks()
+	{
+		return autoPicks;
+	}
+
+	/**
+	 * Whether a spell is taken from its tablet at this location, by the same rule as the supply list. For
+	 * labelling a teleport the player picked. Any thread.
+	 */
+	public boolean usesTablet(Spell spell, Location location)
+	{
+		return SupplyCalculator.usesTablet(spell, location, settings.getRunConfig(), accessChecker.getSnapshot(),
+			holdingsTracker.getHoldings());
 	}
 
 	/** The stop the player is standing at (near one of its patches), or null. Client thread. */

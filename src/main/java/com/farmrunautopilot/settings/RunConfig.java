@@ -6,6 +6,7 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.route.Departure;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -66,7 +67,11 @@ public class RunConfig
 	// Travel
 	/** Chosen method per location; a missing entry means "Auto (best)". */
 	private Map<Location, TravelMethod> travel = new EnumMap<>(Location.class);
+	/** How the chosen method is used (e.g. through the house portal nexus); missing means any way. */
+	private Map<Location, Departure> travelHow = new EnumMap<>(Location.class);
+	/** Old "runes everywhere" setting; now moved into {@link #runesNotTabsAt} for every location on load. */
 	private boolean useRunesNotTabs = false;
+	/** Stops that cast from runes even when a tablet is held (tablets are used first otherwise). */
 	private Set<Location> runesNotTabsAt = EnumSet.noneOf(Location.class);
 	/** Preferred way to get to a fairy ring; null means Auto (the fastest one the player has). */
 	private FairyRingAccess fairyRingWay;
@@ -101,6 +106,12 @@ public class RunConfig
 		disabledPatches = cleanSet(disabledPatches, Patch.class, EnumSet.noneOf(Patch.class));
 		payToClear = cleanSet(payToClear, PatchType.class, EnumSet.noneOf(PatchType.class));
 		runesNotTabsAt = cleanSet(runesNotTabsAt, Location.class, EnumSet.noneOf(Location.class));
+		if (useRunesNotTabs)
+		{
+			// "Runes everywhere" became a per-stop choice: keep it on for every stop
+			runesNotTabsAt.addAll(EnumSet.allOf(Location.class));
+			useRunesNotTabs = false;
+		}
 		if (fairyRingWay == FairyRingAccess.NEARBY)
 		{
 			// The nearby ring has its own switch
@@ -116,6 +127,8 @@ public class RunConfig
 		protectionOverrides = cleanMap(protectionOverrides, Patch.class);
 		travel = cleanMap(travel, Location.class);
 		travel.entrySet().removeIf(e -> e.getValue().getDestination() != e.getKey());
+		travelHow = cleanMap(travelHow, Location.class);
+		travelHow.keySet().removeIf(l -> !travel.containsKey(l));
 
 		final Map<PatchType, Protection> protectionDefaults = defaultProtection();
 		protection = cleanMap(protection, PatchType.class);

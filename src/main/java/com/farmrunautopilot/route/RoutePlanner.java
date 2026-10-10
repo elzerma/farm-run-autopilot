@@ -89,6 +89,8 @@ public final class RoutePlanner
 	private final Holdings holdings;
 	private final PohSetup poh;
 	private final LearnedTimes learned;
+	/** Work out Auto's own pick, ignoring any teleport the player chose (for showing "Auto (best)"). */
+	private boolean ignoreChoices;
 
 	private RoutePlanner(RunConfig config, AccessSnapshot access, Holdings holdings, PohSetup poh,
 		LearnedTimes learned)
@@ -98,6 +100,19 @@ public final class RoutePlanner
 		this.holdings = holdings;
 		this.poh = poh;
 		this.learned = learned;
+	}
+
+	/**
+	 * How Auto (best) would reach a location from anywhere (e.g. straight from the bank), ignoring what the
+	 * player chose for it. Shown on the location's row in the Travel tab.
+	 */
+	public static RouteStop autoPick(Location to, RunConfig config, AccessSnapshot access, Holdings holdings,
+		PohSetup poh, LearnedTimes learned)
+	{
+		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, learned);
+		planner.ignoreChoices = true;
+		final Leg leg = planner.bestLeg(null, to);
+		return new RouteStop(to, leg.method, leg.departure, leg.seconds, leg.needsSupplies);
 	}
 
 	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
@@ -425,11 +440,13 @@ public final class RoutePlanner
 	 */
 	Leg bestLeg(Location from, Location to)
 	{
-		final TravelMethod chosen = config.getTravel().get(to);
+		final TravelMethod chosen = ignoreChoices ? null : config.getTravel().get(to);
 		final boolean chosenUnlocked = chosen != null && access.missingFor(chosen).isEmpty();
 		if (chosenUnlocked)
 		{
-			final Leg leg = quickest(Collections.singletonList(chosen), from, to, null);
+			// The player may also have picked how (e.g. through the house portal nexus)
+			final Leg leg = quickest(Collections.singletonList(chosen), from, to, null,
+				config.getTravelHow().get(to));
 			if (leg != null)
 			{
 				return leg;
@@ -486,10 +503,20 @@ public final class RoutePlanner
 	/** The cheapest usable leg using these methods (or {@code best}, e.g. a walk), or null if there's none. */
 	private Leg quickest(List<TravelMethod> methods, Location from, Location to, Leg best)
 	{
+		return quickest(methods, from, to, best, null);
+	}
+
+	/** @param how only legs that start this way (e.g. through the nexus), or null for any */
+	private Leg quickest(List<TravelMethod> methods, Location from, Location to, Leg best, Departure how)
+	{
 		for (TravelMethod method : methods)
 		{
 			for (Leg leg : options(method, from))
 			{
+				if (how != null && leg.departure != how)
+				{
+					continue;
+				}
 				// Teleports carry the walking preference, so a walk that's only a little slower wins
 				final double seconds = learned.adjust(to, leg.method, leg.departure, leg.seconds);
 				final Leg scored = new Leg(leg.method, leg.departure, seconds, leg.needsSupplies,

@@ -143,4 +143,23 @@ public class RunConfigTest
 		assertNotNull(repaired.getPoh());
 		assertTrue(repaired.getManualUnlocks().isEmpty());
 	}
+
+	@Test
+	public void runesEverywhereBecomesRunesAtEveryStop()
+	{
+		final RunConfig config = new Gson().fromJson("{\"useRunesNotTabs\":true}", RunConfig.class).sanitise();
+		assertFalse(config.isUseRunesNotTabs());
+		assertTrue(config.useRunesAt(Location.CATHERBY));
+		assertTrue(config.useRunesAt(Location.FARMING_GUILD));
+	}
+
+	@Test
+	public void howIsDroppedWithoutAChosenTeleport()
+	{
+		final RunConfig config = new Gson().fromJson(
+			"{\"travelHow\":{\"CATHERBY\":\"POH_NEXUS\",\"ARDOUGNE_FARM\":\"POH_NEXUS\"},"
+				+ "\"travel\":{\"CATHERBY\":\"CATHERBY_TELEPORT\"}}", RunConfig.class).sanitise();
+		assertEquals(com.farmrunautopilot.route.Departure.POH_NEXUS, config.getTravelHow().get(Location.CATHERBY));
+		assertFalse(config.getTravelHow().containsKey(Location.ARDOUGNE_FARM));
+	}
 }

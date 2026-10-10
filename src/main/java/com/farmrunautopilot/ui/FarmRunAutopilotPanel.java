@@ -114,6 +114,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 			this::rebuildSetup,
 			new GuidanceSettings(config, configManager, colorPickers));
 		accountPanel.showHoldings(holdingsTracker::getHoldings);
+		travelPanel.showAutoPicks(runService);
 
 		final TabBar tabs = new TabBar(display);
 		tabs.setBorder(new EmptyBorder(0, 0, 10, 0));
@@ -142,6 +143,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		runPanel.update(plan, loggedIn);
 		// The supply plan is redone when holdings change, so the Detected lines may have too
 		accountPanel.refreshDetected();
+		travelPanel.refreshAutoPicks();
 		// Managing presets is for between runs
 		presetsPanel.setVisible(loggedIn && runSession.getView().getState() == RunView.State.OFF);
 	}

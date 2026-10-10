@@ -197,6 +197,15 @@ public final class SupplyCalculator
 				warnings.add("No unlocked way to reach " + location.getDisplayName());
 				continue;
 			}
+			// A teleport the player picked that can't be used right now: say what's used instead
+			final TravelMethod picked = config.getTravel().get(location);
+			final Departure pickedHow = config.getTravelHow().get(location);
+			if (picked != null && departure != Departure.WALK
+				&& (method != picked || (pickedHow != null && departure != pickedHow)))
+			{
+				warnings.add("Your choice for " + location.getDisplayName() + " can't be used right now, so this run "
+					+ "uses " + stop.describeTravel());
+			}
 
 			String extra = "";
 			if (departure.isViaHouse())
@@ -512,15 +521,24 @@ public final class SupplyCalculator
 	 *
 	 * @return how it will be done, e.g. " (tablet)"
 	 */
+	/**
+	 * Tablet first: a spell is taken from its tablet when the player has one (unless this stop is set to use
+	 * runes), and always when it can't be cast.
+	 */
+	public static boolean usesTablet(Spell spell, Location location, RunConfig config, AccessSnapshot access,
+		Holdings holdings)
+	{
+		return spell.hasTablet() && (!access.canCast(spell)
+			|| (!config.useRunesAt(location) && holdings.count(spell.getTabletItemId()) > 0));
+	}
+
 	private static String addSpell(Spell spell, Location location, RunConfig config, AccessSnapshot access,
 		Holdings holdings, Map<Integer, Integer> tablets, Map<Rune, Integer> runeNeed)
 	{
 		// A spell the player can't cast (wrong spellbook with no altar, Magic level, quest) needs its tablet, even
 		// when runes are preferred (GitHub #2)
 		final boolean castable = access.canCast(spell);
-		final boolean tablet = spell.hasTablet() && (!castable
-			|| (!config.useRunesAt(location) && holdings.count(spell.getTabletItemId()) > 0));
-		if (tablet)
+		if (usesTablet(spell, location, config, access, holdings))
 		{
 			tablets.merge(spell.getTabletItemId(), 1, Integer::sum);
 			return " (tablet)";
@@ -599,7 +617,7 @@ public final class SupplyCalculator
 			}
 			result.lines.add(new SupplyLine(SupplyLine.Group.RUNES, name, n, all.have.get(rune), onYou.have.get(rune),
 				holdings.where(rune.getItemId()), note, infinite || inPouch(holdings, rune) ? 0 : 1, false,
-				TRAVEL_DEFAULTS + " (runes or tablets), " + TRAVEL, new int[]{rune.getItemId()}));
+				TRAVEL + " (teleport, or runes instead of a tablet)", new int[]{rune.getItemId()}));
 		});
 		all.comboUsed.forEach((id, n) -> free.add(n + " " + itemName.apply(id).toLowerCase()));
 		result.summary = String.join(", ", bring) + (free.isEmpty() ? "" : " (" + String.join("; ", free) + ")");
