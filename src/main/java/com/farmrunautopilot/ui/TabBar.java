@@ -1,6 +1,10 @@
 package com.farmrunautopilot.ui;
 
 import java.awt.CardLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.Cursor;
 import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
@@ -29,7 +33,7 @@ class TabBar extends JPanel
 	private static final Border UNSELECTED = new EmptyBorder(4, SIDE_PADDING, 5, SIDE_PADDING);
 
 	private final JPanel display;
-	private final CardLayout cards = new CardLayout();
+	private final CardLayout cards = new VisibleCardLayout();
 	private final List<JLabel> labels = new ArrayList<>();
 
 	/**
@@ -76,11 +80,52 @@ class TabBar extends JPanel
 			style(label, label.getText().equals(name));
 		}
 		cards.show(display, name);
+		// The new tab may be shorter or longer: let the scroll pane re-measure
+		display.revalidate();
 	}
 
 	private static void style(JLabel label, boolean selected)
 	{
 		label.setBorder(selected ? SELECTED : UNSELECTED);
 		label.setForeground(selected ? ColorScheme.BRAND_ORANGE : ColorScheme.LIGHT_GRAY_COLOR);
+	}
+
+	/**
+	 * A card layout as tall as the tab being shown. The standard one is as tall as the tallest tab, which left
+	 * the shorter tabs with a long scroll of empty space.
+	 */
+	private static final class VisibleCardLayout extends CardLayout
+	{
+		@Override
+		public Dimension preferredLayoutSize(Container parent)
+		{
+			final Component shown = visible(parent);
+			return withInsets(parent, shown != null ? shown.getPreferredSize() : new Dimension());
+		}
+
+		@Override
+		public Dimension minimumLayoutSize(Container parent)
+		{
+			final Component shown = visible(parent);
+			return withInsets(parent, shown != null ? shown.getMinimumSize() : new Dimension());
+		}
+
+		private static Component visible(Container parent)
+		{
+			for (Component component : parent.getComponents())
+			{
+				if (component.isVisible())
+				{
+					return component;
+				}
+			}
+			return null;
+		}
+
+		private static Dimension withInsets(Container parent, Dimension size)
+		{
+			final Insets insets = parent.getInsets();
+			return new Dimension(size.width + insets.left + insets.right, size.height + insets.top + insets.bottom);
+		}
 	}
 }
