@@ -94,7 +94,8 @@ public class FarmRunAutopilotPanel extends PluginPanel
 				}
 			});
 		// Presets cover Farm and Travel, so they're managed under the Run tab's preset picker
-		presetsPanel = new SetupPanel(SetupPanel.Page.PRESETS, settings, accessChecker, patchTracker, null);
+		presetsPanel = new SetupPanel(SetupPanel.Page.PRESETS, settings, accessChecker, patchTracker,
+			this::rebuildSetup, null);
 		final JPanel runStack = new JPanel();
 		runStack.setLayout(new BoxLayout(runStack, BoxLayout.Y_AXIS));
 		runStack.setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -106,9 +107,11 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		run.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		run.add(runStack, BorderLayout.NORTH);
 
-		farmPanel = new SetupPanel(SetupPanel.Page.FARM, settings, accessChecker, patchTracker, null);
-		travelPanel = new SetupPanel(SetupPanel.Page.TRAVEL, settings, accessChecker, patchTracker, null);
-		accountPanel = new SetupPanel(SetupPanel.Page.ACCOUNT, settings, accessChecker, patchTracker,
+		farmPanel = new SetupPanel(SetupPanel.Page.FARM, settings, accessChecker, patchTracker,
+			this::rebuildSetup, null);
+		travelPanel = new SetupPanel(SetupPanel.Page.TRAVEL, settings, accessChecker, patchTracker,
+			this::rebuildSetup, null);
+		accountPanel = new SetupPanel(SetupPanel.Page.ACCOUNT, settings, accessChecker, patchTracker, this::rebuildSetup,
 			new GuidanceSettings(config, configManager, colorPickers));
 
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(display);

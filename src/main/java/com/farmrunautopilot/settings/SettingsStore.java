@@ -28,7 +28,7 @@ public class SettingsStore
 	private static final String OPEN_SECTIONS_KEY = "ui.openSections";
 	private static final String PRESETS_KEY = "presets";
 	/** Open the first time: the ones changed most often. */
-	private static final List<String> DEFAULT_OPEN_SECTIONS = Arrays.asList("Crops", "Run options");
+	private static final List<String> DEFAULT_OPEN_SECTIONS = Arrays.asList("Crops", "Defaults for every stop", "Detected");
 
 	private final ConfigManager configManager;
 	private final Gson gson;

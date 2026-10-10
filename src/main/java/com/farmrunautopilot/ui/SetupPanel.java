@@ -37,7 +37,9 @@ import java.awt.GridLayout;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import javax.swing.BoxLayout;
@@ -51,6 +53,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.SwingUtilities;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
 import net.runelite.api.Skill;
@@ -76,18 +79,24 @@ class SetupPanel extends JPanel
 
 	/** Room left for controls after the sidebar's and sections' borders. */
 	private static final int CONTROL_WIDTH = PluginPanel.PANEL_WIDTH - 40;
+	/** Remembered like an open section: the Locations list shows every location. */
+	private static final String SHOW_ALL_LOCATIONS = "Show every location";
 
 	private final SettingsStore settings;
 	private final AccessChecker accessChecker;
 	private final PatchDebugPanel patchDebugPanel;
 	private final Page page;
+	/** Redraws every tab after a change, so summaries and Override tags stay current. */
+	private final Runnable changed;
 	/** Run guidance settings, shown on the Account page only (null elsewhere). */
 	private final GuidanceSettings guidance;
 
 	SetupPanel(Page page, SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker,
+		Runnable changed,
 		GuidanceSettings guidance)
 	{
 		this.page = page;
+		this.changed = changed;
 		this.guidance = guidance;
 		this.settings = settings;
 		this.accessChecker = accessChecker;
@@ -153,7 +162,17 @@ class SetupPanel extends JPanel
 
 	private JComponent patchesSection(RunConfig config, AccessSnapshot access)
 	{
-		final CollapsibleSection s = section("Patches");
+		int usable = 0;
+		int ticked = 0;
+		for (Patch patch : Patch.values())
+		{
+			if (access.missingFor(patch).isEmpty())
+			{
+				usable++;
+				ticked += config.getDisabledPatches().contains(patch) ? 0 : 1;
+			}
+		}
+		final CollapsibleSection s = section("Patches", ticked + " of " + usable + " ticked");
 		s.addContent(note("Untick patches you don't want in your runs. Locked patches show what they need."));
 		for (PatchType type : PatchType.values())
 		{
@@ -301,7 +320,7 @@ class SetupPanel extends JPanel
 	}
 	private JComponent protectionSection(RunConfig config)
 	{
-		final CollapsibleSection s = section("Protection and compost");
+		final CollapsibleSection s = section("Protection and compost", overrides(config.getProtectionOverrides().size()));
 		s.addContent(checkBox("Bring gardener payments noted (trees and fruit trees)", config.isPayWithNotes(), true,
 			"Gardeners accept noted payment; one inventory slot per item type",
 			on -> saveRun(() -> config.setPayWithNotes(on))));
@@ -333,8 +352,10 @@ class SetupPanel extends JPanel
 			s.addContent(combo(enumChoices(Compost.values()), config.getCompost().get(type),
 				c -> saveRun(() -> config.getCompost().put(type, c))));
 		}
-		final CollapsibleSection overrides = section("Per-patch overrides");
-		overrides.addContent(note("Use a different protection for single patches."));
+		final CollapsibleSection overrides = section("Per-patch overrides",
+			overrides(config.getProtectionOverrides().size()));
+		overrides.addContent(note("Use a different protection for single patches. Anything but Default overrides "
+			+ "the setting for its patch type above."));
 		for (Patch patch : Patch.values())
 		{
 			if (!patch.getType().isProtectable())
@@ -446,11 +467,39 @@ class SetupPanel extends JPanel
 	/** One entry per location: which teleport, and its runes override. */
 	private JComponent travelSection(RunConfig config, AccessSnapshot access)
 	{
-		final CollapsibleSection s = section("Locations");
-		s.addContent(note("Auto picks the fastest way you have. Settings here override the defaults above for "
-			+ "that stop. Locked methods show what they need."));
+		// Stops a run can include: a ticked, unlocked patch of a ticked run type
+		final Set<Location> inRuns = EnumSet.noneOf(Location.class);
+		for (Patch patch : Patch.values())
+		{
+			if (config.getEnabledTypes().contains(patch.getType()) && config.isPatchSelected(patch)
+				&& access.missingFor(patch).isEmpty())
+			{
+				inRuns.add(patch.getLocation());
+			}
+		}
+		int overridden = 0;
 		for (Location location : Location.values())
 		{
+			overridden += isOverridden(config, location) ? 1 : 0;
+		}
+		final boolean showAll = settings.isSectionOpen(SHOW_ALL_LOCATIONS);
+
+		final CollapsibleSection s = section("Locations", overrides(overridden));
+		s.addContent(note("Auto picks the fastest way you have. Click a stop to change it; anything you set there "
+			+ "overrides the defaults above for that stop."));
+		s.addContent(checkBox("Show every location", showAll, true,
+			"Off: only stops your runs can include, plus any you've changed",
+			on ->
+			{
+				settings.setSectionOpen(SHOW_ALL_LOCATIONS, on);
+				SwingUtilities.invokeLater(changed);
+			}));
+		for (Location location : Location.values())
+		{
+			if (!showAll && !inRuns.contains(location) && !isOverridden(config, location))
+			{
+				continue;
+			}
 			final List<Choice<TravelMethod>> choices = new ArrayList<>();
 			choices.add(Choice.of(null, "Auto (best)"));
 			boolean hasSpell = false;
@@ -478,8 +527,13 @@ class SetupPanel extends JPanel
 					+ (locked ? " (locked)" : cantCast ? " (" + why + ")" : ""), !locked, tooltip));
 			}
 
-			s.addContent(subheader(location.getDisplayName()));
-			s.addContent(combo(choices, config.getTravel().get(location),
+			final TravelMethod chosen = config.getTravel().get(location);
+			final boolean runesHere = config.getRunesNotTabsAt().contains(location) && !config.isUseRunesNotTabs();
+			final ExpandableRow row = new ExpandableRow(location.getDisplayName(),
+				(chosen != null ? chosen.getDisplayName() : "Auto") + (runesHere ? ", runes" : ""),
+				isOverridden(config, location), CONTROL_WIDTH);
+			s.addContent(row);
+			row.addContent(combo(choices, chosen,
 				m -> saveRun(() ->
 				{
 					if (m == null)
@@ -493,7 +547,7 @@ class SetupPanel extends JPanel
 				})));
 			if (hasSpell)
 			{
-				s.addContent(checkBox("Override: runes instead of tablets here",
+				row.addContent(checkBox("Runes instead of tablets here",
 					config.isUseRunesNotTabs() || config.getRunesNotTabsAt().contains(location), !config.isUseRunesNotTabs(),
 					config.isUseRunesNotTabs() ? "Already on for every stop in the defaults above" : null,
 					on -> saveRun(() ->
@@ -598,7 +652,8 @@ class SetupPanel extends JPanel
 
 	private JComponent unlocksSection(AccountSettings account, AccessSnapshot access)
 	{
-		final CollapsibleSection s = section("Unlocks");
+		final int ticked = account.getManualUnlocks().size();
+		final CollapsibleSection s = section("Unlocks", ticked == 0 ? null : ticked + " ticked");
 		s.addContent(note("Things the plugin can't detect. Tick the ones you have."));
 		for (Unlock unlock : Unlock.values())
 		{
@@ -687,6 +742,7 @@ class SetupPanel extends JPanel
 	{
 		change.run();
 		settings.saveRunConfig();
+		SwingUtilities.invokeLater(changed);
 	}
 
 	/**
@@ -696,6 +752,7 @@ class SetupPanel extends JPanel
 	{
 		change.run();
 		settings.saveAccount(false);
+		SwingUtilities.invokeLater(changed);
 		if (affectsAccess)
 		{
 			accessChecker.requestRefresh();
@@ -836,7 +893,27 @@ class SetupPanel extends JPanel
 	/** Sections remember being open or closed between sessions. */
 	private CollapsibleSection section(String title)
 	{
-		return new CollapsibleSection(title, settings.isSectionOpen(title), open -> settings.setSectionOpen(title, open));
+		return section(title, null);
+	}
+
+	/** With a summary of what's set inside, shown even when the section is closed. */
+	private CollapsibleSection section(String title, String summary)
+	{
+		return new CollapsibleSection(title, summary, settings.isSectionOpen(title),
+			open -> settings.setSectionOpen(title, open));
+	}
+
+	/** A chosen teleport, or runes where the default is tablets. */
+	private static boolean isOverridden(RunConfig config, Location location)
+	{
+		return config.getTravel().containsKey(location)
+			|| (!config.isUseRunesNotTabs() && config.getRunesNotTabsAt().contains(location));
+	}
+
+	/** e.g. "2 overrides", or null for none. */
+	private static String overrides(int count)
+	{
+		return count == 0 ? null : count + (count == 1 ? " override" : " overrides");
 	}
 
 	/** A short label with its number box on the same line. */
