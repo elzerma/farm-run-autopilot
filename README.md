@@ -58,9 +58,9 @@ The plugin never clicks, types or acts for you. It only shows information.
 
 ## How to use
 
-1. Open the Farm Run Autopilot sidebar (the seedling icon).
-2. On the Setup tab, pick your crops and run options. The Rules tab has patches, protection, travel, your
-   house, unlocks and the run guidance highlights.
+1. Open the Farm Run Autopilot sidebar (the leprechaun icon).
+2. Set things up once: the Farm tab has patches, crops, protection and compost; the Travel tab has teleports
+   and the route; the Account tab shows what the plugin has detected, plus your house, unlocks and highlights.
 3. Tick the run types on the Run tab, which also shows what's due and your patch timers, and press
    **Build run**.
 4. Open your bank and click the "Farm run" button to withdraw what you need. The run starts itself once you
