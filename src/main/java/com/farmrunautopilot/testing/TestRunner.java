@@ -328,13 +328,17 @@ public class TestRunner
 		}
 		SwingUtilities.invokeLater(() ->
 		{
-			settings.endTest(finished::keep);
 			busy = false;
+			if (report)
+			{
+				// Before the settings go back, which redraws the list without this test
+				settings.setClientValue(done.key(), passed ? GOOD : ATTENTION);
+			}
+			settings.endTest(finished::keep);
 			if (!report)
 			{
 				return;
 			}
-			settings.setClientValue(done.key(), passed ? GOOD : ATTENTION);
 			final String body = TestReport.body(done, passed, RuneLiteProperties.getVersion(), steps, captured,
 				problems);
 			if (developerMode)

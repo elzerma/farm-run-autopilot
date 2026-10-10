@@ -14,9 +14,12 @@ import com.farmrunautopilot.testing.TestRunner;
 import com.farmrunautopilot.testing.TestView;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
+import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -44,6 +47,10 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	private TabBar tabs;
 	private final RunSession runSession;
 	private final Timer refreshTimer;
+	private final SettingsStore settings;
+	private final boolean developerMode;
+	/** The "I NEED YOUR HELP!" button at the bottom of each tab, whose count changes as tests are run. */
+	private final List<JButton> helpButtons = new ArrayList<>();
 
 	@Inject
 	public FarmRunAutopilotPanel(SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker,
@@ -53,6 +60,8 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		TestRunner testRunner, @Named("developerMode") boolean developerMode)
 	{
 		this.runSession = runSession;
+		this.settings = settings;
+		this.developerMode = developerMode;
 		setLayout(new BorderLayout());
 		setBorder(new EmptyBorder(10, 10, 10, 10));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -141,7 +150,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		presetsPanel.setAlignmentX(LEFT_ALIGNMENT);
 		runStack.add(runPanel);
 		runStack.add(presetsPanel);
-		runStack.add(HelpWanted.button(settings, developerMode, this::openHelp));
+		runStack.add(helpButton());
 		final JPanel run = new JPanel(new BorderLayout());
 		run.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		run.add(runStack, BorderLayout.NORTH);
@@ -172,9 +181,9 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		tabs = new TabBar(display);
 		tabs.setBorder(new EmptyBorder(0, 0, 10, 0));
 		tabs.addTab("Run", run);
-		tabs.addTab("Farm", top(farmPanel, HelpWanted.button(settings, developerMode, this::openHelp)));
-		tabs.addTab("Travel", top(travelPanel, HelpWanted.button(settings, developerMode, this::openHelp)));
-		tabs.addTab("Account", top(accountPanel, HelpWanted.button(settings, developerMode, this::openHelp)));
+		tabs.addTab("Farm", top(farmPanel, helpButton()));
+		tabs.addTab("Travel", top(travelPanel, helpButton()));
+		tabs.addTab("Account", top(accountPanel, helpButton()));
 
 		add(tabs, BorderLayout.NORTH);
 		add(display, BorderLayout.CENTER);
@@ -210,6 +219,17 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		presetsPanel.rebuild();
 		// The Run tab shows the run types and preset from the same settings
 		runPanel.refresh();
+		for (JButton button : helpButtons)
+		{
+			HelpWanted.refresh(button, settings, developerMode);
+		}
+	}
+
+	private JButton helpButton()
+	{
+		final JButton button = HelpWanted.button(settings, developerMode, this::openHelp);
+		helpButtons.add(button);
+		return button;
 	}
 
 	/** Account > Testing & debug, scrolled to the help list. */

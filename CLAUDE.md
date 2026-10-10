@@ -13,7 +13,7 @@ The user uses this list as their test checklist. Keep it current without being a
 
 - **Add** an item (and its guided test) when you build or change a feature that the user can't test on their account (an item, unlock, quest or spellbook they don't have) or that relies on an UNVERIFIED game value: varbit, NPC/object ID, chat message wording, widget. Write full steps a player can follow: where to set it up, what to do, what they should see.
 - **Remove** the item, its guided test and the matching UNVERIFIED comment in the code once its test passes your own reading of the report (the steps and captured values, not only the user's Yes answers). Don't ask first; just say it was removed.
-- **Reword** an item when the feature it describes changes. Never rename a `TestItem` constant that has been released: its name keys the saved result.
+- **Reword** an item when the feature it describes changes. Never rename a `TestItem` constant that has been released: its name keys the saved result. A test someone has run (pass or not) is greyed out for them and not asked again; when a fix means earlier results no longer count, bump the item's `revision` so players are asked again.
 - Put each item on the tab where the player would see the feature.
 - Mention any change to the list when reporting back.
 

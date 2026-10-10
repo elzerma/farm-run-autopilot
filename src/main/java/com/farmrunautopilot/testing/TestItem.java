@@ -64,17 +64,28 @@ public enum TestItem
 	private final Tab tab;
 	private final String title;
 	private final String howToTry;
+	/**
+	 * Bump this when a fix means earlier results no longer count, so players who already ran the test are
+	 * asked again.
+	 */
+	private final int revision;
 
 	TestItem(Tab tab, String title, String howToTry)
+	{
+		this(tab, title, howToTry, 1);
+	}
+
+	TestItem(Tab tab, String title, String howToTry, int revision)
 	{
 		this.tab = tab;
 		this.title = title;
 		this.howToTry = howToTry;
+		this.revision = revision;
 	}
 
-	/** Where the developer's result is saved. */
+	/** Where this client's result for the current revision is saved. */
 	public String key()
 	{
-		return "help." + name();
+		return "help." + name() + (revision > 1 ? ".v" + revision : "");
 	}
 }
