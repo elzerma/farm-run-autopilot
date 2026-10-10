@@ -15,9 +15,8 @@ import net.runelite.api.gameval.VarbitID;
 public final class DailyLimits
 {
 	/**
-	 * The game value counting today's uses of each. The Ardougne cloak's is confirmed in game (it matched "You
-	 * have used 1 of your 3 Ardougne Farm teleports for today."); the Explorer's ring's is UNVERIFIED, assumed
-	 * from its name.
+	 * The game value counting today's uses of each, both confirmed in game: they matched "You have used 1 of
+	 * your 3 Ardougne Farm teleports for today." and "You have used 1 of your 3 Cabbage teleports for today."
 	 */
 	private static final Map<TravelMethod, Integer> USED_TODAY = new EnumMap<>(TravelMethod.class);
 

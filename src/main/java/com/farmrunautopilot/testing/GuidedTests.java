@@ -5,7 +5,6 @@ import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.Unlock;
-import com.farmrunautopilot.data.travel.DailyLimits;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelItem;
@@ -29,7 +28,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.runelite.api.Quest;
 import net.runelite.api.Skill;
-import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
 import static com.farmrunautopilot.testing.GuidedTest.Step.ask;
 import static com.farmrunautopilot.testing.GuidedTest.Step.doThis;
@@ -51,7 +49,6 @@ final class GuidedTests
 		TESTS.put(TestItem.FORTIS_CHAMPION, new FortisChampion());
 		TESTS.put(TestItem.ATES_CHARGES, new AtesCharges());
 		TESTS.put(TestItem.TALISMAN_CHARGES, new TalismanCharges());
-		TESTS.put(TestItem.EXPLORERS_RING_DAILY, new ExplorersRingDaily());
 		TESTS.put(TestItem.KHARYRLL, new Kharyrll());
 		TESTS.put(TestItem.VARBIT_UNLOCKS, new VarbitUnlocks());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
@@ -412,85 +409,6 @@ final class GuidedTests
 						}
 					}),
 				doThis("Check it again", ctx -> checked(ctx, "After teleporting")));
-		}
-	}
-
-	/**
-	 * The Explorer's ring's daily cabbage patch teleports. (The Ardougne cloak's farm teleports passed this test:
-	 * the game said "You have used 1 of your 3 Ardougne Farm teleports for today." and its value went 0 to 1.)
-	 */
-	private static final class ExplorersRingDaily extends GuidedTest
-	{
-		/** The game's message after a limited teleport, e.g. "You have used 1 of your 3 ... teleports for today." */
-		private static final Pattern USED = Pattern.compile("You have used (\\d+) of your (\\d+) .*today\\.?");
-		/** Ticks to wait after the message for the game value to catch up. */
-		private static final int CATCH_UP_TICKS = 5;
-
-		private static int used(TestContext ctx)
-		{
-			return ctx.varbit(DailyLimits.usedTodayVarbits().get(TravelMethod.EXPLORERS_RING_CABBAGE_PATCH));
-		}
-
-		@Override
-		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
-		{
-			return holdings.count(ItemID.LUMBRIDGE_RING_MEDIUM) > 0 ? Collections.emptyList()
-				: Collections.singletonList("Have an Explorer's ring 2 (higher tiers have no daily limit)");
-		}
-
-		@Override
-		public List<Need> bring()
-		{
-			return Collections.singletonList(new Need("Explorer's ring 2", new int[]{ItemID.LUMBRIDGE_RING_MEDIUM}));
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				doThis("Take your Explorer's ring 2 out of the bank",
-					ctx -> ctx.carries(new int[]{ItemID.LUMBRIDGE_RING_MEDIUM})),
-				doThis("Use its cabbage patch teleport", ctx ->
-				{
-					for (String message : ctx.chat())
-					{
-						final Matcher m = USED.matcher(message);
-						if (m.matches())
-						{
-							ctx.capture("Game message", message);
-							ctx.remember("said", Integer.parseInt(m.group(1)));
-							ctx.remember("waited", 0);
-						}
-					}
-					final Integer said = ctx.recall("said");
-					if (said == null)
-					{
-						return false;
-					}
-					final int value = used(ctx);
-					final int waited = ctx.<Integer>recall("waited") + 1;
-					ctx.remember("waited", waited);
-					if (value != said && waited < CATCH_UP_TICKS)
-					{
-						return false;
-					}
-					ctx.capture("Game value after", value);
-					if (value != said)
-					{
-						ctx.problem("The game value (" + value + ") isn't the number used today (" + said + ")");
-					}
-					return true;
-				})
-					.onStart(ctx -> ctx.capture("Game value before", used(ctx)))
-					.orAskAfter(DO_TICKS, "Have you used the cabbage patch teleport?")
-					.onAnswer((ctx, yes) ->
-					{
-						ctx.capture("Game value after", used(ctx));
-						if (yes)
-						{
-							ctx.problem("No \"You have used N of your M\" message was seen after the teleport");
-						}
-					}));
 		}
 	}
 
