@@ -1,7 +1,10 @@
 package com.farmrunautopilot.settings;
 
 import com.farmrunautopilot.data.Unlock;
+import com.farmrunautopilot.data.travel.TravelItem;
+import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 import lombok.Data;
 
@@ -21,10 +24,13 @@ public class AccountSettings
 	private Integer bottomlessUses;
 	/** What the bottomless compost bucket holds, from its game messages; null until seen. */
 	private Compost bottomlessCompost;
+	/** Charges of self-charged teleport items (quetzal whistle, Xeric's talisman, pendant of Ates), from chat. */
+	private Map<TravelItem, Integer> itemCharges = new EnumMap<>(TravelItem.class);
 
 	public AccountSettings sanitise()
 	{
 		manualUnlocks = RunConfig.cleanSet(manualUnlocks, Unlock.class, EnumSet.noneOf(Unlock.class));
+		itemCharges = RunConfig.cleanMap(itemCharges, TravelItem.class);
 		if (poh == null)
 		{
 			poh = new PohSetup();

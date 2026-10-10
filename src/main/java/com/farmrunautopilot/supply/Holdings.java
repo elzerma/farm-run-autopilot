@@ -1,6 +1,7 @@
 package com.farmrunautopilot.supply;
 
 import com.farmrunautopilot.data.travel.Rune;
+import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.Compost;
 import java.util.Collections;
@@ -55,12 +56,14 @@ public class Holdings
 	int bucketUses;
 	/** What the bottomless compost bucket holds, or null if not known. */
 	Compost bucketCompost;
-	/** Today's uses of teleports limited per day (Ardougne cloak, Explorer's ring, Rada's blessing). */
+	/** Today's uses of teleports limited per day (Ardougne cloak, Explorer's ring). */
 	Map<TravelMethod, Integer> usedToday;
+	/** Known charges of self-charged items (quetzal whistle, Xeric's talisman, pendant of Ates). */
+	Map<TravelItem, Integer> itemCharges;
 
 	public Holdings(Map<Source, Map<Integer, Integer>> items, Map<Integer, Integer> runePouch, Set<Rune> infiniteRunes,
 		boolean bankKnown, boolean autoweedOn, int bucketUses, Compost bucketCompost,
-		Map<TravelMethod, Integer> usedToday)
+		Map<TravelMethod, Integer> usedToday, Map<TravelItem, Integer> itemCharges)
 	{
 		this.items = items;
 		this.runePouch = runePouch;
@@ -70,6 +73,15 @@ public class Holdings
 		this.bucketUses = bucketUses;
 		this.bucketCompost = bucketCompost;
 		this.usedToday = usedToday;
+		this.itemCharges = itemCharges;
+	}
+
+	public Holdings(Map<Source, Map<Integer, Integer>> items, Map<Integer, Integer> runePouch, Set<Rune> infiniteRunes,
+		boolean bankKnown, boolean autoweedOn, int bucketUses, Compost bucketCompost,
+		Map<TravelMethod, Integer> usedToday)
+	{
+		this(items, runePouch, infiniteRunes, bankKnown, autoweedOn, bucketUses, bucketCompost, usedToday,
+			Collections.emptyMap());
 	}
 
 	public Holdings(Map<Source, Map<Integer, Integer>> items, Map<Integer, Integer> runePouch, Set<Rune> infiniteRunes,
@@ -142,7 +154,8 @@ public class Holdings
 		carried.put(Source.INVENTORY, in(Source.INVENTORY));
 		carried.put(Source.WORN, in(Source.WORN));
 		return new Holdings(carried, runePouch, infiniteRunes, bankKnown, autoweedOn, bucketUses, bucketCompost,
-			usedToday);
+			usedToday,
+			itemCharges);
 	}
 
 	public Map<Integer, Integer> in(Source source)

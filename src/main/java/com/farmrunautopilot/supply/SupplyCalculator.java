@@ -16,6 +16,7 @@ import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.route.ChargeBudget;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RouteStop;
@@ -237,6 +238,11 @@ public final class SupplyCalculator
 				if (method.getItem() != null)
 				{
 					travelItems.merge(method.getItem(), 1, Integer::sum);
+					if (ChargeBudget.chargesUnknown(method.getItem(), holdings))
+					{
+						warnings.add("Check your " + method.getItem().getDisplayName().toLowerCase()
+							+ " so its charges are known");
+					}
 				}
 				fairyRing |= method.getKind() == TravelKind.FAIRY_RING;
 			}

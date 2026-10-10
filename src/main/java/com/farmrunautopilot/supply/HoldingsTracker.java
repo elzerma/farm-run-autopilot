@@ -90,6 +90,7 @@ public class HoldingsTracker
 	private final ItemManager itemManager;
 	private final SettingsStore settings;
 	private final BottomlessBucketTracker bucket;
+	private final ItemChargeTracker itemCharges;
 
 	private Map<Integer, Integer> bank;
 	private Map<Integer, Integer> groupStorage;
@@ -99,7 +100,7 @@ public class HoldingsTracker
 
 	@Inject
 	HoldingsTracker(Client client, ConfigManager configManager, Gson gson, ItemManager itemManager,
-		SettingsStore settings, BottomlessBucketTracker bucket)
+		SettingsStore settings, BottomlessBucketTracker bucket, ItemChargeTracker itemCharges)
 	{
 		this.client = client;
 		this.configManager = configManager;
@@ -107,6 +108,7 @@ public class HoldingsTracker
 		this.itemManager = itemManager;
 		this.settings = settings;
 		this.bucket = bucket;
+		this.itemCharges = itemCharges;
 	}
 
 	public Holdings getHoldings()
@@ -212,7 +214,7 @@ public class HoldingsTracker
 		final Holdings next = new Holdings(Collections.unmodifiableMap(items), readRunePouch(inventory),
 			Collections.unmodifiableSet(infinite), bank != null,
 			client.getVarbitValue(VarbitID.FARMING_BLOCKWEEDS) == AUTOWEED_ON,
-			bucket.getUses(), bucket.getCompost(), readUsedToday());
+			bucket.getUses(), bucket.getCompost(), readUsedToday(), itemCharges.getCharges());
 		if (next.equals(holdings))
 		{
 			return false;

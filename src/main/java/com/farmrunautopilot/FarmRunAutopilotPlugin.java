@@ -6,6 +6,7 @@ import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.BottomlessBucketTracker;
 import com.farmrunautopilot.supply.HoldingsTracker;
+import com.farmrunautopilot.supply.ItemChargeTracker;
 import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.supply.SupplyPlan;
 import com.farmrunautopilot.route.RunOverrides;
@@ -97,6 +98,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private BottomlessBucketTracker bottomlessBucket;
 
 	@Inject
+	private ItemChargeTracker itemCharges;
+
+	@Inject
 	private RunService runService;
 
 	@Inject
@@ -153,6 +157,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	{
 		settings.load();
 		bottomlessBucket.reload();
+		itemCharges.reload();
 		accessChecker.requestRefresh();
 		panel = injector.getInstance(FarmRunAutopilotPanel.class);
 		settings.addListener(onSettingsReloaded);
@@ -294,6 +299,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		// Reloading notifies onSettingsReloaded, which rebuilds the settings tabs
 		settings.load();
 		bottomlessBucket.reload();
+		itemCharges.reload();
 		holdingsTracker.markDirty();
 		final FarmRunAutopilotPanel p = panel;
 		SwingUtilities.invokeLater(p::refreshPatches);
@@ -363,7 +369,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			final String message = Text.removeTags(event.getMessage());
 			runSession.onChatMessage(message);
-			if (bottomlessBucket.onChatMessage(message))
+			if (bottomlessBucket.onChatMessage(message) | itemCharges.onChatMessage(message))
 			{
 				holdingsTracker.markDirty();
 			}
@@ -404,6 +410,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 	{
 		runSession.onMenuOptionClicked(event);
 		bottomlessBucket.onMenuOptionClicked(event);
+		if (itemCharges.onMenuOptionClicked(event))
+		{
+			holdingsTracker.markDirty();
+		}
 		pohDetector.onMenuOptionClicked(event);
 		farmBankTab.onMenuOptionClicked(event);
 	}

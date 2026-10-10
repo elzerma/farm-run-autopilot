@@ -5,8 +5,10 @@ import com.farmrunautopilot.data.travel.ItemCharges;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.supply.Holdings;
+import com.farmrunautopilot.supply.ItemChargeTracker;
 import java.util.EnumMap;
 import java.util.Map;
+import net.runelite.api.gameval.ItemID;
 
 /**
  * Teleport charges available for one run, pooled per item: every use of the same item in the run draws from
@@ -42,6 +44,19 @@ public final class ChargeBudget
 		}
 	}
 
+	/** The perfected quetzal whistle (i) never runs out. */
+	private static boolean holdsInfinite(TravelItem item, Holdings holdings)
+	{
+		return item == TravelItem.QUETZAL_WHISTLE && holdings.count(ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE) > 0;
+	}
+
+	/** A self-charged item is held but its charges aren't known yet: the player should Check it. */
+	public static boolean chargesUnknown(TravelItem item, Holdings holdings)
+	{
+		return ItemChargeTracker.TRACKED.contains(item) && holdings.countAny(item.getItemIds()) > 0
+			&& !holdsInfinite(item, holdings) && !holdings.getItemCharges().containsKey(item);
+	}
+
 	/** Uses left today of a daily-limited teleport, or null if it's unlimited for the item held. */
 	public static Integer leftToday(TravelMethod method, Holdings holdings)
 	{
@@ -71,6 +86,12 @@ public final class ChargeBudget
 	 */
 	public static Integer held(TravelItem item, Holdings holdings)
 	{
+		if (ItemChargeTracker.TRACKED.contains(item))
+		{
+			// Self-charged: known from chat once checked; unknown counts as usable
+			return holdings.countAny(item.getItemIds()) == 0 || holdsInfinite(item, holdings) ? null
+				: holdings.getItemCharges().get(item);
+		}
 		if (!ItemCharges.isLimited(item))
 		{
 			return null;
