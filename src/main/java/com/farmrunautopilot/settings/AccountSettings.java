@@ -15,6 +15,10 @@ public class AccountSettings
 	/** Unlocks the player ticked in Setup. Only used for unlocks with no automatic detection. */
 	private Set<Unlock> manualUnlocks = EnumSet.noneOf(Unlock.class);
 	private PohSetup poh = new PohSetup();
+	/** Uses left in the bottomless compost bucket, from its game messages; null until seen. */
+	private Integer bottomlessUses;
+	/** What the bottomless compost bucket holds, from its game messages; null until seen. */
+	private Compost bottomlessCompost;
 
 	public AccountSettings sanitise()
 	{

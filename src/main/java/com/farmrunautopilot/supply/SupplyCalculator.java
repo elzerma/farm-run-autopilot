@@ -55,6 +55,8 @@ public final class SupplyCalculator
 	private static final String CROPS = "Setup > Crops";
 	private static final String RUN_OPTIONS = "Setup > Run options";
 	private static final String PROTECTION = "Rules > Protection";
+	/** Compost lines: the setting is the compost type, not anything about a bucket. */
+	private static final String COMPOST_TYPE = "Rules > Protection (compost type)";
 	private static final String TRAVEL = "Rules > Travel";
 
 	private SupplyCalculator()
@@ -299,14 +301,7 @@ public final class SupplyCalculator
 			lines.add(changeIn(line(SupplyLine.Group.TOOLS, "Axe", 1, holdings, carried,
 				"To chop grown trees (pay-to-clear is off)", 1, SupplyItems.AXES), PROTECTION));
 		}
-		final boolean bottomless = holdings.count(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED) > 0;
-		compost.forEach((c, n) ->
-		{
-			final SupplyLine buckets = line(SupplyLine.Group.TOOLS, c.getDisplayName(), n, holdings, carried,
-				bottomless ? "You have a filled bottomless bucket (its type and charges aren't checked)" : null,
-				bottomless ? 1 : n, c.getItemId());
-			lines.add(changeIn(bottomless ? covered(buckets) : buckets, PROTECTION));
-		});
+		lines.addAll(compostLines(compost, holdings, carried, warnings));
 
 		// Optional
 		if (config.isRecommendEquipmentBoosts() && herbs > 0)
@@ -519,14 +514,21 @@ public final class SupplyCalculator
 	private static String addSpell(Spell spell, Location location, RunConfig config, AccessSnapshot access,
 		Holdings holdings, Map<Integer, Integer> tablets, Map<Rune, Integer> runeNeed)
 	{
-		final boolean tablet = spell.hasTablet() && !config.useRunesAt(location)
-			&& (holdings.count(spell.getTabletItemId()) > 0 || !access.canCast(spell));
+		// A spell the player can't cast (wrong spellbook with no altar, Magic level, quest) needs its tablet, even
+		// when runes are preferred (GitHub #2)
+		final boolean castable = access.canCast(spell);
+		final boolean tablet = spell.hasTablet() && (!castable
+			|| (!config.useRunesAt(location) && holdings.count(spell.getTabletItemId()) > 0));
 		if (tablet)
 		{
 			tablets.merge(spell.getTabletItemId(), 1, Integer::sum);
 			return " (tablet)";
 		}
 		addRunes(runeNeed, spell);
+		if (!castable)
+		{
+			return " (runes, " + title(spell.getSpellbook().name()) + " spellbook; you can't cast it yet)";
+		}
 		return " (runes, " + title(spell.getSpellbook().name()) + " spellbook"
 			+ (access.isOnSpellbook(spell) ? "" : "; switch at your house altar") + ")";
 	}
@@ -688,10 +690,65 @@ public final class SupplyCalculator
 		}
 	}
 
-	private static SupplyLine covered(SupplyLine line)
+	/**
+	 * Buckets of each compost type, or one line for a filled bottomless compost bucket (GitHub #3). The bucket
+	 * holds one type: it replaces the buckets of that type (or all of them while its type isn't known), and its
+	 * uses are checked against the patches when known. Warnings go to {@code warnings}.
+	 */
+	static List<SupplyLine> compostLines(Map<Compost, Integer> compost, Holdings holdings, Holdings carried,
+		List<String> warnings)
 	{
-		return new SupplyLine(line.getGroup(), line.getName(), line.getNeed(), line.getHave(), line.getCarried(),
-			line.getWhere(), line.getNote(), line.getSlots(), true, line.getChangeIn(), line.getItemIds());
+		final List<SupplyLine> lines = new ArrayList<>();
+		if (compost.isEmpty())
+		{
+			return lines;
+		}
+		final Map<Compost, Integer> buckets = new EnumMap<>(compost);
+		if (holdings.count(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED) > 0)
+		{
+			final Compost holds = holdings.getBucketCompost();
+			int usesNeeded = 0;
+			final List<String> replaced = new ArrayList<>();
+			for (Map.Entry<Compost, Integer> e : compost.entrySet())
+			{
+				if (holds == null || holds == e.getKey())
+				{
+					usesNeeded += e.getValue();
+					replaced.add(e.getKey().getDisplayName().toLowerCase());
+					buckets.remove(e.getKey());
+				}
+			}
+
+			final int uses = holdings.getBucketUses();
+			String note = "Used instead of buckets of " + String.join(" and ", replaced) + "; this run needs "
+				+ usesNeeded + (usesNeeded == 1 ? " use" : " uses");
+			if (uses < 0)
+			{
+				note += ". Uses left aren't known yet";
+				warnings.add("Right-click your bottomless compost bucket and choose Check, so its uses are known");
+			}
+			else if (uses < usesNeeded)
+			{
+				warnings.add("Your bottomless compost bucket has " + uses + (uses == 1 ? " use" : " uses")
+					+ " left; this run needs " + usesNeeded);
+			}
+			if (holds != null && replaced.isEmpty())
+			{
+				warnings.add("Your bottomless compost bucket holds " + holds.getDisplayName().toLowerCase()
+					+ ", which this run doesn't use (Rules > Protection, compost type)");
+			}
+			if (!replaced.isEmpty())
+			{
+				final String name = "Bottomless compost bucket" + (uses >= 0 ? " (" + uses + (uses == 1 ? " use)" : " uses)") : "");
+				lines.add(changeIn(line(SupplyLine.Group.TOOLS, name, 1, holdings, carried, note, 1,
+					ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED), COMPOST_TYPE));
+			}
+		}
+		final boolean emptyBucket = holdings.count(ItemID.BOTTOMLESS_COMPOST_BUCKET) > 0;
+		buckets.forEach((c, n) -> lines.add(changeIn(line(SupplyLine.Group.TOOLS, c.getDisplayName(), n, holdings,
+			carried, emptyBucket ? "Fill your bottomless compost bucket with " + c.getDisplayName().toLowerCase()
+				+ " to use it instead" : null, n, c.getItemId()), COMPOST_TYPE)));
+		return lines;
 	}
 
 	private static SupplyLine changeIn(SupplyLine line, String where)

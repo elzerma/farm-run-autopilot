@@ -17,6 +17,8 @@ import com.farmrunautopilot.data.poh.PoolTier;
 import com.farmrunautopilot.data.poh.PortalNexus;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.TravelItem;
+import com.farmrunautopilot.data.travel.Spell;
+import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.Compost;
@@ -420,8 +422,19 @@ class SetupPanel extends JPanel
 				hasSpell |= method.getSpell() != null;
 				final List<Requirement> missing = access.missingFor(method);
 				final boolean locked = !missing.isEmpty();
-				choices.add(new Choice<>(method, method.getDisplayName() + (locked ? " (locked)" : ""), !locked,
-					locked ? AccessSnapshot.describe(missing) : method.getNote()));
+				// A spell that can't be cast right now still works as a tablet, so say why rather than lock it
+				final Spell spell = method.getSpell();
+				final boolean cantCast = !locked && method.getKind() == TravelKind.SPELL && access.isKnown()
+					&& !access.canCast(spell);
+				final String why = !cantCast ? null : !access.isOnSpellbook(spell)
+					? title(spell.getSpellbook().name()) + " spellbook"
+					: "needs " + spell.getMagicLevel() + " Magic";
+				final String tooltip = locked ? AccessSnapshot.describe(missing)
+					: cantCast ? "You can't cast this right now (" + why + "). It's used if you carry its teleport "
+					+ "tablet; otherwise another way is picked."
+					: method.getNote();
+				choices.add(new Choice<>(method, method.getDisplayName()
+					+ (locked ? " (locked)" : cantCast ? " (" + why + ")" : ""), !locked, tooltip));
 			}
 
 			s.addContent(subheader(location.getDisplayName()));

@@ -70,6 +70,10 @@ public class RunSession
 	private static final long FINISHED_NOTICE_MILLIS = 15_000;
 	/** Further than this from a patch and the step starts with "Run to the ... patch". */
 	private static final int NEAR_PATCH_TILES = 7;
+	/** Running covers 2 tiles a tick, so a bigger move in one tick is a teleport. */
+	private static final int JUMP_TILES = 10;
+	/** A teleport landing this close to the stop's patch counts as having arrived in the area. */
+	private static final int LANDED_NEAR_TILES = 150;
 	private static final int BEST_TIMES = 3;
 	private static final int INVENTORY_SLOTS = 28;
 	/** Moving further than this in one tick can only be a teleport. */
@@ -95,6 +99,10 @@ public class RunSession
 	private boolean arrived;
 	/** When the player reached the current stop (epoch seconds); patches must be seen after this to count. */
 	private long arrivedAtSeconds;
+	/** Teleported close to the current stop but its patch hasn't loaded yet. */
+	private boolean teleported;
+	/** The player's position last tick, to spot teleports. */
+	private WorldPoint lastPosition;
 	/** The time for the leg to the current stop has been saved. */
 	private boolean legRecorded;
 	private long legStartedAt;
@@ -201,6 +209,8 @@ public class RunSession
 		startedAt = 0;
 		stopIndex = 0;
 		arrived = false;
+		teleported = false;
+		lastPosition = null;
 		currentPatch = null;
 		progress.clear();
 		legs.clear();
@@ -411,6 +421,10 @@ public class RunSession
 		final long now = System.currentTimeMillis();
 		// Armed shows the first step but doesn't time legs or move on until the timer starts
 		final boolean timing = stage == RunView.State.RUNNING;
+		final Player player = client.getLocalPlayer();
+		final WorldPoint position = player != null ? player.getWorldLocation() : null;
+		final WorldPoint previous = lastPosition;
+		lastPosition = position;
 		String instruction = null;
 		while (stopIndex < stops.size())
 		{
@@ -424,7 +438,12 @@ public class RunSession
 				}
 				else
 				{
-					instruction = stop.describeTravel() + " to " + stop.getLocation().getDisplayName();
+					if (!teleported && jumpedTowards(previous, position, here.get(0)))
+					{
+						teleported = true;
+					}
+					instruction = teleported ? walkInstruction(stop, here.get(0))
+						: stop.describeTravel() + " to " + stop.getLocation().getDisplayName();
 					currentPatch = null;
 					break;
 				}
@@ -446,6 +465,7 @@ public class RunSession
 			}
 			stopIndex++;
 			arrived = false;
+			teleported = false;
 			legStartedAt = now;
 		}
 
@@ -602,6 +622,30 @@ public class RunSession
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * A teleport (or other jump) that landed near the stop: the position changed by more than running could in
+	 * one tick, and the patch is now close. Some teleports land too far out for the patch to load yet
+	 * (Trollheim), so without this the step would keep saying to teleport.
+	 */
+	private boolean jumpedTowards(WorldPoint from, WorldPoint to, Patch patch)
+	{
+		if (from == null || to == null)
+		{
+			return false;
+		}
+		final boolean jumped = from.getPlane() != to.getPlane() || from.distanceTo2D(to) > JUMP_TILES;
+		final WorldPoint target = scene.locationOf(patch);
+		return jumped && target != null && target.getPlane() == to.getPlane()
+			&& target.distanceTo2D(to) <= LANDED_NEAR_TILES;
+	}
+
+	/** After teleporting: the way on from the landing spot, e.g. "Walk to the Troll Stronghold herb patch". */
+	private static String walkInstruction(RouteStop stop, Patch patch)
+	{
+		final String directions = stop.getMethod() != null ? stop.getMethod().getDirections() : null;
+		return (directions != null ? directions + " to the " : "Walk to the ") + patch.getDisplayName() + " patch";
 	}
 
 	private boolean nearAny(List<Patch> here)
@@ -838,7 +882,9 @@ public class RunSession
 		if (stored != null)
 		{
 			final String name = runService.itemName(stored).toLowerCase();
-			final String article = currentAction == StepAdvisor.Action.COMPOST ? ""
+			// "Take ultracompost", but "Take a bottomless compost bucket"
+			final String article = currentAction == StepAdvisor.Action.COMPOST
+				&& stored != ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED ? ""
 				: "aeiou".indexOf(name.charAt(0)) >= 0 ? "an " : "a ";
 			return "Take " + article + name + " from the tool leprechaun";
 		}

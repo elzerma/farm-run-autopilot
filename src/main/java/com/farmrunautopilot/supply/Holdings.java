@@ -1,6 +1,7 @@
 package com.farmrunautopilot.supply;
 
 import com.farmrunautopilot.data.travel.Rune;
+import com.farmrunautopilot.settings.Compost;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
@@ -49,6 +50,29 @@ public class Holdings
 	boolean bankKnown;
 	/** Tithe Farm Auto-weed is owned and switched on. */
 	boolean autoweedOn;
+	/** Uses left in the bottomless compost bucket, or -1 if not known. */
+	int bucketUses;
+	/** What the bottomless compost bucket holds, or null if not known. */
+	Compost bucketCompost;
+
+	public Holdings(Map<Source, Map<Integer, Integer>> items, Map<Integer, Integer> runePouch, Set<Rune> infiniteRunes,
+		boolean bankKnown, boolean autoweedOn, int bucketUses, Compost bucketCompost)
+	{
+		this.items = items;
+		this.runePouch = runePouch;
+		this.infiniteRunes = infiniteRunes;
+		this.bankKnown = bankKnown;
+		this.autoweedOn = autoweedOn;
+		this.bucketUses = bucketUses;
+		this.bucketCompost = bucketCompost;
+	}
+
+	/** Without anything known about a bottomless compost bucket. */
+	public Holdings(Map<Source, Map<Integer, Integer>> items, Map<Integer, Integer> runePouch, Set<Rune> infiniteRunes,
+		boolean bankKnown, boolean autoweedOn)
+	{
+		this(items, runePouch, infiniteRunes, bankKnown, autoweedOn, -1, null);
+	}
 
 	public int count(int itemId)
 	{
@@ -105,7 +129,7 @@ public class Holdings
 		final Map<Source, Map<Integer, Integer>> carried = new EnumMap<>(Source.class);
 		carried.put(Source.INVENTORY, in(Source.INVENTORY));
 		carried.put(Source.WORN, in(Source.WORN));
-		return new Holdings(carried, runePouch, infiniteRunes, bankKnown, autoweedOn);
+		return new Holdings(carried, runePouch, infiniteRunes, bankKnown, autoweedOn, bucketUses, bucketCompost);
 	}
 
 	public Map<Integer, Integer> in(Source source)
