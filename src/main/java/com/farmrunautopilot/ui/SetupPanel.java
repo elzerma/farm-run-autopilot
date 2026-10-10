@@ -101,6 +101,7 @@ class SetupPanel extends JPanel
 	private static final String SHOW_ALL_LOCATIONS = "Show every location";
 	/** The Unlocks section's title, which is also how the Run tab opens it. */
 	static final String UNLOCKS = "Unlocks";
+	private static final String DEBUG = "Testing & debug";
 
 	private final SettingsStore settings;
 	private final AccessChecker accessChecker;
@@ -122,6 +123,10 @@ class SetupPanel extends JPanel
 	private Runnable resetEverything;
 	/** The Unlocks section as last drawn (Account page), to scroll to it; null elsewhere. */
 	private JComponent unlocksSectionShown;
+	/** Show the help list in Testing & debug (Account page); with result pickers when developer is true. */
+	private Boolean helpDeveloper;
+	/** The help list as last drawn, to scroll to it. */
+	private JComponent helpListShown;
 	/** Run guidance settings, shown on the Account page only (null elsewhere). */
 	private final GuidanceSettings guidance;
 
@@ -158,6 +163,28 @@ class SetupPanel extends JPanel
 			if (section != null)
 			{
 				section.scrollRectToVisible(new Rectangle(0, 0, section.getWidth(), section.getHeight()));
+			}
+		});
+	}
+
+	/** Show the help list in Testing & debug (Account page). */
+	void showHelpList(boolean developer)
+	{
+		helpDeveloper = developer;
+		rebuild();
+	}
+
+	/** Open Testing & debug and scroll to the help list (Account page). Swing thread. */
+	void revealHelpList()
+	{
+		settings.setSectionOpen(DEBUG, true);
+		rebuild();
+		SwingUtilities.invokeLater(() ->
+		{
+			final JComponent list = helpListShown;
+			if (list != null)
+			{
+				list.scrollRectToVisible(new Rectangle(0, 0, list.getWidth(), list.getHeight()));
 			}
 		});
 	}
@@ -1067,7 +1094,13 @@ class SetupPanel extends JPanel
 
 	private JComponent debugSection(RunConfig config)
 	{
-		final CollapsibleSection s = section("Testing & debug");
+		final CollapsibleSection s = section(DEBUG);
+		if (helpDeveloper != null)
+		{
+			helpListShown = HelpWanted.list(settings, helpDeveloper);
+			s.addContent(helpListShown);
+			s.addContent(subheader("Tools"));
+		}
 		s.addContent(checkBox("Count every patch (full run)", config.isSupplyFullRun(), true,
 			"Supplies for every selected patch, not just the ones that are due. Handy for checking numbers.",
 			on -> saveRun(() -> config.setSupplyFullRun(on))));

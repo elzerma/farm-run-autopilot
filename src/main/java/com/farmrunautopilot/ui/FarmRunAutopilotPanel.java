@@ -13,6 +13,7 @@ import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -46,7 +47,8 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	public FarmRunAutopilotPanel(SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker,
 		RunOverrides runOverrides, RunService runService, RunSession runSession, ClientThread clientThread,
 		FarmRunAutopilotConfig config, ConfigManager configManager,
-		ColorPickerManager colorPickers, HoldingsTracker holdingsTracker, RunTimings timings)
+		ColorPickerManager colorPickers, HoldingsTracker holdingsTracker, RunTimings timings,
+		@Named("developerMode") boolean developerMode)
 	{
 		this.runSession = runSession;
 		setLayout(new BorderLayout());
@@ -113,7 +115,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		presetsPanel.setAlignmentX(LEFT_ALIGNMENT);
 		runStack.add(runPanel);
 		runStack.add(presetsPanel);
-		runStack.add(HelpWanted.section(HelpWanted.Tab.RUN, settings));
+		runStack.add(HelpWanted.button(settings, developerMode, this::openHelp));
 		final JPanel run = new JPanel(new BorderLayout());
 		run.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		run.add(runStack, BorderLayout.NORTH);
@@ -136,6 +138,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 			settings.resetAccountAndPresets();
 			timings.clear();
 		});
+		accountPanel.showHelpList(developerMode);
 		accountPanel.showHoldings(holdingsTracker::getHoldings);
 		travelPanel.showHoldings(holdingsTracker::getHoldings);
 		travelPanel.showAutoPicks(runService);
@@ -143,9 +146,9 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		tabs = new TabBar(display);
 		tabs.setBorder(new EmptyBorder(0, 0, 10, 0));
 		tabs.addTab("Run", run);
-		tabs.addTab("Farm", top(farmPanel, HelpWanted.section(HelpWanted.Tab.FARM, settings)));
-		tabs.addTab("Travel", top(travelPanel, HelpWanted.section(HelpWanted.Tab.TRAVEL, settings)));
-		tabs.addTab("Account", top(accountPanel, HelpWanted.section(HelpWanted.Tab.ACCOUNT, settings)));
+		tabs.addTab("Farm", top(farmPanel, HelpWanted.button(settings, developerMode, this::openHelp)));
+		tabs.addTab("Travel", top(travelPanel, HelpWanted.button(settings, developerMode, this::openHelp)));
+		tabs.addTab("Account", top(accountPanel, HelpWanted.button(settings, developerMode, this::openHelp)));
 
 		add(tabs, BorderLayout.NORTH);
 		add(display, BorderLayout.CENTER);
@@ -181,6 +184,13 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		presetsPanel.rebuild();
 		// The Run tab shows the run types and preset from the same settings
 		runPanel.refresh();
+	}
+
+	/** Account > Testing & debug, scrolled to the help list. */
+	private void openHelp()
+	{
+		accountPanel.revealHelpList();
+		tabs.select("Account");
 	}
 
 	/** Pins a page, with its help section under it, to the top of its tab instead of stretching it. */

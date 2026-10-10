@@ -4,7 +4,7 @@
 
 ## "I NEED YOUR HELP!" list
 
-`src/main/java/com/farmrunautopilot/ui/HelpWanted.java` lists, per sidebar tab (Run, Farm, Travel, Account), the features that couldn't be tried in development and need feedback. Each `Item` has a title, full "how to try it" steps, and a result the player picks (Not tried yet / Good to go / Needs attention, plus a note for Needs attention). The user uses this list as their test checklist. Keep it current without being asked:
+`src/main/java/com/farmrunautopilot/ui/HelpWanted.java` lists the features that couldn't be tried in development and need feedback, grouped by the sidebar tab they belong to. It is shown in Account > Testing & debug; every tab has an "I NEED YOUR HELP!" button that opens it. Each `Item` has a title and full "how to try it" steps. In the dev client (RuneLite developer mode) each item also has a result to pick (Not tried yet / Good to go / Needs attention, plus a note for Needs attention); other players get a GitHub issues button instead. The user uses this list as their test checklist. Keep it current without being asked:
 
 - **Add** an item when you build or change a feature that the user can't test on their account (an item, unlock, quest or spellbook they don't have) or that relies on an UNVERIFIED game value: varbit, NPC/object ID, chat message wording, widget. Write full steps a player can follow: where to set it up, what to do, what they should see.
 - **Remove** the item once the user confirms it works in game ("Good to go"), and drop the matching UNVERIFIED comment in the code at the same time.

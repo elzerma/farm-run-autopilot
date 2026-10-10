@@ -2,15 +2,16 @@ package com.farmrunautopilot.ui;
 
 import com.farmrunautopilot.settings.SettingsStore;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.ArrayList;
-import java.util.List;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,14 @@ final class HelpWanted
 
 	enum Tab
 	{
-		RUN, FARM, TRAVEL, ACCOUNT
+		RUN("Run"), FARM("Farm"), TRAVEL("Travel"), ACCOUNT("Account");
+
+		private final String label;
+
+		Tab(String label)
+		{
+			this.label = label;
+		}
 	}
 
 	/** One thing to try. The key names its saved result, so don't change it once released. */
@@ -106,44 +114,90 @@ final class HelpWanted
 	{
 	}
 
-	static JComponent section(Tab tab, SettingsStore settings)
+	/** How many items are still to try: all of them for players, those not yet Good to go for the developer. */
+	static int toTry(SettingsStore settings, boolean developer)
 	{
-		final List<Item> items = new ArrayList<>();
+		int count = 0;
 		for (Item item : Item.values())
 		{
-			if (item.tab == tab)
+			count += developer && GOOD.equals(settings.getClientValue(item.key())) ? 0 : 1;
+		}
+		return count;
+	}
+
+	/** The button at the bottom of every tab, which opens the list in Account > Testing & debug. */
+	static JComponent button(SettingsStore settings, boolean developer, Runnable open)
+	{
+		final int count = toTry(settings, developer);
+		final JButton button = new JButton(count == 0 ? TITLE + " (all good)" : TITLE + " (" + count + " to try)");
+		button.setFont(FontManager.getRunescapeBoldFont());
+		button.setForeground(ColorScheme.BRAND_ORANGE);
+		button.setFocusPainted(false);
+		button.setAlignmentX(Component.LEFT_ALIGNMENT);
+		button.setToolTipText("Features I couldn't test, with steps to try them");
+		button.addActionListener(e -> open.run());
+		return button;
+	}
+
+	/**
+	 * The list for Account > Testing & debug: every item with steps to try it, grouped by tab. The developer
+	 * (running the dev client) gets a result to pick for each; everyone else gets the issues button.
+	 */
+	static JPanel list(SettingsStore settings, boolean developer)
+	{
+		final JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		panel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		final JLabel heading = text(TITLE, ColorScheme.BRAND_ORANGE, 4);
+		heading.setFont(FontManager.getRunescapeBoldFont());
+		add(panel, heading);
+		add(panel, text(developer
+			? "Try each one and pick how it went. For anything that needs attention, add a note."
+			: "I can't test these myself. If you can, please try them and tell me how it went on GitHub, "
+				+ "especially if something's wrong.", Color.WHITE, 6));
+		for (Tab tab : Tab.values())
+		{
+			boolean first = true;
+			for (Item item : Item.values())
 			{
-				items.add(item);
+				if (item.tab != tab)
+				{
+					continue;
+				}
+				if (first)
+				{
+					add(panel, text(tab.label + " tab", Color.WHITE, 4));
+					first = false;
+				}
+				addItem(panel, item, settings, developer);
 			}
-		}
-		int toTry = 0;
-		for (Item item : items)
-		{
-			toTry += GOOD.equals(settings.getClientValue(item.key())) ? 0 : 1;
-		}
-		final CollapsibleSection s = new CollapsibleSection(TITLE, toTry == 0 ? "all good" : toTry + " to try",
-			settings.isSectionOpen(TITLE), open -> settings.setSectionOpen(TITLE, open));
-		s.addContent(text("I can't test these myself. If you can, try them and pick how it went. For anything "
-			+ "that needs attention, add a note or open an issue.", Color.WHITE, 6));
-		for (Item item : items)
-		{
-			addItem(s, item, settings);
 		}
 		final JButton report = new JButton("Open GitHub issues");
 		report.setFont(FontManager.getRunescapeSmallFont());
 		report.setFocusPainted(false);
 		report.setToolTipText(ISSUES_URL);
 		report.addActionListener(e -> LinkBrowser.browse(ISSUES_URL));
-		s.addContent(report);
-		return s;
+		add(panel, report);
+		return panel;
 	}
 
-	private static void addItem(CollapsibleSection s, Item item, SettingsStore settings)
+	private static void add(JPanel panel, JComponent component)
+	{
+		component.setAlignmentX(Component.LEFT_ALIGNMENT);
+		panel.add(component);
+	}
+
+	private static void addItem(JPanel panel, Item item, SettingsStore settings, boolean developer)
 	{
 		final JLabel title = text(item.title, ColorScheme.BRAND_ORANGE, 2);
 		title.setFont(FontManager.getRunescapeBoldFont());
-		s.addContent(title);
-		s.addContent(text(item.howToTry, ColorScheme.LIGHT_GRAY_COLOR, 4));
+		add(panel, title);
+		add(panel, text(item.howToTry, ColorScheme.LIGHT_GRAY_COLOR, developer ? 4 : 8));
+		if (!developer)
+		{
+			return;
+		}
 
 		final String saved = settings.getClientValue(item.key());
 		final JComboBox<String> result = new JComboBox<>(RESULTS);
@@ -151,16 +205,15 @@ final class HelpWanted
 		result.setFont(FontManager.getRunescapeSmallFont());
 		result.setMaximumSize(new Dimension(CONTROL_WIDTH, 24));
 		result.setPreferredSize(new Dimension(CONTROL_WIDTH, 24));
-		s.addContent(result);
+		add(panel, result);
 
 		final JTextField note = new JTextField(noteOf(item, settings));
 		note.setToolTipText("What went wrong (saved when you press Enter or click away)");
 		note.setMaximumSize(new Dimension(CONTROL_WIDTH, 24));
 		note.setPreferredSize(new Dimension(CONTROL_WIDTH, 24));
 		note.setVisible(ATTENTION.equals(result.getSelectedItem()));
-		s.addContent(note);
-		final JLabel gap = text("", ColorScheme.MEDIUM_GRAY_COLOR, 6);
-		s.addContent(gap);
+		add(panel, note);
+		add(panel, text("", ColorScheme.MEDIUM_GRAY_COLOR, 6));
 
 		result.addActionListener(e ->
 		{
@@ -173,7 +226,7 @@ final class HelpWanted
 			// Infrequent and user-made, so INFO; read back from the client log to follow up
 			log.info("Help list: {} = {}{}", item.name(), picked, noteSuffix(item, settings));
 			note.setVisible(ATTENTION.equals(picked));
-			s.revalidate();
+			panel.revalidate();
 		});
 		final Runnable saveNote = () ->
 		{
