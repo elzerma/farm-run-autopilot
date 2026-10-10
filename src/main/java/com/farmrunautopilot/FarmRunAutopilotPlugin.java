@@ -18,6 +18,7 @@ import com.farmrunautopilot.run.ItemHighlightOverlay;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.run.SceneTracker;
+import com.farmrunautopilot.run.SpellHighlightOverlay;
 import com.farmrunautopilot.tracking.PatchTracker;
 import com.farmrunautopilot.ui.FarmRunAutopilotPanel;
 import com.google.inject.Provides;
@@ -120,6 +121,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private ItemHighlightOverlay itemHighlightOverlay;
 
 	@Inject
+	private SpellHighlightOverlay spellHighlightOverlay;
+
+	@Inject
 	private SceneTracker sceneTracker;
 
 	@Inject
@@ -158,6 +162,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		overlayManager.add(guidanceOverlay);
 		overlayManager.add(highlightOverlay);
 		overlayManager.add(itemHighlightOverlay);
+		overlayManager.add(spellHighlightOverlay);
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
 		navButton = NavigationButton.builder()
@@ -180,6 +185,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		overlayManager.remove(guidanceOverlay);
 		overlayManager.remove(highlightOverlay);
 		overlayManager.remove(itemHighlightOverlay);
+		overlayManager.remove(spellHighlightOverlay);
 		itemHighlightOverlay.clearCache();
 		clientThread.invoke(() ->
 		{

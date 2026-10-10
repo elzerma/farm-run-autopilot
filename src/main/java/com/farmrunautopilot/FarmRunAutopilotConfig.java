@@ -76,13 +76,25 @@ public interface FarmRunAutopilotConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "highlightSpell",
+		name = "Highlight the spell to cast",
+		description = "Outline the teleport (or Cure Plant) to cast next in your spellbook",
+		hidden = true,
+		position = 5
+	)
+	default boolean highlightSpell()
+	{
+		return true;
+	}
+
 	@Alpha
 	@ConfigItem(
 		keyName = "patchColour",
 		name = "Patch colour",
 		description = "Outline colour for the patch",
 		hidden = true,
-		position = 5
+		position = 6
 	)
 	default Color patchColour()
 	{
@@ -95,7 +107,7 @@ public interface FarmRunAutopilotConfig extends Config
 		name = "Gardener colour",
 		description = "Outline colour for the gardener",
 		hidden = true,
-		position = 6
+		position = 7
 	)
 	default Color npcColour()
 	{
@@ -108,7 +120,7 @@ public interface FarmRunAutopilotConfig extends Config
 		name = "Item colour",
 		description = "Outline colour for items to use",
 		hidden = true,
-		position = 7
+		position = 8
 	)
 	default Color itemColour()
 	{

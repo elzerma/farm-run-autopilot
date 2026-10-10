@@ -888,6 +888,8 @@ class SetupPanel extends JPanel
 		s.addContent(checkBox("Highlight items to use", c.highlightItems(), true,
 			"Outline the seed, compost, tool or teleport to use next in your inventory and equipment",
 			on -> guidance.set("highlightItems", on)));
+		s.addContent(checkBox("Highlight the spell to cast", c.highlightSpell(), true,
+			"Outline the teleport (or Cure Plant) to cast next in your spellbook", on -> guidance.set("highlightSpell", on)));
 		s.addContent(colourRow("Patch colour", c.patchColour(), "patchColour"));
 		s.addContent(colourRow("Gardener colour", c.npcColour(), "npcColour"));
 		s.addContent(colourRow("Item colour", c.itemColour(), "itemColour"));

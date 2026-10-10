@@ -719,10 +719,21 @@ public class RunSession
 					}
 				}
 			}
-			return new Highlights(null, false, items);
+			// The spell to cast: the teleport itself, or Teleport to House for routes through the house
+			Spell spell = null;
+			if (stopIndex > 0 && stop.getDeparture() == Departure.DIRECT && stop.getMethod() != null)
+			{
+				spell = stop.getMethod().getSpell();
+			}
+			else if (stopIndex > 0 && stop.getDeparture().isViaHouse())
+			{
+				spell = Spell.TELEPORT_TO_HOUSE;
+			}
+			return new Highlights(null, false, items, castableNow(spell));
 		}
 
 		boolean gardener = false;
+		Spell spell = null;
 		final Crop crop = plan.getSupplies().getPlantings().get(currentPatch);
 		switch (currentAction)
 		{
@@ -755,6 +766,7 @@ public class RunSession
 				break;
 			case CURE:
 				items.add(ItemID.PLANT_CURE);
+				spell = settings.getRunConfig().isUseCurePlant() ? castableNow(Spell.CURE_PLANT) : null;
 				break;
 			case PAY:
 				gardener = true;
@@ -771,7 +783,14 @@ public class RunSession
 			default:
 				break;
 		}
-		return new Highlights(currentPatch, gardener && currentPatch.hasGardener(), items);
+		return new Highlights(currentPatch, gardener && currentPatch.hasGardener(), items, spell);
+	}
+
+	/** The spell if it can be cast from the spellbook the player is on right now, otherwise null. */
+	private Spell castableNow(Spell spell)
+	{
+		final AccessSnapshot access = accessChecker.getSnapshot();
+		return spell != null && access.canCast(spell) && access.isOnSpellbook(spell) ? spell : null;
 	}
 
 	private void travelItems(TravelMethod method, Set<Integer> items)
