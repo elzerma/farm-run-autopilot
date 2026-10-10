@@ -390,17 +390,19 @@ class SetupPanel extends JPanel
 				hasSpell |= method.getSpell() != null;
 				final List<Requirement> missing = access.missingFor(method);
 				final boolean locked = !missing.isEmpty();
-				// A spell that can't be cast from here still works as a tablet, so it's information, not a lock
+				// A spell that can't be cast right now still works as a tablet, so say why rather than lock it
 				final Spell spell = method.getSpell();
-				final boolean tabletOnly = !locked && method.getKind() == TravelKind.SPELL && access.isKnown()
+				final boolean cantCast = !locked && method.getKind() == TravelKind.SPELL && access.isKnown()
 					&& !access.canCast(spell);
+				final String why = !cantCast ? null : !access.isOnSpellbook(spell)
+					? title(spell.getSpellbook().name()) + " spellbook"
+					: "needs " + spell.getMagicLevel() + " Magic";
 				final String tooltip = locked ? AccessSnapshot.describe(missing)
-					: tabletOnly ? (!access.isOnSpellbook(spell)
-						? title(spell.getSpellbook().name()) + " spellbook: you'd need its tablet"
-						: "Can't be cast yet: you'd need its tablet")
+					: cantCast ? "You can't cast this right now (" + why + "). It's used if you carry its teleport "
+					+ "tablet; otherwise another way is picked."
 					: method.getNote();
 				choices.add(new Choice<>(method, method.getDisplayName()
-					+ (locked ? " (locked)" : tabletOnly ? " (tablet only)" : ""), !locked, tooltip));
+					+ (locked ? " (locked)" : cantCast ? " (" + why + ")" : ""), !locked, tooltip));
 			}
 
 			s.addContent(subheader(location.getDisplayName()));
