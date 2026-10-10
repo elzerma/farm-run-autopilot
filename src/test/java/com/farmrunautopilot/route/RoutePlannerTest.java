@@ -13,6 +13,7 @@ import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RouteMode;
 import com.farmrunautopilot.settings.RunConfig;
+import com.farmrunautopilot.settings.TravelStyle;
 import com.farmrunautopilot.supply.Holdings;
 import java.util.Arrays;
 import java.util.Collections;
@@ -264,5 +265,38 @@ public class RoutePlannerTest
 		// Cloak 4 is unlimited
 		assertEquals(null, ChargeBudget.leftToday(TravelMethod.ARDOUGNE_CLOAK_FARM,
 			bank(ItemID.ARDY_CAPE_ELITE, 1)));
+	}
+
+	@Test
+	public void stylesPenaliseWhatTheyAvoid()
+	{
+		assertEquals(0, RoutePlanner.stylePenalty(TravelStyle.FASTEST, RoutePlanner.Cost.CHARGES), 1e-9);
+		assertEquals(0, RoutePlanner.stylePenalty(TravelStyle.PREFER_FREE, RoutePlanner.Cost.FREE), 1e-9);
+		assertTrue(RoutePlanner.stylePenalty(TravelStyle.PREFER_FREE, RoutePlanner.Cost.TABLET) > 0);
+		assertTrue(RoutePlanner.stylePenalty(TravelStyle.SAVE_CHARGES, RoutePlanner.Cost.CHARGES) > 0);
+		assertEquals(0, RoutePlanner.stylePenalty(TravelStyle.SAVE_CHARGES, RoutePlanner.Cost.RUNES), 1e-9);
+		// Fewest items: a tablet per stop costs more than shared runes or one house tablet
+		assertTrue(RoutePlanner.stylePenalty(TravelStyle.FEWEST_ITEMS, RoutePlanner.Cost.TABLET)
+			> RoutePlanner.stylePenalty(TravelStyle.FEWEST_ITEMS, RoutePlanner.Cost.HOUSE));
+	}
+
+	@Test
+	public void saveChargesWalksOrCastsInsteadOfANecklace()
+	{
+		// Skills necklace (6) and 99 Magic on the standard book: Fastest may take the necklace to Falador Park;
+		// Save charges should cast Falador Teleport instead when it's only a little slower
+		final RunConfig config = new RunConfig().sanitise();
+		config.setStartLocation(Location.LUMBRIDGE);
+		config.setPreferWalking(false);
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		levels.put(Skill.MAGIC, 99);
+		levels.put(Skill.FARMING, 99);
+		final AccessSnapshot access = new AccessSnapshot(true, Collections.emptyMap(), levels,
+			Collections.emptySet(), Collections.emptySet(), null);
+		final Holdings necklace = bank(ItemID.JEWL_NECKLACE_OF_SKILLS_6, 1);
+		config.setTravelStyle(TravelStyle.SAVE_CHARGES);
+		final RouteStop stop = RoutePlanner.plan(Collections.singletonList(Patch.FALADOR_TREE), config, access,
+			necklace, new PohSetup()).getStops().get(0);
+		assertTrue(stop.getMethod() + "", stop.getMethod() == null || stop.getMethod().getItem() != TravelItem.SKILLS_NECKLACE);
 	}
 }

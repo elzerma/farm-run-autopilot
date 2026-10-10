@@ -75,6 +75,8 @@ public class RunConfig
 	private Set<Location> runesNotTabsAt = EnumSet.noneOf(Location.class);
 	/** Hold back the last charge of rechargeable jewellery (skills necklace, glory, ring of wealth, ...). */
 	private boolean keepLastCharge = false;
+	/** How Auto (best) picks each stop's teleport. */
+	private TravelStyle travelStyle = TravelStyle.FASTEST;
 	/** Preferred way to get to a fairy ring; null means Auto (the fastest one the player has). */
 	private FairyRingAccess fairyRingWay;
 
@@ -108,6 +110,10 @@ public class RunConfig
 		disabledPatches = cleanSet(disabledPatches, Patch.class, EnumSet.noneOf(Patch.class));
 		payToClear = cleanSet(payToClear, PatchType.class, EnumSet.noneOf(PatchType.class));
 		runesNotTabsAt = cleanSet(runesNotTabsAt, Location.class, EnumSet.noneOf(Location.class));
+		if (travelStyle == null)
+		{
+			travelStyle = TravelStyle.FASTEST;
+		}
 		if (useRunesNotTabs)
 		{
 			// "Runes everywhere" became a per-stop choice: keep it on for every stop

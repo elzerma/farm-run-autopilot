@@ -15,7 +15,9 @@ import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
+import com.farmrunautopilot.settings.TravelStyle;
 import com.farmrunautopilot.supply.Holdings;
+import com.farmrunautopilot.supply.SupplyCalculator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -530,7 +532,7 @@ public final class RoutePlanner
 				// Teleports carry the walking preference, so a walk that's only a little slower wins
 				final double seconds = learned.adjust(to, leg.method, leg.departure, leg.seconds);
 				final Leg scored = new Leg(leg.method, leg.departure, seconds, leg.needsSupplies,
-					seconds + teleportPreference());
+					seconds + teleportPreference() + stylePenalty(leg, to));
 				if (best == null || scored.cost < best.cost)
 				{
 					best = scored;
@@ -727,6 +729,76 @@ public final class RoutePlanner
 		return (access.isKnown()
 			&& access.isMet(Requirement.diary(AchievementDiary.LUMBRIDGE_DRAYNOR, AchievementDiary.Tier.ELITE)))
 			|| holdings.countAny(SupplyItems.FAIRY_RING_STAFFS) > 0;
+	}
+
+	/** What a leg costs besides time, for the Auto (best) styles. */
+	enum Cost
+	{
+		FREE,
+		/** Through the house, paying for Teleport to House with a tablet or runes. */
+		HOUSE,
+		/** Uses a charge or a daily use. */
+		CHARGES,
+		TABLET,
+		RUNES
+	}
+
+	/** Seconds a style adds to ways it doesn't favour, so those win only when clearly quicker. */
+	static final double STYLE_PENALTY = 15;
+
+	/** Extra cost of a leg under the chosen Auto (best) style; 0 for Fastest. */
+	private double stylePenalty(Leg leg, Location to)
+	{
+		if (leg.method == null || config.getTravelStyle() == TravelStyle.FASTEST)
+		{
+			return 0;
+		}
+		return stylePenalty(config.getTravelStyle(), cost(leg, to));
+	}
+
+	static double stylePenalty(TravelStyle style, Cost cost)
+	{
+		switch (style)
+		{
+			case PREFER_FREE:
+				return cost == Cost.FREE ? 0 : STYLE_PENALTY;
+			case SAVE_CHARGES:
+				return cost == Cost.CHARGES ? STYLE_PENALTY : 0;
+			case FEWEST_ITEMS:
+				// A tablet or a charged item is one more thing per stop; runes and the house tab are shared
+				return cost == Cost.TABLET || cost == Cost.CHARGES ? STYLE_PENALTY
+					: cost == Cost.RUNES || cost == Cost.HOUSE ? STYLE_PENALTY / 3 : 0;
+			default:
+				return 0;
+		}
+	}
+
+	private Cost cost(Leg leg, Location to)
+	{
+		final boolean capeHome = owns(TravelItem.CONSTRUCTION_CAPE) || owns(TravelItem.MAX_CAPE);
+		if (leg.departure.isViaHouse() || leg.method.getKind() == TravelKind.HOUSE_PORTAL)
+		{
+			return capeHome ? Cost.FREE : Cost.HOUSE;
+		}
+		if (leg.departure.getFairyRingAccess() != null)
+		{
+			final TravelItem item = itemUsed(leg);
+			return item != null && isLimited(item, leg.method) ? Cost.CHARGES : Cost.FREE;
+		}
+		final Spell spell = leg.method.getSpell();
+		if (spell != null)
+		{
+			return SupplyCalculator.usesTablet(spell, to, config, access, holdings) ? Cost.TABLET : Cost.RUNES;
+		}
+		final TravelItem item = leg.method.getItem();
+		return item != null && isLimited(item, leg.method) ? Cost.CHARGES : Cost.FREE;
+	}
+
+	/** Runs out: charged jewellery, self-charged items, single-use items or daily-limited teleports. */
+	private boolean isLimited(TravelItem item, TravelMethod method)
+	{
+		return ChargeBudget.held(item, holdings) != null || ChargeBudget.chargesUnknown(item, holdings)
+			|| ChargeBudget.leftToday(method, holdings) != null;
 	}
 
 	/** Held, with a charge to spare, and not already used up earlier in this run. */

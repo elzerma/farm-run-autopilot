@@ -1,3 +1,5 @@
+> **Superseded (2026-10-10):** built differently. Per-stop "Auto (best)" with a teleport-and-how dropdown, tablet first with a per-stop runes option, spellbook rules (house altar, or Spellbook Swap only on Lunar), charge tracking pooled per item (jewellery, daily limits, self-charged items) and Auto styles (Fastest default, Prefer free, Save charges, Fewest items). The item table below is still the reference for which teleports are free.
+
 # Plan: teleport preferences ("Prefer free" and friends)
 
 Status: planning only, nothing built. For `feature/fairy-ring-access` (not the issue-fix release).

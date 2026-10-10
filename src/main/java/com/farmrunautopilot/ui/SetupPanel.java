@@ -35,6 +35,7 @@ import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RouteMode;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
+import com.farmrunautopilot.settings.TravelStyle;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.LeprechaunItem;
 import com.farmrunautopilot.tracking.PatchTracker;
@@ -589,6 +590,13 @@ class SetupPanel extends JPanel
 	private JComponent travelDefaultsSection(RunConfig config, AccessSnapshot access)
 	{
 		final CollapsibleSection s = section("Defaults for every stop");
+		final List<Choice<TravelStyle>> styles = new ArrayList<>();
+		for (TravelStyle style : TravelStyle.values())
+		{
+			styles.add(new Choice<>(style, style.getDisplayName(), true, style.getDescription()));
+		}
+		s.addContent(label("Auto (best) picks"));
+		s.addContent(combo(styles, config.getTravelStyle(), st -> saveRun(() -> config.setTravelStyle(st))));
 		s.addContent(checkBox("Keep the last charge of my rechargeable jewellery", config.isKeepLastCharge(), true,
 			"Off: every charge is used. On: the last charge of your last skills necklace, glory, ring of wealth, combat "
 				+ "bracelet or teleport crystal is kept back, and another way is used instead",
@@ -666,7 +674,8 @@ class SetupPanel extends JPanel
 		shownPicks = picks;
 
 		final CollapsibleSection s = section("Locations", overrides(overridden));
-		s.addContent(note("Auto (best) shows what it picked for each stop. Click a stop to choose a teleport and "
+		s.addContent(note("Auto (best) shows what it picked for each stop, by the style above. Click a stop to "
+			+ "choose a teleport and "
 			+ "how to use it instead; that overrides Auto for that stop. Tablets are used before runes."));
 		s.addContent(checkBox("Show every location", showAll, true,
 			"Off: only stops your runs can include, plus any you've changed",
