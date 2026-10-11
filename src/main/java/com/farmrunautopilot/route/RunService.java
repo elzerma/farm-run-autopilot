@@ -147,12 +147,18 @@ public class RunService
 			settings.getAccount().getPoh(), timings.learned(), here, near, nearTiles);
 		SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 			patchTracker::predict, this::itemName, itemManager::getItemPrice);
+		if (moved && !route.getStops().isEmpty())
+		{
+			log.debug("Route planned, starting at {}", route.getStops().get(0).getLocation());
+		}
 		// Too much for one inventory: bank partway
 		final Split split = supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS
 			? split(config, access, holdings, selection, route) : null;
 		final BankStop bankStop = split != null ? split.bankStop : null;
 		if (split != null)
 		{
+			log.debug("Route split at the {} bank, starting at {}", split.bankStop.getLocation(),
+				split.route.getStops().get(0).getLocation());
 			route = split.route;
 			// The guide needs every patch's crop, not only the first half's
 			final Map<Patch, Crop> plantings = new EnumMap<>(Patch.class);
@@ -245,17 +251,43 @@ public class RunService
 		return best != null ? best : splitInOrder(config, access, holdings, selection, route);
 	}
 
-	/** First the stops with any of these patch types (a stop is only visited once), then a bank, then the rest. */
-	private Split splitByType(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
-		Set<PatchType> firstTypes)
+	/**
+	 * The stop a run must start at: the one the player stands at, else the chosen Start at, else one they're
+	 * near; null when it may start anywhere.
+	 */
+	static Location fixedStart(Location here, Location chosen, Location near)
+	{
+		return here != null ? here : chosen != null ? chosen : near;
+	}
+
+	/**
+	 * The stops in the first half of a split by type: those with any of these patch types (a stop is only
+	 * visited once). Null if the run's fixed start would land in the second half, so a split never moves it.
+	 */
+	static Set<Location> firstHalfStops(List<Patch> patches, Set<PatchType> firstTypes, Location start)
 	{
 		final Set<Location> firstAt = EnumSet.noneOf(Location.class);
-		for (Patch patch : selection.getPatches())
+		final Set<Location> all = EnumSet.noneOf(Location.class);
+		for (Patch patch : patches)
 		{
+			all.add(patch.getLocation());
 			if (firstTypes.contains(patch.getType()))
 			{
 				firstAt.add(patch.getLocation());
 			}
+		}
+		return start != null && all.contains(start) && !firstAt.contains(start) ? null : firstAt;
+	}
+
+	/** First the stops with any of these patch types, then a bank, then the rest. */
+	private Split splitByType(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
+		Set<PatchType> firstTypes)
+	{
+		final Set<Location> firstAt = firstHalfStops(selection.getPatches(), firstTypes,
+			fixedStart(here, config.getStartLocation(), near));
+		if (firstAt == null)
+		{
+			return null;
 		}
 		final List<Patch> first = new ArrayList<>();
 		final List<Patch> second = new ArrayList<>();
