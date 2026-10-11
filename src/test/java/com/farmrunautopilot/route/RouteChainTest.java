@@ -91,6 +91,13 @@ public class RouteChainTest
 		assertEquals(describe(stops), Location.GNOME_STRONGHOLD, stops.get(0).getLocation());
 		assertEquals(describe(stops), Departure.WALK, stops.get(0).getDeparture());
 		assertEquals(describe(stops), TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, stops.get(1).getMethod());
+
+		// Even when ending the run at the Stronghold's bank would otherwise win by a second or two
+		final List<RouteStop> few = RoutePlanner.plan(Arrays.asList(Patch.GNOME_STRONGHOLD_TREE, Patch.FALADOR_TREE,
+			Patch.LUMBRIDGE_TREE, Patch.VARROCK_TREE), new RunConfig().sanitise(), access(),
+			holdings(ItemID.SLAYER_RING_8), new PohSetup(), LearnedTimes.NONE, null, Location.GNOME_STRONGHOLD, 36)
+			.getStops();
+		assertEquals(describe(few), Location.GNOME_STRONGHOLD, few.get(0).getLocation());
 	}
 
 	@Test

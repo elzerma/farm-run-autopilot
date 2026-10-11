@@ -259,22 +259,25 @@ public final class RoutePlanner
 		}
 		// Already standing at a stop: start there, with nothing to travel or bring for it
 		final int standingAt = here == null ? -1 : stops.indexOf(here);
+		int walkFirst = -1;
 		if (standingAt >= 0)
 		{
 			firstLeg[standingAt] = new Leg(null, Departure.WALK, 0, false);
 		}
 		else if (near != null && stops.indexOf(near) >= 0)
 		{
-			// Close to a stop already: walking there may beat any teleport
+			// Close to a stop already: if walking there beats any teleport, start there. Fixed rather than left to
+			// the search, which would trade it for a second or two (e.g. ending the run at the Stronghold's bank).
 			final int j = stops.indexOf(near);
 			final double walk = nearTiles * SECONDS_PER_TILE + WALK_OVERHEAD;
 			if (walk < firstLeg[j].cost)
 			{
 				firstLeg[j] = new Leg(null, Departure.WALK, walk, false);
+				walkFirst = j;
 			}
 		}
-		final int start = standingAt >= 0 ? standingAt
-			: fromStartLocation ? stops.indexOf(config.getStartLocation()) : -1;
+		final int chosenStart = fromStartLocation ? stops.indexOf(config.getStartLocation()) : -1;
+		final int start = standingAt >= 0 ? standingAt : chosenStart >= 0 ? chosenStart : walkFirst;
 
 		final int[] order;
 		switch (config.getRouteMode())
