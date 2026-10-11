@@ -1,64 +1,46 @@
 package com.farmrunautopilot.run;
 
-import com.farmrunautopilot.access.AccessChecker;
-import com.farmrunautopilot.access.AccessSnapshot;
-import com.farmrunautopilot.data.AchievementDiary;
-import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
-import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
-import com.farmrunautopilot.data.Requirement;
-import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
-import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.route.BankStop;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
-import com.farmrunautopilot.settings.Compost;
-import com.farmrunautopilot.settings.Protection;
-import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
-import com.farmrunautopilot.supply.SupplyCalculator;
 import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.supply.SupplyPlan;
-import com.farmrunautopilot.tracking.PatchPrediction;
-import com.farmrunautopilot.tracking.PatchTracker;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
-import net.runelite.api.Item;
-import net.runelite.api.ItemContainer;
 import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.MenuOptionClicked;
-import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ItemID;
 
 /**
  * Runs a farm run (SPEC 13.4): off until Build run, building while supplies are gathered, armed (plan frozen,
- * first step shown) once they are, and running from the first teleport or patch click. While running it works
- * out the next step from live patch states, notices when steps are done, records leg times, and finishes
- * itself after the last step.
+ * first step shown) once they are, and running from the first teleport or patch click. While running it moves
+ * from stop to stop, banking where the plan says, records leg times, and finishes itself after the last stop.
+ * Getting to each stop is the {@link Navigator}'s job and the work at its patches the {@link PatchGuide}'s;
+ * banking and what to wear come from {@link BankGuide} (docs/REBUILD.md, Sprint 4).
  *
  * <p>All methods except {@link #getView()} run on the client thread.
  */
@@ -66,40 +48,22 @@ import net.runelite.api.gameval.ItemID;
 @Singleton
 public class RunSession
 {
-	/** Compost messages, as in RuneLite core CompostTracker (BSD-2). */
-	private static final Pattern COMPOST_USED = Pattern.compile(
-		"You treat the .+ with (ultra|super|)compost\\.|^The .+ has been treated with (ultra|super|)compost.*");
-	private static final Pattern ALREADY_COMPOSTED = Pattern.compile(
-		"This .+ has already been (treated|fertilised) with (ultra|super|)compost.*");
 	/** How long "Run finished" stays under the player. */
 	private static final long FINISHED_NOTICE_MILLIS = 15_000;
-	/** Further than this from a patch and the step starts with "Run to the ... patch". */
-	private static final int NEAR_PATCH_TILES = 7;
-	/** Running covers 2 tiles a tick, so a bigger move in one tick is a teleport. */
-	private static final int JUMP_TILES = 10;
-	/** A teleport landing this close to the stop's patch counts as having arrived in the area. */
-	private static final int LANDED_NEAR_TILES = 150;
-	/** A journey step's walk is done this close to where it goes. */
-	private static final int JOURNEY_NEAR_TILES = 4;
-	/** A teleport landing this close to a journey's first step counts as having arrived in the area. */
-	private static final int FIRST_STEP_LANDING_TILES = 60;
-	/** The quetzal that flies between Varlamore landing pads, matched by name. */
-	private static final String RENU = "Renu";
 	private static final int BEST_TIMES = 3;
-	private static final int INVENTORY_SLOTS = 28;
 	/** Moving further than this in one tick can only be a teleport. */
 	private static final int TELEPORT_TILES = 30;
 
 	private final Client client;
 	private final RunService runService;
-	private final PatchTracker patchTracker;
 	private final HoldingsTracker holdingsTracker;
-	private final AccessChecker accessChecker;
 	private final SettingsStore settings;
 	private final RunTimings timings;
 	private final SceneTracker scene;
 	/** Draws the walk for "run to" steps, if Shortest Path is installed. */
 	private final ShortestPathBridge shortestPath;
+	private final Navigator navigator;
+	private final PatchGuide patches;
 
 	private RunView.State stage = RunView.State.OFF;
 	/** Frozen when the run arms; null while off or building. */
@@ -109,59 +73,34 @@ public class RunSession
 	/** Where the player was last tick, to notice a teleport while armed. */
 	private WorldPoint lastLocation;
 	private int stopIndex;
-	private boolean arrived;
-	/** At the plan's bank stop, restocking for the rest of the run. */
+	/** At a bank visit after the current stop, restocking for the next part of the run. */
 	private boolean banking;
-	/** The bank stop is done (or skipped). */
+	/** The bank visit after the current stop is done (or skipped). */
 	private boolean banked;
 	/** At the Farming Guild, everything needed from the seed vault has been taken (or skipped). */
 	private boolean vaultChecked;
-	/** When the player reached the current stop (epoch seconds); patches must be seen after this to count. */
-	private long arrivedAtSeconds;
-	/** Teleported close to the current stop but its patch hasn't loaded yet. */
-	private boolean teleported;
-	/** How many of the travel method's journey steps (boat, quetzal, Elkoy...) are done since landing. */
-	private int journeyStep;
-	/** The player's position last tick, to spot teleports. */
-	private WorldPoint lastPosition;
 	/** The time for the leg to the current stop has been saved. */
 	private boolean legRecorded;
 	private long legStartedAt;
-	private Patch currentPatch;
-	/** What to do at {@link #currentPatch}, or null while travelling. */
-	private StepAdvisor.Action currentAction;
-	private final Map<Patch, Progress> progress = new EnumMap<>(Patch.class);
 	private final List<RunTimings.Leg> legs = new ArrayList<>();
 	private long finishedAt;
 	private String lastRun;
 	private volatile RunView view = RunView.OFF_VIEW;
 
-	/** What has happened at a patch during this run. */
-	private static final class Progress
-	{
-		boolean composted;
-		boolean paid;
-		boolean skipped;
-		/** Seen in range in a state other than growing, so a crop growing later was planted this run. */
-		boolean sawUnplanted;
-		/** Payment items in the inventory when paying became the next step; -1 until then. */
-		int paymentBaseline = -1;
-	}
-
 	@Inject
-	RunSession(Client client, RunService runService, PatchTracker patchTracker, HoldingsTracker holdingsTracker,
-		AccessChecker accessChecker, SettingsStore settings, RunTimings timings,
-		SceneTracker scene, ShortestPathBridge shortestPath)
+	RunSession(Client client, RunService runService, HoldingsTracker holdingsTracker, SettingsStore settings,
+		RunTimings timings, SceneTracker scene, ShortestPathBridge shortestPath, Navigator navigator,
+		PatchGuide patches)
 	{
-		this.scene = scene;
-		this.shortestPath = shortestPath;
 		this.client = client;
 		this.runService = runService;
-		this.patchTracker = patchTracker;
 		this.holdingsTracker = holdingsTracker;
-		this.accessChecker = accessChecker;
 		this.settings = settings;
 		this.timings = timings;
+		this.scene = scene;
+		this.shortestPath = shortestPath;
+		this.navigator = navigator;
+		this.patches = patches;
 	}
 
 	public RunView getView()
@@ -197,7 +136,7 @@ public class RunSession
 		stage = RunView.State.OFF;
 		shortestPath.clear();
 		plan = null;
-		currentPatch = null;
+		patches.reset(null);
 		log.debug("Run cancelled");
 		evaluate();
 	}
@@ -231,17 +170,14 @@ public class RunSession
 		stage = RunView.State.ARMED;
 		startedAt = 0;
 		stopIndex = 0;
-		arrived = false;
-		teleported = false;
-		journeyStep = 0;
-		lastPosition = null;
-		currentPatch = null;
-		progress.clear();
+		navigator.reset();
+		patches.reset(plan);
 		legs.clear();
 		lastRun = null;
 		banking = false;
 		banked = false;
 		vaultChecked = false;
+		legRecorded = false;
 		final Player player = client.getLocalPlayer();
 		lastLocation = player != null ? player.getWorldLocation() : null;
 		log.debug("Run armed with {} stops", plan.getRoute().getStops().size());
@@ -276,7 +212,7 @@ public class RunSession
 		{
 			return;
 		}
-		final List<Patch> patches = plan.getSelection().getPatches();
+		final List<Patch> inRun = plan.getSelection().getPatches();
 		switch (event.getMenuAction())
 		{
 			case GAME_OBJECT_FIRST_OPTION:
@@ -286,7 +222,7 @@ public class RunSession
 			case GAME_OBJECT_FIFTH_OPTION:
 			case WIDGET_TARGET_ON_GAME_OBJECT:
 				final Patch patch = scene.patchAt(event.getId(), event.getParam0(), event.getParam1());
-				if (patch != null && patches.contains(patch))
+				if (patch != null && inRun.contains(patch))
 				{
 					startClock(System.currentTimeMillis());
 				}
@@ -298,7 +234,7 @@ public class RunSession
 			case NPC_FIFTH_OPTION:
 			case WIDGET_TARGET_ON_NPC:
 				final NPC npc = event.getMenuEntry().getNpc();
-				for (Patch p : patches)
+				for (Patch p : inRun)
 				{
 					if (npc != null && scene.gardener(p) == npc)
 					{
@@ -339,6 +275,7 @@ public class RunSession
 		}
 		log.debug("Run ended: {}", lastRun);
 		plan = null;
+		patches.reset(null);
 		// Replan with the newly learned leg times
 		runService.markDirty();
 		evaluate();
@@ -392,37 +329,38 @@ public class RunSession
 		{
 			return;
 		}
-		log.debug("Skip step: {}", banking ? "the bank visit" : !arrived ? "arriving"
-			: currentPatch != null ? currentPatch.name() : "the seed vault");
+		final Patch current = patches.getCurrentPatch();
+		log.debug("Skip step: {}", banking ? "the bank visit" : !navigator.isArrived() ? "arriving"
+			: current != null ? current.name() : "the seed vault");
 		if (banking)
 		{
 			// Carry on without everything from the bank
 			banked = true;
 			banking = false;
 		}
-		else if (currentPatch == null && arrived && !vaultChecked
+		else if (current == null && navigator.isArrived() && !vaultChecked
 			&& plan.getRoute().getStops().get(stopIndex).getLocation() == Location.FARMING_GUILD)
 		{
 			// Carry on without what's in the seed vault
 			vaultChecked = true;
 		}
-		else if (!arrived)
+		else if (!navigator.isArrived())
 		{
-			markArrived(System.currentTimeMillis());
+			navigator.markArrived(System.currentTimeMillis());
 		}
-		else if (currentPatch != null)
+		else
 		{
-			progress(currentPatch).skipped = true;
+			patches.skipCurrent();
 		}
 		evaluate();
 	}
 
 	public void onChatMessage(String message)
 	{
-		if ((stage == RunView.State.ARMED || stage == RunView.State.RUNNING) && currentPatch != null
-			&& (COMPOST_USED.matcher(message).matches() || ALREADY_COMPOSTED.matcher(message).matches()))
+		if ((stage == RunView.State.ARMED || stage == RunView.State.RUNNING) && plan != null
+			&& stopIndex < plan.getRoute().getStops().size())
 		{
-			progress(currentPatch).composted = true;
+			patches.onChatMessage(message, patchesAt(plan, plan.getRoute().getStops().get(stopIndex).getLocation()));
 		}
 	}
 
@@ -463,41 +401,18 @@ public class RunSession
 		final long now = System.currentTimeMillis();
 		// Armed shows the first step but doesn't time legs or move on until the timer starts
 		final boolean timing = stage == RunView.State.RUNNING;
-		final Player player = client.getLocalPlayer();
-		final WorldPoint position = player != null ? player.getWorldLocation() : null;
-		final WorldPoint previous = lastPosition;
-		lastPosition = position;
 		String instruction = null;
 		while (stopIndex < stops.size())
 		{
 			final RouteStop stop = stops.get(stopIndex);
-			final List<Patch> here = patchesAt(stop.getLocation());
-			if (!arrived)
+			final List<Patch> here = patchesAt(plan, stop.getLocation());
+			instruction = navigator.travel(stop, here, now);
+			if (instruction != null)
 			{
-				if (inRange(here))
-				{
-					markArrived(now);
-				}
-				else
-				{
-					if (!teleported && (jumpedTowards(previous, position, here.get(0))
-						|| jumpedToFirstStep(stop, previous, position)))
-					{
-						teleported = true;
-					}
-					else if (teleported && journeyStepDone(journeyStep(stop), previous, position))
-					{
-						journeyStep++;
-					}
-					final JourneyStep step = journeyStep(stop);
-					instruction = !teleported ? stop.describeTravel() + " to " + stop.getLocation().getDisplayName()
-						: step != null ? step.getText()
-						: walkInstruction(stop, here.get(0));
-					currentPatch = null;
-					break;
-				}
+				patches.clearCurrent();
+				break;
 			}
-			if (timing && !legRecorded && nearAny(here))
+			if (timing && !legRecorded && navigator.nearAny(here))
 			{
 				recordLeg(now);
 			}
@@ -505,10 +420,10 @@ public class RunSession
 			instruction = stop.getLocation() == Location.FARMING_GUILD && !vaultChecked ? fromSeedVault() : null;
 			if (instruction != null)
 			{
-				currentPatch = null;
+				patches.clearCurrent();
 				break;
 			}
-			instruction = nextPatchStep(here);
+			instruction = patches.nextStep(here);
 			if (instruction != null || !timing)
 			{
 				break;
@@ -528,7 +443,7 @@ public class RunSession
 				if (missingCount(bank.getSupplies().counted(holdingsTracker.getHoldings()), false) > 0)
 				{
 					banking = true;
-					currentPatch = null;
+					patches.clearCurrent();
 					final String go = bank.getTeleport() != null ? "Use your " + bank.getTeleport().getItemName()
 						+ " to teleport to " + bank.getTeleport().getBankName() : bank.title();
 					instruction = go + ": deposit the outlined items, then take what the Farm run bank tab shows";
@@ -541,10 +456,9 @@ public class RunSession
 			}
 			log.debug("Stop done: {}", stop.getLocation().getDisplayName());
 			stopIndex++;
-			arrived = false;
+			navigator.nextStop();
 			banked = false;
-			teleported = false;
-			journeyStep = 0;
+			legRecorded = false;
 			legStartedAt = now;
 		}
 
@@ -558,134 +472,23 @@ public class RunSession
 	}
 
 	/**
-	 * Where the current step says to walk or run, for Shortest Path to draw: the patch, after landing or
-	 * between patches at a stop. Null while teleporting, riding, banking or working a patch.
+	 * Where the current step says to walk or run, for Shortest Path to draw: the bank at a bank visit, the way on
+	 * while travelling, or the next patch at a stop. Null while teleporting, riding or working a patch.
 	 */
 	private WorldPoint walkTarget(RouteStop stop)
 	{
 		if (banking)
 		{
-			return null;
+			final BankStop bank = plan.bankAfter(stopIndex);
+			// By teleport, the bank is right where it lands
+			return bank == null || bank.getTeleport() != null ? null : TravelTimes.bankPoint(bank.getLocation());
 		}
-		if (!arrived)
+		if (!navigator.isArrived())
 		{
-			if (!teleported)
-			{
-				// A Renu leg starts with the walk back to the landing pad
-				final NPC renu = renuFirst(stop) ? scene.transferNpc(RENU) : null;
-				return renu != null ? renu.getWorldLocation() : null;
-			}
-			final JourneyStep step = journeyStep(stop);
-			final WorldPoint stepAt = step != null ? journeyTarget(step) : null;
-			if (stepAt != null)
-			{
-				// To the boat, quetzal or NPC: where it stands once loaded, else where it's expected
-				return stepAt;
-			}
-			final List<Patch> here = nearestFirst(patchesAt(stop.getLocation()));
-			return here.isEmpty() ? null : scene.locationOf(here.get(0));
+			return navigator.travelTarget(stop, patchesAt(plan, stop.getLocation()));
 		}
-		return currentPatch != null && farFrom(currentPatch) ? scene.locationOf(currentPatch) : null;
-	}
-
-
-	/** The first unfinished step at this stop, or null when every patch here is done. */
-	private String nextPatchStep(List<Patch> here)
-	{
-		for (Patch patch : nearestFirst(here))
-		{
-			final Progress p = progress(patch);
-			if (p.skipped)
-			{
-				continue;
-			}
-			final PatchPrediction live = patchTracker.predict(patch);
-			// Only trust a reading taken since arriving: an estimate from the last visit can say a tree is
-			// still growing when it's ready, which would skip the patch
-			if (live == null || live.getObservedAt() < arrivedAtSeconds)
-			{
-				currentPatch = patch;
-				currentAction = StepAdvisor.Action.INSPECT;
-				return "Walk to the " + patch.getDisplayName() + " patch";
-			}
-			if (live.getState() != PatchState.GROWING && patchTracker.getPatchesInRange().contains(patch))
-			{
-				p.sawUnplanted = true;
-			}
-			final StepAdvisor.PatchGoal goal = goal(patch, p);
-			final StepAdvisor.Advice advice = StepAdvisor.advise(goal, live);
-			if (advice.getAction() == StepAdvisor.Action.PAY)
-			{
-				watchPayment(patch, p);
-				if (p.paid)
-				{
-					continue;
-				}
-			}
-			if (advice.getAction() != StepAdvisor.Action.DONE)
-			{
-				currentPatch = patch;
-				currentAction = advice.getAction();
-				// The area loads well before the patch is reached, and some places have several patches
-				if (advice.getAction() != StepAdvisor.Action.INSPECT && farFrom(patch))
-				{
-					final String text = advice.getText();
-					final TravelMethod method = plan.getRoute().getStops().get(stopIndex).getMethod();
-					final String directions = method != null ? method.getDirections() : null;
-					return (directions != null ? directions + " to the " : "Run to the ") + patch.getDisplayName()
-						+ " patch, then "
-						+ Character.toLowerCase(text.charAt(0)) + text.substring(1);
-				}
-				return advice.getText();
-			}
-		}
-		currentPatch = null;
-		return null;
-	}
-
-	/** Paid once the payment items leave the inventory after paying became the next step. */
-	private void watchPayment(Patch patch, Progress p)
-	{
-		final Crop crop = plan.getSupplies().getPlantings().get(patch);
-		if (crop == null || !crop.hasPayment())
-		{
-			return;
-		}
-		final int held = holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY)
-			.getOrDefault(crop.getPaymentItemId(), 0);
-		if (p.paymentBaseline < 0)
-		{
-			p.paymentBaseline = held;
-		}
-		else if (held < p.paymentBaseline)
-		{
-			p.paid = true;
-		}
-	}
-
-	private StepAdvisor.PatchGoal goal(Patch patch, Progress p)
-	{
-		final RunConfig config = settings.getRunConfig();
-		final AccessSnapshot access = accessChecker.getSnapshot();
-		final Crop crop = plan.getSupplies().getPlantings().get(patch);
-		final boolean faladorElite = patch == Patch.FALADOR_TREE && access.isKnown()
-			&& access.isMet(Requirement.diary(AchievementDiary.FALADOR, AchievementDiary.Tier.ELITE));
-		final boolean protectionNeeded = patch.getType().isProtectable() && crop != null && crop.hasPayment()
-			&& config.protectionFor(patch) == Protection.PAY_GARDENER && !faladorElite;
-		final String plantName = crop != null ? runService.itemName(crop.getPlantItemId()) : "your seed";
-		final String payment = protectionNeeded
-			? crop.getPaymentQuantity() + " x " + runService.itemName(crop.getPaymentItemId())
-			+ (config.isPayWithNotes() ? " (noted is fine)" : "")
-			: null;
-		return new StepAdvisor.PatchGoal(patch, crop, plantName, config.getCompost().get(patch.getType()),
-			protectionNeeded, payment, config.getPayToClear().contains(patch.getType()), p.composted, p.paid, p.sawUnplanted);
-	}
-
-	private void markArrived(long now)
-	{
-		arrived = true;
-		arrivedAtSeconds = now / 1000;
-		legRecorded = false;
+		final Patch current = patches.getCurrentPatch();
+		return current != null && navigator.farFrom(current) ? scene.locationOf(current) : null;
 	}
 
 	/**
@@ -736,36 +539,6 @@ public class RunSession
 		return "Take " + String.join(", ", take) + " from the seed vault (next to the guild's bank)";
 	}
 
-	/**
-	 * A stop's patches, closest to the player first, so nobody runs past one patch to reach another (Catherby's
-	 * herb patch is on the way from the Camelot teleport to the fruit tree). The patch already being worked on
-	 * stays first until it's done, so the step doesn't flip between patches while walking.
-	 */
-	private List<Patch> nearestFirst(List<Patch> here)
-	{
-		final Player player = client.getLocalPlayer();
-		final WorldPoint at = player != null ? player.getWorldLocation() : null;
-		final List<Patch> ordered = new ArrayList<>(here);
-		if (at != null)
-		{
-			ordered.sort(Comparator.comparingInt(p ->
-			{
-				final WorldPoint point = scene.locationOf(p);
-				return point == null || point.getPlane() != at.getPlane() ? Integer.MAX_VALUE : point.distanceTo2D(at);
-			}));
-		}
-		if (currentPatch != null && ordered.remove(currentPatch))
-		{
-			ordered.add(0, currentPatch);
-		}
-		return ordered;
-	}
-
-	private List<Patch> patchesAt(Location location)
-	{
-		return patchesAt(plan, location);
-	}
-
 	private static List<Patch> patchesAt(RunPlan plan, Location location)
 	{
 		final List<Patch> here = new ArrayList<>();
@@ -779,126 +552,6 @@ public class RunSession
 		return here;
 	}
 
-	private boolean inRange(List<Patch> here)
-	{
-		final Set<Patch> inRange = patchTracker.getPatchesInRange();
-		for (Patch patch : here)
-		{
-			if (inRange.contains(patch))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * A teleport (or other jump) that landed near the stop: the position changed by more than running could in
-	 * one tick, and the patch is now close. Some teleports land too far out for the patch to load yet
-	 * (Trollheim), so without this the step would keep saying to teleport.
-	 */
-	private boolean jumpedTowards(WorldPoint from, WorldPoint to, Patch patch)
-	{
-		final WorldPoint target = scene.locationOf(patch);
-		return jumped(from, to) && target != null && target.getPlane() == to.getPlane()
-			&& target.distanceTo2D(to) <= LANDED_NEAR_TILES;
-	}
-
-	/** The position changed by more than running could in one tick: a teleport, ride or plane change. */
-	private static boolean jumped(WorldPoint from, WorldPoint to)
-	{
-		return from != null && to != null && (from.getPlane() != to.getPlane() || from.distanceTo2D(to) > JUMP_TILES);
-	}
-
-	/** This leg is a Renu flight not taken yet: the way starts at the quetzal on the landing pad. */
-	private boolean renuFirst(RouteStop stop)
-	{
-		return stop.getDeparture() == Departure.RENU && !teleported && !arrived;
-	}
-
-	/** The journey step to do now, after the teleport and before the walk to the patch, or null. */
-	private JourneyStep journeyStep(RouteStop stop)
-	{
-		final TravelMethod method = stop.getMethod();
-		return teleported && !arrived && method != null && journeyStep < method.getThen().size()
-			? method.getThen().get(journeyStep) : null;
-	}
-
-	/**
-	 * A teleport that landed by the journey's first step rather than near the patch, e.g. the Mining Guild,
-	 * which is underground with coordinates far from Falador Park.
-	 */
-	private boolean jumpedToFirstStep(RouteStop stop, WorldPoint from, WorldPoint to)
-	{
-		final TravelMethod method = stop.getMethod();
-		if (method == null || method.getThen().isEmpty() || !jumped(from, to))
-		{
-			return false;
-		}
-		final WorldPoint at = method.getThen().get(0).getAt();
-		return at != null && at.getPlane() == to.getPlane() && at.distanceTo2D(to) <= FIRST_STEP_LANDING_TILES;
-	}
-
-	/** A ride is done when the player is moved; a walk when they get close to where it goes. */
-	private boolean journeyStepDone(JourneyStep step, WorldPoint from, WorldPoint to)
-	{
-		if (step == null || to == null)
-		{
-			return false;
-		}
-		if (step.getKind() == JourneyStep.Kind.RIDE)
-		{
-			return jumped(from, to);
-		}
-		final WorldPoint target = journeyTarget(step);
-		return target != null && target.getPlane() == to.getPlane() && target.distanceTo2D(to) <= JOURNEY_NEAR_TILES;
-	}
-
-	/** Where a journey step happens: its NPC's spot once loaded, otherwise the expected spot. */
-	private WorldPoint journeyTarget(JourneyStep step)
-	{
-		final NPC npc = step.getNpc() != null ? scene.transferNpc(step.getNpc()) : null;
-		return npc != null ? npc.getWorldLocation() : step.getAt();
-	}
-
-	/** The NPC to outline for the current journey step, or null. */
-	private String journeyNpc(RouteStop stop)
-	{
-		final JourneyStep step = journeyStep(stop);
-		return step != null ? step.getNpc() : null;
-	}
-
-	/** After teleporting: the way on from the landing spot, e.g. "Walk to the Troll Stronghold herb patch". */
-	private static String walkInstruction(RouteStop stop, Patch patch)
-	{
-		final String directions = stop.getMethod() != null ? stop.getMethod().getDirections() : null;
-		return (directions != null ? directions + " to the " : "Walk to the ") + patch.getDisplayName() + " patch";
-	}
-
-	private boolean nearAny(List<Patch> here)
-	{
-		for (Patch patch : here)
-		{
-			if (!farFrom(patch))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private boolean farFrom(Patch patch)
-	{
-		final Player player = client.getLocalPlayer();
-		final WorldPoint point = scene.locationOf(patch);
-		return player != null && point != null && player.getWorldLocation().distanceTo(point) > NEAR_PATCH_TILES;
-	}
-
-	private Progress progress(Patch patch)
-	{
-		return progress.computeIfAbsent(patch, k -> new Progress());
-	}
-
 	private RunView runningView(String instruction)
 	{
 		final List<RunView.Stop> stopViews = new ArrayList<>();
@@ -908,8 +561,7 @@ public class RunSession
 			final RouteStop stop = stops.get(i);
 			final RunView.StopStatus status = i < stopIndex || (i == stopIndex && banking) ? RunView.StopStatus.DONE
 				: i == stopIndex ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
-			final String travel = stop.describeTravel();
-			stopViews.add(new RunView.Stop(stop.getLocation().getDisplayName(), travel, status,
+			stopViews.add(new RunView.Stop(stop.getLocation().getDisplayName(), stop.describeTravel(), status,
 				status == RunView.StopStatus.CURRENT ? instruction : null,
 				plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList())));
 			final BankStop bank = plan.bankAfter(i);
@@ -926,153 +578,73 @@ public class RunSession
 		{
 			instruction = "Head to your next stop";
 		}
-		final Highlights highlights = highlights();
+		// Before leaving and at each bank: what to put on for this part of the run
+		final BankGuide.Wear wear = stage == RunView.State.ARMED || banking || patches.getCurrentPatch() == null
+			? BankGuide.wear(bankSupplies(), holdingsTracker.getHoldings(), settings.getRunConfig().getOutfit())
+			: BankGuide.Wear.NONE;
+		final Highlights highlights = highlights(wear);
 		return new RunView(stage, startedAt, stopViews, instruction, false, null, null,
-			reminders(highlights), highlights);
+			reminders(highlights), wear.getText(), highlights);
 	}
 
 	/** What the current step points at: the patch and items to use there, or the teleport item while travelling. */
-	private Highlights highlights()
+	private Highlights highlights(BankGuide.Wear wear)
 	{
 		if (banking)
 		{
-			return new Highlights(null, false, null, toDeposit(), null);
+			return new Highlights(null, false, null, BankGuide.toDeposit(bankSupplies(), holdingsTracker.getHoldings(),
+				runService::notedId), null, wear.getItemIds());
 		}
-		// Main item first: reminders name it
+		final Highlights atPatch = patches.highlights();
+		if (atPatch != null)
+		{
+			return atPatch;
+		}
+		// Travelling. Main item first: reminders name it
+		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
 		final Set<Integer> items = new LinkedHashSet<>();
-		if (currentPatch == null || currentAction == null)
+		if (stop.getDeparture() == Departure.DIRECT && stop.getMethod() != null)
 		{
-			final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
-			if (stop.getDeparture() == Departure.DIRECT && stop.getMethod() != null)
-			{
-				travelItems(stop.getMethod(), items);
-			}
-			// The item that gets the player to the fairy ring
-			final FairyRingAccess way = stop.getDeparture().getFairyRingAccess();
-			if (way != null)
-			{
-				for (TravelItem item : way.getItems())
-				{
-					for (int id : item.getItemIds())
-					{
-						items.add(id);
-					}
-				}
-			}
-			// The spell to cast: the teleport itself, or Teleport to House for routes through the house
-			Spell spell = null;
-			if (stop.getDeparture() == Departure.DIRECT && stop.getMethod() != null)
-			{
-				spell = stop.getMethod().getSpell();
-			}
-			else if (stop.getDeparture().isViaHouse())
-			{
-				spell = Spell.TELEPORT_TO_HOUSE;
-				// Whatever gets the player home: construction cape, max cape or a house tablet
-				for (TravelItem cape : new TravelItem[]{TravelItem.CONSTRUCTION_CAPE, TravelItem.MAX_CAPE})
-				{
-					for (int id : cape.getItemIds())
-					{
-						items.add(id);
-					}
-				}
-				items.add(Spell.TELEPORT_TO_HOUSE.getTabletItemId());
-			}
-			return new Highlights(null, false, renuFirst(stop) ? RENU : journeyNpc(stop), items, castableNow(spell));
+			travelItems(stop.getMethod(), items);
 		}
-
-		boolean gardener = false;
+		// The item that gets the player to the fairy ring
+		final FairyRingAccess way = stop.getDeparture().getFairyRingAccess();
+		if (way != null)
+		{
+			for (TravelItem item : way.getItems())
+			{
+				for (int id : item.getItemIds())
+				{
+					items.add(id);
+				}
+			}
+		}
+		// The spell to cast: the teleport itself, or Teleport to House for routes through the house
 		Spell spell = null;
-		final Crop crop = plan.getSupplies().getPlantings().get(currentPatch);
-		switch (currentAction)
+		if (stop.getDeparture() == Departure.DIRECT && stop.getMethod() != null)
 		{
-			case PLANT:
-				if (crop != null)
-				{
-					items.add(crop.getPlantItemId());
-				}
-				break;
-			case COMPOST:
-				final Compost compost = settings.getRunConfig().getCompost().get(currentPatch.getType());
-				if (compost != null && compost != Compost.NONE)
-				{
-					items.add(compost.getItemId());
-				}
-				items.add(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED);
-				break;
-			case RAKE:
-				items.add(ItemID.RAKE);
-				break;
-			case CLEAR_DEAD:
-			case DIG_STUMP:
-				items.add(ItemID.SPADE);
-				break;
-			case CHOP:
-				for (int axe : SupplyItems.AXES)
-				{
-					items.add(axe);
-				}
-				break;
-			case CURE:
-				items.add(ItemID.PLANT_CURE);
-				spell = settings.getRunConfig().isUseCurePlant() ? castableNow(Spell.CURE_PLANT) : null;
-				break;
-			case PAY:
-				gardener = true;
-				if (crop != null && crop.hasPayment())
-				{
-					items.add(crop.getPaymentItemId());
-					items.add(runService.notedId(crop.getPaymentItemId()));
-				}
-				break;
-			case PAY_TO_CLEAR:
-				gardener = true;
-				items.add(ItemID.COINS);
-				break;
-			default:
-				break;
+			spell = stop.getMethod().getSpell();
 		}
-		return new Highlights(currentPatch, gardener && currentPatch.hasGardener(), null, items, spell);
-	}
-
-	/**
-	 * At the bank stop: inventory items the rest of the run doesn't need (produce, empty buckets, what's left
-	 * of the first half's seeds and payments), to deposit.
-	 */
-	private Set<Integer> toDeposit()
-	{
-		final Set<Integer> needed = new HashSet<>();
-		for (SupplyLine line : bankSupplies().getLines())
+		else if (stop.getDeparture().isViaHouse())
 		{
-			for (int id : line.getItemIds())
+			spell = Spell.TELEPORT_TO_HOUSE;
+			// Whatever gets the player home: construction cape, max cape or a house tablet
+			for (TravelItem cape : new TravelItem[]{TravelItem.CONSTRUCTION_CAPE, TravelItem.MAX_CAPE})
 			{
-				needed.add(id);
+				for (int id : cape.getItemIds())
+				{
+					items.add(id);
+				}
 			}
+			items.add(Spell.TELEPORT_TO_HOUSE.getTabletItemId());
 		}
-		final Set<Integer> deposit = new LinkedHashSet<>();
-		for (int id : holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY).keySet())
-		{
-			if (!needed.contains(id))
-			{
-				deposit.add(id);
-			}
-		}
-		return deposit;
+		// An item to put on isn't also outlined as the teleport to use, so the two can't be confused
+		items.removeAll(wear.getItemIds());
+		return new Highlights(null, false, navigator.travelNpc(stop), items, patches.castableNow(spell),
+			wear.getItemIds());
 	}
 
-	/** The spell if it can be cast from the spellbook the player is on right now, otherwise null. */
-	private Spell castableNow(Spell spell)
-	{
-		final AccessSnapshot access = accessChecker.getSnapshot();
-		// On Lunar, a spell from another book starts with Spellbook Swap
-		if (spell != null && access.needsLunarSwap(spell))
-		{
-			return Spell.SPELLBOOK_SWAP;
-		}
-		return spell != null && access.canCast(spell) && access.isOnSpellbook(spell) ? spell : null;
-	}
-
-	private void travelItems(TravelMethod method, Set<Integer> items)
+	private static void travelItems(TravelMethod method, Set<Integer> items)
 	{
 		if (method.getItem() != null)
 		{
@@ -1128,7 +700,7 @@ public class RunSession
 	private String reminders(Highlights highlights)
 	{
 		final List<String> lines = new ArrayList<>();
-		final String missing = missingItemReminder(highlights);
+		final String missing = patches.missingItemReminder(patches.getCurrentPatch() != null ? highlights : null);
 		if (missing != null)
 		{
 			lines.add(missing);
@@ -1138,120 +710,12 @@ public class RunSession
 		{
 			lines.add(drop);
 		}
-		final String space = spaceReminder();
+		final String space = patches.spaceReminder();
 		if (space != null)
 		{
 			lines.add(space);
 		}
 		return lines.isEmpty() ? null : String.join("\n", lines);
-	}
-
-	/**
-	 * The item the current patch step needs isn't carried: take it from the tool leprechaun if it's stored
-	 * there, otherwise say it's missing.
-	 */
-	private String missingItemReminder(Highlights highlights)
-	{
-		if (currentPatch == null || currentAction == null)
-		{
-			return null;
-		}
-		final Set<Integer> needed = highlights.getItemIds();
-		if (needed.isEmpty())
-		{
-			return null;
-		}
-		final Holdings holdings = holdingsTracker.getHoldings();
-		final Map<Integer, Integer> inventory = holdings.in(Holdings.Source.INVENTORY);
-		final Map<Integer, Integer> worn = holdings.in(Holdings.Source.WORN);
-		final Map<Integer, Integer> leprechaun = holdings.in(Holdings.Source.LEPRECHAUN);
-		Integer stored = null;
-		for (int id : needed)
-		{
-			if (inventory.getOrDefault(id, 0) > 0 || worn.getOrDefault(id, 0) > 0)
-			{
-				return null;
-			}
-			if (stored == null && leprechaun.getOrDefault(id, 0) > 0)
-			{
-				stored = id;
-			}
-		}
-		if (stored != null)
-		{
-			final String name = runService.itemName(stored).toLowerCase();
-			// "Take ultracompost", but "Take a bottomless compost bucket"
-			final String article = currentAction == StepAdvisor.Action.COMPOST
-				&& stored != ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED ? ""
-				: "aeiou".indexOf(name.charAt(0)) >= 0 ? "an " : "a ";
-			return "Take " + article + name + " from the tool leprechaun";
-		}
-		if (currentAction == StepAdvisor.Action.CHOP)
-		{
-			return "You aren't carrying an axe";
-		}
-		// The step's main item is listed first
-		return "You aren't carrying: " + runService.itemName(needed.iterator().next());
-	}
-
-	/**
-	 * Not enough free inventory space for what's about to be picked here (SPEC 11.5). Herbs and fruit can be
-	 * noted by the tool leprechaun at every patch.
-	 */
-	private String spaceReminder()
-	{
-		if (currentPatch == null || currentAction == null)
-		{
-			return null;
-		}
-		final PatchPrediction live = patchTracker.predict(currentPatch);
-		final int expected = expectedHarvest(currentPatch, currentAction, live);
-		if (expected == 0)
-		{
-			return null;
-		}
-		final int free = freeInventorySlots();
-		if (free >= expected)
-		{
-			return null;
-		}
-		return "Only " + free + " free slot" + (free == 1 ? "" : "s") + ": note produce on the tool leprechaun";
-	}
-
-	/** Inventory slots the next harvest here will take (herbs and fruit), 0 if none. */
-	static int expectedHarvest(Patch patch, StepAdvisor.Action action, PatchPrediction live)
-	{
-		if (patch.getType() == PatchType.HERB)
-		{
-			return action == StepAdvisor.Action.PICK ? SupplyCalculator.HERBS_PER_PATCH : 0;
-		}
-		if (patch.getType() == PatchType.FRUIT_TREE)
-		{
-			if (action == StepAdvisor.Action.PICK && live != null)
-			{
-				return live.getStage();
-			}
-			return action == StepAdvisor.Action.CHECK_HEALTH ? SupplyCalculator.FRUIT_PER_TREE : 0;
-		}
-		return 0;
-	}
-
-	private int freeInventorySlots()
-	{
-		final ItemContainer inventory = client.getItemContainer(InventoryID.INV);
-		if (inventory == null)
-		{
-			return INVENTORY_SLOTS;
-		}
-		int used = 0;
-		for (Item item : inventory.getItems())
-		{
-			if (item.getId() > 0 && item.getQuantity() > 0)
-			{
-				used++;
-			}
-		}
-		return INVENTORY_SLOTS - used;
 	}
 
 	/**
@@ -1304,10 +768,10 @@ public class RunSession
 		final String notice = lastRun != null && System.currentTimeMillis() - finishedAt < FINISHED_NOTICE_MILLIS
 			? lastRun : null;
 		return new RunView(RunView.State.OFF, 0, new ArrayList<>(), notice, false, lastRun, bestTimes(current),
-			null, Highlights.NONE);
+			null, null, Highlights.NONE);
 	}
 
-	/** Gathering supplies: how many items are still to get. */
+	/** Gathering supplies: how many items are still to get, and what to put on once it's in the inventory. */
 	private RunView buildingView(RunPlan current)
 	{
 		String notice = null;
@@ -1317,10 +781,12 @@ public class RunSession
 			notice = "Farm run: get " + missing + (missing == 1 ? " item" : " items") + " from the bank";
 		}
 		final List<RouteStop> stops = current.getRoute().getStops();
-		final boolean atFirstStop = !stops.isEmpty()
-			&& inRange(patchesAt(current, stops.get(0).getLocation()));
+		final boolean atFirstStop = !stops.isEmpty() && navigator.inRange(patchesAt(current, stops.get(0).getLocation()));
+		final BankGuide.Wear wear = BankGuide.wear(current.getSupplies(), holdingsTracker.getHoldings(),
+			settings.getRunConfig().getOutfit());
 		return new RunView(RunView.State.BUILDING, 0, new ArrayList<>(), notice, atFirstStop, null,
-			bestTimes(current), null, Highlights.NONE);
+			bestTimes(current), null, wear.getText(), new Highlights(null, false, null, Collections.emptySet(), null,
+			wear.getItemIds()));
 	}
 
 	/**
@@ -1341,7 +807,7 @@ public class RunSession
 		return missingCount(plan.getSupplies(), vaultFirst);
 	}
 
-	/**  vaultHere the seed vault can be used here (the Farming Guild) */
+	/** @param vaultHere the seed vault can be used here (the Farming Guild) */
 	static int missingCount(SupplyPlan supplies, boolean vaultHere)
 	{
 		int missing = 0;

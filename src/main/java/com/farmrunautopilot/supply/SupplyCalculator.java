@@ -276,9 +276,10 @@ public final class SupplyCalculator
 		travelItems.forEach((item, stops) ->
 		{
 			final String used = stops > 1 ? "Used at " + stops + " stops" : "Used once";
-			lines.add(line(SupplyLine.Group.TRAVEL, item.getDisplayName(), 1, holdings, carried,
+			final SupplyLine line = line(SupplyLine.Group.TRAVEL, item.getDisplayName(), 1, holdings, carried,
 				worn.contains(item) ? used + ". Wear it: no inventory slot" : used, worn.contains(item) ? 0 : 1,
-				item.getItemIds()));
+				item.getItemIds());
+			lines.add(worn.contains(item) ? line.worn() : line);
 		});
 		if (fairyRing && !(access.isKnown()
 			&& access.isMet(Requirement.diary(AchievementDiary.LUMBRIDGE_DRAYNOR, AchievementDiary.Tier.ELITE))))
@@ -336,7 +337,7 @@ public final class SupplyCalculator
 		}
 		if (config.getOutfit() != Outfit.NONE)
 		{
-			lines.add(outfitLine(config.getOutfit(), holdings, carried));
+			lines.add(outfitLine(config.getOutfit(), holdings, carried).worn());
 		}
 		if (config.getPlantCureDoses() > 0)
 		{
@@ -845,7 +846,7 @@ public final class SupplyCalculator
 	{
 		return new SupplyLine(line.getGroup(), line.getName(), line.getNeed(), line.getHave(), line.getCarried(),
 			line.getWhere(), line.getNote(), line.getSlots(), line.isCoveredOtherwise(), where, line.getItemIds(),
-			line.isConsumed());
+			line.isConsumed(), line.isWear());
 	}
 	private static String title(String enumName)
 	{

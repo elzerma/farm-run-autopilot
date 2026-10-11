@@ -42,7 +42,7 @@ public class RunView
 	}
 
 	public static final RunView OFF_VIEW = new RunView(State.OFF, 0, Collections.emptyList(), null, false, null,
-		null, null, Highlights.NONE);
+		null, null, null, Highlights.NONE);
 
 	State state;
 	/** When the run timer started (epoch millis), 0 until it has. */
@@ -58,5 +58,7 @@ public class RunView
 	String bestTimes;
 	/** Reminders under the instruction, one per line (e.g. "Drop 4 weeds"), or null. */
 	String reminder;
+	/** What to put on, e.g. "Wear: Graceful outfit, Ring of wealth", in its own colour; or null. */
+	String wear;
 	Highlights highlights;
 }

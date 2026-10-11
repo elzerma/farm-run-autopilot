@@ -65,6 +65,8 @@ public class SupplyLine
 	 * jewellery): with bank visits, a later part of the run can't count on what an earlier part used.
 	 */
 	boolean consumed;
+	/** Worn rather than carried (a teleport ring or cape, the chosen outfit): the guide says to put it on. */
+	boolean wear;
 
 	public SupplyLine(Group group, String name, int need, int have, int carried, Map<Holdings.Source, Integer> where,
 		String note, int slots, boolean coveredOtherwise, String changeIn, int[] itemIds)
@@ -74,6 +76,12 @@ public class SupplyLine
 
 	public SupplyLine(Group group, String name, int need, int have, int carried, Map<Holdings.Source, Integer> where,
 		String note, int slots, boolean coveredOtherwise, String changeIn, int[] itemIds, boolean consumed)
+	{
+		this(group, name, need, have, carried, where, note, slots, coveredOtherwise, changeIn, itemIds, consumed, false);
+	}
+
+	public SupplyLine(Group group, String name, int need, int have, int carried, Map<Holdings.Source, Integer> where,
+		String note, int slots, boolean coveredOtherwise, String changeIn, int[] itemIds, boolean consumed, boolean wear)
 	{
 		this.group = group;
 		this.name = name;
@@ -87,20 +95,28 @@ public class SupplyLine
 		this.changeIn = changeIn;
 		this.itemIds = itemIds;
 		this.consumed = consumed;
+		this.wear = wear;
 	}
 
 	/** The same line, counted against what the player holds now (e.g. during a run, after banking). */
 	public SupplyLine counted(Holdings holdings)
 	{
 		return new SupplyLine(group, name, need, holdings.countAny(itemIds), holdings.carriedOnly().countAny(itemIds),
-			holdings.where(itemIds), note, slots, coveredOtherwise, changeIn, itemIds, consumed);
+			holdings.where(itemIds), note, slots, coveredOtherwise, changeIn, itemIds, consumed, wear);
+	}
+
+	/** The same line marked as something to wear. */
+	public SupplyLine worn()
+	{
+		return new SupplyLine(group, name, need, have, carried, where, note, slots, coveredOtherwise, changeIn, itemIds,
+			consumed, true);
 	}
 
 	/** The same line marked as used up on the run. */
 	public SupplyLine usedUp()
 	{
 		return new SupplyLine(group, name, need, have, carried, where, note, slots, coveredOtherwise, changeIn, itemIds,
-			true);
+			true, wear);
 	}
 
 	public boolean isMet()

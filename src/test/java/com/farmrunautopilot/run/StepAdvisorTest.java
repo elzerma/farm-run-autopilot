@@ -112,4 +112,14 @@ public class StepAdvisorTest
 		assertEquals(StepAdvisor.Action.PAY,
 			action(tree(false, false), live(Patch.TAVERLEY_TREE, Crop.MAGIC, PatchState.GROWING, 0)));
 	}
+
+	@Test
+	public void diseasedTreesArePrunedAndHerbsCured()
+	{
+		// Trees and fruit trees are pruned with secateurs; plant cure is for herbs
+		assertEquals(StepAdvisor.Action.PRUNE,
+			action(tree(false, false), live(Patch.TAVERLEY_TREE, Crop.YEW, PatchState.DISEASED, 3)));
+		assertEquals(StepAdvisor.Action.CURE,
+			action(herb(false), live(Patch.CATHERBY_HERB, Crop.RANARR, PatchState.DISEASED, 2)));
+	}
 }

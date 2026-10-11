@@ -5,6 +5,7 @@ import com.farmrunautopilot.data.Unlock;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
+import net.runelite.api.coords.WorldPoint;
 
 /**
  * Measured journeys for each travel method, from wiki research (docs/plans/travel-research.md, checked
@@ -164,6 +165,8 @@ public final class TravelTimes
 	private static final Map<Location, Integer> RENU_PAD_WALK = new EnumMap<>(Location.class);
 	/** Tiles from a stop's patch to its nearest bank; stops without a practical bank are missing. */
 	private static final Map<Location, Integer> BANK_TILES = new EnumMap<>(Location.class);
+	/** Where each stop's nearest bank is, for the walking line to it (UNVERIFIED: from the map, not checked in game). */
+	private static final Map<Location, WorldPoint> BANK_POINTS = new EnumMap<>(Location.class);
 	/** For "finish near a bank": a stop without a bank nearby counts as this far from one. */
 	public static final int NO_BANK_TILES = 70;
 
@@ -203,6 +206,15 @@ public final class TravelTimes
 		BANK_TILES.put(Location.PORT_PHASMATYS, 95);
 		// The Hunter Guild bank chest (open to anyone)
 		BANK_TILES.put(Location.CIVITAS_ILLA_FORTIS, 48);
+
+		BANK_POINTS.put(Location.CATHERBY, new WorldPoint(2809, 3441, 0));
+		// The Grand Tree bank, upstairs
+		BANK_POINTS.put(Location.GNOME_STRONGHOLD, new WorldPoint(2449, 3482, 1));
+		BANK_POINTS.put(Location.FALADOR_PARK, new WorldPoint(3013, 3355, 0));
+		BANK_POINTS.put(Location.VARROCK, new WorldPoint(3253, 3420, 0));
+		BANK_POINTS.put(Location.LLETYA, new WorldPoint(2353, 3163, 0));
+		BANK_POINTS.put(Location.PORT_PHASMATYS, new WorldPoint(3688, 3467, 0));
+		BANK_POINTS.put(Location.FARMING_GUILD, new WorldPoint(1253, 3741, 0));
 	}
 
 	private TravelTimes()
@@ -254,6 +266,12 @@ public final class TravelTimes
 			}
 		}
 		return tiles;
+	}
+
+	/** Where a stop's nearest bank is, or null if not known. */
+	public static WorldPoint bankPoint(Location location)
+	{
+		return BANK_POINTS.get(location);
 	}
 
 	/** Tiles from a stop's patch to its nearest bank, or null if there's no practical bank nearby. */

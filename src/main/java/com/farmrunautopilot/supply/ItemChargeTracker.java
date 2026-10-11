@@ -138,7 +138,10 @@ public class ItemChargeTracker
 	public boolean onMenuOptionClicked(MenuOptionClicked event)
 	{
 		final int itemId = event.getItemId();
-		if (itemId <= 0 || NOT_TELEPORTS.contains(Text.removeTags(event.getMenuOption())))
+		final String option = Text.removeTags(event.getMenuOption());
+		// Moving it in or out of the bank (Withdraw-1, Deposit-All...) isn't a teleport
+		if (itemId <= 0 || NOT_TELEPORTS.contains(option) || option.startsWith("Withdraw")
+			|| option.startsWith("Deposit"))
 		{
 			return false;
 		}

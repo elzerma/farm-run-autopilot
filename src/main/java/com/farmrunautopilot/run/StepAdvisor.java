@@ -23,6 +23,8 @@ public final class StepAdvisor
 		RAKE,
 		CLEAR_DEAD,
 		CURE,
+		/** A diseased tree or fruit tree: pruned with secateurs, not cured with plant cure. */
+		PRUNE,
 		CHECK_HEALTH,
 		PICK,
 		PAY_TO_CLEAR,
@@ -111,7 +113,9 @@ public final class StepAdvisor
 			case DEAD:
 				return new Advice(Action.CLEAR_DEAD, "Clear the dead " + what + (tree ? " tree" : "") + " (spade)");
 			case DISEASED:
-				return new Advice(Action.CURE, "Cure the diseased " + what + " with plant cure, or clear it");
+				return tree
+					? new Advice(Action.PRUNE, "Prune the diseased " + what + " tree with secateurs")
+					: new Advice(Action.CURE, "Cure the diseased " + what + " with plant cure, or clear it");
 			case WEEDS:
 				return new Advice(Action.RAKE, "Rake the patch");
 			case EMPTY:
@@ -175,7 +179,7 @@ public final class StepAdvisor
 					steps.add("clear dead " + what);
 					break;
 				case DISEASED:
-					steps.add("cure or clear " + what);
+					steps.add((tree ? "prune " : "cure or clear ") + what);
 					break;
 				case WEEDS:
 					steps.add("rake");

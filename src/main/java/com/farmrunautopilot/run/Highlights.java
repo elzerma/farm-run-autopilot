@@ -25,4 +25,22 @@ public class Highlights
 	Set<Integer> itemIds;
 	/** The spell to outline in the spellbook, or null. */
 	Spell spell;
+	/** Items to put on, outlined in their own colour with a "Wear" label, never as an item to use. */
+	Set<Integer> wearItemIds;
+
+	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell)
+	{
+		this(patch, gardener, travelNpc, itemIds, spell, Collections.emptySet());
+	}
+
+	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell,
+		Set<Integer> wearItemIds)
+	{
+		this.patch = patch;
+		this.gardener = gardener;
+		this.travelNpc = travelNpc;
+		this.itemIds = itemIds;
+		this.spell = spell;
+		this.wearItemIds = wearItemIds;
+	}
 }

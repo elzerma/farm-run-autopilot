@@ -244,8 +244,6 @@ public enum TravelMethod
 	/** Fairy ring code for FAIRY_RING methods, otherwise null. */
 	private final String fairyRingCode;
 	private final String note;
-	/** What to do after arriving to reach the patch, shown in the run guide; null if it's just a walk. */
-	private final String directions;
 	/**
 	 * Steps after landing and before the walk to the patch (a boat, a quetzal, an NPC who leads the way), in
 	 * order; empty if it's just a walk. The guide shows them one at a time.
@@ -269,7 +267,6 @@ public enum TravelMethod
 		this.coins = def.coins;
 		this.fairyRingCode = def.fairyRingCode;
 		this.note = def.note;
-		this.directions = def.directions;
 		this.then = Collections.unmodifiableList(def.then);
 		this.requirements = Collections.unmodifiableList(def.requirements);
 		this.primaryFor = Collections.unmodifiableSet(def.primaryFor);
@@ -338,7 +335,6 @@ public enum TravelMethod
 		private int coins;
 		private String fairyRingCode;
 		private String note;
-		private String directions;
 		private final List<JourneyStep> then = new ArrayList<>();
 		private final List<Requirement> requirements = new ArrayList<>();
 		private final Set<PatchType> primaryFor = EnumSet.noneOf(PatchType.class);
@@ -373,12 +369,6 @@ public enum TravelMethod
 		Def note(String text)
 		{
 			note = text;
-			return this;
-		}
-
-		Def directions(String text)
-		{
-			directions = text;
 			return this;
 		}
 

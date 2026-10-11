@@ -77,11 +77,11 @@ public class RunSessionTest
 	{
 		final PatchPrediction fruit = new PatchPrediction(Patch.CATHERBY_FRUIT_TREE, Crop.PAPAYA,
 			PatchState.HARVESTABLE, 4, 7, 0, 0, 0, PatchPrediction.Source.THIS_PLUGIN);
-		assertEquals(4, RunSession.expectedHarvest(Patch.CATHERBY_FRUIT_TREE, StepAdvisor.Action.PICK, fruit));
-		assertEquals(6, RunSession.expectedHarvest(Patch.CATHERBY_FRUIT_TREE, StepAdvisor.Action.CHECK_HEALTH, null));
-		assertEquals(8, RunSession.expectedHarvest(Patch.CATHERBY_HERB, StepAdvisor.Action.PICK, null));
-		assertEquals(0, RunSession.expectedHarvest(Patch.CATHERBY_HERB, StepAdvisor.Action.PLANT, null));
-		assertEquals(0, RunSession.expectedHarvest(Patch.TAVERLEY_TREE, StepAdvisor.Action.CHECK_HEALTH, null));
+		assertEquals(4, PatchGuide.expectedHarvest(Patch.CATHERBY_FRUIT_TREE, StepAdvisor.Action.PICK, fruit));
+		assertEquals(6, PatchGuide.expectedHarvest(Patch.CATHERBY_FRUIT_TREE, StepAdvisor.Action.CHECK_HEALTH, null));
+		assertEquals(8, PatchGuide.expectedHarvest(Patch.CATHERBY_HERB, StepAdvisor.Action.PICK, null));
+		assertEquals(0, PatchGuide.expectedHarvest(Patch.CATHERBY_HERB, StepAdvisor.Action.PLANT, null));
+		assertEquals(0, PatchGuide.expectedHarvest(Patch.TAVERLEY_TREE, StepAdvisor.Action.CHECK_HEALTH, null));
 	}
 
 	@Test

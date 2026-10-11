@@ -70,6 +70,14 @@ public class GuidanceOverlay extends Overlay
 		{
 			draw(graphics, player, text, INSTRUCTION, line++);
 		}
+		// What to put on, in the same colour as its item highlight
+		if (view.getWear() != null)
+		{
+			for (String text : wrap(graphics.getFontMetrics(), view.getWear(), maxWidth))
+			{
+				draw(graphics, player, text, ItemHighlightOverlay.WEAR_COLOUR, line++);
+			}
+		}
 		if (view.getReminder() != null)
 		{
 			for (String reminder : view.getReminder().split("\n"))

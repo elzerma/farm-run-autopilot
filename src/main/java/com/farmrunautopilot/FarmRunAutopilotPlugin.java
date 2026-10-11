@@ -243,6 +243,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick tick)
 	{
+		// Patch states first, so the run guide and the plan see this tick's, not last tick's
+		trackPatches();
 		pohDetector.onGameTick();
 		if (accessChecker.onGameTick())
 		{
@@ -283,7 +285,11 @@ public class FarmRunAutopilotPlugin extends Plugin
 			shownRunView = runView;
 			showPlanLater(runService.getPlan(), client.getGameState() == GameState.LOGGED_IN);
 		}
+	}
 
+	/** Read the patches in range this tick (SPEC 9). */
+	private void trackPatches()
+	{
 		// Patch varbits are only sent after leaving the post-login welcome screen
 		final Widget motw = client.getWidget(InterfaceID.WelcomeScreen.MOTW);
 		if (motw != null && !motw.isHidden())
@@ -311,7 +317,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			runService.markDirty();
 			final FarmRunAutopilotPanel p = panel;
-			SwingUtilities.invokeLater(p::refreshPatches);
+			if (p != null)
+			{
+				SwingUtilities.invokeLater(p::refreshPatches);
+			}
 		}
 	}
 
