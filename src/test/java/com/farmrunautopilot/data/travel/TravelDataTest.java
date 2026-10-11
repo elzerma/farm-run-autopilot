@@ -52,7 +52,7 @@ public class TravelDataTest
 		for (TravelMethod method : TravelMethod.values())
 		{
 			final String name = method.name();
-			assertNotNull(name, method.getWalk());
+			assertNotNull(name + " has no measured distance in TravelTimes", TravelTimes.tiles(method));
 			switch (method.getKind())
 			{
 				case SPELL:

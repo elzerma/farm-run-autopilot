@@ -690,9 +690,13 @@ public class RunSession
 		// The trip to the first stop starts from wherever the player banked, so it isn't a sample for
 		// learning our methods' times.
 		final boolean first = stopIndex == 0;
+		// After a bank visit the leg starts at the bank, not the stop before
+		final BankStop bank = plan.getBankStop();
+		final String from = first ? null : bank != null && bank.getAfterStop() == stopIndex - 1 ? "BANK"
+			: plan.getRoute().getStops().get(stopIndex - 1).getLocation().name();
 		legs.add(new RunTimings.Leg(stop.getLocation().name(),
 			first || stop.getMethod() == null ? null : stop.getMethod().name(),
-			first ? "START" : stop.getDeparture().name(), (now - legStartedAt) / 1000.0, now));
+			first ? "START" : stop.getDeparture().name(), (now - legStartedAt) / 1000.0, now, from));
 	}
 
 	/**

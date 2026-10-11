@@ -6,6 +6,7 @@ import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
+import java.util.Arrays;
 import java.util.List;
 import net.runelite.api.gameval.ItemID;
 import static org.junit.Assert.assertEquals;
@@ -107,9 +108,11 @@ public class ScenarioTest
 	@Test
 	public void withoutAWhistleKastoriIsFirstOrSecondOfTheVarlamoreStops()
 	{
-		// Chained by Renu, the walk back to the Kastori pad is slow, so Kastori isn't left until last. (With an
-		// unlimited whistle every Varlamore stop is its own teleport and the order between them doesn't matter.)
-		final List<RouteStop> stops = RoutePlanner.plan(SeanAccount.patches(ALL), new RunConfig().sanitise(),
+		// A Varlamore run chained by Renu: the walk back to the Kastori pad is slow, so Kastori isn't left until
+		// last. (With an unlimited whistle every Varlamore stop is its own teleport and their order doesn't matter;
+		// in a full run, Nemus Retreat is reached by fairy ring and isn't part of the chain.)
+		final List<Patch> varlamore = Arrays.asList(Patch.KASTORI_FRUIT_TREE, Patch.NEMUS_RETREAT_TREE, Patch.CIVITAS_HERB);
+		final List<RouteStop> stops = RoutePlanner.plan(varlamore, new RunConfig().sanitise(),
 			SeanAccount.access(), SeanAccount.holdingsWithout(ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE),
 			new PohSetup(), LearnedTimes.NONE, null, null, 0).getStops();
 		int seen = 0;

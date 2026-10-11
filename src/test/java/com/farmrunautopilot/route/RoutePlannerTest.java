@@ -10,6 +10,7 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RouteMode;
 import com.farmrunautopilot.settings.RunConfig;
@@ -30,7 +31,7 @@ public class RoutePlannerTest
 {
 	private static RoutePlanner.Leg leg(double seconds)
 	{
-		return new RoutePlanner.Leg(null, Departure.DIRECT, seconds, false);
+		return new RoutePlanner.Leg(null, Departure.DIRECT, seconds, false, "");
 	}
 
 	/** Asymmetric costs where the cheap tour is 0 -> 2 -> 1 -> 3. */
@@ -143,8 +144,9 @@ public class RoutePlannerTest
 	@Test
 	public void ringByAStopIsAsFarAsArrivingThereByRing()
 	{
-		assertEquals(Integer.valueOf(28), RoutePlanner.ringWalkTiles(Location.FARMING_GUILD));
-		assertEquals(null, RoutePlanner.ringWalkTiles(Location.TAVERLEY));
+		// The measured walk from CIR, not the old 28-tile size (docs/REBUILD.md)
+		assertEquals(Integer.valueOf(90), TravelTimes.fairyRingTiles(Location.FARMING_GUILD));
+		assertEquals(null, TravelTimes.fairyRingTiles(Location.TAVERLEY));
 	}
 
 	@Test

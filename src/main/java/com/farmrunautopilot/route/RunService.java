@@ -149,10 +149,6 @@ public class RunService
 			settings.getAccount().getPoh(), timings.learned(), here, near, nearTiles);
 		SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 			patchTracker::predict, this::itemName, itemManager::getItemPrice);
-		if (moved && !route.getStops().isEmpty())
-		{
-			log.debug("Route planned, starting at {}", route.getStops().get(0).getLocation());
-		}
 		// Too much for one inventory: bank partway
 		final Split split = supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS
 			? split(config, access, holdings, selection, route) : null;
@@ -197,8 +193,34 @@ public class RunService
 		{
 			return false;
 		}
+		if ((plan == null || !next.getRoute().equals(plan.getRoute())) && log.isDebugEnabled())
+		{
+			log.debug("Route planned:\n{}", explain(next));
+		}
 		plan = next;
 		return true;
+	}
+
+	/**
+	 * The route leg by leg with how each time was worked out, and where it banks, so a strange route can be
+	 * explained from the log alone (docs/REBUILD.md).
+	 */
+	private static String explain(RunPlan plan)
+	{
+		final StringBuilder b = new StringBuilder();
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		for (int i = 0; i < stops.size(); i++)
+		{
+			final RouteStop stop = stops.get(i);
+			b.append(i + 1).append(". ").append(stop.getLocation().getDisplayName()).append(": ")
+				.append(stop.describeTravel()).append(", ").append(Math.round(stop.getLegSeconds())).append(" s = ")
+				.append(stop.getBreakdown()).append('\n');
+			if (plan.getBankStop() != null && plan.getBankStop().getAfterStop() == i)
+			{
+				b.append("   ").append(plan.getBankStop().how()).append('\n');
+			}
+		}
+		return b.append("Travel ").append(Math.round(plan.getRoute().getTravelSeconds())).append(" s").toString();
 	}
 
 	/** A run split by a bank stop: the whole route, what to bring before the bank, and the stop itself. */

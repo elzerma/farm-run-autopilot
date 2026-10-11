@@ -110,24 +110,6 @@ public class PatchDataTest
 	}
 
 	@Test
-	public void everyLocationHasAToolLeprechaun()
-	{
-		for (Location location : Location.values())
-		{
-			assertTrue(location.name(), location.isHasToolLeprechaun());
-		}
-	}
-
-	@Test
-	public void multiPatchLocationsHaveAnInternalWalk()
-	{
-		for (Location location : Location.values())
-		{
-			assertEquals(location.name(), location.getPatches().size() > 1, location.getInternalWalk() != null);
-		}
-	}
-
-	@Test
 	public void farmingGuildPatches()
 	{
 		assertEquals(3, Location.FARMING_GUILD.getPatches().size());

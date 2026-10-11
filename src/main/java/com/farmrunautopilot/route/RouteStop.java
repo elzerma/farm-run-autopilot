@@ -19,6 +19,25 @@ public class RouteStop
 	double legSeconds;
 	/** The player doesn't have what this method needs yet; the supply list asks for it. */
 	boolean needsSupplies;
+	/** How {@link #legSeconds} was worked out, for the log, e.g. "cast 3 + 56 tiles 17 + overhead 8". */
+	String breakdown;
+
+	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
+		boolean needsSupplies)
+	{
+		this(location, method, departure, legSeconds, needsSupplies, "");
+	}
+
+	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
+		boolean needsSupplies, String breakdown)
+	{
+		this.location = location;
+		this.method = method;
+		this.departure = departure;
+		this.legSeconds = legSeconds;
+		this.needsSupplies = needsSupplies;
+		this.breakdown = breakdown;
+	}
 
 	/**
 	 * e.g. "Spirit tree (Tree Gnome Village), then follow Elkoy out of the maze" or "House portal nexus: Catherby

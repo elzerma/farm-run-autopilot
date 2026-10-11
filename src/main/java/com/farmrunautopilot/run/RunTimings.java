@@ -48,6 +48,11 @@ public class RunTimings
 		String departure;
 		double seconds;
 		long finishedAt;
+		/**
+		 * Location enum name of the stop the leg started at, "BANK" after a bank visit, or null (the first leg,
+		 * and saves from before 2026-10-11).
+		 */
+		String from;
 	}
 
 	@Data
@@ -117,11 +122,15 @@ public class RunTimings
 		final Map<String, List<Double>> samples = new HashMap<>();
 		for (Leg leg : legs)
 		{
-			// The trip to the first stop and walks between stops aren't samples of a travel method
-			if (leg.getMethod() != null && leg.getDeparture() != null && leg.getLocation() != null)
+			// The trip to the first stop starts wherever the player banked, so it isn't a sample
+			if (leg.getDeparture() == null || leg.getLocation() == null || "START".equals(leg.getDeparture()))
 			{
-				samples.computeIfAbsent(LearnedTimes.key(leg.getLocation(), leg.getMethod(), leg.getDeparture()),
-					k -> new ArrayList<>()).add(leg.getSeconds());
+				continue;
+			}
+			final String key = LearnedTimes.key(leg.getFrom(), leg.getLocation(), leg.getMethod(), leg.getDeparture());
+			if (key != null)
+			{
+				samples.computeIfAbsent(key, k -> new ArrayList<>()).add(leg.getSeconds());
 			}
 		}
 		return new LearnedTimes(samples);

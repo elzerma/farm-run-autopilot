@@ -1,5 +1,7 @@
 package com.farmrunautopilot.data.travel;
 
+import com.farmrunautopilot.data.Location;
+import com.farmrunautopilot.data.Unlock;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
@@ -7,8 +9,9 @@ import java.util.Map;
 /**
  * Measured journeys for each travel method, from wiki research (docs/plans/travel-research.md, checked
  * 2026-10-10): the real walking path in tiles from where it lands to the nearest of the stop's patches, and
- * extra seconds for anything that isn't walking (a boat, a quetzal, Elkoy, a ladder). These replace the rough
- * {@link com.farmrunautopilot.data.Walk} sizes; a method missing here falls back to its Walk size.
+ * extra seconds for anything that isn't walking (a boat, a quetzal, Elkoy, a ladder). Every method is measured (a
+ * test checks). Below them, every other distance the route uses: walks between stops, spirit trees, Renu,
+ * fairy rings and banks near a stop, and the seconds each kind of travel takes.
  */
 public final class TravelTimes
 {
@@ -60,8 +63,10 @@ public final class TravelTimes
 		// Tree Gnome Village: out of the maze behind Elkoy, then a short walk
 		tiles(TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, 15);
 		extra(TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, 12);
-		// CIQ is north-west of Yanille: the walk round to the village is long (Sean: "SO slow")
+		// CIQ is north-west of Yanille: the walk round to the village is long. Sean: "SO slow"; his recorded leg
+		// took 118 s (2026-10-10), so 40 s on top of the walk
 		tiles(TravelMethod.FAIRY_RING_CIQ, 100);
+		extra(TravelMethod.FAIRY_RING_CIQ, 40);
 		// Catherby (nearest patch: the herb patch from Camelot)
 		tiles(TravelMethod.CAMELOT_TELEPORT, 56);
 		tiles(TravelMethod.CATHERBY_TELEPORT, 30);
@@ -122,8 +127,139 @@ public final class TravelTimes
 		tiles(TravelMethod.FAIRY_RING_AJP, 84);
 	}
 
+	// Everything else the route needs to know about distances, in one place (docs/REBUILD.md, Sprint 1)
+
+	/** Running speed: 2 tiles a game tick. */
+	public static final double SECONDS_PER_TILE = 0.3;
+	/** Casting a standard teleport, rubbing jewellery, a fairy ring dial, a spirit tree, a quetzal: seconds. */
+	public static final double TELEPORT = 3.0;
+	public static final double ITEM_TELEPORT = 3.6;
+	public static final double HOME_TELEPORT = 10.5;
+	public static final double QUETZAL = 6.0;
+	public static final double FAIRY_RING = 4.0;
+	public static final double SPIRIT_TREE = 4.5;
+	/** Walking out of the house to its portal, or into it from outside. */
+	public static final double HOUSE_DOOR = 5.0;
+	/** Walking from the house's arrival point to the nexus, jewellery box, fairy ring or spirit tree. */
+	public static final double HOUSE_WALK = 2.0;
+	/**
+	 * Every leg but a walk between neighbouring stops: finishing the last patch, opening the menu or spellbook,
+	 * the animation and the load. Sean's recorded legs (2026-10-10) ran 1-1.3x the estimates with it.
+	 */
+	public static final double LEG_OVERHEAD = 8;
+	/** A walk between neighbouring stops still means finishing the last patch and setting off. */
+	public static final double WALK_OVERHEAD = 3;
+
+	/** Falador Park to Taverley over the climbing rocks north-west of Falador. */
+	public static final int TAVERLEY_ROCKS_AGILITY = 66;
+	private static final int TAVERLEY_ROCKS_TILES = 75;
+
+	/** Walks between neighbouring stops, in tiles. */
+	private static final Map<Location, Map<Location, Integer>> WALKS = new EnumMap<>(Location.class);
+	/** Spirit trees close to a stop's patches, and the walk to them. */
+	private static final Map<Location, Integer> SPIRIT_TREE_WALK = new EnumMap<>(Location.class);
+	/** Spirit trees the player has to plant first. */
+	private static final Map<Location, Unlock> PLANTED_SPIRIT_TREES = new EnumMap<>(Location.class);
+	/** Varlamore stops with a quetzal landing pad: tiles from the patch back to the pad (for Renu). */
+	private static final Map<Location, Integer> RENU_PAD_WALK = new EnumMap<>(Location.class);
+	/** Tiles from a stop's patch to its nearest bank; stops without a practical bank are missing. */
+	private static final Map<Location, Integer> BANK_TILES = new EnumMap<>(Location.class);
+	/** For "finish near a bank": a stop without a bank nearby counts as this far from one. */
+	public static final int NO_BANK_TILES = 70;
+
+	static
+	{
+		walk(Location.FALADOR_PARK, Location.FALADOR_FARM, 75);
+		// Round to Taverley's gate (wiki research: about 90-110); over the rocks with 66 Agility, 75
+		walk(Location.FALADOR_PARK, Location.TAVERLEY, 100);
+
+		SPIRIT_TREE_WALK.put(Location.GNOME_STRONGHOLD, 14);
+		// The village tree is inside the maze: back in past Elkoy
+		SPIRIT_TREE_WALK.put(Location.TREE_GNOME_VILLAGE, 60);
+		SPIRIT_TREE_WALK.put(Location.FARMING_GUILD, 11);
+		SPIRIT_TREE_WALK.put(Location.BRIMHAVEN, 38);
+		SPIRIT_TREE_WALK.put(Location.FALADOR_FARM, 55);
+		SPIRIT_TREE_WALK.put(Location.VARROCK, 60);
+		PLANTED_SPIRIT_TREES.put(Location.FARMING_GUILD, Unlock.SPIRIT_TREE_FARMING_GUILD);
+		PLANTED_SPIRIT_TREES.put(Location.BRIMHAVEN, Unlock.SPIRIT_TREE_BRIMHAVEN);
+		PLANTED_SPIRIT_TREES.put(Location.FALADOR_FARM, Unlock.SPIRIT_TREE_PORT_SARIM);
+
+		RENU_PAD_WALK.put(Location.CIVITAS_ILLA_FORTIS, 39);
+		RENU_PAD_WALK.put(Location.KASTORI, 36);
+		RENU_PAD_WALK.put(Location.NEMUS_RETREAT, 60);
+
+		// Estimates from the map (UNVERIFIED unless noted); the old Walk sizes were 10 / 28 / 55
+		BANK_TILES.put(Location.VARROCK, 55);
+		BANK_TILES.put(Location.FALADOR_PARK, 28);
+		// The Grand Tree bank from the tree patch
+		BANK_TILES.put(Location.GNOME_STRONGHOLD, 10);
+		// Bank chest on site
+		BANK_TILES.put(Location.FARMING_GUILD, 10);
+		// The bank buffalo on the east side of the camp
+		BANK_TILES.put(Location.NEMUS_RETREAT, 25);
+		BANK_TILES.put(Location.CATHERBY, 28);
+		BANK_TILES.put(Location.LLETYA, 28);
+		// Across town from the patch, through the gate (Sean: banking there is slow)
+		BANK_TILES.put(Location.PORT_PHASMATYS, 95);
+		// The Hunter Guild bank chest (open to anyone)
+		BANK_TILES.put(Location.CIVITAS_ILLA_FORTIS, 48);
+	}
+
 	private TravelTimes()
 	{
+	}
+
+	private static void walk(Location a, Location b, int tiles)
+	{
+		WALKS.computeIfAbsent(a, k -> new EnumMap<>(Location.class)).put(b, tiles);
+		WALKS.computeIfAbsent(b, k -> new EnumMap<>(Location.class)).put(a, tiles);
+	}
+
+	/** Tiles to walk from one stop to another, or null if they aren't neighbours. */
+	public static Integer walkTiles(Location from, Location to, int agility)
+	{
+		final Integer tiles = WALKS.getOrDefault(from, Collections.emptyMap()).get(to);
+		final boolean parkAndTaverley = (from == Location.FALADOR_PARK && to == Location.TAVERLEY)
+			|| (from == Location.TAVERLEY && to == Location.FALADOR_PARK);
+		return tiles != null && parkAndTaverley && agility >= TAVERLEY_ROCKS_AGILITY ? Integer.valueOf(TAVERLEY_ROCKS_TILES) : tiles;
+	}
+
+	/** Tiles from a stop's patch to a nearby spirit tree, or null if there's none. */
+	public static Integer spiritTreeTiles(Location from)
+	{
+		return SPIRIT_TREE_WALK.get(from);
+	}
+
+	/** The unlock a stop's spirit tree needs (a player-planted one), or null. */
+	public static Unlock plantedSpiritTree(Location from)
+	{
+		return PLANTED_SPIRIT_TREES.get(from);
+	}
+
+	/** Tiles from a Varlamore stop's patch back to its quetzal landing pad, or null if it has none. */
+	public static Integer renuPadTiles(Location from)
+	{
+		return RENU_PAD_WALK.get(from);
+	}
+
+	/** Tiles from a stop's patch to its fairy ring (the same walk as arriving by that ring), or null. */
+	public static Integer fairyRingTiles(Location location)
+	{
+		Integer tiles = null;
+		for (Map.Entry<TravelMethod, Integer> e : TILES.entrySet())
+		{
+			if (e.getKey().getKind() == TravelKind.FAIRY_RING && e.getKey().getDestination() == location)
+			{
+				tiles = tiles == null ? e.getValue() : Math.min(tiles, e.getValue());
+			}
+		}
+		return tiles;
+	}
+
+	/** Tiles from a stop's patch to its nearest bank, or null if there's no practical bank nearby. */
+	public static Integer bankTiles(Location location)
+	{
+		return BANK_TILES.get(location);
 	}
 
 	private static void tiles(TravelMethod method, int tiles)
