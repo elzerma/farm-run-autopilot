@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import net.runelite.api.Quest;
+import net.runelite.api.Skill;
 
 /**
  * Orders the stops and picks how to reach each one (SPEC 12).
@@ -40,7 +41,12 @@ public final class RoutePlanner
 	// Starting estimates, in seconds (UNVERIFIED; replaced by learned timings in M8)
 	static final double SECONDS_PER_TILE = 0.3;
 	/** With "prefer walking" on, a walk up to this much slower than a teleport is chosen instead. */
-	static final double PREFER_WALKING_SECONDS = 20.0;
+	static final double PREFER_WALKING_SECONDS = 8.0;
+	/** A walk between neighbouring stops still means finishing the last patch and setting off. */
+	static final double WALK_OVERHEAD = 3;
+	/** Falador Park to Taverley over the climbing rocks north-west of Falador (66 Agility), in tiles. */
+	static final int TAVERLEY_ROCKS_WALK = 75;
+	static final int TAVERLEY_ROCKS_AGILITY = 66;
 	static final double TELEPORT = 3.0;
 	static final double ITEM_TELEPORT = 3.6;
 	static final double HOME_TELEPORT = 10.5;
@@ -93,7 +99,7 @@ public final class RoutePlanner
 		PLANTED_SPIRIT_TREES.put(Location.BRIMHAVEN, Unlock.SPIRIT_TREE_BRIMHAVEN);
 		PLANTED_SPIRIT_TREES.put(Location.FALADOR_FARM, Unlock.SPIRIT_TREE_PORT_SARIM);
 		walk(Location.FALADOR_PARK, Location.FALADOR_FARM, 75);
-		// Out of Falador's west gate and up through Taverley's south gate (estimated), so one Falador Teleport covers both
+		// Round to Taverley's gate (wiki research: about 90-110); see TAVERLEY_ROCKS_WALK for the shortcut
 		walk(Location.FALADOR_PARK, Location.TAVERLEY, 100);
 	}
 
@@ -526,10 +532,16 @@ public final class RoutePlanner
 		Leg walk = null;
 		if (from != null)
 		{
-			final Integer tiles = WALKS.getOrDefault(from, new EnumMap<>(Location.class)).get(to);
+			Integer tiles = WALKS.getOrDefault(from, new EnumMap<>(Location.class)).get(to);
+			if (tiles != null && isParkAndTaverley(from, to) && access.isKnown()
+				&& access.level(Skill.AGILITY) >= TAVERLEY_ROCKS_AGILITY)
+			{
+				// Over the climbing rocks north-west of Falador instead of round to Taverley's gate
+				tiles = TAVERLEY_ROCKS_WALK;
+			}
 			if (tiles != null)
 			{
-				walk = new Leg(null, Departure.WALK, tiles * SECONDS_PER_TILE, false);
+				walk = new Leg(null, Departure.WALK, tiles * SECONDS_PER_TILE + WALK_OVERHEAD, false);
 			}
 		}
 		final Leg best = quickest(candidates, from, to, walk);
@@ -747,6 +759,11 @@ public final class RoutePlanner
 			}
 		}
 		return tiles;
+	}
+
+	private static boolean isParkAndTaverley(Location a, Location b)
+	{
+		return (a == Location.FALADOR_PARK && b == Location.TAVERLEY) || (a == Location.TAVERLEY && b == Location.FALADOR_PARK);
 	}
 
 	/** Renu (Twilight's Promise) can fly from the pad by this stop; Kastori's pad has to be built first. */

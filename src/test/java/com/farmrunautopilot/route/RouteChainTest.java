@@ -1,6 +1,7 @@
 package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.Unlock;
@@ -114,6 +115,44 @@ public class RouteChainTest
 		assertEquals(describe(noWhistle), 2, renu);
 		assertEquals(describe(noWhistle), true,
 			noWhistle.get(noWhistle.size() - 1).getLocation() != Location.KASTORI);
+	}
+
+	@Test
+	public void faladorParkWalkToTaverleyThenCabbageToFaladorFarm()
+	{
+		final RunConfig config = new RunConfig().sanitise();
+		config.setEndNearBank(false);
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		for (Skill skill : AccessSnapshot.REAL_SKILLS)
+		{
+			levels.put(skill, 99);
+		}
+		// Explorer's ring needs the medium Lumbridge & Draynor diary
+		final AccessSnapshot access = new AccessSnapshot(true, Collections.emptyMap(), levels,
+			Collections.singleton(AccessSnapshot.diaryKey(AchievementDiary.LUMBRIDGE_DRAYNOR,
+				AchievementDiary.Tier.MEDIUM)), Collections.emptySet(), null, Spellbook.STANDARD, Collections.emptySet());
+		final List<RouteStop> stops = RoutePlanner.plan(Arrays.asList(Patch.FALADOR_TREE, Patch.TAVERLEY_TREE,
+			Patch.FALADOR_HERB), config, access, holdings(ItemID.RING_OF_WEALTH_5, ItemID.LUMBRIDGE_RING_ELITE),
+			new PohSetup()).getStops();
+
+		// Falador Park and Taverley back to back with a walk between (either way round), and the farm by the
+		// cabbage teleport rather than a walk; the same legs in any order cost the same
+		boolean walkedBetween = false;
+		for (int i = 1; i < stops.size(); i++)
+		{
+			final boolean pair = (stops.get(i - 1).getLocation() == Location.FALADOR_PARK
+				&& stops.get(i).getLocation() == Location.TAVERLEY)
+				|| (stops.get(i - 1).getLocation() == Location.TAVERLEY && stops.get(i).getLocation() == Location.FALADOR_PARK);
+			walkedBetween |= pair && stops.get(i).getDeparture() == Departure.WALK;
+		}
+		assertEquals(describe(stops), true, walkedBetween);
+		for (RouteStop stop : stops)
+		{
+			if (stop.getLocation() == Location.FALADOR_FARM)
+			{
+				assertEquals(describe(stops), TravelMethod.EXPLORERS_RING_CABBAGE_PATCH, stop.getMethod());
+			}
+		}
 	}
 
 	private static String describe(List<RouteStop> stops)

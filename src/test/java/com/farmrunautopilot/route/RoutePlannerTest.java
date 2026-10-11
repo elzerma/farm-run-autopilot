@@ -165,7 +165,10 @@ public class RoutePlannerTest
 		final RunConfig config = new RunConfig().sanitise();
 		config.setStartLocation(Location.VARROCK);
 		final List<Patch> patches = Arrays.asList(Patch.VARROCK_TREE, Patch.FALADOR_TREE, Patch.TAVERLEY_TREE);
-		final Route walking = RoutePlanner.plan(patches, config, AccessSnapshot.UNKNOWN, Holdings.EMPTY, new PohSetup());
+		// 66 Agility: over the rocks north-west of Falador
+		final AccessSnapshot agile = new AccessSnapshot(true, Collections.emptyMap(),
+			Collections.singletonMap(Skill.AGILITY, 66), Collections.emptySet(), Collections.emptySet(), null);
+		final Route walking = RoutePlanner.plan(patches, config, agile, Holdings.EMPTY, new PohSetup());
 		// One teleport into the pair, then a walk between them
 		assertEquals(Departure.WALK, walking.getStops().get(2).getDeparture());
 
