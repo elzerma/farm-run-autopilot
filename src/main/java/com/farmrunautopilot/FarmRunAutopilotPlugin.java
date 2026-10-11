@@ -22,6 +22,7 @@ import com.farmrunautopilot.run.ItemHighlightOverlay;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.run.SceneTracker;
+import com.farmrunautopilot.run.ShortestPathBridge;
 import com.farmrunautopilot.run.SpellHighlightOverlay;
 import com.farmrunautopilot.tracking.PatchTracker;
 import com.farmrunautopilot.ui.FarmRunAutopilotPanel;
@@ -108,6 +109,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 
 	@Inject
 	private TestRunner testRunner;
+
+	@Inject
+	private ShortestPathBridge shortestPath;
 
 	@Inject
 	private RunService runService;
@@ -216,6 +220,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 		clientThread.invoke(() ->
 		{
 			runSession.stop(false);
+			// Also puts the player's own Shortest Path settings back
+			shortestPath.clear();
 			hintArrow.clear();
 			sceneTracker.clear();
 			pohDetector.reset();

@@ -90,6 +90,8 @@ public class RunSession
 	private final SettingsStore settings;
 	private final RunTimings timings;
 	private final SceneTracker scene;
+	/** Draws the walk for "run to" steps, if Shortest Path is installed. */
+	private final ShortestPathBridge shortestPath;
 
 	private RunView.State stage = RunView.State.OFF;
 	/** Frozen when the run arms; null while off or building. */
@@ -141,9 +143,10 @@ public class RunSession
 	@Inject
 	RunSession(Client client, RunService runService, PatchTracker patchTracker, HoldingsTracker holdingsTracker,
 		AccessChecker accessChecker, SettingsStore settings, RunTimings timings,
-		SceneTracker scene)
+		SceneTracker scene, ShortestPathBridge shortestPath)
 	{
 		this.scene = scene;
+		this.shortestPath = shortestPath;
 		this.client = client;
 		this.runService = runService;
 		this.patchTracker = patchTracker;
@@ -184,6 +187,7 @@ public class RunSession
 			return;
 		}
 		stage = RunView.State.OFF;
+		shortestPath.clear();
 		plan = null;
 		currentPatch = null;
 		log.debug("Run cancelled");
@@ -313,6 +317,7 @@ public class RunSession
 			return;
 		}
 		stage = RunView.State.OFF;
+		shortestPath.clear();
 		final long now = System.currentTimeMillis();
 		final double seconds = (now - startedAt) / 1000.0;
 		final Map<PatchType, Integer> counts = plan.getSupplies().getPatchCounts();
@@ -530,7 +535,30 @@ public class RunSession
 			stop(true);
 			return;
 		}
+		shortestPath.setTarget(timing ? walkTarget(stops.get(stopIndex)) : null);
 		view = runningView(instruction);
+	}
+
+	/**
+	 * Where the current step says to walk or run, for Shortest Path to draw: the patch, after landing or
+	 * between patches at a stop. Null while teleporting, riding, banking or working a patch.
+	 */
+	private WorldPoint walkTarget(RouteStop stop)
+	{
+		if (banking)
+		{
+			return null;
+		}
+		if (!arrived)
+		{
+			if (!teleported || transferNpc(stop) != null)
+			{
+				return null;
+			}
+			final List<Patch> here = nearestFirst(patchesAt(stop.getLocation()));
+			return here.isEmpty() ? null : scene.locationOf(here.get(0));
+		}
+		return currentPatch != null && farFrom(currentPatch) ? scene.locationOf(currentPatch) : null;
 	}
 
 
