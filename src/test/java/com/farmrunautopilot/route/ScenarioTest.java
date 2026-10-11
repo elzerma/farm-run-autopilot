@@ -1,0 +1,193 @@
+package com.farmrunautopilot.route;
+
+import com.farmrunautopilot.data.Location;
+import com.farmrunautopilot.data.Patch;
+import com.farmrunautopilot.data.PatchType;
+import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.settings.PohSetup;
+import com.farmrunautopilot.settings.RunConfig;
+import java.util.List;
+import net.runelite.api.gameval.ItemID;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import org.junit.Ignore;
+import org.junit.Test;
+
+/**
+ * Sean's expectations for his own runs (docs/REBUILD.md, Sprint 0), on an account like his. The rebuilt
+ * planner must pass all of these; ignored ones wait for the sprint named in their reason.
+ */
+public class ScenarioTest
+{
+	private static final PatchType[] ALL = {PatchType.HERB, PatchType.TREE, PatchType.FRUIT_TREE};
+
+	private static List<RouteStop> plan(List<Patch> patches, Location near, int nearTiles)
+	{
+		return RoutePlanner.plan(patches, new RunConfig().sanitise(), SeanAccount.access(), SeanAccount.holdings(),
+			new PohSetup(), LearnedTimes.NONE, null, near, nearTiles).getStops();
+	}
+
+	private static int indexOf(List<RouteStop> stops, Location location)
+	{
+		for (int i = 0; i < stops.size(); i++)
+		{
+			if (stops.get(i).getLocation() == location)
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	private static String describe(List<RouteStop> stops)
+	{
+		final StringBuilder b = new StringBuilder();
+		for (int i = 0; i < stops.size(); i++)
+		{
+			final RouteStop stop = stops.get(i);
+			b.append(i + 1).append(". ").append(stop.getLocation()).append(" via ").append(stop.describeTravel())
+				.append(" (").append(Math.round(stop.getLegSeconds())).append(" s)\n");
+		}
+		return b.toString();
+	}
+
+	/** Gnome Stronghold, then straight to Tree Gnome Village by the Stronghold's spirit tree. */
+	private static void assertStrongholdChain(List<RouteStop> stops)
+	{
+		final int stronghold = indexOf(stops, Location.GNOME_STRONGHOLD);
+		assertTrue(describe(stops), stronghold >= 0 && stronghold + 1 < stops.size());
+		assertEquals(describe(stops), Location.TREE_GNOME_VILLAGE, stops.get(stronghold + 1).getLocation());
+		assertEquals(describe(stops), TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, stops.get(stronghold + 1).getMethod());
+	}
+
+	// Starting
+
+	@Test
+	public void startsAtTheStopYouAreNear()
+	{
+		// Falador west bank, 57 tiles from the Falador Park patch
+		final List<RouteStop> stops = plan(SeanAccount.patches(ALL), Location.FALADOR_PARK, 57);
+		assertEquals(describe(stops), Location.FALADOR_PARK, stops.get(0).getLocation());
+	}
+
+	@Test
+	public void startsAtTheStrongholdFromTheGrandTree()
+	{
+		final List<RouteStop> stops = plan(SeanAccount.patches(ALL), Location.GNOME_STRONGHOLD, 50);
+		assertEquals(describe(stops), Location.GNOME_STRONGHOLD, stops.get(0).getLocation());
+		assertStrongholdChain(stops);
+	}
+
+	// Chains a player wouldn't think of
+
+	@Test
+	public void fullRunChainsStrongholdToTreeGnomeVillage()
+	{
+		assertStrongholdChain(plan(SeanAccount.patches(ALL), null, 0));
+	}
+
+	@Test
+	public void fullRunNearFaladorStillChainsStrongholdToTreeGnomeVillage()
+	{
+		assertStrongholdChain(plan(SeanAccount.patches(ALL), Location.FALADOR_PARK, 57));
+	}
+
+	@Test
+	public void faladorParkWalksToTaverleyAndTheFarmIsByExplorersRing()
+	{
+		final List<RouteStop> stops = plan(SeanAccount.patches(ALL), null, 0);
+		final int park = indexOf(stops, Location.FALADOR_PARK);
+		final int taverley = indexOf(stops, Location.TAVERLEY);
+		assertEquals(describe(stops), 1, Math.abs(park - taverley));
+		assertEquals(describe(stops), Departure.WALK, stops.get(Math.max(park, taverley)).getDeparture());
+		assertEquals(describe(stops), TravelMethod.EXPLORERS_RING_CABBAGE_PATCH,
+			stops.get(indexOf(stops, Location.FALADOR_FARM)).getMethod());
+	}
+
+	@Test
+	public void withoutAWhistleKastoriIsFirstOrSecondOfTheVarlamoreStops()
+	{
+		// Chained by Renu, the walk back to the Kastori pad is slow, so Kastori isn't left until last. (With an
+		// unlimited whistle every Varlamore stop is its own teleport and the order between them doesn't matter.)
+		final List<RouteStop> stops = RoutePlanner.plan(SeanAccount.patches(ALL), new RunConfig().sanitise(),
+			SeanAccount.access(), SeanAccount.holdingsWithout(ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE),
+			new PohSetup(), LearnedTimes.NONE, null, null, 0).getStops();
+		int seen = 0;
+		for (RouteStop stop : stops)
+		{
+			final Location at = stop.getLocation();
+			if (at == Location.KASTORI)
+			{
+				assertTrue(describe(stops), seen <= 1);
+				return;
+			}
+			if (at == Location.CIVITAS_ILLA_FORTIS || at == Location.NEMUS_RETREAT)
+			{
+				seen++;
+			}
+		}
+	}
+
+	// Each run can be a different mix
+
+	@Test
+	public void herbsOnlyVisitsOnlyHerbStopsAndStartsNearby()
+	{
+		final List<RouteStop> stops = plan(SeanAccount.patches(PatchType.HERB), Location.CATHERBY, 40);
+		assertEquals(describe(stops), Location.CATHERBY, stops.get(0).getLocation());
+		for (RouteStop stop : stops)
+		{
+			assertTrue(describe(stops), stop.getLocation() != Location.GNOME_STRONGHOLD
+				&& stop.getLocation() != Location.TREE_GNOME_VILLAGE && stop.getLocation() != Location.LLETYA);
+		}
+	}
+
+	@Test
+	public void herbsAndFruitTreesChainStrongholdToTreeGnomeVillage()
+	{
+		assertStrongholdChain(plan(SeanAccount.patches(PatchType.HERB, PatchType.FRUIT_TREE), null, 0));
+	}
+
+	@Test
+	public void herbsAndTreesWalkFaladorParkToTaverley()
+	{
+		final List<RouteStop> stops = plan(SeanAccount.patches(PatchType.HERB, PatchType.TREE), null, 0);
+		assertEquals(describe(stops), 1,
+			Math.abs(indexOf(stops, Location.FALADOR_PARK) - indexOf(stops, Location.TAVERLEY)));
+	}
+
+	// Travel times Sean has corrected
+
+	@Test
+	public void treeGnomeVillageIsQuickerByTheStrongholdSpiritTreeThanByFairyRing()
+	{
+		assertTrue(RoutePlanner.chainsFrom(Location.GNOME_STRONGHOLD, Location.TREE_GNOME_VILLAGE,
+			new RunConfig().sanitise(), SeanAccount.access(), SeanAccount.holdings(), new PohSetup(), LearnedTimes.NONE));
+	}
+
+	// Banking partway (needs the new bank search)
+
+	@Test
+	@Ignore("Sprint 2: bank visits placed by the route search")
+	public void neverBanksAtPortPhasmatys()
+	{
+	}
+
+	@Test
+	@Ignore("Sprint 2: bank visits placed by the route search")
+	public void bigRunBanksAtABankAlongTheWayOrByABankTeleport()
+	{
+	}
+
+	@Test
+	@Ignore("Sprint 2: bank visits placed by the route search")
+	public void bankBreakKeepsTheStrongholdChainAndTheStart()
+	{
+	}
+
+	@Test
+	@Ignore("Sprint 3: per-inventory supplies")
+	public void midRunBankNeverSaysToDepositWhatTheRestOfTheRunNeeds()
+	{
+	}
+}
