@@ -342,24 +342,40 @@ public final class RoutePlanner
 		return order;
 	}
 
-	/** Fast near-optimal order for many stops: nearest neighbour, then swap pairs while it helps. */
+	/**
+	 * Fast near-optimal order for many stops. From each possible first stop (just the start, if fixed): nearest
+	 * neighbour, then improve by reversing stretches (2-opt) and moving runs of 1-3 stops elsewhere (or-opt)
+	 * until neither helps; the best result wins. Moving runs is what keeps chains together, e.g. the
+	 * Stronghold and Tree Gnome Village by spirit tree, which reversals alone can't reach.
+	 */
 	static int[] nearestNeighbourThenImprove(Leg[] firstLeg, Leg[][] legs, double[] endCost, int start)
 	{
 		final int n = firstLeg.length;
-		final int[] order = new int[n];
-		final boolean[] used = new boolean[n];
-		int current = start;
-		if (current < 0)
+		int[] best = null;
+		double bestCost = Double.MAX_VALUE;
+		for (int first = 0; first < n; first++)
 		{
-			current = 0;
-			for (int j = 1; j < n; j++)
+			if (start >= 0 && first != start)
 			{
-				if (firstLeg[j].cost < firstLeg[current].cost)
-				{
-					current = j;
-				}
+				continue;
+			}
+			final int[] order = nearestNeighbour(legs, n, first);
+			improve(order, firstLeg, legs, endCost, start >= 0);
+			final double cost = cost(order, firstLeg, legs, endCost);
+			if (cost < bestCost)
+			{
+				best = order;
+				bestCost = cost;
 			}
 		}
+		return best;
+	}
+
+	private static int[] nearestNeighbour(Leg[][] legs, int n, int first)
+	{
+		final int[] order = new int[n];
+		final boolean[] used = new boolean[n];
+		int current = first;
 		order[0] = current;
 		used[current] = true;
 		for (int k = 1; k < n; k++)
@@ -376,13 +392,20 @@ public final class RoutePlanner
 			used[next] = true;
 			current = next;
 		}
+		return order;
+	}
 
-		// 2-opt style improvement on the full (asymmetric) route cost; the start stays first if fixed
+	/** 2-opt and or-opt on the full (asymmetric) route cost until neither helps; a fixed start stays first. */
+	private static void improve(int[] order, Leg[] firstLeg, Leg[][] legs, double[] endCost, boolean fixedStart)
+	{
+		final int n = order.length;
+		final int from = fixedStart ? 1 : 0;
 		boolean improved = true;
 		while (improved)
 		{
 			improved = false;
-			for (int i = start < 0 ? 0 : 1; i < n - 1; i++)
+			// Reverse a stretch
+			for (int i = from; i < n - 1; i++)
 			{
 				for (int j = i + 1; j < n; j++)
 				{
@@ -398,8 +421,56 @@ public final class RoutePlanner
 					}
 				}
 			}
+			// Move a run of 1-3 stops to another place
+			for (int length = 1; length <= 3; length++)
+			{
+				for (int i = from; i + length <= n; i++)
+				{
+					final double before = cost(order, firstLeg, legs, endCost);
+					int[] bestMove = null;
+					double bestMoveCost = before - 1e-9;
+					for (int at = from; at <= n - length; at++)
+					{
+						if (at == i)
+						{
+							continue;
+						}
+						final int[] moved = move(order, i, length, at);
+						final double cost = cost(moved, firstLeg, legs, endCost);
+						if (cost < bestMoveCost)
+						{
+							bestMove = moved;
+							bestMoveCost = cost;
+						}
+					}
+					if (bestMove != null)
+					{
+						System.arraycopy(bestMove, 0, order, 0, n);
+						improved = true;
+					}
+				}
+			}
 		}
-		return order;
+	}
+
+	/** The order with the run of {@code length} stops at {@code i} taken out and put back starting at {@code at}. */
+	private static int[] move(int[] order, int i, int length, int at)
+	{
+		final int n = order.length;
+		final int[] rest = new int[n - length];
+		int r = 0;
+		for (int k = 0; k < n; k++)
+		{
+			if (k < i || k >= i + length)
+			{
+				rest[r++] = order[k];
+			}
+		}
+		final int[] moved = new int[n];
+		System.arraycopy(rest, 0, moved, 0, at);
+		System.arraycopy(order, i, moved, at, length);
+		System.arraycopy(rest, at, moved, at + length, rest.length - at);
+		return moved;
 	}
 
 	private static double cost(int[] order, Leg[] firstLeg, Leg[][] legs, double[] endCost)

@@ -842,6 +842,17 @@ class RunPanel extends JPanel
 			: "Drag a stop to reorder (switches to your own order)."));
 	}
 
+	/** A leg's time: "25 s" (to the nearest 5) under two minutes, otherwise "2m 10s". */
+	static String legTime(double seconds)
+	{
+		final long rounded = Math.max(5, Math.round(seconds / 5) * 5);
+		if (rounded < 120)
+		{
+			return rounded + " s";
+		}
+		return rounded / 60 + "m " + (rounded % 60 < 10 ? "0" : "") + rounded % 60 + "s";
+	}
+
 	/** A run too big for one inventory: where it banks partway, and what to take there. */
 	private void addBankStop(RunPlan plan)
 	{
@@ -919,7 +930,7 @@ class RunPanel extends JPanel
 			name.setFont(FontManager.getRunescapeSmallFont());
 			final boolean here = index == 0 && controls.view().isAtFirstStop();
 			final JLabel travel = new JLabel(UiText.wrap(here ? "You're here" : stop.describeTravel()
-				+ " - about " + PatchStatusText.duration((long) stop.getLegSeconds()), TEXT_WIDTH - 20));
+				+ " - about " + legTime(stop.getLegSeconds()), TEXT_WIDTH - 20));
 			travel.setForeground(stop.isNeedsSupplies() ? IN_STORAGE : ColorScheme.LIGHT_GRAY_COLOR);
 			travel.setFont(FontManager.getRunescapeSmallFont());
 

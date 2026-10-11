@@ -82,6 +82,28 @@ public class RouteChainTest
 	}
 
 	@Test
+	public void bigRunsKeepTheStrongholdChain()
+	{
+		// Above the exact-search limit the fast search must still find the chain
+		final List<Patch> patches = Arrays.asList(Patch.values());
+		final RunConfig config = new RunConfig().sanitise();
+		config.setEndNearBank(false);
+		final List<RouteStop> stops = RoutePlanner.plan(patches, config, access(),
+			holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF), new PohSetup()).getStops();
+		assertEquals(true, stops.size() > RoutePlanner.EXACT_LIMIT);
+		int stronghold = -1;
+		for (int i = 0; i < stops.size(); i++)
+		{
+			if (stops.get(i).getLocation() == Location.GNOME_STRONGHOLD)
+			{
+				stronghold = i;
+			}
+		}
+		assertEquals(describe(stops), true, stronghold + 1 < stops.size()
+			&& stops.get(stronghold + 1).getMethod() == TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE);
+	}
+
+	@Test
 	public void varlamoreChainsWithRenuAndKastoriIsNotLast()
 	{
 		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
