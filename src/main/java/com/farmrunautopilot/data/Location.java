@@ -23,7 +23,8 @@ public enum Location
 	// Bank chest on site.
 	FARMING_GUILD("Farming Guild", Walk.SHORT, true, Walk.MEDIUM),
 	// Bank buffalo on site (verified on the wiki).
-	NEMUS_RETREAT("Nemus Retreat", Walk.SHORT, true, null),
+	// The bank buffalo on the east side of the camp, 20-30 tiles
+	NEMUS_RETREAT("Nemus Retreat", Walk.MEDIUM, true, null),
 	TREE_GNOME_VILLAGE("Tree Gnome Village", null, true, null),
 	// Herb patch (north farm) and fruit tree (east beach) treated as one stop.
 	CATHERBY("Catherby", Walk.MEDIUM, true, Walk.LONG),
@@ -37,7 +38,8 @@ public enum Location
 	TROLL_STRONGHOLD("Troll Stronghold", null, true, null),
 	HARMONY_ISLAND("Harmony Island", null, true, null),
 	WEISS("Weiss", null, true, null),
-	CIVITAS_ILLA_FORTIS("Civitas illa Fortis (Ortus Farm)", null, true, null);
+	// The Hunter Guild bank chest (open to anyone), 45-50 tiles
+	CIVITAS_ILLA_FORTIS("Civitas illa Fortis (Ortus Farm)", Walk.LONG, true, null);
 
 	private final String displayName;
 	/** Walk to the nearest bank, or null if there is no practical bank nearby. */
