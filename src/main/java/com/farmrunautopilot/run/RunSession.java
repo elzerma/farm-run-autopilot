@@ -694,9 +694,14 @@ public class RunSession
 		final BankStop bank = plan.getBankStop();
 		final String from = first ? null : bank != null && bank.getAfterStop() == stopIndex - 1 ? "BANK"
 			: plan.getRoute().getStops().get(stopIndex - 1).getLocation().name();
+		final double seconds = (now - legStartedAt) / 1000.0;
 		legs.add(new RunTimings.Leg(stop.getLocation().name(),
 			first || stop.getMethod() == null ? null : stop.getMethod().name(),
-			first ? "START" : stop.getDeparture().name(), (now - legStartedAt) / 1000.0, now, from));
+			first ? "START" : stop.getDeparture().name(), seconds, now, from));
+		// One per stop, for comparing estimates with real times
+		log.debug("Leg timed: {} from {} by {}: {} s (estimate {} s{})", stop.getLocation().getDisplayName(),
+			first ? "the start" : from, stop.describeTravel(), Math.round(seconds), Math.round(stop.getLegSeconds()),
+			first ? ", first leg, not learned" : "");
 	}
 
 	/**
