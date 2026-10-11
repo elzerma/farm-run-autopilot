@@ -198,7 +198,7 @@ snapshots. Planning runs on the client thread only when inputs change, never per
 
 ## 6. Sprints
 
-Each sprint ends with `./gradlew test` green, a commit on master, the dev client relaunched, and a numbered
+Each sprint ends with `./gradlew test` green, a commit on the `rebuild` branch, the dev client relaunched, and a numbered
 in-game checklist for Sean. A sprint isn't done until Sean has run its checks.
 
 **Sprint 0: agree the target (no code).** Sean reads sections 1 and 8, corrects them, and lists anything
@@ -257,7 +257,9 @@ times; patch details/debug; the help list and guided tests (see decisions).
 
 ## 8. Decisions (my defaults; Sean, change any you disagree with)
 
-1. **Rebuild in place on master, sprint by sprint**, keeping the parts in section 4. Not a fresh project.
+1. **Rebuild on the `rebuild` branch, sprint by sprint**, keeping the parts in section 4. Not a fresh project.
+   master stays the working, released plugin (urgent fixes go there and are merged into `rebuild`); `rebuild`
+   merges into master once Sprints 1-5 pass Sean's in-game checks.
 2. **Any number of bank breaks** per run, placed by the search.
 3. **Bank teleports** considered: crafting cape (Crafting Guild), ring of dueling (Castle Wars), max cape,
    ring of wealth (Grand Exchange), plus regular teleports that land by a bank (Camelot -> Seers' with the
