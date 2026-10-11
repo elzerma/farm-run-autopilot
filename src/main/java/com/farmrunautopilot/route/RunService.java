@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Player;
@@ -40,6 +41,7 @@ import net.runelite.client.game.ItemManager;
  * Works out the next run on the client thread, at most once per game tick, when something it depends on
  * changes: which patches (SPEC 10), the route (SPEC 12) and the supplies (SPEC 11).
  */
+@Slf4j
 @Singleton
 public class RunService
 {
@@ -125,6 +127,10 @@ public class RunService
 		final boolean moved = nowAt != here || nearNow != near;
 		here = nowAt;
 		near = nearNow;
+		if (moved)
+		{
+			log.debug("Route start: at {}, near {} ({} tiles)", here, near, nearTiles);
+		}
 		if (!holdingsChanged && !moved && !dirty && ++ticksSinceRefresh < REFRESH_TICKS)
 		{
 			return false;
