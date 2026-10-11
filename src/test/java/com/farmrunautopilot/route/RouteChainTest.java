@@ -80,6 +80,42 @@ public class RouteChainTest
 		assertEquals(stops.toString(), TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, next.getMethod());
 	}
 
+	@Test
+	public void varlamoreChainsWithRenuAndKastoriIsNotLast()
+	{
+		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
+		quests.put(Quest.CHILDREN_OF_THE_SUN, QuestState.FINISHED);
+		quests.put(Quest.TWILIGHTS_PROMISE, QuestState.FINISHED);
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		for (Skill skill : AccessSnapshot.REAL_SKILLS)
+		{
+			levels.put(skill, 99);
+		}
+		final AccessSnapshot access = new AccessSnapshot(true, quests, levels, Collections.emptySet(),
+			EnumSet.of(Unlock.QUETZAL_KASTORI), null, Spellbook.STANDARD, Collections.emptySet());
+		final RunConfig config = new RunConfig().sanitise();
+		config.setEndNearBank(false);
+		final List<Patch> patches = Arrays.asList(Patch.KASTORI_FRUIT_TREE, Patch.NEMUS_RETREAT_TREE,
+			Patch.CIVITAS_HERB);
+
+		// With an unlimited whistle, whistling beats walking back to the pad; Kastori still isn't last
+		final List<RouteStop> whistle = RoutePlanner.plan(patches, config, access,
+			holdings(ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE), new PohSetup()).getStops();
+		assertEquals(describe(whistle), true, whistle.get(whistle.size() - 1).getLocation() != Location.KASTORI);
+
+		// Without a whistle: in by teleport, then Renu between the pads
+		final List<RouteStop> noWhistle = RoutePlanner.plan(patches, config, access, holdings(), new PohSetup())
+			.getStops();
+		int renu = 0;
+		for (RouteStop stop : noWhistle)
+		{
+			renu += stop.getDeparture() == Departure.RENU ? 1 : 0;
+		}
+		assertEquals(describe(noWhistle), 2, renu);
+		assertEquals(describe(noWhistle), true,
+			noWhistle.get(noWhistle.size() - 1).getLocation() != Location.KASTORI);
+	}
+
 	private static String describe(List<RouteStop> stops)
 	{
 		final StringBuilder b = new StringBuilder();

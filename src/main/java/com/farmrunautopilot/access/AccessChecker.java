@@ -44,7 +44,9 @@ public class AccessChecker
 	/** Quests and diaries change rarely; re-read them about every 30 seconds. */
 	private static final int REFRESH_TICKS = 50;
 
-	private static final Set<Quest> QUESTS = EnumSet.of(Quest.FAIRYTALE_II__CURE_A_QUEEN, Quest.TREE_GNOME_VILLAGE);
+	private static final Set<Quest> QUESTS = EnumSet.of(Quest.FAIRYTALE_II__CURE_A_QUEEN, Quest.TREE_GNOME_VILLAGE,
+		// Renu, the quetzal that flies between landing pads
+		Quest.TWILIGHTS_PROMISE);
 	/** Every skill, since the max cape needs 99 in all of them. */
 	private static final Set<Skill> SKILLS = AccessSnapshot.REAL_SKILLS;
 

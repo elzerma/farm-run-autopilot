@@ -26,6 +26,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.runelite.api.Quest;
 
 /**
  * Orders the stops and picks how to reach each one (SPEC 12).
@@ -70,6 +71,8 @@ public final class RoutePlanner
 	private static final Map<Location, Integer> SPIRIT_TREE_WALK = new EnumMap<>(Location.class);
 	/** Unlocks needed for player-planted spirit trees near a stop. */
 	private static final Map<Location, Unlock> PLANTED_SPIRIT_TREES = new EnumMap<>(Location.class);
+	/** Varlamore stops with a quetzal landing pad, and the walk from the patch back to it. */
+	private static final Map<Location, Integer> RENU_PAD_WALK = new EnumMap<>(Location.class);
 	/** Stops close enough to walk between, and the distance in tiles (UNVERIFIED). */
 	private static final Map<Location, Map<Location, Integer>> WALKS = new EnumMap<>(Location.class);
 
@@ -82,6 +85,10 @@ public final class RoutePlanner
 		SPIRIT_TREE_WALK.put(Location.BRIMHAVEN, 38);
 		SPIRIT_TREE_WALK.put(Location.FALADOR_FARM, 55);
 		SPIRIT_TREE_WALK.put(Location.VARROCK, 60);
+		// Varlamore stops with a quetzal landing pad: tiles from the patch back to the pad (wiki research)
+		RENU_PAD_WALK.put(Location.CIVITAS_ILLA_FORTIS, 39);
+		RENU_PAD_WALK.put(Location.KASTORI, 36);
+		RENU_PAD_WALK.put(Location.NEMUS_RETREAT, 60);
 		PLANTED_SPIRIT_TREES.put(Location.FARMING_GUILD, Unlock.SPIRIT_TREE_FARMING_GUILD);
 		PLANTED_SPIRIT_TREES.put(Location.BRIMHAVEN, Unlock.SPIRIT_TREE_BRIMHAVEN);
 		PLANTED_SPIRIT_TREES.put(Location.FALADOR_FARM, Unlock.SPIRIT_TREE_PORT_SARIM);
@@ -651,6 +658,14 @@ public final class RoutePlanner
 				break;
 		}
 
+		// From one Varlamore stop to another: back to that stop's landing pad, then Renu (no whistle charge)
+		final Integer padWalk = from == null || from == to(method) ? null : RENU_PAD_WALK.get(from);
+		if (method.getKind() == TravelKind.QUETZAL && padWalk != null && renuReady(from))
+		{
+			legs.add(new Leg(method, Departure.RENU, padWalk * SECONDS_PER_TILE + QUETZAL + walkSeconds(method),
+				false));
+		}
+
 		if (house && method.getNexus() != null && poh.getNexusDestinations().contains(method.getNexus()))
 		{
 			legs.add(new Leg(method, Departure.POH_NEXUS, viaHouse + TELEPORT + walk, false));
@@ -732,6 +747,18 @@ public final class RoutePlanner
 			}
 		}
 		return tiles;
+	}
+
+	/** Renu (Twilight's Promise) can fly from the pad by this stop; Kastori's pad has to be built first. */
+	private boolean renuReady(Location from)
+	{
+		return access.isMet(Requirement.quest(Quest.TWILIGHTS_PROMISE))
+			&& (from != Location.KASTORI || access.isMet(Requirement.unlock(Unlock.QUETZAL_KASTORI)));
+	}
+
+	private static Location to(TravelMethod method)
+	{
+		return method.getDestination();
 	}
 
 	private Integer spiritTreeWalk(Location from)

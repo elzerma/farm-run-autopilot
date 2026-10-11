@@ -26,6 +26,8 @@ public enum Departure
 	FAIRY_RING_SLAYER_RING(false, FairyRingAccess.SLAYER_RING),
 	FAIRY_RING_QUEST_CAPE(false, FairyRingAccess.QUEST_CAPE),
 	/** Just walk from the previous stop. */
+	/** Back to the quetzal landing pad by the stop just finished, then Renu (no whistle charge). */
+	RENU(false, null),
 	WALK(false, null),
 	/** No unlocked way to get there. */
 	NONE(false, null);

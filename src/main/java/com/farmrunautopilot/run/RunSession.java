@@ -82,6 +82,8 @@ public class RunSession
 	private static final int JOURNEY_NEAR_TILES = 4;
 	/** A teleport landing this close to a journey's first step counts as having arrived in the area. */
 	private static final int FIRST_STEP_LANDING_TILES = 60;
+	/** The quetzal that flies between Varlamore landing pads, matched by name. */
+	private static final String RENU = "Renu";
 	private static final int BEST_TIMES = 3;
 	private static final int INVENTORY_SLOTS = 28;
 	/** Moving further than this in one tick can only be a teleport. */
@@ -559,7 +561,9 @@ public class RunSession
 		{
 			if (!teleported)
 			{
-				return null;
+				// A Renu leg starts with the walk back to the landing pad
+				final NPC renu = renuFirst(stop) ? scene.transferNpc(RENU) : null;
+				return renu != null ? renu.getWorldLocation() : null;
 			}
 			final JourneyStep step = journeyStep(stop);
 			final WorldPoint stepAt = step != null ? journeyTarget(step) : null;
@@ -788,6 +792,12 @@ public class RunSession
 		return from != null && to != null && (from.getPlane() != to.getPlane() || from.distanceTo2D(to) > JUMP_TILES);
 	}
 
+	/** This leg is a Renu flight not taken yet: the way starts at the quetzal on the landing pad. */
+	private boolean renuFirst(RouteStop stop)
+	{
+		return stop.getDeparture() == Departure.RENU && !teleported && !arrived;
+	}
+
 	/** The journey step to do now, after the teleport and before the walk to the patch, or null. */
 	private JourneyStep journeyStep(RouteStop stop)
 	{
@@ -950,7 +960,7 @@ public class RunSession
 				}
 				items.add(Spell.TELEPORT_TO_HOUSE.getTabletItemId());
 			}
-			return new Highlights(null, false, journeyNpc(stop), items, castableNow(spell));
+			return new Highlights(null, false, renuFirst(stop) ? RENU : journeyNpc(stop), items, castableNow(spell));
 		}
 
 		boolean gardener = false;
