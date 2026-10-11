@@ -266,15 +266,16 @@ public final class RoutePlanner
 		}
 		else if (near != null && stops.indexOf(near) >= 0)
 		{
-			// Close to a stop already: if walking there beats any teleport, start there. Fixed rather than left to
-			// the search, which would trade it for a second or two (e.g. ending the run at the Stronghold's bank).
+			// Close to a stop already: start there, walking if that beats its teleport. Fixed rather than left to
+			// the search, which would trade it for a second or two (e.g. ending the run at the Stronghold's bank);
+			// a player near a patch expects to do it first.
 			final int j = stops.indexOf(near);
 			final double walk = nearTiles * SECONDS_PER_TILE + WALK_OVERHEAD;
 			if (walk < firstLeg[j].cost)
 			{
 				firstLeg[j] = new Leg(null, Departure.WALK, walk, false);
-				walkFirst = j;
 			}
+			walkFirst = j;
 		}
 		final int chosenStart = fromStartLocation ? stops.indexOf(config.getStartLocation()) : -1;
 		final int start = standingAt >= 0 ? standingAt : chosenStart >= 0 ? chosenStart : walkFirst;

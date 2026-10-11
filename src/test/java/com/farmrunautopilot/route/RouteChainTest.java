@@ -98,6 +98,12 @@ public class RouteChainTest
 			holdings(ItemID.SLAYER_RING_8), new PohSetup(), LearnedTimes.NONE, null, Location.GNOME_STRONGHOLD, 36)
 			.getStops();
 		assertEquals(describe(few), Location.GNOME_STRONGHOLD, few.get(0).getLocation());
+
+		// Near Falador Park (57 tiles), where the ring of wealth is quicker than the walk: still the first stop
+		final List<RouteStop> park = RoutePlanner.plan(Arrays.asList(Patch.values()), new RunConfig().sanitise(),
+			access(), holdings(ItemID.SLAYER_RING_8, ItemID.RING_OF_WEALTH_5), new PohSetup(), LearnedTimes.NONE,
+			null, Location.FALADOR_PARK, 57).getStops();
+		assertEquals(describe(park), Location.FALADOR_PARK, park.get(0).getLocation());
 	}
 
 	@Test
