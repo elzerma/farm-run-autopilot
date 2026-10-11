@@ -156,10 +156,41 @@ public final class RoutePlanner
 		{
 			return new Route(new ArrayList<>(), config.getRouteMode(), 0, 0);
 		}
-		return new RoutePlanner(config, access, holdings, poh, learned).plan(stops, patches.size(), here);
+		return new RoutePlanner(config, access, holdings, poh, learned).plan(stops, patches.size(), here,
+			config.isEndNearBank(), true);
 	}
 
-	private Route plan(List<Location> stops, int patchCount, Location here)
+	/**
+	 * One half of a run with a bank stop between the halves.
+	 *
+	 * @param first the first half: starts at the start location and ends next to a bank; the second half
+	 *              starts wherever is quickest and ends as the settings say
+	 */
+	static Route planHalf(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
+		PohSetup poh, LearnedTimes learned, Location here, boolean first)
+	{
+		final List<Location> stops = new ArrayList<>();
+		for (Location location : Location.values())
+		{
+			for (Patch patch : patches)
+			{
+				if (patch.getLocation() == location)
+				{
+					stops.add(location);
+					break;
+				}
+			}
+		}
+		if (stops.isEmpty())
+		{
+			return new Route(new ArrayList<>(), config.getRouteMode(), 0, 0);
+		}
+		return new RoutePlanner(config, access, holdings, poh, learned).plan(stops, patches.size(),
+			first ? here : null, first || config.isEndNearBank(), first);
+	}
+
+	private Route plan(List<Location> stops, int patchCount, Location here, boolean endNearBank,
+		boolean fromStartLocation)
 	{
 		final int n = stops.size();
 		final Leg[] firstLeg = new Leg[n];
@@ -178,7 +209,7 @@ public final class RoutePlanner
 		final double[] endCost = new double[n];
 		for (int j = 0; j < n; j++)
 		{
-			endCost[j] = config.isEndNearBank() ? bankTiles(stops.get(j)) * SECONDS_PER_TILE : 0;
+			endCost[j] = endNearBank ? bankTiles(stops.get(j)) * SECONDS_PER_TILE : 0;
 		}
 		// Already standing at a stop: start there, with nothing to travel or bring for it
 		final int standingAt = here == null ? -1 : stops.indexOf(here);
@@ -186,7 +217,8 @@ public final class RoutePlanner
 		{
 			firstLeg[standingAt] = new Leg(null, Departure.WALK, 0, false);
 		}
-		final int start = standingAt >= 0 ? standingAt : stops.indexOf(config.getStartLocation());
+		final int start = standingAt >= 0 ? standingAt
+			: fromStartLocation ? stops.indexOf(config.getStartLocation()) : -1;
 
 		final int[] order;
 		switch (config.getRouteMode())

@@ -3,11 +3,15 @@ package com.farmrunautopilot.route;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Location;
+import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
+import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.run.RunTimings;
 import com.farmrunautopilot.run.StepAdvisor;
+import com.farmrunautopilot.settings.PohSetup;
+import com.farmrunautopilot.settings.RouteMode;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
@@ -126,7 +130,7 @@ public class RunService
 		final Holdings holdings = holdingsTracker.getHoldings();
 		final RunSelection selection = RunSelector.select(config, access, patchTracker::predict,
 			Instant.now().getEpochSecond(), config.isSupplyFullRun(), overrides.get());
-		final Route route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
+		Route route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
 			settings.getAccount().getPoh(), timings.learned(), here);
 		SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 			patchTracker::predict, this::itemName, itemManager::getItemPrice);
@@ -136,7 +140,15 @@ public class RunService
 		final BankStop bankStop = split != null ? split.bankStop : null;
 		if (split != null)
 		{
-			supplies = split.before;
+			route = split.route;
+			// The guide needs every patch's crop, not only the first half's
+			final Map<Patch, Crop> plantings = new EnumMap<>(Patch.class);
+			plantings.putAll(split.before.getPlantings());
+			plantings.putAll(split.bankStop.getSupplies().getPlantings());
+			final SupplyPlan before = split.before;
+			supplies = new SupplyPlan(before.getLines(), before.getPatchCounts(), before.getNotDue(),
+				before.getTravelPlan(), before.getWarnings(), before.getCoins(), before.getRuneSummary(),
+				before.getSlots(), Collections.unmodifiableMap(plantings));
 		}
 
 		final Map<Location, List<String>> objectives = new EnumMap<>(Location.class);
@@ -168,24 +180,105 @@ public class RunService
 		return true;
 	}
 
-	/** A run split by a bank stop: what to bring before it, and the stop itself. */
+	/** A run split by a bank stop: the whole route, what to bring before the bank, and the stop itself. */
 	private static final class Split
 	{
+		final Route route;
 		final SupplyPlan before;
 		final BankStop bankStop;
+		final double seconds;
 
-		Split(SupplyPlan before, BankStop bankStop)
+		Split(Route route, SupplyPlan before, BankStop bankStop, double seconds)
 		{
+			this.route = route;
 			this.before = before;
 			this.bankStop = bankStop;
+			this.seconds = seconds;
 		}
 	}
 
 	/**
-	 * Where to bank in a run too big for one inventory: after the stop whose bank adds the least walking,
-	 * among the splits where both halves fit. Null if no split fits (the plan then warns as before).
+	 * How to bank partway through a run too big for one inventory. With the fastest route, the run is planned
+	 * as two halves by patch type (e.g. trees and fruit trees, bank, herbs), so each half carries fewer kinds
+	 * of item, and the first half ends next to a bank; the quickest split where both halves fit wins. Otherwise
+	 * (or if none fits) the planned order is cut at the stop whose bank adds the least walking. Null if no
+	 * split fits: the plan then warns as before.
 	 */
 	private Split split(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
+		Route route)
+	{
+		Split best = null;
+		if (config.getRouteMode() == RouteMode.AUTOPILOT)
+		{
+			final PatchType[] types = PatchType.values();
+			// Every way to put some patch types first: each non-empty, proper subset
+			for (int mask = 1; mask < (1 << types.length) - 1; mask++)
+			{
+				final Set<PatchType> firstTypes = EnumSet.noneOf(PatchType.class);
+				for (int t = 0; t < types.length; t++)
+				{
+					if ((mask & (1 << t)) != 0)
+					{
+						firstTypes.add(types[t]);
+					}
+				}
+				final Split split = splitByType(config, access, holdings, selection, firstTypes);
+				if (split != null && (best == null || split.seconds < best.seconds))
+				{
+					best = split;
+				}
+			}
+		}
+		return best != null ? best : splitInOrder(config, access, holdings, selection, route);
+	}
+
+	/** First the stops with any of these patch types (a stop is only visited once), then a bank, then the rest. */
+	private Split splitByType(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
+		Set<PatchType> firstTypes)
+	{
+		final Set<Location> firstAt = EnumSet.noneOf(Location.class);
+		for (Patch patch : selection.getPatches())
+		{
+			if (firstTypes.contains(patch.getType()))
+			{
+				firstAt.add(patch.getLocation());
+			}
+		}
+		final List<Patch> first = new ArrayList<>();
+		final List<Patch> second = new ArrayList<>();
+		for (Patch patch : selection.getPatches())
+		{
+			(firstAt.contains(patch.getLocation()) ? first : second).add(patch);
+		}
+		if (first.isEmpty() || second.isEmpty())
+		{
+			return null;
+		}
+		final PohSetup poh = settings.getAccount().getPoh();
+		final Route route1 = RoutePlanner.planHalf(first, config, access, holdings, poh, timings.learned(), here, true);
+		final SupplyPlan before = supplies(config, access, holdings, selection, first, route1);
+		if (before.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
+		{
+			return null;
+		}
+		final Route route2 = RoutePlanner.planHalf(second, config, access, holdings, poh, timings.learned(), null,
+			false);
+		final SupplyPlan after = supplies(config, access, holdings, selection, second, route2);
+		if (after.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
+		{
+			return null;
+		}
+		final List<RouteStop> stops = new ArrayList<>(route1.getStops());
+		stops.addAll(route2.getStops());
+		final Location bankAt = route1.getStops().get(route1.getStops().size() - 1).getLocation();
+		final Route whole = new Route(stops, route1.getMode(), route1.getTravelSeconds() + route2.getTravelSeconds(),
+			route1.getPatchSeconds() + route2.getPatchSeconds());
+		return new Split(whole, before, new BankStop(route1.getStops().size() - 1, bankAt, after),
+			whole.getTravelSeconds());
+	}
+
+	/** Cut the planned order at the stop whose bank adds the least walking, among cuts where both halves fit. */
+	private Split splitInOrder(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
 		Route route)
 	{
 		final List<RouteStop> stops = route.getStops();
@@ -199,26 +292,27 @@ public class RunService
 			{
 				continue;
 			}
-			final SupplyPlan before = half(config, access, holdings, selection, route, stops.subList(0, k));
+			final List<RouteStop> head = stops.subList(0, k);
+			final SupplyPlan before = supplies(config, access, holdings, selection, patchesAt(selection, head),
+				new Route(new ArrayList<>(head), route.getMode(), 0, 0));
 			if (before.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
 			{
 				// Banking later only makes the first half bigger
 				break;
 			}
-			final SupplyPlan after = half(config, access, holdings, selection, route,
-				stops.subList(k, stops.size()));
+			final List<RouteStop> tail = stops.subList(k, stops.size());
+			final SupplyPlan after = supplies(config, access, holdings, selection, patchesAt(selection, tail),
+				new Route(new ArrayList<>(tail), route.getMode(), 0, 0));
 			if (after.getSlots() <= SupplyCalculator.INVENTORY_SLOTS)
 			{
-				best = new Split(before, new BankStop(k - 1, bankAt, after));
+				best = new Split(route, before, new BankStop(k - 1, bankAt, after), route.getTravelSeconds());
 				bestTiles = tiles;
 			}
 		}
 		return best;
 	}
 
-	/** The supplies for some of the route's stops on their own. */
-	private SupplyPlan half(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
-		Route route, List<RouteStop> stops)
+	private static List<Patch> patchesAt(RunSelection selection, List<RouteStop> stops)
 	{
 		final Set<Location> at = EnumSet.noneOf(Location.class);
 		for (RouteStop stop : stops)
@@ -233,10 +327,16 @@ public class RunService
 				patches.add(patch);
 			}
 		}
+		return patches;
+	}
+
+	/** The supplies for some of the run's patches on their own. */
+	private SupplyPlan supplies(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
+		List<Patch> patches, Route route)
+	{
 		final RunSelection part = new RunSelection(patches, selection.getIncludedTypes(),
 			selection.getSkippedTypes(), Collections.emptyList(), selection.getDueCounts());
-		final Route partRoute = new Route(new ArrayList<>(stops), route.getMode(), 0, 0);
-		return SupplyCalculator.calculate(config, access, holdings, part, partRoute, patchTracker::predict,
+		return SupplyCalculator.calculate(config, access, holdings, part, route, patchTracker::predict,
 			this::itemName, itemManager::getItemPrice);
 	}
 

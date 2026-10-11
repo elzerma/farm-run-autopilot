@@ -31,6 +31,7 @@ import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -521,7 +522,7 @@ public class RunSession
 	/** The first unfinished step at this stop, or null when every patch here is done. */
 	private String nextPatchStep(List<Patch> here)
 	{
-		for (Patch patch : here)
+		for (Patch patch : nearestFirst(here))
 		{
 			final Progress p = progress(patch);
 			if (p.skipped)
@@ -631,6 +632,31 @@ public class RunSession
 		legs.add(new RunTimings.Leg(stop.getLocation().name(),
 			first || stop.getMethod() == null ? null : stop.getMethod().name(),
 			first ? "START" : stop.getDeparture().name(), (now - legStartedAt) / 1000.0, now));
+	}
+
+	/**
+	 * A stop's patches, closest to the player first, so nobody runs past one patch to reach another (Catherby's
+	 * herb patch is on the way from the Camelot teleport to the fruit tree). The patch already being worked on
+	 * stays first until it's done, so the step doesn't flip between patches while walking.
+	 */
+	private List<Patch> nearestFirst(List<Patch> here)
+	{
+		final Player player = client.getLocalPlayer();
+		final WorldPoint at = player != null ? player.getWorldLocation() : null;
+		final List<Patch> ordered = new ArrayList<>(here);
+		if (at != null)
+		{
+			ordered.sort(Comparator.comparingInt(p ->
+			{
+				final WorldPoint point = scene.locationOf(p);
+				return point == null || point.getPlane() != at.getPlane() ? Integer.MAX_VALUE : point.distanceTo2D(at);
+			}));
+		}
+		if (currentPatch != null && ordered.remove(currentPatch))
+		{
+			ordered.add(0, currentPatch);
+		}
+		return ordered;
 	}
 
 	private List<Patch> patchesAt(Location location)
