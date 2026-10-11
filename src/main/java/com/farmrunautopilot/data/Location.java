@@ -19,14 +19,14 @@ public enum Location
 	FALADOR_PARK("Falador Park", Walk.MEDIUM, true, null),
 	TAVERLEY("Taverley", null, true, null),
 	// Bank is short from the tree patch, medium from the fruit tree.
-	GNOME_STRONGHOLD("Gnome Stronghold", Walk.SHORT, true, Walk.MEDIUM),
+	GNOME_STRONGHOLD("Gnome Stronghold", Walk.SHORT, true, Walk.LONG),
 	// Bank chest on site.
 	FARMING_GUILD("Farming Guild", Walk.SHORT, true, Walk.MEDIUM),
 	// Bank buffalo on site (verified on the wiki).
 	NEMUS_RETREAT("Nemus Retreat", Walk.SHORT, true, null),
 	TREE_GNOME_VILLAGE("Tree Gnome Village", null, true, null),
 	// Herb patch (north farm) and fruit tree (east beach) treated as one stop.
-	CATHERBY("Catherby", Walk.MEDIUM, true, Walk.MEDIUM),
+	CATHERBY("Catherby", Walk.MEDIUM, true, Walk.LONG),
 	BRIMHAVEN("Brimhaven", null, true, null),
 	LLETYA("Lletya", Walk.MEDIUM, true, null),
 	KASTORI("Kastori", null, true, null),

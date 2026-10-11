@@ -12,6 +12,7 @@ import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelKind;
+import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
@@ -52,6 +53,11 @@ public final class RoutePlanner
 	/** Switching spellbook at a house altar and back again later (two trips to the altar). */
 	static final double SPELLBOOK_SWAP = 2 * (TELEPORT + HOUSE_WALK + 3.0);
 	/** Used when the player doesn't own what a method needs, so owned methods win when close. */
+	/**
+	 * Every leg but a walk between neighbouring stops: finishing the last patch, opening the menu or spellbook,
+	 * the animation and the load. Recorded legs ran two to three times the old estimates without it.
+	 */
+	static final double LEG_OVERHEAD = 8;
 	static final double MISSING_PENALTY = 60;
 	/** Rough time at each patch (harvest, clear, plant, pay). */
 	static final double SECONDS_PER_PATCH = 20;
@@ -69,11 +75,13 @@ public final class RoutePlanner
 
 	static
 	{
-		SPIRIT_TREE_WALK.put(Location.GNOME_STRONGHOLD, 20);
-		SPIRIT_TREE_WALK.put(Location.TREE_GNOME_VILLAGE, 15);
-		SPIRIT_TREE_WALK.put(Location.FARMING_GUILD, 25);
-		SPIRIT_TREE_WALK.put(Location.BRIMHAVEN, 10);
-		SPIRIT_TREE_WALK.put(Location.FALADOR_FARM, 40);
+		SPIRIT_TREE_WALK.put(Location.GNOME_STRONGHOLD, 14);
+		// The village tree is inside the maze: back in past Elkoy
+		SPIRIT_TREE_WALK.put(Location.TREE_GNOME_VILLAGE, 60);
+		SPIRIT_TREE_WALK.put(Location.FARMING_GUILD, 11);
+		SPIRIT_TREE_WALK.put(Location.BRIMHAVEN, 38);
+		SPIRIT_TREE_WALK.put(Location.FALADOR_FARM, 55);
+		SPIRIT_TREE_WALK.put(Location.VARROCK, 60);
 		PLANTED_SPIRIT_TREES.put(Location.FARMING_GUILD, Unlock.SPIRIT_TREE_FARMING_GUILD);
 		PLANTED_SPIRIT_TREES.put(Location.BRIMHAVEN, Unlock.SPIRIT_TREE_BRIMHAVEN);
 		PLANTED_SPIRIT_TREES.put(Location.FALADOR_FARM, Unlock.SPIRIT_TREE_PORT_SARIM);
@@ -561,8 +569,9 @@ public final class RoutePlanner
 				{
 					continue;
 				}
-				// Teleports carry the walking preference, so a walk that's only a little slower wins
-				final double seconds = learned.adjust(to, leg.method, leg.departure, leg.seconds);
+				// Teleports carry the walking preference, so a walk that's only a little slower wins. The player's
+				// own times include the overhead, so the estimate they're blended with does too
+				final double seconds = learned.adjust(to, leg.method, leg.departure, leg.seconds + LEG_OVERHEAD);
 				final Leg scored = new Leg(leg.method, leg.departure, seconds, leg.needsSupplies,
 					seconds + teleportPreference() + stylePenalty(leg, to));
 				if (best == null || scored.cost < best.cost)
@@ -678,7 +687,10 @@ public final class RoutePlanner
 
 	private static double walkSeconds(TravelMethod method)
 	{
-		return method.getWalk().getEstimatedTiles() * SECONDS_PER_TILE;
+		// Measured where researched (TravelTimes), otherwise the rough Walk size; plus any ride or ladder
+		final Integer tiles = TravelTimes.tiles(method);
+		return (tiles != null ? tiles : method.getWalk().getEstimatedTiles()) * SECONDS_PER_TILE
+			+ TravelTimes.extraSeconds(method);
 	}
 
 	/** Seconds to get to a fairy ring this way, or null if the player can't. */
