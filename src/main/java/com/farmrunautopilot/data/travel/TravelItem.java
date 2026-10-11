@@ -105,4 +105,46 @@ public enum TravelItem
 	{
 		return itemIds.clone();
 	}
+
+	/** Where it's worn; one item per slot can be worn instead of taking an inventory slot. */
+	public enum WearSlot
+	{
+		RING,
+		NECK,
+		CAPE,
+		HANDS,
+		SHIELD
+	}
+
+	/** The equipment slot it's worn in, or null if it can't be worn. */
+	public WearSlot getWearSlot()
+	{
+		switch (this)
+		{
+			case RING_OF_WEALTH:
+			case SLAYER_RING:
+			case EXPLORERS_RING:
+				return WearSlot.RING;
+			case SKILLS_NECKLACE:
+			case GAMES_NECKLACE:
+			case AMULET_OF_GLORY:
+			case PENDANT_OF_ATES:
+				return WearSlot.NECK;
+			case COMBAT_BRACELET:
+				return WearSlot.HANDS;
+			case RADAS_BLESSING:
+				return WearSlot.SHIELD;
+			case ARDOUGNE_CLOAK:
+			case ARDOUGNE_CLOAK_1:
+			case QUEST_POINT_CAPE:
+			case FARMING_CAPE:
+			case HUNTER_CAPE:
+			case CONSTRUCTION_CAPE:
+			case MAX_CAPE:
+			case ACHIEVEMENT_DIARY_CAPE:
+				return WearSlot.CAPE;
+			default:
+				return null;
+		}
+	}
 }

@@ -6,6 +6,7 @@ import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.Compost;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import lombok.Value;
@@ -161,5 +162,51 @@ public class Holdings
 	public Map<Integer, Integer> in(Source source)
 	{
 		return items.getOrDefault(source, Collections.emptyMap());
+	}
+
+	/**
+	 * What's left after using up {@code amount} of these items (any of them, in order), taken from what's carried
+	 * first, then the rune pouch, then the bank and other storage. For planning later parts of a run.
+	 */
+	public Holdings use(int[] itemIds, int amount)
+	{
+		final Map<Source, Map<Integer, Integer>> left = new EnumMap<>(Source.class);
+		items.forEach((source, counts) -> left.put(source, new HashMap<>(counts)));
+		final Map<Integer, Integer> pouch = new HashMap<>(runePouch);
+		int remaining = amount;
+		for (Source source : Source.values())
+		{
+			remaining = take(left.get(source), itemIds, remaining);
+			if (source == Source.WORN)
+			{
+				remaining = take(pouch, itemIds, remaining);
+			}
+		}
+		return new Holdings(left, pouch, infiniteRunes, bankKnown, autoweedOn, bucketUses, bucketCompost, usedToday,
+			itemCharges);
+	}
+
+	/** Takes up to {@code amount} of these items from {@code counts}; returns how many are still to take. */
+	private static int take(Map<Integer, Integer> counts, int[] itemIds, int amount)
+	{
+		if (counts == null)
+		{
+			return amount;
+		}
+		for (int id : itemIds)
+		{
+			if (amount <= 0)
+			{
+				break;
+			}
+			final int have = counts.getOrDefault(id, 0);
+			final int used = Math.min(have, amount);
+			if (used > 0)
+			{
+				counts.put(id, have - used);
+				amount -= used;
+			}
+		}
+		return amount;
 	}
 }

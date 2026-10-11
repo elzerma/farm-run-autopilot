@@ -188,7 +188,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		settings.addListener(onSettingsReloaded);
 		settings.addSaveListener(onSettingsSaved);
 		clientThread.invoke(holdingsTracker::loadCaches);
-		farmBankTab.startUp(runService::getSupplies);
+		farmBankTab.startUp(runSession::bankSupplies);
 		overlayManager.add(guidanceOverlay);
 		overlayManager.add(highlightOverlay);
 		overlayManager.add(itemHighlightOverlay);
@@ -253,17 +253,18 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			final RunPlan plan = runService.getPlan();
 			showPlanLater(plan, true);
-			// Redraw the bank tab when a line or its colour changes. The bank redraws itself on every withdrawal,
-			// but a tick before the plan catches up, so without this it would show the previous step.
-			final String contents = bankTabContents(plan.getSupplies());
-			if (!contents.equals(bankTabContents))
-			{
-				bankTabContents = contents;
-				farmBankTab.refresh();
-			}
 		}
 
 		runSession.onGameTick();
+		// Redraw the bank tab when a line or its colour changes. The bank redraws itself on every withdrawal, but a
+		// tick before the plan catches up, so without this it would show the previous step. During a run the tab
+		// shows the part of the run being banked for, counted against what's held now.
+		final String contents = bankTabContents(runSession.bankSupplies());
+		if (!contents.equals(bankTabContents))
+		{
+			bankTabContents = contents;
+			farmBankTab.refresh();
+		}
 		testRunner.onGameTick();
 		hintArrow.update();
 		final RunView runView = runSession.getView();

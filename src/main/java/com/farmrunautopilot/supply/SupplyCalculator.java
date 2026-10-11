@@ -29,6 +29,7 @@ import com.farmrunautopilot.tracking.PatchPrediction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -173,7 +174,7 @@ public final class SupplyCalculator
 			final int slots = crop.getType() == PatchType.HERB ? 1 : n;
 			final String role = cropRole(crop, config, farming, reservedHerbs);
 			lines.add(line(SupplyLine.Group.SEEDS, itemName.apply(id) + (role.isEmpty() ? "" : " - " + role), n, holdings,
-				carried, "Planting at: " + String.join(", ", places), slots, id));
+				carried, "Planting at: " + String.join(", ", places), slots, id).usedUp());
 		});
 
 		// Payments
@@ -181,7 +182,7 @@ public final class SupplyCalculator
 		{
 			final String name = itemName.apply(id) + (config.isPayWithNotes() ? " (noted)" : "");
 			lines.add(line(SupplyLine.Group.PAYMENTS, name, qty, holdings, carried,
-				"Gardener protection payment", config.isPayWithNotes() ? 1 : qty, id));
+				"Gardener protection payment", config.isPayWithNotes() ? 1 : qty, id).usedUp());
 		});
 
 		// Travel, following the route
@@ -268,11 +269,17 @@ public final class SupplyCalculator
 			}
 			final boolean auto = method != null && config.getTravel().get(location) != method;
 			travelPlan.add(location.getDisplayName() + ": " + stop.describeTravel() + extra + (auto ? " (auto)" : ""));
-		}		tablets.forEach((id, n) -> lines.add(line(SupplyLine.Group.TRAVEL, itemName.apply(id), n, holdings, carried,
-			null, 1, id)));
-		travelItems.forEach((item, stops) -> lines.add(line(SupplyLine.Group.TRAVEL, item.getDisplayName(), 1, holdings, carried,
-			stops > 1 ? "Used at " + stops + " stops; charges aren't checked" : "Charges aren't checked", 1,
-			item.getItemIds())));
+		}
+		tablets.forEach((id, n) -> lines.add(line(SupplyLine.Group.TRAVEL, itemName.apply(id), n, holdings, carried,
+			null, 1, id).usedUp()));
+		final Set<TravelItem> worn = toWear(travelItems.keySet(), config.getOutfit(), holdings);
+		travelItems.forEach((item, stops) ->
+		{
+			final String used = stops > 1 ? "Used at " + stops + " stops" : "Used once";
+			lines.add(line(SupplyLine.Group.TRAVEL, item.getDisplayName(), 1, holdings, carried,
+				worn.contains(item) ? used + ". Wear it: no inventory slot" : used, worn.contains(item) ? 0 : 1,
+				item.getItemIds()));
+		});
 		if (fairyRing && !(access.isKnown()
 			&& access.isMet(Requirement.diary(AchievementDiary.LUMBRIDGE_DRAYNOR, AchievementDiary.Tier.ELITE))))
 		{
@@ -299,7 +306,7 @@ public final class SupplyCalculator
 		if (coins > 0)
 		{
 			lines.add(line(SupplyLine.Group.PAYMENTS, "Coins", coins, holdings, carried,
-				"200 per tree cleared by the gardener, plus travel fares", 1, ItemID.COINS));
+				"200 per tree cleared by the gardener, plus travel fares", 1, ItemID.COINS).usedUp());
 		}
 
 		// Tools and compost
@@ -334,7 +341,7 @@ public final class SupplyCalculator
 		if (config.getPlantCureDoses() > 0)
 		{
 			lines.add(changeIn(line(SupplyLine.Group.OPTIONAL, "Plant cure", config.getPlantCureDoses(), holdings, carried,
-				"Backup for diseased patches", config.getPlantCureDoses(), ItemID.PLANT_CURE), PROTECTION));
+				"Backup for diseased patches", config.getPlantCureDoses(), ItemID.PLANT_CURE).usedUp(), PROTECTION));
 		}
 		if (config.getStaminaDoses() > 0)
 		{
@@ -349,7 +356,7 @@ public final class SupplyCalculator
 			lines.add(new SupplyLine(SupplyLine.Group.OPTIONAL, "Stamina doses", config.getStaminaDoses(), doses,
 				carriedDoses, holdings.where(staminaIds), null,
 				(config.getStaminaDoses() + STAMINA_DOSES_PER_POTION - 1) / STAMINA_DOSES_PER_POTION, false, TRAVEL_DEFAULTS,
-				staminaIds));
+				staminaIds, true));
 		}
 
 		int slots = 0;
@@ -443,6 +450,48 @@ public final class SupplyCalculator
 			}
 		}
 		return 0;
+	}
+
+	/**
+	 * The teleport items to wear rather than carry: one per equipment slot, the one already worn if any, else the
+	 * first used. Slots the outfit takes (Graceful's cape and gloves) are left out.
+	 */
+	static Set<TravelItem> toWear(Set<TravelItem> items, Outfit outfit, Holdings holdings)
+	{
+		final Set<TravelItem.WearSlot> taken = outfit == Outfit.GRACEFUL
+			? EnumSet.of(TravelItem.WearSlot.CAPE, TravelItem.WearSlot.HANDS) : EnumSet.noneOf(TravelItem.WearSlot.class);
+		final Map<TravelItem.WearSlot, TravelItem> wear = new EnumMap<>(TravelItem.WearSlot.class);
+		for (TravelItem item : items)
+		{
+			final TravelItem.WearSlot slot = item.getWearSlot();
+			if (slot == null || taken.contains(slot))
+			{
+				continue;
+			}
+			if (holdings.in(Holdings.Source.WORN).keySet().stream().anyMatch(id -> contains(item.getItemIds(), id)))
+			{
+				wear.put(slot, item);
+			}
+			else
+			{
+				wear.putIfAbsent(slot, item);
+			}
+		}
+		final Set<TravelItem> result = EnumSet.noneOf(TravelItem.class);
+		result.addAll(wear.values());
+		return result;
+	}
+
+	private static boolean contains(int[] ids, int id)
+	{
+		for (int i : ids)
+		{
+			if (i == id)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** One line for an outfit: pieces held (any variant of each piece) out of the full set. */
@@ -639,7 +688,7 @@ public final class SupplyCalculator
 			}
 			result.lines.add(new SupplyLine(SupplyLine.Group.RUNES, name, n, all.have.get(rune), onYou.have.get(rune),
 				holdings.where(rune.getItemId()), note, infinite || inPouch(holdings, rune) ? 0 : 1, false,
-				TRAVEL + " (teleport, or runes instead of a tablet)", new int[]{rune.getItemId()}));
+				TRAVEL + " (teleport, or runes instead of a tablet)", new int[]{rune.getItemId()}, true));
 		});
 		all.comboUsed.forEach((id, n) -> free.add(n + " " + itemName.apply(id).toLowerCase()));
 		result.summary = String.join(", ", bring) + (free.isEmpty() ? "" : " (" + String.join("; ", free) + ")");
@@ -788,14 +837,15 @@ public final class SupplyCalculator
 		final boolean emptyBucket = holdings.count(ItemID.BOTTOMLESS_COMPOST_BUCKET) > 0;
 		buckets.forEach((c, n) -> lines.add(changeIn(line(SupplyLine.Group.TOOLS, c.getDisplayName(), n, holdings,
 			carried, emptyBucket ? "Fill your bottomless compost bucket with " + c.getDisplayName().toLowerCase()
-				+ " to use it instead" : null, n, c.getItemId()), COMPOST_TYPE)));
+				+ " to use it instead" : null, n, c.getItemId()).usedUp(), COMPOST_TYPE)));
 		return lines;
 	}
 
 	private static SupplyLine changeIn(SupplyLine line, String where)
 	{
 		return new SupplyLine(line.getGroup(), line.getName(), line.getNeed(), line.getHave(), line.getCarried(),
-			line.getWhere(), line.getNote(), line.getSlots(), line.isCoveredOtherwise(), where, line.getItemIds());
+			line.getWhere(), line.getNote(), line.getSlots(), line.isCoveredOtherwise(), where, line.getItemIds(),
+			line.isConsumed());
 	}
 	private static String title(String enumName)
 	{

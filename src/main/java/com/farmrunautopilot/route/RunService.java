@@ -256,20 +256,23 @@ public class RunService
 			return null;
 		}
 
-		// Each part's supplies, the teleport to bank with carried in the part before it
+		// Each part's supplies, counted against what the parts before it leave (seeds planted, runes cast), with
+		// the teleport to bank with carried in the part before the bank
 		final List<RouteStop> banked = result.getRoute().getStops();
 		final List<BankPlanner.Visit> visits = result.getVisits();
 		final List<SupplyPlan> parts = new ArrayList<>();
 		int start = 0;
+		Holdings left = holdings;
 		for (int i = 0; i <= visits.size(); i++)
 		{
 			final int end = i < visits.size() ? visits.get(i).getAfterStop() + 1 : banked.size();
-			SupplyPlan part = part(config, access, holdings, selection, banked.subList(start, end), result.getRoute());
+			SupplyPlan part = part(config, access, left, selection, banked.subList(start, end), result.getRoute());
 			if (i < visits.size() && visits.get(i).getTeleport() != null)
 			{
-				part = withTeleport(part, visits.get(i).getTeleport(), holdings);
+				part = withTeleport(part, visits.get(i).getTeleport(), left);
 			}
 			parts.add(part);
+			left = part.leftAfter(left);
 			start = end;
 		}
 		final List<BankStop> bankStops = new ArrayList<>();

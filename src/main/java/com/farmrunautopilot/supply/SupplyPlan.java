@@ -3,6 +3,7 @@ package com.farmrunautopilot.supply;
 import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -41,5 +42,34 @@ public class SupplyPlan
 			total += n;
 		}
 		return total;
+	}
+
+	/**
+	 * The same checklist counted against what the player holds now: during a run the plan stays as it was when
+	 * the run started, while the player banks.
+	 */
+	public SupplyPlan counted(Holdings holdings)
+	{
+		final List<SupplyLine> now = new ArrayList<>();
+		for (SupplyLine line : lines)
+		{
+			now.add(line.counted(holdings));
+		}
+		return new SupplyPlan(Collections.unmodifiableList(now), patchCounts, notDue, travelPlan, warnings, coins,
+			runeSummary, slots, plantings);
+	}
+
+	/** What the player has left once this part of the run has used up its seeds, payments, runes and so on. */
+	public Holdings leftAfter(Holdings holdings)
+	{
+		Holdings left = holdings;
+		for (SupplyLine line : lines)
+		{
+			if (line.isConsumed())
+			{
+				left = left.use(line.getItemIds(), line.getNeed());
+			}
+		}
+		return left;
 	}
 }

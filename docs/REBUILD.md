@@ -229,6 +229,7 @@ missing from his vision. Turn every chain or behaviour he names into a scenario 
 - State machine, navigator, patch guide, bank guide replacing `RunSession`.
 - Fix: diseased trees prune, tools highlighted, compost credited to the right patch, patch states read after
   the tracker updates, Shortest Path to the bank, noted items outlined, whistle bank clicks not charged.
+- Wear and swap steps (decision 8.8): before the run and at each bank, what to put on, item outlined.
 - Checks: a full run start to finish, including one mid-run bank.
 
 **Sprint 5: bank tab and Run tab.**
@@ -288,3 +289,8 @@ times; patch details/debug; the help list and guided tests (see decisions).
      or a mid-run bank, so the highlight is a fallback rather than the only cue. This only changes our own
      view of the bank, sends nothing to the server, and must be checked against Plugin Hub rules first.
    - The Run tab's status line shows the same next step ("Open a bank, then the Farm run tab").
+8. **Wear teleport items, and swap them at banks** (Sean, 2026-10-11): rings, capes, necklaces, bracelets and
+   Rada's blessing can be worn, one per equipment slot, instead of taking an inventory slot (an outfit such as
+   Graceful takes its slots first). The slot count already assumes this (Sprint 3). The guide then says what to
+   put on before the run ("Wear your ring of wealth and Ardougne cloak") and at each bank what to swap ("Swap:
+   wear your slayer ring"), with the item outlined (Sprints 4-5).

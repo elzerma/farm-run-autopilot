@@ -28,6 +28,7 @@ import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.supply.SupplyCalculator;
 import com.farmrunautopilot.supply.SupplyLine;
+import com.farmrunautopilot.supply.SupplyPlan;
 import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.util.ArrayList;
@@ -327,7 +328,7 @@ public class RunSession
 		shortestPath.clear();
 		final long now = System.currentTimeMillis();
 		final double seconds = (now - startedAt) / 1000.0;
-		final Map<PatchType, Integer> counts = plan.getSupplies().getPatchCounts();
+		final Map<PatchType, Integer> counts = patchCounts(plan);
 		final String makeup = RunTimings.makeup(counts);
 		timings.save(new ArrayList<>(legs), new RunTimings.Run(startedAt, seconds, stopIndex, finished, makeup));
 		finishedAt = now;
@@ -365,7 +366,7 @@ public class RunSession
 	/** e.g. "Best for 6 herbs: 8:12, 8:40, 9:03", or null with none yet. */
 	private String bestTimes(RunPlan current)
 	{
-		final Map<PatchType, Integer> counts = current.getSupplies().getPatchCounts();
+		final Map<PatchType, Integer> counts = patchCounts(current);
 		final String makeup = RunTimings.makeup(counts);
 		if (makeup.isEmpty())
 		{
@@ -523,7 +524,8 @@ public class RunSession
 			final BankStop bank = plan.bankAfter(stopIndex);
 			if (bank != null && !banked)
 			{
-				if (!isReady(runService.getPlan()))
+				// Ready when the next part of the run, as planned at the start, is carried
+				if (missingCount(bank.getSupplies().counted(holdingsTracker.getHoldings()), false) > 0)
 				{
 					banking = true;
 					currentPatch = null;
@@ -717,7 +719,7 @@ public class RunSession
 	private String fromSeedVault()
 	{
 		final List<String> take = new ArrayList<>();
-		for (SupplyLine line : runService.getPlan().getSupplies().getLines())
+		for (SupplyLine line : bankSupplies().getLines())
 		{
 			final int vault = line.getWhere().getOrDefault(Holdings.Source.SEED_VAULT, 0);
 			final int stillNeeded = line.getNeed() - line.getCarried();
@@ -1040,7 +1042,7 @@ public class RunSession
 	private Set<Integer> toDeposit()
 	{
 		final Set<Integer> needed = new HashSet<>();
-		for (SupplyLine line : runService.getPlan().getSupplies().getLines())
+		for (SupplyLine line : bankSupplies().getLines())
 		{
 			for (int id : line.getItemIds())
 			{
@@ -1252,6 +1254,49 @@ public class RunSession
 		return INVENTORY_SLOTS - used;
 	}
 
+	/**
+	 * What the bank tab and deposit outlines work from. During a run, the part of the plan fixed when the run
+	 * started that the player is carrying or banking for, counted against what they hold now (so finished
+	 * patches can't change it). Otherwise the live plan. Client thread.
+	 */
+	public SupplyPlan bankSupplies()
+	{
+		if ((stage == RunView.State.RUNNING || stage == RunView.State.ARMED) && plan != null)
+		{
+			return partFor(plan, stopIndex, banking || banked).counted(holdingsTracker.getHoldings());
+		}
+		return runService.getSupplies();
+	}
+
+	/**
+	 * The part of the run being carried at this stop, or banked for at a bank visit right after it.
+	 *
+	 * @param atBank at (or past) the bank visit after this stop, if there is one
+	 */
+	static SupplyPlan partFor(RunPlan plan, int stopIndex, boolean atBank)
+	{
+		SupplyPlan part = plan.getSupplies();
+		for (BankStop bank : plan.getBankStops())
+		{
+			if (bank.getAfterStop() < stopIndex || (bank.getAfterStop() == stopIndex && atBank))
+			{
+				part = bank.getSupplies();
+			}
+		}
+		return part;
+	}
+
+	/** Patches in the whole run per type (not only the part before the first bank). */
+	static Map<PatchType, Integer> patchCounts(RunPlan plan)
+	{
+		final Map<PatchType, Integer> counts = new EnumMap<>(PatchType.class);
+		for (Patch patch : plan.getSelection().getPatches())
+		{
+			counts.merge(patch.getType(), 1, Integer::sum);
+		}
+		return counts;
+	}
+
 	/** Nothing in game, apart from how the last run went for a few seconds. */
 	private RunView offView()
 	{
@@ -1290,18 +1335,24 @@ public class RunSession
 	/** Required lines that are neither carried nor stored at the tool leprechaun. */
 	static int missingCount(RunPlan plan)
 	{
-		int missing = 0;
 		// The seed vault is in the Farming Guild: a run starting there can take what's in it on arrival
 		final List<RouteStop> stops = plan.getRoute().getStops();
 		final boolean vaultFirst = !stops.isEmpty() && stops.get(0).getLocation() == Location.FARMING_GUILD;
-		for (SupplyLine line : plan.getSupplies().getLines())
+		return missingCount(plan.getSupplies(), vaultFirst);
+	}
+
+	/**  vaultHere the seed vault can be used here (the Farming Guild) */
+	static int missingCount(SupplyPlan supplies, boolean vaultHere)
+	{
+		int missing = 0;
+		for (SupplyLine line : supplies.getLines())
 		{
 			if (line.getGroup() == SupplyLine.Group.OPTIONAL || line.isCoveredOtherwise())
 			{
 				continue;
 			}
 			final int leprechaun = line.getWhere().getOrDefault(Holdings.Source.LEPRECHAUN, 0);
-			final int vault = vaultFirst ? line.getWhere().getOrDefault(Holdings.Source.SEED_VAULT, 0) : 0;
+			final int vault = vaultHere ? line.getWhere().getOrDefault(Holdings.Source.SEED_VAULT, 0) : 0;
 			if (line.getCarried() + leprechaun + vault < line.getNeed())
 			{
 				missing++;
