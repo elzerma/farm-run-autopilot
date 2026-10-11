@@ -391,6 +391,8 @@ public class RunSession
 		{
 			return;
 		}
+		log.debug("Skip step: {}", banking ? "the bank visit" : !arrived ? "arriving"
+			: currentPatch != null ? currentPatch.name() : "the seed vault");
 		if (banking)
 		{
 			// Carry on without everything from the bank
@@ -513,7 +515,9 @@ public class RunSession
 			// Every patch here is done
 			if (!legRecorded)
 			{
-				recordLeg(now);
+				// Skipped without ever reaching the patch: not a real leg, so not a sample
+				legRecorded = true;
+				log.debug("Leg not timed: {} skipped without reaching it", stop.getLocation().getDisplayName());
 			}
 			// A bank visit after this stop: the rest of the run didn't fit in one inventory
 			final BankStop bank = plan.getBankStop();
@@ -528,10 +532,12 @@ public class RunSession
 					instruction = go + ": deposit the outlined items, then take what the Farm run bank tab shows";
 					break;
 				}
+				log.debug("Bank visit done after {}", stop.getLocation().getDisplayName());
 				banked = true;
 				banking = false;
 				legStartedAt = now;
 			}
+			log.debug("Stop done: {}", stop.getLocation().getDisplayName());
 			stopIndex++;
 			arrived = false;
 			teleported = false;

@@ -9,7 +9,8 @@ import java.util.Map;
 
 /**
  * The player's own recorded leg times, blended into the route's estimates (SPEC 12.4): samples more than
- * three times the estimate are ignored, and the estimate keeps some weight until there are three samples.
+ * three times the estimate or under a third of it are ignored (a trip to the bank mid-leg, a leg skipped
+ * through), and the estimate keeps some weight until there are three samples.
  *
  * <p>A teleport takes the same time wherever it's cast, but a walk, the spirit tree or fairy ring by the stop
  * just finished, and Renu from its landing pad depend on where the leg starts; those are kept per starting
@@ -87,7 +88,7 @@ public final class LearnedTimes
 		int n = 0;
 		for (double seconds : times)
 		{
-			if (seconds > 0 && seconds <= estimate * OUTLIER_FACTOR)
+			if (seconds >= estimate / OUTLIER_FACTOR && seconds <= estimate * OUTLIER_FACTOR)
 			{
 				total += seconds;
 				n++;

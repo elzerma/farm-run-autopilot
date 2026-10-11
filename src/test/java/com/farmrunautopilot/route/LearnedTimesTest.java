@@ -42,6 +42,8 @@ public class LearnedTimesTest
 	{
 		// 200s is more than three times the 30s estimate (e.g. the player went to the bank)
 		assertEquals(45, adjust(with(40.0, 45.0, 50.0, 200.0), 30), 1e-9);
+		// So is 4s, under a third of it (a stop skipped through without going there)
+		assertEquals(45, adjust(with(40.0, 45.0, 50.0, 4.0), 30), 1e-9);
 	}
 
 	@Test
