@@ -240,7 +240,7 @@ missing from his vision. Turn every chain or behaviour he names into a scenario 
 - Checks: every setting does what its label says (a short list).
 
 **Sprint 7: tidy and release.**
-- Guided tests per the decision below (and fix the two broken tests), docs (README, delete stale plans),
+- Guided tests: fix the two broken tests and bring every test in line with the rebuilt run, docs (README, delete stale plans),
   screenshots, Plugin Hub PR update (with Sean's OK).
 
 ## 7. Features that must survive the rebuild
@@ -265,6 +265,8 @@ times; patch details/debug; the help list and guided tests (see decisions).
    ring of wealth (Grand Exchange), plus regular teleports that land by a bank (Camelot -> Seers' with the
    diary, Varrock, Falador, Ardougne). The plugin brings one only when it's the cheapest way to bank.
 4. **Shortest Path lines:** a Display setting, on by default (only does anything if it's installed).
-5. **Guided tests:** kept for the dev client only; players don't see the help list or test box.
+5. **Guided tests:** kept for everyone, as now (Sean, 2026-10-11): players run them and open a prefilled GitHub
+   issue with the results; the dev client logs and copies the summary. Each sprint adds or rewords tests for
+   anything Sean can't try on his own account.
 6. **Resurrect Crops:** removed until it can be guided properly.
 7. **Run tab:** no supply list; the bank tab is the only place items are listed.
