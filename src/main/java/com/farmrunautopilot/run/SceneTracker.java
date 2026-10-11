@@ -2,6 +2,7 @@ package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
+import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,7 +45,7 @@ public class SceneTracker
 	private final Client client;
 	private final Map<Patch, List<GameObject>> patchObjects = new EnumMap<>(Patch.class);
 	private final Map<Patch, NPC> gardeners = new EnumMap<>(Patch.class);
-	/** NPCs ridden after a teleport (Renu, the Civitas quetzal), by name. */
+	/** NPCs in journey steps after a teleport (Renu, Captain Barnaby, Elkoy), by name. */
 	private static final Set<String> TRANSFER_NPC_NAMES = transferNpcNames();
 	private final Map<String, NPC> transfers = new HashMap<>();
 
@@ -164,9 +165,12 @@ public class SceneTracker
 		final Set<String> names = new HashSet<>();
 		for (TravelMethod method : TravelMethod.values())
 		{
-			if (method.getTransferNpcName() != null)
+			for (JourneyStep step : method.getThen())
 			{
-				names.add(method.getTransferNpcName());
+				if (step.getNpc() != null)
+				{
+					names.add(step.getNpc());
+				}
 			}
 		}
 		return names;

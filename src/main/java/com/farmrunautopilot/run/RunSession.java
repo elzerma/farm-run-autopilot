@@ -11,6 +11,7 @@ import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
+import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
@@ -77,6 +78,10 @@ public class RunSession
 	private static final int JUMP_TILES = 10;
 	/** A teleport landing this close to the stop's patch counts as having arrived in the area. */
 	private static final int LANDED_NEAR_TILES = 150;
+	/** A journey step's walk is done this close to where it goes. */
+	private static final int JOURNEY_NEAR_TILES = 4;
+	/** A teleport landing this close to a journey's first step counts as having arrived in the area. */
+	private static final int FIRST_STEP_LANDING_TILES = 60;
 	private static final int BEST_TIMES = 3;
 	private static final int INVENTORY_SLOTS = 28;
 	/** Moving further than this in one tick can only be a teleport. */
@@ -112,8 +117,8 @@ public class RunSession
 	private long arrivedAtSeconds;
 	/** Teleported close to the current stop but its patch hasn't loaded yet. */
 	private boolean teleported;
-	/** Took the ride after the teleport (the Civitas quetzal), for travel methods that have one. */
-	private boolean transferred;
+	/** How many of the travel method's journey steps (boat, quetzal, Elkoy...) are done since landing. */
+	private int journeyStep;
 	/** The player's position last tick, to spot teleports. */
 	private WorldPoint lastPosition;
 	/** The time for the leg to the current stop has been saved. */
@@ -225,7 +230,7 @@ public class RunSession
 		stopIndex = 0;
 		arrived = false;
 		teleported = false;
-		transferred = false;
+		journeyStep = 0;
 		lastPosition = null;
 		currentPatch = null;
 		progress.clear();
@@ -470,17 +475,18 @@ public class RunSession
 				}
 				else
 				{
-					if (!teleported && jumpedTowards(previous, position, here.get(0)))
+					if (!teleported && (jumpedTowards(previous, position, here.get(0))
+						|| jumpedToFirstStep(stop, previous, position)))
 					{
 						teleported = true;
 					}
-					else if (teleported && !transferred && jumped(previous, position))
+					else if (teleported && journeyStepDone(journeyStep(stop), previous, position))
 					{
-						// The ride after the teleport
-						transferred = true;
+						journeyStep++;
 					}
+					final JourneyStep step = journeyStep(stop);
 					instruction = !teleported ? stop.describeTravel() + " to " + stop.getLocation().getDisplayName()
-						: transferNpc(stop) != null ? stop.getMethod().getTransferText()
+						: step != null ? step.getText()
 						: walkInstruction(stop, here.get(0));
 					currentPatch = null;
 					break;
@@ -526,7 +532,7 @@ public class RunSession
 			stopIndex++;
 			arrived = false;
 			teleported = false;
-			transferred = false;
+			journeyStep = 0;
 			legStartedAt = now;
 		}
 
@@ -551,9 +557,16 @@ public class RunSession
 		}
 		if (!arrived)
 		{
-			if (!teleported || transferNpc(stop) != null)
+			if (!teleported)
 			{
 				return null;
+			}
+			final JourneyStep step = journeyStep(stop);
+			final WorldPoint stepAt = step != null ? journeyTarget(step) : null;
+			if (stepAt != null)
+			{
+				// To the boat, quetzal or NPC: where it stands once loaded, else where it's expected
+				return stepAt;
 			}
 			final List<Patch> here = nearestFirst(patchesAt(stop.getLocation()));
 			return here.isEmpty() ? null : scene.locationOf(here.get(0));
@@ -775,11 +788,56 @@ public class RunSession
 		return from != null && to != null && (from.getPlane() != to.getPlane() || from.distanceTo2D(to) > JUMP_TILES);
 	}
 
-	/** The name of the NPC to ride now, after teleporting and before walking (the Civitas quetzal), or null. */
-	private String transferNpc(RouteStop stop)
+	/** The journey step to do now, after the teleport and before the walk to the patch, or null. */
+	private JourneyStep journeyStep(RouteStop stop)
 	{
 		final TravelMethod method = stop.getMethod();
-		return teleported && !transferred && !arrived && method != null ? method.getTransferNpcName() : null;
+		return teleported && !arrived && method != null && journeyStep < method.getThen().size()
+			? method.getThen().get(journeyStep) : null;
+	}
+
+	/**
+	 * A teleport that landed by the journey's first step rather than near the patch, e.g. the Mining Guild,
+	 * which is underground with coordinates far from Falador Park.
+	 */
+	private boolean jumpedToFirstStep(RouteStop stop, WorldPoint from, WorldPoint to)
+	{
+		final TravelMethod method = stop.getMethod();
+		if (method == null || method.getThen().isEmpty() || !jumped(from, to))
+		{
+			return false;
+		}
+		final WorldPoint at = method.getThen().get(0).getAt();
+		return at != null && at.getPlane() == to.getPlane() && at.distanceTo2D(to) <= FIRST_STEP_LANDING_TILES;
+	}
+
+	/** A ride is done when the player is moved; a walk when they get close to where it goes. */
+	private boolean journeyStepDone(JourneyStep step, WorldPoint from, WorldPoint to)
+	{
+		if (step == null || to == null)
+		{
+			return false;
+		}
+		if (step.getKind() == JourneyStep.Kind.RIDE)
+		{
+			return jumped(from, to);
+		}
+		final WorldPoint target = journeyTarget(step);
+		return target != null && target.getPlane() == to.getPlane() && target.distanceTo2D(to) <= JOURNEY_NEAR_TILES;
+	}
+
+	/** Where a journey step happens: its NPC's spot once loaded, otherwise the expected spot. */
+	private WorldPoint journeyTarget(JourneyStep step)
+	{
+		final NPC npc = step.getNpc() != null ? scene.transferNpc(step.getNpc()) : null;
+		return npc != null ? npc.getWorldLocation() : step.getAt();
+	}
+
+	/** The NPC to outline for the current journey step, or null. */
+	private String journeyNpc(RouteStop stop)
+	{
+		final JourneyStep step = journeyStep(stop);
+		return step != null ? step.getNpc() : null;
 	}
 
 	/** After teleporting: the way on from the landing spot, e.g. "Walk to the Troll Stronghold herb patch". */
@@ -892,7 +950,7 @@ public class RunSession
 				}
 				items.add(Spell.TELEPORT_TO_HOUSE.getTabletItemId());
 			}
-			return new Highlights(null, false, transferNpc(stop), items, castableNow(spell));
+			return new Highlights(null, false, journeyNpc(stop), items, castableNow(spell));
 		}
 
 		boolean gardener = false;

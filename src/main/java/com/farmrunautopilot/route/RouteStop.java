@@ -1,6 +1,7 @@
 package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.data.Location;
+import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import lombok.Value;
 
@@ -19,8 +20,26 @@ public class RouteStop
 	/** The player doesn't have what this method needs yet; the supply list asks for it. */
 	boolean needsSupplies;
 
-	/** e.g. "Spirit tree (Tree Gnome Village)" or "POH nexus: Catherby Teleport". */
+	/**
+	 * e.g. "Spirit tree (Tree Gnome Village), then follow Elkoy out of the maze" or "House portal nexus: Catherby
+	 * Teleport": the whole journey, so nobody is left guessing about a boat or an NPC.
+	 */
 	public String describeTravel()
+	{
+		final String travel = describeDeparture();
+		if (method == null || method.getThen().isEmpty() || departure == Departure.WALK)
+		{
+			return travel;
+		}
+		final StringBuilder whole = new StringBuilder(travel);
+		for (JourneyStep step : method.getThen())
+		{
+			whole.append(", then ").append(step.getBrief());
+		}
+		return whole.toString();
+	}
+
+	private String describeDeparture()
 	{
 		switch (departure)
 		{
