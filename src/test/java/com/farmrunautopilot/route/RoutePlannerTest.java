@@ -182,6 +182,7 @@ public class RoutePlannerTest
 	{
 		final RunConfig config = new RunConfig().sanitise();
 		config.setRouteMode(RouteMode.META);
+		config.setStartLocation(Location.FARMING_GUILD);
 		final List<Patch> patches = Arrays.asList(Patch.TAVERLEY_TREE, Patch.LUMBRIDGE_TREE, Patch.FARMING_GUILD_TREE);
 		final Route route = RoutePlanner.plan(patches, config, AccessSnapshot.UNKNOWN, Holdings.EMPTY, new PohSetup());
 		assertEquals(Location.FARMING_GUILD, route.getStops().get(0).getLocation());

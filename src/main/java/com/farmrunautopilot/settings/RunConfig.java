@@ -83,7 +83,10 @@ public class RunConfig
 	// Route
 	private RouteMode routeMode = RouteMode.AUTOPILOT;
 	private List<Location> customOrder = new ArrayList<>();
-	private Location startLocation = Location.FARMING_GUILD;
+	/** Where the run starts, or null for anywhere: the quickest first stop (or the stop the player stands at). */
+	private Location startLocation;
+	/** Null in saves from before "Anywhere" was the default: the old default (Farming Guild) becomes Anywhere. */
+	private Boolean startAnywhereByDefault;
 	private boolean endNearBank = true;
 	private int staminaDoses = 0;
 	private Outfit outfit = Outfit.NONE;
@@ -168,9 +171,14 @@ public class RunConfig
 		{
 			routeMode = RouteMode.AUTOPILOT;
 		}
-		if (startLocation == null)
+		if (startAnywhereByDefault == null)
 		{
-			startLocation = Location.FARMING_GUILD;
+			// The Farming Guild was the default, not a choice most players made
+			if (startLocation == Location.FARMING_GUILD)
+			{
+				startLocation = null;
+			}
+			startAnywhereByDefault = true;
 		}
 
 		dueThresholdPercent = clamp(dueThresholdPercent, 1, 100);

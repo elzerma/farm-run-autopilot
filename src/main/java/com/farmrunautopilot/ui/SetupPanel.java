@@ -1100,12 +1100,14 @@ class SetupPanel extends JPanel
 			m -> saveRun(() -> config.setRouteMode(m))));
 		s.addContent(note("Off keeps your own order: drag the stops in the route list on the Run tab."));
 		final List<Choice<Location>> starts = new ArrayList<>();
+		starts.add(Choice.of(null, "Anywhere (quickest)"));
 		for (Location location : Location.values())
 		{
 			starts.add(Choice.of(location, location.getDisplayName()));
 		}
 		s.addContent(label("Start at"));
 		s.addContent(combo(starts, config.getStartLocation(), l -> saveRun(() -> config.setStartLocation(l))));
+		s.addContent(note("If you're standing at one of the run's stops, the run starts there either way."));
 		s.addContent(checkBox("Finish near a bank", config.isEndNearBank(), true, null,
 			on -> saveRun(() -> config.setEndNearBank(on))));
 		return s;

@@ -2,6 +2,7 @@ package com.farmrunautopilot.settings;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import com.farmrunautopilot.data.Crop;
@@ -44,7 +45,7 @@ public class RunConfigTest
 		assertTrue(config.isPayWithNotes());
 		assertTrue(config.isUseGroupStorage());
 		assertTrue(config.isUseSeedVault());
-		assertEquals(Location.FARMING_GUILD, config.getStartLocation());
+		assertNull(config.getStartLocation());
 		assertEquals(Protection.PAY_GARDENER, config.protectionFor(Patch.TAVERLEY_TREE));
 		assertEquals(Compost.ULTRACOMPOST, config.getCompost().get(PatchType.HERB));
 	}
