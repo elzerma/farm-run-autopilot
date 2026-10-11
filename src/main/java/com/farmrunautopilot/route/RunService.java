@@ -212,26 +212,23 @@ public class RunService
 			this.route = route;
 			this.before = before;
 			this.bankStop = bankStop;
-			this.seconds = seconds;
+			// Travel plus the walk from the stop to its bank, so a far-off bank (Port Phasmatys) counts against it
+			this.seconds = seconds + RoutePlanner.bankTiles(bankStop.getLocation()) * RoutePlanner.SECONDS_PER_TILE;
 		}
 	}
 
 	/**
-	 * How to bank partway through a run too big for one inventory. The planned order is cut at the stop whose bank
-	 * adds the least walking, among cuts where both halves fit, so the route stays the quickest one with patch
-	 * types mixed (e.g. the Stronghold, its bank, then the spirit tree to Tree Gnome Village). Only if no cut
-	 * fits, with the fastest route, the run is planned as two halves by patch type (e.g. trees and fruit trees,
-	 * bank, herbs), so each half carries fewer kinds of item; the quickest of those that fit wins. Null if no
-	 * split fits: the plan then warns as before.
+	 * How to bank partway through a run too big for one inventory. Either the planned order is cut at the stop
+	 * whose bank adds the least walking, among cuts where both halves fit, so patch types stay mixed (e.g. the
+	 * Stronghold, its bank, then the spirit tree to Tree Gnome Village); or, with the fastest route, the run is
+	 * planned as two halves by patch type (e.g. trees and fruit trees, bank, herbs), each ending near a bank.
+	 * The quickest of these, counting the walk to the bank, wins. Null if no split fits: the plan then warns as
+	 * before.
 	 */
 	private Split split(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
 		Route route)
 	{
 		Split best = splitInOrder(config, access, holdings, selection, route);
-		if (best != null)
-		{
-			return best;
-		}
 		if (config.getRouteMode() == RouteMode.AUTOPILOT)
 		{
 			final PatchType[] types = PatchType.values();

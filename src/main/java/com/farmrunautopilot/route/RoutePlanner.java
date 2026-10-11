@@ -70,6 +70,7 @@ public final class RoutePlanner
 	static final double SECONDS_PER_PATCH = 20;
 	/** Walk to a bank from locations without one nearby. */
 	static final int NO_BANK_TILES = 70;
+	private static final int PHASMATYS_BANK_TILES = 95;
 	/** Above this many stops, use a fast near-optimal search instead of an exact one. */
 	static final int EXACT_LIMIT = 14;
 
@@ -581,6 +582,11 @@ public final class RoutePlanner
 
 	static int bankTiles(Location location)
 	{
+		if (location == Location.PORT_PHASMATYS)
+		{
+			// The bank is across town from the patch, through the gate (Sean: banking there is slow)
+			return PHASMATYS_BANK_TILES;
+		}
 		return location.getBankWalk() != null ? location.getBankWalk().getEstimatedTiles() : NO_BANK_TILES;
 	}
 
