@@ -104,6 +104,8 @@ public class RunSession
 	private boolean banking;
 	/** The bank stop is done (or skipped). */
 	private boolean banked;
+	/** At the Farming Guild, everything needed from the seed vault has been taken (or skipped). */
+	private boolean vaultChecked;
 	/** When the player reached the current stop (epoch seconds); patches must be seen after this to count. */
 	private long arrivedAtSeconds;
 	/** Teleported close to the current stop but its patch hasn't loaded yet. */
@@ -227,6 +229,7 @@ public class RunSession
 		lastRun = null;
 		banking = false;
 		banked = false;
+		vaultChecked = false;
 		final Player player = client.getLocalPlayer();
 		lastLocation = player != null ? player.getWorldLocation() : null;
 		log.debug("Run armed with {} stops", plan.getRoute().getStops().size());
@@ -382,6 +385,12 @@ public class RunSession
 			banked = true;
 			banking = false;
 		}
+		else if (currentPatch == null && arrived && !vaultChecked
+			&& plan.getRoute().getStops().get(stopIndex).getLocation() == Location.FARMING_GUILD)
+		{
+			// Carry on without what's in the seed vault
+			vaultChecked = true;
+		}
 		else if (!arrived)
 		{
 			markArrived(System.currentTimeMillis());
@@ -477,6 +486,12 @@ public class RunSession
 				recordLeg(now);
 			}
 
+			instruction = stop.getLocation() == Location.FARMING_GUILD && !vaultChecked ? fromSeedVault() : null;
+			if (instruction != null)
+			{
+				currentPatch = null;
+				break;
+			}
 			instruction = nextPatchStep(here);
 			if (instruction != null || !timing)
 			{
@@ -632,6 +647,30 @@ public class RunSession
 		legs.add(new RunTimings.Leg(stop.getLocation().name(),
 			first || stop.getMethod() == null ? null : stop.getMethod().name(),
 			first ? "START" : stop.getDeparture().name(), (now - legStartedAt) / 1000.0, now));
+	}
+
+	/**
+	 * At the Farming Guild: what the run still needs that's only in the seed vault, as a step ("Take 3 maple
+	 * saplings from the seed vault"), or null once it's all carried.
+	 */
+	private String fromSeedVault()
+	{
+		final List<String> take = new ArrayList<>();
+		for (SupplyLine line : runService.getPlan().getSupplies().getLines())
+		{
+			final int vault = line.getWhere().getOrDefault(Holdings.Source.SEED_VAULT, 0);
+			final int stillNeeded = line.getNeed() - line.getCarried();
+			if (vault > 0 && stillNeeded > 0 && line.getGroup() != SupplyLine.Group.OPTIONAL)
+			{
+				take.add(Math.min(vault, stillNeeded) + " x " + line.getName());
+			}
+		}
+		if (take.isEmpty())
+		{
+			vaultChecked = true;
+			return null;
+		}
+		return "Take " + String.join(", ", take) + " from the seed vault (next to the guild's bank)";
 	}
 
 	/**
@@ -1140,6 +1179,9 @@ public class RunSession
 	static int missingCount(RunPlan plan)
 	{
 		int missing = 0;
+		// The seed vault is in the Farming Guild: a run starting there can take what's in it on arrival
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		final boolean vaultFirst = !stops.isEmpty() && stops.get(0).getLocation() == Location.FARMING_GUILD;
 		for (SupplyLine line : plan.getSupplies().getLines())
 		{
 			if (line.getGroup() == SupplyLine.Group.OPTIONAL || line.isCoveredOtherwise())
@@ -1147,7 +1189,8 @@ public class RunSession
 				continue;
 			}
 			final int leprechaun = line.getWhere().getOrDefault(Holdings.Source.LEPRECHAUN, 0);
-			if (line.getCarried() + leprechaun < line.getNeed())
+			final int vault = vaultFirst ? line.getWhere().getOrDefault(Holdings.Source.SEED_VAULT, 0) : 0;
+			if (line.getCarried() + leprechaun + vault < line.getNeed())
 			{
 				missing++;
 			}

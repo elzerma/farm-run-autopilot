@@ -24,7 +24,7 @@ public class Holdings
 		BANK("bank"),
 		LEPRECHAUN("leprechaun"),
 		GROUP_STORAGE("group storage"),
-		SEED_VAULT("seed vault");
+		SEED_VAULT("seed vault (Farming Guild)");
 
 		private final String label;
 

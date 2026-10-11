@@ -42,17 +42,31 @@ public class RunConfigTest
 		final RunConfig config = new RunConfig().sanitise();
 		assertEquals(3, config.getEnabledTypes().size());
 		assertTrue(config.isPayWithNotes());
-		assertFalse(config.isUseGroupStorage());
-		assertFalse(config.isUseSeedVault());
+		assertTrue(config.isUseGroupStorage());
+		assertTrue(config.isUseSeedVault());
 		assertEquals(Location.FARMING_GUILD, config.getStartLocation());
 		assertEquals(Protection.PAY_GARDENER, config.protectionFor(Patch.TAVERLEY_TREE));
 		assertEquals(Compost.ULTRACOMPOST, config.getCompost().get(PatchType.HERB));
 	}
 
 	@Test
+	public void oldSavesGetStorageSwitchedOnOnce()
+	{
+		final RunConfig old = gson.fromJson("{\"useGroupStorage\":false,\"useSeedVault\":false}", RunConfig.class)
+			.sanitise();
+		assertTrue(old.isUseSeedVault());
+		assertTrue(old.isUseGroupStorage());
+
+		// Switched off again afterwards, it stays off
+		old.setUseSeedVault(false);
+		final RunConfig reloaded = gson.fromJson(gson.toJson(old), RunConfig.class).sanitise();
+		assertFalse(reloaded.isUseSeedVault());
+	}
+
+	@Test
 	public void roundTripThroughJson()
 	{
-		final RunConfig config = new RunConfig();
+		final RunConfig config = new RunConfig().sanitise();
 		config.getDisabledPatches().add(Patch.LUMBRIDGE_TREE);
 		config.getCrops().put(PatchType.HERB, Crop.RANARR);
 		config.getProtectionOverrides().put(Patch.FALADOR_TREE, Protection.COMPOST_ONLY);

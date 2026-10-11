@@ -116,6 +116,12 @@ public class FarmRunAutopilotPanel extends PluginPanel
 				}
 
 				@Override
+				public boolean seedVaultSeen()
+				{
+					return holdingsTracker.hasSeenSeedVault();
+				}
+
+				@Override
 				public TestView testView()
 				{
 					return testRunner.getView();

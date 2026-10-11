@@ -112,6 +112,9 @@ class RunPanel extends JPanel
 		/** Show Account > Unlocks. */
 		void openUnlocks();
 
+		/** The seed vault has been opened on this account, so its contents are counted. */
+		boolean seedVaultSeen();
+
 		/** The guided test in progress, or {@link TestView#NONE}. */
 		TestView testView();
 
@@ -224,6 +227,7 @@ class RunPanel extends JPanel
 		{
 			addOff(view);
 			addUnlocksToCheck();
+			addSeedVaultNote();
 			finish();
 			return;
 		}
@@ -250,12 +254,22 @@ class RunPanel extends JPanel
 			add(label);
 		}
 		addUnlocksToCheck();
+		addSeedVaultNote();
 
 		addRoute(plan.getRoute());
 		addBankStop(plan);
 		addSupplies(supplies);
 		addTotals(supplies);
 		finish();
+	}
+
+	/** Until the seed vault has been opened, its seeds and saplings can't be counted: say so. */
+	private void addSeedVaultNote()
+	{
+		if (settings.getRunConfig().isUseSeedVault() && !controls.seedVaultSeen())
+		{
+			add(note("Open your seed vault at the Farming Guild once, so seeds and saplings in it count."));
+		}
 	}
 
 	/** The guided test in progress at the top of the tab: its step, Yes/No when it asks, and what to bring. */

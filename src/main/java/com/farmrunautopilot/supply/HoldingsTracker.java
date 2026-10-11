@@ -116,6 +116,12 @@ public class HoldingsTracker
 		return holdings;
 	}
 
+	/** The seed vault has been opened on this account, so its contents are known. */
+	public boolean hasSeenSeedVault()
+	{
+		return seedVault != null;
+	}
+
 	/** Reload the cached containers for the current account (startup, account switch). */
 	public void loadCaches()
 	{

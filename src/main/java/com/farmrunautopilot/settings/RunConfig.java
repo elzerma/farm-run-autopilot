@@ -96,9 +96,12 @@ public class RunConfig
 	/** Supplies for every selected patch instead of only the due ones. */
 	private boolean supplyFullRun = false;
 
-	// Storage sources (SPEC 2: both default off)
-	private boolean useGroupStorage = false;
-	private boolean useSeedVault = false;
+	// Storage sources: counted by default, so items in them "just work" (each is only read once it has been
+	// opened: group storage only exists for group ironmen)
+	private boolean useGroupStorage = true;
+	private boolean useSeedVault = true;
+	/** Null in saves from before storage was on by default: switches both on once. */
+	private Boolean storageOnByDefault;
 
 	/**
 	 * Fills in anything Gson left null (new fields, or enum names that no longer exist) and clamps
@@ -110,6 +113,13 @@ public class RunConfig
 		disabledPatches = cleanSet(disabledPatches, Patch.class, EnumSet.noneOf(Patch.class));
 		payToClear = cleanSet(payToClear, PatchType.class, EnumSet.noneOf(PatchType.class));
 		runesNotTabsAt = cleanSet(runesNotTabsAt, Location.class, EnumSet.noneOf(Location.class));
+		if (storageOnByDefault == null)
+		{
+			// They used to default off and most players never found the setting
+			useGroupStorage = true;
+			useSeedVault = true;
+			storageOnByDefault = true;
+		}
 		if (travelStyle == null)
 		{
 			travelStyle = TravelStyle.FASTEST;
