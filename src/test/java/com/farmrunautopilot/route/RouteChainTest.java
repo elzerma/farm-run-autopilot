@@ -82,6 +82,18 @@ public class RouteChainTest
 	}
 
 	@Test
+	public void startsByWalkingToANearbyStop()
+	{
+		// By the Grand Tree, about 50 tiles from the Stronghold patches, with Start at: Anywhere
+		final List<RouteStop> stops = RoutePlanner.plan(Arrays.asList(Patch.values()), new RunConfig().sanitise(),
+			access(), holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF), new PohSetup(), LearnedTimes.NONE, null,
+			Location.GNOME_STRONGHOLD, 50).getStops();
+		assertEquals(describe(stops), Location.GNOME_STRONGHOLD, stops.get(0).getLocation());
+		assertEquals(describe(stops), Departure.WALK, stops.get(0).getDeparture());
+		assertEquals(describe(stops), TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, stops.get(1).getMethod());
+	}
+
+	@Test
 	public void bigRunsKeepTheStrongholdChain()
 	{
 		// Above the exact-search limit the fast search must still find the chain

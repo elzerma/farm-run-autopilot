@@ -47,6 +47,8 @@ public class RunService
 	private static final int REFRESH_TICKS = 100;
 	/** Within this many tiles of a patch counts as standing at its stop. */
 	private static final int STANDING_TILES = 25;
+	/** A stop whose patch is within this many tiles can be the first stop by walking there. */
+	private static final int NEARBY_TILES = 120;
 
 	private final Client client;
 	private final ItemManager itemManager;
@@ -66,6 +68,9 @@ public class RunService
 	private int ticksSinceRefresh;
 	/** The stop the player was standing at on the last tick, or null. */
 	private Location here;
+	/** The stop the player is close to but not at, and how far (tiles); null if none. */
+	private Location near;
+	private int nearTiles;
 
 	@Inject
 	RunService(Client client, ItemManager itemManager, SettingsStore settings, AccessChecker accessChecker,
@@ -116,8 +121,10 @@ public class RunService
 		}
 		final boolean holdingsChanged = holdingsTracker.rebuildIfDirty();
 		final Location nowAt = standingAt();
-		final boolean moved = nowAt != here;
+		final Location nearNow = nearby();
+		final boolean moved = nowAt != here || nearNow != near;
 		here = nowAt;
+		near = nearNow;
 		if (!holdingsChanged && !moved && !dirty && ++ticksSinceRefresh < REFRESH_TICKS)
 		{
 			return false;
@@ -131,7 +138,7 @@ public class RunService
 		final RunSelection selection = RunSelector.select(config, access, patchTracker::predict,
 			Instant.now().getEpochSecond(), config.isSupplyFullRun(), overrides.get());
 		Route route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
-			settings.getAccount().getPoh(), timings.learned(), here);
+			settings.getAccount().getPoh(), timings.learned(), here, near, nearTiles);
 		SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 			patchTracker::predict, this::itemName, itemManager::getItemPrice);
 		// Too much for one inventory: bank partway
@@ -255,7 +262,8 @@ public class RunService
 			return null;
 		}
 		final PohSetup poh = settings.getAccount().getPoh();
-		final Route route1 = RoutePlanner.planHalf(first, config, access, holdings, poh, timings.learned(), here, true);
+		final Route route1 = RoutePlanner.planHalf(first, config, access, holdings, poh, timings.learned(), here, true,
+			near, nearTiles);
 		final SupplyPlan before = supplies(config, access, holdings, selection, first, route1);
 		if (before.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
 		{
@@ -264,7 +272,7 @@ public class RunService
 		final Route route2 = RoutePlanner.planHalf(second, config, access, holdings, poh, timings.learned(),
 			// Onward from the bank stop, so e.g. the Stronghold bank then its spirit tree to Tree Gnome Village counts
 			route1.getStops().get(route1.getStops().size() - 1).getLocation(),
-			false);
+			false, null, 0);
 		final SupplyPlan after = supplies(config, access, holdings, selection, second, route2);
 		if (after.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
 		{
@@ -359,6 +367,35 @@ public class RunService
 	}
 
 	/** The stop the player is standing at (near one of its patches), or null. Client thread. */
+	/**
+	 * The stop whose patch is closest to the player, if within {@link #NEARBY_TILES}, so a run can start by
+	 * walking there (e.g. from the Grand Tree to the Stronghold patches); sets {@link #nearTiles}. Another floor
+	 * (the Grand Tree bank is upstairs) counts as a few tiles further.
+	 */
+	private Location nearby()
+	{
+		final Player player = client.getLocalPlayer();
+		if (player == null)
+		{
+			return null;
+		}
+		final WorldPoint location = player.getWorldLocation();
+		Location best = null;
+		int bestTiles = Integer.MAX_VALUE;
+		for (Map.Entry<Patch, WorldPoint> e : PatchPoints.all().entrySet())
+		{
+			final WorldPoint point = e.getValue();
+			final int tiles = point.distanceTo2D(location) + (point.getPlane() != location.getPlane() ? 10 : 0);
+			if (tiles <= NEARBY_TILES && tiles < bestTiles)
+			{
+				best = e.getKey().getLocation();
+				bestTiles = tiles;
+			}
+		}
+		nearTiles = best != null ? bestTiles : 0;
+		return best;
+	}
+
 	private Location standingAt()
 	{
 		final Player player = client.getLocalPlayer();

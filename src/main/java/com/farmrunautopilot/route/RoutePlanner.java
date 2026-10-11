@@ -122,6 +122,9 @@ public final class RoutePlanner
 	private final Set<TravelItem> usedUp = EnumSet.noneOf(TravelItem.class);
 	/** Daily-limited teleports with no uses left today, found while planning. */
 	private final Set<TravelMethod> usedUpToday = EnumSet.noneOf(TravelMethod.class);
+	/** A stop the player is close to but not at, so the run can start by walking there; null if none. */
+	private Location near;
+	private int nearTiles;
 
 	private RoutePlanner(RunConfig config, AccessSnapshot access, Holdings holdings, PohSetup poh,
 		LearnedTimes learned)
@@ -161,36 +164,15 @@ public final class RoutePlanner
 	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
 		PohSetup poh, LearnedTimes learned, Location here)
 	{
-		final List<Location> stops = new ArrayList<>();
-		for (Location location : Location.values())
-		{
-			for (Patch patch : patches)
-			{
-				if (patch.getLocation() == location)
-				{
-					stops.add(location);
-					break;
-				}
-			}
-		}
-		if (stops.isEmpty())
-		{
-			return new Route(new ArrayList<>(), config.getRouteMode(), 0, 0);
-		}
-		return new RoutePlanner(config, access, holdings, poh, learned).plan(stops, patches.size(), here,
-			config.isEndNearBank(), true, null);
+		return plan(patches, config, access, holdings, poh, learned, here, null, 0);
 	}
 
 	/**
-	 * One half of a run with a bank stop between the halves.
-	 *
-	 * @param here first half: the stop the player stands at, or null; second half: the bank stop it starts from
-	 * @param first the first half: starts at the start location and ends next to a bank; the second half
-	 *              starts from the bank stop (so a nearby spirit tree or walk still counts) and ends as the
-	 *              settings say
+	 * @param near a stop the player is close to but not at (e.g. by the Grand Tree for the Stronghold), or null
+	 * @param nearTiles how far the player is from that stop's nearest patch
 	 */
-	static Route planHalf(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
-		PohSetup poh, LearnedTimes learned, Location here, boolean first)
+	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
+		PohSetup poh, LearnedTimes learned, Location here, Location near, int nearTiles)
 	{
 		final List<Location> stops = new ArrayList<>();
 		for (Location location : Location.values())
@@ -208,8 +190,48 @@ public final class RoutePlanner
 		{
 			return new Route(new ArrayList<>(), config.getRouteMode(), 0, 0);
 		}
-		return new RoutePlanner(config, access, holdings, poh, learned).plan(stops, patches.size(),
-			first ? here : null, first || config.isEndNearBank(), first, first ? null : here);
+		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, learned);
+		planner.near = near;
+		planner.nearTiles = nearTiles;
+		return planner.plan(stops, patches.size(), here,
+			config.isEndNearBank(), true, null);
+	}
+
+	/**
+	 * One half of a run with a bank stop between the halves.
+	 *
+	 * @param here first half: the stop the player stands at, or null; second half: the bank stop it starts from
+	 * @param first the first half: starts at the start location and ends next to a bank; the second half
+	 *              starts from the bank stop (so a nearby spirit tree or walk still counts) and ends as the
+	 *              settings say
+	 */
+	static Route planHalf(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
+		PohSetup poh, LearnedTimes learned, Location here, boolean first, Location near, int nearTiles)
+	{
+		final List<Location> stops = new ArrayList<>();
+		for (Location location : Location.values())
+		{
+			for (Patch patch : patches)
+			{
+				if (patch.getLocation() == location)
+				{
+					stops.add(location);
+					break;
+				}
+			}
+		}
+		if (stops.isEmpty())
+		{
+			return new Route(new ArrayList<>(), config.getRouteMode(), 0, 0);
+		}
+		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, learned);
+		if (first)
+		{
+			planner.near = near;
+			planner.nearTiles = nearTiles;
+		}
+		return planner.plan(stops, patches.size(), first ? here : null, first || config.isEndNearBank(), first,
+			first ? null : here);
 	}
 
 	private Route plan(List<Location> stops, int patchCount, Location here, boolean endNearBank,
@@ -240,6 +262,16 @@ public final class RoutePlanner
 		if (standingAt >= 0)
 		{
 			firstLeg[standingAt] = new Leg(null, Departure.WALK, 0, false);
+		}
+		else if (near != null && stops.indexOf(near) >= 0)
+		{
+			// Close to a stop already: walking there may beat any teleport
+			final int j = stops.indexOf(near);
+			final double walk = nearTiles * SECONDS_PER_TILE + WALK_OVERHEAD;
+			if (walk < firstLeg[j].cost)
+			{
+				firstLeg[j] = new Leg(null, Departure.WALK, walk, false);
+			}
 		}
 		final int start = standingAt >= 0 ? standingAt
 			: fromStartLocation ? stops.indexOf(config.getStartLocation()) : -1;
