@@ -159,7 +159,23 @@ public final class RoutePlanner
 		Holdings holdings, PohSetup poh, LearnedTimes learned)
 	{
 		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, learned);
-		return planner.bestLeg(from, to).cost < planner.bestLeg(null, to).cost;
+		return chainSaving(from, to, config, access, holdings, poh, learned) > 0;
+	}
+
+	/** How much quicker a stop is to reach onward from another stop than from anywhere; 0 if it isn't. */
+	static double chainSaving(Location from, Location to, RunConfig config, AccessSnapshot access,
+		Holdings holdings, PohSetup poh, LearnedTimes learned)
+	{
+		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, learned);
+		return Math.max(0, planner.bestLeg(null, to).cost - planner.bestLeg(from, to).cost);
+	}
+
+	/** The best way to a stop from anywhere, e.g. after a bank teleport. */
+	static RouteStop fromAnywhere(Location to, RunConfig config, AccessSnapshot access, Holdings holdings,
+		PohSetup poh, LearnedTimes learned)
+	{
+		final Leg leg = new RoutePlanner(config, access, holdings, poh, learned).bestLeg(null, to);
+		return new RouteStop(to, leg.method, leg.departure, leg.seconds, leg.needsSupplies);
 	}
 
 	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,

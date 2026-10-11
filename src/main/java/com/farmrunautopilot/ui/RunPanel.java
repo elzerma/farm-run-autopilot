@@ -863,8 +863,11 @@ class RunPanel extends JPanel
 		}
 		final List<RouteStop> stops = plan.getRoute().getStops();
 		add(heading("Bank stop"));
-		add(note("Everything doesn't fit in one inventory, so the run banks near "
-			+ bank.getLocation().getDisplayName() + " after stop " + (bank.getAfterStop() + 1) + ". The supply list "
+		final String where = bank.getTeleport() != null
+			? "at " + bank.getTeleport().getBankName() + " (" + bank.getTeleport().getItemName() + ", on the supply list)"
+			: "near " + bank.getLocation().getDisplayName();
+		add(note("Everything doesn't fit in one inventory, so the run banks " + where
+			+ " after stop " + (bank.getAfterStop() + 1) + ". The supply list "
 			+ "below is for the stops before it; at the bank, deposit what's outlined and take the rest from the "
 			+ "Farm run bank tab:"));
 		for (SupplyLine line : bank.getSupplies().getLines())

@@ -523,8 +523,9 @@ public class RunSession
 				{
 					banking = true;
 					currentPatch = null;
-					instruction = "Bank near " + bank.getLocation().getDisplayName() + ": deposit the outlined items, "
-						+ "then take what the Farm run bank tab shows";
+					final String go = bank.getTeleport() != null ? "Use your " + bank.getTeleport().getItemName()
+						+ " to teleport to " + bank.getTeleport().getBankName() : bank.title();
+					instruction = go + ": deposit the outlined items, then take what the Farm run bank tab shows";
 					break;
 				}
 				banked = true;
@@ -899,7 +900,7 @@ public class RunSession
 			{
 				final RunView.StopStatus bankStatus = banked || i < stopIndex ? RunView.StopStatus.DONE
 					: banking ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
-				stopViews.add(new RunView.Stop("Bank near " + bank.getLocation().getDisplayName(),
+				stopViews.add(new RunView.Stop(bank.title(),
 					"Restock for the rest of the run", bankStatus,
 					bankStatus == RunView.StopStatus.CURRENT ? instruction : null, Collections.emptyList()));
 			}
