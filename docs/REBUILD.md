@@ -183,12 +183,14 @@ one object.
   walking line to the patch, the bank, or the next journey step.
 - **Patch guide:** `StepAdvisor` per patch (harvest, clear, cure/prune, compost, plant with the right tool,
   protect), with highlights.
-- **Bank guide:** at a mid-run bank, outline items to deposit (noted IDs too), then the bank tab's withdraw
-  list; done when the next inventory is carried.
+- **Bank guide:** while gathering and at every mid-run bank, three steps: open a bank (booth or chest
+  outlined, walking line), click the Farm run tab (icon outlined and pulsing, or opened by itself), then
+  deposit (outlined, noted IDs too) and withdraw (highlighted in the tab); done when the next inventory is
+  carried. See decision 8.7.
 
 ### 5.5 Sidebar
-- **Run tab:** run types (with today's Include/Skip), Build / Start / Stop, one status line ("6 items to get:
-  open the bank tab"), the route list with bank breaks shown in place, total time and slots. Nothing that the
+- **Run tab:** run types (with today's Include/Skip), Build / Start / Stop, one status line with the same next
+  step as the overlay ("6 items to get: open a bank, then the Farm run tab"), the route list with bank breaks shown in place, total time and slots. Nothing that the
   bank tab or overlay already shows.
 - **Farm / Travel / Account tabs:** as now, one class each; due % next to the run types; fixes from section 3.
 
@@ -231,8 +233,12 @@ missing from his vision. Turn every chain or behaviour he names into a scenario 
 
 **Sprint 5: bank tab and Run tab.**
 - Bank tab: deposit section at a mid-run bank, withdraw list per inventory.
+- Guidance to the bank tab (decision 8.7): "Open a bank", the icon outlined and pulsing, the optional
+  auto-open setting. Add a guided test if any of it relies on an unverified widget.
 - Slim Run tab (section 5.5).
-- Checks: Gathering and mid-run banking only need the bank tab and overlay.
+- Checks: with the bank closed the overlay says to open one; on opening a bank the Farm run icon is
+  impossible to miss (or the tab opens by itself); the highlight stops once it's open; gathering and mid-run
+  banking only need the bank tab and overlay.
 
 **Sprint 6: settings and pages.**
 - Immutable settings snapshots; split `SetupPanel`; presets hold only Farm and Travel; Shortest Path setting;
@@ -269,4 +275,16 @@ times; patch details/debug; the help list and guided tests (see decisions).
    issue with the results; the dev client logs and copies the summary. Each sprint adds or rewords tests for
    anything Sean can't try on his own account.
 6. **Resurrect Crops:** removed until it can be guided properly.
-7. **Run tab:** no supply list; the bank tab is the only place items are listed.
+7. **Run tab:** no supply list; the bank tab is the only place items are listed. Because the bank tab's icon
+   is small and easy to miss, the player is walked to it (Sean, 2026-10-11), at the start and at every
+   mid-run bank:
+   1. **Bank closed:** the overlay says "Open a bank". At a mid-run bank, that bank's booth or chest is
+      outlined and Shortest Path draws the walk to it.
+   2. **Bank open, Farm run tab not selected:** the overlay says "Click the Farm run tab" and the icon in the
+      bank interface is outlined and pulses until it's clicked.
+   3. **Farm run tab open:** at a mid-run bank, the items to deposit are outlined in the inventory first; then
+      the items to withdraw are highlighted in the tab.
+   - Option (a setting, on by default): open the Farm run tab by itself when the bank opens during gathering
+     or a mid-run bank, so the highlight is a fallback rather than the only cue. This only changes our own
+     view of the bank, sends nothing to the server, and must be checked against Plugin Hub rules first.
+   - The Run tab's status line shows the same next step ("Open a bank, then the Farm run tab").
