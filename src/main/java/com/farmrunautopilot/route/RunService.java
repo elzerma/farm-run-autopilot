@@ -6,13 +6,11 @@ import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
-import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.travel.BankTeleport;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.run.RunTimings;
 import com.farmrunautopilot.run.StepAdvisor;
 import com.farmrunautopilot.settings.PohSetup;
-import com.farmrunautopilot.settings.RouteMode;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
@@ -149,23 +147,17 @@ public class RunService
 			settings.getAccount().getPoh(), timings.learned(), here, near, nearTiles);
 		SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 			patchTracker::predict, this::itemName, itemManager::getItemPrice);
-		// Too much for one inventory: bank partway
-		final Split split = supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS
-			? split(config, access, holdings, selection, route) : null;
-		final BankStop bankStop = split != null ? split.bankStop : null;
-		if (split != null)
+		// Too much for one inventory: bank partway, as often as needed, where it costs least
+		final List<BankStop> bankStops = new ArrayList<>();
+		if (supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
 		{
-			log.debug("Route split: {} after {}, starting at {}", split.bankStop.how(), split.bankStop.getLocation(),
-				split.route.getStops().get(0).getLocation());
-			route = split.route;
-			// The guide needs every patch's crop, not only the first half's
-			final Map<Patch, Crop> plantings = new EnumMap<>(Patch.class);
-			plantings.putAll(split.before.getPlantings());
-			plantings.putAll(split.bankStop.getSupplies().getPlantings());
-			final SupplyPlan before = split.before;
-			supplies = new SupplyPlan(before.getLines(), before.getPatchCounts(), before.getNotDue(),
-				before.getTravelPlan(), before.getWarnings(), before.getCoins(), before.getRuneSummary(),
-				before.getSlots(), Collections.unmodifiableMap(plantings));
+			final Banked banked = bankStops(config, access, holdings, selection, route);
+			if (banked != null)
+			{
+				route = banked.route;
+				supplies = banked.first;
+				bankStops.addAll(banked.stops);
+			}
 		}
 
 		final Map<Location, List<String>> objectives = new EnumMap<>(Location.class);
@@ -188,12 +180,14 @@ public class RunService
 		final boolean picksChanged = !picks.equals(autoPicks);
 		autoPicks = picks;
 
-		final RunPlan next = new RunPlan(selection, route, supplies, objectives, bankStop);
+		final RunPlan next = new RunPlan(selection, route, supplies, objectives,
+			Collections.unmodifiableList(bankStops));
 		if (next.equals(plan) && !picksChanged)
 		{
 			return false;
 		}
-		if ((plan == null || !next.getRoute().equals(plan.getRoute())) && log.isDebugEnabled())
+		if ((plan == null || !next.getRoute().equals(plan.getRoute())
+			|| !next.getBankStops().equals(plan.getBankStops())) && log.isDebugEnabled())
 		{
 			log.debug("Route planned:\n{}", explain(next));
 		}
@@ -215,235 +209,97 @@ public class RunService
 			b.append(i + 1).append(". ").append(stop.getLocation().getDisplayName()).append(": ")
 				.append(stop.describeTravel()).append(", ").append(Math.round(stop.getLegSeconds())).append(" s = ")
 				.append(stop.getBreakdown()).append('\n');
-			if (plan.getBankStop() != null && plan.getBankStop().getAfterStop() == i)
+			final BankStop bank = plan.bankAfter(i);
+			if (bank != null)
 			{
-				b.append("   ").append(plan.getBankStop().how()).append('\n');
+				b.append("   Bank: ").append(bank.how()).append(", ").append(bank.getSupplies().getSlots())
+					.append(" slots for the next part\n");
 			}
 		}
-		return b.append("Travel ").append(Math.round(plan.getRoute().getTravelSeconds())).append(" s").toString();
+		return b.append("Travel ").append(Math.round(plan.getRoute().getTravelSeconds())).append(" s, first part ")
+			.append(plan.getSupplies().getSlots()).append(" slots").toString();
 	}
 
-	/** A run split by a bank stop: the whole route, what to bring before the bank, and the stop itself. */
-	private static final class Split
+	/** A run with its bank visits: the route, what to bring at the start, and each visit with what it takes. */
+	private static final class Banked
 	{
 		final Route route;
-		final SupplyPlan before;
-		final BankStop bankStop;
-		final double seconds;
+		final SupplyPlan first;
+		final List<BankStop> stops;
 
-		Split(Route route, SupplyPlan before, BankStop bankStop, double travelSeconds, double bankSeconds)
+		Banked(Route route, SupplyPlan first, List<BankStop> stops)
 		{
 			this.route = route;
-			this.before = before;
-			this.bankStop = bankStop;
-			// Travel plus getting to the bank, so a far-off bank (Port Phasmatys) counts against it
-			this.seconds = travelSeconds + bankSeconds;
+			this.first = first;
+			this.stops = stops;
 		}
 	}
 
 	/**
-	 * How to bank partway through a run too big for one inventory. Either the planned order is cut at the stop
-	 * whose bank adds the least walking, among cuts where both halves fit, so patch types stay mixed (e.g. the
-	 * Stronghold, its bank, then the spirit tree to Tree Gnome Village); or, with the fastest route, the run is
-	 * planned as two halves by patch type (e.g. trees and fruit trees, bank, herbs), each ending near a bank.
-	 * The quickest of these, counting the walk to the bank, wins. Null if no split fits: the plan then warns as
-	 * before.
+	 * Bank visits for a run too big for one inventory (see {@link BankPlanner}), with each part's supplies.
+	 * Null if a part can't fit even on its own; the plan then warns about slots as before.
 	 */
-	private Split split(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
-		Route route)
-	{
-		Split best = splitInOrder(config, access, holdings, selection, route);
-		if (config.getRouteMode() == RouteMode.AUTOPILOT)
-		{
-			final PatchType[] types = PatchType.values();
-			// Every way to put some patch types first: each non-empty, proper subset
-			for (int mask = 1; mask < (1 << types.length) - 1; mask++)
-			{
-				final Set<PatchType> firstTypes = EnumSet.noneOf(PatchType.class);
-				for (int t = 0; t < types.length; t++)
-				{
-					if ((mask & (1 << t)) != 0)
-					{
-						firstTypes.add(types[t]);
-					}
-				}
-				final Split split = splitByType(config, access, holdings, selection, firstTypes);
-				if (split != null && (best == null || split.seconds < best.seconds))
-				{
-					best = split;
-				}
-			}
-		}
-		return best;
-	}
-
-	/**
-	 * The stop a run must start at: the one the player stands at, else the chosen Start at, else one they're
-	 * near; null when it may start anywhere.
-	 */
-	static Location fixedStart(Location here, Location chosen, Location near)
-	{
-		return here != null ? here : chosen != null ? chosen : near;
-	}
-
-	/**
-	 * The stops in the first half of a split by type: those with any of these patch types (a stop is only
-	 * visited once). Null if the run's fixed start would land in the second half, so a split never moves it.
-	 */
-	static Set<Location> firstHalfStops(List<Patch> patches, Set<PatchType> firstTypes, Location start)
-	{
-		final Set<Location> firstAt = EnumSet.noneOf(Location.class);
-		final Set<Location> all = EnumSet.noneOf(Location.class);
-		for (Patch patch : patches)
-		{
-			all.add(patch.getLocation());
-			if (firstTypes.contains(patch.getType()))
-			{
-				firstAt.add(patch.getLocation());
-			}
-		}
-		return start != null && all.contains(start) && !firstAt.contains(start) ? null : firstAt;
-	}
-
-	/**
-	 * First the stops with any of these patch types, then a bank, then the rest. A first-half stop that the bank
-	 * stop chains to (e.g. the Stronghold bank, then its spirit tree to Tree Gnome Village) may move to just after
-	 * the bank, carried in the second inventory, when that's quicker and both still fit.
-	 */
-	private Split splitByType(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
-		Set<PatchType> firstTypes)
-	{
-		final Location start = fixedStart(here, config.getStartLocation(), near);
-		final Set<Location> firstAt = firstHalfStops(selection.getPatches(), firstTypes, start);
-		if (firstAt == null)
-		{
-			return null;
-		}
-		Split best = splitAt(config, access, holdings, selection, firstAt);
-		if (best == null)
-		{
-			return null;
-		}
-		final Location bankAt = best.bankStop.getLocation();
-		final PohSetup poh = settings.getAccount().getPoh();
-		for (Location chained : firstAt)
-		{
-			if (chained == start || chained == bankAt
-				|| !RoutePlanner.chainsFrom(bankAt, chained, config, access, holdings, poh, timings.learned()))
-			{
-				continue;
-			}
-			final Set<Location> fewer = EnumSet.copyOf(firstAt);
-			fewer.remove(chained);
-			final Split moved = splitAt(config, access, holdings, selection, fewer);
-			if (moved != null && moved.seconds < best.seconds)
-			{
-				best = moved;
-			}
-		}
-		return best;
-	}
-
-	/** The stops in firstAt, then a bank, then the rest; null if either half doesn't fit one inventory. */
-	private Split splitAt(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
-		Set<Location> firstAt)
-	{
-		final List<Patch> first = new ArrayList<>();
-		final List<Patch> second = new ArrayList<>();
-		for (Patch patch : selection.getPatches())
-		{
-			(firstAt.contains(patch.getLocation()) ? first : second).add(patch);
-		}
-		if (first.isEmpty() || second.isEmpty())
-		{
-			return null;
-		}
-		final PohSetup poh = settings.getAccount().getPoh();
-		final Route route1 = RoutePlanner.planHalf(first, config, access, holdings, poh, timings.learned(), here, true,
-			near, nearTiles);
-		final SupplyPlan before = supplies(config, access, holdings, selection, first, route1);
-		if (before.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
-		{
-			return null;
-		}
-		final Route route2 = RoutePlanner.planHalf(second, config, access, holdings, poh, timings.learned(),
-			// Onward from the bank stop, so e.g. the Stronghold bank then its spirit tree to Tree Gnome Village counts
-			route1.getStops().get(route1.getStops().size() - 1).getLocation(),
-			false, null, 0);
-		final SupplyPlan after = supplies(config, access, holdings, selection, second, route2);
-		if (after.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
-		{
-			return null;
-		}
-		final List<RouteStop> stops = new ArrayList<>(route1.getStops());
-		stops.addAll(route2.getStops());
-		final Location bankAt = route1.getStops().get(route1.getStops().size() - 1).getLocation();
-		final Route whole = new Route(stops, route1.getMode(), route1.getTravelSeconds() + route2.getTravelSeconds(),
-			route1.getPatchSeconds() + route2.getPatchSeconds());
-		return new Split(whole, before, new BankStop(route1.getStops().size() - 1, bankAt, after, null),
-			whole.getTravelSeconds(), RoutePlanner.bankTiles(bankAt) * RoutePlanner.SECONDS_PER_TILE);
-	}
-
-	/**
-	 * Cut the planned order where banking costs the least, among cuts where both halves fit: the walk to the bank
-	 * near the stop just finished, or the player's quickest bank teleport (carried from the start) plus whatever
-	 * the next leg loses by setting off from the bank instead of that stop (e.g. the Stronghold's spirit tree).
-	 */
-	private Split splitInOrder(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
+	private Banked bankStops(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
 		Route route)
 	{
 		final PohSetup poh = settings.getAccount().getPoh();
-		final BankTeleport teleport = BankTeleport.best(access, holdings);
 		final List<RouteStop> stops = route.getStops();
-		Split best = null;
-		for (int k = 1; k < stops.size(); k++)
+		final Map<Long, Integer> slots = new HashMap<>();
+		final BankPlanner.Slots slotsOf = (a, b) -> slots.computeIfAbsent((long) a * 1000 + b,
+			k -> part(config, access, holdings, selection, stops.subList(a, b), route).getSlots());
+		final BankPlanner.Result result = BankPlanner.place(route, slotsOf, SupplyCalculator.INVENTORY_SLOTS,
+			BankTeleport.best(access, holdings),
+			(from, to) -> RoutePlanner.chainSaving(from, to, config, access, holdings, poh, timings.learned()),
+			to -> RoutePlanner.fromAnywhere(to, config, access, holdings, poh, timings.learned()));
+		if (result == null || result.getVisits().isEmpty())
 		{
-			final Location bankAt = stops.get(k - 1).getLocation();
-			final List<RouteStop> head = stops.subList(0, k);
-			final SupplyPlan before = supplies(config, access, holdings, selection, patchesAt(selection, head),
-				new Route(new ArrayList<>(head), route.getMode(), 0, 0));
-			if (before.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
-			{
-				// Banking later only makes the first half bigger
-				break;
-			}
-			final List<RouteStop> tail = stops.subList(k, stops.size());
-			final SupplyPlan after = supplies(config, access, holdings, selection, patchesAt(selection, tail),
-				new Route(new ArrayList<>(tail), route.getMode(), 0, 0));
-			if (after.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
-			{
-				continue;
-			}
-			final double walk = RoutePlanner.bankTiles(bankAt) * RoutePlanner.SECONDS_PER_TILE;
-			final Location next = stops.get(k).getLocation();
-			final double byTeleport = teleport == null || before.getSlots() + 1 > SupplyCalculator.INVENTORY_SLOTS
-				? Double.MAX_VALUE
-				: teleport.getSeconds() + RoutePlanner.chainSaving(bankAt, next, config, access, holdings, poh,
-					timings.learned());
-			final Split split;
-			if (byTeleport < walk)
-			{
-				// Set off for the next stop from the bank, not from the stop just finished
-				final List<RouteStop> onward = new ArrayList<>(stops);
-				onward.set(k, RoutePlanner.fromAnywhere(next, config, access, holdings, poh, timings.learned()));
-				split = new Split(new Route(onward, route.getMode(), route.getTravelSeconds(), route.getPatchSeconds()),
-					withTeleport(before, teleport, holdings), new BankStop(k - 1, bankAt, after, teleport),
-					route.getTravelSeconds(), byTeleport);
-			}
-			else
-			{
-				split = new Split(route, before, new BankStop(k - 1, bankAt, after, null), route.getTravelSeconds(),
-					walk);
-			}
-			if (best == null || split.seconds < best.seconds)
-			{
-				best = split;
-			}
+			return null;
 		}
-		return best;
+
+		// Each part's supplies, the teleport to bank with carried in the part before it
+		final List<RouteStop> banked = result.getRoute().getStops();
+		final List<BankPlanner.Visit> visits = result.getVisits();
+		final List<SupplyPlan> parts = new ArrayList<>();
+		int start = 0;
+		for (int i = 0; i <= visits.size(); i++)
+		{
+			final int end = i < visits.size() ? visits.get(i).getAfterStop() + 1 : banked.size();
+			SupplyPlan part = part(config, access, holdings, selection, banked.subList(start, end), result.getRoute());
+			if (i < visits.size() && visits.get(i).getTeleport() != null)
+			{
+				part = withTeleport(part, visits.get(i).getTeleport(), holdings);
+			}
+			parts.add(part);
+			start = end;
+		}
+		final List<BankStop> bankStops = new ArrayList<>();
+		for (int i = 0; i < visits.size(); i++)
+		{
+			final BankPlanner.Visit v = visits.get(i);
+			bankStops.add(new BankStop(v.getAfterStop(), v.getLocation(), parts.get(i + 1), v.getTeleport()));
+		}
+
+		// The guide needs every patch's crop, not only the first part's
+		final Map<Patch, Crop> plantings = new EnumMap<>(Patch.class);
+		for (SupplyPlan part : parts)
+		{
+			plantings.putAll(part.getPlantings());
+		}
+		final SupplyPlan first = parts.get(0);
+		return new Banked(result.getRoute(), new SupplyPlan(first.getLines(), first.getPatchCounts(),
+			first.getNotDue(), first.getTravelPlan(), first.getWarnings(), first.getCoins(), first.getRuneSummary(),
+			first.getSlots(), Collections.unmodifiableMap(plantings)), bankStops);
 	}
 
-	/** The first half's supplies with the bank teleport to bring. */
+	/** The supplies for some of the route's stops on their own. */
+	private SupplyPlan part(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
+		List<RouteStop> stops, Route route)
+	{
+		return supplies(config, access, holdings, selection, patchesAt(selection, stops),
+			new Route(new ArrayList<>(stops), route.getMode(), 0, 0));
+	}
+
+	/** A part's supplies with the bank teleport to bring, used at the bank that ends it. */
 	private static SupplyPlan withTeleport(SupplyPlan before, BankTeleport teleport, Holdings holdings)
 	{
 		final int[] ids = teleport.getItemIds();
@@ -516,8 +372,15 @@ public class RunService
 		final WorldPoint location = player.getWorldLocation();
 		Location best = null;
 		int bestTiles = Integer.MAX_VALUE;
+		// Only stops in the run: a nearby patch that isn't due shouldn't hide one a little further away
+		final RunPlan current = plan;
 		for (Map.Entry<Patch, WorldPoint> e : PatchPoints.all().entrySet())
 		{
+			if (current != null && !current.getSelection().getPatches().isEmpty()
+				&& !current.getSelection().getPatches().contains(e.getKey()))
+			{
+				continue;
+			}
 			final WorldPoint point = e.getValue();
 			final int tiles = point.distanceTo2D(location) + (point.getPlane() != location.getPlane() ? 10 : 0);
 			if (tiles <= NEARBY_TILES && tiles < bestTiles)

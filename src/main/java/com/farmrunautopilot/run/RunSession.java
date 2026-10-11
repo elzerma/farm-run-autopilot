@@ -520,8 +520,8 @@ public class RunSession
 				log.debug("Leg not timed: {} skipped without reaching it", stop.getLocation().getDisplayName());
 			}
 			// A bank visit after this stop: the rest of the run didn't fit in one inventory
-			final BankStop bank = plan.getBankStop();
-			if (bank != null && bank.getAfterStop() == stopIndex && !banked)
+			final BankStop bank = plan.bankAfter(stopIndex);
+			if (bank != null && !banked)
 			{
 				if (!isReady(runService.getPlan()))
 				{
@@ -540,6 +540,7 @@ public class RunSession
 			log.debug("Stop done: {}", stop.getLocation().getDisplayName());
 			stopIndex++;
 			arrived = false;
+			banked = false;
 			teleported = false;
 			journeyStep = 0;
 			legStartedAt = now;
@@ -697,8 +698,7 @@ public class RunSession
 		// learning our methods' times.
 		final boolean first = stopIndex == 0;
 		// After a bank visit the leg starts at the bank, not the stop before
-		final BankStop bank = plan.getBankStop();
-		final String from = first ? null : bank != null && bank.getAfterStop() == stopIndex - 1 ? "BANK"
+		final String from = first ? null : plan.bankAfter(stopIndex - 1) != null ? "BANK"
 			: plan.getRoute().getStops().get(stopIndex - 1).getLocation().name();
 		final double seconds = (now - legStartedAt) / 1000.0;
 		legs.add(new RunTimings.Leg(stop.getLocation().name(),
@@ -910,8 +910,8 @@ public class RunSession
 			stopViews.add(new RunView.Stop(stop.getLocation().getDisplayName(), travel, status,
 				status == RunView.StopStatus.CURRENT ? instruction : null,
 				plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList())));
-			final BankStop bank = plan.getBankStop();
-			if (bank != null && bank.getAfterStop() == i)
+			final BankStop bank = plan.bankAfter(i);
+			if (bank != null)
 			{
 				final RunView.StopStatus bankStatus = banked || i < stopIndex ? RunView.StopStatus.DONE
 					: banking ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;

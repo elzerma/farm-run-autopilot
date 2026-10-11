@@ -856,30 +856,32 @@ class RunPanel extends JPanel
 	/** A run too big for one inventory: where it banks partway, and what to take there. */
 	private void addBankStop(RunPlan plan)
 	{
-		final BankStop bank = plan.getBankStop();
-		if (bank == null)
+		final List<BankStop> banks = plan.getBankStops();
+		if (banks.isEmpty())
 		{
 			return;
 		}
 		final List<RouteStop> stops = plan.getRoute().getStops();
-		add(heading("Bank stop"));
-		final String where = bank.getTeleport() != null
-			? "at " + bank.getTeleport().getBankName() + " (" + bank.getTeleport().getItemName() + ", on the supply list)"
-			: "near " + bank.getLocation().getDisplayName();
-		add(note("Everything doesn't fit in one inventory, so the run banks " + where
-			+ " after stop " + (bank.getAfterStop() + 1) + ". The supply list "
-			+ "below is for the stops before it; at the bank, deposit what's outlined and take the rest from the "
-			+ "Farm run bank tab:"));
-		for (SupplyLine line : bank.getSupplies().getLines())
+		add(heading(banks.size() == 1 ? "Bank stop" : "Bank stops"));
+		add(note("Everything doesn't fit in one inventory, so the run banks partway. The supply list below is for "
+			+ "the stops before the first bank; at each bank, deposit what's outlined and take the rest from the "
+			+ "Farm run bank tab."));
+		for (BankStop bank : banks)
 		{
-			if (line.getGroup() != SupplyLine.Group.OPTIONAL && !line.isCoveredOtherwise())
+			final String where = bank.getTeleport() != null
+				? "at " + bank.getTeleport().getBankName() + " (" + bank.getTeleport().getItemName()
+				+ ", on the supply list)"
+				: "near " + bank.getLocation().getDisplayName();
+			final String next = bank.getAfterStop() + 1 < stops.size()
+				? ", then on to " + stops.get(bank.getAfterStop() + 1).getLocation().getDisplayName() : "";
+			add(note("After stop " + (bank.getAfterStop() + 1) + ", bank " + where + next + ". Take:"));
+			for (SupplyLine line : bank.getSupplies().getLines())
 			{
-				add(note("- " + line.getNeed() + " x " + line.getName()));
+				if (line.getGroup() != SupplyLine.Group.OPTIONAL && !line.isCoveredOtherwise())
+				{
+					add(note("- " + line.getNeed() + " x " + line.getName()));
+				}
 			}
-		}
-		if (bank.getAfterStop() + 1 < stops.size())
-		{
-			add(note("Then on to " + stops.get(bank.getAfterStop() + 1).getLocation().getDisplayName() + "."));
 		}
 	}
 

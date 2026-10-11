@@ -4,7 +4,6 @@ import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
-import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelMethod;
@@ -105,24 +104,6 @@ public class RouteChainTest
 			access(), holdings(ItemID.SLAYER_RING_8, ItemID.RING_OF_WEALTH_5), new PohSetup(), LearnedTimes.NONE,
 			null, Location.FALADOR_PARK, 57).getStops();
 		assertEquals(describe(park), Location.FALADOR_PARK, park.get(0).getLocation());
-	}
-
-	@Test
-	public void bankStopSplitsKeepTheStart()
-	{
-		final List<Patch> patches = Arrays.asList(Patch.values());
-		// Near Falador Park (trees only): herbs-first splits would start elsewhere, so they're skipped
-		final Location start = RunService.fixedStart(null, null, Location.FALADOR_PARK);
-		assertEquals(null, RunService.firstHalfStops(patches, EnumSet.of(PatchType.HERB), start));
-		assertEquals(true, RunService.firstHalfStops(patches, EnumSet.of(PatchType.TREE), start)
-			.contains(Location.FALADOR_PARK));
-		// Standing at a stop beats a chosen Start at, which beats being near one
-		assertEquals(Location.CATHERBY, RunService.fixedStart(Location.CATHERBY, Location.FARMING_GUILD,
-			Location.FALADOR_PARK));
-		assertEquals(Location.FARMING_GUILD, RunService.fixedStart(null, Location.FARMING_GUILD,
-			Location.FALADOR_PARK));
-		// Nothing fixed: every split is allowed
-		assertEquals(true, RunService.firstHalfStops(patches, EnumSet.of(PatchType.HERB), null) != null);
 	}
 
 	@Test

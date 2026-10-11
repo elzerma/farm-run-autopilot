@@ -161,57 +161,43 @@ public final class RoutePlanner
 		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, learned);
 		planner.near = near;
 		planner.nearTiles = nearTiles;
-		return planner.plan(stops, patches.size(), here,
-			config.isEndNearBank(), true, null);
+		return planner.plan(stops, patches.size(), here);
 	}
 
 	/**
-	 * One half of a run with a bank stop between the halves.
-	 *
-	 * @param here first half: the stop the player stands at, or null; second half: the bank stop it starts from
-	 * @param first the first half: starts at the start location and ends next to a bank; the second half
-	 *              starts from the bank stop (so a nearby spirit tree or walk still counts) and ends as the
-	 *              settings say
+	 * Order the stops, then spend charges along that order. If an item or daily teleport ran out partway, the
+	 * order was chosen as if it hadn't, so order again knowing it's gone and keep whichever is quicker.
 	 */
-	static Route planHalf(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
-		PohSetup poh, LearnedTimes learned, Location here, boolean first, Location near, int nearTiles)
+	private Route plan(List<Location> stops, int patchCount, Location here)
 	{
-		final List<Location> stops = new ArrayList<>();
-		for (Location location : Location.values())
+		final Route first = order(stops, patchCount, here);
+		if (usedUp.isEmpty() && usedUpToday.isEmpty())
 		{
-			for (Patch patch : patches)
-			{
-				if (patch.getLocation() == location)
-				{
-					stops.add(location);
-					break;
-				}
-			}
+			return first;
 		}
-		if (stops.isEmpty())
-		{
-			return new Route(new ArrayList<>(), config.getRouteMode(), 0, 0);
-		}
-		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, learned);
-		if (first)
-		{
-			planner.near = near;
-			planner.nearTiles = nearTiles;
-		}
-		return planner.plan(stops, patches.size(), first ? here : null, first || config.isEndNearBank(), first,
-			first ? null : here);
+		final Route second = order(stops, patchCount, here);
+		return penalised(second) < penalised(first) ? second : first;
 	}
 
-	private Route plan(List<Location> stops, int patchCount, Location here, boolean endNearBank,
-		boolean fromStartLocation, Location departFrom)
+	/** Travel time, with legs the player can't make yet counted as much worse, for comparing two orders. */
+	private static double penalised(Route route)
+	{
+		double total = route.getTravelSeconds();
+		for (RouteStop stop : route.getStops())
+		{
+			total += stop.isNeedsSupplies() ? MISSING_PENALTY : 0;
+		}
+		return total;
+	}
+
+	private Route order(List<Location> stops, int patchCount, Location here)
 	{
 		final int n = stops.size();
 		final Leg[] firstLeg = new Leg[n];
 		final Leg[][] legs = new Leg[n][n];
 		for (int j = 0; j < n; j++)
 		{
-			// From anywhere, or onward from where the run already is (a bank stop) so nearby chains still count
-			firstLeg[j] = bestLeg(departFrom, stops.get(j));
+			firstLeg[j] = bestLeg(null, stops.get(j));
 			for (int i = 0; i < n; i++)
 			{
 				if (i != j)
@@ -223,7 +209,7 @@ public final class RoutePlanner
 		final double[] endCost = new double[n];
 		for (int j = 0; j < n; j++)
 		{
-			endCost[j] = endNearBank ? bankTiles(stops.get(j)) * SECONDS_PER_TILE : 0;
+			endCost[j] = config.isEndNearBank() ? bankTiles(stops.get(j)) * SECONDS_PER_TILE : 0;
 		}
 		// Already standing at a stop: start there, with nothing to travel or bring for it
 		final int standingAt = here == null ? -1 : stops.indexOf(here);
@@ -247,7 +233,7 @@ public final class RoutePlanner
 			}
 			walkFirst = j;
 		}
-		final int chosenStart = fromStartLocation ? stops.indexOf(config.getStartLocation()) : -1;
+		final int chosenStart = stops.indexOf(config.getStartLocation());
 		final int start = standingAt >= 0 ? standingAt : chosenStart >= 0 ? chosenStart : walkFirst;
 
 		final int[] order;

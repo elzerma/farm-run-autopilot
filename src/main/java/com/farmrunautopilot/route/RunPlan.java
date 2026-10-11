@@ -20,15 +20,28 @@ public class RunPlan
 
 	RunSelection selection;
 	Route route;
-	/** What to bring at the start: with a bank stop, only what's needed before it. */
+	/** What to bring at the start: with bank stops, only what's needed before the first. */
 	SupplyPlan supplies;
 	/** What to do at each stop, one line per patch, e.g. "Herb: harvest guam and plant ranarr". */
 	Map<Location, List<String>> objectives;
-	/** A bank visit partway, when one inventory can't hold everything; null if not needed. */
-	BankStop bankStop;
+	/** Bank visits partway, in route order, when one inventory can't hold everything; empty if not needed. */
+	List<BankStop> bankStops;
 
 	public RunPlan(RunSelection selection, Route route, SupplyPlan supplies, Map<Location, List<String>> objectives)
 	{
-		this(selection, route, supplies, objectives, null);
+		this(selection, route, supplies, objectives, Collections.emptyList());
+	}
+
+	/** The bank visit right after this stop, or null. */
+	public BankStop bankAfter(int stopIndex)
+	{
+		for (BankStop bank : bankStops)
+		{
+			if (bank.getAfterStop() == stopIndex)
+			{
+				return bank;
+			}
+		}
+		return null;
 	}
 }

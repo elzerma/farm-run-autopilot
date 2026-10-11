@@ -168,24 +168,76 @@ public class ScenarioTest
 			new RunConfig().sanitise(), SeanAccount.access(), SeanAccount.holdings(), new PohSetup(), LearnedTimes.NONE));
 	}
 
-	// Banking partway (needs the new bank search)
+	// Banking partway
+
+	/**
+	 * Sean's full run from near Falador Park with bank visits placed, using a simple slot count (5 tools, one
+	 * travel item per stop, two per patch: seed or sapling, and payment or compost), so it needs banking.
+	 */
+	private static BankPlanner.Result bankedFullRun()
+	{
+		final RunConfig config = new RunConfig().sanitise();
+		final Route route = RoutePlanner.plan(SeanAccount.patches(ALL), config, SeanAccount.access(),
+			SeanAccount.holdings(), new PohSetup(), LearnedTimes.NONE, null, Location.FALADOR_PARK, 57);
+		final List<RouteStop> stops = route.getStops();
+		final BankPlanner.Slots slots = (a, b) ->
+		{
+			int used = 5;
+			for (RouteStop stop : stops.subList(a, b))
+			{
+				used += 1 + 2 * (int) SeanAccount.patches(ALL).stream()
+					.filter(p -> p.getLocation() == stop.getLocation()).count();
+			}
+			return used;
+		};
+		return BankPlanner.place(route, slots, 28,
+			com.farmrunautopilot.data.travel.BankTeleport.best(SeanAccount.access(), SeanAccount.holdings()),
+			(from, to) -> RoutePlanner.chainSaving(from, to, config, SeanAccount.access(), SeanAccount.holdings(),
+				new PohSetup(), LearnedTimes.NONE),
+			to -> RoutePlanner.fromAnywhere(to, config, SeanAccount.access(), SeanAccount.holdings(), new PohSetup(),
+				LearnedTimes.NONE));
+	}
+
+	private static String describe(BankPlanner.Result result)
+	{
+		final StringBuilder b = new StringBuilder(describe(result.getRoute().getStops()));
+		for (BankPlanner.Visit v : result.getVisits())
+		{
+			b.append("bank after ").append(v.getAfterStop() + 1).append(": ")
+				.append(v.getTeleport() != null ? v.getTeleport().name() : "near " + v.getLocation()).append('\n');
+		}
+		return b.toString();
+	}
 
 	@Test
-	@Ignore("Sprint 2: bank visits placed by the route search")
 	public void neverBanksAtPortPhasmatys()
 	{
+		final BankPlanner.Result result = bankedFullRun();
+		for (BankPlanner.Visit v : result.getVisits())
+		{
+			assertTrue(describe(result), v.getTeleport() != null || v.getLocation() != Location.PORT_PHASMATYS);
+		}
 	}
 
 	@Test
-	@Ignore("Sprint 2: bank visits placed by the route search")
 	public void bigRunBanksAtABankAlongTheWayOrByABankTeleport()
 	{
+		final BankPlanner.Result result = bankedFullRun();
+		assertTrue(describe(result), !result.getVisits().isEmpty());
+		for (BankPlanner.Visit v : result.getVisits())
+		{
+			assertTrue(describe(result), v.getTeleport() != null
+				|| com.farmrunautopilot.data.travel.TravelTimes.bankTiles(v.getLocation()) != null);
+		}
 	}
 
 	@Test
-	@Ignore("Sprint 2: bank visits placed by the route search")
 	public void bankBreakKeepsTheStrongholdChainAndTheStart()
 	{
+		final BankPlanner.Result result = bankedFullRun();
+		final List<RouteStop> stops = result.getRoute().getStops();
+		assertEquals(describe(result), Location.FALADOR_PARK, stops.get(0).getLocation());
+		assertStrongholdChain(stops);
 	}
 
 	@Test
