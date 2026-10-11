@@ -126,6 +126,15 @@ public class RouteChainTest
 	}
 
 	@Test
+	public void treeGnomeVillageChainsFromTheStronghold()
+	{
+		// The CIQ fairy ring walk is long; the Stronghold's spirit tree is the way in
+		assertEquals(true, RoutePlanner.chainsFrom(Location.GNOME_STRONGHOLD, Location.TREE_GNOME_VILLAGE,
+			new RunConfig().sanitise(), access(), holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF), new PohSetup(),
+			LearnedTimes.NONE));
+	}
+
+	@Test
 	public void bigRunsKeepTheStrongholdChain()
 	{
 		// Above the exact-search limit the fast search must still find the chain

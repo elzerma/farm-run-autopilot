@@ -150,6 +150,17 @@ public final class RoutePlanner
 		return new RouteStop(to, leg.method, leg.departure, leg.seconds, leg.needsSupplies);
 	}
 
+	/**
+	 * Whether a stop is quicker to reach onward from another stop (a spirit tree, a walk) than from anywhere,
+	 * e.g. Tree Gnome Village from the Gnome Stronghold.
+	 */
+	static boolean chainsFrom(Location from, Location to, RunConfig config, AccessSnapshot access,
+		Holdings holdings, PohSetup poh, LearnedTimes learned)
+	{
+		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, learned);
+		return planner.bestLeg(from, to).cost < planner.bestLeg(null, to).cost;
+	}
+
 	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
 		PohSetup poh)
 	{

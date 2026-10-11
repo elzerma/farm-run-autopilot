@@ -60,7 +60,8 @@ public final class TravelTimes
 		// Tree Gnome Village: out of the maze behind Elkoy, then a short walk
 		tiles(TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, 15);
 		extra(TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, 12);
-		tiles(TravelMethod.FAIRY_RING_CIQ, 60);
+		// CIQ is north-west of Yanille: the walk round to the village is long (Sean: "SO slow")
+		tiles(TravelMethod.FAIRY_RING_CIQ, 100);
 		// Catherby (nearest patch: the herb patch from Camelot)
 		tiles(TravelMethod.CAMELOT_TELEPORT, 56);
 		tiles(TravelMethod.CATHERBY_TELEPORT, 30);

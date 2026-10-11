@@ -217,16 +217,21 @@ public class RunService
 	}
 
 	/**
-	 * How to bank partway through a run too big for one inventory. With the fastest route, the run is planned
-	 * as two halves by patch type (e.g. trees and fruit trees, bank, herbs), so each half carries fewer kinds
-	 * of item, and the first half ends next to a bank; the quickest split where both halves fit wins. Otherwise
-	 * (or if none fits) the planned order is cut at the stop whose bank adds the least walking. Null if no
+	 * How to bank partway through a run too big for one inventory. The planned order is cut at the stop whose bank
+	 * adds the least walking, among cuts where both halves fit, so the route stays the quickest one with patch
+	 * types mixed (e.g. the Stronghold, its bank, then the spirit tree to Tree Gnome Village). Only if no cut
+	 * fits, with the fastest route, the run is planned as two halves by patch type (e.g. trees and fruit trees,
+	 * bank, herbs), so each half carries fewer kinds of item; the quickest of those that fit wins. Null if no
 	 * split fits: the plan then warns as before.
 	 */
 	private Split split(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
 		Route route)
 	{
-		Split best = null;
+		Split best = splitInOrder(config, access, holdings, selection, route);
+		if (best != null)
+		{
+			return best;
+		}
 		if (config.getRouteMode() == RouteMode.AUTOPILOT)
 		{
 			final PatchType[] types = PatchType.values();
@@ -248,7 +253,7 @@ public class RunService
 				}
 			}
 		}
-		return best != null ? best : splitInOrder(config, access, holdings, selection, route);
+		return best;
 	}
 
 	/**
@@ -279,16 +284,49 @@ public class RunService
 		return start != null && all.contains(start) && !firstAt.contains(start) ? null : firstAt;
 	}
 
-	/** First the stops with any of these patch types, then a bank, then the rest. */
+	/**
+	 * First the stops with any of these patch types, then a bank, then the rest. A first-half stop that the bank
+	 * stop chains to (e.g. the Stronghold bank, then its spirit tree to Tree Gnome Village) may move to just after
+	 * the bank, carried in the second inventory, when that's quicker and both still fit.
+	 */
 	private Split splitByType(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
 		Set<PatchType> firstTypes)
 	{
-		final Set<Location> firstAt = firstHalfStops(selection.getPatches(), firstTypes,
-			fixedStart(here, config.getStartLocation(), near));
+		final Location start = fixedStart(here, config.getStartLocation(), near);
+		final Set<Location> firstAt = firstHalfStops(selection.getPatches(), firstTypes, start);
 		if (firstAt == null)
 		{
 			return null;
 		}
+		Split best = splitAt(config, access, holdings, selection, firstAt);
+		if (best == null)
+		{
+			return null;
+		}
+		final Location bankAt = best.bankStop.getLocation();
+		final PohSetup poh = settings.getAccount().getPoh();
+		for (Location chained : firstAt)
+		{
+			if (chained == start || chained == bankAt
+				|| !RoutePlanner.chainsFrom(bankAt, chained, config, access, holdings, poh, timings.learned()))
+			{
+				continue;
+			}
+			final Set<Location> fewer = EnumSet.copyOf(firstAt);
+			fewer.remove(chained);
+			final Split moved = splitAt(config, access, holdings, selection, fewer);
+			if (moved != null && moved.seconds < best.seconds)
+			{
+				best = moved;
+			}
+		}
+		return best;
+	}
+
+	/** The stops in firstAt, then a bank, then the rest; null if either half doesn't fit one inventory. */
+	private Split splitAt(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
+		Set<Location> firstAt)
+	{
 		final List<Patch> first = new ArrayList<>();
 		final List<Patch> second = new ArrayList<>();
 		for (Patch patch : selection.getPatches())
