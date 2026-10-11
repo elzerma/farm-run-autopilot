@@ -294,3 +294,8 @@ times; patch details/debug; the help list and guided tests (see decisions).
    Graceful takes its slots first). The slot count already assumes this (Sprint 3). The guide then says what to
    put on before the run ("Wear your ring of wealth and Ardougne cloak") and at each bank what to swap ("Swap:
    wear your slayer ring"), with the item outlined (Sprints 4-5).
+   - The wear step is its own message under the character ("Wear: Graceful outfit, ring of wealth, Ardougne
+     cloak"), including the outfit chosen in Farm > Extras, so it's obvious without hovering anything.
+   - Items to wear get their own highlight colour and a "Wear" label, never the colour used for "use this to
+     teleport", so nobody mistakes an item to put on for the next teleport. Once it's worn the highlight goes.
+   - The Run tab's status line says the same, not only a tooltip. (Sean, 2026-10-11)
