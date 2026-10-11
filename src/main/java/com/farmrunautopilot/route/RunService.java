@@ -261,7 +261,9 @@ public class RunService
 		{
 			return null;
 		}
-		final Route route2 = RoutePlanner.planHalf(second, config, access, holdings, poh, timings.learned(), null,
+		final Route route2 = RoutePlanner.planHalf(second, config, access, holdings, poh, timings.learned(),
+			// Onward from the bank stop, so e.g. the Stronghold bank then its spirit tree to Tree Gnome Village counts
+			route1.getStops().get(route1.getStops().size() - 1).getLocation(),
 			false);
 		final SupplyPlan after = supplies(config, access, holdings, selection, second, route2);
 		if (after.getSlots() > SupplyCalculator.INVENTORY_SLOTS)

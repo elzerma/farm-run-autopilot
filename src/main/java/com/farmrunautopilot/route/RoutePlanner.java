@@ -165,14 +165,16 @@ public final class RoutePlanner
 			return new Route(new ArrayList<>(), config.getRouteMode(), 0, 0);
 		}
 		return new RoutePlanner(config, access, holdings, poh, learned).plan(stops, patches.size(), here,
-			config.isEndNearBank(), true);
+			config.isEndNearBank(), true, null);
 	}
 
 	/**
 	 * One half of a run with a bank stop between the halves.
 	 *
+	 * @param here first half: the stop the player stands at, or null; second half: the bank stop it starts from
 	 * @param first the first half: starts at the start location and ends next to a bank; the second half
-	 *              starts wherever is quickest and ends as the settings say
+	 *              starts from the bank stop (so a nearby spirit tree or walk still counts) and ends as the
+	 *              settings say
 	 */
 	static Route planHalf(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
 		PohSetup poh, LearnedTimes learned, Location here, boolean first)
@@ -194,18 +196,19 @@ public final class RoutePlanner
 			return new Route(new ArrayList<>(), config.getRouteMode(), 0, 0);
 		}
 		return new RoutePlanner(config, access, holdings, poh, learned).plan(stops, patches.size(),
-			first ? here : null, first || config.isEndNearBank(), first);
+			first ? here : null, first || config.isEndNearBank(), first, first ? null : here);
 	}
 
 	private Route plan(List<Location> stops, int patchCount, Location here, boolean endNearBank,
-		boolean fromStartLocation)
+		boolean fromStartLocation, Location departFrom)
 	{
 		final int n = stops.size();
 		final Leg[] firstLeg = new Leg[n];
 		final Leg[][] legs = new Leg[n][n];
 		for (int j = 0; j < n; j++)
 		{
-			firstLeg[j] = bestLeg(null, stops.get(j));
+			// From anywhere, or onward from where the run already is (a bank stop) so nearby chains still count
+			firstLeg[j] = bestLeg(departFrom, stops.get(j));
 			for (int i = 0; i < n; i++)
 			{
 				if (i != j)
