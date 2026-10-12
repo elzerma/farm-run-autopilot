@@ -378,7 +378,7 @@ public final class SupplyCalculator
 		{
 			warnings.add("Needs about " + slots + " inventory slots, more than " + INVENTORY_SLOTS + ".");
 		}
-		// Filling up mid-run is said at the patch when it happens ("Only N free slots: note produce..."), not here
+		// Filling up mid-run is said at the patch when it happens ("Inventory full: note produce..."), not here
 
 		lines.sort((a, b) -> a.getGroup().compareTo(b.getGroup()));
 		return new SupplyPlan(Collections.unmodifiableList(lines), patchCounts, notDue, travelPlan, warnings, coins,

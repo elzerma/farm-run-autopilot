@@ -427,8 +427,8 @@ class PatchGuide
 	}
 
 	/**
-	 * Not enough free inventory space for what's about to be picked here (SPEC 11.5). Herbs and fruit can be
-	 * noted by the tool leprechaun at every patch.
+	 * The inventory is full and something is about to be picked here. Only when full, not when it merely might
+	 * not fit (Sean): herbs and fruit can be noted by the tool leprechaun at every patch.
 	 */
 	String spaceReminder()
 	{
@@ -441,12 +441,7 @@ class PatchGuide
 		{
 			return null;
 		}
-		final int free = freeInventorySlots();
-		if (free >= expected)
-		{
-			return null;
-		}
-		return "Only " + free + " free slot" + (free == 1 ? "" : "s") + ": note produce on the tool leprechaun";
+		return freeInventorySlots() > 0 ? null : "Inventory full: note produce on the tool leprechaun";
 	}
 
 	/** Inventory slots the next harvest here will take (herbs and fruit), 0 if none. */
