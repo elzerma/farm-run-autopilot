@@ -274,7 +274,7 @@ class AccountPage extends SetupPanel
 	private JComponent detectedSection()
 	{
 		final CollapsibleSection s = section("Detected");
-		s.addContent(note("Worked out from your account and what you hold. Hover a line to see how."));
+		s.help("Worked out from your account and what you hold. Hover a line to see how.");
 		s.addContent(detected);
 		refreshDetected();
 		return s;
@@ -285,20 +285,20 @@ class AccountPage extends SetupPanel
 		final PohSetup poh = account.getPoh();
 		final CollapsibleSection s = section("My house");
 		s.addContent(checkBox("Detect furniture when I enter my house (beta)", account.isAutoDetectHouse(), true,
-			"Fills in the jewellery box, pool, altar, fairy ring and spirit tree below from your house",
+			"Fills in the jewellery box, pool, altar, fairy ring and spirit tree below from your house. Beta: it skips "
+				+ "other players' houses by how you got in, which can't be fully checked yet; if it gets your house wrong, "
+				+ "please report it.",
 			on -> saveAccount(() -> account.setAutoDetectHouse(on), false)));
 		if (account.isAutoDetectHouse())
 		{
-			s.addContent(note("Beta: it skips other players' houses by how you got in, which can't be fully checked "
-				+ "yet. If it gets your house wrong, please report it."));
 			final JButton report = smallButton("Report a problem");
 			report.setToolTipText("Opens the plugin's GitHub issues page");
 			report.addActionListener(e -> LinkBrowser.browse(HelpWanted.ISSUES_URL));
 			s.addContent(report);
 			s.addContent(note(poh.getLastDetected() > 0
-				? "Furniture last detected " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
-				.format(new Date(poh.getLastDetected() * 1000)) + ". Edit anything below."
-				: "Enter your house (or leave and come back in) to detect its furniture."));
+				? "Last scanned " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+				.format(new Date(poh.getLastDetected() * 1000))
+				: "Enter your house to scan it"));
 			final JButton rescan = smallButton("Rescan house");
 			rescan.setToolTipText("<html>Detection only adds furniture. If you removed or downgraded something, "
 				+ "rescan:<br>this clears the detected furniture and your next house visit fills it in again.<br>"
@@ -311,7 +311,7 @@ class AccountPage extends SetupPanel
 			});
 			s.addContent(rescan);
 		}
-		s.addContent(note("Set the portal location and nexus destinations by hand."));
+		s.help("Set the portal location and nexus destinations by hand.");
 
 		final List<Choice<HousePortal>> portals = new ArrayList<>();
 		portals.add(Choice.of(null, "Unknown / no house"));
@@ -382,9 +382,9 @@ class AccountPage extends SetupPanel
 		final int ticked = account.getManualUnlocks().size();
 		final CollapsibleSection s = section(UNLOCKS, !review.isEmpty() ? review.size() + " to check"
 			: ticked == 0 ? null : ticked + " ticked");
-		s.addContent(note("Ticked for you where the game shows it, or once you pass a planted spirit tree or the Weiss "
+		s.help("Ticked for you where the game shows it, or once you pass a planted spirit tree or the Weiss "
 			+ "fire. Tick the rest that you have; the plugin can't "
-			+ "see them until you do."));
+			+ "see them until you do.");
 		for (Unlock unlock : Unlock.values())
 		{
 			if (AccessChecker.isDetected(unlock))
@@ -506,7 +506,7 @@ class AccountPage extends SetupPanel
 	private JComponent storageSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("Storage sources");
-		s.addContent(note("Bank, inventory, equipment and the tool leprechaun are always counted."));
+		s.help("Bank, inventory, equipment and the tool leprechaun are always counted.");
 		s.addContent(checkBox("Group storage (GIM)", config.isUseGroupStorage(), true, null,
 			on -> saveRun(() -> config.setUseGroupStorage(on))));
 		s.addContent(checkBox("Seed vault", config.isUseSeedVault(), true, null,

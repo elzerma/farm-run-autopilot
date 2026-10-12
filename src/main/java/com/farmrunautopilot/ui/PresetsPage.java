@@ -34,8 +34,8 @@ class PresetsPage extends SetupPanel
 	private JComponent presetsSection()
 	{
 		final CollapsibleSection s = section("Manage presets");
-		s.addContent(note("Save these settings under a name (e.g. \"Quick herbs\") and switch between them at the "
-			+ "top of the Run tab. Presets cover the Farm and Travel tabs; your house and unlocks are shared."));
+		s.help("Save these settings under a name (e.g. \"Quick herbs\") and switch between them at the "
+			+ "top of the Run tab. Presets cover the Farm and Travel tabs; your house and unlocks are shared.");
 		final JButton save = smallButton("Save current settings as...");
 		save.addActionListener(e ->
 		{

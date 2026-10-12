@@ -53,8 +53,8 @@ class FarmPage extends SetupPanel
 			}
 		}
 		final CollapsibleSection s = section("Patches", ticked + " of " + usable + " ticked");
-		s.addContent(note("Untick patches you don't want in your runs; locked ones show what they need. Choose trees, "
-			+ "fruit trees and herbs at the top of the Run tab: each joins a run once its patches are due."));
+		s.help("Untick patches you don't want in your runs; locked ones show what they need. Choose trees, "
+			+ "fruit trees and herbs at the top of the Run tab: each joins a run once its patches are due.");
 		for (PatchType type : PatchType.values())
 		{
 			s.addContent(subheader(type.getDisplayName() + " patches"));
@@ -147,8 +147,8 @@ class FarmPage extends SetupPanel
 		{
 			return s;
 		}
-		s.addContent(note("Troll Stronghold, Weiss and Harmony Island, plus Hosidius and Civitas once their "
-			+ "unlock is done. They get these herbs first, most valuable first (by GE price); other patches never do."));
+		s.help("Troll Stronghold, Weiss and Harmony Island, plus Hosidius and Civitas once their "
+			+ "unlock is done. They get these herbs first, most valuable first (by GE price); other patches never do.");
 		for (Crop crop : Crop.values())
 		{
 			if (crop.getType() != PatchType.HERB)
@@ -240,7 +240,7 @@ class FarmPage extends SetupPanel
 					}
 				})));
 		}
-		s.addContent(note("Single patches can differ: Advanced > Per-patch protection."));
+		s.help("Single patches can differ: Advanced > Per-patch protection.");
 		return s;
 	}
 
@@ -270,8 +270,8 @@ class FarmPage extends SetupPanel
 			spinner(config.getDueThresholdPercent(), 1, 100, 5,
 				v -> saveRunQuietly(() -> config.setDueThresholdPercent(v)))));
 		s.addContent(subheader("Per-patch protection"));
-		s.addContent(note("Use a different protection for single patches. Anything but Default overrides the "
-			+ "setting for its patch type in Protection."));
+		s.help("Use a different protection for single patches. Anything but Default overrides the "
+			+ "setting for its patch type in Protection.");
 		for (Patch patch : Patch.values())
 		{
 			if (!patch.getType().isProtectable())

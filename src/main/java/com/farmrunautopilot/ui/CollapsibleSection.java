@@ -23,6 +23,8 @@ class CollapsibleSection extends JPanel
 	/** What's set inside, shown after the title so a closed section still says it, e.g. "18 of 24"; or null. */
 	private final String summary;
 	private boolean expanded;
+	/** What the section is for, shown on hovering its title (Sprint 7: explanations out of the way); or null. */
+	private String help;
 
 	/**
 	 * @param onToggle told the new expanded state, so it can be remembered across rebuilds
@@ -65,6 +67,15 @@ class CollapsibleSection extends JPanel
 		setExpanded(expanded);
 	}
 
+	/** Explain the section on hovering its title, marked with a faint "(?)", instead of a note inside it. */
+	CollapsibleSection help(String text)
+	{
+		help = text;
+		header.setToolTipText(UiText.wrap(text, 250));
+		setExpanded(expanded);
+		return this;
+	}
+
 	void addContent(JComponent component)
 	{
 		component.setAlignmentX(LEFT_ALIGNMENT);
@@ -74,7 +85,8 @@ class CollapsibleSection extends JPanel
 	private void setExpanded(boolean expanded)
 	{
 		this.expanded = expanded;
-		final String text = (expanded ? "- " : "+ ") + UiText.escape(title);
+		final String text = (expanded ? "- " : "+ ") + UiText.escape(title)
+			+ (help != null ? " <font color='#6f6f6f'>(?)</font>" : "");
 		header.setText(summary == null ? "<html>" + text + "</html>"
 			: "<html>" + text + " <font color='#9a9a9a'>" + UiText.escape(summary) + "</font></html>");
 		content.setVisible(expanded);

@@ -9,6 +9,7 @@ import com.farmrunautopilot.supply.Holdings;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -120,12 +121,21 @@ abstract class SetupPanel extends JPanel
 	{
 		final JButton button = new JButton(text);
 		button.setFont(FontManager.getRunescapeSmallFont());
+		// Narrow padding, so three to a row still fit "Rename" and "Delete" (Sean: they showed "Ren..." "Del...")
+		button.setMargin(new Insets(2, 2, 2, 2));
 		button.setFocusPainted(false);
 		button.setAlignmentX(LEFT_ALIGNMENT);
 		return button;
 	}
 
 	// Building blocks
+
+	/** The same component with an explanation on hover (Sprint 7: explanations out of the way). */
+	static <C extends JComponent> C tip(C component, String text)
+	{
+		component.setToolTipText(UiText.wrap(text, 250));
+		return component;
+	}
 
 	/** Sections remember being open or closed between sessions. */
 	CollapsibleSection section(String title)

@@ -407,15 +407,16 @@ class RunPanel extends JPanel
 		if (!supplies.getLines().isEmpty())
 		{
 			final Route route = plan.getRoute();
+			// Two lines: time, and slots for each part (Sprint 7: less to read)
 			add(heading("Totals"));
-			add(note("Time: about " + PatchStatusText.duration((long) route.getTravelSeconds()) + " travelling, "
-				+ PatchStatusText.duration((long) (route.getTravelSeconds() + route.getPatchSeconds())) + " in all"));
-			add(note("Starting inventory: about " + supplies.getSlots() + " / 28 slots"));
+			add(note("About " + PatchStatusText.duration((long) (route.getTravelSeconds() + route.getPatchSeconds()))
+				+ " (" + PatchStatusText.duration((long) route.getTravelSeconds()) + " travelling)"));
+			final StringBuilder slots = new StringBuilder("Slots: " + supplies.getSlots() + " / 28");
 			for (BankStop bank : plan.getBankStops())
 			{
-				add(note("After the bank at stop " + (bank.getAfterStop() + 1) + ": about " + bank.getSupplies().getSlots()
-					+ " / 28 slots"));
+				slots.append(", then ").append(bank.getSupplies().getSlots()).append(" / 28");
 			}
+			add(tipped(note(slots.toString()), "Inventory slots needed at the start, and after each bank stop"));
 		}
 	}
 
@@ -547,8 +548,9 @@ class RunPanel extends JPanel
 		{
 			// The next step, as under the player: open a bank, open the Farm run tab, take what it marks
 			final String step = controls.view().getInstruction();
-			final JLabel ready = note((step != null ? step + ". " : "") + "The run starts itself once you have "
-				+ "everything; the timer starts when you teleport or click your first patch.");
+			final JLabel ready = tipped(note(step != null ? step : "Get what the Farm run bank tab shows"),
+				"The run starts itself once you have everything; the timer starts when you teleport or click your "
+					+ "first patch.");
 			ready.setForeground(IN_STORAGE);
 			add(ready);
 		}
@@ -872,7 +874,9 @@ class RunPanel extends JPanel
 		{
 			return;
 		}
-		add(heading("Route (" + modeName(route.getMode()) + ")"));
+		add(tipped(heading("Route (" + modeName(route.getMode()) + ")"), route.getMode() == RouteMode.OFF
+			? "Your own order. Drag stops to change it; switch back in Travel > Route."
+			: "Drag a stop to reorder it (switches to your own order). Hover a stop for its plan."));
 
 		final DefaultListModel<RouteStop> model = new DefaultListModel<>();
 		for (RouteStop stop : route.getStops())
@@ -888,9 +892,6 @@ class RunPanel extends JPanel
 		list.setTransferHandler(new ReorderHandler(list, model));
 		add(left(list));
 
-		add(note(route.getMode() == RouteMode.OFF
-			? "Your own order. Drag stops to change it; switch back in Travel > Route."
-			: "Drag a stop to reorder (switches to your own order)."));
 	}
 
 	/** A leg's time: "25 s" (to the nearest 5) under two minutes, otherwise "2m 10s". */
@@ -1057,6 +1058,13 @@ class RunPanel extends JPanel
 		label.setForeground(ColorScheme.BRAND_ORANGE);
 		label.setBorder(new EmptyBorder(10, 0, 4, 0));
 		return left(label);
+	}
+
+	/** The same label with an explanation on hover. */
+	private static JLabel tipped(JLabel label, String text)
+	{
+		label.setToolTipText(UiText.wrap(text, 250));
+		return label;
 	}
 
 	private static JLabel note(String text)

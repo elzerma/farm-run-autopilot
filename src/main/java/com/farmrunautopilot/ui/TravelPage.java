@@ -122,10 +122,11 @@ class TravelPage extends SetupPanel
 			ways.add(new Choice<>(way, way.getDisplayName() + (locked ? " (locked)" : ""), !locked,
 				locked ? AccessSnapshot.describe(missing) : needs));
 		}
-		s.addContent(label("Way to a fairy ring"));
-		s.addContent(combo(ways, config.getFairyRingWay(), w -> saveRun(() -> config.setFairyRingWay(w))));
-		s.addContent(note("The ring by the stop you just finished is used whenever it's quicker, and your house "
-			+ "ring is set in Account > My house."));
+		final String ringHelp = "How you get to a fairy ring when the stop before has none. The ring by the stop you "
+			+ "just finished is used whenever it's quicker, and your house ring is set in Account > My house.";
+		s.addContent(tip(label("Way to a fairy ring"), ringHelp));
+		s.addContent(tip(combo(ways, config.getFairyRingWay(), w -> saveRun(() -> config.setFairyRingWay(w))),
+			ringHelp));
 		return s;
 	}
 
@@ -164,9 +165,9 @@ class TravelPage extends SetupPanel
 		shownPicks = picks;
 
 		final CollapsibleSection s = section("Locations", overrides(overridden));
-		s.addContent(note("Auto (best) shows what it picked for each stop, by the style above. Click a stop to "
+		s.help("Auto (best) shows what it picked for each stop, by the style above. Click a stop to "
 			+ "choose a teleport and "
-			+ "how to use it instead; that overrides Auto for that stop. Tablets are used before runes."));
+			+ "how to use it instead; that overrides Auto for that stop. Tablets are used before runes.");
 		s.addContent(checkBox("Show every location", showAll, true,
 			"Off: only stops your runs can include, plus any you've changed",
 			on ->
@@ -355,19 +356,22 @@ class TravelPage extends SetupPanel
 	private JComponent routeSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("Route");
-		s.addContent(label("Order"));
-		s.addContent(combo(enumChoices(RouteMode.values()), config.getRouteMode(),
-			m -> saveRun(() -> config.setRouteMode(m))));
-		s.addContent(note("Off keeps your own order: drag the stops in the route list on the Run tab."));
+		final String orderHelp = "Autopilot finds the quickest order; Meta follows the wiki's order; Off keeps your "
+			+ "own: drag the stops in the route list on the Run tab.";
+		s.addContent(tip(label("Order"), orderHelp));
+		s.addContent(tip(combo(enumChoices(RouteMode.values()), config.getRouteMode(),
+			m -> saveRun(() -> config.setRouteMode(m))), orderHelp));
 		final List<Choice<Location>> starts = new ArrayList<>();
 		starts.add(Choice.of(null, "Anywhere (quickest)"));
 		for (Location location : Location.values())
 		{
 			starts.add(Choice.of(location, location.getDisplayName()));
 		}
-		s.addContent(label("Start at"));
-		s.addContent(combo(starts, config.getStartLocation(), l -> saveRun(() -> config.setStartLocation(l))));
-		s.addContent(note("If you're standing at one of the run's stops, the run starts there either way."));
+		final String startHelp = "Where the run starts. Anywhere lets the plugin choose; if you're standing at or near "
+			+ "one of the run's stops, the run starts there either way.";
+		s.addContent(tip(label("Start at"), startHelp));
+		s.addContent(tip(combo(starts, config.getStartLocation(), l -> saveRun(() -> config.setStartLocation(l))),
+			startHelp));
 		s.addContent(checkBox("Finish near a bank", config.isEndNearBank(), true, null,
 			on -> saveRun(() -> config.setEndNearBank(on))));
 		return s;
