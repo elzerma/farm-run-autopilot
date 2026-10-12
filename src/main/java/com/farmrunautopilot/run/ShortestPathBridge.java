@@ -27,12 +27,16 @@ public class ShortestPathBridge
 	static
 	{
 		final Map<String, Object> config = new HashMap<>();
-		config.put("useTeleportationItems", "NONE");
+		// Matched exactly against its TeleportationItem type names ("None", not "NONE"). Anything else is ignored
+		// and the player's own setting is used, which sent Sean to a bank for a teleport item (2026-10-11). Key
+		// names checked against Shortest Path's ShortestPathConfig and override() on 2026-10-11.
+		config.put("useTeleportationItems", "None");
 		for (String key : new String[]{"useTeleportationSpells", "useTeleportationSpellsHome", "useFairyRings",
 			"useSpiritTrees", "useGnomeGliders", "useQuetzals", "useBoats", "useCanoes", "useCharterShips", "useShips",
 			"useHotAirBalloons", "useMagicCarpets", "useMagicMushtrees", "useMinecarts", "useSeasonalTransports",
 			"useTeleportationLevers", "useTeleportationMinigames", "useTeleportationPortals", "useWildernessObelisks",
-			"usePoh", "includeBankPath", "showBankPickupInfo", "highlightBankPickupItems", "highlightInventoryItems",
+			"usePoh", "usePohFairyRing", "usePohSpiritTree", "usePohObelisk", "useTeleportationPortalsPoh",
+			"includeBankPath", "showBankPickupInfo", "highlightBankPickupItems", "highlightInventoryItems",
 			"highlightSpellbookSpells"})
 		{
 			config.put(key, false);
