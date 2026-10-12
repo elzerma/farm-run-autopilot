@@ -2,6 +2,7 @@ package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.FarmRunAutopilotConfig;
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -24,6 +25,7 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 	/** Items to put on: a colour no other highlight uses. */
 	static final Color WEAR_COLOUR = new Color(0x40, 0xC8, 0xFF);
 	private static final String WEAR_LABEL = "Wear";
+	private static final Color LABEL_BACKGROUND = new Color(0, 0, 0, 170);
 
 	private final RunSession session;
 	private final FarmRunAutopilotConfig config;
@@ -71,12 +73,33 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 		graphics.drawImage(outline, (int) bounds.getX(), (int) bounds.getY(), null);
 		if (wear)
 		{
-			graphics.setFont(FontManager.getRunescapeSmallFont());
-			graphics.setColor(Color.BLACK);
-			graphics.drawString(WEAR_LABEL, (int) bounds.getX() + 1, (int) bounds.getMaxY());
-			graphics.setColor(WEAR_COLOUR);
-			graphics.drawString(WEAR_LABEL, (int) bounds.getX(), (int) bounds.getMaxY() - 1);
+			drawLabel(graphics, bounds);
 		}
+	}
+
+	/** "Wear" on a dark strip along the bottom of the slot, outlined all round, so it reads on pale items too. */
+	private static void drawLabel(Graphics2D graphics, Rectangle bounds)
+	{
+		graphics.setFont(FontManager.getRunescapeSmallFont());
+		final FontMetrics metrics = graphics.getFontMetrics();
+		final int width = metrics.stringWidth(WEAR_LABEL);
+		final int x = (int) bounds.getCenterX() - width / 2;
+		final int y = (int) bounds.getMaxY() - 1;
+		graphics.setColor(LABEL_BACKGROUND);
+		graphics.fillRect(x - 2, y - metrics.getAscent(), width + 4, metrics.getAscent() + 2);
+		graphics.setColor(Color.BLACK);
+		for (int dx = -1; dx <= 1; dx++)
+		{
+			for (int dy = -1; dy <= 1; dy++)
+			{
+				if (dx != 0 || dy != 0)
+				{
+					graphics.drawString(WEAR_LABEL, x + dx, y + dy);
+				}
+			}
+		}
+		graphics.setColor(WEAR_COLOUR);
+		graphics.drawString(WEAR_LABEL, x, y);
 	}
 
 	/** Forget cached outlines (colour changed, plugin stopped). */
