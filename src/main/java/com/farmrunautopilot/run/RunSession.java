@@ -322,7 +322,10 @@ public class RunSession
 		return "Best for " + RunTimings.makeupName(counts) + ": " + String.join(", ", clocks);
 	}
 
-	/** Skip whatever the next step is (arriving, or the current patch). */
+	/**
+	 * "Mark done": the guide missed that the next step is done (arriving, a journey step, the current patch, the
+	 * bank visit), so move past it.
+	 */
 	public void skip()
 	{
 		if (stage != RunView.State.RUNNING)
@@ -330,7 +333,7 @@ public class RunSession
 			return;
 		}
 		final Patch current = patches.getCurrentPatch();
-		log.debug("Skip step: {}", banking ? "the bank visit" : !navigator.isArrived() ? "arriving"
+		log.debug("Mark done: {}", banking ? "the bank visit" : !navigator.isArrived() ? "arriving"
 			: current != null ? current.name() : "the seed vault");
 		if (banking)
 		{

@@ -593,7 +593,7 @@ class RunPanel extends JPanel
 		}
 		else
 		{
-			buttons.add(smallButton("Skip step", controls::skip));
+			buttons.add(smallButton("Mark done", controls::skip));
 			buttons.add(smallButton("Skip stop", controls::skipStop));
 			buttons.add(smallButton("Stop", controls::stop));
 		}
