@@ -378,84 +378,11 @@ public final class SupplyCalculator
 		{
 			warnings.add("Needs about " + slots + " inventory slots, more than " + INVENTORY_SLOTS + ".");
 		}
-		else
-		{
-			final Location full = fillsUpAt(route, patches, predictions, plantings, slots, config);
-			if (full != null)
-			{
-				warnings.add("Inventory may fill up at " + full.getDisplayName()
-					+ ": note herbs and fruit on the tool leprechaun as you go.");
-			}
-		}
+		// Filling up mid-run is said at the patch when it happens ("Only N free slots: note produce..."), not here
 
 		lines.sort((a, b) -> a.getGroup().compareTo(b.getGroup()));
 		return new SupplyPlan(Collections.unmodifiableList(lines), patchCounts, notDue, travelPlan, warnings, coins,
 			runes.summary, slots, Collections.unmodifiableMap(plantings));
-	}
-
-	/**
-	 * Walks the route with the starting inventory (SPEC 11.5): picked herbs and fruit are added, planted saplings
-	 * (empty pots dropped) and unnoted payments are used up.
-	 *
-	 * @return the first stop where the harvest won't fit, or null if it always does
-	 */
-	static Location fillsUpAt(Route route, List<Patch> patches, Function<Patch, PatchPrediction> predictions,
-		Map<Patch, Crop> plantings, int startSlots, RunConfig config)
-	{
-		int used = startSlots;
-		for (RouteStop stop : route.getStops())
-		{
-			for (Patch patch : patches)
-			{
-				if (patch.getLocation() != stop.getLocation())
-				{
-					continue;
-				}
-				final int harvest = expectedHarvest(patch, predictions.apply(patch));
-				if (used + harvest > INVENTORY_SLOTS)
-				{
-					return stop.getLocation();
-				}
-				used += harvest;
-				final Crop crop = plantings.get(patch);
-				if (crop != null && patch.getType().isProtectable())
-				{
-					used--;
-					if (!config.isPayWithNotes() && crop.hasPayment()
-						&& config.protectionFor(patch) == Protection.PAY_GARDENER)
-					{
-						used -= crop.getPaymentQuantity();
-					}
-				}
-			}
-		}
-		return null;
-	}
-
-	/** Slots the herbs or fruit picked at this patch will take. */
-	private static int expectedHarvest(Patch patch, PatchPrediction prediction)
-	{
-		if (prediction == null)
-		{
-			return 0;
-		}
-		if (patch.getType() == PatchType.HERB)
-		{
-			return prediction.getState() == PatchState.HARVESTABLE ? HERBS_PER_PATCH : 0;
-		}
-		if (patch.getType() == PatchType.FRUIT_TREE)
-		{
-			switch (prediction.getState())
-			{
-				case CHECK_HEALTH:
-					return FRUIT_PER_TREE;
-				case HARVESTABLE:
-					return prediction.getStage();
-				default:
-					return 0;
-			}
-		}
-		return 0;
 	}
 
 	/**
