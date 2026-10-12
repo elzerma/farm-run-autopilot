@@ -894,6 +894,8 @@ class RunPanel extends JPanel
 		list.setDragEnabled(true);
 		list.setDropMode(DropMode.INSERT);
 		list.setTransferHandler(new ReorderHandler(list, model));
+		// A JList is only as wide as its longest row unless told otherwise: stretch it to the panel (Sean: width wacky)
+		list.setMaximumSize(new Dimension(Integer.MAX_VALUE, list.getPreferredSize().height));
 		add(left(list));
 
 	}
