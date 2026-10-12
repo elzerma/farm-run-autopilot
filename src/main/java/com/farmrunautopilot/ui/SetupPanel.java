@@ -287,6 +287,12 @@ class SetupPanel extends JPanel
 					addDetected(item.getDisplayName(), charges + (charges == 1 ? " charge" : " charges"),
 						"Every piece you have, in your bank, inventory and worn, added together");
 				}
+				else if (ChargeBudget.chargesUnknown(item, held))
+				{
+					// Held, but the count isn't known (never checked, or just recharged): say so rather than hide it
+					addDetected(item.getDisplayName(), "Check it",
+						"Right-click it and choose Check once, so the plugin can read how many charges it has");
+				}
 			}
 			for (TravelMethod method : DailyLimits.usedTodayVarbits().keySet())
 			{
