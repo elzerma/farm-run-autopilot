@@ -43,7 +43,6 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
@@ -58,9 +57,7 @@ import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.Timer;
 import javax.swing.TransferHandler;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
@@ -288,11 +285,8 @@ class RunPanel extends JPanel
 		{
 			return;
 		}
-		final JPanel box = new JPanel();
+		final Card box = new Card(null).accent(ColorScheme.BRAND_ORANGE);
 		box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
-		box.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		box.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createMatteBorder(2, 2, 2, 2, ColorScheme.BRAND_ORANGE), new EmptyBorder(6, 6, 6, 6)));
 		box.setAlignmentX(LEFT_ALIGNMENT);
 
 		final JLabel title = testText("TEST: " + test.getTitle(), ColorScheme.BRAND_ORANGE);
@@ -554,9 +548,7 @@ class RunPanel extends JPanel
 
 	private static JComponent patchTimer(Patch patch, PatchPrediction prediction, long now)
 	{
-		final JPanel cell = new JPanel(new BorderLayout());
-		cell.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		cell.setBorder(new EmptyBorder(3, 6, 3, 6));
+		final Card cell = new Card(new BorderLayout());
 		final JLabel name = new JLabel(UiText.wrap(patch.getLocation().getDisplayName(), TEXT_WIDTH - 20));
 		name.setForeground(ColorScheme.TEXT_COLOR);
 		name.setFont(FontManager.getRunescapeSmallFont());
@@ -568,7 +560,7 @@ class RunPanel extends JPanel
 
 		final JPanel wrapper = new JPanel(new BorderLayout());
 		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		wrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
+		wrapper.setBorder(new EmptyBorder(0, 0, 4, 0));
 		wrapper.add(cell, BorderLayout.CENTER);
 		return left(wrapper);
 	}
@@ -667,11 +659,22 @@ class RunPanel extends JPanel
 	private static JCheckBox tickBox(boolean done, boolean enabled, java.util.function.Consumer<Boolean> onChange)
 	{
 		final JCheckBox box = new JCheckBox();
+		// Drawn to stand out (Sean: hard to see): green when the plugin saw it done (locked), orange when ticked by
+		// hand (can be unticked), an outline when it can be ticked, faint when it can't yet
+		box.setIcon(Card.tick(null, ColorScheme.LIGHT_GRAY_COLOR));
+		box.setSelectedIcon(Card.tick(ColorScheme.BRAND_ORANGE, null));
+		box.setRolloverIcon(Card.tick(null, Color.WHITE));
+		box.setRolloverSelectedIcon(Card.tick(ColorScheme.BRAND_ORANGE.brighter(), null));
+		box.setDisabledIcon(Card.tick(null, ColorScheme.MEDIUM_GRAY_COLOR));
+		box.setDisabledSelectedIcon(Card.tick(CARRIED, null));
 		box.setSelected(done);
 		box.setEnabled(enabled);
 		box.setOpaque(false);
 		box.setFocusPainted(false);
-		box.setBorder(new EmptyBorder(0, 0, 0, 4));
+		box.setBorder(new EmptyBorder(2, 0, 0, 6));
+		box.setBorderPainted(false);
+		// Level with the first line of text when it wraps
+		box.setVerticalAlignment(JCheckBox.TOP);
 		box.addActionListener(e -> onChange.accept(box.isSelected()));
 		box.setAlignmentY(Component.TOP_ALIGNMENT);
 		return box;
@@ -710,14 +713,12 @@ class RunPanel extends JPanel
 	 */
 	private JComponent runningStop(int number, int row, RunView.Stop stop)
 	{
-		final JPanel cell = new JPanel(new BorderLayout());
 		final boolean current = stop.getStatus() == RunView.StopStatus.CURRENT;
 		final boolean done = stop.getStatus() == RunView.StopStatus.DONE;
-		cell.setBackground(current ? ColorScheme.DARK_GRAY_HOVER_COLOR : ColorScheme.DARKER_GRAY_COLOR);
-		// The current stop is boxed in orange (Sean)
-		cell.setBorder(current
-			? new CompoundBorder(new LineBorder(ColorScheme.BRAND_ORANGE, 1), new EmptyBorder(3, 4, 3, 6))
-			: new EmptyBorder(3, 4, 3, 6));
+		// The current one stands out: a lighter card with an orange bar down its edge (Sean: boxed; facelift: a bar)
+		final Card cell = new Card(new BorderLayout())
+			.fill(current ? ColorScheme.DARK_GRAY_HOVER_COLOR : ColorScheme.DARKER_GRAY_COLOR)
+			.accent(current ? ColorScheme.BRAND_ORANGE : null);
 
 		final String name = UiText.escape(number > 0 ? number + ". " + stop.getLocation() : stop.getLocation());
 		final JLabel title = new JLabel(done ? "<html><s>" + name + "</s></html>" : "<html>" + name + "</html>");
@@ -758,7 +759,7 @@ class RunPanel extends JPanel
 
 		final JPanel wrapper = new JPanel(new BorderLayout());
 		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		wrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
+		wrapper.setBorder(new EmptyBorder(0, 0, 4, 0));
 		wrapper.add(cell, BorderLayout.CENTER);
 		wrapper.setToolTipText(objectivesTooltip(stop.getObjectives()));
 		wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, wrapper.getPreferredSize().height));
@@ -1011,12 +1012,11 @@ class RunPanel extends JPanel
 		public Component getListCellRendererComponent(JList<? extends Object> list, Object row, int index,
 			boolean isSelected, boolean cellHasFocus)
 		{
-			final JPanel cell = new JPanel(new BorderLayout());
-			cell.setBackground(isSelected ? ColorScheme.DARK_GRAY_HOVER_COLOR : ColorScheme.DARKER_GRAY_COLOR);
-			cell.setBorder(new EmptyBorder(3, 6, 3, 6));
+			final Card cell = new Card(new BorderLayout())
+				.fill(isSelected ? ColorScheme.DARK_GRAY_HOVER_COLOR : ColorScheme.DARKER_GRAY_COLOR);
 			final JPanel wrapper = new JPanel(new BorderLayout());
 			wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
-			wrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
+			wrapper.setBorder(new EmptyBorder(0, 0, 4, 0));
 			wrapper.add(cell);
 
 			if (row instanceof BankStop)
@@ -1146,7 +1146,7 @@ class RunPanel extends JPanel
 	{
 		final JLabel label = new JLabel(UiText.wrap(text, TEXT_WIDTH));
 		label.setForeground(ColorScheme.BRAND_ORANGE);
-		label.setBorder(new EmptyBorder(10, 0, 4, 0));
+		label.setBorder(new EmptyBorder(12, 0, 6, 0));
 		return left(label);
 	}
 

@@ -24,6 +24,8 @@ class ExpandableRow extends JPanel
 
 	private final JPanel content = new JPanel();
 	private final JLabel header = new JLabel();
+	/** The clickable summary line: a rounded card with a chevron (Sprint 7 facelift). */
+	private final Card headCard = new Card(new BorderLayout());
 	private final String name;
 	private final String summary;
 	private final boolean overridden;
@@ -44,15 +46,15 @@ class ExpandableRow extends JPanel
 		setLayout(new BorderLayout());
 		setAlignmentX(LEFT_ALIGNMENT);
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
-		setBorder(new EmptyBorder(0, 0, 2, 0));
+		setBorder(new EmptyBorder(0, 0, 3, 0));
 
-		header.setOpaque(true);
-		header.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		header.setBorder(new EmptyBorder(3, 6, 3, 6));
+		headCard.setBorder(new EmptyBorder(4, 8, 4, 8));
+		headCard.add(header, BorderLayout.CENTER);
+		header.setIconTextGap(6);
 		header.setFont(FontManager.getRunescapeSmallFont());
 		header.setForeground(ColorScheme.TEXT_COLOR);
-		header.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		header.addMouseListener(new MouseAdapter()
+		headCard.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		headCard.addMouseListener(new MouseAdapter()
 		{
 			@Override
 			public void mouseClicked(MouseEvent e)
@@ -66,7 +68,7 @@ class ExpandableRow extends JPanel
 		content.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		content.setBorder(new EmptyBorder(4, 6, 4, 0));
 
-		add(header, BorderLayout.NORTH);
+		add(headCard, BorderLayout.NORTH);
 		add(content, BorderLayout.CENTER);
 		setExpanded(expanded);
 	}
@@ -82,8 +84,9 @@ class ExpandableRow extends JPanel
 		this.expanded = expanded;
 		final String tag = overridden
 			? " <font color='#" + Integer.toHexString(OVERRIDE.getRGB() & 0xFFFFFF) + "'>Override</font>" : "";
-		header.setText(UiText.wrap((expanded ? "- " : "+ ") + name + ": " + summary, width - 70)
+		header.setText(UiText.wrap(name + ": " + summary, width - 80)
 			.replace("</body>", tag + "</body>"));
+		header.setIcon(Card.chevron(expanded, ColorScheme.LIGHT_GRAY_COLOR));
 		content.setVisible(expanded);
 		revalidate();
 	}

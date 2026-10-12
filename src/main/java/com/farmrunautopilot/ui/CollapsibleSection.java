@@ -17,6 +17,8 @@ import net.runelite.client.ui.ColorScheme;
  */
 class CollapsibleSection extends JPanel
 {
+	/** The clickable title bar: a rounded card with a chevron (Sprint 7 facelift). */
+	private final Card headCard = new Card(new BorderLayout());
 	private final JLabel header = new JLabel();
 	private final JPanel content = new JPanel();
 	private final String title;
@@ -41,14 +43,13 @@ class CollapsibleSection extends JPanel
 		setLayout(new BorderLayout());
 		setAlignmentX(LEFT_ALIGNMENT);
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
-		setBorder(new EmptyBorder(0, 0, 6, 0));
+		setBorder(new EmptyBorder(0, 0, 4, 0));
 
 		header.setForeground(ColorScheme.BRAND_ORANGE);
-		header.setOpaque(true);
-		header.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		header.setBorder(new EmptyBorder(6, 6, 6, 6));
-		header.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		header.addMouseListener(new MouseAdapter()
+		header.setIconTextGap(8);
+		headCard.add(header, BorderLayout.CENTER);
+		headCard.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		headCard.addMouseListener(new MouseAdapter()
 		{
 			@Override
 			public void mouseClicked(MouseEvent e)
@@ -60,9 +61,9 @@ class CollapsibleSection extends JPanel
 
 		content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 		content.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		content.setBorder(new EmptyBorder(6, 4, 0, 4));
+		content.setBorder(new EmptyBorder(6, 4, 2, 4));
 
-		add(header, BorderLayout.NORTH);
+		add(headCard, BorderLayout.NORTH);
 		add(content, BorderLayout.CENTER);
 		setExpanded(expanded);
 	}
@@ -71,7 +72,8 @@ class CollapsibleSection extends JPanel
 	CollapsibleSection help(String text)
 	{
 		help = text;
-		header.setToolTipText(UiText.wrap(text, 250));
+		// On the card only: a tooltip on the label would take its clicks
+		headCard.setToolTipText(UiText.wrap(text, 250));
 		setExpanded(expanded);
 		return this;
 	}
@@ -85,10 +87,11 @@ class CollapsibleSection extends JPanel
 	private void setExpanded(boolean expanded)
 	{
 		this.expanded = expanded;
-		final String text = (expanded ? "- " : "+ ") + UiText.escape(title)
+		final String text = UiText.escape(title)
 			+ (help != null ? " <font color='#6f6f6f'>(?)</font>" : "");
 		header.setText(summary == null ? "<html>" + text + "</html>"
 			: "<html>" + text + " <font color='#9a9a9a'>" + UiText.escape(summary) + "</font></html>");
+		header.setIcon(Card.chevron(expanded, ColorScheme.LIGHT_GRAY_COLOR));
 		content.setVisible(expanded);
 		revalidate();
 	}
