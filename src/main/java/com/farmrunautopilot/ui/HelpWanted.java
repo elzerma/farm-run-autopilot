@@ -60,15 +60,21 @@ final class HelpWanted
 		return count;
 	}
 
-	/** The button at the bottom of every tab, which opens the list in Account > Testing & debug. */
+	/**
+	 * The small line at the bottom of every tab, which opens the list in Account > Testing & debug (Sean: a quiet
+	 * link rather than a big button).
+	 */
 	static JButton button(SettingsStore settings, boolean developer, Runnable open)
 	{
 		final JButton button = new JButton();
-		button.setFont(FontManager.getRunescapeBoldFont());
-		button.setForeground(ColorScheme.BRAND_ORANGE);
+		button.setFont(FontManager.getRunescapeSmallFont());
+		button.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		button.setFocusPainted(false);
+		button.setBorderPainted(false);
+		button.setContentAreaFilled(false);
+		button.setBorder(new javax.swing.border.EmptyBorder(8, 0, 8, 0));
+		button.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
 		button.setAlignmentX(Component.LEFT_ALIGNMENT);
-		button.setToolTipText("Features I couldn't test, with steps to try them");
 		button.addActionListener(e -> open.run());
 		refresh(button, settings, developer);
 		return button;
@@ -78,7 +84,9 @@ final class HelpWanted
 	static void refresh(JButton button, SettingsStore settings, boolean developer)
 	{
 		final int count = toTry(settings);
-		button.setText(count == 0 ? TITLE + " (all done)" : TITLE + " (" + count + " to try)");
+		button.setText("<html>Interested in improving this plugin? <u>Click here.</u></html>");
+		button.setToolTipText(count == 0 ? "Every test is done" : count + (count == 1 ? " feature" : " features")
+			+ " I couldn't test, with steps to try them");
 		button.setVisible(count > 0 || developer);
 	}
 

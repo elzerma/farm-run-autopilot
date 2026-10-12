@@ -757,12 +757,11 @@ class RunPanel extends JPanel
 			cell.add(detail, BorderLayout.CENTER);
 		}
 
-		final JPanel wrapper = new JPanel(new BorderLayout());
+		final JPanel wrapper = fullWidth();
 		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		wrapper.setBorder(new EmptyBorder(0, 0, 4, 0));
 		wrapper.add(cell, BorderLayout.CENTER);
 		wrapper.setToolTipText(objectivesTooltip(stop.getObjectives()));
-		wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, wrapper.getPreferredSize().height));
 		return left(wrapper);
 	}
 
@@ -950,9 +949,13 @@ class RunPanel extends JPanel
 		list.setDragEnabled(true);
 		list.setDropMode(DropMode.INSERT);
 		list.setTransferHandler(new ReorderHandler(list, model));
-		// A JList is only as wide as its longest row unless told otherwise: stretch it to the panel (Sean: width wacky)
-		list.setMaximumSize(new Dimension(Integer.MAX_VALUE, list.getPreferredSize().height));
-		add(left(list));
+		// A JList is only as wide as its longest row unless told otherwise: stretch it to the panel (Sean: width
+		// wacky). Its height is asked for each layout, as rows wrap differently once it has its real width (Sean: the
+		// line under it overlapped the last stop)
+		final JPanel holder = fullWidth();
+		holder.setOpaque(false);
+		holder.add(list, BorderLayout.CENTER);
+		add(left(holder));
 
 	}
 
@@ -1164,6 +1167,22 @@ class RunPanel extends JPanel
 		label.setFont(FontManager.getRunescapeSmallFont());
 		label.setBorder(new EmptyBorder(0, 0, 4, 0));
 		return left(label);
+	}
+
+	/**
+	 * A panel that fills the width and is as tall as its content, asked at each layout: a height fixed when it's
+	 * built is too small once its text wraps (Sean: the line under the route overlapped the last stop).
+	 */
+	private static JPanel fullWidth()
+	{
+		return new JPanel(new BorderLayout())
+		{
+			@Override
+			public Dimension getMaximumSize()
+			{
+				return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+			}
+		};
 	}
 
 	private static <T extends JComponent> T left(T component)
