@@ -234,7 +234,7 @@ class RunPanel extends JPanel
 		}
 		addBuilding();
 		add(heading(summary(supplies)));
-		if (settings.getRunConfig().isSupplyFullRun())
+		if (settings.editRunConfig().isSupplyFullRun())
 		{
 			final JLabel full = note("Counting every patch (full run is on in Account > Testing & debug)");
 			full.setForeground(ColorScheme.BRAND_ORANGE);
@@ -266,7 +266,7 @@ class RunPanel extends JPanel
 	/** Until the seed vault has been opened, its seeds and saplings can't be counted: say so. */
 	private void addSeedVaultNote()
 	{
-		if (settings.getRunConfig().isUseSeedVault() && !controls.seedVaultSeen())
+		if (settings.editRunConfig().isUseSeedVault() && !controls.seedVaultSeen())
 		{
 			add(note("Open your seed vault at the Farming Guild once, so seeds and saplings in it count."));
 		}
@@ -373,7 +373,7 @@ class RunPanel extends JPanel
 	 */
 	private void addUnlocksToCheck()
 	{
-		final List<Unlock> review = AccessChecker.toReview(settings.getRunConfig(), settings.getAccount());
+		final List<Unlock> review = AccessChecker.toReview(settings.editRunConfig(), settings.editAccount());
 		if (review.isEmpty())
 		{
 			return;
@@ -459,7 +459,7 @@ class RunPanel extends JPanel
 	private void fillPatchTimers(JPanel panel)
 	{
 		panel.removeAll();
-		final RunConfig config = settings.getRunConfig();
+		final RunConfig config = settings.editRunConfig();
 		final AccessSnapshot access = accessChecker.getSnapshot();
 		final long now = Instant.now().getEpochSecond();
 		boolean any = false;
@@ -690,7 +690,7 @@ class RunPanel extends JPanel
 		for (PatchType type : PatchType.values())
 		{
 			final JCheckBox box = new JCheckBox(SHORT_TYPE_NAMES[type.ordinal()],
-				settings.getRunConfig().getEnabledTypes().contains(type));
+				settings.editRunConfig().getEnabledTypes().contains(type));
 			box.setToolTipText("Include " + type.getDisplayName().toLowerCase() + " patches in this run");
 			box.setBackground(ColorScheme.DARK_GRAY_COLOR);
 			box.setFont(FontManager.getRunescapeSmallFont());
@@ -698,13 +698,15 @@ class RunPanel extends JPanel
 			{
 				if (box.isSelected())
 				{
-					settings.getRunConfig().getEnabledTypes().add(type);
+					settings.editRunConfig().getEnabledTypes().add(type);
 				}
 				else
 				{
-					settings.getRunConfig().getEnabledTypes().remove(type);
+					settings.editRunConfig().getEnabledTypes().remove(type);
 				}
 				settings.saveRunConfig();
+				// The Travel tab's locations and the preset picker depend on the run types
+				settingsChanged.run();
 			});
 			types.add(box);
 		}
@@ -719,7 +721,7 @@ class RunPanel extends JPanel
 		final Map<PatchType, TypeOverride> current = overrides.get();
 		for (PatchType type : PatchType.values())
 		{
-			if (!settings.getRunConfig().getEnabledTypes().contains(type))
+			if (!settings.editRunConfig().getEnabledTypes().contains(type))
 			{
 				continue;
 			}
@@ -863,15 +865,15 @@ class RunPanel extends JPanel
 			order.add(model.get(i).getLocation());
 		}
 		// Keep stops that aren't in this run where they were in the saved order
-		for (Location location : settings.getRunConfig().getCustomOrder())
+		for (Location location : settings.editRunConfig().getCustomOrder())
 		{
 			if (!order.contains(location))
 			{
 				order.add(location);
 			}
 		}
-		settings.getRunConfig().setCustomOrder(order);
-		settings.getRunConfig().setRouteMode(RouteMode.OFF);
+		settings.editRunConfig().setCustomOrder(order);
+		settings.editRunConfig().setRouteMode(RouteMode.OFF);
 		settings.saveRunConfig();
 		settingsChanged.run();
 	}

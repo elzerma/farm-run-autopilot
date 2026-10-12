@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
@@ -87,9 +88,16 @@ public class UnlockSpotter
 				&& !hasOption(composition, "Build"))
 			{
 				log.debug("Spotted {} ({} at {})", spot.unlock, object.getId(), object.getWorldLocation());
-				account.getManualUnlocks().add(spot.unlock);
-				settings.saveAccount(true);
-				accessChecker.requestRefresh();
+				// Settings are changed on the Swing thread (SettingsStore)
+				final Unlock spotted = spot.unlock;
+				SwingUtilities.invokeLater(() ->
+				{
+					if (settings.editAccount().getManualUnlocks().add(spotted))
+					{
+						settings.saveAccount(true);
+						accessChecker.requestRefresh();
+					}
+				});
 			}
 		}
 	}

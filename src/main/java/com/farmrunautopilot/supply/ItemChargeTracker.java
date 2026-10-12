@@ -237,7 +237,7 @@ public class ItemChargeTracker
 		final Map<TravelItem, Integer> saved = new EnumMap<>(next);
 		SwingUtilities.invokeLater(() ->
 		{
-			settings.getAccount().setItemCharges(saved);
+			settings.editAccount().setItemCharges(saved);
 			settings.saveAccount(false);
 		});
 		return true;
@@ -267,7 +267,7 @@ public class ItemChargeTracker
 		final Map<TravelItem, Integer> saved = new EnumMap<>(next);
 		SwingUtilities.invokeLater(() ->
 		{
-			settings.getAccount().setItemCharges(saved);
+			settings.editAccount().setItemCharges(saved);
 			settings.saveAccount(false);
 		});
 		return true;

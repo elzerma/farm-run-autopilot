@@ -12,13 +12,17 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.config.ConfigManager;
 
 /**
  * Loads and saves {@link RunConfig} and {@link AccountSettings} as JSON in the current account's RuneLite
  * profile (SPEC 14). Edits made while logged out stay in memory only.
+ *
+ * <p>Two copies of each: the sidebar edits a working copy on the Swing thread ({@link #editRunConfig()},
+ * {@link #editAccount()}), and every save publishes a fresh copy that nothing changes, which everything else
+ * reads from any thread ({@link #getRunConfig()}, {@link #getAccount()}). So the planner never sees a setting
+ * half-way through being changed (docs/REBUILD.md, Sprint 6).
  */
 @Slf4j
 @Singleton
@@ -39,10 +43,12 @@ public class SettingsStore
 	private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 	private final List<Runnable> saveListeners = new CopyOnWriteArrayList<>();
 
-	@Getter
-	private volatile RunConfig runConfig = new RunConfig();
-	@Getter
-	private volatile AccountSettings account = new AccountSettings();
+	/** The sidebar's working copies. Swing thread. */
+	private RunConfig runConfig = new RunConfig().sanitise();
+	private AccountSettings account = new AccountSettings().sanitise();
+	/** Published on every save; never changed in place. Any thread. */
+	private volatile RunConfig runView = new RunConfig().sanitise();
+	private volatile AccountSettings accountView = new AccountSettings().sanitise();
 	/** Replaced, never changed in place. */
 	private volatile List<Preset> presets = new ArrayList<>();
 
@@ -51,6 +57,37 @@ public class SettingsStore
 	{
 		this.configManager = configManager;
 		this.gson = gson;
+	}
+
+	/** The run settings as last saved, to read from any thread. Don't change it: use {@link #editRunConfig()}. */
+	public RunConfig getRunConfig()
+	{
+		return runView;
+	}
+
+	/** The account settings as last saved, to read from any thread. Don't change it: use {@link #editAccount()}. */
+	public AccountSettings getAccount()
+	{
+		return accountView;
+	}
+
+	/** The run settings to change, then {@link #saveRunConfig()}. Swing thread only. */
+	public RunConfig editRunConfig()
+	{
+		return runConfig;
+	}
+
+	/** The account settings to change, then {@link #saveAccount(boolean)}. Swing thread only. */
+	public AccountSettings editAccount()
+	{
+		return account;
+	}
+
+	/** Copy the working settings out for everything else to read. */
+	private void publish()
+	{
+		runView = copy(runConfig);
+		accountView = gson.fromJson(gson.toJson(account), AccountSettings.class).sanitise();
 	}
 
 	/** Called after settings are reloaded or changed by something other than the Setup tab. */
@@ -155,6 +192,7 @@ public class SettingsStore
 			}
 		}
 		presets = loaded;
+		publish();
 		notifyListeners();
 		for (Runnable listener : saveListeners)
 		{
@@ -388,6 +426,7 @@ public class SettingsStore
 
 	private void write(String key, Object value)
 	{
+		publish();
 		if (hasProfile())
 		{
 			configManager.setRSProfileConfiguration(FarmRunAutopilotConfig.GROUP, key, gson.toJson(value));

@@ -309,8 +309,8 @@ class SetupPanel extends JPanel
 			{
 				addDetected("Auto-weed", "On", "Tithe Farm Auto-weed: no rake needed for weeds");
 			}
-			final long scanned = settings.getAccount().getPoh().getLastDetected();
-			addDetected("House", !settings.getAccount().isAutoDetectHouse() ? "Detection off (beta)"
+			final long scanned = settings.editAccount().getPoh().getLastDetected();
+			addDetected("House", !settings.editAccount().isAutoDetectHouse() ? "Detection off (beta)"
 					: scanned > 0 ? "Scanned " + DateFormat.getDateInstance(DateFormat.SHORT)
 					.format(new Date(scanned * 1000)) : "Not scanned yet",
 				"Enter your house to detect its furniture; Rescan is in My house");
@@ -356,8 +356,8 @@ class SetupPanel extends JPanel
 	void rebuild()
 	{
 		removeAll();
-		final RunConfig config = settings.getRunConfig();
-		final AccountSettings account = settings.getAccount();
+		final RunConfig config = settings.editRunConfig();
+		final AccountSettings account = settings.editAccount();
 		final AccessSnapshot access = accessChecker.getSnapshot();
 
 		if (!settings.hasProfile())
@@ -897,7 +897,7 @@ class SetupPanel extends JPanel
 		{
 			return new Choice<>(way, wayLabel(way, location) + " (locked)", false, AccessSnapshot.describe(missing));
 		}
-		final PohSetup poh = settings.getAccount().getPoh();
+		final PohSetup poh = settings.editAccount().getPoh();
 		final boolean inHouse;
 		switch (way.getHow())
 		{
@@ -1050,7 +1050,7 @@ class SetupPanel extends JPanel
 	private JComponent unlocksSection(AccountSettings account)
 	{
 		final AccessSnapshot access = accessChecker.getSnapshot();
-		final List<Unlock> review = AccessChecker.toReview(settings.getRunConfig(), account);
+		final List<Unlock> review = AccessChecker.toReview(settings.editRunConfig(), account);
 		final int ticked = account.getManualUnlocks().size();
 		final CollapsibleSection s = section(UNLOCKS, !review.isEmpty() ? review.size() + " to check"
 			: ticked == 0 ? null : ticked + " ticked");

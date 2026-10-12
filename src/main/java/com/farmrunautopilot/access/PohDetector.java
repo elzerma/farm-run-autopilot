@@ -251,7 +251,7 @@ public class PohDetector
 
 	private void apply(JewelleryBoxTier box, PoolTier pool, PohAltar altar, boolean fairyRing, boolean spiritTree)
 	{
-		final PohSetup poh = settings.getAccount().getPoh();
+		final PohSetup poh = settings.editAccount().getPoh();
 		boolean changed = false;
 		if (box != null && (poh.getJewelleryBox() == null || box.ordinal() > poh.getJewelleryBox().ordinal()))
 		{

@@ -191,8 +191,8 @@ public class BottomlessBucketTracker
 		final Integer savedUses = newUses >= 0 ? newUses : null;
 		SwingUtilities.invokeLater(() ->
 		{
-			settings.getAccount().setBottomlessUses(savedUses);
-			settings.getAccount().setBottomlessCompost(newCompost);
+			settings.editAccount().setBottomlessUses(savedUses);
+			settings.editAccount().setBottomlessCompost(newCompost);
 			settings.saveAccount(false);
 		});
 		return true;
