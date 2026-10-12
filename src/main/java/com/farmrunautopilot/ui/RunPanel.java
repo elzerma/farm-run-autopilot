@@ -604,6 +604,33 @@ class RunPanel extends JPanel
 	}
 
 	/** A stop while running: struck through when done, highlighted with its next step when current. */
+	/** One step of the current stop: struck through when done, "> " and orange when in hand, "- " when to come. */
+	private static JLabel stepLabel(RunView.Step step)
+	{
+		final String text = UiText.escape(step.getText());
+		final String open = "<html><body style='width:" + ((TEXT_WIDTH - 30) * 10 / 13) + "px'>";
+		final String close = "</body></html>";
+		final JLabel label;
+		switch (step.getStatus())
+		{
+			case DONE:
+				label = new JLabel(open + "<s>" + text + "</s>" + close);
+				label.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
+				break;
+			case CURRENT:
+				label = new JLabel(open + "&gt; " + text + close);
+				label.setForeground(ColorScheme.BRAND_ORANGE);
+				break;
+			default:
+				label = new JLabel(open + "- " + text + close);
+				label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+				break;
+		}
+		label.setFont(FontManager.getRunescapeSmallFont());
+		label.setBorder(new EmptyBorder(1, 4, 1, 0));
+		return label;
+	}
+
 	private JComponent runningStop(int number, RunView.Stop stop)
 	{
 		final JPanel cell = new JPanel(new BorderLayout());
@@ -619,7 +646,27 @@ class RunPanel extends JPanel
 		title.setFont(FontManager.getRunescapeSmallFont());
 		cell.add(title, BorderLayout.NORTH);
 
-		if (stop.getStatus() != RunView.StopStatus.DONE)
+		if (current && !stop.getSteps().isEmpty())
+		{
+			// Every step of this stop, done ones struck through, the one in hand marked, then what to do now
+			final JPanel steps = new JPanel();
+			steps.setLayout(new BoxLayout(steps, BoxLayout.Y_AXIS));
+			steps.setOpaque(false);
+			for (RunView.Step step : stop.getSteps())
+			{
+				steps.add(stepLabel(step));
+			}
+			if (stop.getInstruction() != null)
+			{
+				final JLabel now = new JLabel(UiText.wrap(stop.getInstruction(), TEXT_WIDTH - 20));
+				now.setForeground(IN_STORAGE);
+				now.setFont(FontManager.getRunescapeSmallFont());
+				now.setBorder(new EmptyBorder(3, 0, 0, 0));
+				steps.add(now);
+			}
+			cell.add(steps, BorderLayout.CENTER);
+		}
+		else if (stop.getStatus() != RunView.StopStatus.DONE)
 		{
 			final JLabel detail = new JLabel(UiText.wrap(current && stop.getInstruction() != null
 				? stop.getInstruction() : stop.getTravel(), TEXT_WIDTH - 20));

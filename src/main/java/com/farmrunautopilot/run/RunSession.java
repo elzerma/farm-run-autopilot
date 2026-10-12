@@ -599,7 +599,8 @@ public class RunSession
 				: i == stopIndex ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
 			stopViews.add(new RunView.Stop(stop.getLocation().getDisplayName(), stop.describeTravel(), status,
 				status == RunView.StopStatus.CURRENT ? instruction : null,
-				plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList())));
+				plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList()),
+				status == RunView.StopStatus.CURRENT ? steps(stop) : Collections.emptyList()));
 			final BankStop bank = plan.bankAfter(i);
 			if (bank != null)
 			{
@@ -607,7 +608,7 @@ public class RunSession
 					: banking ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
 				stopViews.add(new RunView.Stop(bank.title(),
 					"Restock for the rest of the run", bankStatus,
-					bankStatus == RunView.StopStatus.CURRENT ? instruction : null, Collections.emptyList()));
+					bankStatus == RunView.StopStatus.CURRENT ? instruction : null, Collections.emptyList(), Collections.emptyList()));
 			}
 		}
 		if (instruction == null)
@@ -677,6 +678,46 @@ public class RunSession
 			return "Farm run: click the flashing Farm run tab at the top of the bank";
 		}
 		return "Farm run: take the " + items + " marked in red or yellow";
+	}
+
+	/**
+	 * The current stop's steps in order, each done, current or still to do (Sean: show that a stop has several
+	 * steps): the way there and any journey steps after it (a boat, Elkoy), then each patch's plan.
+	 */
+	private List<RunView.Step> steps(RouteStop stop)
+	{
+		final List<RunView.Step> steps = new ArrayList<>();
+		final boolean arrived = navigator.isArrived();
+		// "Ardougne Teleport, then boat from the docks": the way there, then each journey step
+		final String[] travel = stop.describeTravel().split(", then ");
+		for (int i = 0; i < travel.length; i++)
+		{
+			final RunView.StopStatus status;
+			if (arrived || (i == 0 && navigator.isTeleported()) || (i > 0 && i <= navigator.getJourneyStep()))
+			{
+				status = RunView.StopStatus.DONE;
+			}
+			else if (i == 0 ? !navigator.isTeleported() : navigator.isTeleported() && i == navigator.getJourneyStep() + 1)
+			{
+				status = RunView.StopStatus.CURRENT;
+			}
+			else
+			{
+				status = RunView.StopStatus.PENDING;
+			}
+			steps.add(new RunView.Step(i == 0 ? travel[i] : "Then " + travel[i], status));
+		}
+		// Each patch's plan, in the same order the objectives were made
+		final List<Patch> here = patchesAt(plan, stop.getLocation());
+		final List<String> objectives = plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList());
+		for (int i = 0; i < here.size(); i++)
+		{
+			final Patch patch = here.get(i);
+			final RunView.StopStatus status = patches.isDone(patch) ? RunView.StopStatus.DONE
+				: arrived && patch == patches.getCurrentPatch() ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
+			steps.add(new RunView.Step(i < objectives.size() ? objectives.get(i) : patch.getDisplayName(), status));
+		}
+		return steps;
 	}
 
 	/** What the current step points at: the patch and items to use there, or the teleport item while travelling. */

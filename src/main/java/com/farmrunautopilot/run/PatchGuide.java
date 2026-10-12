@@ -70,6 +70,8 @@ class PatchGuide
 		boolean composted;
 		boolean paid;
 		boolean skipped;
+		/** Finished (or skipped) this run, for the current stop's checklist. */
+		boolean done;
 		/** Seen in range in a state other than growing, so a crop growing later was planted this run. */
 		boolean sawUnplanted;
 		/** Payment items in the inventory when paying became the next step; -1 until then. */
@@ -116,6 +118,13 @@ class PatchGuide
 		{
 			progress(currentPatch).skipped = true;
 		}
+	}
+
+	/** Finished or skipped this run, so far as the guide has got (later patches aren't looked at yet). */
+	boolean isDone(Patch patch)
+	{
+		final Progress p = progress.get(patch);
+		return p != null && p.done;
 	}
 
 	/** Skip every patch at a stop. */
@@ -177,6 +186,7 @@ class PatchGuide
 			final Progress p = progress(patch);
 			if (p.skipped)
 			{
+				p.done = true;
 				continue;
 			}
 			final PatchPrediction live = patchTracker.predict(patch);
@@ -198,6 +208,7 @@ class PatchGuide
 				watchPayment(patch, p);
 				if (p.paid)
 				{
+					p.done = true;
 					continue;
 				}
 			}
@@ -214,6 +225,7 @@ class PatchGuide
 				}
 				return advice.getText();
 			}
+			p.done = true;
 		}
 		clearCurrent();
 		return null;

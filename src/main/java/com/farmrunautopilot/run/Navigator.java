@@ -80,6 +80,18 @@ class Navigator
 		return arrived;
 	}
 
+	/** Landed from the teleport (or set off on foot); the journey steps come next. */
+	boolean isTeleported()
+	{
+		return teleported;
+	}
+
+	/** How many of the travel method's journey steps are done since landing. */
+	int getJourneyStep()
+	{
+		return journeyStep;
+	}
+
 	long getArrivedAtSeconds()
 	{
 		return arrivedAtSeconds;

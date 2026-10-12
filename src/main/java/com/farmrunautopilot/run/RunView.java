@@ -29,6 +29,14 @@ public class RunView
 		PENDING
 	}
 
+	/** One step of the current stop, e.g. "Camelot Teleport" or "Herb: harvest ranarr and plant ranarr". */
+	@Value
+	public static class Step
+	{
+		String text;
+		StopStatus status;
+	}
+
 	@Value
 	public static class Stop
 	{
@@ -39,6 +47,8 @@ public class RunView
 		String instruction;
 		/** The plan for each patch there, for hovering. */
 		List<String> objectives;
+		/** The current stop's steps in order (travel, journey steps, each patch), with how far along; empty otherwise. */
+		List<Step> steps;
 	}
 
 	public static final RunView OFF_VIEW = new RunView(State.OFF, 0, Collections.emptyList(), null, false, null,
