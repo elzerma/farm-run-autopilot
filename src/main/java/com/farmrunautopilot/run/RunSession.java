@@ -372,7 +372,7 @@ public class RunSession
 		final int journey = Navigator.journeySteps(stop);
 		final long now = System.currentTimeMillis();
 		log.debug("Step {}: {} step {}", ticked ? "ticked" : "unticked", stop.getLocation().getDisplayName(), step);
-		if (step <= journey)
+		if (step < travelSteps(stop))
 		{
 			if (ticked)
 			{
@@ -399,7 +399,7 @@ public class RunSession
 		else
 		{
 			final List<Patch> here = patchesAt(plan, stop.getLocation());
-			final int index = step - journey - 1;
+			final int index = step - travelSteps(stop);
 			if (index >= here.size())
 			{
 				return;
@@ -420,6 +420,15 @@ public class RunSession
 			}
 		}
 		evaluate();
+	}
+
+	/**
+	 * How many of a stop's steps are travel: the way there and its journey steps. None for a walk from the stop
+	 * before: the patch's own "Walk to the ... patch" covers it (Sean: it showed ticked already).
+	 */
+	private static int travelSteps(RouteStop stop)
+	{
+		return stop.getDeparture() == Departure.WALK ? 0 : Navigator.journeySteps(stop) + 1;
 	}
 
 	/** The way there (step 0) or a journey step after it is done, as {@link #steps} shows it. */
@@ -1132,8 +1141,7 @@ public class RunSession
 		final List<RunView.Step> steps = new ArrayList<>();
 		final boolean arrived = navigator.isArrived();
 		// The way there, then each journey step after it (a boat, Elkoy) as its sub-steps
-		final int journey = Navigator.journeySteps(stop);
-		for (int i = 0; i <= journey; i++)
+		for (int i = 0; i < travelSteps(stop); i++)
 		{
 			final RunView.StopStatus status;
 			if (arrived || (i == 0 && navigator.isTeleported()) || (i > 0 && i <= navigator.getJourneyStep()))
