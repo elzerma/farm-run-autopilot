@@ -766,10 +766,16 @@ class RunPanel extends JPanel
 			final TypeOverride buttonAction;
 			if (selection.getIncludedTypes().contains(type))
 			{
-				text = name + ": " + selection.getDueCounts().getOrDefault(type, 0) + " due"
-					+ (override == TypeOverride.INCLUDE ? " (included anyway)" : "");
-				buttonText = override == TypeOverride.INCLUDE ? "Undo" : "Skip";
-				buttonAction = override == TypeOverride.INCLUDE ? null : TypeOverride.SKIP;
+				final String due = name + ": " + selection.getDueCounts().getOrDefault(type, 0) + " due";
+				if (override != TypeOverride.INCLUDE)
+				{
+					// No Skip button: unticking the type at the top does that (Sean: redundant)
+					add(note(due));
+					continue;
+				}
+				text = due + " (included anyway)";
+				buttonText = "Undo";
+				buttonAction = null;
 			}
 			else if (selection.getSkippedTypes().containsKey(type))
 			{
