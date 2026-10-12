@@ -71,6 +71,7 @@ public class RunConfigTest
 		config.getDisabledPatches().add(Patch.LUMBRIDGE_TREE);
 		config.getCrops().put(PatchType.HERB, Crop.RANARR);
 		config.getProtectionOverrides().put(Patch.FALADOR_TREE, Protection.COMPOST_ONLY);
+		config.setUseProtectionOverrides(true);
 		config.getTravel().put(Location.CATHERBY, TravelMethod.CATHERBY_TELEPORT);
 		config.setRouteMode(RouteMode.META);
 		config.setStaminaDoses(4);
@@ -79,6 +80,22 @@ public class RunConfigTest
 		assertEquals(config, loaded);
 		assertFalse(loaded.isPatchSelected(Patch.LUMBRIDGE_TREE));
 		assertEquals(Protection.COMPOST_ONLY, loaded.protectionFor(Patch.FALADOR_TREE));
+	}
+
+	@Test
+	public void perPatchProtectionIsBehindItsSwitch()
+	{
+		// Saved before the switch existed, with an override: switched on, so nothing changes
+		final RunConfig old = new RunConfig();
+		old.getProtectionOverrides().put(Patch.FALADOR_TREE, Protection.COMPOST_ONLY);
+		old.setUseProtectionOverrides(null);
+		final RunConfig loaded = gson.fromJson(gson.toJson(old), RunConfig.class).sanitise();
+		assertEquals(Protection.COMPOST_ONLY, loaded.protectionFor(Patch.FALADOR_TREE));
+
+		// Switched off: the override is kept but ignored
+		loaded.setUseProtectionOverrides(false);
+		assertEquals(Protection.PAY_GARDENER, loaded.protectionFor(Patch.FALADOR_TREE));
+		assertEquals(Protection.COMPOST_ONLY, loaded.getProtectionOverrides().get(Patch.FALADOR_TREE));
 	}
 
 	@Test

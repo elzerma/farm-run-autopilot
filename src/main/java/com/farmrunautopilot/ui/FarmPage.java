@@ -12,10 +12,14 @@ import com.farmrunautopilot.settings.Outfit;
 import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
+import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 import net.runelite.api.Skill;
+import net.runelite.client.ui.ColorScheme;
 
 /**
  * The Farm tab: which patches, what to plant, protection, compost and extras to bring.
@@ -53,11 +57,15 @@ class FarmPage extends SetupPanel
 			}
 		}
 		final CollapsibleSection s = section("Patches", ticked + " of " + usable + " ticked");
-		s.help("Untick patches you don't want in your runs; locked ones show what they need. Choose trees, "
+		s.help("Untick patches you don't want in your runs; locked ones show what they need on hover. Choose trees, "
 			+ "fruit trees and herbs at the top of the Run tab: each joins a run once its patches are due.");
+		// One group per type that opens and closes, two tick boxes to a row (Sean)
 		for (PatchType type : PatchType.values())
 		{
-			s.addContent(subheader(type.getDisplayName() + " patches"));
+			final JPanel grid = new JPanel(new GridLayout(0, 2, 4, 0));
+			grid.setBackground(ColorScheme.DARK_GRAY_COLOR);
+			int typeUsable = 0;
+			int typeTicked = 0;
 			for (Patch patch : Patch.values())
 			{
 				if (patch.getType() != type)
@@ -66,12 +74,15 @@ class FarmPage extends SetupPanel
 				}
 				final List<Requirement> missing = access.missingFor(patch);
 				final boolean locked = !missing.isEmpty();
-				final String name = patch.getLocation().getDisplayName() + (locked ? " (locked)" : "");
-				s.addContent(checkBox(name, !locked && !config.getDisabledPatches().contains(patch), !locked,
-					locked ? AccessSnapshot.describe(missing) : null,
-					on -> saveRun(() ->
+				final boolean on = !locked && !config.getDisabledPatches().contains(patch);
+				typeUsable += locked ? 0 : 1;
+				typeTicked += on ? 1 : 0;
+				// Locked ones are greyed, with what they need on hover
+				grid.add(halfCheckBox(patch.getLocation().getDisplayName(), on, !locked,
+					locked ? "Locked: " + AccessSnapshot.describe(missing) : null,
+					tick -> saveRun(() ->
 					{
-						if (on)
+						if (tick)
 						{
 							config.getDisabledPatches().remove(patch);
 						}
@@ -81,6 +92,11 @@ class FarmPage extends SetupPanel
 						}
 					})));
 			}
+			final CollapsibleSection group = section(type.getDisplayName() + " patches",
+				typeTicked + " of " + typeUsable);
+			grid.setMaximumSize(new Dimension(CONTROL_WIDTH, grid.getPreferredSize().height));
+			group.addContent(grid);
+			s.addContent(group);
 		}
 		return s;
 	}
@@ -98,32 +114,31 @@ class FarmPage extends SetupPanel
 				rebuild();
 			}));
 
+		// One line per choice (Sean): "1st [drop-down]"; the 3rd only once the 2nd is set
 		for (PatchType type : PatchType.values())
 		{
 			s.addContent(subheader(type.getDisplayName()));
-			if (config.isUseBackupCrops())
-			{
-				s.addContent(label("1st choice"));
-			}
-			s.addContent(combo(cropChoices(type, farming, false), config.cropFor(type, farming),
-				crop -> saveRun(() -> config.getCrops().put(type, crop))));
+			final JComponent first = combo(cropChoices(type, farming, false), config.cropFor(type, farming),
+				crop -> saveRun(() -> config.getCrops().put(type, crop)));
 			if (!config.isUseBackupCrops())
 			{
+				s.addContent(first);
 				continue;
 			}
+			s.addContent(labeled("1st", first));
 
 			final List<Crop> backups = config.getBackupCrops().getOrDefault(type, new ArrayList<>());
-			for (int i = 0; i < RunConfig.MAX_BACKUP_CROPS; i++)
+			for (int i = 0; i < RunConfig.MAX_BACKUP_CROPS && i <= backups.size(); i++)
 			{
 				final int index = i;
-				s.addContent(label(i == 0 ? "2nd choice" : "3rd choice"));
-				s.addContent(combo(cropChoices(type, farming, true), index < backups.size() ? backups.get(index) : null,
+				s.addContent(labeled(i == 0 ? "2nd" : "3rd", combo(cropChoices(type, farming, true),
+					index < backups.size() ? backups.get(index) : null,
 					crop ->
 					{
 						saveRun(() -> setBackup(config, type, index, crop));
-						// Setting or clearing one choice can shift the other
+						// Setting or clearing one choice shows or hides the next
 						rebuild();
-					}));
+					})));
 			}
 		}
 
@@ -264,25 +279,48 @@ class FarmPage extends SetupPanel
 	/** Settings most players never need to change. */
 	private JComponent advancedFarmSection(RunConfig config)
 	{
-		final CollapsibleSection s = section("Advanced", overrides(config.getProtectionOverrides().size()));
+		final boolean perPatch = config.isUsingProtectionOverrides();
+		final CollapsibleSection s = section("Advanced",
+			perPatch ? overrides(config.getProtectionOverrides().size()) : null);
 		s.addContent(spinnerRow("Include a run type when this % of its patches are due",
 			spinner(config.getDueThresholdPercent(), 1, 100, 5,
 				v -> saveRunQuietly(() -> config.setDueThresholdPercent(v)))));
-		s.addContent(subheader("Per-patch protection"));
-		s.help("Use a different protection for single patches. Anything but Default overrides the "
-			+ "setting for its patch type in Protection.");
+
+		// Rarely used, so behind a tick box (Sean); ticking it off keeps the choices but ignores them
+		s.addContent(checkBox("Different protection for single patches", perPatch, true,
+			"Choose another protection for a patch than its type has in Protection. Ticking this off keeps your "
+				+ "choices but ignores them.",
+			on ->
+			{
+				saveRun(() -> config.setUseProtectionOverrides(on));
+				rebuild();
+			}));
+		if (!perPatch)
+		{
+			return s;
+		}
+		// Only the patches that differ, then a way to add another
+		final List<Choice<Protection>> choices = new ArrayList<>();
+		choices.add(Choice.of(null, "Same as its type"));
+		choices.addAll(enumChoices(Protection.values()));
+		final List<Choice<Patch>> addable = new ArrayList<>();
+		addable.add(Choice.of(null, "Add a patch..."));
 		for (Patch patch : Patch.values())
 		{
 			if (!patch.getType().isProtectable())
 			{
 				continue;
 			}
-			final List<Choice<Protection>> choices = new ArrayList<>();
-			choices.add(Choice.of(null, "Default"));
-			choices.addAll(enumChoices(Protection.values()));
+			final Protection override = config.getProtectionOverrides().get(patch);
+			if (override == null)
+			{
+				addable.add(Choice.of(patch, patch.getDisplayName()));
+				continue;
+			}
 			s.addContent(label(patch.getDisplayName()));
-			s.addContent(combo(choices, config.getProtectionOverrides().get(patch),
-				p -> saveRun(() ->
+			s.addContent(combo(choices, override, p ->
+			{
+				saveRun(() ->
 				{
 					if (p == null)
 					{
@@ -292,7 +330,24 @@ class FarmPage extends SetupPanel
 					{
 						config.getProtectionOverrides().put(patch, p);
 					}
-				})));
+				});
+				rebuild();
+			}));
+		}
+		if (addable.size() > 1)
+		{
+			s.addContent(combo(addable, null, patch ->
+			{
+				if (patch == null)
+				{
+					return;
+				}
+				// Starts as the other choice from its type's, so adding it changes something
+				final Protection type = config.getProtection().get(patch.getType());
+				saveRun(() -> config.getProtectionOverrides().put(patch,
+					type == Protection.PAY_GARDENER ? Protection.COMPOST_ONLY : Protection.PAY_GARDENER));
+				rebuild();
+			}));
 		}
 		return s;
 	}

@@ -53,6 +53,11 @@ public class RunConfig
 	// Protection
 	private Map<PatchType, Protection> protection = defaultProtection();
 	private Map<Patch, Protection> protectionOverrides = new EnumMap<>(Patch.class);
+	/**
+	 * Use {@link #protectionOverrides}; when off they're kept but ignored (Sean: hidden behind a tick box). Null in
+	 * settings saved before it existed: on if there are any overrides, so nothing changes for them.
+	 */
+	private Boolean useProtectionOverrides;
 	/** Bring gardener payments noted (one slot each); confirmed preferable in-game. */
 	private boolean payWithNotes = true;
 	/** Run types where the gardener is paid 200 coins to clear a grown tree instead of chopping it. */
@@ -111,6 +116,10 @@ public class RunConfig
 	 */
 	public RunConfig sanitise()
 	{
+		if (useProtectionOverrides == null)
+		{
+			useProtectionOverrides = protectionOverrides != null && !protectionOverrides.isEmpty();
+		}
 		enabledTypes = cleanSet(enabledTypes, PatchType.class, EnumSet.allOf(PatchType.class));
 		disabledPatches = cleanSet(disabledPatches, Patch.class, EnumSet.noneOf(Patch.class));
 		payToClear = cleanSet(payToClear, PatchType.class, EnumSet.noneOf(PatchType.class));
@@ -191,9 +200,15 @@ public class RunConfig
 		return enabledTypes.contains(patch.getType()) && !disabledPatches.contains(patch);
 	}
 
+	/** Per-patch protection is switched on. */
+	public boolean isUsingProtectionOverrides()
+	{
+		return Boolean.TRUE.equals(useProtectionOverrides);
+	}
+
 	public Protection protectionFor(Patch patch)
 	{
-		final Protection override = protectionOverrides.get(patch);
+		final Protection override = isUsingProtectionOverrides() ? protectionOverrides.get(patch) : null;
 		return override != null ? override : protection.get(patch.getType());
 	}
 

@@ -44,6 +44,8 @@ abstract class SetupPanel extends JPanel
 {
 	/** Room left for controls after the sidebar's and sections' borders. */
 	static final int CONTROL_WIDTH = PluginPanel.PANEL_WIDTH - 40;
+	/** Room for a short label in front of its control on one line. */
+	static final int LABEL_WIDTH = 30;
 
 	final SettingsStore settings;
 	final AccessChecker accessChecker;
@@ -169,6 +171,34 @@ abstract class SetupPanel extends JPanel
 		row.add(label, BorderLayout.CENTER);
 		row.add(spinner, BorderLayout.EAST);
 		row.setMaximumSize(new Dimension(CONTROL_WIDTH, row.getPreferredSize().height));
+		return row;
+	}
+
+	/** A tick box half the width, for two to a row. */
+	static JCheckBox halfCheckBox(String text, boolean selected, boolean enabled, String tooltip,
+		Consumer<Boolean> onChange)
+	{
+		final JCheckBox box = checkBox(text, selected, enabled, tooltip, onChange);
+		box.setText(wrap(text, CONTROL_WIDTH / 2 - 26));
+		return box;
+	}
+
+	/** A short label and its control on one line, e.g. "1st" and a drop-down. */
+	static JComponent labeled(String text, JComponent control)
+	{
+		final JPanel row = new JPanel(new BorderLayout(8, 0));
+		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		row.setBorder(new EmptyBorder(2, 0, 2, 0));
+		final JLabel label = new JLabel(text);
+		label.setForeground(Color.WHITE);
+		label.setFont(FontManager.getRunescapeSmallFont());
+		label.setPreferredSize(new Dimension(LABEL_WIDTH, label.getPreferredSize().height));
+		control.setPreferredSize(new Dimension(CONTROL_WIDTH - LABEL_WIDTH - 8, control.getPreferredSize().height));
+		control.setMaximumSize(control.getPreferredSize());
+		row.add(label, BorderLayout.WEST);
+		row.add(control, BorderLayout.CENTER);
+		row.setMaximumSize(new Dimension(CONTROL_WIDTH, row.getPreferredSize().height));
+		row.setAlignmentX(LEFT_ALIGNMENT);
 		return row;
 	}
 
