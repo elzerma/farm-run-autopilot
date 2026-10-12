@@ -246,12 +246,21 @@ missing from his vision. Turn every chain or behaviour he names into a scenario 
   fix the mislabelled options and hints.
 - Checks: every setting does what its label says (a short list).
 
-**Sprint 7: tidy and release.**
+**Sprint 7: UI facelift** (Sean, 2026-10-12: "a LOT to look at"). Before the release, so its screenshots show it.
+- Explanations move into hover tooltips: no note lines under checkboxes and dropdowns; a control's label says what
+  it is, its tooltip says why and what it does. Only warnings that need action stay visible.
+- Shorter labels and summaries, the same spacing and fonts everywhere, fewer headings; sections closed by
+  default except the one or two changed most.
+- Run tab: the status line, route and buttons only; Account > Detected as a compact two-column list.
+- Measure it: visible lines per tab before and after, and screenshots of each tab for Sean to compare.
+- Checks: every control still has its explanation on hover; nothing a player needs is only in a tooltip.
+
+**Sprint 8: tidy and release.**
 - Journey step text that fits the player (e.g. leave out "without 33 Agility, walk round" when they have it).
 - Guided tests: fix the two broken tests and bring every test in line with the rebuilt run, docs (README, delete stale plans),
   screenshots, Plugin Hub PR update (with Sean's OK).
 
-**Sprint 8: Shortest Path data** (after Sprint 7; plan in docs/plans/shortest-path-research.md). Reuse its BSD-2
+**Sprint 9: Shortest Path data** (after Sprint 8; plan in docs/plans/shortest-path-research.md). Reuse its BSD-2
 licensed data with credit: bank coordinates, teleport landing points and durations checked against ours, a
 dev-only "Measure walks" tool using its query message to measure every landing-to-patch walk once and save
 the numbers in TravelTimes, and research on the Trinket of fairies. Also hot air balloons (Taverley, Grand Tree, Castle
