@@ -29,4 +29,13 @@ public class ItemChargeTrackerTest
 			"Your add 12 frozen tears to your pendant. It now has 37 charges."));
 		assertFalse(ItemChargeTracker.PENDANT_CHECK.matcher("The talisman has 3 charges.").matches());
 	}
+
+	@Test
+	public void rechargeLineHasNoCount()
+	{
+		// Soar Leader Pitri's line, as the client logs it: the count has to come from the next Check or flight
+		assertTrue("Soar Leader Pitri|There you go. Some whistle charges for you!"
+			.endsWith("Some whistle charges for you!"));
+		assertFalse(ItemChargeTracker.WHISTLE_CHECK.matcher("There you go. Some whistle charges for you!").matches());
+	}
 }

@@ -443,6 +443,12 @@ public class FarmRunAutopilotPlugin extends Plugin
 			// After the trackers, so a guided test sees their new counts
 			testRunner.onChatMessage(message);
 		}
+		else if (event.getType() == ChatMessageType.DIALOG
+			&& itemCharges.onChatMessage(Text.removeTags(event.getMessage())))
+		{
+			// NPC lines, e.g. Soar Leader Pitri recharging the whistle
+			holdingsTracker.markDirty();
+		}
 	}
 
 	@Subscribe

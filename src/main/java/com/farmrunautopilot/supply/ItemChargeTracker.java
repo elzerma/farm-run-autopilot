@@ -23,10 +23,11 @@ import net.runelite.client.util.Text;
 /**
  * Charges of teleport items the player charges themselves, which the game only shows in chat: the quetzal
  * whistle, Xeric's talisman and the pendant of Ates. Set from their Check and charging messages (wiki
- * transcripts) and the whistle's own "...charges remaining" after each flight. Xeric's talisman, which may not say,
- * is counted down by one when a teleport click is followed by the player being moved (picking a destination can take a while; a cancelled
- * teleport or a closed menu uses nothing). A count from the game wins, so a use is never counted twice. Saved per account. Kharedst's memoirs / Book of the dead have no known messages, so aren't
- * tracked.
+ * transcripts) and the whistle's own "...charges remaining" after each flight. Xeric's talisman, which may
+ * not say, is counted down by one when a teleport click is followed by the player being moved (picking a
+ * destination can take a while; a cancelled teleport or a closed menu uses nothing). A count from the game wins,
+ * so a use is never counted twice. Saved per account. Kharedst's memoirs / Book of the dead have no known
+ * messages, so aren't tracked.
  *
  * <p>Client thread, except that settings are written on the Swing thread.
  */
@@ -93,6 +94,12 @@ public class ItemChargeTracker
 	 */
 	public boolean onChatMessage(String message)
 	{
+		// Recharged by Soar Leader Pitri: the message has no count, so the old one is wrong; unknown until the next
+		// Check or flight says (Sean, 2026-10-11)
+		if (message.endsWith("Some whistle charges for you!"))
+		{
+			return forget(TravelItem.QUETZAL_WHISTLE);
+		}
 		if (message.equals("The talisman is full."))
 		{
 			return reported(TravelItem.XERICS_TALISMAN, FULL);
@@ -213,6 +220,27 @@ public class ItemChargeTracker
 			return 0;
 		}
 		return text.equals("one") ? 1 : Integer.parseInt(text.replace(",", ""));
+	}
+
+	/** The count isn't known any more (recharged without a number). */
+	private boolean forget(TravelItem item)
+	{
+		if (!charges.containsKey(item))
+		{
+			return false;
+		}
+		final Map<TravelItem, Integer> next = new EnumMap<>(TravelItem.class);
+		next.putAll(charges);
+		next.remove(item);
+		charges = Collections.unmodifiableMap(next);
+		log.debug("{} charges: unknown (recharged)", item);
+		final Map<TravelItem, Integer> saved = new EnumMap<>(next);
+		SwingUtilities.invokeLater(() ->
+		{
+			settings.getAccount().setItemCharges(saved);
+			settings.saveAccount(false);
+		});
+		return true;
 	}
 
 	/** A count the game reported: exact, and any teleport waiting to be counted for this item already is. */
