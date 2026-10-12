@@ -23,8 +23,8 @@ import net.runelite.client.util.Text;
 /**
  * Charges of teleport items the player charges themselves, which the game only shows in chat: the quetzal
  * whistle, Xeric's talisman and the pendant of Ates. Set from their Check and charging messages (wiki
- * transcripts) and the game's own "...charges remaining" after a teleport, and otherwise counted down by one when a
- * teleport click is followed by the player being moved (picking a destination can take a while; a cancelled
+ * transcripts) and the whistle's own "...charges remaining" after each flight. Xeric's talisman, which may not say,
+ * is counted down by one when a teleport click is followed by the player being moved (picking a destination can take a while; a cancelled
  * teleport or a closed menu uses nothing). A count from the game wins, so a use is never counted twice. Saved per account. Kharedst's memoirs / Book of the dead have no known messages, so aren't
  * tracked.
  *
@@ -158,9 +158,11 @@ public class ItemChargeTracker
 		}
 		for (TravelItem item : TRACKED)
 		{
-			if (item == TravelItem.PENDANT_OF_ATES)
+			// The pendant's varbit says when a charge is really used; the whistle says so in chat after every flight
+			// ("Your quetzal whistle has 19 charges remaining."). Guessing from movement as well counted a Renu flight
+			// after the whistle menu was opened and closed (Sean, 2026-10-11)
+			if (item == TravelItem.PENDANT_OF_ATES || item == TravelItem.QUETZAL_WHISTLE)
 			{
-				// Its varbit says when the charge is really used (a cancelled teleport uses none)
 				continue;
 			}
 			final Integer left = charges.get(item);
