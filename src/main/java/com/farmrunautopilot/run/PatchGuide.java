@@ -211,6 +211,11 @@ class PatchGuide
 				p.done = true;
 				continue;
 			}
+			// Seen done stays done (its tick is locked), so a stop passed again after going back needs nothing
+			if (p.done)
+			{
+				continue;
+			}
 			final PatchPrediction live = patchTracker.predict(patch);
 			// Only trust a reading taken since arriving: an estimate from the last visit can say a tree is
 			// still growing when it's ready, which would skip the patch

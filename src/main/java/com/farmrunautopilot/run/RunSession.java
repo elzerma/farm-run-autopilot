@@ -82,13 +82,12 @@ public class RunSession
 	/** At a bank visit after the current stop, restocking for the next part of the run. */
 	private boolean banking;
 	/** The bank visit after the current stop is done (or skipped). */
-	private boolean banked;
+	/** Bank visits done, by the stop they follow: seen done or ticked by hand. */
+	private final Set<Integer> banksDone = new HashSet<>();
+	/** Bank visits ticked by hand, so they can be unticked. */
+	private final Set<Integer> manualBanks = new HashSet<>();
 	/** Travel steps of the current stop ticked by hand (they can be unticked), by index in its steps. */
 	private final Set<Integer> manualSteps = new HashSet<>();
-	/** The last stop ticked by hand, while it can still be unticked; or null. */
-	private SkippedStop skippedStop;
-	/** The stop whose bank visit was ticked by hand, or -1. */
-	private int skippedBankAfter = -1;
 	/**
 	 * An unplanned bank visit, because an item the plan counted on has gone missing (Sean): after the current stop,
 	 * or before finishing it when {@link #extraNow}. Null when there's none.
@@ -201,12 +200,11 @@ public class RunSession
 		legs.clear();
 		lastRun = null;
 		banking = false;
-		banked = false;
+		banksDone.clear();
+		manualBanks.clear();
 		vaultChecked = false;
 		legRecorded = false;
 		manualSteps.clear();
-		skippedStop = null;
-		skippedBankAfter = -1;
 		clearExtraBank();
 		declinedExtra = false;
 		final Player player = client.getLocalPlayer();
@@ -510,42 +508,49 @@ public class RunSession
 		}
 		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
 		log.debug("Stop ticked: {}", stop.getLocation().getDisplayName());
-		final boolean wasArrived = navigator.isArrived();
-		if (!wasArrived)
+		if (!navigator.isArrived())
 		{
 			navigator.markArrived(System.currentTimeMillis());
 			legRecorded = true;
 		}
-		final boolean vaultWas = vaultChecked;
 		if (stop.getLocation() == Location.FARMING_GUILD)
 		{
 			vaultChecked = true;
 		}
-		skippedStop = new SkippedStop(index, patches.skipAll(patchesAt(plan, stop.getLocation())), wasArrived,
-			vaultWas);
+		patches.skipAll(patchesAt(plan, stop.getLocation()));
 		evaluate();
 	}
 
-	/** Back to a stop ticked by hand: its skipped patches are to do again. */
+	/**
+	 * A stop ticked by hand is unticked: its patches skipped by hand are to do again, and if it's behind the player
+	 * the guide goes back to it. Any number of stops can be unticked, all the way back to the start (Sean); what
+	 * the plugin saw done stays done, so the way forward again passes it.
+	 */
 	private void untickStop(int index)
 	{
-		final SkippedStop skipped = skippedStop;
-		if (skipped == null || skipped.index != index || !canGoBackTo(index))
+		final Location location = plan.getRoute().getStops().get(index).getLocation();
+		boolean any = false;
+		for (Patch patch : patchesAt(plan, location))
+		{
+			if (patches.isSkipped(patch))
+			{
+				patches.unskip(patch);
+				any = true;
+			}
+		}
+		if (!any)
 		{
 			return;
 		}
-		log.debug("Stop unticked: {}", plan.getRoute().getStops().get(index).getLocation().getDisplayName());
-		skippedStop = null;
-		backTo(index);
-		for (Patch patch : skipped.patches)
+		log.debug("Stop unticked: {}", location.getDisplayName());
+		if (location == Location.FARMING_GUILD)
 		{
-			patches.unskip(patch);
+			vaultChecked = false;
 		}
-		if (skipped.wasArrived)
+		if (index <= stopIndex)
 		{
-			navigator.markArrived(System.currentTimeMillis());
+			backTo(index);
 		}
-		vaultChecked = skipped.vaultChecked;
 		evaluate();
 	}
 
@@ -557,25 +562,55 @@ public class RunSession
 			return;
 		}
 		log.debug("Bank visit ticked by hand");
-		skippedBankAfter = afterStop;
-		banked = true;
+		banksDone.add(afterStop);
+		manualBanks.add(afterStop);
 		banking = false;
 		evaluate();
 	}
 
-	/** Back to a bank visit ticked by hand. */
+	/** A bank visit ticked by hand is unticked: to do again, and if it's behind the player, back to it. */
 	private void untickBank(int afterStop)
 	{
-		if (skippedBankAfter != afterStop || stopIndex != afterStop + 1)
+		if (!manualBanks.remove(afterStop))
 		{
 			return;
 		}
 		log.debug("Bank visit unticked");
-		skippedBankAfter = -1;
-		backTo(afterStop);
-		// The stop itself was finished: straight to its bank visit
-		navigator.markArrived(System.currentTimeMillis());
+		banksDone.remove(afterStop);
+		if (afterStop < stopIndex)
+		{
+			backTo(afterStop);
+			// The stop itself was finished: straight to its bank visit
+			navigator.markArrived(System.currentTimeMillis());
+		}
 		evaluate();
+	}
+
+	/** Every patch at this stop is done (seen done or ticked by hand), so there's nothing to go there for. */
+	private boolean stopDone(int index)
+	{
+		final List<Patch> here = patchesAt(plan, plan.getRoute().getStops().get(index).getLocation());
+		for (Patch patch : here)
+		{
+			if (!patches.isDone(patch))
+			{
+				return false;
+			}
+		}
+		return !here.isEmpty();
+	}
+
+	/** Some patch at this stop was ticked by hand, so the stop can be unticked. */
+	private boolean stopTickedByHand(int index)
+	{
+		for (Patch patch : patchesAt(plan, plan.getRoute().getStops().get(index).getLocation()))
+		{
+			if (patches.isSkipped(patch))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -622,11 +657,6 @@ public class RunSession
 	{
 		log.debug("Unplanned bank visit ticked by hand");
 		declinedExtra = true;
-		if (!extraNow)
-		{
-			// It stood in the after-stop place: the stop is finished, so on to the next
-			banked = true;
-		}
 		clearExtraBank();
 		banking = false;
 		evaluate();
@@ -741,33 +771,16 @@ public class RunSession
 		return String.join(", ", names);
 	}
 
-	/** A stop ticked by hand can be gone back to while it's current (at its bank) or the next one is. */
-	private boolean canGoBackTo(int index)
-	{
-		return index == stopIndex || index == stopIndex - 1;
-	}
-
-	/** Make an earlier (or the current) stop current again, its bank visit not done. Not timed. */
+	/** Make an earlier (or the current) stop current again. Not timed. */
 	private void backTo(int index)
 	{
 		stopIndex = index;
 		banking = false;
-		banked = false;
+		clearExtraBank();
 		manualSteps.clear();
 		navigator.nextStop();
 		patches.clearCurrent();
 		legRecorded = true;
-	}
-
-	/** A stop ticked by hand, to bring back if it's unticked. */
-	@lombok.Value
-	private static class SkippedStop
-	{
-		int index;
-		/** The patches the tick skipped (not those already done). */
-		List<Patch> patches;
-		boolean wasArrived;
-		boolean vaultChecked;
 	}
 
 	public void onChatMessage(String message)
@@ -839,6 +852,12 @@ public class RunSession
 				manualSteps.clear();
 				legRecorded = true;
 			}
+			// Already done, e.g. passed again after going back to an earlier stop: nothing to travel there for
+			if (!navigator.isArrived() && stopDone(stopIndex))
+			{
+				navigator.markArrived(now);
+				legRecorded = true;
+			}
 			instruction = navigator.travel(stop, here, now);
 			if (instruction != null)
 			{
@@ -870,7 +889,8 @@ public class RunSession
 			}
 			// A bank visit after this stop: the rest of the run didn't fit in one inventory, or an item went missing
 			final BankStop bank = bankAfterStop();
-			if (bank != null && !banked)
+			// A planned visit already done (or ticked) stays done, e.g. when the guide goes back past it
+			if (bank != null && (bank == extraBank || !banksDone.contains(stopIndex)))
 			{
 				// Ready when the next part of the run, as planned at the start, is carried
 				if (missingCount(bank.getSupplies().counted(holdingsTracker.getHoldings()), false) > 0)
@@ -886,10 +906,10 @@ public class RunSession
 					break;
 				}
 				log.debug("Bank visit done after {}", stop.getLocation().getDisplayName());
-				banked = true;
 				banking = false;
 				if (extraBank == null)
 				{
+					banksDone.add(stopIndex);
 					// A planned visit starts a new part: missing items count again
 					declinedExtra = false;
 				}
@@ -909,7 +929,6 @@ public class RunSession
 			{
 				legRecorded = false;
 			}
-			banked = false;
 			legStartedAt = now;
 		}
 
@@ -1022,14 +1041,15 @@ public class RunSession
 			final int i = (Integer) row;
 			final RouteStop stop = stops.get(i);
 			// At a bank visit before finishing the stop, the stop waits; after it, the stop is done
+			// Stops ahead can be done already too, after going back to an earlier one
 			final RunView.StopStatus status = i < stopIndex || (i == stopIndex && banking && !extraNow)
-				? RunView.StopStatus.DONE
+				|| (i > stopIndex && stopDone(i)) ? RunView.StopStatus.DONE
 				: i == stopIndex && !banking ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
 			stopViews.add(new RunView.Stop(stop.getLocation().getDisplayName(), stop.describeTravel(), status,
 				status == RunView.StopStatus.CURRENT ? instruction : null,
 				plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList()),
 				status == RunView.StopStatus.CURRENT ? steps(stop) : Collections.emptyList(), false,
-				skippedStop != null && skippedStop.getIndex() == i && canGoBackTo(i)));
+				status == RunView.StopStatus.DONE && stopTickedByHand(i)));
 		}
 		if (instruction == null)
 		{
@@ -1055,14 +1075,14 @@ public class RunSession
 		}
 		else
 		{
-			status = i < stopIndex || (i == stopIndex && banked) ? RunView.StopStatus.DONE
+			status = banksDone.contains(i) ? RunView.StopStatus.DONE
 				: i == stopIndex && banking && extraBank == null ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
 		}
 		final boolean current = status == RunView.StopStatus.CURRENT;
 		return new RunView.Stop(bank.title(), bank == extraBank ? "Get what's missing" : "Restock for the rest of the run",
 			status, current ? instruction : null, Collections.emptyList(),
 			current ? bankSteps(bank) : Collections.emptyList(), true,
-			bank != extraBank && skippedBankAfter == i && stopIndex == i + 1);
+			bank != extraBank && manualBanks.contains(i));
 	}
 
 	/** What the bank visit says to deposit, by name, for the log. */
@@ -1340,7 +1360,7 @@ public class RunSession
 	{
 		if ((stage == RunView.State.RUNNING || stage == RunView.State.ARMED) && plan != null)
 		{
-			return (extraBank != null && banking ? extraBank.getSupplies() : partFor(plan, stopIndex, banking || banked))
+			return (extraBank != null && banking ? extraBank.getSupplies() : partFor(plan, stopIndex, banking || banksDone.contains(stopIndex)))
 				.counted(holdingsTracker.getHoldings());
 		}
 		return runService.getSupplies();
