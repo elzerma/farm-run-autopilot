@@ -200,8 +200,10 @@ class TravelPage extends SetupPanel
 			final Departure chosenHow = config.getTravelHow().get(location);
 			final Way selected = chosen != null ? new Way(chosen, chosenHow != null ? chosenHow : Departure.DIRECT)
 				: null;
+			final String way = selected != null ? wayLabel(selected, location) : auto;
 			final ExpandableRow row = new ExpandableRow(location.getDisplayName(),
-				selected != null ? wayLabel(selected, location) : auto != null ? "Auto: " + auto : "Auto",
+				way != null ? shortWay(way) : "No way yet",
+				selected != null ? way : way != null ? "Auto: " + way : "Auto: no unlocked way here",
 				isOverridden(config, location), CONTROL_WIDTH, openRows.contains(location),
 				open ->
 				{
@@ -254,6 +256,24 @@ class TravelPage extends SetupPanel
 			}
 		}
 		return s;
+	}
+
+	/**
+	 * A way short enough to share a line with the stop's name (Sean): "Falador Teleport, then rocks or gate into
+	 * Taverley (runes)" is "Falador Teleport", "Quetzal whistle (Kastori)" is "Quetzal whistle".
+	 */
+	static String shortWay(String way)
+	{
+		int end = way.length();
+		for (String cut : new String[]{", ", " (", " - "})
+		{
+			final int at = way.indexOf(cut);
+			if (at > 0 && at < end)
+			{
+				end = at;
+			}
+		}
+		return way.substring(0, end);
 	}
 
 	/** Every way a method can be used: directly, and through the house where the house has it. */

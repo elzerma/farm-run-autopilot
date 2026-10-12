@@ -15,44 +15,47 @@ import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
 /**
- * A one-line summary (e.g. "Catherby: Auto") that opens to show its controls when clicked. An orange
- * "Override" tag marks a row that differs from the defaults.
+ * One line, e.g. "Taverley" and "Falador Teleport", that opens to show its controls when clicked (Sean: one line
+ * per location, the full way on hover and when opened). A yellow bar down its edge marks a row changed from the
+ * default.
  */
 class ExpandableRow extends JPanel
 {
 	private static final Color OVERRIDE = new Color(0xE8, 0xC5, 0x3A);
 
 	private final JPanel content = new JPanel();
-	private final JLabel header = new JLabel();
-	/** The clickable summary line: a rounded card with a chevron (Sprint 7 facelift). */
-	private final Card headCard = new Card(new BorderLayout()).hoverable();
-	private final String name;
-	private final String summary;
-	private final boolean overridden;
-	private final int width;
+	private final JLabel name = new JLabel();
+	/** The clickable line: a rounded card with a chevron (Sprint 7 facelift). */
+	private final Card headCard = new Card(new BorderLayout(8, 0)).hoverable();
 	private boolean expanded;
 
 	/**
+	 * @param name e.g. "Taverley"
+	 * @param shortSummary what it's set to, short enough to share the line, e.g. "Falador Teleport"
+	 * @param fullSummary the whole of it, for the tooltip
 	 * @param expanded open to start with
 	 * @param onToggle told the new state, so it can be kept across redraws
 	 */
-	ExpandableRow(String name, String summary, boolean overridden, int width, boolean expanded,
-		Consumer<Boolean> onToggle)
+	ExpandableRow(String name, String shortSummary, String fullSummary, boolean overridden, int width,
+		boolean expanded, Consumer<Boolean> onToggle)
 	{
-		this.name = name;
-		this.summary = summary;
-		this.overridden = overridden;
-		this.width = width;
 		setLayout(new BorderLayout());
 		setAlignmentX(LEFT_ALIGNMENT);
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
-		setBorder(new EmptyBorder(0, 0, 3, 0));
+		setBorder(new EmptyBorder(0, 0, 4, 0));
 
-		headCard.setBorder(new EmptyBorder(4, 8, 4, 8));
-		headCard.add(header, BorderLayout.CENTER);
-		header.setIconTextGap(6);
-		header.setFont(FontManager.getRunescapeSmallFont());
-		header.setForeground(ColorScheme.TEXT_COLOR);
+		headCard.accent(overridden ? OVERRIDE : null);
+		this.name.setText(UiText.wrap(name, width / 2 - 20));
+		this.name.setIconTextGap(6);
+		this.name.setFont(FontManager.getRunescapeSmallFont());
+		this.name.setForeground(Color.WHITE);
+		final JLabel summary = new JLabel(UiText.wrap(shortSummary, width / 2 - 10));
+		summary.setFont(FontManager.getRunescapeSmallFont());
+		summary.setForeground(Color.WHITE);
+		headCard.add(this.name, BorderLayout.CENTER);
+		headCard.add(summary, BorderLayout.EAST);
+		headCard.setToolTipText(UiText.wrap(name + ": " + fullSummary
+			+ (overridden ? " (changed from Auto)" : ""), 250));
 		headCard.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		headCard.addMouseListener(new MouseAdapter()
 		{
@@ -82,11 +85,7 @@ class ExpandableRow extends JPanel
 	private void setExpanded(boolean expanded)
 	{
 		this.expanded = expanded;
-		final String tag = overridden
-			? " <font color='#" + Integer.toHexString(OVERRIDE.getRGB() & 0xFFFFFF) + "'>Override</font>" : "";
-		header.setText(UiText.wrap(name + ": " + summary, width - 80)
-			.replace("</body>", tag + "</body>"));
-		header.setIcon(Card.chevron(expanded, ColorScheme.LIGHT_GRAY_COLOR));
+		name.setIcon(Card.chevron(expanded, Color.WHITE));
 		content.setVisible(expanded);
 		revalidate();
 	}
