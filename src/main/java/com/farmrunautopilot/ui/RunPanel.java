@@ -70,6 +70,8 @@ class RunPanel extends JPanel
 	private static final int TEXT_WIDTH = PluginPanel.PANEL_WIDTH - 40;
 	/** The run clock, big enough to read at a glance (Sean). */
 	private static final float CLOCK_FONT_SIZE = 24f;
+	/** Tooltips wrap at this width (in the 13/10 CSS pixels Swing's HTML uses), about the sidebar's. */
+	private static final int TOOLTIP_WIDTH = 190;
 	private static final Color CARRIED = new Color(0x4C, 0xC1, 0x52);
 	private static final Color IN_STORAGE = new Color(0xE8, 0xC5, 0x3A);
 	/** Run type labels short enough for three across the sidebar, in {@link PatchType} order. */
@@ -476,6 +478,18 @@ class RunPanel extends JPanel
 		build.setAlignmentX(LEFT_ALIGNMENT);
 		build.setMaximumSize(new Dimension(Integer.MAX_VALUE, build.getPreferredSize().height));
 		add(Style.primary(build));
+		// How the last run went, one quiet line under the button; the best times are its tooltip (Sean)
+		final String times = view.getLastRun() != null ? view.getLastRun() : view.getBestTimes();
+		if (times != null)
+		{
+			final JLabel line = note(times);
+			line.setBorder(new EmptyBorder(4, 0, 0, 0));
+			if (view.getLastRun() != null && view.getBestTimes() != null)
+			{
+				tipped(line, view.getBestTimes());
+			}
+			add(line);
+		}
 
 		// No route summary until the run is built: only the types to include (Sean)
 		addRunTypeStatus(plan.getSelection());
@@ -487,21 +501,12 @@ class RunPanel extends JPanel
 		fillPatchTimers(patchTimers);
 		add(left(patchTimers));
 
-		if (view.getLastRun() != null || view.getBestTimes() != null)
-		{
-			add(heading("Times"));
-		}
-		if (view.getLastRun() != null)
-		{
-			add(note(view.getLastRun()));
-		}
-		if (view.getBestTimes() != null)
-		{
-			add(note(view.getBestTimes()));
-		}
 	}
 
-	/** Every usable, selected patch of each ticked type, soonest ready first. */
+	/**
+	 * Every usable, selected patch of each ticked type, soonest ready first: one line each (name, then its state),
+	 * under a heading per type that opens and closes and stays that way (Sean: 22 two-line cards was too long).
+	 */
 	private void fillPatchTimers(JPanel panel)
 	{
 		panel.removeAll();
@@ -532,14 +537,34 @@ class RunPanel extends JPanel
 			// Due patches first, then by when they'll be ready
 			patches.sort(Comparator.comparingLong(p -> RunSelector.isDue(predictions.get(p))
 				? Long.MIN_VALUE : predictions.get(p).getDoneAt()));
-			final JLabel title = new JLabel(type.getDisplayName() + "s");
-			title.setForeground(Color.WHITE);
-			title.setFont(FontManager.getRunescapeSmallFont());
-			title.setBorder(new EmptyBorder(any ? 6 : 0, 0, 2, 0));
-			panel.add(left(title));
+			int due = 0;
 			for (Patch patch : patches)
 			{
-				panel.add(patchTimer(patch, predictions.get(patch), now));
+				if (RunSelector.isDue(predictions.get(patch)))
+				{
+					due++;
+				}
+			}
+			final String key = "Patch timers: " + type.name();
+			final boolean open = settings.isSectionOpen(key);
+			panel.add(timerGroupHeader(type.getDisplayName() + "s", due + " of " + patches.size() + " due", open, () ->
+			{
+				settings.setSectionOpen(key, !open);
+				fillPatchTimers(panel);
+			}));
+			if (open)
+			{
+				final Card rows = new Card(null);
+				rows.setLayout(new BoxLayout(rows, BoxLayout.Y_AXIS));
+				for (Patch patch : patches)
+				{
+					rows.add(patchTimer(patch, predictions.get(patch), now));
+				}
+				final JPanel wrapper = fullWidth();
+				wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
+				wrapper.setBorder(new EmptyBorder(0, 0, 6, 0));
+				wrapper.add(rows, BorderLayout.CENTER);
+				panel.add(left(wrapper));
 			}
 			any = true;
 		}
@@ -547,25 +572,62 @@ class RunPanel extends JPanel
 		{
 			panel.add(note("No patches selected"));
 		}
+		panel.revalidate();
+		panel.repaint();
 	}
 
-	private static JComponent patchTimer(Patch patch, PatchPrediction prediction, long now)
+	/** A patch type's heading in the timers: a card with a chevron, the type and how many are due. */
+	private static JComponent timerGroupHeader(String title, String summary, boolean open, Runnable toggle)
 	{
-		final Card cell = new Card(new BorderLayout());
-		final JLabel name = new JLabel(UiText.wrap(patch.getLocation().getDisplayName(), TEXT_WIDTH - 20));
-		name.setForeground(ColorScheme.TEXT_COLOR);
-		name.setFont(FontManager.getRunescapeSmallFont());
-		final JLabel status = new JLabel(UiText.wrap(PatchStatusText.describe(prediction, now), TEXT_WIDTH - 20));
-		status.setForeground(RunSelector.isDue(prediction) ? CARRIED : Color.WHITE);
-		status.setFont(FontManager.getRunescapeSmallFont());
-		cell.add(name, BorderLayout.NORTH);
-		cell.add(status, BorderLayout.CENTER);
-
-		final JPanel wrapper = new JPanel(new BorderLayout());
+		final Card head = new Card(new BorderLayout(8, 0)).hoverable();
+		final JLabel name = new JLabel(title, Card.chevron(open, Color.WHITE), JLabel.LEFT);
+		name.setIconTextGap(8);
+		name.setForeground(Color.WHITE);
+		name.setFont(FontManager.getRunescapeBoldFont());
+		final JLabel count = new JLabel(summary);
+		count.setForeground(Color.WHITE);
+		count.setFont(FontManager.getRunescapeSmallFont());
+		head.add(name, BorderLayout.CENTER);
+		head.add(count, BorderLayout.EAST);
+		head.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		head.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				toggle.run();
+			}
+		});
+		final JPanel wrapper = fullWidth();
 		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		wrapper.setBorder(new EmptyBorder(0, 0, 4, 0));
-		wrapper.add(cell, BorderLayout.CENTER);
+		wrapper.add(head, BorderLayout.CENTER);
 		return left(wrapper);
+	}
+
+	/** One patch on one line: where on the left, its state on the right (green when due); crop and all on hover. */
+	private static JComponent patchTimer(Patch patch, PatchPrediction prediction, long now)
+	{
+		final String described = PatchStatusText.describe(prediction, now);
+		// "Maple - check health": the state on the line, the whole thing in the tooltip
+		final int dash = described.indexOf(" - ");
+		final String state = dash >= 0 ? described.substring(dash + 3) : described;
+		final JPanel row = new JPanel(new BorderLayout(8, 0));
+		row.setOpaque(false);
+		row.setBorder(new EmptyBorder(2, 0, 2, 0));
+		final JLabel name = new JLabel(UiText.wrap(patch.getLocation().getDisplayName(), TEXT_WIDTH - 110));
+		name.setForeground(Color.WHITE);
+		name.setFont(FontManager.getRunescapeSmallFont());
+		name.setVerticalAlignment(JLabel.TOP);
+		final JLabel status = new JLabel(state);
+		status.setForeground(RunSelector.isDue(prediction) ? CARRIED : Color.WHITE);
+		status.setFont(FontManager.getRunescapeSmallFont());
+		status.setVerticalAlignment(JLabel.TOP);
+		row.add(name, BorderLayout.CENTER);
+		row.add(status, BorderLayout.EAST);
+		row.setToolTipText(described);
+		row.setAlignmentX(LEFT_ALIGNMENT);
+		return row;
 	}
 
 	/** Gathering supplies: cancel, or start without everything. */
@@ -588,11 +650,26 @@ class RunPanel extends JPanel
 		// The next step (open a bank, the Farm run tab...) is under the player only: said once (Sean)
 	}
 
-	/** Hover text for a stop: the plan for each patch there. */
+	/** Hover text for a stop: the plan for each patch there, wrapped so it stays on screen (Sean: it ran off). */
 	private static String objectivesTooltip(List<String> objectives)
 	{
-		return objectives == null || objectives.isEmpty() ? null
-			: "<html>" + String.join("<br>", escapeAll(objectives)) + "</html>";
+		return objectivesTooltip(null, objectives);
+	}
+
+	/** The same, after a first line such as "About 25 s". */
+	private static String objectivesTooltip(String first, List<String> objectives)
+	{
+		final List<String> lines = new ArrayList<>();
+		if (first != null)
+		{
+			lines.add(first);
+		}
+		if (objectives != null)
+		{
+			lines.addAll(objectives);
+		}
+		return lines.isEmpty() ? null : "<html><body style='width:" + TOOLTIP_WIDTH + "px'>"
+			+ String.join("<br>", escapeAll(lines)) + "</body></html>";
 	}
 
 	private void addRunning(RunView view)
@@ -1069,15 +1146,16 @@ class RunPanel extends JPanel
 			name.setForeground(Color.WHITE);
 			name.setFont(FontManager.getRunescapeBoldFont());
 			final boolean here = index == 0 && controls.view().isAtFirstStop();
-			final JLabel travel = new JLabel(UiText.wrap(here ? "You're here" : stop.describeTravel()
-				+ " - about " + legTime(stop.getLegSeconds()), TEXT_WIDTH - 20));
+			// The leg time is in the tooltip, above the plan (Sean: fewer three-line rows)
+			final JLabel travel = new JLabel(UiText.wrap(here ? "You're here" : stop.describeTravel(), TEXT_WIDTH - 20));
 			travel.setForeground(stop.isNeedsSupplies() ? IN_STORAGE : Color.WHITE);
 			travel.setFont(FontManager.getRunescapeSmallFont());
 
 			cell.add(name, BorderLayout.NORTH);
 			cell.add(travel, BorderLayout.CENTER);
 			// JList shows the renderer's tooltip for the hovered row
-			wrapper.setToolTipText(objectivesTooltip(plan.getObjectives().get(stop.getLocation())));
+			wrapper.setToolTipText(objectivesTooltip(here ? null : "About " + legTime(stop.getLegSeconds()),
+				plan.getObjectives().get(stop.getLocation())));
 			return wrapper;
 		}
 	}
