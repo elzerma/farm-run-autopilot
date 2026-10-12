@@ -247,6 +247,8 @@ missing from his vision. Turn every chain or behaviour he names into a scenario 
 - Checks: every setting does what its label says (a short list).
 
 **Sprint 7: UI facelift** (Sean, 2026-10-12: "a LOT to look at"). Before the release, so its screenshots show it.
+- **Say each thing in one place** (Sean, 2026-10-12, a rule for the whole UI): if the overlay, a tooltip or another tab
+  already says it, the panel doesn't repeat it. E.g. the next step is under the player only, not also on the Run tab.
 - Explanations move into hover tooltips: no note lines under checkboxes and dropdowns; a control's label says what
   it is, its tooltip says why and what it does. Only warnings that need action stay visible.
 - Shorter labels and summaries, the same spacing and fonts everywhere, fewer headings; sections closed by

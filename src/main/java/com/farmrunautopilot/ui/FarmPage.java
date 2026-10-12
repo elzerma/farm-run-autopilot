@@ -240,7 +240,6 @@ class FarmPage extends SetupPanel
 					}
 				})));
 		}
-		s.help("Single patches can differ: Advanced > Per-patch protection.");
 		return s;
 	}
 

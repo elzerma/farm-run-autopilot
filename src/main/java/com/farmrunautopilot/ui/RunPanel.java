@@ -235,7 +235,7 @@ class RunPanel extends JPanel
 			return;
 		}
 		addBuilding();
-		add(heading(summary(supplies)));
+		add(heading("This run"));
 		if (settings.editRunConfig().isSupplyFullRun())
 		{
 			final JLabel full = tipped(note("Counting every patch"), "Full run is on in Account > Testing & debug");
@@ -381,16 +381,10 @@ class RunPanel extends JPanel
 		{
 			return;
 		}
-		final JLabel label = note("Check your unlocks: " + review.size() + " not seen yet"
-			+ " (click to open)");
+		// Which ones, and how they get ticked, is in Account > Unlocks: only the count here (said once, Sean)
+		final JLabel label = tipped(note("Check your unlocks: " + review.size() + " not seen yet"),
+			"Click to open Account > Unlocks");
 		label.setForeground(ColorScheme.BRAND_ORANGE);
-		final List<String> names = new ArrayList<>();
-		for (Unlock unlock : review)
-		{
-			names.add(unlock.getDescription());
-		}
-		label.setToolTipText("<html>Spirit trees and the Weiss fire tick when you pass them; tick the rest by hand:<br>" + String.join("<br>", escapeAll(names))
-			+ "</html>");
 		label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		label.addMouseListener(new MouseAdapter()
 		{
@@ -435,7 +429,8 @@ class RunPanel extends JPanel
 		build.setMaximumSize(new Dimension(Integer.MAX_VALUE, build.getPreferredSize().height));
 		add(build);
 
-		add(heading(summary(plan.getSupplies())));
+		// The counts are on the type rows under it (Sean: say each thing in one place)
+		add(heading("This run"));
 		addRunTypeStatus(plan.getSelection());
 
 		add(heading("Patch timers"));
@@ -545,16 +540,7 @@ class RunPanel extends JPanel
 		buttons.add(cancel);
 		buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, buttons.getPreferredSize().height));
 		add(left(buttons));
-		if (!plan.getRoute().getStops().isEmpty())
-		{
-			// The next step, as under the player: open a bank, open the Farm run tab, take what it marks
-			final String step = controls.view().getInstruction();
-			final JLabel ready = tipped(note(step != null ? step : "Get what the Farm run bank tab shows"),
-				"The run starts itself once you have everything; the timer starts when you teleport or click your "
-					+ "first patch.");
-			ready.setForeground(IN_STORAGE);
-			add(ready);
-		}
+		// The next step (open a bank, the Farm run tab...) is under the player only: said once (Sean)
 	}
 
 	/** Hover text for a stop: the plan for each patch there. */
@@ -657,37 +643,21 @@ class RunPanel extends JPanel
 
 		if (current && !stop.getSteps().isEmpty())
 		{
-			// Every step of this stop, done ones struck through, the one in hand marked. What to do now goes with that
-			// step: instead of it when it only says the same thing, otherwise just under it (Sean)
+			// Every step of this stop, done ones struck through, the one in hand marked. The full instruction for it
+			// is under the player, so it isn't repeated here (Sean: say each thing in one place)
 			final JPanel steps = new JPanel();
 			steps.setLayout(new BoxLayout(steps, BoxLayout.Y_AXIS));
 			steps.setOpaque(false);
-			final String instruction = stop.getInstruction();
 			for (RunView.Step step : stop.getSteps())
 			{
-				final boolean inHand = step.getStatus() == RunView.StopStatus.CURRENT && instruction != null;
-				if (inHand && instruction.startsWith(step.getText()))
-				{
-					steps.add(stepLabel(new RunView.Step(instruction, step.getStatus(), step.isSub())));
-					continue;
-				}
 				steps.add(stepLabel(step));
-				if (inHand)
-				{
-					final JLabel now = new JLabel(UiText.wrap(instruction, TEXT_WIDTH - 40));
-					now.setForeground(IN_STORAGE);
-					now.setFont(FontManager.getRunescapeSmallFont());
-					now.setBorder(new EmptyBorder(0, 16, 2, 0));
-					steps.add(now);
-				}
 			}
 			cell.add(steps, BorderLayout.CENTER);
 		}
-		else if (stop.getStatus() != RunView.StopStatus.DONE)
+		else if (!current && stop.getStatus() != RunView.StopStatus.DONE)
 		{
-			final JLabel detail = new JLabel(UiText.wrap(current && stop.getInstruction() != null
-				? stop.getInstruction() : stop.getTravel(), TEXT_WIDTH - 20));
-			detail.setForeground(current ? IN_STORAGE : ColorScheme.LIGHT_GRAY_COLOR);
+			final JLabel detail = new JLabel(UiText.wrap(stop.getTravel(), TEXT_WIDTH - 20));
+			detail.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 			detail.setFont(FontManager.getRunescapeSmallFont());
 			cell.add(detail, BorderLayout.CENTER);
 		}
@@ -847,24 +817,6 @@ class RunPanel extends JPanel
 		row.add(button, BorderLayout.EAST);
 		row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
 		return left(row);
-	}
-
-	private String summary(SupplyPlan supplies)
-	{
-		if (supplies.patchTotal() == 0)
-		{
-			return plan.getSelection().getSkippedTypes().isEmpty() ? "No patches selected" : "Nothing is due yet";
-		}
-		final List<String> parts = new ArrayList<>();
-		for (PatchType type : PatchType.values())
-		{
-			final int n = supplies.getPatchCounts().getOrDefault(type, 0);
-			if (n > 0)
-			{
-				parts.add(n + " " + type.getDisplayName().toLowerCase() + (n == 1 ? "" : "s"));
-			}
-		}
-		return "This run: " + String.join(", ", parts);
 	}
 
 	// Route

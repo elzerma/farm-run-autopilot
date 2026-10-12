@@ -237,11 +237,6 @@ class AccountPage extends SetupPanel
 			{
 				addDetected("Auto-weed", "On", "Tithe Farm Auto-weed: no rake needed for weeds");
 			}
-			final long scanned = settings.editAccount().getPoh().getLastDetected();
-			addDetected("House", !settings.editAccount().isAutoDetectHouse() ? "Detection off (beta)"
-					: scanned > 0 ? "Scanned " + DateFormat.getDateInstance(DateFormat.SHORT)
-					.format(new Date(scanned * 1000)) : "Not scanned yet",
-				"Enter your house to detect its furniture; Rescan is in My house");
 		}
 		detected.revalidate();
 		detected.repaint();
@@ -380,8 +375,7 @@ class AccountPage extends SetupPanel
 		final AccessSnapshot access = accessChecker.getSnapshot();
 		final List<Unlock> review = AccessChecker.toReview(settings.editRunConfig(), account);
 		final int ticked = account.getManualUnlocks().size();
-		final CollapsibleSection s = section(UNLOCKS, !review.isEmpty() ? review.size() + " to check"
-			: ticked == 0 ? null : ticked + " ticked");
+		final CollapsibleSection s = section(UNLOCKS, ticked == 0 ? null : ticked + " ticked");
 		s.help("Ticked for you where the game shows it, or once you pass a planted spirit tree or the Weiss "
 			+ "fire. Tick the rest that you have; the plugin can't "
 			+ "see them until you do.");
