@@ -238,7 +238,7 @@ class RunPanel extends JPanel
 		add(heading(summary(supplies)));
 		if (settings.editRunConfig().isSupplyFullRun())
 		{
-			final JLabel full = note("Counting every patch (full run is on in Account > Testing & debug)");
+			final JLabel full = tipped(note("Counting every patch"), "Full run is on in Account > Testing & debug");
 			full.setForeground(ColorScheme.BRAND_ORANGE);
 			add(full);
 		}
@@ -246,7 +246,7 @@ class RunPanel extends JPanel
 		if (!supplies.getNotDue().isEmpty())
 		{
 			final JLabel notDue = note(supplies.getNotDue().size() + " patch"
-				+ (supplies.getNotDue().size() == 1 ? " isn't" : "es aren't") + " due yet (hover for details)");
+				+ (supplies.getNotDue().size() == 1 ? " isn't" : "es aren't") + " due yet");
 			notDue.setToolTipText("<html>" + String.join("<br>", escapeAll(supplies.getNotDue())) + "</html>");
 			add(notDue);
 		}
@@ -270,7 +270,8 @@ class RunPanel extends JPanel
 	{
 		if (settings.editRunConfig().isUseSeedVault() && !controls.seedVaultSeen())
 		{
-			add(note("Open your seed vault at the Farming Guild once, so seeds and saplings in it count."));
+			add(tipped(note("Open your seed vault once"),
+				"At the Farming Guild, so the seeds and saplings in it count"));
 		}
 	}
 
