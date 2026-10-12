@@ -23,8 +23,9 @@ import net.runelite.client.util.Text;
 /**
  * Charges of teleport items the player charges themselves, which the game only shows in chat: the quetzal
  * whistle, Xeric's talisman and the pendant of Ates. Set from their Check and charging messages (wiki
- * transcripts), and counted down by one when a teleport click is followed by the player actually being moved
- * (picking a destination can take a while; a cancelled teleport or a closed menu uses nothing). Saved per account. Kharedst's memoirs / Book of the dead have no known messages, so aren't
+ * transcripts) and the game's own "...charges remaining" after a teleport, and otherwise counted down by one when a
+ * teleport click is followed by the player being moved (picking a destination can take a while; a cancelled
+ * teleport or a closed menu uses nothing). A count from the game wins, so a use is never counted twice. Saved per account. Kharedst's memoirs / Book of the dead have no known messages, so aren't
  * tracked.
  *
  * <p>Client thread, except that settings are written on the Swing thread.
@@ -94,36 +95,36 @@ public class ItemChargeTracker
 	{
 		if (message.equals("The talisman is full."))
 		{
-			return record(TravelItem.XERICS_TALISMAN, FULL);
+			return reported(TravelItem.XERICS_TALISMAN, FULL);
 		}
 		if (message.equals("The pendant is already fully charged."))
 		{
-			return record(TravelItem.PENDANT_OF_ATES, FULL);
+			return reported(TravelItem.PENDANT_OF_ATES, FULL);
 		}
 		Matcher m = WHISTLE_CHECK.matcher(message);
 		if (m.matches())
 		{
-			return record(TravelItem.QUETZAL_WHISTLE, count(m.group(1)));
+			return reported(TravelItem.QUETZAL_WHISTLE, count(m.group(1)));
 		}
 		m = TALISMAN_CHECK.matcher(message);
 		if (m.matches())
 		{
-			return record(TravelItem.XERICS_TALISMAN, count(m.group(1)));
+			return reported(TravelItem.XERICS_TALISMAN, count(m.group(1)));
 		}
 		m = TALISMAN_CHARGED.matcher(message);
 		if (m.matches())
 		{
-			return record(TravelItem.XERICS_TALISMAN, count(m.group(1)));
+			return reported(TravelItem.XERICS_TALISMAN, count(m.group(1)));
 		}
 		m = PENDANT_CHECK.matcher(message);
 		if (m.matches())
 		{
-			return record(TravelItem.PENDANT_OF_ATES, count(m.group(1)));
+			return reported(TravelItem.PENDANT_OF_ATES, count(m.group(1)));
 		}
 		m = PENDANT_CHARGED.matcher(message);
 		if (m.matches() && message.contains("pendant"))
 		{
-			return record(TravelItem.PENDANT_OF_ATES, count(m.group(1)));
+			return reported(TravelItem.PENDANT_OF_ATES, count(m.group(1)));
 		}
 		return false;
 	}
@@ -210,6 +211,16 @@ public class ItemChargeTracker
 			return 0;
 		}
 		return text.equals("one") ? 1 : Integer.parseInt(text.replace(",", ""));
+	}
+
+	/** A count the game reported: exact, and any teleport waiting to be counted for this item already is. */
+	private boolean reported(TravelItem item, int value)
+	{
+		if (pending == item)
+		{
+			pending = null;
+		}
+		return record(item, value);
 	}
 
 	private boolean record(TravelItem item, int value)
