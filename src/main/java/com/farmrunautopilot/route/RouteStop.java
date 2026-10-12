@@ -65,8 +65,8 @@ public class RouteStop
 			case WALK:
 				return "Walk";
 			case RENU:
-				return "Back to the landing pad, Renu: Travel to "
-					+ method.getDisplayName().replace("Quetzal whistle (", "").replace(")", "");
+				// The guide adds " to Kastori", so the place isn't named here too
+				return "Back to the landing pad, then Renu";
 			case NONE:
 				return "No unlocked way here";
 			case POH_NEXUS:
