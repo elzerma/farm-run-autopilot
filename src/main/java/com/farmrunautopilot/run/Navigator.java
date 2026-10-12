@@ -170,6 +170,12 @@ class Navigator
 		}
 		if (inRange(here))
 		{
+			// Teleported straight into range still counts as teleported, so the way there shows as done; walking in,
+			// or being there already, doesn't
+			if (jumped(previous, position))
+			{
+				teleported = true;
+			}
 			markArrived(nowMillis);
 			return null;
 		}

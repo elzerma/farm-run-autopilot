@@ -423,12 +423,17 @@ public class RunSession
 	}
 
 	/**
-	 * How many of a stop's steps are travel: the way there and its journey steps. None for a walk from the stop
-	 * before: the patch's own "Walk to the ... patch" covers it (Sean: it showed ticked already).
+	 * How many of the current stop's steps are travel: the way there and its journey steps. None for a walk from
+	 * the stop before (the patch's own "Walk to the ... patch" covers it), nor when the player was already there
+	 * without travelling (Sean: Taverley and Kastori showed the way there ticked already).
 	 */
-	private static int travelSteps(RouteStop stop)
+	private int travelSteps(RouteStop stop)
 	{
-		return stop.getDeparture() == Departure.WALK ? 0 : Navigator.journeySteps(stop) + 1;
+		if (stop.getDeparture() == Departure.WALK || (navigator.isArrived() && !navigator.isTeleported()))
+		{
+			return 0;
+		}
+		return Navigator.journeySteps(stop) + 1;
 	}
 
 	/** The way there (step 0) or a journey step after it is done, as {@link #steps} shows it. */
