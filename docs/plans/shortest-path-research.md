@@ -131,3 +131,20 @@ in seconds.
    guided test (Sean may not own it). In game: only if he has it.
 8. **Optional: live first leg.** Query from the player's tile to the first stop when planning, fall back to
    baked numbers. In game: start a run from an odd spot (e.g. Lumbridge); the first leg's time is believable.
+
+## Risk mitigations (agreed with Sean, 2026-10-11)
+
+- **License:** a THIRD_PARTY_NOTICES file with their BSD-2 text, a README credit, and a source comment on each
+  copied table naming the Shortest Path commit. Copy facts (coordinates, ticks), not code.
+- **Snapshot, never live:** copy only the numbers we need into Java, pinned to the commit the Plugin Hub ships
+  (not master). Nothing is downloaded or loaded at runtime.
+- **Format churn:** only a dev-only script (outside the plugin build) reads their TSVs; if it breaks, players
+  are unaffected.
+- **Accuracy:** their values are a second opinion. A unit test compares ours with the snapshot; big
+  differences are flagged for review, never taken automatically. Learned times still override estimates.
+- **Staleness:** the same script prints what changed since the recorded commit, so a refresh is a short review.
+- **Runtime query:** only in the dev "Measure walks" tool; results are baked into TravelTimes. Planning never
+  waits on Shortest Path, and nothing changes if it's missing or silent.
+- **Global overrides:** always send `clear` on run stop, logout and plugin shutdown.
+- **Override keys:** a unit test checks every key and value we send against a list taken from their source
+  (the "None" vs "NONE" bug); the dev client logs if one of our walk-only lines contains a teleport.
