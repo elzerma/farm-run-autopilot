@@ -32,6 +32,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
@@ -364,6 +365,7 @@ class RunPanel extends JPanel
 	{
 		final JButton button = new JButton(text);
 		button.setFont(FontManager.getRunescapeSmallFont());
+		button.setMargin(new Insets(2, 2, 2, 2));
 		button.setFocusPainted(false);
 		button.addActionListener(e -> action.run());
 		return button;
@@ -547,7 +549,7 @@ class RunPanel extends JPanel
 	/** Gathering supplies: cancel, or start without everything. */
 	private void addBuilding()
 	{
-		final JPanel buttons = new JPanel(new GridLayout(1, 2, 4, 0));
+		final JPanel buttons = new JPanel(new GridLayout(1, 0, 4, 0));
 		buttons.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		final JButton startNow = new JButton("Start now");
 		startNow.setFocusPainted(false);
@@ -579,7 +581,8 @@ class RunPanel extends JPanel
 
 	private void addRunning(RunView view)
 	{
-		final JPanel bar = new JPanel(new BorderLayout(6, 0));
+		// The clock on its own line, then the buttons across the full width, so no label is cut off
+		final JPanel bar = new JPanel(new BorderLayout(0, 4));
 		bar.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		clockLabel = new JLabel();
 		clockLabel.setForeground(ColorScheme.BRAND_ORANGE);
@@ -597,8 +600,8 @@ class RunPanel extends JPanel
 			buttons.add(smallButton("Skip stop", controls::skipStop));
 			buttons.add(smallButton("Stop", controls::stop));
 		}
-		bar.add(clockLabel, BorderLayout.CENTER);
-		bar.add(buttons, BorderLayout.EAST);
+		bar.add(clockLabel, BorderLayout.NORTH);
+		bar.add(buttons, BorderLayout.CENTER);
 		bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, bar.getPreferredSize().height));
 		add(left(bar));
 
