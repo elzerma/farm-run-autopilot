@@ -258,6 +258,11 @@ missing from his vision. Turn every chain or behaviour he names into a scenario 
   back. Mark done and Skip stop go; the clock and Stop share one line. Bank visits are rows of their own.
 - A calculated item missing mid-run turns the current task into a bank visit (Sean, 2026-10-12): straight away
   if the current step needs it, otherwise after the current stop; none if a planned bank visit comes first.
+- Second pass (Sean, 2026-10-12): five icon tabs (Run, Farm, Travel, Account, Settings). Account is what you
+  have (house, unlocks, storage); Settings holds Presets, Display, Debug (Detected inside), Reset and the help list
+  last. One soft radius and flat controls (FlatLaf style strings, ui/Style.java); white bold headings. Patch
+  timers one line each by type; Farm patches in groups two to a row; crops one line per choice; per-patch
+  protection behind a tick box; Travel locations one line each.
 - Run tab: the status line, route and buttons only; Account > Detected as a compact two-column list.
 - Measure it: visible lines per tab before and after, and screenshots of each tab for Sean to compare.
 - Checks: every control still has its explanation on hover; nothing a player needs is only in a tooltip.
