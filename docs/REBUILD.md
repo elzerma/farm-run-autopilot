@@ -250,6 +250,11 @@ missing from his vision. Turn every chain or behaviour he names into a scenario 
 - Guided tests: fix the two broken tests and bring every test in line with the rebuilt run, docs (README, delete stale plans),
   screenshots, Plugin Hub PR update (with Sean's OK).
 
+**Sprint 8: Shortest Path data** (after Sprint 7; plan in docs/plans/shortest-path-research.md). Reuse its BSD-2
+licensed data with credit: bank coordinates, teleport landing points and durations checked against ours, a
+dev-only "Measure walks" tool using its query message to measure every landing-to-patch walk once and save
+the numbers in TravelTimes, and research on the Trinket of fairies.
+
 ## 7. Features that must survive the rebuild
 
 Due tracking and timers; run types with per-run Include/Skip; presets; crop choices with backups and
