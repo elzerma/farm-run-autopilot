@@ -468,6 +468,11 @@ public class RunSession
 				// Ready when the next part of the run, as planned at the start, is carried
 				if (missingCount(bank.getSupplies().counted(holdingsTracker.getHoldings()), false) > 0)
 				{
+					if (!banking)
+					{
+						log.debug("Bank visit after {}: deposit {}", stop.getLocation().getDisplayName(),
+							depositNames());
+					}
 					banking = true;
 					patches.clearCurrent();
 					final String go = bank.getTeleport() != null ? "Use your " + bank.getTeleport().getItemName()
@@ -611,6 +616,17 @@ public class RunSession
 		final Highlights highlights = highlights(wear);
 		return new RunView(stage, startedAt, stopViews, instruction, false, null, null,
 			reminders(highlights), wear.getText(), highlights);
+	}
+
+	/** What the bank visit says to deposit, by name, for the log. */
+	private String depositNames()
+	{
+		final List<String> names = new ArrayList<>();
+		for (int id : BankGuide.toDeposit(partFor(plan, stopIndex, true), holdingsTracker.getHoldings(), id -> id))
+		{
+			names.add(runService.itemName(id));
+		}
+		return names.isEmpty() ? "nothing" : String.join(", ", names);
 	}
 
 	/** What the current step points at: the patch and items to use there, or the teleport item while travelling. */

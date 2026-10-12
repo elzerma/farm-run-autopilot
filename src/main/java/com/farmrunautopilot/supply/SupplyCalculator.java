@@ -285,7 +285,8 @@ public final class SupplyCalculator
 			&& access.isMet(Requirement.diary(AchievementDiary.LUMBRIDGE_DRAYNOR, AchievementDiary.Tier.ELITE))))
 		{
 			lines.add(line(SupplyLine.Group.TRAVEL, "Dramen or lunar staff", 1, holdings, carried,
-				"Needed for fairy rings until the Elite Lumbridge & Draynor diary", 0, SupplyItems.FAIRY_RING_STAFFS));
+				"Needed for fairy rings until the Elite Lumbridge & Draynor diary. Wield it: fairy rings need it wielded",
+				0, SupplyItems.FAIRY_RING_STAFFS).worn());
 		}
 
 		// Spells used on patches
@@ -466,6 +467,11 @@ public final class SupplyCalculator
 		{
 			final TravelItem.WearSlot slot = item.getWearSlot();
 			if (slot == null || taken.contains(slot))
+			{
+				continue;
+			}
+			// Kharedst's memoirs can't be worn; the Book of the dead (its upgrade) can
+			if (item == TravelItem.KHAREDSTS_MEMOIRS && holdings.count(ItemID.BOOK_OF_THE_DEAD) == 0)
 			{
 				continue;
 			}

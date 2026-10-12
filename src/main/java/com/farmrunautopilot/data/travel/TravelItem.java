@@ -133,6 +133,8 @@ public enum TravelItem
 			case COMBAT_BRACELET:
 				return WearSlot.HANDS;
 			case RADAS_BLESSING:
+			// The Book of the dead only; Kharedst's memoirs can't be worn (see SupplyCalculator.toWear)
+			case KHAREDSTS_MEMOIRS:
 				return WearSlot.SHIELD;
 			case ARDOUGNE_CLOAK:
 			case ARDOUGNE_CLOAK_1:
