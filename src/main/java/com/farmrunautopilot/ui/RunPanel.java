@@ -583,7 +583,7 @@ class RunPanel extends JPanel
 		final JLabel name = new JLabel(title, Card.chevron(open, Color.WHITE), JLabel.LEFT);
 		name.setIconTextGap(8);
 		name.setForeground(Color.WHITE);
-		name.setFont(FontManager.getRunescapeBoldFont());
+		name.setFont(FontManager.getRunescapeFont());
 		final JLabel count = new JLabel(summary);
 		count.setForeground(Color.WHITE);
 		count.setFont(FontManager.getRunescapeSmallFont());
@@ -703,7 +703,6 @@ class RunPanel extends JPanel
 			updateClock();
 			final JButton stop = new JButton("Stop");
 			stop.setFocusPainted(false);
-			stop.setFont(FontManager.getRunescapeBoldFont());
 			stop.setToolTipText("End the run now. It ends by itself after the last stop");
 			stop.addActionListener(e -> controls.stop());
 			bar.add(clockLabel);
@@ -796,9 +795,9 @@ class RunPanel extends JPanel
 
 		final String name = UiText.escape(number > 0 ? number + ". " + stop.getLocation() : stop.getLocation());
 		final JLabel title = new JLabel(done ? "<html><s>" + name + "</s></html>" : "<html>" + name + "</html>");
-		// Titles in white bold (Sean); the current one is marked by its orange bar, a bank visit by an orange bar too
+		// Titles in white (Sean); the current one is marked by its orange bar, a bank visit by an orange bar too
 		title.setForeground(done ? ColorScheme.MEDIUM_GRAY_COLOR : Color.WHITE);
-		title.setFont(current ? Style.titleFont() : FontManager.getRunescapeBoldFont());
+		title.setFont(current ? FontManager.getRunescapeBoldFont() : FontManager.getRunescapeSmallFont());
 		// Only the current row can be ticked, and a row the player ticked can be unticked while it can be gone back to
 		final JPanel head = new JPanel(new BorderLayout());
 		head.setOpaque(false);
@@ -1119,7 +1118,7 @@ class RunPanel extends JPanel
 				final BankStop bank = (BankStop) row;
 				final JLabel title = new JLabel(UiText.wrap(bank.title(), TEXT_WIDTH - 20));
 				title.setForeground(Color.WHITE);
-				title.setFont(FontManager.getRunescapeBoldFont());
+				title.setFont(FontManager.getRunescapeSmallFont());
 				cell.accent(ColorScheme.BRAND_ORANGE);
 				cell.add(title, BorderLayout.NORTH);
 				if (bank.getTeleport() != null)
@@ -1144,7 +1143,7 @@ class RunPanel extends JPanel
 			}
 			final JLabel name = new JLabel(number + ". " + stop.getLocation().getDisplayName());
 			name.setForeground(Color.WHITE);
-			name.setFont(FontManager.getRunescapeBoldFont());
+			name.setFont(FontManager.getRunescapeSmallFont());
 			final boolean here = index == 0 && controls.view().isAtFirstStop();
 			// The leg time is in the tooltip, above the plan (Sean: fewer three-line rows)
 			final JLabel travel = new JLabel(UiText.wrap(here ? "You're here" : stop.describeTravel(), TEXT_WIDTH - 20));

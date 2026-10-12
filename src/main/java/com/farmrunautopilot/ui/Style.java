@@ -19,8 +19,8 @@ import net.runelite.client.ui.FontManager;
  */
 final class Style
 {
-	/** The one corner radius for cards, buttons, drop-downs and number boxes. */
-	static final int ARC = 10;
+	/** Corner radius for cards, buttons, drop-downs and number boxes: square (Sean: no radius). */
+	static final int ARC = 0;
 	/** Done, due, carried. */
 	static final Color GREEN = new Color(0x4C, 0xC1, 0x52);
 	/** Stop: a muted red, not an alarm. */
@@ -48,7 +48,6 @@ final class Style
 	static JButton primary(JButton button)
 	{
 		button.setFocusPainted(false);
-		button.setFont(FontManager.getRunescapeBoldFont());
 		button.putClientProperty(STYLE, "arc: " + ARC + "; borderWidth: 0; focusWidth: 0; innerFocusWidth: 0"
 			+ "; background: " + hex(ColorScheme.BRAND_ORANGE)
 			+ "; hoverBackground: " + hex(ColorScheme.BRAND_ORANGE.brighter())
@@ -61,7 +60,6 @@ final class Style
 	static JButton danger(JButton button)
 	{
 		button.setFocusPainted(false);
-		button.setFont(FontManager.getRunescapeBoldFont());
 		button.putClientProperty(STYLE, "arc: " + ARC + "; borderWidth: 0; focusWidth: 0; innerFocusWidth: 0"
 			+ "; background: " + hex(DANGER)
 			+ "; hoverBackground: " + hex(DANGER.brighter())
@@ -103,7 +101,7 @@ final class Style
 	static JCheckBox checkBox(JCheckBox box)
 	{
 		box.setFocusPainted(false);
-		box.putClientProperty(STYLE, "icon.arc: 5; icon.focusWidth: 0; icon.borderWidth: 1"
+		box.putClientProperty(STYLE, "icon.arc: 0; icon.focusWidth: 0; icon.borderWidth: 1"
 			+ "; icon.background: " + hex(ColorScheme.DARKER_GRAY_COLOR)
 			+ "; icon.borderColor: " + hex(ColorScheme.LIGHT_GRAY_COLOR.darker())
 			+ "; icon.hoverBorderColor: " + hex(ColorScheme.BRAND_ORANGE)
@@ -122,14 +120,13 @@ final class Style
 		return box;
 	}
 
-	/** Titles and headings (Sean): white, bold, a point larger. */
+	/** Titles and headings: RuneLite's normal font, not bold (Sean: back to how it was). */
 	static Font titleFont()
 	{
-		final Font bold = FontManager.getRunescapeBoldFont();
-		return bold.deriveFont(bold.getSize2D() + 1f);
+		return FontManager.getRunescapeFont();
 	}
 
-	/** A heading in white bold, as every title is. */
+	/** A heading in white, as every title is. */
 	static <C extends JComponent> C title(C component)
 	{
 		component.setFont(titleFont());
