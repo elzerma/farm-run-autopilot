@@ -29,6 +29,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.datatransfer.DataFlavor;
@@ -69,7 +70,9 @@ import net.runelite.client.ui.PluginPanel;
  */
 class RunPanel extends JPanel
 {
-	private static final int TEXT_WIDTH = PluginPanel.PANEL_WIDTH - 40;
+	private static final int TEXT_WIDTH = PluginPanel.PANEL_WIDTH - 40;
+	/** The run clock, big enough to read at a glance (Sean). */
+	private static final float CLOCK_FONT_SIZE = 24f;
 	private static final Color CARRIED = new Color(0x4C, 0xC1, 0x52);
 	private static final Color IN_STORAGE = new Color(0xE8, 0xC5, 0x3A);
 	/** Run type labels short enough for three across the sidebar, in {@link PatchType} order. */
@@ -107,10 +110,11 @@ class RunPanel extends JPanel
 
 		void stop();
 
-		void skip();
+		/** A step of the current stop ticked or unticked by hand. */
+		void setStepTicked(int step, boolean ticked);
 
-		/** Skip everything left at the current stop: getting there, its patches and its bank visit. */
-		void skipStop();
+		/** A stop or bank visit row ticked or unticked by hand (row index, bank visits included). */
+		void setRowTicked(int row, boolean ticked);
 
 		/** Show Account > Unlocks. */
 		void openUnlocks();
@@ -165,7 +169,7 @@ class RunPanel extends JPanel
 		}
 		if (view.getState() == RunView.State.RUNNING)
 		{
-			clockLabel.setText("Running " + GuidanceOverlay.clock((System.currentTimeMillis() - view.getStartedAtMillis()) / 1000));
+			clockLabel.setText(GuidanceOverlay.clock((System.currentTimeMillis() - view.getStartedAtMillis()) / 1000));
 		}
 		else if (view.getState() == RunView.State.ARMED)
 		{
@@ -598,36 +602,52 @@ class RunPanel extends JPanel
 
 	private void addRunning(RunView view)
 	{
-		// The clock on its own line, then the buttons across the full width, so no label is cut off
-		final JPanel bar = new JPanel(new BorderLayout(0, 4));
-		bar.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		clockLabel = new JLabel();
-		clockLabel.setForeground(ColorScheme.BRAND_ORANGE);
-		updateClock();
-		// Two to a row: three across the sidebar cut their labels off (Sean)
-		final JPanel buttons = new JPanel(new GridLayout(0, 2, 4, 4));
-		buttons.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		if (view.getState() == RunView.State.ARMED)
 		{
+			// The clock on its own line, then the buttons across the full width, so no label is cut off
+			final JPanel bar = new JPanel(new BorderLayout(0, 4));
+			bar.setBackground(ColorScheme.DARK_GRAY_COLOR);
+			clockLabel = new JLabel();
+			clockLabel.setForeground(ColorScheme.BRAND_ORANGE);
+			updateClock();
+			final JPanel buttons = new JPanel(new GridLayout(0, 2, 4, 4));
+			buttons.setBackground(ColorScheme.DARK_GRAY_COLOR);
 			buttons.add(smallButton("Start now", controls::startNow));
 			buttons.add(smallButton("Cancel", controls::cancel));
+			bar.add(clockLabel, BorderLayout.NORTH);
+			bar.add(buttons, BorderLayout.CENTER);
+			bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, bar.getPreferredSize().height));
+			add(left(bar));
 		}
 		else
 		{
-			buttons.add(smallButton("Mark done", controls::skip));
-			buttons.add(smallButton("Skip stop", controls::skipStop));
-			buttons.add(smallButton("Stop", controls::stop));
+			// The run finishes by itself after the last stop, so Stop is only for ending it early. The clock, big,
+			// and Stop share one centred line (Sean)
+			final JPanel bar = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
+			bar.setBackground(ColorScheme.DARK_GRAY_COLOR);
+			clockLabel = new JLabel();
+			clockLabel.setForeground(ColorScheme.BRAND_ORANGE);
+			clockLabel.setFont(FontManager.getRunescapeBoldFont().deriveFont(CLOCK_FONT_SIZE));
+			updateClock();
+			final JButton stop = new JButton("Stop");
+			stop.setFocusPainted(false);
+			stop.setFont(FontManager.getRunescapeBoldFont());
+			stop.setToolTipText("End the run now. It ends by itself after the last stop");
+			stop.addActionListener(e -> controls.stop());
+			bar.add(clockLabel);
+			bar.add(stop);
+			bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, bar.getPreferredSize().height));
+			add(left(bar));
 		}
-		bar.add(clockLabel, BorderLayout.NORTH);
-		bar.add(buttons, BorderLayout.CENTER);
-		bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, bar.getPreferredSize().height));
-		add(left(bar));
 
-		add(heading("Route"));
+		add(tipped(heading("Complete route"), "Ticks itself as you go. If it misses something, tick it yourself; "
+			+ "a box you ticked can be unticked to go back to it"));
 		int number = 1;
-		for (RunView.Stop routeStop : view.getStops())
+		final List<RunView.Stop> stops = view.getStops();
+		for (int row = 0; row < stops.size(); row++)
 		{
-			add(runningStop(number++, routeStop));
+			final RunView.Stop stop = stops.get(row);
+			add(runningStop(stop.isBank() ? 0 : number++, row, stop));
 		}
 	}
 
@@ -640,71 +660,99 @@ class RunPanel extends JPanel
 		return button;
 	}
 
-	/** A stop while running: struck through when done, highlighted with its next step when current. */
-	/** One step of the current stop: struck through when done, "> " and orange when in hand, "- " when to come. */
-	private static JLabel stepLabel(RunView.Step step)
+	/**
+	 * A tick box as in Quest Helper (Sean): ticked when done; the plugin's own ticks can't be undone, the player's
+	 * can. Disabled when there's nothing the player can do with it.
+	 */
+	private static JCheckBox tickBox(boolean done, boolean enabled, java.util.function.Consumer<Boolean> onChange)
 	{
-		final String text = UiText.escape(step.getText());
-		final String open = "<html><body style='width:" + ((TEXT_WIDTH - 30) * 10 / 13) + "px'>";
-		final String close = "</body></html>";
-		final JLabel label;
-		switch (step.getStatus())
-		{
-			case DONE:
-				label = new JLabel(open + "<s>" + text + "</s>" + close);
-				label.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
-				break;
-			case CURRENT:
-				label = new JLabel(open + "&gt; " + text + close);
-				label.setForeground(ColorScheme.BRAND_ORANGE);
-				break;
-			default:
-				label = new JLabel(open + "- " + text + close);
-				label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-				break;
-		}
-		label.setFont(FontManager.getRunescapeSmallFont());
-		// Journey steps sit further in, under the teleport they follow
-		label.setBorder(new EmptyBorder(1, step.isSub() ? 16 : 4, 1, 0));
-		return label;
+		final JCheckBox box = new JCheckBox();
+		box.setSelected(done);
+		box.setEnabled(enabled);
+		box.setOpaque(false);
+		box.setFocusPainted(false);
+		box.setBorder(new EmptyBorder(0, 0, 0, 4));
+		box.addActionListener(e -> onChange.accept(box.isSelected()));
+		box.setAlignmentY(Component.TOP_ALIGNMENT);
+		return box;
 	}
 
-	private JComponent runningStop(int number, RunView.Stop stop)
+	/** One step of the current stop: its tick box, struck through when done, orange when in hand. */
+	private JComponent stepRow(int index, RunView.Step step, boolean bank)
+	{
+		final String text = UiText.escape(step.getText());
+		final String open = "<html><body style='width:" + ((TEXT_WIDTH - 60) * 10 / 13) + "px'>";
+		final String close = "</body></html>";
+		final boolean done = step.getStatus() == RunView.StopStatus.DONE;
+		final JLabel label = new JLabel(open + (done ? "<s>" + text + "</s>" : text) + close);
+		label.setForeground(done ? ColorScheme.MEDIUM_GRAY_COLOR
+			: step.getStatus() == RunView.StopStatus.CURRENT ? ColorScheme.BRAND_ORANGE : ColorScheme.LIGHT_GRAY_COLOR);
+		label.setFont(FontManager.getRunescapeSmallFont());
+
+		// A bank visit's steps are only ticked by the plugin; the bank row itself can be ticked
+		final JCheckBox box = tickBox(done, !bank && (!done || step.isManual()),
+			ticked -> controls.setStepTicked(index, ticked));
+		final JPanel row = new JPanel(new BorderLayout());
+		row.setOpaque(false);
+		// Journey steps sit further in, under the teleport they follow
+		row.setBorder(new EmptyBorder(1, step.isSub() ? 16 : 0, 1, 0));
+		row.add(box, BorderLayout.WEST);
+		row.add(label, BorderLayout.CENTER);
+		row.setAlignmentX(LEFT_ALIGNMENT);
+		return row;
+	}
+
+	/**
+	 * A stop or bank visit while running: its tick box, struck through when done; the current one boxed in orange
+	 * with every step under it.
+	 *
+	 * @param number the stop's number, 0 for a bank visit
+	 */
+	private JComponent runningStop(int number, int row, RunView.Stop stop)
 	{
 		final JPanel cell = new JPanel(new BorderLayout());
 		final boolean current = stop.getStatus() == RunView.StopStatus.CURRENT;
+		final boolean done = stop.getStatus() == RunView.StopStatus.DONE;
 		cell.setBackground(current ? ColorScheme.DARK_GRAY_HOVER_COLOR : ColorScheme.DARKER_GRAY_COLOR);
 		// The current stop is boxed in orange (Sean)
 		cell.setBorder(current
-			? new CompoundBorder(new LineBorder(ColorScheme.BRAND_ORANGE, 1), new EmptyBorder(3, 6, 3, 6))
-			: new EmptyBorder(3, 6, 3, 6));
+			? new CompoundBorder(new LineBorder(ColorScheme.BRAND_ORANGE, 1), new EmptyBorder(3, 4, 3, 6))
+			: new EmptyBorder(3, 4, 3, 6));
 
-		final String name = UiText.escape(number + ". " + stop.getLocation());
-		final JLabel title = new JLabel(stop.getStatus() == RunView.StopStatus.DONE
-			? "<html><s>" + name + "</s></html>" : "<html>" + name + "</html>");
-		title.setForeground(stop.getStatus() == RunView.StopStatus.DONE ? ColorScheme.MEDIUM_GRAY_COLOR
-			: current ? ColorScheme.BRAND_ORANGE : ColorScheme.TEXT_COLOR);
+		final String name = UiText.escape(number > 0 ? number + ". " + stop.getLocation() : stop.getLocation());
+		final JLabel title = new JLabel(done ? "<html><s>" + name + "</s></html>" : "<html>" + name + "</html>");
+		title.setForeground(done ? ColorScheme.MEDIUM_GRAY_COLOR
+			: current ? ColorScheme.BRAND_ORANGE : stop.isBank() ? ColorScheme.BRAND_ORANGE : ColorScheme.TEXT_COLOR);
 		title.setFont(current ? FontManager.getRunescapeBoldFont() : FontManager.getRunescapeSmallFont());
-		cell.add(title, BorderLayout.NORTH);
+		// Only the current row can be ticked, and a row the player ticked can be unticked while it can be gone back to
+		final JPanel head = new JPanel(new BorderLayout());
+		head.setOpaque(false);
+		head.add(tickBox(done, current || (done && stop.isManual()), ticked -> controls.setRowTicked(row, ticked)),
+			BorderLayout.WEST);
+		head.add(title, BorderLayout.CENTER);
+		cell.add(head, BorderLayout.NORTH);
 
 		if (current && !stop.getSteps().isEmpty())
 		{
-			// Every step of this stop, done ones struck through, the one in hand marked. The full instruction for it
-			// is under the player, so it isn't repeated here (Sean: say each thing in one place)
+			// Every step of this row, only while it's current. What to do now is under the player, not repeated
+			// here (Sean: say each thing in one place)
 			final JPanel steps = new JPanel();
 			steps.setLayout(new BoxLayout(steps, BoxLayout.Y_AXIS));
 			steps.setOpaque(false);
-			for (RunView.Step step : stop.getSteps())
+			steps.setBorder(new EmptyBorder(2, 12, 0, 0));
+			final List<RunView.Step> list = stop.getSteps();
+			for (int i = 0; i < list.size(); i++)
 			{
-				steps.add(stepLabel(step));
+				steps.add(stepRow(i, list.get(i), stop.isBank()));
 			}
 			cell.add(steps, BorderLayout.CENTER);
 		}
-		else if (!current && stop.getStatus() != RunView.StopStatus.DONE)
+		else if (!current && !done)
 		{
-			final JLabel detail = new JLabel(UiText.wrap(stop.getTravel(), TEXT_WIDTH - 20));
+			final JLabel detail = new JLabel(UiText.wrap(stop.getTravel(), TEXT_WIDTH - 40));
 			detail.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 			detail.setFont(FontManager.getRunescapeSmallFont());
+			detail.setBorder(new EmptyBorder(0, 24, 0, 0));
 			cell.add(detail, BorderLayout.CENTER);
 		}
 
@@ -713,6 +761,7 @@ class RunPanel extends JPanel
 		wrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
 		wrapper.add(cell, BorderLayout.CENTER);
 		wrapper.setToolTipText(objectivesTooltip(stop.getObjectives()));
+		wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, wrapper.getPreferredSize().height));
 		return left(wrapper);
 	}
 
@@ -882,12 +931,18 @@ class RunPanel extends JPanel
 			: "Order: " + modeName(route.getMode()) + ". Drag a stop to reorder it (switches to your own order). "
 				+ "Hover a stop for its plan."));
 
-		final DefaultListModel<RouteStop> model = new DefaultListModel<>();
-		for (RouteStop stop : route.getStops())
+		// Stops, each followed by its bank visit if it has one: a row of its own (Sean)
+		final DefaultListModel<Object> model = new DefaultListModel<>();
+		for (int i = 0; i < route.getStops().size(); i++)
 		{
-			model.addElement(stop);
+			model.addElement(route.getStops().get(i));
+			final BankStop bank = plan.bankAfter(i);
+			if (bank != null)
+			{
+				model.addElement(bank);
+			}
 		}
-		final JList<RouteStop> list = new JList<>(model);
+		final JList<Object> list = new JList<>(model);
 		list.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.setCellRenderer(new StopRenderer());
@@ -925,12 +980,16 @@ class RunPanel extends JPanel
 	}
 
 	/** Saves the dragged order as the player's own and switches the route to it (SPEC 12.1). */
-	private void saveOrder(DefaultListModel<RouteStop> model)
+	private void saveOrder(DefaultListModel<Object> model)
 	{
 		final List<Location> order = new ArrayList<>();
 		for (int i = 0; i < model.size(); i++)
 		{
-			order.add(model.get(i).getLocation());
+			// Bank visits are placed again by the plan
+			if (model.get(i) instanceof RouteStop)
+			{
+				order.add(((RouteStop) model.get(i)).getLocation());
+			}
 		}
 		// Keep stops that aren't in this run where they were in the saved order
 		for (Location location : settings.editRunConfig().getCustomOrder())
@@ -946,17 +1005,49 @@ class RunPanel extends JPanel
 		settingsChanged.run();
 	}
 
-	private final class StopRenderer implements ListCellRenderer<RouteStop>
+	private final class StopRenderer implements ListCellRenderer<Object>
 	{
 		@Override
-		public Component getListCellRendererComponent(JList<? extends RouteStop> list, RouteStop stop, int index,
+		public Component getListCellRendererComponent(JList<? extends Object> list, Object row, int index,
 			boolean isSelected, boolean cellHasFocus)
 		{
 			final JPanel cell = new JPanel(new BorderLayout());
 			cell.setBackground(isSelected ? ColorScheme.DARK_GRAY_HOVER_COLOR : ColorScheme.DARKER_GRAY_COLOR);
 			cell.setBorder(new EmptyBorder(3, 6, 3, 6));
+			final JPanel wrapper = new JPanel(new BorderLayout());
+			wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
+			wrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
+			wrapper.add(cell);
 
-			final JLabel name = new JLabel((index + 1) + ". " + stop.getLocation().getDisplayName());
+			if (row instanceof BankStop)
+			{
+				// A bank visit between two stops: where, and how when it's by teleport
+				final BankStop bank = (BankStop) row;
+				final JLabel title = new JLabel(UiText.wrap(bank.title(), TEXT_WIDTH - 20));
+				title.setForeground(ColorScheme.BRAND_ORANGE);
+				title.setFont(FontManager.getRunescapeSmallFont());
+				cell.add(title, BorderLayout.NORTH);
+				if (bank.getTeleport() != null)
+				{
+					final JLabel how = new JLabel(UiText.wrap(bank.getTeleport().getItemName(), TEXT_WIDTH - 20));
+					how.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+					how.setFont(FontManager.getRunescapeSmallFont());
+					cell.add(how, BorderLayout.CENTER);
+				}
+				return wrapper;
+			}
+
+			final RouteStop stop = (RouteStop) row;
+			// Numbered by stop, bank visits not counted
+			int number = 0;
+			for (int i = 0; i <= index; i++)
+			{
+				if (list.getModel().getElementAt(i) instanceof RouteStop)
+				{
+					number++;
+				}
+			}
+			final JLabel name = new JLabel(number + ". " + stop.getLocation().getDisplayName());
 			name.setForeground(ColorScheme.TEXT_COLOR);
 			name.setFont(FontManager.getRunescapeSmallFont());
 			final boolean here = index == 0 && controls.view().isAtFirstStop();
@@ -967,19 +1058,6 @@ class RunPanel extends JPanel
 
 			cell.add(name, BorderLayout.NORTH);
 			cell.add(travel, BorderLayout.CENTER);
-			// A bank break after this stop shows in place, under it
-			final BankStop bank = plan.bankAfter(index);
-			if (bank != null)
-			{
-				final JLabel banking = new JLabel(UiText.wrap("Then bank: " + bank.how(), TEXT_WIDTH - 20));
-				banking.setForeground(ColorScheme.BRAND_ORANGE);
-				banking.setFont(FontManager.getRunescapeSmallFont());
-				cell.add(banking, BorderLayout.SOUTH);
-			}
-			final JPanel wrapper = new JPanel(new BorderLayout());
-			wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
-			wrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
-			wrapper.add(cell);
 			// JList shows the renderer's tooltip for the hovered row
 			wrapper.setToolTipText(objectivesTooltip(plan.getObjectives().get(stop.getLocation())));
 			return wrapper;
@@ -989,11 +1067,11 @@ class RunPanel extends JPanel
 	/** Drag-and-drop reordering within the route list. */
 	private final class ReorderHandler extends TransferHandler
 	{
-		private final JList<RouteStop> list;
-		private final DefaultListModel<RouteStop> model;
+		private final JList<Object> list;
+		private final DefaultListModel<Object> model;
 		private int from = -1;
 
-		ReorderHandler(JList<RouteStop> list, DefaultListModel<RouteStop> model)
+		ReorderHandler(JList<Object> list, DefaultListModel<Object> model)
 		{
 			this.list = list;
 			this.model = model;
@@ -1009,6 +1087,12 @@ class RunPanel extends JPanel
 		protected Transferable createTransferable(JComponent c)
 		{
 			from = list.getSelectedIndex();
+			// A bank visit goes where the plan puts it, so it can't be dragged
+			if (from < 0 || model.get(from) instanceof BankStop)
+			{
+				from = -1;
+				return null;
+			}
 			return new StringSelection(Integer.toString(from));
 		}
 
@@ -1030,7 +1114,7 @@ class RunPanel extends JPanel
 			{
 				return false;
 			}
-			final RouteStop moved = model.remove(from);
+			final Object moved = model.remove(from);
 			if (to > from)
 			{
 				to--;

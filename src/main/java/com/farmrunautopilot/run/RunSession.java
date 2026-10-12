@@ -22,6 +22,7 @@ import com.farmrunautopilot.supply.SupplyPlan;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +80,12 @@ public class RunSession
 	private boolean banking;
 	/** The bank visit after the current stop is done (or skipped). */
 	private boolean banked;
+	/** Travel steps of the current stop ticked by hand (they can be unticked), by index in its steps. */
+	private final Set<Integer> manualSteps = new HashSet<>();
+	/** The last stop ticked by hand, while it can still be unticked; or null. */
+	private SkippedStop skippedStop;
+	/** The stop whose bank visit was ticked by hand, or -1. */
+	private int skippedBankAfter = -1;
 	/** At the Farming Guild, everything needed from the seed vault has been taken (or skipped). */
 	private boolean vaultChecked;
 	/** The time for the leg to the current stop has been saved. */
@@ -181,6 +188,9 @@ public class RunSession
 		banked = false;
 		vaultChecked = false;
 		legRecorded = false;
+		manualSteps.clear();
+		skippedStop = null;
+		skippedBankAfter = -1;
 		final Player player = client.getLocalPlayer();
 		lastLocation = player != null ? player.getWorldLocation() : null;
 		log.debug("Run armed with {} stops", plan.getRoute().getStops().size());
@@ -326,65 +336,241 @@ public class RunSession
 	}
 
 	/**
-	 * "Mark done": the guide missed that the next step is done (arriving, a journey step, the current patch, the
-	 * bank visit), so move past it.
+	 * A step of the current stop ticked or unticked by hand, as in Quest Helper (Sean): ticking says the guide
+	 * missed that it's done, unticking goes back to a step ticked by hand. A step the plugin saw done stays
+	 * ticked. The way there and its journey steps go in order, so ticking one ticks those before it and unticking
+	 * one unticks those after it; a patch is ticked on its own (and the seed vault check with it, as the player
+	 * has moved on).
+	 *
+	 * @param step its index in the current stop's {@link RunView.Stop#getSteps() steps}
 	 */
-	public void skip()
+	public void setStepTicked(int step, boolean ticked)
+	{
+		if (stage != RunView.State.RUNNING || banking || stopIndex >= plan.getRoute().getStops().size())
+		{
+			return;
+		}
+		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
+		final int journey = Navigator.journeySteps(stop);
+		final long now = System.currentTimeMillis();
+		log.debug("Step {}: {} step {}", ticked ? "ticked" : "unticked", stop.getLocation().getDisplayName(), step);
+		if (step <= journey)
+		{
+			if (ticked)
+			{
+				final int first = firstTravelStepToDo(journey);
+				// Each call moves one step on; the guard stops it at the end whatever the state
+				for (int i = 0; i <= journey && !travelStepDone(step); i++)
+				{
+					navigator.markStepDone(stop, now);
+				}
+				for (int s = first; s <= step; s++)
+				{
+					manualSteps.add(s);
+				}
+				// Not seen arriving, so the leg isn't a sample
+				legRecorded = true;
+			}
+			else if (manualSteps.contains(step))
+			{
+				navigator.rewindTo(step);
+				manualSteps.removeIf(s -> s >= step);
+				patches.clearCurrent();
+			}
+		}
+		else
+		{
+			final List<Patch> here = patchesAt(plan, stop.getLocation());
+			final int index = step - journey - 1;
+			if (index >= here.size())
+			{
+				return;
+			}
+			if (!ticked)
+			{
+				patches.unskip(here.get(index));
+			}
+			else
+			{
+				if (!navigator.isArrived())
+				{
+					navigator.markArrived(now);
+					legRecorded = true;
+				}
+				vaultChecked = true;
+				patches.skipAll(Collections.singletonList(here.get(index)));
+			}
+		}
+		evaluate();
+	}
+
+	/** The way there (step 0) or a journey step after it is done, as {@link #steps} shows it. */
+	private boolean travelStepDone(int step)
+	{
+		return navigator.isArrived() || (step == 0 ? navigator.isTeleported() : navigator.getJourneyStep() >= step);
+	}
+
+	private int firstTravelStepToDo(int journey)
+	{
+		for (int s = 0; s <= journey; s++)
+		{
+			if (!travelStepDone(s))
+			{
+				return s;
+			}
+		}
+		return journey + 1;
+	}
+
+	/**
+	 * A stop or bank row ticked or unticked by hand. Ticking the current stop skips everything left there
+	 * (getting there, its patches, the seed vault); ticking the current bank visit carries on without everything
+	 * from the bank. Unticking either goes back to it, until the stop after it is finished.
+	 *
+	 * @param row its index in the view's {@link RunView#getStops() stops}, bank visits included
+	 */
+	public void setRowTicked(int row, boolean ticked)
 	{
 		if (stage != RunView.State.RUNNING)
 		{
 			return;
 		}
-		final Patch current = patches.getCurrentPatch();
-		log.debug("Mark done: {}", banking ? "the bank visit" : !navigator.isArrived() ? "arriving"
-			: current != null ? current.name() : "the seed vault");
-		if (banking)
+		// Rows are each stop, then its bank visit if it has one, as in runningView
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		int r = 0;
+		for (int i = 0; i < stops.size(); i++, r++)
 		{
-			// Carry on without everything from the bank
-			banked = true;
-			banking = false;
+			if (r == row)
+			{
+				if (ticked)
+				{
+					skipStop(i);
+				}
+				else
+				{
+					untickStop(i);
+				}
+				return;
+			}
+			if (plan.bankAfter(i) != null && ++r == row)
+			{
+				if (ticked)
+				{
+					skipBank(i);
+				}
+				else
+				{
+					untickBank(i);
+				}
+				return;
+			}
 		}
-		else if (current == null && navigator.isArrived() && !vaultChecked
-			&& plan.getRoute().getStops().get(stopIndex).getLocation() == Location.FARMING_GUILD)
-		{
-			// Carry on without what's in the seed vault
-			vaultChecked = true;
-		}
-		else if (!navigator.isArrived())
-		{
-			navigator.markStepDone(plan.getRoute().getStops().get(stopIndex), System.currentTimeMillis());
-		}
-		else
-		{
-			patches.skipCurrent();
-		}
-		evaluate();
 	}
 
-	/**
-	 * Skip everything left at the current stop in one press: getting there, its patches, the seed vault and the
-	 * bank visit after it (Sean: one press per stop, not one per step). Not timed, as with any skipped stop.
-	 */
-	public void skipStop()
+	/** The current stop ticked by hand: skip everything left there in one go. Not timed, as any skipped stop. */
+	private void skipStop(int index)
 	{
-		if (stage != RunView.State.RUNNING || stopIndex >= plan.getRoute().getStops().size())
+		if (index != stopIndex || banking)
 		{
 			return;
 		}
 		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
-		log.debug("Skip stop: {}", stop.getLocation().getDisplayName());
-		if (!navigator.isArrived())
+		log.debug("Stop ticked: {}", stop.getLocation().getDisplayName());
+		final boolean wasArrived = navigator.isArrived();
+		if (!wasArrived)
 		{
 			navigator.markArrived(System.currentTimeMillis());
+			legRecorded = true;
 		}
-		patches.skipAll(patchesAt(plan, stop.getLocation()));
+		final boolean vaultWas = vaultChecked;
 		if (stop.getLocation() == Location.FARMING_GUILD)
 		{
 			vaultChecked = true;
 		}
+		skippedStop = new SkippedStop(index, patches.skipAll(patchesAt(plan, stop.getLocation())), wasArrived,
+			vaultWas);
+		evaluate();
+	}
+
+	/** Back to a stop ticked by hand: its skipped patches are to do again. */
+	private void untickStop(int index)
+	{
+		final SkippedStop skipped = skippedStop;
+		if (skipped == null || skipped.index != index || !canGoBackTo(index))
+		{
+			return;
+		}
+		log.debug("Stop unticked: {}", plan.getRoute().getStops().get(index).getLocation().getDisplayName());
+		skippedStop = null;
+		backTo(index);
+		for (Patch patch : skipped.patches)
+		{
+			patches.unskip(patch);
+		}
+		if (skipped.wasArrived)
+		{
+			navigator.markArrived(System.currentTimeMillis());
+		}
+		vaultChecked = skipped.vaultChecked;
+		evaluate();
+	}
+
+	/** The current bank visit ticked by hand: carry on without everything from the bank. */
+	private void skipBank(int afterStop)
+	{
+		if (afterStop != stopIndex || !banking)
+		{
+			return;
+		}
+		log.debug("Bank visit ticked by hand");
+		skippedBankAfter = afterStop;
 		banked = true;
 		banking = false;
 		evaluate();
+	}
+
+	/** Back to a bank visit ticked by hand. */
+	private void untickBank(int afterStop)
+	{
+		if (skippedBankAfter != afterStop || stopIndex != afterStop + 1)
+		{
+			return;
+		}
+		log.debug("Bank visit unticked");
+		skippedBankAfter = -1;
+		backTo(afterStop);
+		// The stop itself was finished: straight to its bank visit
+		navigator.markArrived(System.currentTimeMillis());
+		evaluate();
+	}
+
+	/** A stop ticked by hand can be gone back to while it's current (at its bank) or the next one is. */
+	private boolean canGoBackTo(int index)
+	{
+		return index == stopIndex || index == stopIndex - 1;
+	}
+
+	/** Make an earlier (or the current) stop current again, its bank visit not done. Not timed. */
+	private void backTo(int index)
+	{
+		stopIndex = index;
+		banking = false;
+		banked = false;
+		manualSteps.clear();
+		navigator.nextStop();
+		patches.clearCurrent();
+		legRecorded = true;
+	}
+
+	/** A stop ticked by hand, to bring back if it's unticked. */
+	@lombok.Value
+	private static class SkippedStop
+	{
+		int index;
+		/** The patches the tick skipped (not those already done). */
+		List<Patch> patches;
+		boolean wasArrived;
+		boolean vaultChecked;
 	}
 
 	public void onChatMessage(String message)
@@ -492,6 +678,7 @@ public class RunSession
 			log.debug("Stop done: {}", stop.getLocation().getDisplayName());
 			stopIndex++;
 			navigator.nextStop();
+			manualSteps.clear();
 			banked = false;
 			legRecorded = false;
 			legStartedAt = now;
@@ -600,7 +787,8 @@ public class RunSession
 			stopViews.add(new RunView.Stop(stop.getLocation().getDisplayName(), stop.describeTravel(), status,
 				status == RunView.StopStatus.CURRENT ? instruction : null,
 				plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList()),
-				status == RunView.StopStatus.CURRENT ? steps(stop) : Collections.emptyList()));
+				status == RunView.StopStatus.CURRENT ? steps(stop) : Collections.emptyList(), false,
+				skippedStop != null && skippedStop.getIndex() == i && canGoBackTo(i)));
 			final BankStop bank = plan.bankAfter(i);
 			if (bank != null)
 			{
@@ -608,7 +796,9 @@ public class RunSession
 					: banking ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
 				stopViews.add(new RunView.Stop(bank.title(),
 					"Restock for the rest of the run", bankStatus,
-					bankStatus == RunView.StopStatus.CURRENT ? instruction : null, Collections.emptyList(), Collections.emptyList()));
+					bankStatus == RunView.StopStatus.CURRENT ? instruction : null, Collections.emptyList(),
+					bankStatus == RunView.StopStatus.CURRENT ? bankSteps(bank) : Collections.emptyList(), true,
+					skippedBankAfter == i && stopIndex == i + 1));
 			}
 		}
 		if (instruction == null)
@@ -665,6 +855,21 @@ public class RunSession
 		return "Deposit the outlined items, then take what the Farm run tab shows";
 	}
 
+	/** A bank visit's steps, as {@link #bankStep} goes through them, for the bank's row on the Run tab. */
+	private List<RunView.Step> bankSteps(BankStop bank)
+	{
+		final boolean open = bankTab.isBankOpen();
+		final boolean tab = open && bankTab.isTabOpen();
+		final List<RunView.Step> steps = new ArrayList<>();
+		steps.add(new RunView.Step(bank.getTeleport() != null ? capitalised(bank.how()) + ", open the bank"
+			: "Open the bank", open ? RunView.StopStatus.DONE : RunView.StopStatus.CURRENT, false, false));
+		steps.add(new RunView.Step("Open the Farm run tab", tab ? RunView.StopStatus.DONE
+			: open ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING, false, false));
+		steps.add(new RunView.Step("Deposit and take the marked items", tab ? RunView.StopStatus.CURRENT
+			: RunView.StopStatus.PENDING, false, false));
+		return steps;
+	}
+
 	/** Gathering supplies, one step at a time: open a bank, open the Farm run tab, take what it shows. */
 	private String gatheringStep(int missing)
 	{
@@ -707,7 +912,7 @@ public class RunSession
 			}
 			final String text = i == 0 ? stop.describeWay()
 				: capitalised(stop.getMethod().getThen().get(i - 1).getBrief());
-			steps.add(new RunView.Step(text, status, i > 0));
+			steps.add(new RunView.Step(text, status, i > 0, status == RunView.StopStatus.DONE && manualSteps.contains(i)));
 		}
 		// Each patch's plan, in the same order the objectives were made
 		final List<Patch> here = patchesAt(plan, stop.getLocation());
@@ -717,7 +922,8 @@ public class RunSession
 			final Patch patch = here.get(i);
 			final RunView.StopStatus status = patches.isDone(patch) ? RunView.StopStatus.DONE
 				: arrived && patch == patches.getCurrentPatch() ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
-			steps.add(new RunView.Step(i < objectives.size() ? objectives.get(i) : patch.getDisplayName(), status, false));
+			steps.add(new RunView.Step(i < objectives.size() ? objectives.get(i) : patch.getDisplayName(), status, false,
+				status == RunView.StopStatus.DONE && patches.isSkipped(patch)));
 		}
 		return steps;
 	}

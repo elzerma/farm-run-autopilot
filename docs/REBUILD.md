@@ -253,6 +253,11 @@ missing from his vision. Turn every chain or behaviour he names into a scenario 
   it is, its tooltip says why and what it does. Only warnings that need action stay visible.
 - Shorter labels and summaries, the same spacing and fonts everywhere, fewer headings; sections closed by
   default except the one or two changed most.
+- Run checklist as in Quest Helper (Sean, 2026-10-12): tick boxes on stops, bank visits and the current row's
+  steps; the plugin ticks what it sees done (locked), the player ticks what it missed and can untick those to go
+  back. Mark done and Skip stop go; the clock and Stop share one line. Bank visits are rows of their own.
+- A calculated item missing mid-run turns the current task into a bank visit (Sean, 2026-10-12): straight away
+  if the current step needs it, otherwise after the current stop; none if a planned bank visit comes first.
 - Run tab: the status line, route and buttons only; Account > Detected as a compact two-column list.
 - Measure it: visible lines per tab before and after, and screenshots of each tab for Sean to compare.
 - Checks: every control still has its explanation on hover; nothing a player needs is only in a tooltip.

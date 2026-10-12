@@ -133,6 +133,19 @@ class Navigator
 		}
 	}
 
+	/**
+	 * A travel step ticked by hand is unticked: back to it, so it and the steps after it are to do again (the
+	 * landing or arrival is spotted again if it did happen).
+	 *
+	 * @param step 0 for the way there, 1 on for the journey steps after it
+	 */
+	void rewindTo(int step)
+	{
+		arrived = false;
+		teleported = step > 0;
+		journeyStep = Math.max(0, step - 1);
+	}
+
 	/** How many journey steps follow the way there (a boat, Elkoy...); none for a walk. */
 	static int journeySteps(RouteStop stop)
 	{

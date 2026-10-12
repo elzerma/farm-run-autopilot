@@ -103,15 +103,15 @@ public class FarmRunAutopilotPanel extends PluginPanel
 				}
 
 				@Override
-				public void skip()
+				public void setStepTicked(int step, boolean ticked)
 				{
-					clientThread.invoke(runSession::skip);
+					clientThread.invoke(() -> runSession.setStepTicked(step, ticked));
 				}
 
 				@Override
-				public void skipStop()
+				public void setRowTicked(int row, boolean ticked)
 				{
-					clientThread.invoke(runSession::skipStop);
+					clientThread.invoke(() -> runSession.setRowTicked(row, ticked));
 				}
 
 				@Override

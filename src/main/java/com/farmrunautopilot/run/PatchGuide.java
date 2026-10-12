@@ -21,6 +21,7 @@ import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.supply.SupplyCalculator;
 import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchTracker;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -111,15 +112,6 @@ class PatchGuide
 		return currentPatch;
 	}
 
-	/** Skip the patch being worked on. */
-	void skipCurrent()
-	{
-		if (currentPatch != null)
-		{
-			progress(currentPatch).skipped = true;
-		}
-	}
-
 	/** Finished or skipped this run, so far as the guide has got (later patches aren't looked at yet). */
 	boolean isDone(Patch patch)
 	{
@@ -127,12 +119,42 @@ class PatchGuide
 		return p != null && p.done;
 	}
 
-	/** Skip every patch at a stop. */
-	void skipAll(List<Patch> here)
+	/** Ticked by hand rather than seen done, so it can be unticked. */
+	boolean isSkipped(Patch patch)
 	{
+		final Progress p = progress.get(patch);
+		return p != null && p.skipped;
+	}
+
+	/**
+	 * Tick patches by hand: the ones not already seen done count as skipped.
+	 *
+	 * @return the patches newly skipped, to bring back if the stop is unticked
+	 */
+	List<Patch> skipAll(List<Patch> here)
+	{
+		final List<Patch> skipped = new ArrayList<>();
 		for (Patch patch : here)
 		{
-			progress(patch).skipped = true;
+			final Progress p = progress(patch);
+			if (!p.done)
+			{
+				p.skipped = true;
+				skipped.add(patch);
+			}
+		}
+		clearCurrent();
+		return skipped;
+	}
+
+	/** Untick a patch ticked by hand: the guide looks at it again. */
+	void unskip(Patch patch)
+	{
+		final Progress p = progress.get(patch);
+		if (p != null && p.skipped)
+		{
+			p.skipped = false;
+			p.done = false;
 		}
 		clearCurrent();
 	}

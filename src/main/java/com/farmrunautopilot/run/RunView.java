@@ -37,6 +37,8 @@ public class RunView
 		StopStatus status;
 		/** Part of the step above it, e.g. "Down to the stronghold" after "Trollheim Teleport". */
 		boolean sub;
+		/** Ticked by hand, so it can be unticked; a step the plugin saw done can't be. */
+		boolean manual;
 	}
 
 	@Value
@@ -51,6 +53,10 @@ public class RunView
 		List<String> objectives;
 		/** The current stop's steps in order (travel, journey steps, each patch), with how far along; empty otherwise. */
 		List<Step> steps;
+		/** A bank visit between two stops, not a stop: its steps are ticked by the plugin, not by hand. */
+		boolean bank;
+		/** Ticked by hand and can still be unticked to go back to it. */
+		boolean manual;
 	}
 
 	public static final RunView OFF_VIEW = new RunView(State.OFF, 0, Collections.emptyList(), null, false, null,
