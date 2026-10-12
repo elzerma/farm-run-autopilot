@@ -621,8 +621,6 @@ class SetupPanel extends JPanel
 		s.addContent(subheader("Disease"));
 		s.addContent(checkBox("Use Cure Plant (Lunar)", config.isUseCurePlant(), true, null,
 			on -> saveRun(() -> config.setUseCurePlant(on))));
-		s.addContent(checkBox("Use Resurrect Crops (Arceuus)", config.isUseResurrectCrops(), true, null,
-			on -> saveRun(() -> config.setUseResurrectCrops(on))));
 		s.addContent(spinnerRow("Plant cures to bring (backup)", spinner(config.getPlantCureDoses(), 0, 40, 1,
 			v -> saveRunQuietly(() -> config.setPlantCureDoses(v)))));
 		return s;
@@ -671,7 +669,7 @@ class SetupPanel extends JPanel
 		s.addContent(label("Outfit"));
 		s.addContent(combo(enumChoices(Outfit.values()), config.getOutfit(), o -> saveRun(() -> config.setOutfit(o))));
 		s.addContent(checkBox("Suggest yield boosts", config.isRecommendEquipmentBoosts(), true,
-			"Magic secateurs and Farming cape/outfit as optional items",
+			"Magic secateurs (+10% herb yield) as an optional item; worn when nothing else needs the weapon slot",
 			on -> saveRun(() -> config.setRecommendEquipmentBoosts(on))));
 		return s;
 	}

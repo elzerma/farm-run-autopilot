@@ -60,8 +60,7 @@ public class RunConfig
 	private Map<PatchType, Compost> compost = defaultCompost();
 	private int plantCureDoses = 0;
 	private boolean useCurePlant = false;
-	private boolean useResurrectCrops = false;
-	/** Suggest magic secateurs and Farming cape/outfit as optional items. */
+	/** Suggest magic secateurs (+10% herb yield) as an optional item. */
 	private boolean recommendEquipmentBoosts = true;
 
 	// Travel

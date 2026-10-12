@@ -58,6 +58,8 @@ public class PatchTracker
 	}
 
 	private final Client client;
+	/** A Leagues world (patches grow faster), read on the client thread. */
+	private volatile boolean leaguesWorld;
 	private final ConfigManager configManager;
 
 	private Set<Patch> lastPatches = Collections.emptySet();
@@ -94,6 +96,7 @@ public class PatchTracker
 	 */
 	public boolean update(WorldPoint location, int ticksSinceModalClose)
 	{
+		leaguesWorld = isLeagues(client.getWorldType());
 		// Varbits don't get sent when a modal widget is open
 		for (WidgetNode node : client.getComponentTable())
 		{
@@ -234,9 +237,14 @@ public class PatchTracker
 		return patches;
 	}
 
+	/** Read on the client thread each update, since predict() is also called from the sidebar (Swing). */
 	private boolean isLeaguesWorld()
 	{
-		final Set<WorldType> worldTypes = client.getWorldType();
+		return leaguesWorld;
+	}
+
+	private static boolean isLeagues(Set<WorldType> worldTypes)
+	{
 		return worldTypes.contains(WorldType.SEASONAL) && !worldTypes.contains(WorldType.DEADMAN);
 	}
 

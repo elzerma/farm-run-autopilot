@@ -368,7 +368,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 		itemCharges.reload();
 		holdingsTracker.markDirty();
 		final FarmRunAutopilotPanel p = panel;
-		SwingUtilities.invokeLater(p::refreshPatches);
+		if (p != null)
+		{
+			SwingUtilities.invokeLater(p::refreshPatches);
+		}
 	}
 
 	@Subscribe

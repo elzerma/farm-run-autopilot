@@ -57,9 +57,10 @@ public final class SupplyCalculator
 	private static final String CROPS = "Farm > Crops";
 	private static final String RUN_OPTIONS = "Farm > Extras to bring";
 	private static final String TRAVEL_DEFAULTS = "Travel > Defaults for every stop";
-	private static final String PROTECTION = "Farm > Protection and compost";
+	private static final String PROTECTION = "Farm > Protection";
+	private static final String CURES = "Farm > Compost and cures";
 	/** Compost lines: the setting is the compost type, not anything about a bucket. */
-	private static final String COMPOST_TYPE = "Farm > Protection and compost (compost type)";
+	private static final String COMPOST_TYPE = "Farm > Compost and cures (compost type)";
 	private static final String TRAVEL = "Travel > Locations";
 
 	private SupplyCalculator()
@@ -297,10 +298,6 @@ public final class SupplyCalculator
 		{
 			addRunes(runeNeed, Spell.CURE_PLANT);
 		}
-		if (config.isUseResurrectCrops())
-		{
-			addRunes(runeNeed, Spell.RESURRECT_CROPS);
-		}
 
 		// Runes
 		final RuneResult runes = runes(runeNeed, holdings, carried, itemName);
@@ -340,7 +337,7 @@ public final class SupplyCalculator
 			final SupplyLine secateurs = changeIn(line(SupplyLine.Group.OPTIONAL, "Magic secateurs", 1, holdings,
 				carried, staffWielded ? "+10% herb yield; in the inventory, as the staff takes the weapon slot"
 				: "+10% herb yield. Wear it: no inventory slot", staffWielded ? 1 : 0, SupplyItems.MAGIC_SECATEURS),
-				PROTECTION);
+				RUN_OPTIONS);
 			lines.add(staffWielded ? secateurs : secateurs.worn());
 		}
 		if (config.getOutfit() != Outfit.NONE)
@@ -350,7 +347,7 @@ public final class SupplyCalculator
 		if (config.getPlantCureDoses() > 0)
 		{
 			lines.add(changeIn(line(SupplyLine.Group.OPTIONAL, "Plant cure", config.getPlantCureDoses(), holdings, carried,
-				"Backup for diseased patches", config.getPlantCureDoses(), ItemID.PLANT_CURE).usedUp(), PROTECTION));
+				"Backup for diseased patches", config.getPlantCureDoses(), ItemID.PLANT_CURE).usedUp(), CURES));
 		}
 		if (config.getStaminaDoses() > 0)
 		{
@@ -839,7 +836,7 @@ public final class SupplyCalculator
 			if (holds != null && replaced.isEmpty())
 			{
 				warnings.add("Your bottomless compost bucket holds " + holds.getDisplayName().toLowerCase()
-					+ ", which this run doesn't use (Farm > Protection and compost)");
+					+ ", which this run doesn't use (Farm > Compost and cures)");
 			}
 			if (!replaced.isEmpty())
 			{
