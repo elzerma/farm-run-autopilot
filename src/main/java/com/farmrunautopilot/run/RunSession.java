@@ -684,6 +684,17 @@ public class RunSession
 	{
 		if (banking)
 		{
+			// Teleporting to the bank: the bank teleport is the item to use, as for any other teleport (Sean)
+			final BankStop bank = plan.bankAfter(stopIndex);
+			if (bank != null && bank.getTeleport() != null && !bankTab.isBankOpen())
+			{
+				final Set<Integer> teleport = new LinkedHashSet<>();
+				for (int id : bank.getTeleport().getItemIds())
+				{
+					teleport.add(id);
+				}
+				return new Highlights(null, false, null, teleport, null, wear.getItemIds());
+			}
 			return new Highlights(null, false, null, BankGuide.toDeposit(bankSupplies(), holdingsTracker.getHoldings(),
 				runService::notedId), null, wear.getItemIds());
 		}
