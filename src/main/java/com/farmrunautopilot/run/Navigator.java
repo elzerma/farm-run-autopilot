@@ -112,11 +112,13 @@ class Navigator
 			markArrived(nowMillis);
 			return null;
 		}
-		// A walk from the last stop (Falador Park to Taverley, or to a stop near the start) has no teleport to
-		// wait for: it's one step, "Walk to the ... patch", with the walking line drawn from the start (Sean)
+		// A walk from the last stop (Falador Park to Taverley, or to a stop near the start) has nothing to travel to
+		// first: arrived straight away, so the patch's own "Walk to the ... patch" is the one step, with its walking
+		// line (Sean: it took two Mark done presses)
 		if (stop.getDeparture() == Departure.WALK)
 		{
-			teleported = true;
+			markArrived(nowMillis);
+			return null;
 		}
 		if (!teleported && (jumpedTowards(previous, position, here.get(0)) || jumpedToFirstStep(stop, previous, position)))
 		{

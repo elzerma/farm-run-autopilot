@@ -549,7 +549,8 @@ class RunPanel extends JPanel
 	/** Gathering supplies: cancel, or start without everything. */
 	private void addBuilding()
 	{
-		final JPanel buttons = new JPanel(new GridLayout(1, 0, 4, 0));
+		// Two to a row: three across the sidebar cut their labels off
+		final JPanel buttons = new JPanel(new GridLayout(0, 2, 4, 4));
 		buttons.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		final JButton startNow = new JButton("Start now");
 		startNow.setFocusPainted(false);
