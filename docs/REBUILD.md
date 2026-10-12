@@ -255,16 +255,17 @@ missing from his vision. Turn every chain or behaviour he names into a scenario 
 - Measure it: visible lines per tab before and after, and screenshots of each tab for Sean to compare.
 - Checks: every control still has its explanation on hover; nothing a player needs is only in a tooltip.
 
-**Sprint 8: tidy and release.**
-- Journey step text that fits the player (e.g. leave out "without 33 Agility, walk round" when they have it).
-- Guided tests: fix the two broken tests and bring every test in line with the rebuilt run, docs (README, delete stale plans),
-  screenshots, Plugin Hub PR update (with Sean's OK).
-
-**Sprint 9: Shortest Path data** (after Sprint 8; plan in docs/plans/shortest-path-research.md). Reuse its BSD-2
+**Sprint 8: Shortest Path data** (after Sprint 7; plan in docs/plans/shortest-path-research.md). Reuse its BSD-2
 licensed data with credit: bank coordinates, teleport landing points and durations checked against ours, a
 dev-only "Measure walks" tool using its query message to measure every landing-to-patch walk once and save
 the numbers in TravelTimes, and research on the Trinket of fairies. Also hot air balloons (Taverley, Grand Tree, Castle
-Wars), bank distance from the last patch done at a stop, and measured walks for every landing and bank.
+Wars), bank distance from the last patch done at a stop, measured walks for every landing and bank, and start points chosen by walking distance (Castle Wars must not suggest Lletya).
+
+**Sprint 9: tidy and release** (last, and only once everything works: Sean, 2026-10-12).
+- Journey step text that fits the player (e.g. leave out "without 33 Agility, walk round" when they have it).
+- Guided tests: fix the two broken tests and bring every test in line with the rebuilt run, docs (README, delete stale plans),
+  screenshots, Plugin Hub PR update (with Sean's OK).
+- Starts only when Sprints 1-8 all pass in game; then merge `rebuild` into master and release.
 
 ## 7. Features that must survive the rebuild
 
@@ -282,7 +283,7 @@ times; patch details/debug; the help list and guided tests (see decisions).
 
 1. **Rebuild on the `rebuild` branch, sprint by sprint**, keeping the parts in section 4. Not a fresh project.
    master stays the working, released plugin (urgent fixes go there and are merged into `rebuild`); `rebuild`
-   merges into master once Sprints 1-5 pass Sean's in-game checks.
+   merges into master in Sprint 9, the last sprint, once everything works in game (Sean, 2026-10-12).
 2. **Any number of bank breaks** per run, placed by the search.
 3. **Bank teleports** considered: crafting cape (Crafting Guild), ring of dueling (Castle Wars), max cape,
    ring of wealth (Grand Exchange), plus regular teleports that land by a bank (Camelot -> Seers' with the

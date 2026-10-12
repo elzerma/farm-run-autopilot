@@ -149,7 +149,7 @@ in seconds.
 - **Override keys:** a unit test checks every key and value we send against a list taken from their source
   (the "None" vs "NONE" bug); the dev client logs if one of our walk-only lines contains a teleport.
 
-## Added to Sprint 8 (Sean, 2026-10-12)
+## Added to Sprint 8, Shortest Path data (Sean, 2026-10-12)
 
 - **Hot air balloons** as travel options: Taverley's lands 14 walking tiles from the tree patch. Worth it from the
   Gnome Stronghold fruit tree (10 tiles to the Grand Tree balloon, about 20 s to the Taverley tree against about
