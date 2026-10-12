@@ -15,6 +15,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.util.Text;
@@ -22,8 +23,8 @@ import net.runelite.client.util.Text;
 /**
  * Charges of teleport items the player charges themselves, which the game only shows in chat: the quetzal
  * whistle, Xeric's talisman and the pendant of Ates. Set from their Check and charging messages (wiki
- * transcripts), and counted down by one on each teleport click; a cancelled teleport makes it drift until the
- * next Check. Saved per account. Kharedst's memoirs / Book of the dead have no known messages, so aren't
+ * transcripts), and counted down by one when a teleport click is followed by the player actually being moved
+ * (picking a destination can take a while; a cancelled teleport or a closed menu uses nothing). Saved per account. Kharedst's memoirs / Book of the dead have no known messages, so aren't
  * tracked.
  *
  * <p>Client thread, except that settings are written on the Swing thread.
@@ -43,12 +44,20 @@ public class ItemChargeTracker
 	public static final Pattern PENDANT_CHECK = Pattern.compile("The pendant has " + COUNT + " charges?\\.");
 	static final Pattern PENDANT_CHARGED = Pattern.compile(".*It now has ([\\d,]+) charges?\\.");
 	private static final int FULL = 1000;
+	/** A teleport click counts only if the player is moved within this many ticks (about 30 seconds). */
+	private static final int PENDING_TICKS = 50;
+	/** Moving further than this in one tick can only be a teleport. */
+	private static final int TELEPORT_TILES = 30;
 	/** Menu options on these items that aren't a teleport. */
 	private static final Set<String> NOT_TELEPORTS = new HashSet<>(Arrays.asList("Check", "Wear", "Wield", "Remove",
 		"Drop", "Examine", "Use", "Destroy", "Uncharge", "Charge", "Cancel"));
 
 	private final SettingsStore settings;
 	private volatile Map<TravelItem, Integer> charges = Collections.emptyMap();
+	/** The item a teleport was just chosen from, waiting for the player to be moved; null if none. */
+	private TravelItem pending;
+	private int pendingTicks;
+	private WorldPoint lastLocation;
 
 	@Inject
 	ItemChargeTracker(SettingsStore settings)
@@ -131,9 +140,10 @@ public class ItemChargeTracker
 	}
 
 	/**
-	 * A teleport chosen from one of these items uses a charge.
+	 * A teleport chosen from one of these items: it uses a charge once the player is moved (see
+	 * {@link #onGameTick}).
 	 *
-	 * @return whether a charge count changed
+	 * @return whether a charge count changed (never, now; kept for callers)
 	 */
 	public boolean onMenuOptionClicked(MenuOptionClicked event)
 	{
@@ -155,8 +165,40 @@ public class ItemChargeTracker
 			final Integer left = charges.get(item);
 			if (left != null && left > 0 && Arrays.stream(item.getItemIds()).anyMatch(id -> id == itemId))
 			{
-				return record(item, left - 1);
+				pending = item;
+				pendingTicks = 0;
+				return false;
 			}
+		}
+		return false;
+	}
+
+	/**
+	 * Each game tick: a chosen teleport uses its charge when the player is moved, and is forgotten if they aren't
+	 * within about 30 seconds.
+	 *
+	 * @return whether a charge count changed
+	 */
+	public boolean onGameTick(WorldPoint location)
+	{
+		final WorldPoint previous = lastLocation;
+		lastLocation = location;
+		if (pending == null)
+		{
+			return false;
+		}
+		final boolean moved = previous != null && location != null
+			&& (previous.getPlane() != location.getPlane() || previous.distanceTo2D(location) > TELEPORT_TILES);
+		if (moved)
+		{
+			final TravelItem used = pending;
+			pending = null;
+			final Integer left = charges.get(used);
+			return left != null && left > 0 && record(used, left - 1);
+		}
+		if (++pendingTicks > PENDING_TICKS)
+		{
+			pending = null;
 		}
 		return false;
 	}

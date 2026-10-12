@@ -245,6 +245,11 @@ public class FarmRunAutopilotPlugin extends Plugin
 	{
 		// Patch states first, so the run guide and the plan see this tick's, not last tick's
 		trackPatches();
+		final Player me = client.getLocalPlayer();
+		if (itemCharges.onGameTick(me != null ? me.getWorldLocation() : null))
+		{
+			holdingsTracker.markDirty();
+		}
 		pohDetector.onGameTick();
 		if (accessChecker.onGameTick())
 		{
