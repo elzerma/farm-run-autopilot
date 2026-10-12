@@ -38,10 +38,10 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	private static final int REFRESH_MILLIS = 10_000;
 
 	private final RunPanel runPanel;
-	private final SetupPanel presetsPanel;
-	private final SetupPanel farmPanel;
-	private final SetupPanel travelPanel;
-	private final SetupPanel accountPanel;
+	private final PresetsPage presetsPanel;
+	private final FarmPage farmPanel;
+	private final TravelPage travelPanel;
+	private final AccountPage accountPanel;
 	/** Built after the Run tab, which can switch to the Account tab. */
 	private TabBar tabs;
 	private final RunSession runSession;
@@ -165,8 +165,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 				}
 			});
 		// Presets cover Farm and Travel, so they're managed under the Run tab's preset picker
-		presetsPanel = new SetupPanel(SetupPanel.Page.PRESETS, settings, accessChecker, patchTracker,
-			this::rebuildSetup, null);
+		presetsPanel = new PresetsPage(settings, accessChecker, this::rebuildSetup);
 		final JPanel runStack = new JPanel();
 		runStack.setLayout(new BoxLayout(runStack, BoxLayout.Y_AXIS));
 		runStack.setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -179,13 +178,10 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		run.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		run.add(runStack, BorderLayout.NORTH);
 
-		farmPanel = new SetupPanel(SetupPanel.Page.FARM, settings, accessChecker, patchTracker,
-			this::rebuildSetup, null);
-		travelPanel = new SetupPanel(SetupPanel.Page.TRAVEL, settings, accessChecker, patchTracker,
-			this::rebuildSetup, null);
+		farmPanel = new FarmPage(settings, accessChecker, this::rebuildSetup);
+		travelPanel = new TravelPage(settings, accessChecker, this::rebuildSetup);
 		final GuidanceSettings guidance = new GuidanceSettings(config, configManager, colorPickers);
-		accountPanel = new SetupPanel(SetupPanel.Page.ACCOUNT, settings, accessChecker, patchTracker,
-			this::rebuildSetup, guidance);
+		accountPanel = new AccountPage(settings, accessChecker, patchTracker, this::rebuildSetup, guidance);
 		final Runnable resetRunSettings = () ->
 		{
 			settings.resetRunConfig();
