@@ -6,6 +6,7 @@ import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
+import java.awt.Color;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -125,7 +126,7 @@ abstract class SetupPanel extends JPanel
 		button.setMargin(new Insets(2, 2, 2, 2));
 		button.setFocusPainted(false);
 		button.setAlignmentX(LEFT_ALIGNMENT);
-		return button;
+		return Style.button(button);
 	}
 
 	// Building blocks
@@ -163,7 +164,7 @@ abstract class SetupPanel extends JPanel
 		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		row.setBorder(new EmptyBorder(3, 0, 3, 0));
 		final JLabel label = new JLabel(wrap(text, CONTROL_WIDTH - 85));
-		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
 		row.add(label, BorderLayout.CENTER);
 		row.add(spinner, BorderLayout.EAST);
@@ -183,7 +184,7 @@ abstract class SetupPanel extends JPanel
 		box.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		box.setFont(FontManager.getRunescapeSmallFont());
 		box.addActionListener(e -> onChange.accept(box.isSelected()));
-		return box;
+		return Style.checkBox(box);
 	}
 
 	static <T> JComboBox<Choice<T>> combo(List<Choice<T>> choices, T selected, Consumer<T> onChange)
@@ -221,7 +222,7 @@ abstract class SetupPanel extends JPanel
 			previous[0] = picked;
 			onChange.accept(picked.getValue());
 		});
-		return combo;
+		return Style.combo(combo);
 	}
 
 	static <E extends Enum<E>> List<Choice<E>> enumChoices(E[] values)
@@ -240,13 +241,13 @@ abstract class SetupPanel extends JPanel
 		spinner.setPreferredSize(new Dimension(70, 24));
 		spinner.setMaximumSize(new Dimension(70, 24));
 		spinner.addChangeListener(e -> onChange.accept((Integer) spinner.getValue()));
-		return spinner;
+		return Style.spinner(spinner);
 	}
 
 	static JLabel label(String text)
 	{
 		final JLabel label = new JLabel(wrap(text));
-		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
 		label.setBorder(new EmptyBorder(4, 0, 2, 0));
 		return label;
@@ -255,7 +256,7 @@ abstract class SetupPanel extends JPanel
 	static JLabel subheader(String text)
 	{
 		final JLabel label = new JLabel(wrap(text));
-		label.setForeground(ColorScheme.TEXT_COLOR);
+		Style.title(label);
 		label.setBorder(new EmptyBorder(8, 0, 2, 0));
 		return label;
 	}
@@ -263,7 +264,7 @@ abstract class SetupPanel extends JPanel
 	static JLabel note(String text)
 	{
 		final JLabel label = new JLabel(wrap(text));
-		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
 		label.setBorder(new EmptyBorder(0, 0, 6, 0));
 		label.setAlignmentX(LEFT_ALIGNMENT);

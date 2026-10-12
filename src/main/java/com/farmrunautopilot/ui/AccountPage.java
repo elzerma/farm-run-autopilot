@@ -251,7 +251,7 @@ class AccountPage extends SetupPanel
 		// Both columns wrap: the value column is CONTROL_WIDTH - 90 wide, so the name gets the rest
 		final JLabel name = new JLabel(wrap(what, 80));
 		name.setVerticalAlignment(JLabel.TOP);
-		name.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		name.setForeground(Color.WHITE);
 		name.setFont(FontManager.getRunescapeSmallFont());
 		final JLabel shown = new JLabel(wrap(value, CONTROL_WIDTH - 90));
 		shown.setVerticalAlignment(JLabel.TOP);
@@ -540,7 +540,7 @@ class AccountPage extends SetupPanel
 		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		row.setBorder(new EmptyBorder(3, 0, 3, 0));
 		final JLabel label = new JLabel(text);
-		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
 		final JButton swatch = new JButton();
 		swatch.setFocusPainted(false);

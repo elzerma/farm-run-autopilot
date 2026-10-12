@@ -5,6 +5,7 @@ import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchStatusText;
 import com.farmrunautopilot.tracking.PatchTracker;
+import java.awt.Color;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.time.Instant;
@@ -33,14 +34,14 @@ class PatchDebugPanel extends JPanel
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 
 		final JLabel title = new JLabel("Patch states (debug)");
-		title.setForeground(ColorScheme.BRAND_ORANGE);
+		Style.title(title);
 		title.setBorder(new EmptyBorder(0, 0, 6, 0));
 		add(title);
 
 		for (PatchType type : PatchType.values())
 		{
 			final JLabel header = new JLabel(type.getDisplayName() + " patches");
-			header.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+			header.setForeground(Color.WHITE);
 			header.setBorder(new EmptyBorder(8, 0, 4, 0));
 			add(header);
 
@@ -89,7 +90,7 @@ class PatchDebugPanel extends JPanel
 			final PatchPrediction prediction = tracker.predict(patch);
 			final JLabel status = statusLabels.get(patch);
 			status.setText(PatchStatusText.describe(prediction, now));
-			status.setForeground(prediction == null ? ColorScheme.MEDIUM_GRAY_COLOR : ColorScheme.LIGHT_GRAY_COLOR);
+			status.setForeground(prediction == null ? ColorScheme.MEDIUM_GRAY_COLOR : Color.WHITE);
 			rows.get(patch).setToolTipText(tooltip(patch, prediction, now));
 		}
 	}

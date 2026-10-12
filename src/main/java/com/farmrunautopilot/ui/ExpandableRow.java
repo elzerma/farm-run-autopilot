@@ -25,7 +25,7 @@ class ExpandableRow extends JPanel
 	private final JPanel content = new JPanel();
 	private final JLabel header = new JLabel();
 	/** The clickable summary line: a rounded card with a chevron (Sprint 7 facelift). */
-	private final Card headCard = new Card(new BorderLayout());
+	private final Card headCard = new Card(new BorderLayout()).hoverable();
 	private final String name;
 	private final String summary;
 	private final boolean overridden;

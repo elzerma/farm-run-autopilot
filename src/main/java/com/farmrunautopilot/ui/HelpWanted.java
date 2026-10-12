@@ -68,7 +68,7 @@ final class HelpWanted
 	{
 		final JButton button = new JButton();
 		button.setFont(FontManager.getRunescapeSmallFont());
-		button.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		button.setForeground(Color.WHITE);
 		button.setFocusPainted(false);
 		button.setBorderPainted(false);
 		button.setContentAreaFilled(false);
@@ -100,8 +100,7 @@ final class HelpWanted
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		panel.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		final JLabel heading = text(TITLE, ColorScheme.BRAND_ORANGE, 4);
-		heading.setFont(FontManager.getRunescapeBoldFont());
+		final JLabel heading = Style.title(text(TITLE, Color.WHITE, 4));
 		add(panel, heading);
 		if (developer)
 		{
@@ -113,9 +112,9 @@ final class HelpWanted
 			add(panel, text("I can't test these myself, so your results really help. How it works:", Color.WHITE, 4));
 			for (String step : HOW_IT_WORKS)
 			{
-				add(panel, text(step, ColorScheme.LIGHT_GRAY_COLOR, 3));
+				add(panel, text(step, Color.WHITE, 3));
 			}
-			add(panel, text("", ColorScheme.LIGHT_GRAY_COLOR, 3));
+			add(panel, text("", Color.WHITE, 3));
 		}
 		if (toTry(settings) == 0)
 		{
@@ -157,10 +156,10 @@ final class HelpWanted
 	private static void addItem(JPanel panel, TestItem item, SettingsStore settings, TestRunner runner,
 		Runnable showRun)
 	{
-		final JLabel title = text(item.getTitle(), ColorScheme.BRAND_ORANGE, 2);
+		final JLabel title = text(item.getTitle(), Color.WHITE, 2);
 		title.setFont(FontManager.getRunescapeBoldFont());
 		add(panel, title);
-		add(panel, text(item.getHowToTry(), ColorScheme.LIGHT_GRAY_COLOR, 4));
+		add(panel, text(item.getHowToTry(), Color.WHITE, 4));
 		addStart(panel, item, "Start test", runner, showRun);
 	}
 
@@ -209,7 +208,7 @@ final class HelpWanted
 		add(panel, start);
 		if (!missing.isEmpty())
 		{
-			add(panel, text("Needs: " + String.join("; ", missing), ColorScheme.LIGHT_GRAY_COLOR, 0));
+			add(panel, text("Needs: " + String.join("; ", missing), Color.WHITE, 0));
 		}
 		add(panel, text("", ColorScheme.MEDIUM_GRAY_COLOR, 6));
 	}

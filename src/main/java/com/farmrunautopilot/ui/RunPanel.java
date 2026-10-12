@@ -307,15 +307,15 @@ class RunPanel extends JPanel
 			add(box);
 			return;
 		}
-		box.add(testText("Step " + test.getStep() + " of " + test.getSteps(), ColorScheme.LIGHT_GRAY_COLOR));
+		box.add(testText("Step " + test.getStep() + " of " + test.getSteps(), Color.WHITE));
 		box.add(testText(test.getText(), Color.WHITE));
 		if (!test.getBring().isEmpty())
 		{
 			// Any one of the items will do
-			box.add(testText(test.getBring().size() == 1 ? "Bring:" : "Bring one of:", ColorScheme.LIGHT_GRAY_COLOR));
+			box.add(testText(test.getBring().size() == 1 ? "Bring:" : "Bring one of:", Color.WHITE));
 			for (String line : test.getBring())
 			{
-				box.add(testText("- " + line, ColorScheme.LIGHT_GRAY_COLOR));
+				box.add(testText("- " + line, Color.WHITE));
 			}
 		}
 
@@ -367,7 +367,7 @@ class RunPanel extends JPanel
 		button.setMargin(new Insets(2, 2, 2, 2));
 		button.setFocusPainted(false);
 		button.addActionListener(e -> action.run());
-		return button;
+		return Style.button(button);
 	}
 
 	/**
@@ -472,7 +472,7 @@ class RunPanel extends JPanel
 		build.addActionListener(e -> controls.build());
 		build.setAlignmentX(LEFT_ALIGNMENT);
 		build.setMaximumSize(new Dimension(Integer.MAX_VALUE, build.getPreferredSize().height));
-		add(build);
+		add(Style.primary(build));
 
 		// No route summary until the run is built: only the types to include (Sean)
 		addRunTypeStatus(plan.getSelection());
@@ -530,7 +530,7 @@ class RunPanel extends JPanel
 			patches.sort(Comparator.comparingLong(p -> RunSelector.isDue(predictions.get(p))
 				? Long.MIN_VALUE : predictions.get(p).getDoneAt()));
 			final JLabel title = new JLabel(type.getDisplayName() + "s");
-			title.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+			title.setForeground(Color.WHITE);
 			title.setFont(FontManager.getRunescapeSmallFont());
 			title.setBorder(new EmptyBorder(any ? 6 : 0, 0, 2, 0));
 			panel.add(left(title));
@@ -553,7 +553,7 @@ class RunPanel extends JPanel
 		name.setForeground(ColorScheme.TEXT_COLOR);
 		name.setFont(FontManager.getRunescapeSmallFont());
 		final JLabel status = new JLabel(UiText.wrap(PatchStatusText.describe(prediction, now), TEXT_WIDTH - 20));
-		status.setForeground(RunSelector.isDue(prediction) ? CARRIED : ColorScheme.LIGHT_GRAY_COLOR);
+		status.setForeground(RunSelector.isDue(prediction) ? CARRIED : Color.WHITE);
 		status.setFont(FontManager.getRunescapeSmallFont());
 		cell.add(name, BorderLayout.NORTH);
 		cell.add(status, BorderLayout.CENTER);
@@ -578,8 +578,8 @@ class RunPanel extends JPanel
 		final JButton cancel = new JButton("Cancel");
 		cancel.setFocusPainted(false);
 		cancel.addActionListener(e -> controls.cancel());
-		buttons.add(startNow);
-		buttons.add(cancel);
+		buttons.add(Style.primary(startNow));
+		buttons.add(Style.button(cancel));
 		buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, buttons.getPreferredSize().height));
 		add(left(buttons));
 		// The next step (open a bank, the Farm run tab...) is under the player only: said once (Sean)
@@ -627,7 +627,7 @@ class RunPanel extends JPanel
 			stop.setToolTipText("End the run now. It ends by itself after the last stop");
 			stop.addActionListener(e -> controls.stop());
 			bar.add(clockLabel);
-			bar.add(stop);
+			bar.add(Style.danger(stop));
 			bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, bar.getPreferredSize().height));
 			add(left(bar));
 		}
@@ -649,7 +649,7 @@ class RunPanel extends JPanel
 		button.setFocusPainted(false);
 		button.setFont(FontManager.getRunescapeSmallFont());
 		button.addActionListener(e -> onClick.run());
-		return button;
+		return Style.button(button);
 	}
 
 	/**
@@ -659,20 +659,14 @@ class RunPanel extends JPanel
 	private static JCheckBox tickBox(boolean done, boolean enabled, java.util.function.Consumer<Boolean> onChange)
 	{
 		final JCheckBox box = new JCheckBox();
-		// Drawn to stand out (Sean: hard to see): green when the plugin saw it done (locked), orange when ticked by
-		// hand (can be unticked), an outline when it can be ticked, faint when it can't yet
-		box.setIcon(Card.tick(null, ColorScheme.LIGHT_GRAY_COLOR));
-		box.setSelectedIcon(Card.tick(ColorScheme.BRAND_ORANGE, null));
-		box.setRolloverIcon(Card.tick(null, Color.WHITE));
-		box.setRolloverSelectedIcon(Card.tick(ColorScheme.BRAND_ORANGE.brighter(), null));
-		box.setDisabledIcon(Card.tick(null, ColorScheme.MEDIUM_GRAY_COLOR));
-		box.setDisabledSelectedIcon(Card.tick(CARRIED, null));
+		// Green when the plugin saw it done (locked), orange when ticked by hand (can be unticked), an outline when it
+		// can be ticked, faint when it can't yet (Sean: the old ones were hard to see)
+		Style.checkBox(box);
 		box.setSelected(done);
 		box.setEnabled(enabled);
 		box.setOpaque(false);
 		box.setFocusPainted(false);
 		box.setBorder(new EmptyBorder(2, 0, 0, 6));
-		box.setBorderPainted(false);
 		// Level with the first line of text when it wraps
 		box.setVerticalAlignment(JCheckBox.TOP);
 		box.addActionListener(e -> onChange.accept(box.isSelected()));
@@ -689,7 +683,7 @@ class RunPanel extends JPanel
 		final boolean done = step.getStatus() == RunView.StopStatus.DONE;
 		final JLabel label = new JLabel(open + (done ? "<s>" + text + "</s>" : text) + close);
 		label.setForeground(done ? ColorScheme.MEDIUM_GRAY_COLOR
-			: step.getStatus() == RunView.StopStatus.CURRENT ? ColorScheme.BRAND_ORANGE : ColorScheme.LIGHT_GRAY_COLOR);
+			: step.getStatus() == RunView.StopStatus.CURRENT ? ColorScheme.BRAND_ORANGE : Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
 
 		// A bank visit's steps are only ticked by the plugin; the bank row itself can be ticked
@@ -718,13 +712,13 @@ class RunPanel extends JPanel
 		// The current one stands out: a lighter card with an orange bar down its edge (Sean: boxed; facelift: a bar)
 		final Card cell = new Card(new BorderLayout())
 			.fill(current ? ColorScheme.DARK_GRAY_HOVER_COLOR : ColorScheme.DARKER_GRAY_COLOR)
-			.accent(current ? ColorScheme.BRAND_ORANGE : null);
+			.accent(current || (stop.isBank() && !done) ? ColorScheme.BRAND_ORANGE : null);
 
 		final String name = UiText.escape(number > 0 ? number + ". " + stop.getLocation() : stop.getLocation());
 		final JLabel title = new JLabel(done ? "<html><s>" + name + "</s></html>" : "<html>" + name + "</html>");
-		title.setForeground(done ? ColorScheme.MEDIUM_GRAY_COLOR
-			: current ? ColorScheme.BRAND_ORANGE : stop.isBank() ? ColorScheme.BRAND_ORANGE : ColorScheme.TEXT_COLOR);
-		title.setFont(current ? FontManager.getRunescapeBoldFont() : FontManager.getRunescapeSmallFont());
+		// Titles in white bold (Sean); the current one is marked by its orange bar, a bank visit by an orange bar too
+		title.setForeground(done ? ColorScheme.MEDIUM_GRAY_COLOR : Color.WHITE);
+		title.setFont(current ? Style.titleFont() : FontManager.getRunescapeBoldFont());
 		// Only the current row can be ticked, and a row the player ticked can be unticked while it can be gone back to
 		final JPanel head = new JPanel(new BorderLayout());
 		head.setOpaque(false);
@@ -751,7 +745,7 @@ class RunPanel extends JPanel
 		else if (!current && !done)
 		{
 			final JLabel detail = new JLabel(UiText.wrap(stop.getTravel(), TEXT_WIDTH - 40));
-			detail.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+			detail.setForeground(Color.WHITE);
 			detail.setFont(FontManager.getRunescapeSmallFont());
 			detail.setBorder(new EmptyBorder(0, 24, 0, 0));
 			cell.add(detail, BorderLayout.CENTER);
@@ -787,6 +781,7 @@ class RunPanel extends JPanel
 			combo.addItem(name);
 		}
 		combo.setSelectedItem(active != null ? active : EDITED_PRESET);
+		Style.combo(combo);
 		combo.setFont(FontManager.getRunescapeSmallFont());
 		combo.setToolTipText("Switch to a saved preset. Save and manage presets under Manage presets below.");
 		combo.addActionListener(e ->
@@ -802,7 +797,7 @@ class RunPanel extends JPanel
 		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		row.setBorder(new EmptyBorder(0, 0, 4, 0));
 		final JLabel label = new JLabel("Preset");
-		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
 		row.add(label, BorderLayout.WEST);
 		row.add(combo, BorderLayout.CENTER);
@@ -822,6 +817,7 @@ class RunPanel extends JPanel
 				settings.editRunConfig().getEnabledTypes().contains(type));
 			box.setToolTipText("Include " + type.getDisplayName().toLowerCase() + " patches in this run");
 			box.setBackground(ColorScheme.DARK_GRAY_COLOR);
+			Style.checkBox(box);
 			box.setFont(FontManager.getRunescapeSmallFont());
 			box.addActionListener(e ->
 			{
@@ -906,14 +902,14 @@ class RunPanel extends JPanel
 		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		row.setBorder(new EmptyBorder(1, 0, 1, 0));
 		final JLabel label = new JLabel(UiText.wrap(text, TEXT_WIDTH - 70));
-		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
 		final JButton button = new JButton(buttonText);
 		button.setFont(FontManager.getRunescapeSmallFont());
 		button.setFocusPainted(false);
 		button.addActionListener(e -> onClick.run());
 		row.add(label, BorderLayout.CENTER);
-		row.add(button, BorderLayout.EAST);
+		row.add(Style.button(button), BorderLayout.EAST);
 		row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
 		return left(row);
 	}
@@ -1027,13 +1023,14 @@ class RunPanel extends JPanel
 				// A bank visit between two stops: where, and how when it's by teleport
 				final BankStop bank = (BankStop) row;
 				final JLabel title = new JLabel(UiText.wrap(bank.title(), TEXT_WIDTH - 20));
-				title.setForeground(ColorScheme.BRAND_ORANGE);
-				title.setFont(FontManager.getRunescapeSmallFont());
+				title.setForeground(Color.WHITE);
+				title.setFont(FontManager.getRunescapeBoldFont());
+				cell.accent(ColorScheme.BRAND_ORANGE);
 				cell.add(title, BorderLayout.NORTH);
 				if (bank.getTeleport() != null)
 				{
 					final JLabel how = new JLabel(UiText.wrap(bank.getTeleport().getItemName(), TEXT_WIDTH - 20));
-					how.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+					how.setForeground(Color.WHITE);
 					how.setFont(FontManager.getRunescapeSmallFont());
 					cell.add(how, BorderLayout.CENTER);
 				}
@@ -1051,12 +1048,12 @@ class RunPanel extends JPanel
 				}
 			}
 			final JLabel name = new JLabel(number + ". " + stop.getLocation().getDisplayName());
-			name.setForeground(ColorScheme.TEXT_COLOR);
-			name.setFont(FontManager.getRunescapeSmallFont());
+			name.setForeground(Color.WHITE);
+			name.setFont(FontManager.getRunescapeBoldFont());
 			final boolean here = index == 0 && controls.view().isAtFirstStop();
 			final JLabel travel = new JLabel(UiText.wrap(here ? "You're here" : stop.describeTravel()
 				+ " - about " + legTime(stop.getLegSeconds()), TEXT_WIDTH - 20));
-			travel.setForeground(stop.isNeedsSupplies() ? IN_STORAGE : ColorScheme.LIGHT_GRAY_COLOR);
+			travel.setForeground(stop.isNeedsSupplies() ? IN_STORAGE : Color.WHITE);
 			travel.setFont(FontManager.getRunescapeSmallFont());
 
 			cell.add(name, BorderLayout.NORTH);
@@ -1148,7 +1145,7 @@ class RunPanel extends JPanel
 	private static JLabel heading(String text)
 	{
 		final JLabel label = new JLabel(UiText.wrap(text, TEXT_WIDTH));
-		label.setForeground(ColorScheme.BRAND_ORANGE);
+		Style.title(label);
 		label.setBorder(new EmptyBorder(12, 0, 6, 0));
 		return left(label);
 	}
@@ -1163,7 +1160,7 @@ class RunPanel extends JPanel
 	private static JLabel note(String text)
 	{
 		final JLabel label = new JLabel(UiText.wrap(text, TEXT_WIDTH));
-		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
 		label.setBorder(new EmptyBorder(0, 0, 4, 0));
 		return left(label);

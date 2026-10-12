@@ -18,7 +18,7 @@ import net.runelite.client.ui.ColorScheme;
 class CollapsibleSection extends JPanel
 {
 	/** The clickable title bar: a rounded card with a chevron (Sprint 7 facelift). */
-	private final Card headCard = new Card(new BorderLayout());
+	private final Card headCard = new Card(new BorderLayout()).hoverable();
 	private final JLabel header = new JLabel();
 	private final JPanel content = new JPanel();
 	private final String title;
@@ -45,7 +45,7 @@ class CollapsibleSection extends JPanel
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 		setBorder(new EmptyBorder(0, 0, 4, 0));
 
-		header.setForeground(ColorScheme.BRAND_ORANGE);
+		Style.title(header);
 		header.setIconTextGap(8);
 		headCard.add(header, BorderLayout.CENTER);
 		headCard.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -90,7 +90,7 @@ class CollapsibleSection extends JPanel
 		final String text = UiText.escape(title)
 			+ (help != null ? " <font color='#6f6f6f'>(?)</font>" : "");
 		header.setText(summary == null ? "<html>" + text + "</html>"
-			: "<html>" + text + " <font color='#9a9a9a'>" + UiText.escape(summary) + "</font></html>");
+			: "<html>" + text + " <font color='#ffffff'>" + UiText.escape(summary) + "</font></html>");
 		header.setIcon(Card.chevron(expanded, ColorScheme.LIGHT_GRAY_COLOR));
 		content.setVisible(expanded);
 		revalidate();

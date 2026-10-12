@@ -18,8 +18,8 @@ import net.runelite.client.ui.ColorScheme;
  */
 class Card extends JPanel
 {
-	/** Corner rounding, in pixels. */
-	static final int ARC = 8;
+	/** Corner rounding, in pixels: the one radius everything shares. */
+	static final int ARC = Style.ARC;
 	/** Width of the accent bar down the left edge. */
 	private static final int ACCENT_WIDTH = 3;
 
@@ -38,6 +38,27 @@ class Card extends JPanel
 	{
 		this.fill = fill;
 		repaint();
+		return this;
+	}
+
+	/** Clickable: one step lighter while the mouse is over it. */
+	Card hoverable()
+	{
+		final Color normal = fill;
+		addMouseListener(new java.awt.event.MouseAdapter()
+		{
+			@Override
+			public void mouseEntered(java.awt.event.MouseEvent e)
+			{
+				fill(ColorScheme.DARK_GRAY_HOVER_COLOR);
+			}
+
+			@Override
+			public void mouseExited(java.awt.event.MouseEvent e)
+			{
+				fill(normal);
+			}
+		});
 		return this;
 	}
 
@@ -66,57 +87,6 @@ class Card extends JPanel
 		}
 		g2.dispose();
 		super.paintComponent(g);
-	}
-
-	/** Side of a tick box, in pixels. */
-	static final int TICK_SIZE = 14;
-
-	/**
-	 * A tick box drawn to stand out on a dark card (Sean: RuneLite's own was hard to see): an outline when empty,
-	 * filled with a white tick when ticked.
-	 *
-	 * @param fill the fill when ticked, or null for an empty box
-	 * @param outline the empty box's outline
-	 */
-	static Icon tick(Color fill, Color outline)
-	{
-		return new Icon()
-		{
-			@Override
-			public void paintIcon(Component c, Graphics g, int x, int y)
-			{
-				final Graphics2D g2 = (Graphics2D) g.create();
-				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-				final int s = TICK_SIZE - 1;
-				if (fill == null)
-				{
-					g2.setColor(outline);
-					g2.setStroke(new BasicStroke(1.5f));
-					g2.drawRoundRect(x, y, s, s, 4, 4);
-				}
-				else
-				{
-					g2.setColor(fill);
-					g2.fillRoundRect(x, y, s + 1, s + 1, 4, 4);
-					g2.setColor(Color.WHITE);
-					g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-					g2.drawPolyline(new int[]{x + 3, x + 6, x + 11}, new int[]{y + 7, y + 10, y + 4}, 3);
-				}
-				g2.dispose();
-			}
-
-			@Override
-			public int getIconWidth()
-			{
-				return TICK_SIZE;
-			}
-
-			@Override
-			public int getIconHeight()
-			{
-				return TICK_SIZE;
-			}
-		};
 	}
 
 	/** A small chevron for a collapsible header: pointing right when closed, down when open. */
