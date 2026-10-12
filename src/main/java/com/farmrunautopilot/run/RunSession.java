@@ -705,6 +705,11 @@ public class RunSession
 		{
 			lines.add(missing);
 		}
+		final String tool = patches.plantingToolReminder();
+		if (tool != null)
+		{
+			lines.add(tool);
+		}
 		final String drop = dropReminder();
 		if (drop != null)
 		{

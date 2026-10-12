@@ -272,8 +272,6 @@ class PatchGuide
 				{
 					items.add(crop.getPlantItemId());
 				}
-				// Herb seeds go in with a seed dibber; saplings need a spade
-				items.add(currentPatch.getType() == PatchType.HERB ? ItemID.DIBBER : ItemID.SPADE);
 				break;
 			case COMPOST:
 				final Compost compost = settings.getRunConfig().getCompost().get(currentPatch.getType());
@@ -382,6 +380,28 @@ class PatchGuide
 		}
 		// The step's main item is listed first
 		return "You aren't carrying: " + runService.itemName(needed.iterator().next());
+	}
+
+	/**
+	 * Planting uses the seed or sapling itself, but only works with a seed dibber (herbs) or spade (saplings) in the
+	 * inventory: say so if it isn't there. The tool isn't outlined, since it isn't what gets clicked (Sean).
+	 */
+	String plantingToolReminder()
+	{
+		if (currentPatch == null || currentAction != StepAdvisor.Action.PLANT)
+		{
+			return null;
+		}
+		final boolean herb = currentPatch.getType() == PatchType.HERB;
+		final Map<Integer, Integer> inventory = holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY);
+		if (inventory.getOrDefault(herb ? ItemID.DIBBER : ItemID.SPADE, 0) > 0)
+		{
+			return null;
+		}
+		final boolean atLeprechaun = holdingsTracker.getHoldings().in(Holdings.Source.LEPRECHAUN)
+			.getOrDefault(herb ? ItemID.DIBBER : ItemID.SPADE, 0) > 0;
+		return (herb ? "Planting needs a seed dibber" : "Planting needs a spade") + " in your inventory"
+			+ (atLeprechaun ? ": take it from the tool leprechaun" : "");
 	}
 
 	/**
