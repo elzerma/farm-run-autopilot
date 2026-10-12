@@ -90,4 +90,17 @@ public class BankGuideTest
 			PatchGuide.patchNamed("You treat the fruit tree patch with ultracompost.", catherby));
 		assertNull(PatchGuide.patchNamed("You treat the allotment with ultracompost.", catherby));
 	}
+
+	@Test
+	public void secateursAreWornOnlyWhenTheWeaponSlotIsFree()
+	{
+		final SupplyLine worn = new SupplyLine(SupplyLine.Group.OPTIONAL, "Magic secateurs", 1, 0, 0,
+			Collections.emptyMap(), null, 0, false, null, new int[]{ItemID.FAIRY_ENCHANTED_SECATEURS}, false, true);
+		final SupplyLine carried = new SupplyLine(SupplyLine.Group.OPTIONAL, "Magic secateurs", 1, 0, 0,
+			Collections.emptyMap(), null, 1, false, null, new int[]{ItemID.FAIRY_ENCHANTED_SECATEURS}, false, false);
+		final Holdings inInventory = holdings(items(ItemID.FAIRY_ENCHANTED_SECATEURS, 1), items());
+		assertEquals("Wear: Magic secateurs", BankGuide.wear(part(worn), inInventory, Outfit.NONE).getText());
+		// A run with fairy rings wields the staff, so the secateurs stay in the inventory
+		assertNull(BankGuide.wear(part(carried), inInventory, Outfit.NONE).getText());
+	}
 }

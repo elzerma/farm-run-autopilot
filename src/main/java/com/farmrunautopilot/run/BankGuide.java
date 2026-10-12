@@ -78,7 +78,8 @@ final class BankGuide
 		final Set<Integer> ids = new LinkedHashSet<>();
 		for (SupplyLine line : part.getLines())
 		{
-			if (!line.isWear() || line.getGroup() != SupplyLine.Group.TRAVEL || any(line.getItemIds(), worn))
+			// Teleport items, the staff and magic secateurs; the outfit is handled below, piece by piece
+			if (!line.isWear() || line.getName().equals(outfit.getDisplayName()) || any(line.getItemIds(), worn))
 			{
 				continue;
 			}

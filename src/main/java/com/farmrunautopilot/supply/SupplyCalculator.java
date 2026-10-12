@@ -281,8 +281,10 @@ public final class SupplyCalculator
 				item.getItemIds());
 			lines.add(worn.contains(item) ? line.worn() : line);
 		});
-		if (fairyRing && !(access.isKnown()
-			&& access.isMet(Requirement.diary(AchievementDiary.LUMBRIDGE_DRAYNOR, AchievementDiary.Tier.ELITE))))
+		// Fairy rings need a staff wielded, which takes the weapon slot
+		final boolean staffWielded = fairyRing && !(access.isKnown()
+			&& access.isMet(Requirement.diary(AchievementDiary.LUMBRIDGE_DRAYNOR, AchievementDiary.Tier.ELITE)));
+		if (staffWielded)
 		{
 			lines.add(line(SupplyLine.Group.TRAVEL, "Dramen or lunar staff", 1, holdings, carried,
 				"Needed for fairy rings until the Elite Lumbridge & Draynor diary. Wield it: fairy rings need it wielded",
@@ -333,8 +335,13 @@ public final class SupplyCalculator
 		// Optional
 		if (config.isRecommendEquipmentBoosts() && herbs > 0)
 		{
-			lines.add(changeIn(line(SupplyLine.Group.OPTIONAL, "Magic secateurs", 1, holdings, carried,
-				"+10% herb yield; can be worn", 0, SupplyItems.MAGIC_SECATEURS), PROTECTION));
+			// The bonus works from the inventory too. Worn when the weapon slot is free; with a staff wielded for fairy
+			// rings they go in the inventory (Sean)
+			final SupplyLine secateurs = changeIn(line(SupplyLine.Group.OPTIONAL, "Magic secateurs", 1, holdings,
+				carried, staffWielded ? "+10% herb yield; in the inventory, as the staff takes the weapon slot"
+				: "+10% herb yield. Wear it: no inventory slot", staffWielded ? 1 : 0, SupplyItems.MAGIC_SECATEURS),
+				PROTECTION);
+			lines.add(staffWielded ? secateurs : secateurs.worn());
 		}
 		if (config.getOutfit() != Outfit.NONE)
 		{
