@@ -57,7 +57,9 @@ import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.Timer;
 import javax.swing.TransferHandler;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
@@ -636,33 +638,44 @@ class RunPanel extends JPanel
 		final JPanel cell = new JPanel(new BorderLayout());
 		final boolean current = stop.getStatus() == RunView.StopStatus.CURRENT;
 		cell.setBackground(current ? ColorScheme.DARK_GRAY_HOVER_COLOR : ColorScheme.DARKER_GRAY_COLOR);
-		cell.setBorder(new EmptyBorder(3, 6, 3, 6));
+		// The current stop is boxed in orange (Sean)
+		cell.setBorder(current
+			? new CompoundBorder(new LineBorder(ColorScheme.BRAND_ORANGE, 1), new EmptyBorder(3, 6, 3, 6))
+			: new EmptyBorder(3, 6, 3, 6));
 
 		final String name = UiText.escape(number + ". " + stop.getLocation());
 		final JLabel title = new JLabel(stop.getStatus() == RunView.StopStatus.DONE
 			? "<html><s>" + name + "</s></html>" : "<html>" + name + "</html>");
 		title.setForeground(stop.getStatus() == RunView.StopStatus.DONE ? ColorScheme.MEDIUM_GRAY_COLOR
 			: current ? ColorScheme.BRAND_ORANGE : ColorScheme.TEXT_COLOR);
-		title.setFont(FontManager.getRunescapeSmallFont());
+		title.setFont(current ? FontManager.getRunescapeBoldFont() : FontManager.getRunescapeSmallFont());
 		cell.add(title, BorderLayout.NORTH);
 
 		if (current && !stop.getSteps().isEmpty())
 		{
-			// Every step of this stop, done ones struck through, the one in hand marked, then what to do now
+			// Every step of this stop, done ones struck through, the one in hand marked. What to do now goes with that
+			// step: instead of it when it only says the same thing, otherwise just under it (Sean)
 			final JPanel steps = new JPanel();
 			steps.setLayout(new BoxLayout(steps, BoxLayout.Y_AXIS));
 			steps.setOpaque(false);
+			final String instruction = stop.getInstruction();
 			for (RunView.Step step : stop.getSteps())
 			{
+				final boolean inHand = step.getStatus() == RunView.StopStatus.CURRENT && instruction != null;
+				if (inHand && instruction.startsWith(step.getText()))
+				{
+					steps.add(stepLabel(new RunView.Step(instruction, step.getStatus())));
+					continue;
+				}
 				steps.add(stepLabel(step));
-			}
-			if (stop.getInstruction() != null)
-			{
-				final JLabel now = new JLabel(UiText.wrap(stop.getInstruction(), TEXT_WIDTH - 20));
-				now.setForeground(IN_STORAGE);
-				now.setFont(FontManager.getRunescapeSmallFont());
-				now.setBorder(new EmptyBorder(3, 0, 0, 0));
-				steps.add(now);
+				if (inHand)
+				{
+					final JLabel now = new JLabel(UiText.wrap(instruction, TEXT_WIDTH - 40));
+					now.setForeground(IN_STORAGE);
+					now.setFont(FontManager.getRunescapeSmallFont());
+					now.setBorder(new EmptyBorder(0, 16, 2, 0));
+					steps.add(now);
+				}
 			}
 			cell.add(steps, BorderLayout.CENTER);
 		}
