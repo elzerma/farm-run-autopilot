@@ -549,8 +549,7 @@ class RunPanel extends JPanel
 	/** Gathering supplies: cancel, or start without everything. */
 	private void addBuilding()
 	{
-		// Two to a row: three across the sidebar cut their labels off
-		final JPanel buttons = new JPanel(new GridLayout(0, 2, 4, 4));
+		final JPanel buttons = new JPanel(new GridLayout(1, 2, 4, 0));
 		buttons.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		final JButton startNow = new JButton("Start now");
 		startNow.setFocusPainted(false);
@@ -588,7 +587,8 @@ class RunPanel extends JPanel
 		clockLabel = new JLabel();
 		clockLabel.setForeground(ColorScheme.BRAND_ORANGE);
 		updateClock();
-		final JPanel buttons = new JPanel(new GridLayout(1, 2, 4, 0));
+		// Two to a row: three across the sidebar cut their labels off (Sean)
+		final JPanel buttons = new JPanel(new GridLayout(0, 2, 4, 4));
 		buttons.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		if (view.getState() == RunView.State.ARMED)
 		{
