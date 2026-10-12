@@ -1253,6 +1253,10 @@ class SetupPanel extends JPanel
 			on -> guidance.set("highlightItems", on)));
 		s.addContent(checkBox("Highlight the spell to cast", c.highlightSpell(), true,
 			"Outline the teleport (or Cure Plant) to cast next in your spellbook", on -> guidance.set("highlightSpell", on)));
+		s.addContent(checkBox("Walking lines (Shortest Path)", c.shortestPathLines(), true,
+			"If the Shortest Path plugin is installed, it draws the walk for each \"walk to\" step: walking only, no "
+				+ "teleports. Your own Shortest Path settings come back when the step changes.",
+			on -> guidance.set("shortestPathLines", on)));
 		s.addContent(colourRow("Patch colour", c.patchColour(), "patchColour"));
 		s.addContent(colourRow("NPC colour", c.npcColour(), "npcColour"));
 		s.addContent(colourRow("Item colour", c.itemColour(), "itemColour"));

@@ -88,6 +88,18 @@ public interface FarmRunAutopilotConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "shortestPathLines",
+		name = "Walking lines (Shortest Path)",
+		description = "Ask the Shortest Path plugin, if installed, to draw the walk for each \"walk to\" step",
+		hidden = true,
+		position = 9
+	)
+	default boolean shortestPathLines()
+	{
+		return true;
+	}
+
 	@Alpha
 	@ConfigItem(
 		keyName = "patchColour",

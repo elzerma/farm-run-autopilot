@@ -311,7 +311,7 @@ public class SettingsStore
 	{
 		for (Preset preset : presets)
 		{
-			if (preset.getConfig().equals(runConfig))
+			if (farmAndTravel(preset.getConfig()).equals(runConfig))
 			{
 				return preset.getName();
 			}
@@ -344,7 +344,7 @@ public class SettingsStore
 		{
 			return;
 		}
-		runConfig = copy(presets.get(index).getConfig());
+		runConfig = farmAndTravel(presets.get(index).getConfig());
 		saveRunConfig();
 		notifyListeners();
 	}
@@ -385,6 +385,20 @@ public class SettingsStore
 		presets = updated;
 		write(PRESETS_KEY, updated.toArray(new Preset[0]));
 		notifyListeners();
+	}
+
+	/**
+	 * A preset as it applies now: its Farm and Travel choices, with the current account and debug switches that
+	 * also live in RunConfig (storage sources, drop reminders, full run), which presets don't cover.
+	 */
+	private RunConfig farmAndTravel(RunConfig preset)
+	{
+		final RunConfig result = copy(preset);
+		result.setUseGroupStorage(runConfig.isUseGroupStorage());
+		result.setUseSeedVault(runConfig.isUseSeedVault());
+		result.setRemindToDrop(runConfig.isRemindToDrop());
+		result.setSupplyFullRun(runConfig.isSupplyFullRun());
+		return result;
 	}
 
 	/** A deep copy, so editing the current settings never changes a saved preset. */

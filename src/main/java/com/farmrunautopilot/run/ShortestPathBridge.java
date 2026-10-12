@@ -1,5 +1,6 @@
 package com.farmrunautopilot.run;
 
+import com.farmrunautopilot.FarmRunAutopilotConfig;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +16,8 @@ import net.runelite.client.events.PluginMessage;
  * message API ("shortestpath" / "path" with a "target" point and a "config" map of overrides, and "clear"). The
  * overrides switch off every teleport, jewellery, transport, house and bank option for our path only, so it
  * draws just the walk; our own steps cover the travel. The overrides last until "clear", which also puts the
- * player's own Shortest Path settings back. Nothing happens if Shortest Path isn't installed. Client thread.
+ * player's own Shortest Path settings back. Nothing happens if Shortest Path isn't installed or the "Walking lines"
+ * setting is off. Client thread.
  */
 @Singleton
 public class ShortestPathBridge
@@ -45,18 +47,20 @@ public class ShortestPathBridge
 	}
 
 	private final EventBus eventBus;
+	private final FarmRunAutopilotConfig config;
 	private WorldPoint target;
 
 	@Inject
-	ShortestPathBridge(EventBus eventBus)
+	ShortestPathBridge(EventBus eventBus, FarmRunAutopilotConfig config)
 	{
 		this.eventBus = eventBus;
+		this.config = config;
 	}
 
 	/** Draw the walk to {@code point}, or clear it for null. Only sends a message when the target changes. */
 	public void setTarget(WorldPoint point)
 	{
-		if (point == null)
+		if (point == null || !config.shortestPathLines())
 		{
 			clear();
 			return;
