@@ -59,6 +59,31 @@ public class SupplyPlan
 			runeSummary, slots, plantings);
 	}
 
+	/**
+	 * Required lines that are neither carried nor stored at the tool leprechaun (every stop has one), nor in the
+	 * seed vault when it can be used here.
+	 *
+	 * @param vaultHere the seed vault can be used here (the Farming Guild)
+	 */
+	public int missingCount(boolean vaultHere)
+	{
+		int missing = 0;
+		for (SupplyLine line : lines)
+		{
+			if (line.getGroup() == SupplyLine.Group.OPTIONAL || line.isCoveredOtherwise())
+			{
+				continue;
+			}
+			final int leprechaun = line.getWhere().getOrDefault(Holdings.Source.LEPRECHAUN, 0);
+			final int vault = vaultHere ? line.getWhere().getOrDefault(Holdings.Source.SEED_VAULT, 0) : 0;
+			if (line.getCarried() + leprechaun + vault < line.getNeed())
+			{
+				missing++;
+			}
+		}
+		return missing;
+	}
+
 	/** What the player has left once this part of the run has used up its seeds, payments, runes and so on. */
 	public Holdings leftAfter(Holdings holdings)
 	{

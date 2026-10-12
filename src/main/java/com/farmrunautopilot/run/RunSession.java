@@ -910,20 +910,6 @@ public class RunSession
 	/** @param vaultHere the seed vault can be used here (the Farming Guild) */
 	static int missingCount(SupplyPlan supplies, boolean vaultHere)
 	{
-		int missing = 0;
-		for (SupplyLine line : supplies.getLines())
-		{
-			if (line.getGroup() == SupplyLine.Group.OPTIONAL || line.isCoveredOtherwise())
-			{
-				continue;
-			}
-			final int leprechaun = line.getWhere().getOrDefault(Holdings.Source.LEPRECHAUN, 0);
-			final int vault = vaultHere ? line.getWhere().getOrDefault(Holdings.Source.SEED_VAULT, 0) : 0;
-			if (line.getCarried() + leprechaun + vault < line.getNeed())
-			{
-				missing++;
-			}
-		}
-		return missing;
+		return supplies.missingCount(vaultHere);
 	}
 }

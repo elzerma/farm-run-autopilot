@@ -8,6 +8,7 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.travel.BankTeleport;
 import com.farmrunautopilot.data.travel.Spell;
+import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.run.RunTimings;
 import com.farmrunautopilot.run.StepAdvisor;
 import com.farmrunautopilot.settings.PohSetup;
@@ -147,6 +148,18 @@ public class RunService
 			settings.getAccount().getPoh(), timings.learned(), here, near, nearTiles);
 		SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 			patchTracker::predict, this::itemName, itemManager::getItemPrice);
+		// Starting at the stop the player stands at or near only makes sense if they can start from there: carrying
+		// everything already, or with a bank close by. Otherwise (Kastori, still needing supplies) they'll bank
+		// somewhere first, so plan from anywhere (Sean)
+		final Location startStop = here != null ? here : near;
+		if (startStop != null && TravelTimes.bankTiles(startStop) == null
+			&& supplies.missingCount(startStop == Location.FARMING_GUILD) > 0)
+		{
+			route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
+				settings.getAccount().getPoh(), timings.learned(), null, null, 0);
+			supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
+				patchTracker::predict, this::itemName, itemManager::getItemPrice);
+		}
 		// Too much for one inventory: bank partway, as often as needed, where it costs least
 		final List<BankStop> bankStops = new ArrayList<>();
 		if (supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
