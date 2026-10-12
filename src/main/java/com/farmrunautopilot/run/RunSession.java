@@ -352,7 +352,7 @@ public class RunSession
 		}
 		else if (!navigator.isArrived())
 		{
-			navigator.markArrived(System.currentTimeMillis());
+			navigator.markStepDone(plan.getRoute().getStops().get(stopIndex), System.currentTimeMillis());
 		}
 		else
 		{
@@ -688,9 +688,9 @@ public class RunSession
 	{
 		final List<RunView.Step> steps = new ArrayList<>();
 		final boolean arrived = navigator.isArrived();
-		// "Ardougne Teleport, then boat from the docks": the way there, then each journey step
-		final String[] travel = stop.describeTravel().split(", then ");
-		for (int i = 0; i < travel.length; i++)
+		// The way there, then each journey step after it (a boat, Elkoy) as its sub-steps
+		final int journey = Navigator.journeySteps(stop);
+		for (int i = 0; i <= journey; i++)
 		{
 			final RunView.StopStatus status;
 			if (arrived || (i == 0 && navigator.isTeleported()) || (i > 0 && i <= navigator.getJourneyStep()))
@@ -705,7 +705,9 @@ public class RunSession
 			{
 				status = RunView.StopStatus.PENDING;
 			}
-			steps.add(new RunView.Step(i == 0 ? travel[i] : "Then " + travel[i], status));
+			final String text = i == 0 ? stop.describeWay()
+				: capitalised(stop.getMethod().getThen().get(i - 1).getBrief());
+			steps.add(new RunView.Step(text, status, i > 0));
 		}
 		// Each patch's plan, in the same order the objectives were made
 		final List<Patch> here = patchesAt(plan, stop.getLocation());
@@ -715,9 +717,14 @@ public class RunSession
 			final Patch patch = here.get(i);
 			final RunView.StopStatus status = patches.isDone(patch) ? RunView.StopStatus.DONE
 				: arrived && patch == patches.getCurrentPatch() ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
-			steps.add(new RunView.Step(i < objectives.size() ? objectives.get(i) : patch.getDisplayName(), status));
+			steps.add(new RunView.Step(i < objectives.size() ? objectives.get(i) : patch.getDisplayName(), status, false));
 		}
 		return steps;
+	}
+
+	private static String capitalised(String text)
+	{
+		return text.isEmpty() ? text : Character.toUpperCase(text.charAt(0)) + text.substring(1);
 	}
 
 	/** What the current step points at: the patch and items to use there, or the teleport item while travelling. */

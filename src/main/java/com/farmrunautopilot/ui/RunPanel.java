@@ -629,7 +629,8 @@ class RunPanel extends JPanel
 				break;
 		}
 		label.setFont(FontManager.getRunescapeSmallFont());
-		label.setBorder(new EmptyBorder(1, 4, 1, 0));
+		// Journey steps sit further in, under the teleport they follow
+		label.setBorder(new EmptyBorder(1, step.isSub() ? 16 : 4, 1, 0));
 		return label;
 	}
 
@@ -664,7 +665,7 @@ class RunPanel extends JPanel
 				final boolean inHand = step.getStatus() == RunView.StopStatus.CURRENT && instruction != null;
 				if (inHand && instruction.startsWith(step.getText()))
 				{
-					steps.add(stepLabel(new RunView.Step(instruction, step.getStatus())));
+					steps.add(stepLabel(new RunView.Step(instruction, step.getStatus(), step.isSub())));
 					continue;
 				}
 				steps.add(stepLabel(step));

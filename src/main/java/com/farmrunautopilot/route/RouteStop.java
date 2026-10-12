@@ -58,6 +58,12 @@ public class RouteStop
 		return whole.toString();
 	}
 
+	/** The way there without the journey steps after it, e.g. "Trollheim Teleport". */
+	public String describeWay()
+	{
+		return describeDeparture();
+	}
+
 	private String describeDeparture()
 	{
 		switch (departure)

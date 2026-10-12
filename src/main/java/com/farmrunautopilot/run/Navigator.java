@@ -104,6 +104,42 @@ class Navigator
 	}
 
 	/**
+	 * "Mark done" while travelling: on one step at a time, the teleport, then each journey step (Sean: it skipped
+	 * them all). After the last one the stop counts as reached, so the patch's own "Walk to the ... patch" is next.
+	 */
+	void markStepDone(RouteStop stop, long nowMillis)
+	{
+		if (arrived)
+		{
+			return;
+		}
+		final int journey = journeySteps(stop);
+		if (!teleported)
+		{
+			teleported = true;
+			if (journey == 0)
+			{
+				markArrived(nowMillis);
+			}
+		}
+		else if (journeyStep < journey - 1)
+		{
+			journeyStep++;
+		}
+		else
+		{
+			journeyStep = journey;
+			markArrived(nowMillis);
+		}
+	}
+
+	/** How many journey steps follow the way there (a boat, Elkoy...); none for a walk. */
+	static int journeySteps(RouteStop stop)
+	{
+		return stop.getMethod() == null || stop.getDeparture() == Departure.WALK ? 0 : stop.getMethod().getThen().size();
+	}
+
+	/**
 	 * Follow the travel to this stop for one tick.
 	 *
 	 * @param here the stop's patches in the run
@@ -141,7 +177,7 @@ class Navigator
 			journeyStep++;
 		}
 		final JourneyStep step = journeyStep(stop);
-		return !teleported ? stop.describeTravel() + " to " + stop.getLocation().getDisplayName()
+		return !teleported ? stop.describeWay() + " to " + stop.getLocation().getDisplayName()
 			: step != null ? step.getText()
 			: walkInstruction(here.get(0));
 	}

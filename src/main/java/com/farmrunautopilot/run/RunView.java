@@ -35,6 +35,8 @@ public class RunView
 	{
 		String text;
 		StopStatus status;
+		/** Part of the step above it, e.g. "Down to the stronghold" after "Trollheim Teleport". */
+		boolean sub;
 	}
 
 	@Value
