@@ -242,6 +242,7 @@ class RunPanel extends JPanel
 			full.setForeground(ColorScheme.BRAND_ORANGE);
 			add(full);
 		}
+		addParts();
 		addRunTypeStatus(plan.getSelection());
 		if (!supplies.getNotDue().isEmpty())
 		{
@@ -406,13 +407,59 @@ class RunPanel extends JPanel
 			add(heading("Totals"));
 			add(note("About " + PatchStatusText.duration((long) (route.getTravelSeconds() + route.getPatchSeconds()))
 				+ " (" + PatchStatusText.duration((long) route.getTravelSeconds()) + " travelling)"));
-			final StringBuilder slots = new StringBuilder("Slots: " + supplies.getSlots() + " / 28");
-			for (BankStop bank : plan.getBankStops())
-			{
-				slots.append(", then ").append(bank.getSupplies().getSlots()).append(" / 28");
-			}
-			add(tipped(note(slots.toString()), "Inventory slots needed at the start, and after each bank stop"));
 		}
+	}
+
+	/**
+	 * The run's patches by type, one line per inventory, with each bank stop between them (Sean): e.g. "4 trees,
+	 * 6 herbs (18/28 slots)", "Bank near Catherby", "3 trees, 2 herbs (12/28 slots)". The slots are here, not
+	 * in Totals.
+	 */
+	private void addParts()
+	{
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		if (stops.isEmpty())
+		{
+			return;
+		}
+		Map<PatchType, Integer> counts = new EnumMap<>(PatchType.class);
+		int slots = plan.getSupplies().getSlots();
+		for (int i = 0; i < stops.size(); i++)
+		{
+			for (Patch patch : plan.getSelection().getPatches())
+			{
+				if (patch.getLocation() == stops.get(i).getLocation())
+				{
+					counts.merge(patch.getType(), 1, Integer::sum);
+				}
+			}
+			final BankStop bank = plan.bankAfter(i);
+			if (bank != null || i == stops.size() - 1)
+			{
+				add(tipped(note(partText(counts) + " (" + slots + "/28 slots)"),
+					"Patches done with this inventory, and the slots it needs"));
+				counts = new EnumMap<>(PatchType.class);
+			}
+			if (bank != null)
+			{
+				final JLabel banking = note(bank.title());
+				banking.setForeground(ColorScheme.BRAND_ORANGE);
+				add(banking);
+				slots = bank.getSupplies().getSlots();
+			}
+		}
+	}
+
+	/** "4 trees, 1 fruit tree, 6 herbs". */
+	private static String partText(Map<PatchType, Integer> counts)
+	{
+		final List<String> parts = new ArrayList<>();
+		for (Map.Entry<PatchType, Integer> e : counts.entrySet())
+		{
+			final int n = e.getValue();
+			parts.add(n + " " + e.getKey().getDisplayName().toLowerCase() + (n == 1 ? "" : "s"));
+		}
+		return parts.isEmpty() ? "No patches" : String.join(", ", parts);
 	}
 
 	// Off, building and running
@@ -429,8 +476,8 @@ class RunPanel extends JPanel
 		build.setMaximumSize(new Dimension(Integer.MAX_VALUE, build.getPreferredSize().height));
 		add(build);
 
-		// The counts are on the type rows under it (Sean: say each thing in one place)
 		add(heading("This run"));
+		addParts();
 		addRunTypeStatus(plan.getSelection());
 
 		add(heading("Patch timers"));
@@ -766,14 +813,12 @@ class RunPanel extends JPanel
 			final TypeOverride buttonAction;
 			if (selection.getIncludedTypes().contains(type))
 			{
-				final String due = name + ": " + selection.getDueCounts().getOrDefault(type, 0) + " due";
 				if (override != TypeOverride.INCLUDE)
 				{
-					// No Skip button: unticking the type at the top does that (Sean: redundant)
-					add(note(due));
+					// Counted in the parts above; no Skip button: unticking the type at the top does that (Sean)
 					continue;
 				}
-				text = due + " (included anyway)";
+				text = name + ": included anyway";
 				buttonText = "Undo";
 				buttonAction = null;
 			}
