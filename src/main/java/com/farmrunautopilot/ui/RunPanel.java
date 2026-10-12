@@ -235,7 +235,9 @@ class RunPanel extends JPanel
 			return;
 		}
 		addBuilding();
-		add(heading("This run"));
+		// Shown only with the complete route, i.e. once the run is built (Sean)
+		add(heading("Route summary"));
+		addTime();
 		if (settings.editRunConfig().isSupplyFullRun())
 		{
 			final JLabel full = tipped(note("Counting every patch"), "Full run is on in Account > Testing & debug");
@@ -262,7 +264,6 @@ class RunPanel extends JPanel
 
 		// The items themselves are on the Farm run bank tab, so they aren't listed here too (docs/REBUILD.md, 5.5)
 		addRoute(plan.getRoute());
-		addTotals(supplies);
 		finish();
 	}
 
@@ -398,13 +399,12 @@ class RunPanel extends JPanel
 		add(label);
 	}
 
-	private void addTotals(SupplyPlan supplies)
+	/** How long the run should take, first in the route summary. */
+	private void addTime()
 	{
-		if (!supplies.getLines().isEmpty())
+		final Route route = plan.getRoute();
+		if (!route.getStops().isEmpty())
 		{
-			final Route route = plan.getRoute();
-			// Two lines: time, and slots for each part (Sprint 7: less to read)
-			add(heading("Totals"));
 			add(note("About " + PatchStatusText.duration((long) (route.getTravelSeconds() + route.getPatchSeconds()))
 				+ " (" + PatchStatusText.duration((long) route.getTravelSeconds()) + " travelling)"));
 		}
@@ -476,8 +476,7 @@ class RunPanel extends JPanel
 		build.setMaximumSize(new Dimension(Integer.MAX_VALUE, build.getPreferredSize().height));
 		add(build);
 
-		add(heading("This run"));
-		addParts();
+		// No route summary until the run is built: only the types to include (Sean)
 		addRunTypeStatus(plan.getSelection());
 
 		add(heading("Patch timers"));
@@ -878,9 +877,10 @@ class RunPanel extends JPanel
 		{
 			return;
 		}
-		add(tipped(heading("Route (" + modeName(route.getMode()) + ")"), route.getMode() == RouteMode.OFF
+		add(tipped(heading("Complete route"), route.getMode() == RouteMode.OFF
 			? "Your own order. Drag stops to change it; switch back in Travel > Route."
-			: "Drag a stop to reorder it (switches to your own order). Hover a stop for its plan."));
+			: "Order: " + modeName(route.getMode()) + ". Drag a stop to reorder it (switches to your own order). "
+				+ "Hover a stop for its plan."));
 
 		final DefaultListModel<RouteStop> model = new DefaultListModel<>();
 		for (RouteStop stop : route.getStops())
