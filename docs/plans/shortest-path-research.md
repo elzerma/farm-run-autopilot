@@ -161,3 +161,15 @@ in seconds.
   walking tiles to the bank (plugin uses 28), Falador Park tree 32 (28).
 - **Walking distances measured on the collision map** (a one-off BFS over collision-map.zip) for every landing,
   bank and stop-to-stop walk, e.g. Falador Park to Taverley by the gate is 114 tiles (plugin: 100).
+
+## Start points by walking distance (Sean, 2026-10-12)
+
+"Near a stop" is straight-line today (within 120 tiles), so Castle Wars counts as near Lletya. Plan:
+- A dev-only script walks out from each stop's patches over the collision map (up to ~150 tiles) and saves
+  walking tiles per 4x4-tile block as a small data file; in game the player's block gives the walk to each
+  nearby stop. No runtime dependency on Shortest Path.
+- Within walking range (~80-100 walking tiles, about a teleport), try each nearby stop as the start, plus
+  "from anywhere", and keep the quickest whole route; beyond it, plan from anywhere.
+- Keep the Kastori rule: a stop without a bank is only the start once everything is carried.
+- Scenarios: Falador west bank -> Falador Park; Castle Wars -> not Lletya; Grand Tree -> Gnome Stronghold;
+  Grand Exchange -> Varrock; Seers' bank -> Catherby only if the walk beats Camelot Teleport.
