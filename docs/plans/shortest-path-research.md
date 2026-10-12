@@ -148,3 +148,16 @@ in seconds.
 - **Global overrides:** always send `clear` on run stop, logout and plugin shutdown.
 - **Override keys:** a unit test checks every key and value we send against a list taken from their source
   (the "None" vs "NONE" bug); the dev client logs if one of our walk-only lines contains a teleport.
+
+## Added to Sprint 8 (Sean, 2026-10-12)
+
+- **Hot air balloons** as travel options: Taverley's lands 14 walking tiles from the tree patch. Worth it from the
+  Gnome Stronghold fruit tree (10 tiles to the Grand Tree balloon, about 20 s to the Taverley tree against about
+  30 s by house portal) and straight after a bank stop at the Castle Wars chest (31 tiles to its balloon). One
+  normal log per flight to Taverley; Enlightened Journey and each balloon unlocked (Shortest Path's
+  hot_air_balloons.tsv names the varbits: Taverley 2868=2, Grand Tree 2870=1, Castle Wars 2869=1). Unlocks read
+  from the game need a guided test.
+- **Bank distance from the last patch done at a stop**, not one number per stop: Catherby herb 36 / fruit tree 52
+  walking tiles to the bank (plugin uses 28), Falador Park tree 32 (28).
+- **Walking distances measured on the collision map** (a one-off BFS over collision-map.zip) for every landing,
+  bank and stop-to-stop walk, e.g. Falador Park to Taverley by the gate is 114 tiles (plugin: 100).

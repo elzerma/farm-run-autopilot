@@ -247,13 +247,15 @@ missing from his vision. Turn every chain or behaviour he names into a scenario 
 - Checks: every setting does what its label says (a short list).
 
 **Sprint 7: tidy and release.**
+- Journey step text that fits the player (e.g. leave out "without 33 Agility, walk round" when they have it).
 - Guided tests: fix the two broken tests and bring every test in line with the rebuilt run, docs (README, delete stale plans),
   screenshots, Plugin Hub PR update (with Sean's OK).
 
 **Sprint 8: Shortest Path data** (after Sprint 7; plan in docs/plans/shortest-path-research.md). Reuse its BSD-2
 licensed data with credit: bank coordinates, teleport landing points and durations checked against ours, a
 dev-only "Measure walks" tool using its query message to measure every landing-to-patch walk once and save
-the numbers in TravelTimes, and research on the Trinket of fairies.
+the numbers in TravelTimes, and research on the Trinket of fairies. Also hot air balloons (Taverley, Grand Tree, Castle
+Wars), bank distance from the last patch done at a stop, and measured walks for every landing and bank.
 
 ## 7. Features that must survive the rebuild
 
