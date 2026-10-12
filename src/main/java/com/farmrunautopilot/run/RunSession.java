@@ -355,6 +355,32 @@ public class RunSession
 		evaluate();
 	}
 
+	/**
+	 * Skip everything left at the current stop in one press: getting there, its patches, the seed vault and the
+	 * bank visit after it (Sean: one press per stop, not one per step). Not timed, as with any skipped stop.
+	 */
+	public void skipStop()
+	{
+		if (stage != RunView.State.RUNNING || stopIndex >= plan.getRoute().getStops().size())
+		{
+			return;
+		}
+		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
+		log.debug("Skip stop: {}", stop.getLocation().getDisplayName());
+		if (!navigator.isArrived())
+		{
+			navigator.markArrived(System.currentTimeMillis());
+		}
+		patches.skipAll(patchesAt(plan, stop.getLocation()));
+		if (stop.getLocation() == Location.FARMING_GUILD)
+		{
+			vaultChecked = true;
+		}
+		banked = true;
+		banking = false;
+		evaluate();
+	}
+
 	public void onChatMessage(String message)
 	{
 		if ((stage == RunView.State.ARMED || stage == RunView.State.RUNNING) && plan != null

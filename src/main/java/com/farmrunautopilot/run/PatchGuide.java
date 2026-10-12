@@ -118,6 +118,16 @@ class PatchGuide
 		}
 	}
 
+	/** Skip every patch at a stop. */
+	void skipAll(List<Patch> here)
+	{
+		for (Patch patch : here)
+		{
+			progress(patch).skipped = true;
+		}
+		clearCurrent();
+	}
+
 	/**
 	 * A compost message: credit the patch it names ("You treat the herb patch...") among this stop's patches, so
 	 * at a stop with several patches it lands on the right one; otherwise the patch being worked on.

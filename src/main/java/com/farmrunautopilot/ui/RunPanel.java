@@ -109,6 +109,9 @@ class RunPanel extends JPanel
 
 		void skip();
 
+		/** Skip everything left at the current stop: getting there, its patches and its bank visit. */
+		void skipStop();
+
 		/** Show Account > Unlocks. */
 		void openUnlocks();
 
@@ -591,6 +594,7 @@ class RunPanel extends JPanel
 		else
 		{
 			buttons.add(smallButton("Skip step", controls::skip));
+			buttons.add(smallButton("Skip stop", controls::skipStop));
 			buttons.add(smallButton("Stop", controls::stop));
 		}
 		bar.add(clockLabel, BorderLayout.CENTER);

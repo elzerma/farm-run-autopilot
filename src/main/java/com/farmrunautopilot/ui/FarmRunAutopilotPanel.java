@@ -109,6 +109,12 @@ public class FarmRunAutopilotPanel extends PluginPanel
 				}
 
 				@Override
+				public void skipStop()
+				{
+					clientThread.invoke(runSession::skipStop);
+				}
+
+				@Override
 				public void openUnlocks()
 				{
 					accountPanel.revealUnlocks();
