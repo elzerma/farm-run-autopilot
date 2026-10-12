@@ -116,6 +116,9 @@ class RunPanel extends JPanel
 		/** Show Account > Unlocks. */
 		void openUnlocks();
 
+		/** Show Settings > Presets. */
+		void openPresets();
+
 		/** The seed vault has been opened on this account, so its contents are counted. */
 		boolean seedVaultSeen();
 
@@ -241,7 +244,7 @@ class RunPanel extends JPanel
 		addTime();
 		if (settings.editRunConfig().isSupplyFullRun())
 		{
-			final JLabel full = tipped(note("Counting every patch"), "Full run is on in Account > Testing & debug");
+			final JLabel full = tipped(note("Counting every patch"), "Full run is on in Settings > Debug");
 			full.setForeground(ColorScheme.BRAND_ORANGE);
 			add(full);
 		}
@@ -783,7 +786,7 @@ class RunPanel extends JPanel
 		combo.setSelectedItem(active != null ? active : EDITED_PRESET);
 		Style.combo(combo);
 		combo.setFont(FontManager.getRunescapeSmallFont());
-		combo.setToolTipText("Switch to a saved preset. Save and manage presets under Manage presets below.");
+		combo.setToolTipText("Switch to a saved preset");
 		combo.addActionListener(e ->
 		{
 			final Object picked = combo.getSelectedItem();
@@ -801,6 +804,21 @@ class RunPanel extends JPanel
 		label.setFont(FontManager.getRunescapeSmallFont());
 		row.add(label, BorderLayout.WEST);
 		row.add(combo, BorderLayout.CENTER);
+		// Saving, renaming and deleting are in Settings > Presets (Sean): a small link there
+		final JLabel manage = new JLabel("<html><u>Manage</u></html>");
+		manage.setForeground(Color.WHITE);
+		manage.setFont(FontManager.getRunescapeSmallFont());
+		manage.setToolTipText("Save, rename and delete presets in Settings");
+		manage.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		manage.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				controls.openPresets();
+			}
+		});
+		row.add(manage, BorderLayout.EAST);
 		row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
 		return left(row);
 	}

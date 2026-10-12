@@ -19,7 +19,7 @@ import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
 /**
- * Patch details list (Account > Testing & debug): every patch with its predicted state (milestone M2).
+ * Patch details list (Settings > Debug): every patch with its predicted state (milestone M2).
  */
 class PatchDebugPanel extends JPanel
 {

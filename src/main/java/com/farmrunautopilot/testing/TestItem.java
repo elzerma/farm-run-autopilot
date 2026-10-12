@@ -23,10 +23,10 @@ public enum TestItem
 		"With \"Champion rank at the Fortis Colosseum\" ticked in Account > Unlocks, the Civitas herb patch "
 			+ "should count as disease-free: no plant cure or protection asked for it."),
 	ATES_CHARGES(Tab.TRAVEL, "Pendant of Ates charges",
-		"With the pendant on you, Account > Detected should show the same charges as its Check. Teleport once "
+		"With the pendant on you, Settings > Debug > Detected should show the same charges as its Check. Teleport once "
 			+ "and it should drop by one. Start a teleport and cancel it: it shouldn't change."),
 	TALISMAN_CHARGES(Tab.TRAVEL, "Xeric's talisman charges",
-		"Check the talisman. Account > Detected should show the same number. Teleport once and it should drop "
+		"Check the talisman. Settings > Debug > Detected should show the same number. Teleport once and it should drop "
 			+ "by one. At 0 charges, Auto (best) should stop picking it."),
 	KHARYRLL(Tab.TRAVEL, "Kharyrll Teleport highlight",
 		"On the Ancient spellbook with Kharyrll Teleport planned for Port Phasmatys (and no tablet), the "

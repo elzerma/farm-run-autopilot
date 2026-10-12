@@ -42,6 +42,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	private final FarmPage farmPanel;
 	private final TravelPage travelPanel;
 	private final AccountPage accountPanel;
+	private final SettingsPage settingsPanel;
 	/** Built after the Run tab, which can switch to the Account tab. */
 	private TabBar tabs;
 	private final RunSession runSession;
@@ -122,6 +123,13 @@ public class FarmRunAutopilotPanel extends PluginPanel
 				}
 
 				@Override
+				public void openPresets()
+				{
+					settingsPanel.revealPresets();
+					tabs.select("Settings");
+				}
+
+				@Override
 				public boolean seedVaultSeen()
 				{
 					return holdingsTracker.hasSeenSeedVault();
@@ -170,9 +178,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		runStack.setLayout(new BoxLayout(runStack, BoxLayout.Y_AXIS));
 		runStack.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		runPanel.setAlignmentX(LEFT_ALIGNMENT);
-		presetsPanel.setAlignmentX(LEFT_ALIGNMENT);
 		runStack.add(runPanel);
-		runStack.add(presetsPanel);
 		runStack.add(helpButton());
 		final JPanel run = new JPanel(new BorderLayout());
 		run.setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -181,29 +187,33 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		farmPanel = new FarmPage(settings, accessChecker, this::rebuildSetup);
 		travelPanel = new TravelPage(settings, accessChecker, this::rebuildSetup);
 		final GuidanceSettings guidance = new GuidanceSettings(config, configManager, colorPickers);
-		accountPanel = new AccountPage(settings, accessChecker, patchTracker, this::rebuildSetup, guidance);
+		accountPanel = new AccountPage(settings, accessChecker, this::rebuildSetup);
+		settingsPanel = new SettingsPage(settings, accessChecker, patchTracker, this::rebuildSetup, guidance,
+			presetsPanel);
 		final Runnable resetRunSettings = () ->
 		{
 			settings.resetRunConfig();
 			guidance.resetDefaults();
 		};
-		accountPanel.setResetActions(resetRunSettings, () ->
+		settingsPanel.setResetActions(resetRunSettings, () ->
 		{
 			resetRunSettings.run();
 			settings.resetAccountAndPresets();
 			timings.clear();
 		});
-		accountPanel.showHelpList(testRunner, () -> tabs.select("Run"));
-		accountPanel.showHoldings(holdingsTracker::getHoldings);
+		settingsPanel.showHelpList(testRunner, () -> tabs.select("Run"));
+		settingsPanel.showHoldings(holdingsTracker::getHoldings);
 		travelPanel.showHoldings(holdingsTracker::getHoldings);
 		travelPanel.showAutoPicks(runService);
 
 		tabs = new TabBar(display);
 		tabs.setBorder(new EmptyBorder(0, 0, 10, 0));
-		tabs.addTab("Run", run);
-		tabs.addTab("Farm", top(farmPanel, helpButton()));
-		tabs.addTab("Travel", top(travelPanel, helpButton()));
-		tabs.addTab("Account", top(accountPanel, helpButton()));
+		tabs.addTab("Run", TabIcon.RUN, run);
+		tabs.addTab("Farm", TabIcon.FARM, top(farmPanel, helpButton()));
+		tabs.addTab("Travel", TabIcon.TRAVEL, top(travelPanel, helpButton()));
+		tabs.addTab("Account", TabIcon.ACCOUNT, top(accountPanel, helpButton()));
+		// No help link here: the list itself is the last section
+		tabs.addTab("Settings", TabIcon.SETTINGS, top(settingsPanel, null));
 
 		add(tabs, BorderLayout.NORTH);
 		add(display, BorderLayout.CENTER);
@@ -215,14 +225,14 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	/** Re-reads patch predictions. Call on the Swing thread. */
 	public void refreshPatches()
 	{
-		accountPanel.refreshPatches();
+		settingsPanel.refreshPatches();
 		runPanel.refreshPatches();
 	}
 
 	/** What the plugin has detected changed (charges, the leprechaun, the bucket). Call on the Swing thread. */
 	public void refreshDetected()
 	{
-		accountPanel.refreshDetected();
+		settingsPanel.refreshDetected();
 	}
 
 	/** Shows a new supply plan in the Run tab. Call on the Swing thread. */
@@ -230,10 +240,8 @@ public class FarmRunAutopilotPanel extends PluginPanel
 	{
 		runPanel.update(plan, loggedIn);
 		// The supply plan is redone when holdings change, so the Detected lines may have too
-		accountPanel.refreshDetected();
+		settingsPanel.refreshDetected();
 		travelPanel.refreshAutoPicks();
-		// Managing presets is for between runs
-		presetsPanel.setVisible(loggedIn && runSession.getView().getState() == RunView.State.OFF);
 	}
 
 	/** Rebuilds the settings tabs from saved settings and account access. Call on the Swing thread. */
@@ -242,6 +250,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		farmPanel.rebuild();
 		travelPanel.rebuild();
 		accountPanel.rebuild();
+		settingsPanel.rebuild();
 		presetsPanel.rebuild();
 		// The Run tab shows the run types and preset from the same settings
 		runPanel.refresh();
@@ -258,11 +267,11 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		return button;
 	}
 
-	/** Account > Testing & debug, scrolled to the help list. */
+	/** Settings > Help improve this plugin, scrolled to the help list. */
 	private void openHelp()
 	{
-		accountPanel.revealHelpList();
-		tabs.select("Account");
+		settingsPanel.revealHelpList();
+		tabs.select("Settings");
 	}
 
 	/** Pins a page, with its help section under it, to the top of its tab instead of stretching it. */
@@ -272,9 +281,12 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		stack.setLayout(new BoxLayout(stack, BoxLayout.Y_AXIS));
 		stack.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		page.setAlignmentX(LEFT_ALIGNMENT);
-		help.setAlignmentX(LEFT_ALIGNMENT);
 		stack.add(page);
-		stack.add(help);
+		if (help != null)
+		{
+			help.setAlignmentX(LEFT_ALIGNMENT);
+			stack.add(help);
+		}
 		final JPanel wrapper = new JPanel(new BorderLayout());
 		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		wrapper.add(stack, BorderLayout.NORTH);

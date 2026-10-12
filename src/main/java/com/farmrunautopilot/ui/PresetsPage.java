@@ -14,10 +14,13 @@ import javax.swing.JPanel;
 import net.runelite.client.ui.ColorScheme;
 
 /**
- * Preset management on the Run tab (SPEC 13.5): save, apply, rename and delete named Farm and Travel setups.
+ * Preset management, the first section of the Settings tab (SPEC 13.5; Sean moved it from the Run tab): save, apply, rename and delete named Farm and Travel setups.
  */
 class PresetsPage extends SetupPanel
 {
+	/** The section's title, also how the Run tab's Manage link opens it. */
+	static final String TITLE = "Presets";
+
 	PresetsPage(SettingsStore settings, AccessChecker accessChecker, Runnable changed)
 	{
 		super(settings, accessChecker, changed);
@@ -33,7 +36,7 @@ class PresetsPage extends SetupPanel
 	/** Save, rename and delete named copies of the run settings (SPEC 13.5). */
 	private JComponent presetsSection()
 	{
-		final CollapsibleSection s = section("Manage presets");
+		final CollapsibleSection s = section(TITLE);
 		s.help("Save these settings under a name (e.g. \"Quick herbs\") and switch between them at the "
 			+ "top of the Run tab. Presets cover the Farm and Travel tabs; your house and unlocks are shared.");
 		final JButton save = smallButton("Save current settings as...");

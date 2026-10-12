@@ -19,7 +19,7 @@ import net.runelite.client.util.LinkBrowser;
 /**
  * "I NEED YOUR HELP!": features that couldn't be tried in development (no account with the item or unlock, or
  * a game value not checked yet), what to try, and a guided test for each. A button at the bottom of every tab
- * opens the list in Account > Testing & debug. Remove an item once it's confirmed (see CLAUDE.md).
+ * opens the list in Settings > Help improve this plugin. Remove an item once it's confirmed (see CLAUDE.md).
  */
 final class HelpWanted
 {
@@ -61,7 +61,7 @@ final class HelpWanted
 	}
 
 	/**
-	 * The small line at the bottom of every tab, which opens the list in Account > Testing & debug (Sean: a quiet
+	 * The small line at the bottom of every tab, which opens the list in Settings > Help improve this plugin (Sean: a quiet
 	 * link rather than a big button).
 	 */
 	static JButton button(SettingsStore settings, boolean developer, Runnable open)
@@ -91,7 +91,7 @@ final class HelpWanted
 	}
 
 	/**
-	 * The list for Account > Testing & debug: every item with steps to try it and its guided test, grouped by
+	 * The list for Settings > Help improve this plugin: every item with steps to try it and its guided test, grouped by
 	 * tab. In the dev client a finished test's result goes to the clipboard; for players it opens a GitHub issue.
 	 */
 	static JPanel list(SettingsStore settings, boolean developer, TestRunner runner, Runnable showRun)

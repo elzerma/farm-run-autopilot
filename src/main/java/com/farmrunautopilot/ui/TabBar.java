@@ -18,19 +18,18 @@ import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.ui.FontManager;
 
 /**
- * The sidebar's tab strip. RuneLite's material tabs pad each label by 10px and space them 8px apart, which
- * only fits three tabs; this one pads by a few pixels so Run, Farm, Travel and Account fit on one line.
+ * The sidebar's tab strip: one icon per tab, its name on hover (Sean: five names don't fit across the sidebar).
+ * The selected tab's icon is orange with a line under it.
  */
 class TabBar extends JPanel
 {
-	private static final int SIDE_PADDING = 4;
+	private static final int SIDE_PADDING = 9;
 	private static final Border SELECTED = BorderFactory.createCompoundBorder(
 		BorderFactory.createMatteBorder(0, 0, 2, 0, ColorScheme.BRAND_ORANGE),
-		new EmptyBorder(4, SIDE_PADDING, 3, SIDE_PADDING));
-	private static final Border UNSELECTED = new EmptyBorder(4, SIDE_PADDING, 5, SIDE_PADDING);
+		new EmptyBorder(6, SIDE_PADDING, 4, SIDE_PADDING));
+	private static final Border UNSELECTED = new EmptyBorder(6, SIDE_PADDING, 6, SIDE_PADDING);
 
 	private final JPanel display;
 	private final CardLayout cards = new VisibleCardLayout();
@@ -47,10 +46,12 @@ class TabBar extends JPanel
 		setOpaque(false);
 	}
 
-	void addTab(String name, JComponent content)
+	void addTab(String name, TabIcon icon, JComponent content)
 	{
-		final JLabel label = new JLabel(name);
-		label.setFont(FontManager.getRunescapeFont());
+		final JLabel label = new JLabel();
+		label.setName(name);
+		label.putClientProperty(TabIcon.class, icon);
+		label.setToolTipText(name);
 		label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		label.addMouseListener(new MouseAdapter()
 		{
@@ -77,7 +78,7 @@ class TabBar extends JPanel
 	{
 		for (JLabel label : labels)
 		{
-			style(label, label.getText().equals(name));
+			style(label, label.getName().equals(name));
 		}
 		cards.show(display, name);
 		// The new tab may be shorter or longer: let the scroll pane re-measure
@@ -87,7 +88,8 @@ class TabBar extends JPanel
 	private static void style(JLabel label, boolean selected)
 	{
 		label.setBorder(selected ? SELECTED : UNSELECTED);
-		label.setForeground(selected ? ColorScheme.BRAND_ORANGE : ColorScheme.LIGHT_GRAY_COLOR);
+		final TabIcon icon = (TabIcon) label.getClientProperty(TabIcon.class);
+		label.setIcon(icon.icon(selected ? ColorScheme.BRAND_ORANGE : ColorScheme.LIGHT_GRAY_COLOR));
 	}
 
 	/**

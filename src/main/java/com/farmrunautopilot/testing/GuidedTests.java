@@ -359,8 +359,8 @@ final class GuidedTests
 							ctx.problem("The game value didn't go down after a teleport");
 						}
 					}),
-				ask("Does Account > Detected show the same charges as the pendant's Check would now?"),
-				ask("Start a pendant teleport, then cancel it before it happens. Did Account > Detected keep the "
+				ask("Does Settings > Debug > Detected show the same charges as the pendant's Check would now?"),
+				ask("Start a pendant teleport, then cancel it before it happens. Did Settings > Debug > Detected keep the "
 					+ "same count?").optional());
 		}
 	}
