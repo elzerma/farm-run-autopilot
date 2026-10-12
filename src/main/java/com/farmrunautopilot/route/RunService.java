@@ -356,6 +356,22 @@ public class RunService
 			this::itemName, itemManager::getItemPrice);
 	}
 
+	/**
+	 * What some stops of a run in progress need, worked out afresh against what the player holds now: for spotting
+	 * an item gone missing mid-run (Sean). Client thread.
+	 */
+	public SupplyPlan suppliesFor(RunPlan plan, List<RouteStop> stops)
+	{
+		return part(settings.getRunConfig(), accessChecker.getSnapshot(), holdingsTracker.getHoldings(),
+			plan.getSelection(), stops, plan.getRoute());
+	}
+
+	/** The quickest bank teleport the player is carrying now, or null. Client thread. */
+	public BankTeleport carriedBankTeleport()
+	{
+		return BankTeleport.best(accessChecker.getSnapshot(), holdingsTracker.getHoldings().carriedOnly());
+	}
+
 	/** Auto (best)'s pick for each location, from anywhere. Any thread. */
 	public Map<Location, TravelPick> getAutoPicks()
 	{

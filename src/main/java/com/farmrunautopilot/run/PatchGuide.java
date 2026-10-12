@@ -382,6 +382,17 @@ class PatchGuide
 	 * The item the current patch step needs isn't carried: take it from the tool leprechaun if it's stored
 	 * there, otherwise say it's missing.
 	 */
+	/**
+	 * The current patch step's item is neither carried nor at the tool leprechaun, so only a bank can help (Sean:
+	 * the task then becomes a bank visit).
+	 */
+	boolean currentItemMissing(Highlights highlights)
+	{
+		final String reminder = missingItemReminder(highlights);
+		// "Take ... from the tool leprechaun" can be done right here
+		return reminder != null && !reminder.startsWith("Take ");
+	}
+
 	String missingItemReminder(Highlights highlights)
 	{
 		if (currentPatch == null || currentAction == null || highlights == null)

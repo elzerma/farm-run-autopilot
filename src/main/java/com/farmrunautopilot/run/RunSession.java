@@ -3,6 +3,7 @@ package com.farmrunautopilot.run;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
+import com.farmrunautopilot.data.travel.BankTeleport;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
@@ -53,6 +54,8 @@ public class RunSession
 	/** How long "Run finished" stays under the player. */
 	private static final long FINISHED_NOTICE_MILLIS = 15_000;
 	private static final int BEST_TIMES = 3;
+	/** How long the step in hand must lack its item before the task becomes a bank visit. */
+	private static final long MISSING_GRACE_MILLIS = 1800;
 	/** Moving further than this in one tick can only be a teleport. */
 	private static final int TELEPORT_TILES = 30;
 
@@ -86,6 +89,19 @@ public class RunSession
 	private SkippedStop skippedStop;
 	/** The stop whose bank visit was ticked by hand, or -1. */
 	private int skippedBankAfter = -1;
+	/**
+	 * An unplanned bank visit, because an item the plan counted on has gone missing (Sean): after the current stop,
+	 * or before finishing it when {@link #extraNow}. Null when there's none.
+	 */
+	private BankStop extraBank;
+	/** The unplanned bank visit comes before the current stop is finished: its step needs the missing item. */
+	private boolean extraNow;
+	/** An unplanned bank visit was ticked away by hand: no more until the next planned one. */
+	private boolean declinedExtra;
+	/** What the player held when items were last checked for the rest of this part. */
+	private Holdings checkedHoldings;
+	/** Since when the current step's item has been missing (epoch millis), 0 if it isn't. */
+	private long missingSince;
 	/** At the Farming Guild, everything needed from the seed vault has been taken (or skipped). */
 	private boolean vaultChecked;
 	/** The time for the leg to the current stop has been saved. */
@@ -191,6 +207,8 @@ public class RunSession
 		manualSteps.clear();
 		skippedStop = null;
 		skippedBankAfter = -1;
+		clearExtraBank();
+		declinedExtra = false;
 		final Player player = client.getLocalPlayer();
 		lastLocation = player != null ? player.getWorldLocation() : null;
 		log.debug("Run armed with {} stops", plan.getRoute().getStops().size());
@@ -435,35 +453,37 @@ public class RunSession
 		{
 			return;
 		}
-		// Rows are each stop, then its bank visit if it has one, as in runningView
-		final List<RouteStop> stops = plan.getRoute().getStops();
-		int r = 0;
-		for (int i = 0; i < stops.size(); i++, r++)
+		final List<Object> rows = rows();
+		if (row < 0 || row >= rows.size())
 		{
-			if (r == row)
+			return;
+		}
+		final Object at = rows.get(row);
+		if (at == extraBank)
+		{
+			if (ticked)
 			{
-				if (ticked)
-				{
-					skipStop(i);
-				}
-				else
-				{
-					untickStop(i);
-				}
-				return;
+				declineExtraBank();
 			}
-			if (plan.bankAfter(i) != null && ++r == row)
+		}
+		else if (at instanceof BankStop)
+		{
+			if (ticked)
 			{
-				if (ticked)
-				{
-					skipBank(i);
-				}
-				else
-				{
-					untickBank(i);
-				}
-				return;
+				skipBank(((BankStop) at).getAfterStop());
 			}
+			else
+			{
+				untickBank(((BankStop) at).getAfterStop());
+			}
+		}
+		else if (ticked)
+		{
+			skipStop((Integer) at);
+		}
+		else
+		{
+			untickStop((Integer) at);
 		}
 	}
 
@@ -542,6 +562,169 @@ public class RunSession
 		// The stop itself was finished: straight to its bank visit
 		navigator.markArrived(System.currentTimeMillis());
 		evaluate();
+	}
+
+	/**
+	 * The Run tab's rows in order: each stop (its index) and each bank visit (its {@link BankStop}), the unplanned
+	 * one before the current stop when it comes first, else after it.
+	 */
+	private List<Object> rows()
+	{
+		final List<Object> rows = new ArrayList<>();
+		for (int i = 0; i < plan.getRoute().getStops().size(); i++)
+		{
+			if (extraBank != null && extraNow && i == stopIndex)
+			{
+				rows.add(extraBank);
+			}
+			rows.add(i);
+			final BankStop bank = plan.bankAfter(i);
+			if (bank != null)
+			{
+				rows.add(bank);
+			}
+			else if (extraBank != null && !extraNow && i == stopIndex)
+			{
+				rows.add(extraBank);
+			}
+		}
+		return rows;
+	}
+
+	/** The bank visit after the current stop: the unplanned one if there is one, else the planned one, or null. */
+	private BankStop bankAfterStop()
+	{
+		return extraBank != null && !extraNow ? extraBank : plan.bankAfter(stopIndex);
+	}
+
+	/** The bank visit under way, or null. */
+	private BankStop activeBank()
+	{
+		return !banking ? null : extraBank != null ? extraBank : plan.bankAfter(stopIndex);
+	}
+
+	/** The unplanned bank visit ticked away by hand: carry on without the missing items, and don't ask again. */
+	private void declineExtraBank()
+	{
+		log.debug("Unplanned bank visit ticked by hand");
+		declinedExtra = true;
+		if (!extraNow)
+		{
+			// It stood in the after-stop place: the stop is finished, so on to the next
+			banked = true;
+		}
+		clearExtraBank();
+		banking = false;
+		evaluate();
+	}
+
+	private void clearExtraBank()
+	{
+		extraBank = null;
+		extraNow = false;
+		checkedHoldings = null;
+		missingSince = 0;
+	}
+
+	/**
+	 * An item the plan counted on has gone missing (Sean): the current task becomes a bank visit. When the current
+	 * step needs it, straight away; when a later stop does, after this stop. Not when a planned bank visit comes
+	 * first, or the tool leprechaun has it. Checked when what the player holds changes. Client thread.
+	 */
+	private void checkMissing(long now)
+	{
+		if (banking || extraBank != null || declinedExtra)
+		{
+			return;
+		}
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		// This part of the run: up to the next planned bank visit, or the end
+		int end = stops.size() - 1;
+		for (BankStop bank : plan.getBankStops())
+		{
+			if (bank.getAfterStop() >= stopIndex)
+			{
+				end = bank.getAfterStop();
+				break;
+			}
+		}
+
+		// Needed now: the step in hand can't be done; a moment's grace, as the inventory changes mid-step
+		if (patches.currentItemMissing(view.getHighlights()))
+		{
+			if (missingSince == 0)
+			{
+				missingSince = now;
+			}
+			else if (now - missingSince >= MISSING_GRACE_MILLIS)
+			{
+				final List<RouteStop> part = stops.subList(stopIndex, end + 1);
+				final SupplyPlan needed = runService.suppliesFor(plan, part);
+				if (needed.missingCount(passesGuild(part)) > 0)
+				{
+					startExtraBank(needed, true);
+					return;
+				}
+			}
+		}
+		else
+		{
+			missingSince = 0;
+		}
+
+		// Needed later in this part: bank after this stop
+		final Holdings holdings = holdingsTracker.getHoldings();
+		if (holdings == checkedHoldings || stopIndex >= end)
+		{
+			return;
+		}
+		checkedHoldings = holdings;
+		final List<RouteStop> part = stops.subList(stopIndex + 1, end + 1);
+		final SupplyPlan needed = runService.suppliesFor(plan, part);
+		if (needed.missingCount(passesGuild(part)) > 0)
+		{
+			startExtraBank(needed, false);
+		}
+	}
+
+	/** The seed vault, in the Farming Guild, is on the way, so what's in it counts. */
+	private static boolean passesGuild(List<RouteStop> stops)
+	{
+		for (RouteStop stop : stops)
+		{
+			if (stop.getLocation() == Location.FARMING_GUILD)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void startExtraBank(SupplyPlan needed, boolean now)
+	{
+		final Location here = plan.getRoute().getStops().get(stopIndex).getLocation();
+		// Banking near the stop if there's a bank, else by a bank teleport carried, else any bank
+		final BankTeleport teleport = TravelTimes.bankTiles(here) != null ? null : runService.carriedBankTeleport();
+		extraBank = new BankStop(stopIndex, here, needed, teleport);
+		extraNow = now;
+		log.debug("Item missing, unplanned bank visit {} {}: {}", now ? "now, at" : "after", here.getDisplayName(),
+			missingNames(needed));
+	}
+
+	/** What a bank visit is for, by name, for the log. */
+	private static String missingNames(SupplyPlan needed)
+	{
+		final List<String> names = new ArrayList<>();
+		for (SupplyLine line : needed.getLines())
+		{
+			final int leprechaun = line.getWhere().getOrDefault(Holdings.Source.LEPRECHAUN, 0);
+			if (line.getGroup() != SupplyLine.Group.OPTIONAL && !line.isCoveredOtherwise()
+				&& line.getCarried() + leprechaun < line.getNeed())
+			{
+				names.add(line.getName());
+			}
+		}
+		return String.join(", ", names);
 	}
 
 	/** A stop ticked by hand can be gone back to while it's current (at its bank) or the next one is. */
@@ -624,6 +807,24 @@ public class RunSession
 		{
 			final RouteStop stop = stops.get(stopIndex);
 			final List<Patch> here = patchesAt(plan, stop.getLocation());
+			// An item the step in hand needs has gone missing: to a bank first, then back to this stop
+			if (extraBank != null && extraNow && timing)
+			{
+				if (missingCount(extraBank.getSupplies().counted(holdingsTracker.getHoldings()), false) > 0)
+				{
+					banking = true;
+					patches.clearCurrent();
+					instruction = bankStep(extraBank);
+					break;
+				}
+				log.debug("Unplanned bank visit done, back to {}", stop.getLocation().getDisplayName());
+				clearExtraBank();
+				banking = false;
+				// Back from the bank the way the stop is reached; that trip isn't a sample
+				navigator.nextStop();
+				manualSteps.clear();
+				legRecorded = true;
+			}
 			instruction = navigator.travel(stop, here, now);
 			if (instruction != null)
 			{
@@ -653,8 +854,8 @@ public class RunSession
 				legRecorded = true;
 				log.debug("Leg not timed: {} skipped without reaching it", stop.getLocation().getDisplayName());
 			}
-			// A bank visit after this stop: the rest of the run didn't fit in one inventory
-			final BankStop bank = plan.bankAfter(stopIndex);
+			// A bank visit after this stop: the rest of the run didn't fit in one inventory, or an item went missing
+			final BankStop bank = bankAfterStop();
 			if (bank != null && !banked)
 			{
 				// Ready when the next part of the run, as planned at the start, is carried
@@ -673,14 +874,28 @@ public class RunSession
 				log.debug("Bank visit done after {}", stop.getLocation().getDisplayName());
 				banked = true;
 				banking = false;
+				if (extraBank == null)
+				{
+					// A planned visit starts a new part: missing items count again
+					declinedExtra = false;
+				}
 				legStartedAt = now;
 			}
 			log.debug("Stop done: {}", stop.getLocation().getDisplayName());
 			stopIndex++;
 			navigator.nextStop();
 			manualSteps.clear();
+			if (extraBank != null)
+			{
+				// After an unplanned visit the next leg starts at a bank: not a sample
+				clearExtraBank();
+				legRecorded = true;
+			}
+			else
+			{
+				legRecorded = false;
+			}
 			banked = false;
-			legRecorded = false;
 			legStartedAt = now;
 		}
 
@@ -688,6 +903,10 @@ public class RunSession
 		{
 			stop(true);
 			return;
+		}
+		if (timing)
+		{
+			checkMissing(now);
 		}
 		shortestPath.setTarget(timing ? walkTarget(stops.get(stopIndex)) : null);
 		bankTab.setAttention(banking && !bankTab.isTabOpen());
@@ -702,7 +921,7 @@ public class RunSession
 	{
 		if (banking)
 		{
-			final BankStop bank = plan.bankAfter(stopIndex);
+			final BankStop bank = activeBank();
 			// By teleport, the bank is right where it lands
 			return bank == null || bank.getTeleport() != null ? null : TravelTimes.bankPoint(bank.getLocation());
 		}
@@ -779,27 +998,24 @@ public class RunSession
 	{
 		final List<RunView.Stop> stopViews = new ArrayList<>();
 		final List<RouteStop> stops = plan.getRoute().getStops();
-		for (int i = 0; i < stops.size(); i++)
+		for (Object row : rows())
 		{
+			if (row instanceof BankStop)
+			{
+				stopViews.add(bankRow((BankStop) row, instruction));
+				continue;
+			}
+			final int i = (Integer) row;
 			final RouteStop stop = stops.get(i);
-			final RunView.StopStatus status = i < stopIndex || (i == stopIndex && banking) ? RunView.StopStatus.DONE
-				: i == stopIndex ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
+			// At a bank visit before finishing the stop, the stop waits; after it, the stop is done
+			final RunView.StopStatus status = i < stopIndex || (i == stopIndex && banking && !extraNow)
+				? RunView.StopStatus.DONE
+				: i == stopIndex && !banking ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
 			stopViews.add(new RunView.Stop(stop.getLocation().getDisplayName(), stop.describeTravel(), status,
 				status == RunView.StopStatus.CURRENT ? instruction : null,
 				plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList()),
 				status == RunView.StopStatus.CURRENT ? steps(stop) : Collections.emptyList(), false,
 				skippedStop != null && skippedStop.getIndex() == i && canGoBackTo(i)));
-			final BankStop bank = plan.bankAfter(i);
-			if (bank != null)
-			{
-				final RunView.StopStatus bankStatus = banked || i < stopIndex ? RunView.StopStatus.DONE
-					: banking ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
-				stopViews.add(new RunView.Stop(bank.title(),
-					"Restock for the rest of the run", bankStatus,
-					bankStatus == RunView.StopStatus.CURRENT ? instruction : null, Collections.emptyList(),
-					bankStatus == RunView.StopStatus.CURRENT ? bankSteps(bank) : Collections.emptyList(), true,
-					skippedBankAfter == i && stopIndex == i + 1));
-			}
 		}
 		if (instruction == null)
 		{
@@ -814,6 +1030,27 @@ public class RunSession
 			reminders(highlights), wear.getText(), highlights);
 	}
 
+	/** A bank visit's row: planned, or unplanned because an item went missing. */
+	private RunView.Stop bankRow(BankStop bank, String instruction)
+	{
+		final int i = bank.getAfterStop();
+		final RunView.StopStatus status;
+		if (bank == extraBank)
+		{
+			status = banking ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
+		}
+		else
+		{
+			status = i < stopIndex || (i == stopIndex && banked) ? RunView.StopStatus.DONE
+				: i == stopIndex && banking && extraBank == null ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
+		}
+		final boolean current = status == RunView.StopStatus.CURRENT;
+		return new RunView.Stop(bank.title(), bank == extraBank ? "Get what's missing" : "Restock for the rest of the run",
+			status, current ? instruction : null, Collections.emptyList(),
+			current ? bankSteps(bank) : Collections.emptyList(), true,
+			bank != extraBank && skippedBankAfter == i && stopIndex == i + 1);
+	}
+
 	/** What the bank visit says to deposit, by name, for the log. */
 	private String depositNames()
 	{
@@ -824,7 +1061,8 @@ public class RunSession
 	private List<String> depositList()
 	{
 		final List<String> names = new ArrayList<>();
-		for (int id : BankGuide.toDeposit(partFor(plan, stopIndex, true), holdingsTracker.getHoldings(), id -> id))
+		final SupplyPlan part = extraBank != null ? extraBank.getSupplies() : partFor(plan, stopIndex, true);
+		for (int id : BankGuide.toDeposit(part, holdingsTracker.getHoldings(), id -> id))
 		{
 			names.add(runService.itemName(id));
 		}
@@ -939,7 +1177,7 @@ public class RunSession
 		if (banking)
 		{
 			// Teleporting to the bank: the bank teleport is the item to use, as for any other teleport (Sean)
-			final BankStop bank = plan.bankAfter(stopIndex);
+			final BankStop bank = activeBank();
 			if (bank != null && bank.getTeleport() != null && !bankTab.isBankOpen())
 			{
 				final Set<Integer> teleport = new LinkedHashSet<>();
@@ -1089,7 +1327,8 @@ public class RunSession
 	{
 		if ((stage == RunView.State.RUNNING || stage == RunView.State.ARMED) && plan != null)
 		{
-			return partFor(plan, stopIndex, banking || banked).counted(holdingsTracker.getHoldings());
+			return (extraBank != null && banking ? extraBank.getSupplies() : partFor(plan, stopIndex, banking || banked))
+				.counted(holdingsTracker.getHoldings());
 		}
 		return runService.getSupplies();
 	}

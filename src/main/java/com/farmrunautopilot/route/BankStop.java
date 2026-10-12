@@ -2,6 +2,7 @@ package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.travel.BankTeleport;
+import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.supply.SupplyPlan;
 import lombok.Value;
 
@@ -25,7 +26,9 @@ public class BankStop
 	/** e.g. "Bank near Gnome Stronghold" or "Bank at the Castle Wars bank chest". */
 	public String title()
 	{
-		return teleport != null ? "Bank at " + teleport.getBankName() : "Bank near " + location.getDisplayName();
+		// An unplanned visit (an item gone missing) can come where there's no bank close by
+		return teleport != null ? "Bank at " + teleport.getBankName()
+			: TravelTimes.bankTiles(location) == null ? "Go to a bank" : "Bank near " + location.getDisplayName();
 	}
 
 	/** e.g. "Ring of dueling to the Castle Wars bank chest" or "Bank near Gnome Stronghold". */
