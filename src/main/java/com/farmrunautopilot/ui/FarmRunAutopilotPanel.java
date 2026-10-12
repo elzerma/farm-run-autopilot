@@ -223,6 +223,12 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		runPanel.refreshPatches();
 	}
 
+	/** What the plugin has detected changed (charges, the leprechaun, the bucket). Call on the Swing thread. */
+	public void refreshDetected()
+	{
+		accountPanel.refreshDetected();
+	}
+
 	/** Shows a new supply plan in the Run tab. Call on the Swing thread. */
 	public void updateRun(RunPlan plan, boolean loggedIn)
 	{

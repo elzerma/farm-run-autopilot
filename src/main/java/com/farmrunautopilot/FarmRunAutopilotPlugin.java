@@ -6,6 +6,7 @@ import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.access.UnlockSpotter;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.BottomlessBucketTracker;
+import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.supply.ItemChargeTracker;
 import com.farmrunautopilot.testing.TestRunner;
@@ -151,6 +152,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 
 	/** The session view last shown in the sidebar. */
 	private RunView shownRunView;
+	/** The holdings the Detected list last showed (a new object each time they change). */
+	private Holdings shownHoldings;
 	/** The guided test as the Run tab last showed it. */
 	private TestView shownTestView = TestView.NONE;
 
@@ -260,6 +263,17 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			final RunPlan plan = runService.getPlan();
 			showPlanLater(plan, true);
+		}
+		// Detected (charges, leprechaun, bucket) follows what's held, even when the plan stays the same (a recharge)
+		final Holdings held = holdingsTracker.getHoldings();
+		if (held != shownHoldings)
+		{
+			shownHoldings = held;
+			final FarmRunAutopilotPanel p = panel;
+			if (p != null)
+			{
+				SwingUtilities.invokeLater(p::refreshDetected);
+			}
 		}
 
 		runSession.onGameTick();
