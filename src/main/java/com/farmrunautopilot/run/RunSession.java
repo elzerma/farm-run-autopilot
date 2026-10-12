@@ -8,6 +8,7 @@ import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.data.travel.TravelTimes;
+import com.farmrunautopilot.bank.FarmBankTab;
 import com.farmrunautopilot.route.BankStop;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.RouteStop;
@@ -64,6 +65,7 @@ public class RunSession
 	private final ShortestPathBridge shortestPath;
 	private final Navigator navigator;
 	private final PatchGuide patches;
+	private final FarmBankTab bankTab;
 
 	private RunView.State stage = RunView.State.OFF;
 	/** Frozen when the run arms; null while off or building. */
@@ -90,7 +92,7 @@ public class RunSession
 	@Inject
 	RunSession(Client client, RunService runService, HoldingsTracker holdingsTracker, SettingsStore settings,
 		RunTimings timings, SceneTracker scene, ShortestPathBridge shortestPath, Navigator navigator,
-		PatchGuide patches)
+		PatchGuide patches, FarmBankTab bankTab)
 	{
 		this.client = client;
 		this.runService = runService;
@@ -101,6 +103,7 @@ public class RunSession
 		this.shortestPath = shortestPath;
 		this.navigator = navigator;
 		this.patches = patches;
+		this.bankTab = bankTab;
 	}
 
 	public RunView getView()
@@ -478,9 +481,7 @@ public class RunSession
 					}
 					banking = true;
 					patches.clearCurrent();
-					final String go = bank.getTeleport() != null ? "Use your " + bank.getTeleport().getItemName()
-						+ " to teleport to " + bank.getTeleport().getBankName() : bank.title();
-					instruction = go + ": deposit the outlined items, then take what the Farm run bank tab shows";
+					instruction = bankStep(bank);
 					break;
 				}
 				log.debug("Bank visit done after {}", stop.getLocation().getDisplayName());
@@ -502,6 +503,7 @@ public class RunSession
 			return;
 		}
 		shortestPath.setTarget(timing ? walkTarget(stops.get(stopIndex)) : null);
+		bankTab.setAttention(banking && !bankTab.isTabOpen());
 		view = runningView(instruction);
 	}
 
@@ -624,12 +626,57 @@ public class RunSession
 	/** What the bank visit says to deposit, by name, for the log. */
 	private String depositNames()
 	{
+		final List<String> names = depositList();
+		return names.isEmpty() ? "nothing" : String.join(", ", names);
+	}
+
+	private List<String> depositList()
+	{
 		final List<String> names = new ArrayList<>();
 		for (int id : BankGuide.toDeposit(partFor(plan, stopIndex, true), holdingsTracker.getHoldings(), id -> id))
 		{
 			names.add(runService.itemName(id));
 		}
-		return names.isEmpty() ? "nothing" : String.join(", ", names);
+		return names;
+	}
+
+	/** At a bank visit partway through a run: what to deposit, by name, for the bank tab; empty otherwise. */
+	public List<String> depositNow()
+	{
+		return stage == RunView.State.RUNNING && banking && plan != null ? depositList() : Collections.emptyList();
+	}
+
+	/**
+	 * A bank visit, one step at a time (decision 8.7): get to the bank, open the Farm run tab (it flashes), then
+	 * deposit what's outlined and take what the tab shows.
+	 */
+	private String bankStep(BankStop bank)
+	{
+		if (!bankTab.isBankOpen())
+		{
+			return bank.getTeleport() != null ? "Use your " + bank.getTeleport().getItemName() + " to teleport to "
+				+ bank.getTeleport().getBankName() + ", then open the bank" : bank.title() + ": open the bank";
+		}
+		if (!bankTab.isTabOpen())
+		{
+			return "Deposit the outlined items, then click the flashing Farm run tab at the top of the bank";
+		}
+		return "Deposit the outlined items, then take what the Farm run tab shows";
+	}
+
+	/** Gathering supplies, one step at a time: open a bank, open the Farm run tab, take what it shows. */
+	private String gatheringStep(int missing)
+	{
+		final String items = missing + (missing == 1 ? " item" : " items");
+		if (!bankTab.isBankOpen())
+		{
+			return "Farm run: open a bank to get " + items;
+		}
+		if (!bankTab.isTabOpen())
+		{
+			return "Farm run: click the flashing Farm run tab at the top of the bank";
+		}
+		return "Farm run: take the " + items + " marked in red or yellow";
 	}
 
 	/** What the current step points at: the patch and items to use there, or the teleport item while travelling. */
@@ -814,6 +861,7 @@ public class RunSession
 	/** Nothing in game, apart from how the last run went for a few seconds. */
 	private RunView offView()
 	{
+		bankTab.setAttention(false);
 		final RunPlan current = runService.getPlan();
 		final String notice = lastRun != null && System.currentTimeMillis() - finishedAt < FINISHED_NOTICE_MILLIS
 			? lastRun : null;
@@ -828,7 +876,9 @@ public class RunSession
 		if (!current.getRoute().getStops().isEmpty())
 		{
 			final int missing = missingCount(current);
-			notice = "Farm run: get " + missing + (missing == 1 ? " item" : " items") + " from the bank";
+			notice = gatheringStep(missing);
+			// Flash the Farm run tab until it's open, while there's something to take
+			bankTab.setAttention(missing > 0 && !bankTab.isTabOpen());
 		}
 		final List<RouteStop> stops = current.getRoute().getStops();
 		final boolean atFirstStop = !stops.isEmpty() && navigator.inRange(patchesAt(current, stops.get(0).getLocation()));

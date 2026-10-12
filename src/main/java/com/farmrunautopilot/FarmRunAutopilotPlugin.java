@@ -191,7 +191,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		settings.addListener(onSettingsReloaded);
 		settings.addSaveListener(onSettingsSaved);
 		clientThread.invoke(holdingsTracker::loadCaches);
-		farmBankTab.startUp(runSession::bankSupplies);
+		farmBankTab.startUp(runSession::bankSupplies, runSession::depositNow);
 		overlayManager.add(guidanceOverlay);
 		overlayManager.add(highlightOverlay);
 		overlayManager.add(itemHighlightOverlay);
@@ -280,7 +280,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 		// Redraw the bank tab when a line or its colour changes. The bank redraws itself on every withdrawal, but a
 		// tick before the plan catches up, so without this it would show the previous step. During a run the tab
 		// shows the part of the run being banked for, counted against what's held now.
-		final String contents = bankTabContents(runSession.bankSupplies());
+		farmBankTab.onGameTick();
+		final String contents = bankTabContents(runSession.bankSupplies()) + runSession.depositNow();
 		if (!contents.equals(bankTabContents))
 		{
 			bankTabContents = contents;

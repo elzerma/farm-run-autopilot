@@ -82,6 +82,10 @@ public class FarmBankTab
 	private static final Color IN_STORAGE = new Color(0xE8, 0xC5, 0x3A);
 	private static final Color MISSING = new Color(0xE0, 0x55, 0x55);
 	private static final String REST_OF_BANK = "Everything else";
+	private static final String DEPOSIT_FIRST = "Deposit first (outlined in your inventory)";
+	private static final Color DEPOSIT = new Color(0xFF, 0x98, 0x1F);
+	/** Characters per line of the deposit list, to fit the bank's width. */
+	private static final int DEPOSIT_LINE_CHARS = 70;
 
 	private final Client client;
 	private final ClientThread clientThread;
@@ -94,6 +98,8 @@ public class FarmBankTab
 	private final Map<Widget, SupplyLine> lineByWidget = new HashMap<>();
 	private int originalContainerChildren = -1;
 	private Supplier<SupplyPlan> plan = () -> SupplyPlan.EMPTY;
+	/** At a bank visit partway through a run: what to deposit first, by name; empty otherwise. */
+	private Supplier<List<String>> deposit = java.util.Collections::emptyList;
 	private boolean enabled;
 
 	@Inject
@@ -106,9 +112,37 @@ public class FarmBankTab
 		this.button = button;
 	}
 
-	public void startUp(Supplier<SupplyPlan> plan)
+	public void startUp(Supplier<SupplyPlan> plan, Supplier<List<String>> deposit)
 	{
 		this.plan = plan;
+		this.deposit = deposit;
+	}
+
+	/** The bank is open. Client thread. */
+	public boolean isBankOpen()
+	{
+		return button.isBankOpen();
+	}
+
+	/** The farm run view is showing in the bank. Client thread. */
+	public boolean isTabOpen()
+	{
+		return button.isActive() && button.isBankOpen();
+	}
+
+	/** Flash the Farm run button while the guide waits for it to be clicked. Client thread. */
+	public void setAttention(boolean attention)
+	{
+		button.setAttention(attention);
+	}
+
+	/** Each game tick, for the button's flashing. Client thread. */
+	public void onGameTick()
+	{
+		if (enabled)
+		{
+			button.onGameTick();
+		}
 	}
 
 	public void shutDown()
@@ -294,6 +328,19 @@ public class FarmBankTab
 
 		final List<PendingText> texts = new ArrayList<>();
 		int height = 0;
+		// At a bank visit partway through a run: what to put away first (it's outlined in the inventory too)
+		final List<String> toDeposit = deposit.get();
+		if (!toDeposit.isEmpty())
+		{
+			height = addHeader(itemContainer, DEPOSIT_FIRST, height);
+			for (String line : wrap(String.join(", ", toDeposit), DEPOSIT_LINE_CHARS))
+			{
+				addedWidgets.add(createText(itemContainer, line, DEPOSIT.getRGB(),
+					ITEMS_PER_ROW * ITEM_HORIZONTAL_SPACING, TEXT_HEIGHT, ITEM_ROW_START, height));
+				height += TEXT_HEIGHT;
+			}
+			height += LINE_VERTICAL_SPACING;
+		}
 		int nextWidget = 0;
 		for (Map.Entry<SupplyLine.Group, List<SupplyLine>> section : sections.entrySet())
 		{
@@ -350,6 +397,31 @@ public class FarmBankTab
 		final int scroll = itemContainer.getScrollY();
 		clientThread.invokeLater(() -> client.runScript(ScriptID.UPDATE_SCROLLBAR, InterfaceID.Bankmain.SCROLLBAR,
 			InterfaceID.Bankmain.ITEMS, scroll));
+	}
+
+	/** Splits text into lines of at most {@code width} characters, between words. */
+	static List<String> wrap(String text, int width)
+	{
+		final List<String> lines = new ArrayList<>();
+		final StringBuilder line = new StringBuilder();
+		for (String word : text.split(" "))
+		{
+			if (line.length() > 0 && line.length() + 1 + word.length() > width)
+			{
+				lines.add(line.toString());
+				line.setLength(0);
+			}
+			if (line.length() > 0)
+			{
+				line.append(' ');
+			}
+			line.append(word);
+		}
+		if (line.length() > 0)
+		{
+			lines.add(line.toString());
+		}
+		return lines;
 	}
 
 	/** The variant the bank holds most of (e.g. which charge of a ring), or the first one if none. */

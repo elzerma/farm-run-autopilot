@@ -47,6 +47,9 @@ class FarmBankTabButton
 
 	@Getter
 	private boolean active;
+	/** Flash the button until it's clicked: the guide is waiting for the player to open the farm run tab. */
+	private boolean attention;
+	private int pulseTicks;
 	private Widget background;
 	private Widget icon;
 
@@ -84,6 +87,38 @@ class FarmBankTabButton
 			active = false;
 			clientThread.invokeLater(this::activate);
 		}
+	}
+
+	/** Flash the button (or stop) while the guide is waiting for the farm run tab to be opened. */
+	void setAttention(boolean attention)
+	{
+		this.attention = attention;
+	}
+
+	/**
+	 * Each game tick: while the guide is waiting for it, the button flashes between its normal and pressed look so
+	 * it's hard to miss (Sean). Only our own widget is changed.
+	 */
+	void onGameTick()
+	{
+		if (background == null || background.isHidden() || isBankHidden())
+		{
+			return;
+		}
+		final boolean lit = active || (attention && pulseTicks++ % 2 == 0);
+		final int sprite = lit ? SpriteID.Miscgraphics3.UNKNOWN_BUTTON_SQUARE_SMALL_SELECTED
+			: SpriteID.Miscgraphics3.UNKNOWN_BUTTON_SQUARE_SMALL;
+		if (background.getSpriteId() != sprite)
+		{
+			background.setSpriteId(sprite);
+			background.revalidate();
+		}
+	}
+
+	/** The bank is open (and our button can be shown). */
+	boolean isBankOpen()
+	{
+		return !isBankHidden();
 	}
 
 	/** Removes the button and goes back to the normal bank. */
