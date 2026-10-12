@@ -42,7 +42,7 @@ class ExpandableRow extends JPanel
 		setLayout(new BorderLayout());
 		setAlignmentX(LEFT_ALIGNMENT);
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
-		setBorder(new EmptyBorder(0, 0, 4, 0));
+		setBorder(new EmptyBorder(0, 0, 2, 0));
 
 		headCard.accent(overridden ? OVERRIDE : null);
 		this.name.setText(UiText.wrap(name, width / 2 - 20));
@@ -69,7 +69,7 @@ class ExpandableRow extends JPanel
 
 		content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 		content.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		content.setBorder(new EmptyBorder(4, 6, 4, 0));
+		content.setBorder(new EmptyBorder(2, 4, 2, 0));
 
 		add(headCard, BorderLayout.NORTH);
 		add(content, BorderLayout.CENTER);

@@ -63,7 +63,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		this.settings = settings;
 		this.testRunner = testRunner;
 		setLayout(new BorderLayout());
-		setBorder(new EmptyBorder(10, 10, 10, 10));
+		setBorder(new EmptyBorder(6, 6, 6, 6));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 
 		final JPanel display = new JPanel(new BorderLayout());
@@ -207,7 +207,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		travelPanel.showAutoPicks(runService);
 
 		tabs = new TabBar(display);
-		tabs.setBorder(new EmptyBorder(0, 0, 10, 0));
+		tabs.setBorder(new EmptyBorder(0, 0, 6, 0));
 		tabs.addTab("Run", TabIcon.RUN, run);
 		tabs.addTab("Farm", TabIcon.FARM, top(farmPanel, helpButton()));
 		tabs.addTab("Travel", TabIcon.TRAVEL, top(travelPanel, helpButton()));

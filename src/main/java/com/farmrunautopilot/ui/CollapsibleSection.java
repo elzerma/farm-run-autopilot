@@ -43,7 +43,7 @@ class CollapsibleSection extends JPanel
 		setLayout(new BorderLayout());
 		setAlignmentX(LEFT_ALIGNMENT);
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
-		setBorder(new EmptyBorder(0, 0, 4, 0));
+		setBorder(new EmptyBorder(0, 0, 2, 0));
 
 		Style.title(header);
 		header.setIconTextGap(8);
@@ -61,7 +61,7 @@ class CollapsibleSection extends JPanel
 
 		content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 		content.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		content.setBorder(new EmptyBorder(6, 4, 2, 4));
+		content.setBorder(new EmptyBorder(3, 2, 1, 2));
 
 		add(headCard, BorderLayout.NORTH);
 		add(content, BorderLayout.CENTER);

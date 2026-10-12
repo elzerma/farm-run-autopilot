@@ -236,7 +236,7 @@ class SettingsPage extends SetupPanel
 	{
 		final JPanel row = new JPanel(new BorderLayout(6, 0));
 		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		row.setBorder(new EmptyBorder(2, 0, 2, 0));
+		row.setBorder(new EmptyBorder(1, 0, 1, 0));
 		// Both columns wrap: the value column is CONTROL_WIDTH - 90 wide, so the name gets the rest
 		final JLabel name = new JLabel(wrap(what, 80));
 		name.setVerticalAlignment(JLabel.TOP);
@@ -384,7 +384,7 @@ class SettingsPage extends SetupPanel
 	{
 		final JPanel row = new JPanel(new BorderLayout(6, 0));
 		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		row.setBorder(new EmptyBorder(3, 0, 3, 0));
+		row.setBorder(new EmptyBorder(1, 0, 1, 0));
 		final JLabel label = new JLabel(text);
 		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());

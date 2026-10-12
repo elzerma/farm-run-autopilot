@@ -28,8 +28,8 @@ class TabBar extends JPanel
 	private static final int SIDE_PADDING = 9;
 	private static final Border SELECTED = BorderFactory.createCompoundBorder(
 		BorderFactory.createMatteBorder(0, 0, 2, 0, ColorScheme.BRAND_ORANGE),
-		new EmptyBorder(6, SIDE_PADDING, 4, SIDE_PADDING));
-	private static final Border UNSELECTED = new EmptyBorder(6, SIDE_PADDING, 6, SIDE_PADDING);
+		new EmptyBorder(4, SIDE_PADDING, 2, SIDE_PADDING));
+	private static final Border UNSELECTED = new EmptyBorder(4, SIDE_PADDING, 4, SIDE_PADDING);
 
 	private final JPanel display;
 	private final CardLayout cards = new VisibleCardLayout();

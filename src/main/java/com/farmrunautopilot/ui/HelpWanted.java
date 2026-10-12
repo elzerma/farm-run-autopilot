@@ -72,7 +72,7 @@ final class HelpWanted
 		button.setFocusPainted(false);
 		button.setBorderPainted(false);
 		button.setContentAreaFilled(false);
-		button.setBorder(new javax.swing.border.EmptyBorder(8, 0, 8, 0));
+		button.setBorder(new javax.swing.border.EmptyBorder(4, 0, 4, 0));
 		button.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
 		button.setAlignmentX(Component.LEFT_ALIGNMENT);
 		button.addActionListener(e -> open.run());

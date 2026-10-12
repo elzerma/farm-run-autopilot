@@ -1,8 +1,15 @@
 package com.farmrunautopilot.ui;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.RenderingHints;
 import javax.swing.AbstractButton;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -23,6 +30,8 @@ final class Style
 	static final int ARC = 0;
 	/** Done, due, carried. */
 	static final Color GREEN = new Color(0x4C, 0xC1, 0x52);
+	/** Side of a tick box, in pixels. */
+	private static final int TICK_SIZE = 12;
 	/** Stop: a muted red, not an alarm. */
 	private static final Color DANGER = new Color(0x8A, 0x33, 0x33);
 	/** FlatLaf's per-component style property (FlatClientProperties.STYLE). */
@@ -101,23 +110,57 @@ final class Style
 	static JCheckBox checkBox(JCheckBox box)
 	{
 		box.setFocusPainted(false);
-		box.putClientProperty(STYLE, "icon.arc: 0; icon.focusWidth: 0; icon.borderWidth: 1"
-			+ "; icon.background: " + hex(ColorScheme.DARKER_GRAY_COLOR)
-			+ "; icon.borderColor: " + hex(ColorScheme.LIGHT_GRAY_COLOR.darker())
-			+ "; icon.hoverBorderColor: " + hex(ColorScheme.BRAND_ORANGE)
-			+ "; icon.hoverBackground: " + hex(ColorScheme.DARKER_GRAY_COLOR)
-			+ "; icon.focusedBorderColor: " + hex(ColorScheme.LIGHT_GRAY_COLOR.darker())
-			+ "; icon.selectedBackground: " + hex(ColorScheme.BRAND_ORANGE)
-			+ "; icon.selectedBorderColor: " + hex(ColorScheme.BRAND_ORANGE)
-			+ "; icon.hoverSelectedBackground: " + hex(ColorScheme.BRAND_ORANGE.brighter())
-			+ "; icon.focusedSelectedBackground: " + hex(ColorScheme.BRAND_ORANGE)
-			+ "; icon.checkmarkColor: " + hex(ColorScheme.DARKER_GRAY_COLOR)
-			+ "; icon.disabledBackground: " + hex(ColorScheme.DARK_GRAY_COLOR)
-			+ "; icon.disabledBorderColor: " + hex(ColorScheme.MEDIUM_GRAY_COLOR)
-			+ "; icon.disabledSelectedBackground: " + hex(GREEN)
-			+ "; icon.disabledSelectedBorderColor: " + hex(GREEN)
-			+ "; icon.disabledCheckmarkColor: " + hex(ColorScheme.DARKER_GRAY_COLOR));
+		box.setIconTextGap(5);
+		box.setMargin(new Insets(1, 1, 1, 1));
+		// Drawn here, smaller than the look and feel's (Sean: smaller tick boxes)
+		box.setIcon(tick(ColorScheme.DARKER_GRAY_COLOR, ColorScheme.LIGHT_GRAY_COLOR.darker(), null));
+		box.setRolloverIcon(tick(ColorScheme.DARKER_GRAY_COLOR, ColorScheme.BRAND_ORANGE, null));
+		box.setPressedIcon(tick(ColorScheme.DARKER_GRAY_COLOR, ColorScheme.BRAND_ORANGE, null));
+		box.setSelectedIcon(tick(ColorScheme.BRAND_ORANGE, null, ColorScheme.DARKER_GRAY_COLOR));
+		box.setRolloverSelectedIcon(tick(ColorScheme.BRAND_ORANGE.brighter(), null, ColorScheme.DARKER_GRAY_COLOR));
+		box.setDisabledIcon(tick(ColorScheme.DARK_GRAY_COLOR, ColorScheme.MEDIUM_GRAY_COLOR, null));
+		box.setDisabledSelectedIcon(tick(GREEN, null, ColorScheme.DARKER_GRAY_COLOR));
 		return box;
+	}
+
+	/** A small square tick box: a fill, an outline (or none), and a tick (or none). */
+	private static Icon tick(Color fill, Color outline, Color check)
+	{
+		return new Icon()
+		{
+			@Override
+			public void paintIcon(Component c, Graphics g, int x, int y)
+			{
+				final Graphics2D g2 = (Graphics2D) g.create();
+				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+				g2.setColor(fill);
+				g2.fillRect(x, y, TICK_SIZE, TICK_SIZE);
+				if (outline != null)
+				{
+					g2.setColor(outline);
+					g2.drawRect(x, y, TICK_SIZE - 1, TICK_SIZE - 1);
+				}
+				if (check != null)
+				{
+					g2.setColor(check);
+					g2.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+					g2.drawPolyline(new int[]{x + 2, x + 5, x + 9}, new int[]{y + 6, y + 9, y + 3}, 3);
+				}
+				g2.dispose();
+			}
+
+			@Override
+			public int getIconWidth()
+			{
+				return TICK_SIZE;
+			}
+
+			@Override
+			public int getIconHeight()
+			{
+				return TICK_SIZE;
+			}
+		};
 	}
 
 	/** Titles and headings: RuneLite's normal font, not bold (Sean: back to how it was). */

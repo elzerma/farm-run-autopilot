@@ -164,7 +164,7 @@ abstract class SetupPanel extends JPanel
 	{
 		final JPanel row = new JPanel(new BorderLayout(6, 0));
 		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		row.setBorder(new EmptyBorder(3, 0, 3, 0));
+		row.setBorder(new EmptyBorder(1, 0, 1, 0));
 		final JLabel label = new JLabel(wrap(text, CONTROL_WIDTH - 85));
 		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
@@ -188,7 +188,7 @@ abstract class SetupPanel extends JPanel
 	{
 		final JPanel row = new JPanel(new BorderLayout(8, 0));
 		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		row.setBorder(new EmptyBorder(2, 0, 2, 0));
+		row.setBorder(new EmptyBorder(1, 0, 1, 0));
 		final JLabel label = new JLabel(text);
 		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
@@ -279,7 +279,7 @@ abstract class SetupPanel extends JPanel
 		final JLabel label = new JLabel(wrap(text));
 		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
-		label.setBorder(new EmptyBorder(4, 0, 2, 0));
+		label.setBorder(new EmptyBorder(2, 0, 1, 0));
 		return label;
 	}
 
@@ -287,7 +287,7 @@ abstract class SetupPanel extends JPanel
 	{
 		final JLabel label = new JLabel(wrap(text));
 		Style.title(label);
-		label.setBorder(new EmptyBorder(8, 0, 2, 0));
+		label.setBorder(new EmptyBorder(5, 0, 1, 0));
 		return label;
 	}
 
@@ -296,7 +296,7 @@ abstract class SetupPanel extends JPanel
 		final JLabel label = new JLabel(wrap(text));
 		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
-		label.setBorder(new EmptyBorder(0, 0, 6, 0));
+		label.setBorder(new EmptyBorder(0, 0, 3, 0));
 		label.setAlignmentX(LEFT_ALIGNMENT);
 		return label;
 	}
