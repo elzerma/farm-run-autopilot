@@ -584,6 +584,25 @@ class RunPanel extends JPanel
 		return Card.groupHeader(title, summary, open, toggle);
 	}
 
+	/**
+	 * A shorter name for the timers only (Sean), so it fits beside the state: each list is one patch type, so
+	 * "Falador" is the herb patch there and "Falador Park" the tree.
+	 */
+	private static String timerName(Location location)
+	{
+		switch (location)
+		{
+			case FALADOR_FARM:
+				return "Falador";
+			case ARDOUGNE_FARM:
+				return "Ardougne";
+			case CIVITAS_ILLA_FORTIS:
+				return "Civitas";
+			default:
+				return location.getDisplayName();
+		}
+	}
+
 	/** One patch on one line: where on the left, its state on the right (green when due); crop and all on hover. */
 	private static JComponent patchTimer(Patch patch, PatchPrediction prediction, long now)
 	{
@@ -595,7 +614,7 @@ class RunPanel extends JPanel
 		row.setOpaque(false);
 		row.setBorder(new EmptyBorder(1, 0, 1, 0));
 		// One line, never wrapped (Sean); a name too long for what's left ends in "..." and is whole on hover
-		final JLabel name = new JLabel(patch.getLocation().getDisplayName());
+		final JLabel name = new JLabel(timerName(patch.getLocation()));
 		name.setForeground(Color.WHITE);
 		name.setFont(FontManager.getRunescapeSmallFont());
 		name.setVerticalAlignment(JLabel.TOP);
@@ -605,7 +624,7 @@ class RunPanel extends JPanel
 		status.setVerticalAlignment(JLabel.TOP);
 		row.add(name, BorderLayout.CENTER);
 		row.add(status, BorderLayout.EAST);
-		row.setToolTipText(described);
+		row.setToolTipText(patch.getLocation().getDisplayName() + ": " + described);
 		row.setAlignmentX(LEFT_ALIGNMENT);
 		return row;
 	}
