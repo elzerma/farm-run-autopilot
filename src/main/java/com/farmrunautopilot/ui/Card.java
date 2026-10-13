@@ -89,6 +89,48 @@ class Card extends JPanel
 		super.paintComponent(g);
 	}
 
+	/**
+	 * A group's heading that opens and closes it: a card with a chevron, the title, and a count on the right
+	 * (e.g. "3 of 7 due"). Used for the patch timers and the guided tests.
+	 */
+	static javax.swing.JComponent groupHeader(String title, String summary, boolean open, Runnable toggle)
+	{
+		final Card head = new Card(new java.awt.BorderLayout(8, 0)).hoverable();
+		final javax.swing.JLabel name = new javax.swing.JLabel(title, chevron(open, Color.WHITE),
+			javax.swing.JLabel.LEFT);
+		name.setIconTextGap(8);
+		name.setForeground(Color.WHITE);
+		name.setFont(net.runelite.client.ui.FontManager.getRunescapeFont());
+		final javax.swing.JLabel count = new javax.swing.JLabel(summary);
+		count.setForeground(Color.WHITE);
+		count.setFont(net.runelite.client.ui.FontManager.getRunescapeSmallFont());
+		head.add(name, java.awt.BorderLayout.CENTER);
+		head.add(count, java.awt.BorderLayout.EAST);
+		head.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+		head.addMouseListener(new java.awt.event.MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(java.awt.event.MouseEvent e)
+			{
+				toggle.run();
+			}
+		});
+		// As wide as its parent, as tall as its text at each layout
+		final JPanel wrapper = new JPanel(new java.awt.BorderLayout())
+		{
+			@Override
+			public java.awt.Dimension getMaximumSize()
+			{
+				return new java.awt.Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+			}
+		};
+		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		wrapper.setBorder(new EmptyBorder(0, 0, 3, 0));
+		wrapper.add(head, java.awt.BorderLayout.CENTER);
+		wrapper.setAlignmentX(LEFT_ALIGNMENT);
+		return wrapper;
+	}
+
 	/** A small chevron for a collapsible header: pointing right when closed, down when open. */
 	static Icon chevron(boolean open, Color color)
 	{

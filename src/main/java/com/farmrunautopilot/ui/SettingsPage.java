@@ -306,9 +306,21 @@ class SettingsPage extends SetupPanel
 	private JComponent testingSection()
 	{
 		final CollapsibleSection s = section(TESTING);
-		s.help("Features I couldn't test myself, each with a guided test. Running one helps get it right.");
+		// Said here, where people come to read it (Sean): what everything in this section has in common, then each
+		// part under its own heading with its own explanation
+		s.addContent(note("Everything here ends the same way: a GitHub issue opens in your browser with the details "
+			+ "filled in. You read it, and nothing is sent unless you submit it (a free GitHub account is needed). It "
+			+ "never includes your name or account."));
 		if (testRunner != null)
 		{
+			s.addContent(subheader("Guided tests"));
+			s.addContent(note(testRunner.asDeveloper()
+				? "Start a test: the Run tab walks you through it and your settings are put back afterwards. The "
+					+ "result is copied to your clipboard to paste to Claude."
+				: "Features I couldn't try myself. Each test walks you through it on the Run tab: it sets what it needs "
+					+ "(your settings come back after), says what to bring, and asks Yes or No as you go. If you don't "
+					+ "have what a test needs, it says so and stops, and nothing is reported. A few minutes each, no "
+					+ "coding."));
 			if (testRunner.isDeveloperMode())
 			{
 				// Dev client only: see the help list and the end of a test the way players do
@@ -319,7 +331,8 @@ class SettingsPage extends SetupPanel
 						SwingUtilities.invokeLater(changed);
 					}));
 			}
-			helpListShown = HelpWanted.list(settings, testRunner.asDeveloper(), testRunner, showRunTab);
+			helpListShown = HelpWanted.list(settings, testRunner.asDeveloper(), testRunner, showRunTab,
+				() -> SwingUtilities.invokeLater(this::rebuild));
 			s.addContent(helpListShown);
 		}
 		return s;

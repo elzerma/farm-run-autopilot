@@ -67,7 +67,7 @@ import net.runelite.client.ui.PluginPanel;
  */
 class RunPanel extends JPanel
 {
-	private static final int TEXT_WIDTH = PluginPanel.PANEL_WIDTH - 40;
+	private static final int TEXT_WIDTH = PluginPanel.PANEL_WIDTH - 40;
 	/** The run clock, big enough to read at a glance (Sean). */
 	private static final float CLOCK_FONT_SIZE = 24f;
 	/** Tooltips wrap at this width (in the 13/10 CSS pixels Swing's HTML uses), about the sidebar's. */
@@ -294,8 +294,9 @@ class RunPanel extends JPanel
 		box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
 		box.setAlignmentX(LEFT_ALIGNMENT);
 
-		final JLabel title = testText("TEST: " + test.getTitle(), ColorScheme.BRAND_ORANGE);
-		title.setFont(FontManager.getRunescapeBoldFont());
+		// White like every title; the orange bar marks it (Sprint 7)
+		final JLabel title = testText("Test: " + test.getTitle(), Color.WHITE);
+		title.setFont(FontManager.getRunescapeFont());
 		box.add(title);
 		if (test.isFinished())
 		{
@@ -303,9 +304,9 @@ class RunPanel extends JPanel
 			if (test.isReporting())
 			{
 				// The last step: the player sends the report themselves
-				box.add(testButtons(testButton(
+				box.add(testButtons(Style.primary(testButton(
 					"<html><center>Open GitHub issues with<br>prefilled test results</center></html>",
-					controls::openTestReport)));
+					controls::openTestReport))));
 			}
 			box.add(testButtons(testButton("Close", controls::closeTestReport)));
 			box.setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH - 20, Integer.MAX_VALUE));
@@ -359,7 +360,7 @@ class RunPanel extends JPanel
 		final JLabel label = new JLabel("<html><div style='width:" + (TEXT_WIDTH - 55) + "px'>"
 			+ text.replace("&", "&amp;").replace("<", "&lt;") + "</div></html>");
 		label.setForeground(colour);
-		label.setFont(FontManager.getRunescapeFont());
+		label.setFont(FontManager.getRunescapeSmallFont());
 		label.setBorder(new EmptyBorder(0, 0, 3, 0));
 		label.setAlignmentX(LEFT_ALIGNMENT);
 		return label;
@@ -579,30 +580,7 @@ class RunPanel extends JPanel
 	/** A patch type's heading in the timers: a card with a chevron, the type and how many are due. */
 	private static JComponent timerGroupHeader(String title, String summary, boolean open, Runnable toggle)
 	{
-		final Card head = new Card(new BorderLayout(8, 0)).hoverable();
-		final JLabel name = new JLabel(title, Card.chevron(open, Color.WHITE), JLabel.LEFT);
-		name.setIconTextGap(8);
-		name.setForeground(Color.WHITE);
-		name.setFont(FontManager.getRunescapeFont());
-		final JLabel count = new JLabel(summary);
-		count.setForeground(Color.WHITE);
-		count.setFont(FontManager.getRunescapeSmallFont());
-		head.add(name, BorderLayout.CENTER);
-		head.add(count, BorderLayout.EAST);
-		head.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		head.addMouseListener(new MouseAdapter()
-		{
-			@Override
-			public void mouseClicked(MouseEvent e)
-			{
-				toggle.run();
-			}
-		});
-		final JPanel wrapper = fullWidth();
-		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		wrapper.setBorder(new EmptyBorder(0, 0, 3, 0));
-		wrapper.add(head, BorderLayout.CENTER);
-		return left(wrapper);
+		return Card.groupHeader(title, summary, open, toggle);
 	}
 
 	/** One patch on one line: where on the left, its state on the right (green when due); crop and all on hover. */
