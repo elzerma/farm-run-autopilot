@@ -50,11 +50,59 @@ New, one small test:
 - `BUCKET_COMPOST` (Farm): "Store your bottomless bucket with the tool leprechaun. Which compost is in it?"
   (cannotTest without one) → captures the bucket varbit value with their answer, so 2/3/4 can be mapped.
 
-## 3. Share my run times (opt-in)
+## 3. Layout of Settings > Help improve this plugin (Sean)
 
-- A **Share my run times** button in Settings > Help improve this plugin (shown once there are learned
-  times) opens a prefilled GitHub issue; nothing is sent unless the player submits it. Built with
-  `TestReport.url(title, body)` (`testing/TestReport.java`, 6000-char cap).
+Two features, clearly divided, under one shared explanation:
+
+```
+Help improve this plugin
+  [shared] Everything here ends the same way: a GitHub issue opens in your browser with the details filled in.
+           You read it, and nothing is sent unless you submit it (a free GitHub account is needed). Never your
+           name, account or where you've been.
+  ── Share your run times ─────────────────────────────
+  [own explanation] Your measured times between stops help set better estimates for everyone.
+  [Share your run times]      (greyed until you've done a run, with why on hover)
+  ── Guided tests ─────────────────────────────────────
+  [own explanation] Features I couldn't try myself. Each test walks you through it on the Run tab: it sets
+  what it needs (your settings come back after), lists anything to bring, and asks Yes/No as you go. If you
+  don't have what a test needs, it says so and stops; nothing is reported. A few minutes each, no coding.
+  ...the test list as now, by tab
+```
+
+- Share your run times goes **first**; guided tests second, with the extra explanation the tests need.
+- Each part is its own sub-heading (the existing `subheader` style with a divider line above), so they read
+  as separate features.
+- The shared text and each part's explanation are visible lines here (not tooltips): this is the place
+  people come to read them.
+- Implemented in `ui/SettingsPage.testingSection()` and `ui/HelpWanted.list(...)` (which currently builds the
+  heading and test list; the heading/intro move to SettingsPage, HelpWanted keeps the list).
+
+### Guided tests brought in line with Sprint 7 (Sean asked whether they match: they don't)
+
+Today `HelpWanted.list` is a long text page: full how-to paragraphs in the larger font, a second
+"I NEED YOUR HELP!" heading inside the already-titled section, plain "Run tab"/"Farm tab" labels, unstyled
+Start test / Open GitHub issues buttons, "Needs: …" both on the button's hover and as a line under it, and a
+plain greyed Done list. Redesign, reusing the Sprint 7 parts:
+
+- **No inner heading**: the section title is the heading; `HOW_IT_WORKS` becomes the guided-tests explanation
+  in section 3 (shortened).
+- **Groups by tab** with the timer-style headers (`RunPanel.timerGroupHeader` pattern, chevron + "3 to try"),
+  remembered open/closed via `settings.isSectionOpen`.
+- **Each test is one line** (`ExpandableRow`): title on the left, on the right either "Start" or what it needs
+  ("Needs Lunar spellbook", short); hover shows the full how-to; opening it shows the how-to text in the small
+  font and a **Start test** button (`Style.primary`, greyed when something's missing). "Needs" said once, on
+  the row.
+- **Done**: one closed group "Done (n)" with greyed one-line rows ("Weiss fire: passed"); in the dev client each
+  has Run again (`Style.button`).
+- **Open GitHub issues** becomes a small underlined link at the end (like the help line), not a button.
+- **Run tab test box** (`RunPanel.addTest`): keep the orange-bar card; title white like other titles (orange
+  only as the bar); Yes/No/Skip/Cancel already `Style.button`; text in the small font.
+- All text white, small font, square corners, the same padding as the rest (Card, `Style`).
+
+## 4. Share your run times (opt-in)
+
+- The **Share your run times** button (section 3) opens a prefilled GitHub issue; nothing is sent unless the
+  player submits it. Built with `TestReport.url(title, body)` (`testing/TestReport.java`, 6000-char cap).
 - Body: plugin version, then one line per learned leg from `route/LearnedTimes` (`from > to, method,
   departure: median s (n)`), plus the unlocks that change times (fairy rings, spirit trees, diary tiers,
   Graceful). No name, account or location history. The button's tooltip says exactly that.
@@ -65,7 +113,10 @@ New, one small test:
 - `data/AchievementDiary.java`, `settings/Compost.java`, `supply/LeprechaunItem.java` + `supply/HoldingsTracker.java`,
   `data/Unlock.java`, `data/travel/{Spell,TravelItem,TravelMethod}.java`, `access/PohDetector.java`
 - `testing/TestItem.java`, `testing/GuidedTests.java` (remove ATES_STATUES, add BUCKET_COMPOST)
-- `ui/SettingsPage.java`, `route/LearnedTimes.java` (summary), README credits
+- `ui/SettingsPage.java` (shared intro, two divided parts, the button), `ui/HelpWanted.java` (list only,
+  redesigned as above), `ui/RunPanel.java` (test box title colour, small font),
+  `route/LearnedTimes.java` (summary), README credits
+- Now (before Sprint 9 is built): copy this revised plan over `docs/plans/sourced-data.md` and commit.
 - Unit tests: Karamja done only at 2; bucket 1 = empty; leprechaun totals with the script's multipliers;
   run-times summary format and cap.
 
