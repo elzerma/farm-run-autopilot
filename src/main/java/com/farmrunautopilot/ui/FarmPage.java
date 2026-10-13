@@ -12,13 +12,10 @@ import com.farmrunautopilot.settings.Outfit;
 import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
-import java.awt.Dimension;
-import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import net.runelite.api.Skill;
 import net.runelite.client.ui.ColorScheme;
 
@@ -63,8 +60,7 @@ class FarmPage extends SetupPanel
 		// One group per type that opens and closes, two tick boxes to a row (Sean)
 		for (PatchType type : PatchType.values())
 		{
-			final JPanel grid = new JPanel(new GridLayout(0, 2, 4, 0));
-			grid.setBackground(ColorScheme.DARK_GRAY_COLOR);
+			final List<JComponent> boxes = new ArrayList<>();
 			int typeUsable = 0;
 			int typeTicked = 0;
 			for (Patch patch : Patch.values())
@@ -79,7 +75,7 @@ class FarmPage extends SetupPanel
 				typeUsable += locked ? 0 : 1;
 				typeTicked += on ? 1 : 0;
 				// Locked ones are greyed, with what they need on hover
-				grid.add(halfCheckBox(patch.getLocation().getDisplayName(), on, !locked,
+				boxes.add(halfCheckBox(patch.getLocation().getDisplayName(), on, !locked,
 					locked ? "Locked: " + AccessSnapshot.describe(missing) : null,
 					tick -> saveRun(() ->
 					{
@@ -95,8 +91,7 @@ class FarmPage extends SetupPanel
 			}
 			final CollapsibleSection group = section(type.getDisplayName() + " patches",
 				typeTicked + " of " + typeUsable);
-			grid.setMaximumSize(new Dimension(CONTROL_WIDTH, grid.getPreferredSize().height));
-			group.addContent(grid);
+			group.addContent(twoPerRow(boxes));
 			s.addContent(group);
 		}
 		return s;

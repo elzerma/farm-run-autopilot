@@ -10,6 +10,7 @@ import java.awt.Color;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
@@ -183,6 +184,38 @@ abstract class SetupPanel extends JPanel
 		// Rows of two sit closer together (Sean: a little much padding)
 		box.setMargin(new Insets(1, 1, 1, 1));
 		return box;
+	}
+
+	/**
+	 * Controls two to a row, each row only as tall as its own contents (Sean: one long name made every row tall
+	 * in a grid).
+	 */
+	static JComponent twoPerRow(List<JComponent> items)
+	{
+		final JPanel rows = new JPanel();
+		rows.setLayout(new BoxLayout(rows, BoxLayout.Y_AXIS));
+		rows.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		for (int i = 0; i < items.size(); i += 2)
+		{
+			final JPanel row = new JPanel(new GridLayout(1, 2, 4, 0));
+			row.setBackground(ColorScheme.DARK_GRAY_COLOR);
+			row.add(items.get(i));
+			if (i + 1 < items.size())
+			{
+				row.add(items.get(i + 1));
+			}
+			else
+			{
+				final JPanel empty = new JPanel();
+				empty.setOpaque(false);
+				row.add(empty);
+			}
+			row.setMaximumSize(new Dimension(CONTROL_WIDTH, row.getPreferredSize().height));
+			row.setAlignmentX(LEFT_ALIGNMENT);
+			rows.add(row);
+		}
+		rows.setMaximumSize(new Dimension(CONTROL_WIDTH, rows.getPreferredSize().height));
+		return rows;
 	}
 
 	/** A short label and its control on one line, e.g. "1st" and a drop-down. */
