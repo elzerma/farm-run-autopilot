@@ -76,7 +76,7 @@ class PatchDebugPanel extends JPanel
 
 		final JPanel wrapper = new JPanel(new BorderLayout());
 		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		wrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
+		wrapper.setBorder(new EmptyBorder(0, 0, 3, 0));
 		wrapper.add(row, BorderLayout.CENTER);
 		return wrapper;
 	}

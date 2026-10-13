@@ -345,7 +345,7 @@ class RunPanel extends JPanel
 		final JPanel row = new JPanel(new GridLayout(1, 0, 4, 0));
 		row.setOpaque(false);
 		row.setAlignmentX(LEFT_ALIGNMENT);
-		row.setBorder(new EmptyBorder(0, 0, 2, 0));
+		row.setBorder(new EmptyBorder(0, 0, 3, 0));
 		for (JButton button : buttons)
 		{
 			row.add(button);
@@ -360,7 +360,7 @@ class RunPanel extends JPanel
 			+ text.replace("&", "&amp;").replace("<", "&lt;") + "</div></html>");
 		label.setForeground(colour);
 		label.setFont(FontManager.getRunescapeFont());
-		label.setBorder(new EmptyBorder(0, 0, 2, 0));
+		label.setBorder(new EmptyBorder(0, 0, 3, 0));
 		label.setAlignmentX(LEFT_ALIGNMENT);
 		return label;
 	}
@@ -600,7 +600,7 @@ class RunPanel extends JPanel
 		});
 		final JPanel wrapper = fullWidth();
 		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		wrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
+		wrapper.setBorder(new EmptyBorder(0, 0, 3, 0));
 		wrapper.add(head, BorderLayout.CENTER);
 		return left(wrapper);
 	}
@@ -832,7 +832,7 @@ class RunPanel extends JPanel
 
 		final JPanel wrapper = fullWidth();
 		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		wrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
+		wrapper.setBorder(new EmptyBorder(0, 0, 3, 0));
 		wrapper.add(cell, BorderLayout.CENTER);
 		wrapper.setToolTipText(objectivesTooltip(stop.getObjectives()));
 		return left(wrapper);
@@ -874,7 +874,7 @@ class RunPanel extends JPanel
 
 		final JPanel row = new JPanel(new BorderLayout(6, 0));
 		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		row.setBorder(new EmptyBorder(0, 0, 2, 0));
+		row.setBorder(new EmptyBorder(0, 0, 3, 0));
 		final JLabel label = new JLabel("Preset");
 		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
@@ -1109,7 +1109,7 @@ class RunPanel extends JPanel
 				.fill(isSelected ? ColorScheme.DARK_GRAY_HOVER_COLOR : ColorScheme.DARKER_GRAY_COLOR);
 			final JPanel wrapper = new JPanel(new BorderLayout());
 			wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
-			wrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
+			wrapper.setBorder(new EmptyBorder(0, 0, 3, 0));
 			wrapper.add(cell);
 
 			if (row instanceof BankStop)
@@ -1257,7 +1257,7 @@ class RunPanel extends JPanel
 		final JLabel label = new JLabel(UiText.wrap(text, TEXT_WIDTH));
 		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
-		label.setBorder(new EmptyBorder(0, 0, 2, 0));
+		label.setBorder(new EmptyBorder(0, 0, 3, 0));
 		return left(label);
 	}
 
