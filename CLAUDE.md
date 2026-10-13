@@ -2,6 +2,10 @@
 
 # This plugin
 
+## Look and words
+
+Every sidebar screen follows `docs/BRANDING.md` (colours, type, spacing, components, wording, the one-place rule). Build new UI from `ui/Style.java`, `ui/Card.java` and `ui/UiText.java`, and update the kit when Sean changes the look.
+
 ## "I NEED YOUR HELP!" list
 
 `src/main/java/com/farmrunautopilot/testing/TestItem.java` (shown by `ui/HelpWanted.java`) lists the features that couldn't be tried in development and need feedback, grouped by the sidebar tab they belong to. It is shown in Settings > Help improve this plugin; every tab ends with a small "Help improve this plugin: try a few quick things in game, no coding needed. Show me" line that opens it. Each item has a title, full "how to try it" steps, and a guided test in `testing/GuidedTests.java`: settings it applies (the player's are backed up and put back), items to bring, steps it detects or asks Yes/No about, and values it captures for the report. When a test finishes:
