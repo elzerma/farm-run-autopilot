@@ -180,6 +180,8 @@ abstract class SetupPanel extends JPanel
 	{
 		final JCheckBox box = checkBox(text, selected, enabled, tooltip, onChange);
 		box.setText(wrap(text, CONTROL_WIDTH / 2 - 26));
+		// Rows of two sit closer together (Sean: a little much padding)
+		box.setMargin(new Insets(1, 1, 1, 1));
 		return box;
 	}
 

@@ -15,6 +15,7 @@ import com.farmrunautopilot.settings.SettingsStore;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -118,8 +119,18 @@ class FarmPage extends SetupPanel
 		for (PatchType type : PatchType.values())
 		{
 			s.addContent(subheader(type.getDisplayName()));
-			final JComponent first = combo(cropChoices(type, farming, false), config.cropFor(type, farming),
-				crop -> saveRun(() -> config.getCrops().put(type, crop)));
+			final Crop firstCrop = config.cropFor(type, farming);
+			final JComponent first = combo(cropChoices(type, farming, false, Collections.emptyList()), firstCrop,
+				crop ->
+				{
+					saveRun(() ->
+					{
+						config.getCrops().put(type, crop);
+						// A crop can only be one of the choices: drop it from the backups
+						config.getBackupCrops().getOrDefault(type, new ArrayList<>()).remove(crop);
+					});
+					rebuild();
+				});
 			if (!config.isUseBackupCrops())
 			{
 				s.addContent(first);
@@ -131,7 +142,10 @@ class FarmPage extends SetupPanel
 			for (int i = 0; i < RunConfig.MAX_BACKUP_CROPS && i <= backups.size(); i++)
 			{
 				final int index = i;
-				s.addContent(labeled(i == 0 ? "2nd" : "3rd", combo(cropChoices(type, farming, true),
+				// Each list leaves out the choices above it (Sean)
+				final List<Crop> above = new ArrayList<>(backups.subList(0, Math.min(index, backups.size())));
+				above.add(firstCrop);
+				s.addContent(labeled(i == 0 ? "2nd" : "3rd", combo(cropChoices(type, farming, true, above),
 					index < backups.size() ? backups.get(index) : null,
 					crop ->
 					{
@@ -189,7 +203,9 @@ class FarmPage extends SetupPanel
 		return s;
 	}
 
-	private static List<Choice<Crop>> cropChoices(PatchType type, int farming, boolean allowNone)
+	/** @param taken crops already chosen above, left out of this list */
+	private static List<Choice<Crop>> cropChoices(PatchType type, int farming, boolean allowNone,
+		List<Crop> taken)
 	{
 		final List<Choice<Crop>> choices = new ArrayList<>();
 		if (allowNone)
@@ -198,7 +214,7 @@ class FarmPage extends SetupPanel
 		}
 		for (Crop crop : Crop.values())
 		{
-			if (crop.getType() == type)
+			if (crop.getType() == type && !taken.contains(crop))
 			{
 				final boolean canPlant = crop.getFarmingLevel() <= farming;
 				choices.add(new Choice<>(crop, crop.getDisplayName() + " (" + crop.getFarmingLevel() + ")", canPlant,
