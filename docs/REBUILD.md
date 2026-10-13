@@ -273,11 +273,18 @@ dev-only "Measure walks" tool using its query message to measure every landing-t
 the numbers in TravelTimes, and research on the Trinket of fairies. Also hot air balloons (Taverley, Grand Tree, Castle
 Wars), bank distance from the last patch done at a stop, measured walks for every landing and bank, and start points chosen by walking distance (Castle Wars must not suggest Lletya).
 
-**Sprint 9: tidy and release** (last, and only once everything works: Sean, 2026-10-12).
+**Sprint 9: sourced data and crowdsourcing** (Sean, 2026-10-12; plan in docs/plans/sourced-data.md). Most
+guessed game values come from the game's own client scripts, Shortest Path's data and RuneLite's code instead of
+players: Karamja diary done at 2 (bug), bottomless bucket 1 = empty (bug), leprechaun counts by the script's
+multipliers, statues of Ates confirmed, Trollheim tablet, eternal crystal, Barnaby's spot, the nexus Troll
+Stronghold landing. Players then only test behaviour (the help list, plus a bottomless bucket test) and can
+share their run times through an opt-in GitHub report.
+
+**Sprint 10: tidy and release** (last, and only once everything works: Sean, 2026-10-12).
 - Journey step text that fits the player (e.g. leave out "without 33 Agility, walk round" when they have it).
 - Guided tests: fix the two broken tests and bring every test in line with the rebuilt run, docs (README, delete stale plans),
   screenshots, Plugin Hub PR update (with Sean's OK).
-- Starts only when Sprints 1-8 all pass in game; then merge `rebuild` into master and release.
+- Starts only when Sprints 1-9 all pass in game; then merge `rebuild` into master and release.
 
 ## 7. Features that must survive the rebuild
 
@@ -295,7 +302,7 @@ times; patch details/debug; the help list and guided tests (see decisions).
 
 1. **Rebuild on the `rebuild` branch, sprint by sprint**, keeping the parts in section 4. Not a fresh project.
    master stays the working, released plugin (urgent fixes go there and are merged into `rebuild`); `rebuild`
-   merges into master in Sprint 9, the last sprint, once everything works in game (Sean, 2026-10-12).
+   merges into master in Sprint 10, the last sprint, once everything works in game (Sean, 2026-10-12).
 2. **Any number of bank breaks** per run, placed by the search.
 3. **Bank teleports** considered: crafting cape (Crafting Guild), ring of dueling (Castle Wars), max cape,
    ring of wealth (Grand Exchange), plus regular teleports that land by a bank (Camelot -> Seers' with the
