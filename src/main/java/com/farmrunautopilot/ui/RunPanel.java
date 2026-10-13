@@ -594,7 +594,8 @@ class RunPanel extends JPanel
 		final JPanel row = new JPanel(new BorderLayout(8, 0));
 		row.setOpaque(false);
 		row.setBorder(new EmptyBorder(1, 0, 1, 0));
-		final JLabel name = new JLabel(UiText.wrap(patch.getLocation().getDisplayName(), TEXT_WIDTH - 110));
+		// One line, never wrapped (Sean); a name too long for what's left ends in "..." and is whole on hover
+		final JLabel name = new JLabel(patch.getLocation().getDisplayName());
 		name.setForeground(Color.WHITE);
 		name.setFont(FontManager.getRunescapeSmallFont());
 		name.setVerticalAlignment(JLabel.TOP);
