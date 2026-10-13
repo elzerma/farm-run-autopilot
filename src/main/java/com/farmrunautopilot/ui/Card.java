@@ -30,7 +30,7 @@ class Card extends JPanel
 	{
 		super(layout);
 		setOpaque(false);
-		setBorder(new EmptyBorder(3, 6, 3, 6));
+		setBorder(new EmptyBorder(4, 7, 4, 7));
 	}
 
 	/** The card's background; RuneLite's darker grey unless changed. */
@@ -66,7 +66,7 @@ class Card extends JPanel
 	Card accent(Color accent)
 	{
 		this.accent = accent;
-		setBorder(new EmptyBorder(3, accent != null ? 6 + ACCENT_WIDTH : 6, 3, 6));
+		setBorder(new EmptyBorder(4, accent != null ? 7 + ACCENT_WIDTH : 7, 4, 7));
 		repaint();
 		return this;
 	}
