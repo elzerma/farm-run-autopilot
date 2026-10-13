@@ -43,7 +43,7 @@ import net.runelite.client.ui.PluginPanel;
 abstract class SetupPanel extends JPanel
 {
 	/** Room left for controls after the sidebar's and sections' borders. */
-	static final int CONTROL_WIDTH = PluginPanel.PANEL_WIDTH - 40;
+	static final int CONTROL_WIDTH = PluginPanel.PANEL_WIDTH - 24;
 	/** Room for a short label in front of its control on one line. */
 	static final int LABEL_WIDTH = 30;
 

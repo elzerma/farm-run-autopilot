@@ -67,7 +67,8 @@ import net.runelite.client.ui.PluginPanel;
  */
 class RunPanel extends JPanel
 {
-	private static final int TEXT_WIDTH = PluginPanel.PANEL_WIDTH - 40;
+	// The sidebar's width less its 6 px edges and a little for the scroll bar (Sean: text stopped short of the card's edge)
+	private static final int TEXT_WIDTH = PluginPanel.PANEL_WIDTH - 16;
 	/** The run clock, big enough to read at a glance (Sean). */
 	private static final float CLOCK_FONT_SIZE = 24f;
 	/** Tooltips wrap at this width (in the 13/10 CSS pixels Swing's HTML uses), about the sidebar's. */

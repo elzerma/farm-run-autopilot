@@ -28,7 +28,7 @@ import net.runelite.client.util.LinkBrowser;
 final class HelpWanted
 {
 	static final String ISSUES_URL = "https://github.com/elzerma/farm-run-autopilot/issues";
-	private static final int TEXT_WIDTH = 160;
+	private static final int TEXT_WIDTH = 184;
 	/** Tests opened to show their steps, kept while the page redraws. */
 	private static final java.util.Set<TestItem> OPEN_ROWS = java.util.EnumSet.noneOf(TestItem.class);
 
