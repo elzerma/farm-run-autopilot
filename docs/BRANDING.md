@@ -83,7 +83,7 @@ All RuneScape fonts from `FontManager`. No other fonts, no added bold.
 | Section content | 3 top, 2 sides |
 | Tick box margin | 3 above and below; 5 between box and text |
 | Under the Trees / Fruit / Herbs row | 5 |
-| Tab bar | 4 top/bottom, 9 each side of an icon |
+| Tab bar | 5 top/bottom inside each box, 3 between boxes |
 
 Keep to these numbers; if something looks cramped, change it here and in the code together.
 
@@ -111,8 +111,9 @@ Keep to these numbers; if something looks cramped, change it here and in the cod
   | Not possible yet | dark grey, faint outline |
 
 - **Links** ("Manage", "Show me", "See every report on GitHub"): small font, white, underlined, hand cursor.
-- **Tab bar** (`TabBar`, `TabIcon`): five line icons (play, sprout, map pin, person, cog), grey; the selected
-  one orange with an orange underline; the tab's name on hover.
+- **Tab bar** (`TabBar`, `TabIcon`): five boxed buttons sharing the width (darker grey, lighter on hover), each
+  with an icon (play, sprout, map pin, person, solid gear), grey; the selected one's icon orange with an orange
+  line along its bottom; the tab's name on hover.
 - **Tooltips**: wrapped to about the sidebar's width (`UiText.wrap(text, 250)`, route tooltips 190).
 
 ## 6. Words
