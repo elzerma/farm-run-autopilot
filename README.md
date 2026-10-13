@@ -76,8 +76,8 @@ The plugin never clicks, types or acts for you. It only shows information.
   haven't unlocked is greyed out with what it needs.
 - Your house (portal, nexus, jewellery box, spirit tree, fairy ring, spellbook altar), unlocks the game
   doesn't show, highlights and colours.
-- **Help improve it:** some features couldn't be tested by the author. "Interested in improving this plugin?
-  Click here." at the bottom of each tab lists them. Each one has a guided test: the
+- **Help improve it:** some features couldn't be tested by the author. "Help improve this plugin: try a few quick things
+  in game, no coding needed. Show me" at the bottom of each tab lists them. Each one has a guided test: the
   Run tab walks you through it, your settings are put back afterwards, and at the end a button opens a
   GitHub issue with the results filled in for you to check and send.
 

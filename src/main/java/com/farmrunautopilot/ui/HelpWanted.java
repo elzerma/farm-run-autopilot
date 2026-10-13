@@ -84,7 +84,9 @@ final class HelpWanted
 	static void refresh(JButton button, SettingsStore settings, boolean developer)
 	{
 		final int count = toTry(settings);
-		button.setText("<html>Interested in improving this plugin? <u>Click here.</u></html>");
+		// Says it's easy (Sean: no coding or heavy lifting, just run a couple of scenarios)
+		button.setText("<html><body style='width:146px'>Help improve this plugin: try a few quick things in game, "
+			+ "no coding needed. <u>Show me</u></body></html>");
 		button.setToolTipText(count == 0 ? "Every test is done" : count + (count == 1 ? " feature" : " features")
 			+ " I couldn't test, with steps to try them");
 		button.setVisible(count > 0 || developer);
