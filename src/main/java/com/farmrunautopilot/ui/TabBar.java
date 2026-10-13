@@ -6,7 +6,7 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Cursor;
-import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -20,16 +20,15 @@ import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
 
 /**
- * The sidebar's tab strip: one icon per tab, its name on hover (Sean: five names don't fit across the sidebar).
- * The selected tab's icon is orange with a line under it.
+ * The sidebar's tab strip: one boxed button per tab sharing the width evenly, an icon each with its name on hover
+ * (Sean: five names don't fit across the sidebar). The selected tab's icon is orange with a line under it.
  */
 class TabBar extends JPanel
 {
-	private static final int SIDE_PADDING = 9;
+	// Boxed buttons sharing the width evenly (Sean); the selected one has an orange line along its bottom
 	private static final Border SELECTED = BorderFactory.createCompoundBorder(
-		BorderFactory.createMatteBorder(0, 0, 2, 0, ColorScheme.BRAND_ORANGE),
-		new EmptyBorder(4, SIDE_PADDING, 2, SIDE_PADDING));
-	private static final Border UNSELECTED = new EmptyBorder(4, SIDE_PADDING, 4, SIDE_PADDING);
+		BorderFactory.createMatteBorder(0, 0, 2, 0, ColorScheme.BRAND_ORANGE), new EmptyBorder(5, 0, 3, 0));
+	private static final Border UNSELECTED = new EmptyBorder(5, 0, 5, 0);
 
 	private final JPanel display;
 	private final CardLayout cards = new VisibleCardLayout();
@@ -42,7 +41,7 @@ class TabBar extends JPanel
 	{
 		this.display = display;
 		display.setLayout(cards);
-		setLayout(new FlowLayout(FlowLayout.CENTER, 2, 0));
+		setLayout(new GridLayout(1, 0, 3, 0));
 		setOpaque(false);
 	}
 
@@ -50,6 +49,8 @@ class TabBar extends JPanel
 	{
 		final JLabel label = new JLabel();
 		label.setName(name);
+		label.setHorizontalAlignment(JLabel.CENTER);
+		label.setOpaque(true);
 		label.putClientProperty(TabIcon.class, icon);
 		label.setToolTipText(name);
 		label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -59,6 +60,18 @@ class TabBar extends JPanel
 			public void mouseClicked(MouseEvent e)
 			{
 				select(name);
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				label.setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR.brighter());
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				label.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 			}
 		});
 		labels.add(label);
@@ -88,6 +101,7 @@ class TabBar extends JPanel
 	private static void style(JLabel label, boolean selected)
 	{
 		label.setBorder(selected ? SELECTED : UNSELECTED);
+		label.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		final TabIcon icon = (TabIcon) label.getClientProperty(TabIcon.class);
 		label.setIcon(icon.icon(selected ? ColorScheme.BRAND_ORANGE : ColorScheme.LIGHT_GRAY_COLOR));
 	}

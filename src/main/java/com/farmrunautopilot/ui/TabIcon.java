@@ -7,7 +7,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import javax.swing.Icon;
 
@@ -50,6 +49,21 @@ enum TabIcon
 				return SIZE;
 			}
 		};
+	}
+
+	/** A point on a circle round the icon's centre: moved to (the first) or drawn to. */
+	private static void point(Path2D path, boolean first, double radius, double angle)
+	{
+		final double x = 9 + Math.cos(angle) * radius;
+		final double y = 9 + Math.sin(angle) * radius;
+		if (first)
+		{
+			path.moveTo(x, y);
+		}
+		else
+		{
+			path.lineTo(x, y);
+		}
 	}
 
 	private void paint(Graphics2D g)
@@ -111,14 +125,25 @@ enum TabIcon
 			}
 			default:
 			{
-				// A cog: a ring with eight teeth
-				g.draw(new Ellipse2D.Float(5.5f, 5.5f, 7, 7));
-				for (int i = 0; i < 8; i++)
+				// A solid gear: six square teeth round a body with a hole (Sean: thin teeth read as a sun)
+				final Path2D gear = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+				final int teeth = 6;
+				final double outer = 8.2;
+				final double inner = 6;
+				final double half = Math.PI / teeth / 2.2;
+				for (int i = 0; i < teeth; i++)
 				{
-					final double a = Math.PI / 4 * i;
-					g.draw(new Line2D.Double(9 + Math.cos(a) * 5, 9 + Math.sin(a) * 5, 9 + Math.cos(a) * 7.5,
-						9 + Math.sin(a) * 7.5));
+					final double a = 2 * Math.PI / teeth * i;
+					final double next = a + 2 * Math.PI / teeth;
+					point(gear, i == 0, inner, a - half);
+					point(gear, false, outer, a - half * 0.8);
+					point(gear, false, outer, a + half * 0.8);
+					point(gear, false, inner, a + half);
+					point(gear, false, inner, next - half);
 				}
+				gear.closePath();
+				gear.append(new Ellipse2D.Double(6.2, 6.2, 5.6, 5.6), false);
+				g.fill(gear);
 				break;
 			}
 		}

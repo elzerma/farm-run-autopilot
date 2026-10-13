@@ -890,6 +890,8 @@ class RunPanel extends JPanel
 			box.setToolTipText("Include " + type.getDisplayName().toLowerCase() + " patches in this run");
 			box.setBackground(ColorScheme.DARK_GRAY_COLOR);
 			Style.checkBox(box);
+			// Centred in its third of the row (Sean)
+			box.setHorizontalAlignment(JCheckBox.CENTER);
 			box.setFont(FontManager.getRunescapeSmallFont());
 			box.addActionListener(e ->
 			{
