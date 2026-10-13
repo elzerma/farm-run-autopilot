@@ -164,7 +164,8 @@ final class HelpWanted
 	{
 		final List<String> missing = runner.missing(item);
 		final ExpandableRow row = new ExpandableRow(item.getTitle(),
-			missing.isEmpty() ? "Start" : "Needs " + lowerFirst(missing.get(0)),
+			// Short on the line (Sean: the whole need wrapped into a tall column); what's needed is inside
+			missing.isEmpty() ? "Ready" : "Not yet",
 			item.getHowToTry() + (missing.isEmpty() ? "" : " Needs: " + String.join("; ", missing) + "."),
 			false, TEXT_WIDTH + 40, OPEN_ROWS.contains(item), open ->
 			{
@@ -178,8 +179,14 @@ final class HelpWanted
 				}
 			});
 		row.addContent(text(item.getHowToTry(), Color.WHITE, 4));
+		if (!missing.isEmpty())
+		{
+			// Instead of a greyed-out button, say what's missing
+			row.addContent(text("You need to: " + lowerFirst(String.join("; ", missing)) + ".",
+				Color.WHITE, 4));
+			return row;
+		}
 		final JButton start = Style.primary(new JButton(startLabel));
-		start.setEnabled(missing.isEmpty());
 		start.setToolTipText("Walks you through it on the Run tab");
 		start.addActionListener(e ->
 		{

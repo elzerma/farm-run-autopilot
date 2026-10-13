@@ -45,11 +45,15 @@ class ExpandableRow extends JPanel
 		setBorder(new EmptyBorder(0, 0, 3, 0));
 
 		headCard.accent(overridden ? OVERRIDE : null);
-		this.name.setText(UiText.wrap(name, width / 2 - 20));
+		// The name gets whatever the value on the right leaves (Sean: a long value squeezed it into a column)
+		final JLabel measure = new JLabel(shortSummary);
+		measure.setFont(FontManager.getRunescapeSmallFont());
+		final int valueWidth = Math.min(measure.getPreferredSize().width, width / 2);
+		this.name.setText(UiText.wrap(name, width - valueWidth - 40));
 		this.name.setIconTextGap(6);
 		this.name.setFont(FontManager.getRunescapeSmallFont());
 		this.name.setForeground(Color.WHITE);
-		final JLabel summary = new JLabel(UiText.wrap(shortSummary, width / 2 - 10));
+		final JLabel summary = new JLabel(UiText.wrap(shortSummary, width / 2));
 		summary.setFont(FontManager.getRunescapeSmallFont());
 		summary.setForeground(Color.WHITE);
 		headCard.add(this.name, BorderLayout.CENTER);
