@@ -137,7 +137,7 @@ abstract class SetupPanel extends JPanel
 	/** The same component with an explanation on hover (Sprint 7: explanations out of the way). */
 	static <C extends JComponent> C tip(C component, String text)
 	{
-		component.setToolTipText(UiText.wrap(text, 250));
+		component.setToolTipText(UiText.tooltip(text, 250));
 		return component;
 	}
 

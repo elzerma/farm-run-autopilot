@@ -667,8 +667,7 @@ class RunPanel extends JPanel
 		{
 			lines.addAll(objectives);
 		}
-		return lines.isEmpty() ? null : "<html><body style='width:" + TOOLTIP_WIDTH + "px'>"
-			+ String.join("<br>", escapeAll(lines)) + "</body></html>";
+		return lines.isEmpty() ? null : UiText.tooltip(lines, TOOLTIP_WIDTH * 13 / 10);
 	}
 
 	private void addRunning(RunView view)
@@ -1251,7 +1250,7 @@ class RunPanel extends JPanel
 	/** The same label with an explanation on hover. */
 	private static JLabel tipped(JLabel label, String text)
 	{
-		label.setToolTipText(UiText.wrap(text, 250));
+		label.setToolTipText(UiText.tooltip(text, 250));
 		return label;
 	}
 

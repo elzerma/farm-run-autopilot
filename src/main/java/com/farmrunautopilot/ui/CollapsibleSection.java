@@ -73,7 +73,7 @@ class CollapsibleSection extends JPanel
 	{
 		help = text;
 		// On the card only: a tooltip on the label would take its clicks
-		headCard.setToolTipText(UiText.wrap(text, 250));
+		headCard.setToolTipText(UiText.tooltip(text, 250));
 		setExpanded(expanded);
 		return this;
 	}

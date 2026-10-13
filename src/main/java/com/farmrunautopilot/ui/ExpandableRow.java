@@ -58,7 +58,7 @@ class ExpandableRow extends JPanel
 		summary.setForeground(Color.WHITE);
 		headCard.add(this.name, BorderLayout.CENTER);
 		headCard.add(summary, BorderLayout.EAST);
-		headCard.setToolTipText(UiText.wrap(name + ": " + fullSummary
+		headCard.setToolTipText(UiText.tooltip(name + ": " + fullSummary
 			+ (overridden ? " (changed from Auto)" : ""), 250));
 		headCard.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		headCard.addMouseListener(new MouseAdapter()
