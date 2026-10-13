@@ -470,14 +470,14 @@ class RunPanel extends JPanel
 	/** Not planning a run: what's due, patch timers and a Build run button. Nothing shows in game. */
 	private void addOff(RunView view)
 	{
-		final JButton build = new JButton("Build run");
+		final JButton build = Style.primary(new JButton("Build run"));
 		build.setEnabled(!plan.getRoute().getStops().isEmpty());
 		build.setFocusPainted(false);
 		build.setToolTipText("Show the farm run bank tab and gather supplies. The run starts itself once you have them.");
 		build.addActionListener(e -> controls.build());
 		build.setAlignmentX(LEFT_ALIGNMENT);
 		build.setMaximumSize(new Dimension(Integer.MAX_VALUE, build.getPreferredSize().height));
-		add(Style.primary(build));
+		add(build);
 		// How the last run went, one quiet line under the button; the best times are its tooltip (Sean)
 		final String times = view.getLastRun() != null ? view.getLastRun() : view.getBestTimes();
 		if (times != null)
@@ -929,6 +929,8 @@ class RunPanel extends JPanel
 			});
 			types.add(box);
 		}
+		// A little room before the button under it (Sean)
+		types.setBorder(new EmptyBorder(0, 0, 5, 0));
 		types.setMaximumSize(new Dimension(Integer.MAX_VALUE, types.getPreferredSize().height));
 		return left(types);
 	}

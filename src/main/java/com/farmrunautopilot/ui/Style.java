@@ -57,6 +57,9 @@ final class Style
 	static JButton primary(JButton button)
 	{
 		button.setFocusPainted(false);
+		// Slimmer than a standard button (Sean: a little smaller)
+		button.setFont(FontManager.getRunescapeSmallFont());
+		button.setMargin(new Insets(1, 8, 1, 8));
 		button.putClientProperty(STYLE, "arc: " + ARC + "; borderWidth: 0; focusWidth: 0; innerFocusWidth: 0"
 			+ "; background: " + hex(ColorScheme.BRAND_ORANGE)
 			+ "; hoverBackground: " + hex(ColorScheme.BRAND_ORANGE.brighter())
@@ -111,7 +114,8 @@ final class Style
 	{
 		box.setFocusPainted(false);
 		box.setIconTextGap(5);
-		box.setMargin(new Insets(1, 1, 1, 1));
+		// A little room above and below, so it doesn't touch a drop-down (Sean)
+		box.setMargin(new Insets(3, 1, 3, 1));
 		// Drawn here, smaller than the look and feel's (Sean: smaller tick boxes)
 		box.setIcon(tick(ColorScheme.DARKER_GRAY_COLOR, ColorScheme.LIGHT_GRAY_COLOR.darker(), null));
 		box.setRolloverIcon(tick(ColorScheme.DARKER_GRAY_COLOR, ColorScheme.BRAND_ORANGE, null));
