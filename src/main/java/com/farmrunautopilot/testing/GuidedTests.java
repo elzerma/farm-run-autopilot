@@ -122,7 +122,7 @@ final class GuidedTests
 
 	private static GuidedTest.Step startRun()
 	{
-		return doThis("On the Run tab, press Build, get the supplies it lists from the bank, then start the run",
+		return doThis("On the Run tab, press Build run, take what the bank's Farm run tab lists, then start the run",
 			ctx -> ctx.runView().getState() == RunView.State.RUNNING);
 	}
 
@@ -204,8 +204,8 @@ final class GuidedTests
 						ctx.capture("Run tab warnings", warnings(ctx));
 						ctx.capture("Supply list", supplyNames(ctx));
 					}),
-				ask("Are Spellbook Swap's runes (3 astral, 2 cosmic, 1 law) on the supply list, as well as Camelot "
-					+ "Teleport's?"),
+				ask("Press Build run and open a bank: are Spellbook Swap's runes (3 astral, 2 cosmic, 1 law) on the "
+					+ "bank's Farm run tab, as well as Camelot Teleport's?"),
 				startRun(),
 				doThis("Wait for the first step", ctx -> highlightedSpell(ctx) == Spell.SPELLBOOK_SWAP)
 					.orAskAfter(SPOT_TICKS, "The plugin didn't pick Spellbook Swap to highlight. Carry on?")

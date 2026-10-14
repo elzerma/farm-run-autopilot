@@ -14,7 +14,7 @@ public enum TestItem
 	SPELLBOOK_SWAP(Tab.RUN, "Spellbook Swap",
 		"On the Lunar spellbook (96 Magic, Dream Mentor done) with no house altar for the other spellbook, "
 			+ "plan a stop whose teleport is from another spellbook and that you have no tablet for. The Run "
-			+ "tab should warn that you need Spellbook Swap, its runes should be on the supply list, and the "
+			+ "tab should warn that you need Spellbook Swap, its runes should be on the bank's Farm run tab, and the "
 			+ "spell should be outlined in your spellbook on that step."),
 	WEISS_FIRE(Tab.FARM, "Fire of Nourishment at Weiss",
 		"If you've built the Fire of Nourishment, untick it in Account > Unlocks, then go to Weiss. It should "
