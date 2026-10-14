@@ -1018,18 +1018,21 @@ class RunPanel extends JPanel
 		{
 			return;
 		}
-		add(tipped(heading("Complete route"), route.getMode() == RouteMode.OFF
-			? "Your own order. Drag stops to change it; switch back in Travel > Route."
-			: "Order: " + modeName(route.getMode()) + ". Drag a stop to reorder it (switches to your own order). "
-				+ "Hover a stop for its plan."));
-		if (route.getMode() == RouteMode.OFF)
+		add(tipped(heading("Complete route"), "Hover a stop for its plan. Drag a stop to reorder it (that switches to your "
+			+ "own order)."));
+		// The order is always said, under the heading (Sean): a drag had switched it to his own without him noticing
+		if (route.getMode() != RouteMode.OFF)
 		{
-			// Visible, not only in the tooltip: in your own order the run ignores where you're standing and the
-			// quickest chains (Sean: a drag had switched it without him noticing)
-			final JLabel own = tipped(note("<html>In your own order. <u>Use the fastest order</u></html>"),
+			add(tipped(note(route.getMode() == RouteMode.META ? "Order: the wiki's" : "Order: auto (fastest)"),
+				"Change it in Travel > Route"));
+		}
+		else
+		{
+			// In your own order the run ignores where you're standing and the quickest chains: say so, and offer the way back
+			final JLabel own = tipped(note("Order: your own"),
 				"Your own order ignores where you're standing and the quickest chains. Click to plan the fastest "
 					+ "order again (your order is kept for later in Travel > Route).");
-			own.setText("<html>In your own order. <u>Use the fastest order</u></html>");
+			own.setText("<html>Order: your own. <u>Use the fastest</u></html>");
 			own.setForeground(ColorScheme.BRAND_ORANGE);
 			own.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 			own.addMouseListener(new MouseAdapter()
@@ -1084,18 +1087,6 @@ class RunPanel extends JPanel
 		return rounded / 60 + "m " + (rounded % 60 < 10 ? "0" : "") + rounded % 60 + "s";
 	}
 
-	private static String modeName(RouteMode mode)
-	{
-		switch (mode)
-		{
-			case META:
-				return "wiki order";
-			case OFF:
-				return "your order";
-			default:
-				return "fastest";
-		}
-	}
 
 	/** Saves the dragged order as the player's own and switches the route to it (SPEC 12.1). */
 	private void saveOrder(DefaultListModel<Object> model)
