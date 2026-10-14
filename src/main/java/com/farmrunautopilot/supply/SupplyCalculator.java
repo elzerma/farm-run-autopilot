@@ -352,7 +352,10 @@ public final class SupplyCalculator
 		{
 			lines.add(outfitLine(config.getOutfit(), holdings, carried).worn());
 		}
-		if (config.getPlantCureDoses() > 0)
+		// Only when a patch on the run can catch disease: the Civitas herbs with the Champion rank, Trollheim and the
+		// like never need it (the Fortis Champion test could never pass)
+		if (config.getPlantCureDoses() > 0
+			&& patches.stream().anyMatch(patch -> !isSafe(patch, config, access, faladorElite)))
 		{
 			lines.add(changeIn(line(SupplyLine.Group.OPTIONAL, "Plant cure", config.getPlantCureDoses(), holdings, carried,
 				"Backup for diseased patches", config.getPlantCureDoses(), ItemID.PLANT_CURE).usedUp(), CURES));

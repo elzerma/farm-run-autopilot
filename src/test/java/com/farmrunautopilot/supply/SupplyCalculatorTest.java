@@ -78,6 +78,29 @@ public class SupplyCalculatorTest
 	}
 
 	@Test
+	public void noPlantCureWhenEveryPatchIsDiseaseFree()
+	{
+		final RunConfig config = onlyType(PatchType.HERB);
+		config.setPlantCureDoses(1);
+		for (Patch patch : Patch.values())
+		{
+			if (patch != Patch.TROLL_STRONGHOLD_HERB)
+			{
+				config.getDisabledPatches().add(patch);
+			}
+		}
+		final SupplyPlan safe = plan(config, AccessSnapshot.UNKNOWN, holdings(new HashMap<>(), Collections.emptySet()),
+			NEVER_SEEN, true);
+		assertEquals(1, safe.patchTotal());
+		assertNull(find(safe, "Plant cure"));
+
+		config.getDisabledPatches().remove(Patch.ARDOUGNE_HERB);
+		final SupplyPlan atRisk = plan(config, AccessSnapshot.UNKNOWN, holdings(new HashMap<>(), Collections.emptySet()),
+			NEVER_SEEN, true);
+		assertNotNull(find(atRisk, "Plant cure"));
+	}
+
+	@Test
 	public void herbRun()
 	{
 		final Map<Integer, Integer> bank = new HashMap<>();

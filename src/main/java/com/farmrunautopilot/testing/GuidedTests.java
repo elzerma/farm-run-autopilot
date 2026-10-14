@@ -295,8 +295,17 @@ final class GuidedTests
 							ctx.cannotTest("the Champion rank at the Fortis Colosseum");
 						}
 					}),
-				ask("On the Run tab, is there no plant cure on the supply list for the Civitas herb patch?")
-					.onStart(ctx -> ctx.capture("Supply list", supplyNames(ctx))),
+				// Read from the plan, not asked: the supply list is on the bank's Farm run tab since Sprint 5
+				doThis("Checking the supplies for the Civitas herb patch", ctx -> true)
+					.onStart(ctx ->
+					{
+						final String supplies = supplyNames(ctx);
+						ctx.capture("Supply list", supplies);
+						if (supplies.contains("Plant cure"))
+						{
+							ctx.problem("Plant cure was asked for the disease-free Civitas herb patch");
+						}
+					}),
 				ask("Has your Civitas herb patch ever caught disease since you got the rank?")
 					.onAnswer((ctx, yes) ->
 					{

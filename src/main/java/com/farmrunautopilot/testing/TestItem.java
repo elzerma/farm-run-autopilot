@@ -21,7 +21,7 @@ public enum TestItem
 			+ "tick itself once the fire is in view, and the Weiss herb patch should join your herb runs."),
 	FORTIS_CHAMPION(Tab.FARM, "Civitas herbs and the Colosseum",
 		"With \"Champion rank at the Fortis Colosseum\" ticked in Account > Unlocks, the Civitas herb patch "
-			+ "should count as disease-free: no plant cure or protection asked for it."),
+			+ "should count as disease-free: no plant cure or protection asked for it.", 2),
 	ATES_CHARGES(Tab.TRAVEL, "Pendant of Ates charges",
 		"With the pendant on you, Settings > Debug > Detected should show the same charges as its Check. Teleport once "
 			+ "and it should drop by one. Start a teleport and cancel it: it shouldn't change."),
