@@ -64,6 +64,31 @@ public final class TestReport
 		return b.length() <= MAX_BODY ? b.toString() : b.substring(0, MAX_BODY) + "\n\n(cut short)\n";
 	}
 
+	/**
+	 * The "Share your run times" report (Sprint 9): the plugin version, the unlocks that change travel times, and
+	 * the learned legs, nothing else about the player. Cut short like a test report if it's long.
+	 *
+	 * @param unlocks e.g. "Fairy rings: yes", one per line
+	 * @param legs from {@code LearnedTimes.summary()}
+	 */
+	public static String runTimesBody(String version, List<String> unlocks, List<String> legs)
+	{
+		final StringBuilder b = new StringBuilder();
+		b.append("Run times shared from Farm Run Autopilot ").append(version).append(".\n\n");
+		b.append("**Unlocks that change times**\n");
+		for (String line : unlocks)
+		{
+			b.append("- ").append(line).append('\n');
+		}
+		b.append("\n**Learned legs** (stop, way, how; median seconds; samples)\n```\n");
+		for (String line : legs)
+		{
+			b.append(line).append('\n');
+		}
+		b.append("```\n");
+		return b.length() <= MAX_BODY ? b.toString() : b.substring(0, MAX_BODY) + "\n```\n\n(cut short)\n";
+	}
+
 	public static String url(String title, String body)
 	{
 		return NEW_ISSUE_URL + "?title=" + encode(title) + "&body=" + encode(body);

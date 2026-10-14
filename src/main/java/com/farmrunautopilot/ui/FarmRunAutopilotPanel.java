@@ -202,6 +202,7 @@ public class FarmRunAutopilotPanel extends PluginPanel
 			timings.clear();
 		});
 		settingsPanel.showHelpList(testRunner, () -> tabs.select("Run"));
+		settingsPanel.showRunTimes(timings::learned);
 		settingsPanel.showHoldings(holdingsTracker::getHoldings);
 		travelPanel.showHoldings(holdingsTracker::getHoldings);
 		travelPanel.showAutoPicks(runService);

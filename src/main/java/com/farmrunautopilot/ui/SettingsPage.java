@@ -1,5 +1,10 @@
 package com.farmrunautopilot.ui;
 
+import net.runelite.api.Skill;
+import net.runelite.client.util.LinkBrowser;
+import net.runelite.client.RuneLiteProperties;
+import com.farmrunautopilot.testing.TestReport;
+import com.farmrunautopilot.route.LearnedTimes;
 import com.farmrunautopilot.FarmRunAutopilotConfig;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
@@ -66,6 +71,8 @@ class SettingsPage extends SetupPanel
 	private final PresetsPage presets;
 	/** Run guidance settings (highlights, colours, walking lines). */
 	private final GuidanceSettings guidance;
+	/** The player's learned leg times, for "Share your run times". */
+	private Supplier<LearnedTimes> learnedTimes = () -> LearnedTimes.NONE;
 
 	SettingsPage(SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker, Runnable changed,
 		GuidanceSettings guidance, PresetsPage presets)
@@ -311,6 +318,22 @@ class SettingsPage extends SetupPanel
 		s.addContent(note("Everything here ends the same way: a GitHub issue opens in your browser with the details "
 			+ "filled in. You read it, and nothing is sent unless you submit it (a free GitHub account is needed). It "
 			+ "never includes your name or account."));
+
+		// First: sharing run times (Sean), its own part with its own explanation
+		s.addContent(divider());
+		s.addContent(subheader("Share your run times"));
+		s.addContent(note("How long each leg of your runs really takes helps set better travel times for everyone. "
+			+ "The report lists your learned legs and the few unlocks that change them."));
+		final LearnedTimes learned = learnedTimes.get();
+		final JButton share = smallButton("Share your run times");
+		share.setEnabled(!learned.isEmpty());
+		share.setToolTipText(UiText.tooltip(learned.isEmpty() ? "Finish a run first, so there are times to share"
+			: "Opens a GitHub issue with " + learned.summary().size() + " learned legs (stop, way, seconds), your Agility "
+				+ "level and which travel unlocks you have. Nothing is sent unless you submit it.", 250));
+		share.addActionListener(e -> LinkBrowser.browse(TestReport.url("Run times", TestReport.runTimesBody(
+			RuneLiteProperties.getVersion(), travelUnlocks(), learnedTimes.get().summary()))));
+		s.addContent(share);
+		s.addContent(divider());
 		if (testRunner != null)
 		{
 			s.addContent(subheader("Guided tests"));
@@ -336,6 +359,26 @@ class SettingsPage extends SetupPanel
 			s.addContent(helpListShown);
 		}
 		return s;
+	}
+
+	/** What the run-times report says about the account: only what changes how long travel takes. */
+	private List<String> travelUnlocks()
+	{
+		final AccessSnapshot access = accessChecker.getSnapshot();
+		final List<String> lines = new ArrayList<>();
+		lines.add("Agility: " + (access.isKnown() ? access.level(Skill.AGILITY) : "unknown"));
+		for (Unlock unlock : new Unlock[]{Unlock.FAIRY_RINGS, Unlock.SPIRIT_TREES, Unlock.QUETZAL_KASTORI})
+		{
+			lines.add(unlock.getDescription() + ": " + (access.getUnlocks().contains(unlock) ? "yes" : "no"));
+		}
+		return lines;
+	}
+
+	/** Where the learned leg times come from, for "Share your run times". */
+	void showRunTimes(Supplier<LearnedTimes> learnedTimes)
+	{
+		this.learnedTimes = learnedTimes;
+		rebuild();
 	}
 
 	/** Set what the Reset button does. */

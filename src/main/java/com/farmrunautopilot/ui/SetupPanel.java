@@ -218,6 +218,23 @@ abstract class SetupPanel extends JPanel
 		return rows;
 	}
 
+	/** A thin line between two parts of a section. */
+	static JComponent divider()
+	{
+		final JPanel line = new JPanel();
+		line.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
+		line.setPreferredSize(new Dimension(CONTROL_WIDTH, 1));
+		line.setMaximumSize(new Dimension(CONTROL_WIDTH, 1));
+		line.setAlignmentX(LEFT_ALIGNMENT);
+		final JPanel spaced = new JPanel(new BorderLayout());
+		spaced.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		spaced.setBorder(new EmptyBorder(6, 0, 2, 0));
+		spaced.add(line, BorderLayout.CENTER);
+		spaced.setMaximumSize(new Dimension(CONTROL_WIDTH, 9));
+		spaced.setAlignmentX(LEFT_ALIGNMENT);
+		return spaced;
+	}
+
 	/** A short label and its control on one line, e.g. "1st" and a drop-down. */
 	static JComponent labeled(String text, JComponent control)
 	{
