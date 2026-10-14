@@ -140,7 +140,13 @@ public final class TravelTimes
 	public static final double TELEPORT = 3.0;
 	public static final double ITEM_TELEPORT = 3.6;
 	public static final double HOME_TELEPORT = 10.5;
+	/** Renu's flight from a landing pad (no whistle charge). */
 	public static final double QUETZAL = 6.0;
+	/**
+	 * Blowing the quetzal whistle, waiting for the quetzal and flying: slower than a teleport. Sean's recorded whistle
+	 * leg to the Hunter Guild (2026-10-11) had about 21 s on top of the walk, overhead 8 included.
+	 */
+	public static final double QUETZAL_WHISTLE = 13.0;
 	public static final double FAIRY_RING = 4.0;
 	public static final double SPIRIT_TREE = 4.5;
 	/** A hot air balloon flight: the basket, the log and the map (Shortest Path: 5 ticks to fly). */

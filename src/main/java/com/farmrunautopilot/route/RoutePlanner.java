@@ -40,6 +40,11 @@ public final class RoutePlanner
 	static final double SECONDS_PER_TILE = TravelTimes.SECONDS_PER_TILE;
 	/** With "prefer walking" on, a walk up to this much slower than a teleport is chosen instead. */
 	static final double PREFER_WALKING_SECONDS = 8.0;
+	/**
+	 * What spending a quetzal whistle charge is worth in the route's ordering (not its times): charges are few and
+	 * recharged by hand, so Renu from a nearby pad wins a near tie (Sean, 2026-10-13).
+	 */
+	static final double WHISTLE_CHARGE_PENALTY = 8.0;
 	/** Switching spellbook at a house altar and back again later (two trips to the altar). */
 	static final double SPELLBOOK_SWAP = 2 * (TravelTimes.TELEPORT + TravelTimes.HOUSE_WALK + 3.0);
 	/** For the ordering only: a leg needing an item or tablet the player doesn't have goes last if it can. */
@@ -684,9 +689,12 @@ public final class RoutePlanner
 				// The player's own times include the overhead, so the estimate they're blended with does too
 				final double estimate = option.seconds + TravelTimes.LEG_OVERHEAD;
 				final double seconds = learned.adjust(from, to, option.method, option.departure, estimate);
-				final Leg leg = new Leg(option.method, option.departure, seconds, false, option.breakdown
+				// A whistle flight spends a charge, Renu from a pad doesn't (Sean: run back to the Kastori pad for Renu)
+				final double charge = option.method.getKind() == TravelKind.QUETZAL && option.departure == Departure.DIRECT
+					? WHISTLE_CHARGE_PENALTY : 0;
+				final Leg leg = new Leg(option.method, option.departure, seconds, false, charge, option.breakdown
 					+ " + overhead " + round(TravelTimes.LEG_OVERHEAD) + learnedNote(seconds, estimate));
-				final double rank = seconds + teleportPreference() + stylePenalty(leg, to);
+				final double rank = seconds + charge + teleportPreference() + stylePenalty(leg, to);
 				if (rank < bestRank)
 				{
 					best = leg;
@@ -823,7 +831,8 @@ public final class RoutePlanner
 			case HOUSE_PORTAL:
 				return TravelTimes.TELEPORT;
 			case QUETZAL:
-				return TravelTimes.QUETZAL;
+				// Arriving by quetzal directly means the whistle; Renu from a pad is its own option below
+				return TravelTimes.QUETZAL_WHISTLE;
 			case FAIRY_RING:
 				return TravelTimes.FAIRY_RING;
 			case SPIRIT_TREE:
