@@ -68,6 +68,9 @@ public enum TravelMethod
 	FALADOR_TELEPORT_TO_TAVERLEY(spell(Location.TAVERLEY, Spell.FALADOR_TELEPORT)
 		.then(JourneyStep.way("Leave Falador by the north gate and Climb-up the rocks into Taverley (66 Agility); "
 			+ "without it, go round to Taverley's gate", "rocks or gate into Taverley"))),
+	// From the Grand Tree's basket after the Gnome Stronghold stop (Sean): 6 tiles from the fruit tree, lands 16 from
+	// the tree patch; one normal log a flight
+	HOT_AIR_BALLOON_TAVERLEY(balloon(Location.TAVERLEY, "Hot air balloon from the Grand Tree")),
 	GAMES_NECKLACE_BURTHORPE(item(Location.TAVERLEY, "Games necklace (Burthorpe)",
 		TravelKind.JEWELLERY, TravelItem.GAMES_NECKLACE).jewelleryBox(JewelleryBoxTier.BASIC)),
 	COMBAT_BRACELET_WARRIORS_GUILD(item(Location.TAVERLEY, "Combat bracelet (Warriors' Guild)",
@@ -305,6 +308,15 @@ public enum TravelMethod
 	{
 		final Def def = new Def(destination, displayName, TravelKind.SPIRIT_TREE);
 		def.requirements.add(Requirement.unlock(Unlock.SPIRIT_TREES));
+		return def;
+	}
+
+	/** A balloon flight: Enlightened Journey, and the route from the basket it leaves from unlocked. */
+	private static Def balloon(Location destination, String displayName)
+	{
+		final Def def = new Def(destination, displayName, TravelKind.BALLOON);
+		def.requirements.add(Requirement.quest(Quest.ENLIGHTENED_JOURNEY));
+		def.requirements.add(Requirement.unlock(Unlock.BALLOON_GRAND_TREE));
 		return def;
 	}
 

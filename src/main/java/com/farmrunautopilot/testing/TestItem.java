@@ -37,6 +37,10 @@ public enum TestItem
 	SPIRIT_TREES(Tab.ACCOUNT, "Planted spirit trees",
 		"Untick your planted spirit tree in Account > Unlocks, then go to it (Port Sarim, Brimhaven or the "
 			+ "Farming Guild). It should tick itself once the grown tree is in view."),
+	HOT_AIR_BALLOONS(Tab.ACCOUNT, "Hot air balloon from the Grand Tree",
+		"If you've done Enlightened Journey and unlocked the Grand Tree balloon route (40 Firemaking), Account > "
+			+ "Unlocks should show \"Hot air balloon route to the Grand Tree unlocked (detected)\" ticked. A run with "
+			+ "Gnome Stronghold and Taverley can then fly from the Grand Tree to Taverley with one normal log."),
 	HOUSE_SCAN(Tab.ACCOUNT, "House scanning (beta)",
 		"Tick \"Detect furniture when I enter my house\" in Account > My house, then enter your house: your "
 			+ "portal nexus, jewellery box, pool and altar should fill in. Then visit someone else's house: "

@@ -45,6 +45,7 @@ public final class TravelTimes
 		tiles(TravelMethod.CONSTRUCTION_CAPE_TAVERLEY, 48);
 		// 70 over the 66 Agility rocks, about 100 round by the gate
 		tiles(TravelMethod.FALADOR_TELEPORT_TO_TAVERLEY, 89);
+		tiles(TravelMethod.HOT_AIR_BALLOON_TAVERLEY, 16);
 		tiles(TravelMethod.GAMES_NECKLACE_BURTHORPE, 117);
 		tiles(TravelMethod.COMBAT_BRACELET_WARRIORS_GUILD, 115);
 		// Gnome Stronghold (nearest patch: tree by the Slayer Cave, fruit tree by the spirit tree)
@@ -142,6 +143,8 @@ public final class TravelTimes
 	public static final double QUETZAL = 6.0;
 	public static final double FAIRY_RING = 4.0;
 	public static final double SPIRIT_TREE = 4.5;
+	/** A hot air balloon flight: the basket, the log and the map (Shortest Path: 5 ticks to fly). */
+	public static final double BALLOON = 4.5;
 	/** Walking out of the house to its portal, or into it from outside. */
 	public static final double HOUSE_DOOR = 5.0;
 	/** Walking from the house's arrival point to the nexus, jewellery box, fairy ring or spirit tree. */
@@ -166,6 +169,8 @@ public final class TravelTimes
 	private static final Map<Location, Unlock> PLANTED_SPIRIT_TREES = new EnumMap<>(Location.class);
 	/** Varlamore stops with a quetzal landing pad: tiles from the patch back to the pad (for Renu). */
 	private static final Map<Location, Integer> RENU_PAD_WALK = new EnumMap<>(Location.class);
+	/** Tiles from a stop's nearest patch to a hot air balloon basket (Enlightened Journey). */
+	private static final Map<Location, Integer> BALLOON_WALK = new EnumMap<>(Location.class);
 	/** Tiles from a stop's patch to its nearest bank; stops without a practical bank are missing. */
 	private static final Map<Location, Integer> BANK_TILES = new EnumMap<>(Location.class);
 	/** Where each stop's nearest bank is, for the walking line to it (Shortest Path's bank tiles). */
@@ -191,6 +196,9 @@ public final class TravelTimes
 		PLANTED_SPIRIT_TREES.put(Location.FARMING_GUILD, Unlock.SPIRIT_TREE_FARMING_GUILD);
 		PLANTED_SPIRIT_TREES.put(Location.BRIMHAVEN, Unlock.SPIRIT_TREE_BRIMHAVEN);
 		PLANTED_SPIRIT_TREES.put(Location.FALADOR_FARM, Unlock.SPIRIT_TREE_PORT_SARIM);
+
+		// The Grand Tree's basket, measured from the Stronghold fruit tree
+		BALLOON_WALK.put(Location.GNOME_STRONGHOLD, 6);
 
 		// From the patch back to the quetzal pad, measured; Nemus Retreat through the 33 Agility tunnel
 		RENU_PAD_WALK.put(Location.CIVITAS_ILLA_FORTIS, 45);
@@ -256,6 +264,12 @@ public final class TravelTimes
 	public static Unlock plantedSpiritTree(Location from)
 	{
 		return PLANTED_SPIRIT_TREES.get(from);
+	}
+
+	/** Tiles from a stop's patch to a hot air balloon basket, or null if there's none by it. */
+	public static Integer balloonTiles(Location from)
+	{
+		return BALLOON_WALK.get(from);
 	}
 
 	/** Tiles from a Varlamore stop's patch back to its quetzal landing pad, or null if it has none. */

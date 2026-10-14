@@ -17,5 +17,7 @@ public enum TravelKind
 	SPIRIT_TREE,
 	/** Teleport to House with the house portal at the destination. */
 	HOUSE_PORTAL,
-	QUETZAL
+	QUETZAL,
+	/** A hot air balloon from a basket near the stop before (Enlightened Journey). */
+	BALLOON
 }

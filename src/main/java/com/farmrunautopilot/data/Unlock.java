@@ -20,6 +20,9 @@ public enum Unlock
 	// UNVERIFIED (picked by name; non-zero taken as activated)
 	ATES_STATUE_NEMUS_RETREAT("Statue of Ates activated at Nemus Retreat", VarbitID.PENDANT_OF_ATES_AUBURN_FOUND),
 	ATES_STATUE_NORTH_KASTORI("Statue of Ates activated north of Kastori", VarbitID.PENDANT_OF_ATES_TLATI_FOUND),
+	// From Shortest Path's balloon data (1 once the route is unlocked: 40 Firemaking and 10 oak logs after Enlightened
+	// Journey); not checked in game yet (guided test HOT_AIR_BALLOONS)
+	BALLOON_GRAND_TREE("Hot air balloon route to the Grand Tree unlocked (40 Firemaking)", VarbitID.ZEP_MULTI_GNO),
 	FIRE_OF_NOURISHMENT("Fire of Nourishment built at Weiss"),
 	FORTIS_CHAMPION("Champion rank at the Fortis Colosseum");
 

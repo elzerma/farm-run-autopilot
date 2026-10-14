@@ -190,6 +190,8 @@ public final class SupplyCalculator
 		final Map<TravelItem, Integer> travelItems = new LinkedHashMap<>();
 		final Map<Integer, Integer> tablets = new LinkedHashMap<>();
 		boolean fairyRing = false;
+		// Hot air balloon flights: one normal log each
+		int balloonFlights = 0;
 		for (RouteStop stop : route.getStops())
 		{
 			final Location location = stop.getLocation();
@@ -247,6 +249,7 @@ public final class SupplyCalculator
 					}
 				}
 				fairyRing |= method.getKind() == TravelKind.FAIRY_RING;
+				balloonFlights += method.getKind() == TravelKind.BALLOON ? 1 : 0;
 			}
 			else if (departure.getFairyRingAccess() != null)
 			{
@@ -282,6 +285,11 @@ public final class SupplyCalculator
 				item.getItemIds());
 			lines.add(worn.contains(item) ? line.worn() : line);
 		});
+		if (balloonFlights > 0)
+		{
+			lines.add(line(SupplyLine.Group.TRAVEL, "Logs", balloonFlights, holdings, carried,
+				"The hot air balloon takes one normal log a flight", 1, ItemID.LOGS).usedUp());
+		}
 		// Fairy rings need a staff wielded, which takes the weapon slot
 		final boolean staffWielded = fairyRing && !(access.isKnown()
 			&& access.isMet(Requirement.diary(AchievementDiary.LUMBRIDGE_DRAYNOR, AchievementDiary.Tier.ELITE)));

@@ -768,6 +768,17 @@ public final class RoutePlanner
 						viaHouseText + " + tree " + round(TravelTimes.SPIRIT_TREE) + " + " + landing));
 				}
 				break;
+			case BALLOON:
+				// Only from a stop with a basket by it (the Grand Tree after Gnome Stronghold); one normal log a flight
+				final Integer basketWalk = from == null ? null : TravelTimes.balloonTiles(from);
+				if (basketWalk != null)
+				{
+					options.add(new Option(method, Departure.DIRECT,
+						basketWalk * SECONDS_PER_TILE + TravelTimes.BALLOON + walk, "to the basket " + basketWalk
+						+ " tiles " + round(basketWalk * SECONDS_PER_TILE) + " + balloon " + round(TravelTimes.BALLOON)
+						+ " + " + landing));
+				}
+				break;
 			default:
 				if (method.getItem() != null && owns(method.getItem()) && startCharges.hasUseToday(method)
 					&& !usedUpToday.contains(method))
@@ -817,6 +828,8 @@ public final class RoutePlanner
 				return TravelTimes.FAIRY_RING;
 			case SPIRIT_TREE:
 				return TravelTimes.SPIRIT_TREE;
+			case BALLOON:
+				return TravelTimes.BALLOON;
 			default:
 				return TravelTimes.ITEM_TELEPORT;
 		}

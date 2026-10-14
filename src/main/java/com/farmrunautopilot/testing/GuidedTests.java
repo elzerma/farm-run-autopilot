@@ -52,6 +52,7 @@ final class GuidedTests
 		TESTS.put(TestItem.KHARYRLL, new Kharyrll());
 		TESTS.put(TestItem.ATES_STATUES, new AtesStatues());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
+		TESTS.put(TestItem.HOT_AIR_BALLOONS, new HotAirBalloons());
 		TESTS.put(TestItem.HOUSE_SCAN, new HouseScan());
 	}
 
@@ -500,6 +501,35 @@ final class GuidedTests
 					}),
 				have(Unlock.ATES_STATUE_NEMUS_RETREAT, "Have you activated the statue of Ates at Nemus Retreat?"),
 				have(Unlock.ATES_STATUE_NORTH_KASTORI, "Have you activated the statue of Ates north of Kastori?"));
+		}
+	}
+
+	/** The Grand Tree balloon route's unlock value (from Shortest Path's data, not checked in game). */
+	private static final class HotAirBalloons extends GuidedTest
+	{
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				// Without the route, the value reads 0 whether or not it's the right one, which proves nothing
+				ask("Have you done Enlightened Journey and unlocked the hot air balloon route to the Grand Tree?")
+					.onAnswer((ctx, yes) ->
+					{
+						if (!yes)
+						{
+							ctx.cannotTest("the Grand Tree balloon route unlocked");
+							return;
+						}
+						final int value = ctx.varbit(Unlock.BALLOON_GRAND_TREE.getVarbit());
+						ctx.capture("Grand Tree route value", value);
+						ctx.capture("Taverley route value", ctx.varbit(net.runelite.api.gameval.VarbitID.ZEP_MULTI_PICCARD));
+						if (value <= 0)
+						{
+							ctx.problem("The Grand Tree route is unlocked but its game value is " + value);
+						}
+					}),
+				ask("In Account > Unlocks, is \"Hot air balloon route to the Grand Tree unlocked\" ticked and marked "
+					+ "(detected)?"));
 		}
 	}
 

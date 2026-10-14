@@ -65,6 +65,7 @@ public class TravelDataTest
 					assertTrue(name, method.getFairyRingCode().matches("[A-D][I-L][P-S]"));
 					break;
 				case SPIRIT_TREE:
+				case BALLOON:
 					assertNull(name, method.getSpell());
 					assertNull(name, method.getItem());
 					break;
