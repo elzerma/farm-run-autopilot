@@ -13,6 +13,7 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
+import net.runelite.api.Skill;
 import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
@@ -197,7 +198,7 @@ class Navigator
 		}
 		final JourneyStep step = journeyStep(stop);
 		return !teleported ? stop.describeWay() + " to " + stop.getLocation().getDisplayName()
-			: step != null ? step.getText()
+			: step != null ? step.textFor(client.getBoostedSkillLevel(Skill.AGILITY))
 			: walkInstruction(here.get(0));
 	}
 

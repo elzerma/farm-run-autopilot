@@ -66,8 +66,8 @@ public enum TravelMethod
 	CONSTRUCTION_CAPE_TAVERLEY(item(Location.TAVERLEY, "Construction cape (Taverley)",
 		TravelKind.CAPE, TravelItem.CONSTRUCTION_CAPE)),
 	FALADOR_TELEPORT_TO_TAVERLEY(spell(Location.TAVERLEY, Spell.FALADOR_TELEPORT)
-		.then(JourneyStep.way("Leave Falador by the north gate and Climb-up the rocks into Taverley (66 Agility); "
-			+ "without it, go round to Taverley's gate", "rocks or gate into Taverley"))),
+		.then(JourneyStep.shortcut(66, "Leave Falador by the north gate and Climb-up the rocks into Taverley",
+			"Leave Falador by the north gate and go round to Taverley's gate", "rocks or gate into Taverley"))),
 	// From the Grand Tree's basket after the Gnome Stronghold stop (Sean): 6 tiles from the fruit tree, lands 16 from
 	// the tree patch; one normal log a flight
 	HOT_AIR_BALLOON_TAVERLEY(balloon(Location.TAVERLEY, "Hot air balloon from the Grand Tree")),
@@ -104,8 +104,8 @@ public enum TravelMethod
 		TravelKind.ITEM, TravelItem.PENDANT_OF_ATES)
 		.requires(Requirement.unlock(Unlock.ATES_STATUE_NEMUS_RETREAT)).primaryFor(TREE)),
 	QUETZAL_AUBURNVALE(quetzal(Location.NEMUS_RETREAT, "Quetzal whistle (Auburnvale)")
-		.then(JourneyStep.way("Go through the tunnel in the north wall next to the patch (33 Agility); "
-			+ "without it, walk round to the camp entrance", "tunnel into the camp"))),
+		.then(JourneyStep.shortcut(33, "Go through the tunnel in the north wall next to the patch",
+			"Walk round to the camp entrance", "into the camp"))),
 	FAIRY_RING_AIS(fairyRing(Location.NEMUS_RETREAT, "AIS")
 		.requires(Requirement.skill(Skill.AGILITY, 36)).note("Stepping stones (36 Agility) and broken wall (24)")
 		.then(JourneyStep.way("Cross the stepping stones (36 Agility) and the broken wall (24 Agility) into the camp",

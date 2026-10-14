@@ -22,9 +22,8 @@ public class JourneyStep
 	public static final JourneyStep LEAVE_HOUSE = exit("Leave your house through the exit portal",
 		"out of your house", null);
 	/** Into the Troll Stronghold and up to the roof patch (My Arm's Big Adventure). */
-	public static final JourneyStep STRONGHOLD_ROOF = way("Climb the Rocks beside the entrance up to the roof "
-		+ "(73 Agility); without it, Enter the stronghold, go through the door in the west wall and Climb-up the "
-		+ "ladder to the roof", "up to the roof");
+	public static final JourneyStep STRONGHOLD_ROOF = shortcut(73, "Climb the Rocks beside the entrance up to the roof",
+		"Enter the stronghold, go through the door in the west wall and Climb-up the ladder to the roof", "up to the roof");
 
 	Kind kind;
 	/** The step in the guide, e.g. "Pay-fare to Captain Barnaby at the Ardougne docks (30 coins)". */
@@ -35,26 +34,45 @@ public class JourneyStep
 	String npc;
 	/** Where the step happens, for the walking line; null to use the NPC's position once it's loaded. */
 	WorldPoint at;
+	/** The Agility level the shortcut in {@link #text} needs, or 0 if it has none. */
+	int agility;
+	/** The way round for players below {@link #agility}; null if no shortcut. */
+	String without;
 
 	public static JourneyStep ride(String npc, String text, String brief, WorldPoint at)
 	{
-		return new JourneyStep(Kind.RIDE, text, brief, npc, at);
+		return new JourneyStep(Kind.RIDE, text, brief, npc, at, 0, null);
 	}
 
 	public static JourneyStep walk(String text, String brief, WorldPoint at)
 	{
-		return new JourneyStep(Kind.WALK, text, brief, null, at);
+		return new JourneyStep(Kind.WALK, text, brief, null, at, 0, null);
 	}
 
 	/** Directions for the way to the patch (shortcuts, gates, ladders): shown until the patch is reached. */
 	public static JourneyStep way(String text, String brief)
 	{
-		return new JourneyStep(Kind.WALK, text, brief, null, null);
+		return new JourneyStep(Kind.WALK, text, brief, null, null, 0, null);
+	}
+
+	/**
+	 * Directions with an Agility shortcut, shown by the player's level (Sean, Sprint 10: only the way that fits them,
+	 * not "(66 Agility); without it, ...").
+	 */
+	public static JourneyStep shortcut(int agility, String text, String without, String brief)
+	{
+		return new JourneyStep(Kind.WALK, text + " (" + agility + " Agility)", brief, null, null, agility, without);
+	}
+
+	/** The step for a player with this Agility level: the shortcut if they have it, the way round if not. */
+	public String textFor(int agilityLevel)
+	{
+		return without == null || agilityLevel >= agility ? text : without;
 	}
 
 	/** Leaving somewhere by a portal or ladder: done when the player is moved. */
 	public static JourneyStep exit(String text, String brief, WorldPoint at)
 	{
-		return new JourneyStep(Kind.RIDE, text, brief, null, at);
+		return new JourneyStep(Kind.RIDE, text, brief, null, at, 0, null);
 	}
 }
