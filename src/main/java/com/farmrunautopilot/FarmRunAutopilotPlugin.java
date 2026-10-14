@@ -401,6 +401,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			// A run being built or waiting to leave is dropped; one already timing carries on after relogging
 			runSession.cancelIfNotRunning();
+			// Give the player their own Shortest Path settings back while logged out; a run carrying on sends its walk
+			// again after relogging
+			shortestPath.clear();
 			testRunner.onLoggedOut();
 			sceneTracker.clear();
 			pohDetector.reset();

@@ -24,20 +24,22 @@ public class ShortestPathBridge
 {
 	private static final String NAMESPACE = "shortestpath";
 	/** Walking only: agility shortcuts and doors are left as the player has them. */
-	private static final Map<String, Object> WALK_ONLY;
+	static final Map<String, Object> WALK_ONLY;
 
 	static
 	{
 		final Map<String, Object> config = new HashMap<>();
 		// Matched exactly against its TeleportationItem type names ("None", not "NONE"). Anything else is ignored
 		// and the player's own setting is used, which sent Sean to a bank for a teleport item (2026-10-11). Key
-		// names checked against Shortest Path's ShortestPathConfig and override() on 2026-10-11.
+		// names checked against Shortest Path's ShortestPathConfig on 2026-10-11 and again at commit 7e81a40 (2026-10-13,
+		// ShortestPathBridgeTest pins the list).
 		config.put("useTeleportationItems", "None");
 		for (String key : new String[]{"useTeleportationSpells", "useTeleportationSpellsHome", "useFairyRings",
 			"useSpiritTrees", "useGnomeGliders", "useQuetzals", "useBoats", "useCanoes", "useCharterShips", "useShips",
 			"useHotAirBalloons", "useMagicCarpets", "useMagicMushtrees", "useMinecarts", "useSeasonalTransports",
 			"useTeleportationLevers", "useTeleportationMinigames", "useTeleportationPortals", "useWildernessObelisks",
 			"usePoh", "usePohFairyRing", "usePohSpiritTree", "usePohObelisk", "useTeleportationPortalsPoh",
+			"usePohMountedItems", "useSailingMoves", "useGrappleShortcuts",
 			"includeBankPath", "showBankPickupInfo", "highlightBankPickupItems", "highlightInventoryItems",
 			"highlightSpellbookSpells"})
 		{
