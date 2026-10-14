@@ -167,7 +167,7 @@ public class AccessChecker
 		{
 			for (AchievementDiary.Tier tier : AchievementDiary.Tier.values())
 			{
-				if (client.getVarbitValue(diary.getCompleteVarbit(tier)) > 0)
+				if (diary.isComplete(tier, client.getVarbitValue(diary.getCompleteVarbit(tier))))
 				{
 					diaries.add(AccessSnapshot.diaryKey(diary, tier));
 				}

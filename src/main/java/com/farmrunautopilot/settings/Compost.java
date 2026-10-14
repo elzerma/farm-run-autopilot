@@ -36,16 +36,23 @@ public enum Compost
 		return null;
 	}
 
-	/** The tool leprechaun's bottomless bucket type value, or null. UNVERIFIED: assumed 1 compost, 2 super, 3 ultra. */
+	/** The tool leprechaun's bottomless bucket type value for an empty bucket (the game's farming_tools_getstored script). */
+	public static final int EMPTY_BUCKET_TYPE = 1;
+
+	/**
+	 * The compost in a bucket stored at the tool leprechaun, from its type value, or null (empty, or unknown). The
+	 * game's farming_tools_getstored script says 1 is an empty bucket and anything higher a filled one. UNVERIFIED
+	 * which filled value is which compost: assumed 2 compost, 3 super, 4 ultra (guided test BUCKET_COMPOST).
+	 */
 	public static Compost fromBucketType(int type)
 	{
 		switch (type)
 		{
-			case 1:
-				return COMPOST;
 			case 2:
-				return SUPERCOMPOST;
+				return COMPOST;
 			case 3:
+				return SUPERCOMPOST;
+			case 4:
 				return ULTRACOMPOST;
 			default:
 				return null;

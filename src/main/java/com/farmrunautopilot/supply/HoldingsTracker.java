@@ -10,6 +10,7 @@ import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import com.farmrunautopilot.settings.Compost;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -25,7 +26,6 @@ import net.runelite.api.EnumComposition;
 import net.runelite.api.EnumID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
-import net.runelite.api.VarbitComposition;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
@@ -284,15 +284,20 @@ public class HoldingsTracker
 			}
 			final int base = client.getVarbitValue(item.getBaseVarbit());
 			final int extra = item.getExtraVarbit() == DataConstants.NONE ? 0 : client.getVarbitValue(item.getExtraVarbit());
-			final int total = LeprechaunItem.combine(base, extra, bitsIn(item.getBaseVarbit()));
+			final int total = item.total(base, extra);
 			if (total > 0)
 			{
 				counts.put(item.getItemId(), total);
 			}
 		}
-		// A filled bottomless compost bucket stored here: a type and a number of uses
-		if (client.getVarbitValue(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE) > 0
-			&& client.getVarbitValue(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_QUANTITY) > 0)
+		// A bottomless compost bucket stored here: type 1 is an empty one, higher a filled one (the game's
+		// farming_tools_getstored script)
+		final int bucketType = client.getVarbitValue(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE);
+		if (bucketType == Compost.EMPTY_BUCKET_TYPE)
+		{
+			counts.put(ItemID.BOTTOMLESS_COMPOST_BUCKET, 1);
+		}
+		else if (bucketType > Compost.EMPTY_BUCKET_TYPE)
 		{
 			counts.put(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED, 1);
 		}
@@ -316,11 +321,6 @@ public class HoldingsTracker
 		return Collections.unmodifiableMap(used);
 	}
 
-	private int bitsIn(int varbitId)
-	{
-		final VarbitComposition varbit = client.getVarbit(varbitId);
-		return varbit == null ? 0 : varbit.getMostSignificantBit() - varbit.getLeastSignificantBit() + 1;
-	}
 
 	private Map<Integer, Integer> writeCache(String key, ItemContainer container)
 	{

@@ -274,10 +274,20 @@ public class SupplyCalculatorTest
 	}
 
 	@Test
-	public void leprechaunCountsCombine()
+	public void leprechaunCountsCombineAsTheGameDoes()
 	{
-		assertEquals(5, LeprechaunItem.combine(5, 0, 8));
-		assertEquals(256 + 5, LeprechaunItem.combine(5, 1, 8));
+		// The game's farming_tools_getstored script: compost base + 256 * extra, tools base + 2 * extra
+		assertEquals(5, LeprechaunItem.COMPOST.total(5, 0));
+		assertEquals(256 + 5, LeprechaunItem.COMPOST.total(5, 1));
+		assertEquals(1 + 2 * 3, LeprechaunItem.RAKE.total(1, 3));
+		assertEquals(40, LeprechaunItem.ULTRACOMPOST.total(40, 0));
+	}
+
+	@Test
+	public void anEmptyStoredBucketHoldsNoCompost()
+	{
+		assertEquals(null, Compost.fromBucketType(Compost.EMPTY_BUCKET_TYPE));
+		assertEquals(null, Compost.fromBucketType(0));
 	}
 
 	private static Map<Compost, Integer> ultracompostFor(int patches)

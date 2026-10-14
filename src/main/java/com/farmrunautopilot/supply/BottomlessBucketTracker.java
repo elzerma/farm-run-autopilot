@@ -156,9 +156,9 @@ public class BottomlessBucketTracker
 		}
 		final int type = client.getVarbitValue(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE);
 		final int quantity = client.getVarbitValue(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_QUANTITY);
-		if (type <= 0 || quantity <= 0)
+		if (type <= Compost.EMPTY_BUCKET_TYPE || quantity <= 0)
 		{
-			// Taken out (or never stored): the bucket keeps its uses
+			// Taken out, never stored, or stored empty: the bucket keeps what it had
 			return false;
 		}
 		final Compost stored = Compost.fromBucketType(type);

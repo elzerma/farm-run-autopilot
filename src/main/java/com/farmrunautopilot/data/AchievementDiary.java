@@ -16,7 +16,8 @@ public enum AchievementDiary
 		VarbitID.FREMENNIK_DIARY_HARD_COMPLETE, VarbitID.FREMENNIK_DIARY_ELITE_COMPLETE),
 	KANDARIN("Kandarin", VarbitID.KANDARIN_DIARY_EASY_COMPLETE, VarbitID.KANDARIN_DIARY_MEDIUM_COMPLETE,
 		VarbitID.KANDARIN_DIARY_HARD_COMPLETE, VarbitID.KANDARIN_DIARY_ELITE_COMPLETE),
-	// UNVERIFIED: Karamja easy/medium/hard use the "_DONE" varbits, assumed non-zero when complete.
+	// Karamja easy/medium/hard use the "_DONE" varbits, which are 2 once complete (the game's area_task_complete
+	// script); see isComplete
 	KARAMJA("Karamja", VarbitID.ATJUN_EASY_DONE, VarbitID.ATJUN_MED_DONE,
 		VarbitID.ATJUN_HARD_DONE, VarbitID.KARAMJA_DIARY_ELITE_COMPLETE),
 	KOUREND_KEBOS("Kourend & Kebos", VarbitID.KOUREND_DIARY_EASY_COMPLETE, VarbitID.KOUREND_DIARY_MEDIUM_COMPLETE,
@@ -46,6 +47,16 @@ public enum AchievementDiary
 	public int getCompleteVarbit(Tier tier)
 	{
 		return completeVarbits[tier.ordinal()];
+	}
+
+	/**
+	 * Whether a tier's varbit value means it's complete. Karamja's easy, medium and hard values count up while the
+	 * tier is in progress and are 2 once it's done (the game's area_task_complete script checks "= 2"); every
+	 * other is 1 once done.
+	 */
+	public boolean isComplete(Tier tier, int value)
+	{
+		return this == KARAMJA && tier != Tier.ELITE ? value >= 2 : value > 0;
 	}
 
 	public int[] getCompleteVarbits()
