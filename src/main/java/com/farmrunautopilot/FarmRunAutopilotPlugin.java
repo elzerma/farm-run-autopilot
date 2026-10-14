@@ -225,6 +225,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 		itemHighlightOverlay.clearCache();
 		clientThread.invoke(() ->
 		{
+			// A running guided test ends unreported and puts the player's settings back, as on logout
+			testRunner.onLoggedOut();
 			runSession.stop(false);
 			// Also puts the player's own Shortest Path settings back
 			shortestPath.clear();

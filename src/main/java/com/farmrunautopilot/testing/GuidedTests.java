@@ -634,8 +634,8 @@ final class GuidedTests
 			return Arrays.asList(
 				doThis("Enter your own house", TestContext::inOwnHouse)
 					.onStart(ctx -> ctx.capture("My house before", ctx.houseSummary())),
-				ask("Look at Account > My house. Does it match your house (portal nexus, jewellery box, pool, "
-					+ "altar, fairy ring, spirit tree)?")
+				ask("Look at Account > My house. Do the jewellery box, pool, altar, fairy ring and spirit tree match your "
+					+ "house? (The portal nexus isn't scanned: it stays as you set it.)")
 					.onAnswer((ctx, yes) ->
 					{
 						ctx.capture("My house after", ctx.houseSummary());

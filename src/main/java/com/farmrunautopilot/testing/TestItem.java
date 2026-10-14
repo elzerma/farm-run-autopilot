@@ -43,8 +43,8 @@ public enum TestItem
 			+ "Gnome Stronghold and Taverley can then fly from the Grand Tree to Taverley with one normal log."),
 	HOUSE_SCAN(Tab.ACCOUNT, "House scanning (beta)",
 		"Tick \"Detect furniture when I enter my house\" in Account > My house, then enter your house: your "
-			+ "portal nexus, jewellery box, pool and altar should fill in. Then visit someone else's house: "
-			+ "nothing of yours should change.");
+			+ "jewellery box, pool, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned). "
+			+ "Then visit someone else's house: nothing of yours should change.", 2);
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter
