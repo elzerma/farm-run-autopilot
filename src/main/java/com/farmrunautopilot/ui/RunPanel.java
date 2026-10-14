@@ -32,9 +32,6 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.Instant;
@@ -43,9 +40,9 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
-import javax.swing.DropMode;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -56,7 +53,6 @@ import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.Timer;
-import javax.swing.TransferHandler;
 import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
@@ -65,6 +61,7 @@ import net.runelite.client.ui.PluginPanel;
 /**
  * The Run tab (SPEC 13.1): what the next run covers, the route, and the supply checklist.
  */
+@Slf4j
 class RunPanel extends JPanel
 {
 	// The sidebar's width less its 6 px edges and a little for the scroll bar (Sean: text stopped short of the card's edge)
@@ -1063,9 +1060,8 @@ class RunPanel extends JPanel
 		list.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.setCellRenderer(new StopRenderer());
-		list.setDragEnabled(true);
-		list.setDropMode(DropMode.INSERT);
-		list.setTransferHandler(new ReorderHandler(list, model));
+		// Reorder only on a deliberate drag (Sean: clicks were reordering the route by accident)
+		new Reorder(list, model).install();
 		// A JList is only as wide as its longest row unless told otherwise: stretch it to the panel (Sean: width
 		// wacky). Its height is asked for each layout, as rows wrap differently once it has its real width (Sean: the
 		// line under it overlapped the last stop)
@@ -1174,65 +1170,69 @@ class RunPanel extends JPanel
 		}
 	}
 
-	/** Drag-and-drop reordering within the route list. */
-	private final class ReorderHandler extends TransferHandler
+	/**
+	 * Reordering the route by dragging a stop, only when it's deliberate (Sean: clicks were switching his route to
+	 * his own order): the mouse has to go well past the stop's own row, and a bank visit can't be moved (the plan
+	 * places those). Dropping it saves the order as the player's own.
+	 */
+	private final class Reorder extends MouseAdapter
 	{
+		/** How far the mouse must move before it counts as a drag. */
+		private static final int DRAG_PIXELS = 15;
+
 		private final JList<Object> list;
 		private final DefaultListModel<Object> model;
 		private int from = -1;
+		private int pressedY;
 
-		ReorderHandler(JList<Object> list, DefaultListModel<Object> model)
+		Reorder(JList<Object> list, DefaultListModel<Object> model)
 		{
 			this.list = list;
 			this.model = model;
 		}
 
-		@Override
-		public int getSourceActions(JComponent c)
+		void install()
 		{
-			return MOVE;
+			list.addMouseListener(this);
+			list.addMouseMotionListener(this);
 		}
 
 		@Override
-		protected Transferable createTransferable(JComponent c)
+		public void mousePressed(MouseEvent e)
 		{
-			from = list.getSelectedIndex();
-			// A bank visit goes where the plan puts it, so it can't be dragged
-			if (from < 0 || model.get(from) instanceof BankStop)
-			{
-				from = -1;
-				return null;
-			}
-			return new StringSelection(Integer.toString(from));
+			final int index = list.locationToIndex(e.getPoint());
+			from = index >= 0 && model.get(index) instanceof RouteStop ? index : -1;
+			pressedY = e.getY();
 		}
 
 		@Override
-		public boolean canImport(TransferSupport support)
+		public void mouseDragged(MouseEvent e)
 		{
-			return support.isDrop() && support.isDataFlavorSupported(DataFlavor.stringFlavor) && from >= 0;
+			if (from >= 0 && Math.abs(e.getY() - pressedY) > DRAG_PIXELS)
+			{
+				list.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+			}
 		}
 
 		@Override
-		public boolean importData(TransferSupport support)
+		public void mouseReleased(MouseEvent e)
 		{
-			if (!canImport(support))
-			{
-				return false;
-			}
-			int to = ((JList.DropLocation) support.getDropLocation()).getIndex();
-			if (to == from || to == from + 1)
-			{
-				return false;
-			}
-			final Object moved = model.remove(from);
-			if (to > from)
-			{
-				to--;
-			}
-			model.add(to, moved);
+			list.setCursor(Cursor.getDefaultCursor());
+			final int start = from;
 			from = -1;
+			if (start < 0 || Math.abs(e.getY() - pressedY) <= DRAG_PIXELS)
+			{
+				return;
+			}
+			final int to = list.locationToIndex(e.getPoint());
+			if (to < 0 || to == start)
+			{
+				return;
+			}
+			final Object moved = model.remove(start);
+			model.add(to, moved);
+			log.debug("Route reordered by dragging {} to place {}", moved, to + 1);
 			saveOrder(model);
-			return true;
 		}
 	}
 

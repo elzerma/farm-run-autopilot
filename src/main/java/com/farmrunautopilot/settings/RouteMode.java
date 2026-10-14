@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum RouteMode
 {
-	AUTOPILOT("On - Autopilot"),
+	AUTOPILOT("On - Autopilot (default)"),
 	META("On - Meta (wiki order)"),
 	OFF("Off (my own order)");
 
