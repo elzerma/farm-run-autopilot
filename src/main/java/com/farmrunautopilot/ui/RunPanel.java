@@ -1022,6 +1022,28 @@ class RunPanel extends JPanel
 			? "Your own order. Drag stops to change it; switch back in Travel > Route."
 			: "Order: " + modeName(route.getMode()) + ". Drag a stop to reorder it (switches to your own order). "
 				+ "Hover a stop for its plan."));
+		if (route.getMode() == RouteMode.OFF)
+		{
+			// Visible, not only in the tooltip: in your own order the run ignores where you're standing and the
+			// quickest chains (Sean: a drag had switched it without him noticing)
+			final JLabel own = tipped(note("<html>In your own order. <u>Use the fastest order</u></html>"),
+				"Your own order ignores where you're standing and the quickest chains. Click to plan the fastest "
+					+ "order again (your order is kept for later in Travel > Route).");
+			own.setText("<html>In your own order. <u>Use the fastest order</u></html>");
+			own.setForeground(ColorScheme.BRAND_ORANGE);
+			own.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+			own.addMouseListener(new MouseAdapter()
+			{
+				@Override
+				public void mouseClicked(MouseEvent e)
+				{
+					settings.editRunConfig().setRouteMode(RouteMode.AUTOPILOT);
+					settings.saveRunConfig();
+					settingsChanged.run();
+				}
+			});
+			add(own);
+		}
 
 		// Stops, each followed by its bank visit if it has one: a row of its own (Sean)
 		final DefaultListModel<Object> model = new DefaultListModel<>();
