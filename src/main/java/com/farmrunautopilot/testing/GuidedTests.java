@@ -12,6 +12,7 @@ import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.settings.AccountSettings;
+import com.farmrunautopilot.settings.Compost;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.ItemChargeTracker;
@@ -51,6 +52,7 @@ final class GuidedTests
 		TESTS.put(TestItem.TALISMAN_CHARGES, new TalismanCharges());
 		TESTS.put(TestItem.KHARYRLL, new Kharyrll());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
+		TESTS.put(TestItem.BUCKET_COMPOST, new BucketCompost());
 		TESTS.put(TestItem.HOT_AIR_BALLOONS, new HotAirBalloons());
 		TESTS.put(TestItem.HOUSE_SCAN, new HouseScan());
 	}
@@ -466,6 +468,51 @@ final class GuidedTests
 						ctx.problem("Kharyrll Teleport wasn't the spell to highlight");
 					}),
 				ask("Open your spellbook. Is Kharyrll Teleport outlined?"));
+		}
+	}
+
+	/**
+	 * Which stored-bucket type value means which compost (the game's script only says 1 is empty, higher filled):
+	 * the player says which compost is in theirs, the test captures the value.
+	 */
+	private static final class BucketCompost extends GuidedTest
+	{
+		private static Step isIt(Compost compost)
+		{
+			return ask("Is the bucket filled with " + compost.getDisplayName().toLowerCase() + "?").onAnswer((ctx, yes) ->
+			{
+				if (!yes)
+				{
+					return;
+				}
+				final int type = ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE);
+				ctx.capture("Compost in it / type value", compost.getDisplayName() + " / " + type);
+				ctx.capture("Uses value", ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_QUANTITY));
+				if (Compost.fromBucketType(type) != compost)
+				{
+					ctx.problem("Type value " + type + " was read as " + Compost.fromBucketType(type) + ", not "
+						+ compost.getDisplayName());
+				}
+			});
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				// An empty or missing bucket reads 0 or 1 whichever compost values are right, which proves nothing
+				ask("Do you have a bottomless compost bucket with compost in it?").onAnswer((ctx, yes) ->
+				{
+					if (!yes)
+					{
+						ctx.cannotTest("a bottomless compost bucket with compost in it");
+					}
+				}),
+				doThis("Store the bucket with a tool leprechaun",
+					ctx -> ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE) > Compost.EMPTY_BUCKET_TYPE),
+				isIt(Compost.COMPOST),
+				isIt(Compost.SUPERCOMPOST),
+				isIt(Compost.ULTRACOMPOST));
 		}
 	}
 

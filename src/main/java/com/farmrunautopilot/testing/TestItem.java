@@ -31,6 +31,9 @@ public enum TestItem
 	KHARYRLL(Tab.TRAVEL, "Kharyrll Teleport highlight",
 		"On the Ancient spellbook with Kharyrll Teleport planned for Port Phasmatys (and no tablet), the "
 			+ "spell should be outlined in your spellbook on that step."),
+	BUCKET_COMPOST(Tab.FARM, "Bottomless bucket at the tool leprechaun",
+		"With a bottomless compost bucket that has compost in it, store it with any tool leprechaun. Settings > "
+			+ "Debug > Detected should then show the bucket with the right compost and uses."),
 	SPIRIT_TREES(Tab.ACCOUNT, "Planted spirit trees",
 		"Untick your planted spirit tree in Account > Unlocks, then go to it (Port Sarim, Brimhaven or the "
 			+ "Farming Guild). It should tick itself once the grown tree is in view."),
