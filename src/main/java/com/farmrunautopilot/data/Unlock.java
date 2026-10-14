@@ -17,9 +17,9 @@ public enum Unlock
 	SPIRIT_TREE_FARMING_GUILD("Spirit tree planted at the Farming Guild (85 Farming)"),
 	// Confirmed in game: 1 once the landing site is built
 	QUETZAL_KASTORI("Kastori quetzal landing site built", VarbitID.QUETZAL_KASTORI, true),
-	// UNVERIFIED (picked by name; non-zero taken as activated)
-	ATES_STATUE_NEMUS_RETREAT("Statue of Ates activated at Nemus Retreat", VarbitID.PENDANT_OF_ATES_AUBURN_FOUND),
-	ATES_STATUE_NORTH_KASTORI("Statue of Ates activated north of Kastori", VarbitID.PENDANT_OF_ATES_TLATI_FOUND),
+	// 1 once the statue is activated: the game's pendant_of_ates_teleport_unlocked script checks "= 1"
+	ATES_STATUE_NEMUS_RETREAT("Statue of Ates activated at Nemus Retreat", VarbitID.PENDANT_OF_ATES_AUBURN_FOUND, true),
+	ATES_STATUE_NORTH_KASTORI("Statue of Ates activated north of Kastori", VarbitID.PENDANT_OF_ATES_TLATI_FOUND, true),
 	// From Shortest Path's balloon data (1 once the route is unlocked: 60 Firemaking and 3 magic logs after Enlightened
 	// Journey); not checked in game yet (guided test HOT_AIR_BALLOONS)
 	BALLOON_GRAND_TREE("Hot air balloon route to the Grand Tree unlocked (60 Firemaking)", VarbitID.ZEP_MULTI_GNO),

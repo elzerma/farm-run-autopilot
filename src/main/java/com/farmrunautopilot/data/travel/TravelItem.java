@@ -61,7 +61,7 @@ public enum TravelItem
 	STONY_BASALT("Stony basalt", needs(Requirement.quest(Quest.MAKING_FRIENDS_WITH_MY_ARM)), ItemID.STRONGHOLD_TELEPORT_BASALT),
 	ICY_BASALT("Icy basalt", needs(Requirement.quest(Quest.MAKING_FRIENDS_WITH_MY_ARM)), ItemID.WEISS_TELEPORT_BASALT),
 	ROYAL_SEED_POD("Royal seed pod", needs(Requirement.quest(Quest.MONKEY_MADNESS_II)), ItemID.MM2_ROYAL_SEED_POD),
-	// UNVERIFIED: PRIF_TELEPORT_CRYSTAL is assumed to be the eternal teleport crystal.
+	// PRIF_TELEPORT_CRYSTAL (23946) is the eternal teleport crystal, as in Shortest Path's data.
 	TELEPORT_CRYSTAL("Teleport crystal", needs(Requirement.questStarted(Quest.MOURNINGS_END_PART_I)),
 		ItemID.MOURNING_TELEPORT_CRYSTAL_1, ItemID.MOURNING_TELEPORT_CRYSTAL_2, ItemID.MOURNING_TELEPORT_CRYSTAL_3,
 		ItemID.MOURNING_TELEPORT_CRYSTAL_4, ItemID.MOURNING_TELEPORT_CRYSTAL_5, ItemID.PRIF_TELEPORT_CRYSTAL),

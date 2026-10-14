@@ -134,9 +134,9 @@ public enum TravelMethod
 		.requires(Requirement.unlock(Unlock.SPIRIT_TREE_BRIMHAVEN))),
 	ARDOUGNE_TELEPORT_AND_BOAT(spell(Location.BRIMHAVEN, Spell.ARDOUGNE_TELEPORT)
 		.coins(30).note("Then the boat from Ardougne docks")
-		// UNVERIFIED: the docks spot is an estimate (the line goes to Captain Barnaby himself once he's loaded)
+		// The boat leaves from 2683, 3271 (Shortest Path's data); the line goes to Captain Barnaby once he's loaded
 		.then(JourneyStep.ride("Captain Barnaby", "Go to Captain Barnaby at the Ardougne docks and Pay-fare to "
-			+ "Brimhaven (30 coins)", "boat from the Ardougne docks", new WorldPoint(2683, 3272, 0)))),
+			+ "Brimhaven (30 coins)", "boat from the Ardougne docks", new WorldPoint(2683, 3271, 0)))),
 	GLORY_KARAMJA(item(Location.BRIMHAVEN, "Amulet of glory (Karamja)",
 		TravelKind.JEWELLERY, TravelItem.AMULET_OF_GLORY).jewelleryBox(JewelleryBoxTier.ORNATE)),
 
@@ -206,7 +206,8 @@ public enum TravelMethod
 		TravelKind.ITEM, TravelItem.STONY_BASALT).primaryFor(HERB)
 		.requires(Requirement.diary(AchievementDiary.FREMENNIK, AchievementDiary.Tier.HARD),
 			Requirement.skill(Skill.AGILITY, 73))),
-	// UNVERIFIED that the nexus Troll Stronghold portal lands at the basalt entrance spot.
+	// The nexus Troll Stronghold portal lands at the entrance (2845, 3694), or on the roof with the hard Fremennik
+	// diary (Shortest Path's data).
 	STONY_BASALT_ENTRANCE(item(Location.TROLL_STRONGHOLD, "Stony basalt (entrance)",
 		TravelKind.ITEM, TravelItem.STONY_BASALT).nexus(PortalNexus.Destination.TROLL_STRONGHOLD)
 		.then(JourneyStep.STRONGHOLD_ROOF)),

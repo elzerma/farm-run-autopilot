@@ -50,7 +50,6 @@ final class GuidedTests
 		TESTS.put(TestItem.ATES_CHARGES, new AtesCharges());
 		TESTS.put(TestItem.TALISMAN_CHARGES, new TalismanCharges());
 		TESTS.put(TestItem.KHARYRLL, new Kharyrll());
-		TESTS.put(TestItem.ATES_STATUES, new AtesStatues());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
 		TESTS.put(TestItem.HOT_AIR_BALLOONS, new HotAirBalloons());
 		TESTS.put(TestItem.HOUSE_SCAN, new HouseScan());
@@ -467,40 +466,6 @@ final class GuidedTests
 						ctx.problem("Kharyrll Teleport wasn't the spell to highlight");
 					}),
 				ask("Open your spellbook. Is Kharyrll Teleport outlined?"));
-		}
-	}
-
-	private static final class AtesStatues extends GuidedTest
-	{
-		private static Step have(Unlock unlock, String question)
-		{
-			return ask(question).onAnswer((ctx, yes) ->
-			{
-				final int value = ctx.varbit(unlock.getVarbit());
-				ctx.capture(unlock.getDescription() + ": answer / game value", (yes ? "yes" : "no") + " / " + value);
-				if (yes != (value > 0))
-				{
-					ctx.problem(unlock.getDescription() + ": you said " + (yes ? "yes" : "no")
-						+ " but the game value is " + value);
-				}
-			});
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				// Without one, both values read 0 whether or not they're the right ones, which proves nothing
-				ask("Have you activated a statue of Ates, at Nemus Retreat or north of Kastori?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (!yes)
-						{
-							ctx.cannotTest("a statue of Ates you've activated");
-						}
-					}),
-				have(Unlock.ATES_STATUE_NEMUS_RETREAT, "Have you activated the statue of Ates at Nemus Retreat?"),
-				have(Unlock.ATES_STATUE_NORTH_KASTORI, "Have you activated the statue of Ates north of Kastori?"));
 		}
 	}
 

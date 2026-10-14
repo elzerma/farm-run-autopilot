@@ -340,7 +340,8 @@ public class PohDetector
 				return PoolTier.REVITALISATION;
 			case ObjectID.POH_POOL_REJUVENATION:
 				return PoolTier.REJUVENATION;
-			// UNVERIFIED: "recovery" and "regeneration" are assumed to be the fancy and ornate pools.
+			// "Recovery" (29240) and "regeneration" (29241) are the fancy and ornate pools: the wiki gives the ornate pool
+			// 29241, and the five are numbered in tier order
 			case ObjectID.POH_POOL_RECOVERY:
 				return PoolTier.FANCY_REJUVENATION;
 			case ObjectID.POH_POOL_REGENERATION:

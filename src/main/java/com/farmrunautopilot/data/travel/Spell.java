@@ -43,7 +43,8 @@ public enum Spell
 	CIVITAS_ILLA_FORTIS_TELEPORT("Civitas illa Fortis Teleport", Spellbook.STANDARD, 54, ItemID.POH_TABLET_FORTISTELEPORT,
 		Quest.TWILIGHTS_PROMISE,
 		of(1, EARTH), of(1, FIRE), of(2, LAW)),
-	// The tablet is the redirected "Trollheim teleport" tablet. UNVERIFIED that it lands where the spell does.
+	// The tablet is the redirected "Trollheim teleport" tablet; it lands where the spell does (2890, 3679 for both in
+	// Shortest Path's data).
 	TROLLHEIM_TELEPORT("Trollheim Teleport", Spellbook.STANDARD, 61, ItemID.NZONE_TELETAB_TROLLHEIM, Quest.EADGARS_RUSE,
 		of(2, FIRE), of(2, LAW)),
 
