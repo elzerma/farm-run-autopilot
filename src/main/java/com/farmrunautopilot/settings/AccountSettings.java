@@ -10,7 +10,7 @@ import lombok.Data;
 
 /**
  * Facts about the account that can't be detected automatically. Kept apart from {@link RunConfig} so
- * presets (M9) don't carry them.
+ * presets don't carry them.
  */
 @Data
 public class AccountSettings

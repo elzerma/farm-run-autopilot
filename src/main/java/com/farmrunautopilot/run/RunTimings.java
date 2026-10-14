@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.config.ConfigManager;
 
 /**
- * Saves how long each leg and run took, per account (SPEC 12.4). Milestone M8 uses these to replace the
+ * Saves how long each leg and run took, per account (SPEC 12.4). LearnedTimes uses these to replace the
  * starting time estimates with the player's own.
  */
 @Slf4j

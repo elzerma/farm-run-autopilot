@@ -37,7 +37,7 @@ import net.runelite.client.ui.PluginPanel;
 
 /**
  * What the Farm, Travel and Account tabs, and preset management on the Run tab, have in common (SPEC 13.2;
- * layout in docs/plans/sidebar-ux.md): sections that remember being open, the controls, and saving. Each page
+ * look in docs/BRANDING.md): sections that remember being open, the controls, and saving. Each page
  * is its own class ({@link FarmPage}, {@link TravelPage}, {@link AccountPage}, {@link PresetsPage}). Rebuilt from
  * the saved settings whenever they reload or the account's access changes; every edit is saved straight away.
  */

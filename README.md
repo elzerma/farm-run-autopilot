@@ -10,61 +10,63 @@ The plugin never clicks, types or acts for you. It only shows information.
 ## Features
 
 **Run tab**
-- Shows which run types are due (trees, fruit trees, herbs) and counts down to the ones that aren't, with
-  buttons to include or skip a type for this run.
-- Plans one route across every due patch, using the teleports, items and unlocks you actually have. Pick the
-  fastest route, the wiki order, or drag stops into your own order.
-- A supply checklist: seeds and saplings, gardener payments (noted is fine), compost, tools, coins, runes or
-  tablets, and travel items. Green is carried, yellow is in your bank or at the tool leprechaun, red is
-  missing.
-- Big runs that don't fit in one inventory get a bank stop partway, at the bank that adds the least time:
-  you bring the first half, deposit what's outlined, and take the rest from the Farm run bank tab.
+- Patch timers for every run type, with what's due now and what's ready soon.
+- One route across every due patch, using the teleports, items and unlocks you actually have. The route starts
+  at the stop nearest you on foot and can end near a bank. Choose the order: **Autopilot** (fastest, the
+  default), **Meta** (the wiki's order), or your own (drag a stop to move it).
+- The route shows each stop's way there, the whole run's time and where you'll stop at a bank when everything
+  doesn't fit in one inventory.
 - Backup crop choices for when you run out, and your most valuable herbs sent to disease-free patches first.
 
-<p>
-  <img src="docs/run-tab.png" alt="Run tab: what's due and the route" width="300">
-  <img src="docs/supplies.png" alt="Supply checklist with carried, in storage and missing colours" width="300">
-</p>
+<img src="docs/run-tab.png" alt="Run tab: patch timers and the route" width="300">
 
 **Bank**
-- After you press Build run, a "Farm run" button in the bank shows just the items you need, with how many
-  of each. It stays hidden while you aren't planning a run.
+- After you press **Build run**, a flashing "Farm run" button in the bank shows just the items you need, with
+  how many of each: seeds and saplings, gardener payments (noted is fine), compost, tools, coins, runes or
+  tablets and travel items. Green is carried, yellow is in your bank or at the tool leprechaun, red is missing.
+- At a bank stop partway through a big run, it shows what to deposit first, then what to take for the rest.
 
-<img src="docs/bank-tab.png" alt="The Farm run bank tab" width="500">
+<p>
+  <img src="docs/bank-tab.png" alt="The Farm run bank tab" width="300">
+  <img src="docs/supplies.png" alt="Supplies with carried, in storage and missing colours" width="300">
+</p>
 
 **During a run**
-- Once you have everything (tools at the tool leprechaun count), the run starts itself with step-by-step
-  instructions under your character: where to go next, then
-  what to do at each patch (pick, check health, clear, rake, compost, plant, pay the gardener).
+- Once you have everything (tools at the tool leprechaun count), the run starts itself, with each stop's steps
+  as tick boxes on the Run tab and the current step under your character: where to go next, then what to do
+  at each patch (pick, check health, clear, rake, compost, plant, pay the gardener).
 - The patch is outlined with a hint arrow over it; the gardener is outlined when it's time to pay; the seed,
   compost, tool or teleport to use next is outlined in your inventory.
+- Journeys are spelled out: boats, quetzals, Elkoy, hot air balloons, and Agility shortcuts when you have the
+  level (the way round when you don't).
+- With [Shortest Path](https://github.com/Skretzo/shortest-path) installed, a walking line to the next patch or
+  bank. Your Shortest Path settings are put back afterwards.
 - Reminders to drop weeds, empty plant pots and buckets, to take an item from the tool leprechaun, or to note
   produce when your inventory is nearly full.
-- Steps tick off on their own (planting, composting, paying) and the run finishes itself after the last
-  patch, showing your time and your best three times for that kind of run.
-- Route time estimates learn from your own runs.
+- Steps tick off on their own (planting, composting, paying), and you can tick or untick any yourself. The run
+  finishes after the last patch, showing your time and your best three times for that kind of run.
+- Route times learn from your own runs.
 
 ![The patch outlined with the next step under the player](docs/guidance-patch.webp)
 
 ![Composting: the compost is outlined in the inventory and finished stops are struck through](docs/guidance-compost.webp)
 
 **Farm tab**
-- Choose your patches, crops (with backups), protection (pay the gardener or compost only), compost and
-  plant cures.
-- Save settings as presets (e.g. "Quick herbs") and switch between them from the Run tab.
+- Choose your patches, crops (with backups), disease-free herbs, protection (pay the gardener or compost
+  only, per patch if you like), compost and plant cures.
 
-<img src="docs/farm-tab.png" alt="Farm tab: crop choices and disease-free herbs" width="300">
+<img src="docs/farm-tab.png" alt="Farm tab: patches and crop choices" width="300">
 
 **Travel tab**
-- Every stop shows what **Auto (best)** picked, such as "Camelot Teleport (tablet)", and a dropdown to choose
-  the teleport and how to use it yourself: directly, through your house's portal nexus or jewellery box,
-  or by fairy ring.
+- Every stop shows what **Auto (best)** picked, such as "Camelot Teleport (tablet)", and lets you choose the
+  teleport and how to use it yourself: directly, through your house's portal nexus or jewellery box, or by
+  fairy ring.
 - Pick how Auto chooses: Fastest, Prefer free, Save charges, or Fewest items to bring.
 - Tablets come first; tick "Use runes instead" for any stop. Spells from another spellbook are only planned
   when your house altar or Lunar's Spellbook Swap can reach them.
 - Charges are tracked across the whole run: jewellery charges, daily-limited teleports (Ardougne cloak,
-  Explorer's ring) and items charged by hand (quetzal whistle, Xeric's talisman, pendant of Ates). When
-  one runs out partway, Auto picks the next best way.
+  Explorer's ring) and items charged by hand (quetzal whistle, Xeric's talisman, pendant of Ates). When one
+  runs out partway, Auto picks the next best way.
 
 <p>
   <img src="docs/travel-tab.png" alt="Travel tab: how Auto (best) picks, and defaults for every stop" width="300">
@@ -72,34 +74,37 @@ The plugin never clicks, types or acts for you. It only shows information.
 </p>
 
 **Account tab**
-- Quests, diaries, levels, spellbook, charges and some unlocks are detected automatically; anything you
-  haven't unlocked is greyed out with what it needs.
-- Your house (portal, nexus, jewellery box, spirit tree, fairy ring, spellbook altar), unlocks the game
-  doesn't show, highlights and colours.
-- **Help improve it:** some features couldn't be tested by the author. "Help improve this plugin: try a few quick things
-  in game, no coding needed. Show me" at the bottom of each tab lists them. Each one has a guided test: the
-  Run tab walks you through it, your settings are put back afterwards, and at the end a button opens a
-  GitHub issue with the results filled in for you to check and send.
+- Your house (portal, nexus, jewellery box, pool, altar, spirit tree, fairy ring), with an optional scan that
+  fills it in when you go home.
+- Unlocks the game doesn't show, and the storage the plugin counts from (seed vault, group storage, tool
+  leprechaun, bottomless bucket).
+
+**Settings tab**
+- Presets (e.g. "Quick herbs"), display options, and what the plugin has detected: quests, diaries, levels,
+  spellbook, charges and unlocks.
+- **Help improve this plugin:** share your run times to improve everyone's estimates, or try a guided test of a
+  feature the author couldn't test. A test walks you through it on the Run tab and puts your settings back
+  afterwards. The small "Help improve this plugin" line at the bottom of each tab opens this section.
 
 ## How to use
 
 1. Open the Farm Run Autopilot sidebar (the leprechaun icon).
-2. Set things up once: the Farm tab has patches, crops, protection and compost; the Travel tab has teleports
-   and the route; the Account tab shows what the plugin has detected, plus your house, unlocks and highlights.
-3. Tick the run types on the Run tab, which also shows what's due and your patch timers, and press
-   **Build run**.
-4. Open your bank and click the "Farm run" button to withdraw what you need. The run starts itself once you
-   have everything; the timer starts when you teleport or click your first patch (or press **Start now**).
-5. Follow the instructions under your character.
+2. Set things up once: patches, crops, protection and compost on the Farm tab; teleports and the route on
+   the Travel tab; your house, unlocks and storage on the Account tab.
+3. On the Run tab, tick the run types and press **Build run**.
+4. Open your bank and click the flashing "Farm run" button to take what you need. The run starts itself once
+   you have everything; the timer starts when you teleport or click your first patch (or press
+   **Start now**).
+5. Follow the steps under your character.
 
 Patches are tracked as you visit them. Until then, the plugin uses RuneLite's Time Tracking data if it has
 any.
 
 ## Privacy
 
-Everything is stored in your RuneLite profile. The plugin makes no network requests. A guided test's GitHub
-report only opens in your browser when you press its button, nothing is sent unless you submit it there,
-and it never includes your character name.
+Everything is stored in your RuneLite profile. The plugin makes no network requests. "Share your run times"
+and a guided test's report only open a GitHub issue in your browser when you press their button; nothing is
+sent unless you submit it there, and they never include your character name or where you've been.
 
 ## Credits
 

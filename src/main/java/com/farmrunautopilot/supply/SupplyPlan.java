@@ -29,9 +29,9 @@ public class SupplyPlan
 	int coins;
 	/** e.g. "7 law, 3 water (staff covers air)". */
 	String runeSummary;
-	/** Rough inventory slots needed at the start; M8 refines this with a full simulation. */
+	/** Rough inventory slots needed at the start. */
 	int slots;
-	/** Which crop goes in which patch (used by the step guide in M7). */
+	/** Which crop goes in which patch (used by the step guide). */
 	Map<Patch, Crop> plantings;
 
 	public int patchTotal()

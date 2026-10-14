@@ -174,7 +174,7 @@ public class AccessSnapshot
 	/**
 	 * Requirements for a travel method: its own, the item's, the spell's quest, and the spell's Magic level
 	 * when there is no tablet (tablets work at any Magic level). Owning the item, tablet or runes is checked
-	 * by the supply calculator (M4), not here.
+	 * by the supply calculator, not here.
 	 */
 	public List<Requirement> missingFor(TravelMethod method)
 	{

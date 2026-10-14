@@ -15,7 +15,7 @@ import net.runelite.api.gameval.ItemID;
  * trimmed versions); uncharged versions are left out.
  *
  * <p>Requirements are what it takes to use the item. Most are also needed to get the item, so they mostly
- * matter before the supply calculator (M4) checks what the player owns.
+ * matter before the supply calculator checks what the player owns.
  */
 @Getter
 public enum TravelItem

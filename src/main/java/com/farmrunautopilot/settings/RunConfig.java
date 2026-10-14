@@ -17,8 +17,8 @@ import java.util.Set;
 import lombok.Data;
 
 /**
- * Everything the player chooses for a run (SPEC 5 RunConfig). Saved as JSON per account; milestone M9
- * turns it into named presets. Fields are mutable so Gson can fill them; call {@link #sanitise()}
+ * Everything the player chooses for a run (SPEC 5 RunConfig). Saved as JSON per account; presets
+ * are named copies of it. Fields are mutable so Gson can fill them; call {@link #sanitise()}
  * after loading.
  */
 @Data

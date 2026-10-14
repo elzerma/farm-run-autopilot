@@ -30,7 +30,7 @@ import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.colorpicker.ColorPickerManager;
 
 /**
- * Sidebar root: Run, Farm, Travel and Account tabs (SPEC section 13, docs/plans/sidebar-ux.md).
+ * Sidebar root: Run, Farm, Travel and Account tabs (SPEC section 13, docs/BRANDING.md).
  */
 public class FarmRunAutopilotPanel extends PluginPanel
 {

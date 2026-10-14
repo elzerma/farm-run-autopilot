@@ -185,7 +185,7 @@ public class AccessChecker
 			}
 		}
 		// A dramen or lunar staff is also needed unless the Elite Lumbridge diary is done; the supply
-		// calculator (M4) checks for the staff.
+		// calculator checks for the staff.
 		if (quests.get(Quest.FAIRYTALE_II__CURE_A_QUEEN) != QuestState.NOT_STARTED)
 		{
 			unlocks.add(Unlock.FAIRY_RINGS);

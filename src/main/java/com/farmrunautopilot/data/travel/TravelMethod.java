@@ -27,7 +27,7 @@ import net.runelite.api.coords.WorldPoint;
  * "Primary" marks the wiki's first choice for that run type.
  *
  * <p>Gnome gliders, charter ships, the Lovakengj minecart and similar transports that must be boarded
- * somewhere specific are left to the route planner's link edges (M6).
+ * somewhere specific are not planned.
  */
 @Getter
 public enum TravelMethod
