@@ -250,8 +250,8 @@ final class HelpWanted
 
 	private static JLabel text(String text, Color colour, int gapBelow)
 	{
-		final JLabel label = new JLabel(text.isEmpty() ? " " : "<html><div style='width:" + TEXT_WIDTH + "px'>"
-			+ text.replace("&", "&amp;").replace("<", "&lt;") + "</div></html>");
+		// UiText.wrap scales to screen pixels; an unscaled width ran off the edge inside an opened test (Sean)
+		final JLabel label = new JLabel(text.isEmpty() ? " " : UiText.wrap(text, TEXT_WIDTH));
 		label.setForeground(colour);
 		label.setFont(FontManager.getRunescapeSmallFont());
 		label.setBorder(new EmptyBorder(0, 0, gapBelow, 0));

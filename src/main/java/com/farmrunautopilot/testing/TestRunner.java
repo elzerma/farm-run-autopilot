@@ -150,7 +150,8 @@ public class TestRunner
 			missing.add("Log in first");
 			return missing;
 		}
-		if (runSession.getView().getState() != RunView.State.OFF)
+		// A route built but not started doesn't count (Sean: "no run going" was told to stop it); begin clears it
+		if (runSession.getView().getState() == RunView.State.RUNNING)
 		{
 			missing.add("Stop your run first");
 		}
@@ -175,6 +176,7 @@ public class TestRunner
 
 	private void begin(TestItem item, GuidedTest test)
 	{
+		runSession.cancelIfNotRunning();
 		this.item = item;
 		this.test = test;
 		this.steps = test.steps();
