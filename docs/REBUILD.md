@@ -269,7 +269,7 @@ before/after line count was skipped. The look is written down in docs/BRANDING.m
 - Measure it: visible lines per tab before and after, and screenshots of each tab for Sean to compare.
 - Checks: every control still has its explanation on hover; nothing a player needs is only in a tooltip.
 
-**Built 2026-10-13, awaiting Sean's checks** (results in docs/plans/shortest-path-research.md).
+**PASSED 2026-10-14** (results in docs/plans/shortest-path-research.md; balloon left to players: needs 60 Firemaking).
 **Sprint 8: Shortest Path data** (after Sprint 7; plan in docs/plans/shortest-path-research.md). Reuse its BSD-2
 licensed data with credit: bank coordinates, teleport landing points and durations checked against ours, a
 dev-only "Measure walks" tool using its query message to measure every landing-to-patch walk once and save
@@ -282,6 +282,9 @@ players: Karamja diary done at 2 (bug), bottomless bucket 1 = empty (bug), lepre
 multipliers, statues of Ates confirmed, Trollheim tablet, eternal crystal, Barnaby's spot, the nexus Troll
 Stronghold landing. Players then only test behaviour (the help list, plus a bottomless bucket test) and can
 share their run times through an opt-in GitHub report.
+
+**PASSED 2026-10-14** (leprechaun counts, share run times, bank steps; Karamja diary, Ates statues and an empty
+bucket couldn't be tried on Sean's account and rest on the game's own scripts; BUCKET_COMPOST stays for players).
 
 **Sprint 10: tidy and release** (last, and only once everything works: Sean, 2026-10-12).
 - Journey step text that fits the player (e.g. leave out "without 33 Agility, walk round" when they have it).
