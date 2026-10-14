@@ -105,6 +105,8 @@ and it never includes your character name.
 
 - Generated bank tab approach adapted from [Quest Helper](https://github.com/Zoinkwiz/quest-helper).
 - Patch coordinates from [Farming-Helper](https://github.com/Speaax/Farming-Helper).
+- Teleport landings, banks, hot air balloons and walking distances from [Shortest Path](https://github.com/Skretzo/shortest-path)
+  (measured once, nothing downloaded while playing).
 - Built on [RuneLite](https://github.com/runelite/runelite).
 
 See `THIRD_PARTY_NOTICES` for their licences.
