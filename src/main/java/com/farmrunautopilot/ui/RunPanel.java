@@ -354,9 +354,9 @@ class RunPanel extends JPanel
 
 	private static JLabel testText(String text, Color colour)
 	{
-		// Narrower than the box: the orange border, padding and scroll bar take about 50px
-		final JLabel label = new JLabel("<html><div style='width:" + (TEXT_WIDTH - 55) + "px'>"
-			+ text.replace("&", "&amp;").replace("<", "&lt;") + "</div></html>");
+		// Narrower than the box: the orange border, padding and scroll bar take about 35px. UiText.wrap scales to
+		// screen pixels; an unscaled width ran off the right edge (Sean)
+		final JLabel label = new JLabel(UiText.wrap(text, TEXT_WIDTH - 35));
 		label.setForeground(colour);
 		label.setFont(FontManager.getRunescapeSmallFont());
 		label.setBorder(new EmptyBorder(0, 0, 3, 0));
