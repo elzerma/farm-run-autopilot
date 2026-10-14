@@ -53,7 +53,9 @@ class ExpandableRow extends JPanel
 		this.name.setIconTextGap(6);
 		this.name.setFont(FontManager.getRunescapeSmallFont());
 		this.name.setForeground(Color.WHITE);
-		final JLabel summary = new JLabel(UiText.wrap(shortSummary, width / 2));
+		// Only as wide as it needs (Sean: "Not yet" took half the line and cut the name to "Spellbook Swa")
+		final JLabel summary = new JLabel(measure.getPreferredSize().width <= width / 2
+			? shortSummary : UiText.wrap(shortSummary, width / 2));
 		summary.setFont(FontManager.getRunescapeSmallFont());
 		summary.setForeground(Color.WHITE);
 		headCard.add(this.name, BorderLayout.CENTER);
