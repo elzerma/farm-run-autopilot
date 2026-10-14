@@ -144,8 +144,8 @@ public class RoutePlannerTest
 	@Test
 	public void ringByAStopIsAsFarAsArrivingThereByRing()
 	{
-		// The measured walk from CIR, not the old 28-tile size (docs/REBUILD.md)
-		assertEquals(Integer.valueOf(90), TravelTimes.fairyRingTiles(Location.FARMING_GUILD));
+		// The walk from CIR as measured on Shortest Path's map, not the old 28-tile size (docs/REBUILD.md)
+		assertEquals(Integer.valueOf(82), TravelTimes.fairyRingTiles(Location.FARMING_GUILD));
 		assertEquals(null, TravelTimes.fairyRingTiles(Location.TAVERLEY));
 	}
 

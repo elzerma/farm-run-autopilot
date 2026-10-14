@@ -19,113 +19,116 @@ public final class TravelTimes
 	private static final Map<TravelMethod, Integer> TILES = new EnumMap<>(TravelMethod.class);
 	private static final Map<TravelMethod, Double> EXTRA_SECONDS = new EnumMap<>(TravelMethod.class);
 
+	// Walking tiles from where each method lands to the nearest patch of its stop, measured on Shortest Path's
+	// collision map (commit 7e81a40, BSD-2, see THIRD_PARTY_NOTICES) with its landing tiles, 2026-10-13. A few the map
+	// can't measure keep their estimates, marked "estimate". Journeys add up the walks before and after the ride.
 	static
 	{
 		// Lumbridge
-		tiles(TravelMethod.LUMBRIDGE_TELEPORT, 35);
-		tiles(TravelMethod.LUMBRIDGE_HOME_TELEPORT, 35);
-		tiles(TravelMethod.DIARY_CAPE_LUMBRIDGE, 50);
+		tiles(TravelMethod.LUMBRIDGE_TELEPORT, 45);
+		tiles(TravelMethod.LUMBRIDGE_HOME_TELEPORT, 45);
+		tiles(TravelMethod.DIARY_CAPE_LUMBRIDGE, 51);
 		// Varrock
-		tiles(TravelMethod.VARROCK_TELEPORT, 45);
-		tiles(TravelMethod.DIARY_CAPE_VARROCK, 50);
-		tiles(TravelMethod.SKILLS_NECKLACE_COOKS_GUILD, 95);
-		tiles(TravelMethod.RING_OF_WEALTH_GRAND_EXCHANGE, 80);
-		tiles(TravelMethod.SPIRIT_TREE_GRAND_EXCHANGE, 60);
+		tiles(TravelMethod.VARROCK_TELEPORT, 37);
+		tiles(TravelMethod.DIARY_CAPE_VARROCK, 46);
+		tiles(TravelMethod.SKILLS_NECKLACE_COOKS_GUILD, 93);
+		tiles(TravelMethod.RING_OF_WEALTH_GRAND_EXCHANGE, 82);
+		tiles(TravelMethod.SPIRIT_TREE_GRAND_EXCHANGE, 82);
 		// Falador Park
-		tiles(TravelMethod.RING_OF_WEALTH_FALADOR_PARK, 9);
-		tiles(TravelMethod.FALADOR_TELEPORT_TO_PARK, 45);
-		tiles(TravelMethod.SKILLS_NECKLACE_MINING_GUILD, 70);
+		tiles(TravelMethod.RING_OF_WEALTH_FALADOR_PARK, 7);
+		tiles(TravelMethod.FALADOR_TELEPORT_TO_PARK, 39);
+		tiles(TravelMethod.SKILLS_NECKLACE_MINING_GUILD, 101);
 		extra(TravelMethod.SKILLS_NECKLACE_MINING_GUILD, 3);
 		// Taverley
-		tiles(TravelMethod.HOUSE_PORTAL_TAVERLEY, 43);
-		tiles(TravelMethod.TAVERLEY_TABLET, 43);
-		tiles(TravelMethod.CONSTRUCTION_CAPE_TAVERLEY, 43);
+		tiles(TravelMethod.HOUSE_PORTAL_TAVERLEY, 47);
+		tiles(TravelMethod.TAVERLEY_TABLET, 47);
+		tiles(TravelMethod.CONSTRUCTION_CAPE_TAVERLEY, 48);
 		// 70 over the 66 Agility rocks, about 100 round by the gate
-		tiles(TravelMethod.FALADOR_TELEPORT_TO_TAVERLEY, 85);
-		tiles(TravelMethod.GAMES_NECKLACE_BURTHORPE, 120);
+		tiles(TravelMethod.FALADOR_TELEPORT_TO_TAVERLEY, 89);
+		tiles(TravelMethod.GAMES_NECKLACE_BURTHORPE, 117);
 		tiles(TravelMethod.COMBAT_BRACELET_WARRIORS_GUILD, 115);
 		// Gnome Stronghold (nearest patch: tree by the Slayer Cave, fruit tree by the spirit tree)
-		tiles(TravelMethod.SLAYER_RING_STRONGHOLD_CAVE, 8);
-		tiles(TravelMethod.SPIRIT_TREE_GNOME_STRONGHOLD, 14);
-		tiles(TravelMethod.ROYAL_SEED_POD, 50);
+		tiles(TravelMethod.SLAYER_RING_STRONGHOLD_CAVE, 5);
+		tiles(TravelMethod.SPIRIT_TREE_GNOME_STRONGHOLD, 12);
+		tiles(TravelMethod.ROYAL_SEED_POD, 50); // estimate: the Grand Tree's door isn't on the map
 		// Farming Guild
-		tiles(TravelMethod.FARMING_CAPE, 10);
-		tiles(TravelMethod.SKILLS_NECKLACE_FARMING_GUILD, 10);
-		tiles(TravelMethod.MAX_CAPE_FARMING_GUILD, 10);
-		tiles(TravelMethod.SPIRIT_TREE_FARMING_GUILD, 11);
-		tiles(TravelMethod.FAIRY_RING_CIR, 90);
-		tiles(TravelMethod.BATTLEFRONT_TELEPORT, 110);
-		tiles(TravelMethod.RADAS_BLESSING_MOUNT_KARUULM, 100);
+		tiles(TravelMethod.FARMING_CAPE, 8);
+		tiles(TravelMethod.SKILLS_NECKLACE_FARMING_GUILD, 8);
+		tiles(TravelMethod.MAX_CAPE_FARMING_GUILD, 8);
+		tiles(TravelMethod.SPIRIT_TREE_FARMING_GUILD, 7);
+		tiles(TravelMethod.FAIRY_RING_CIR, 82);
+		tiles(TravelMethod.BATTLEFRONT_TELEPORT, 121);
+		tiles(TravelMethod.RADAS_BLESSING_MOUNT_KARUULM, 100); // estimate: the stairs down Mount Karuulm aren't on the map
 		// Nemus Retreat
-		tiles(TravelMethod.PENDANT_OF_ATES_NEMUS_RETREAT, 44);
-		// 44 through the 33 Agility tunnel, 80+ without
-		tiles(TravelMethod.QUETZAL_AUBURNVALE, 60);
-		tiles(TravelMethod.FAIRY_RING_AIS, 64);
+		tiles(TravelMethod.PENDANT_OF_ATES_NEMUS_RETREAT, 54);
+		// Pad to the 33 Agility tunnel, then a step to the patch; about 100 round without it
+		tiles(TravelMethod.QUETZAL_AUBURNVALE, 71);
+		tiles(TravelMethod.FAIRY_RING_AIS, 65);
 		// Tree Gnome Village: out of the maze behind Elkoy, then a short walk
 		tiles(TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, 15);
 		extra(TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, 12);
 		// CIQ is north-west of Yanille: the walk round to the village is long. Sean: "SO slow"; his recorded leg
-		// took 118 s (2026-10-10), so 40 s on top of the walk
-		tiles(TravelMethod.FAIRY_RING_CIQ, 100);
-		extra(TravelMethod.FAIRY_RING_CIQ, 40);
+		// took 118 s (2026-10-10), so 47 s on top of the measured walk
+		tiles(TravelMethod.FAIRY_RING_CIQ, 77);
+		extra(TravelMethod.FAIRY_RING_CIQ, 47);
 		// Catherby (nearest patch: the herb patch from Camelot)
-		tiles(TravelMethod.CAMELOT_TELEPORT, 56);
-		tiles(TravelMethod.CATHERBY_TELEPORT, 30);
+		tiles(TravelMethod.CAMELOT_TELEPORT, 57);
+		tiles(TravelMethod.CATHERBY_TELEPORT, 19);
 		// Brimhaven
-		tiles(TravelMethod.HOUSE_PORTAL_BRIMHAVEN, 34);
-		tiles(TravelMethod.BRIMHAVEN_TABLET, 34);
+		tiles(TravelMethod.HOUSE_PORTAL_BRIMHAVEN, 32);
+		tiles(TravelMethod.BRIMHAVEN_TABLET, 31);
 		tiles(TravelMethod.CONSTRUCTION_CAPE_BRIMHAVEN, 34);
-		tiles(TravelMethod.SPIRIT_TREE_BRIMHAVEN, 38);
-		tiles(TravelMethod.ARDOUGNE_TELEPORT_AND_BOAT, 57);
+		tiles(TravelMethod.SPIRIT_TREE_BRIMHAVEN, 33);
+		tiles(TravelMethod.ARDOUGNE_TELEPORT_AND_BOAT, 62);
 		extra(TravelMethod.ARDOUGNE_TELEPORT_AND_BOAT, 12);
-		tiles(TravelMethod.GLORY_KARAMJA, 165);
+		tiles(TravelMethod.GLORY_KARAMJA, 164);
 		// Lletya
-		tiles(TravelMethod.TELEPORT_CRYSTAL_LLETYA, 17);
+		tiles(TravelMethod.TELEPORT_CRYSTAL_LLETYA, 15);
 		// Kastori
-		tiles(TravelMethod.QUETZAL_KASTORI, 36);
-		tiles(TravelMethod.PENDANT_OF_ATES_NORTH_KASTORI, 30);
+		tiles(TravelMethod.QUETZAL_KASTORI, 32);
+		tiles(TravelMethod.PENDANT_OF_ATES_NORTH_KASTORI, 33);
 		// Falador farm
-		tiles(TravelMethod.EXPLORERS_RING_CABBAGE_PATCH, 25);
-		tiles(TravelMethod.DRAYNOR_MANOR_TELEPORT, 60);
-		tiles(TravelMethod.SPIRIT_TREE_PORT_SARIM, 55);
-		tiles(TravelMethod.GLORY_DRAYNOR, 70);
-		tiles(TravelMethod.FALADOR_TELEPORT_TO_FARM, 100);
+		tiles(TravelMethod.EXPLORERS_RING_CABBAGE_PATCH, 19);
+		tiles(TravelMethod.DRAYNOR_MANOR_TELEPORT, 75);
+		tiles(TravelMethod.SPIRIT_TREE_PORT_SARIM, 54);
+		tiles(TravelMethod.GLORY_DRAYNOR, 95);
+		tiles(TravelMethod.FALADOR_TELEPORT_TO_FARM, 127);
 		// Port Phasmatys
-		tiles(TravelMethod.FAIRY_RING_ALQ, 40);
-		tiles(TravelMethod.ECTOPHIAL, 60);
-		tiles(TravelMethod.FENKENSTRAINS_CASTLE_TELEPORT, 60);
-		tiles(TravelMethod.KHARYRLL_TELEPORT, 120);
+		tiles(TravelMethod.FAIRY_RING_ALQ, 41);
+		tiles(TravelMethod.ECTOPHIAL, 57);
+		tiles(TravelMethod.FENKENSTRAINS_CASTLE_TELEPORT, 55);
+		tiles(TravelMethod.KHARYRLL_TELEPORT, 134);
 		// Ardougne farm
 		tiles(TravelMethod.ARDOUGNE_CLOAK_FARM, 3);
-		tiles(TravelMethod.SKILLS_NECKLACE_FISHING_GUILD, 59);
-		tiles(TravelMethod.MAX_CAPE_FISHING_GUILD, 62);
-		tiles(TravelMethod.FISHING_GUILD_TELEPORT, 59);
-		tiles(TravelMethod.COMBAT_BRACELET_RANGING_GUILD, 67);
-		tiles(TravelMethod.FAIRY_RING_BLR, 70);
-		tiles(TravelMethod.ARDOUGNE_TELEPORT, 69);
+		tiles(TravelMethod.SKILLS_NECKLACE_FISHING_GUILD, 60);
+		tiles(TravelMethod.MAX_CAPE_FISHING_GUILD, 73);
+		tiles(TravelMethod.FISHING_GUILD_TELEPORT, 58);
+		tiles(TravelMethod.COMBAT_BRACELET_RANGING_GUILD, 69);
+		tiles(TravelMethod.FAIRY_RING_BLR, 71);
+		tiles(TravelMethod.ARDOUGNE_TELEPORT, 95);
 		// Hosidius
-		tiles(TravelMethod.XERICS_TALISMAN_GLADE, 16);
-		tiles(TravelMethod.HOUSE_PORTAL_HOSIDIUS, 33);
-		tiles(TravelMethod.HOSIDIUS_TABLET, 33);
-		tiles(TravelMethod.CONSTRUCTION_CAPE_HOSIDIUS, 33);
-		tiles(TravelMethod.KHAREDSTS_MEMOIRS_LANCALLIUMS, 62);
-		tiles(TravelMethod.FAIRY_RING_AKR, 89);
-		tiles(TravelMethod.SKILLS_NECKLACE_WOODCUTTING_GUILD, 76);
-		// Troll Stronghold: 16 over the 73 Agility rocks, about 55 through the inside
-		tiles(TravelMethod.STONY_BASALT_ROOF, 11);
-		tiles(TravelMethod.STONY_BASALT_ENTRANCE, 35);
-		tiles(TravelMethod.TROLLHEIM_TELEPORT, 150);
+		tiles(TravelMethod.XERICS_TALISMAN_GLADE, 21);
+		tiles(TravelMethod.HOUSE_PORTAL_HOSIDIUS, 31);
+		tiles(TravelMethod.HOSIDIUS_TABLET, 31);
+		tiles(TravelMethod.CONSTRUCTION_CAPE_HOSIDIUS, 31);
+		tiles(TravelMethod.KHAREDSTS_MEMOIRS_LANCALLIUMS, 72);
+		tiles(TravelMethod.FAIRY_RING_AKR, 87);
+		tiles(TravelMethod.SKILLS_NECKLACE_WOODCUTTING_GUILD, 76); // estimate: with the 45 Agility river jump
+		// Troll Stronghold: the roof is a few steps from the patch; Trollheim is the long walk down the mountain
+		tiles(TravelMethod.STONY_BASALT_ROOF, 7);
+		tiles(TravelMethod.STONY_BASALT_ENTRANCE, 35); // estimate: in and up through the stronghold
+		tiles(TravelMethod.TROLLHEIM_TELEPORT, 174);
 		extra(TravelMethod.TROLLHEIM_TELEPORT, 10);
 		// Harmony Island, Weiss
-		tiles(TravelMethod.HARMONY_ISLAND_TELEPORT, 32);
-		tiles(TravelMethod.ICY_BASALT, 7);
+		tiles(TravelMethod.HARMONY_ISLAND_TELEPORT, 25);
+		tiles(TravelMethod.ICY_BASALT, 3);
 		// Civitas illa Fortis / Ortus Farm
-		tiles(TravelMethod.QUETZAL_HUNTER_GUILD, 39);
-		tiles(TravelMethod.HUNTER_CAPE, 48);
-		tiles(TravelMethod.MAX_CAPE_HUNTER_GUILD, 48);
-		tiles(TravelMethod.CIVITAS_ILLA_FORTIS_TELEPORT, 54);
+		tiles(TravelMethod.QUETZAL_HUNTER_GUILD, 46);
+		tiles(TravelMethod.HUNTER_CAPE, 73);
+		tiles(TravelMethod.MAX_CAPE_HUNTER_GUILD, 73);
+		tiles(TravelMethod.CIVITAS_ILLA_FORTIS_TELEPORT, 60);
 		extra(TravelMethod.CIVITAS_ILLA_FORTIS_TELEPORT, 8);
-		tiles(TravelMethod.FAIRY_RING_AJP, 84);
+		tiles(TravelMethod.FAIRY_RING_AJP, 91);
 	}
 
 	// Everything else the route needs to know about distances, in one place (docs/REBUILD.md, Sprint 1)
@@ -165,56 +168,63 @@ public final class TravelTimes
 	private static final Map<Location, Integer> RENU_PAD_WALK = new EnumMap<>(Location.class);
 	/** Tiles from a stop's patch to its nearest bank; stops without a practical bank are missing. */
 	private static final Map<Location, Integer> BANK_TILES = new EnumMap<>(Location.class);
-	/** Where each stop's nearest bank is, for the walking line to it (UNVERIFIED: from the map, not checked in game). */
+	/** Where each stop's nearest bank is, for the walking line to it (Shortest Path's bank tiles). */
 	private static final Map<Location, WorldPoint> BANK_POINTS = new EnumMap<>(Location.class);
 	/** For "finish near a bank": a stop without a bank nearby counts as this far from one. */
 	public static final int NO_BANK_TILES = 70;
 
 	static
 	{
-		walk(Location.FALADOR_PARK, Location.FALADOR_FARM, 75);
-		// Round to Taverley's gate (wiki research: about 90-110); over the rocks with 66 Agility, 75
-		walk(Location.FALADOR_PARK, Location.TAVERLEY, 100);
+		// Measured on Shortest Path's collision map (2026-10-13), patch to patch; over Taverley's rocks with 66
+		// Agility it's 75
+		walk(Location.FALADOR_PARK, Location.FALADOR_FARM, 108);
+		walk(Location.FALADOR_PARK, Location.TAVERLEY, 112);
 
-		SPIRIT_TREE_WALK.put(Location.GNOME_STRONGHOLD, 14);
-		// The village tree is inside the maze: back in past Elkoy
+		// From the stop's nearest patch to the tree, measured (Shortest Path's map and tree tiles)
+		SPIRIT_TREE_WALK.put(Location.GNOME_STRONGHOLD, 11);
+		// The village tree is inside the maze: back in past Elkoy (estimate; the maze walk isn't the way in)
 		SPIRIT_TREE_WALK.put(Location.TREE_GNOME_VILLAGE, 60);
-		SPIRIT_TREE_WALK.put(Location.FARMING_GUILD, 11);
-		SPIRIT_TREE_WALK.put(Location.BRIMHAVEN, 38);
-		SPIRIT_TREE_WALK.put(Location.FALADOR_FARM, 55);
-		SPIRIT_TREE_WALK.put(Location.VARROCK, 60);
+		SPIRIT_TREE_WALK.put(Location.FARMING_GUILD, 6);
+		SPIRIT_TREE_WALK.put(Location.BRIMHAVEN, 32);
+		SPIRIT_TREE_WALK.put(Location.FALADOR_FARM, 53);
+		SPIRIT_TREE_WALK.put(Location.VARROCK, 81);
 		PLANTED_SPIRIT_TREES.put(Location.FARMING_GUILD, Unlock.SPIRIT_TREE_FARMING_GUILD);
 		PLANTED_SPIRIT_TREES.put(Location.BRIMHAVEN, Unlock.SPIRIT_TREE_BRIMHAVEN);
 		PLANTED_SPIRIT_TREES.put(Location.FALADOR_FARM, Unlock.SPIRIT_TREE_PORT_SARIM);
 
-		RENU_PAD_WALK.put(Location.CIVITAS_ILLA_FORTIS, 39);
-		RENU_PAD_WALK.put(Location.KASTORI, 36);
-		RENU_PAD_WALK.put(Location.NEMUS_RETREAT, 60);
+		// From the patch back to the quetzal pad, measured; Nemus Retreat through the 33 Agility tunnel
+		RENU_PAD_WALK.put(Location.CIVITAS_ILLA_FORTIS, 45);
+		RENU_PAD_WALK.put(Location.KASTORI, 31);
+		RENU_PAD_WALK.put(Location.NEMUS_RETREAT, 71);
 
-		// Estimates from the map (UNVERIFIED unless noted); the old Walk sizes were 10 / 28 / 55
-		BANK_TILES.put(Location.VARROCK, 55);
-		BANK_TILES.put(Location.FALADOR_PARK, 28);
-		// The Grand Tree bank from the tree patch
+		// From the stop's patch furthest from the bank (the one most likely done last, Sean) to the nearest bank,
+		// measured on Shortest Path's map with its bank tiles. Catherby: herb 38, fruit tree 54. Farming Guild:
+		// fruit tree 2, herb 32, tree 38.
+		BANK_TILES.put(Location.VARROCK, 49);
+		BANK_TILES.put(Location.FALADOR_PARK, 34);
+		// The Tree Gnome Stronghold bank by the tree patch, upstairs (estimate: the ladder isn't on the map)
 		BANK_TILES.put(Location.GNOME_STRONGHOLD, 10);
-		// Bank chest on site
-		BANK_TILES.put(Location.FARMING_GUILD, 10);
+		// Bank chest by the fruit tree
+		BANK_TILES.put(Location.FARMING_GUILD, 38);
 		// The bank buffalo on the east side of the camp
 		BANK_TILES.put(Location.NEMUS_RETREAT, 25);
-		BANK_TILES.put(Location.CATHERBY, 28);
-		BANK_TILES.put(Location.LLETYA, 28);
-		// Across town from the patch, through the gate (Sean: banking there is slow)
+		BANK_TILES.put(Location.CATHERBY, 54);
+		BANK_TILES.put(Location.LLETYA, 33);
+		// Across town from the patch, through the gate (estimate; Sean: banking there is slow)
 		BANK_TILES.put(Location.PORT_PHASMATYS, 95);
-		// The Hunter Guild bank chest (open to anyone)
-		BANK_TILES.put(Location.CIVITAS_ILLA_FORTIS, 48);
+		// The Hunter Guild bank (open to anyone)
+		BANK_TILES.put(Location.CIVITAS_ILLA_FORTIS, 89);
 
-		BANK_POINTS.put(Location.CATHERBY, new WorldPoint(2809, 3441, 0));
-		// The Grand Tree bank, upstairs
-		BANK_POINTS.put(Location.GNOME_STRONGHOLD, new WorldPoint(2449, 3482, 1));
-		BANK_POINTS.put(Location.FALADOR_PARK, new WorldPoint(3013, 3355, 0));
-		BANK_POINTS.put(Location.VARROCK, new WorldPoint(3253, 3420, 0));
-		BANK_POINTS.put(Location.LLETYA, new WorldPoint(2353, 3163, 0));
-		BANK_POINTS.put(Location.PORT_PHASMATYS, new WorldPoint(3688, 3467, 0));
-		BANK_POINTS.put(Location.FARMING_GUILD, new WorldPoint(1253, 3741, 0));
+		// Bank booths and chests, from Shortest Path's bank list
+		BANK_POINTS.put(Location.CATHERBY, new WorldPoint(2807, 3441, 0));
+		BANK_POINTS.put(Location.GNOME_STRONGHOLD, new WorldPoint(2445, 3424, 1));
+		BANK_POINTS.put(Location.FALADOR_PARK, new WorldPoint(3010, 3355, 0));
+		BANK_POINTS.put(Location.VARROCK, new WorldPoint(3251, 3420, 0));
+		BANK_POINTS.put(Location.LLETYA, new WorldPoint(2352, 3162, 0));
+		BANK_POINTS.put(Location.PORT_PHASMATYS, new WorldPoint(3687, 3466, 0));
+		BANK_POINTS.put(Location.FARMING_GUILD, new WorldPoint(1248, 3758, 0));
+		BANK_POINTS.put(Location.NEMUS_RETREAT, new WorldPoint(1387, 3309, 0));
+		BANK_POINTS.put(Location.CIVITAS_ILLA_FORTIS, new WorldPoint(1542, 3040, 0));
 	}
 
 	private TravelTimes()
