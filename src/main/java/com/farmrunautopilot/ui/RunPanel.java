@@ -749,7 +749,7 @@ class RunPanel extends JPanel
 	}
 
 	/** One step of the current stop: its tick box, struck through when done, orange when in hand. */
-	private JComponent stepRow(int index, RunView.Step step, boolean bank)
+	private JComponent stepRow(int index, RunView.Step step)
 	{
 		final String text = UiText.escape(step.getText());
 		final String open = "<html><body style='width:" + ((TEXT_WIDTH - 60) * 10 / 13) + "px'>";
@@ -760,8 +760,8 @@ class RunPanel extends JPanel
 			: step.getStatus() == RunView.StopStatus.CURRENT ? ColorScheme.BRAND_ORANGE : Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
 
-		// A bank visit's steps are only ticked by the plugin; the bank row itself can be ticked
-		final JCheckBox box = tickBox(done, !bank && (!done || step.isManual()),
+		// Bank visit steps too (Sean: none could be ticked): the plugin ticks what it sees, the player the rest
+		final JCheckBox box = tickBox(done, !done || step.isManual(),
 			ticked -> controls.setStepTicked(index, ticked));
 		final JPanel row = new JPanel(new BorderLayout());
 		row.setOpaque(false);
@@ -812,7 +812,7 @@ class RunPanel extends JPanel
 			final List<RunView.Step> list = stop.getSteps();
 			for (int i = 0; i < list.size(); i++)
 			{
-				steps.add(stepRow(i, list.get(i), stop.isBank()));
+				steps.add(stepRow(i, list.get(i)));
 			}
 			cell.add(steps, BorderLayout.CENTER);
 		}

@@ -101,6 +101,15 @@ public class RunSession
 	private Holdings checkedHoldings;
 	/** Since when the current step's item has been missing (epoch millis), 0 if it isn't. */
 	private long missingSince;
+	/**
+	 * The bank visit under way, step by step (Sean: at Castle Wars it still said to use the ring): got to the bank,
+	 * opened it, opened the Farm run tab. Each stays done once seen (or ticked by hand) until the visit ends.
+	 */
+	private final boolean[] bankProgress = new boolean[3];
+	/** Bank visit steps ticked by hand, so they can be unticked. */
+	private final boolean[] bankTicked = new boolean[3];
+	/** Within this of the bank chest or booth counts as having got there. */
+	private static final int AT_BANK_TILES = 20;
 	/** At the Farming Guild, everything needed from the seed vault has been taken (or skipped). */
 	private boolean vaultChecked;
 	/** The time for the leg to the current stop has been saved. */
@@ -362,8 +371,14 @@ public class RunSession
 	 */
 	public void setStepTicked(int step, boolean ticked)
 	{
-		if (stage != RunView.State.RUNNING || banking || stopIndex >= plan.getRoute().getStops().size())
+		if (stage != RunView.State.RUNNING || stopIndex >= plan.getRoute().getStops().size())
 		{
+			return;
+		}
+		if (banking)
+		{
+			// The steps shown are the bank visit's
+			setBankStepTicked(step, ticked);
 			return;
 		}
 		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
@@ -839,7 +854,7 @@ public class RunSession
 			{
 				if (missingCount(extraBank.getSupplies().counted(holdingsTracker.getHoldings()), false) > 0)
 				{
-					banking = true;
+					visitBank(extraBank);
 					patches.clearCurrent();
 					instruction = bankStep(extraBank);
 					break;
@@ -900,7 +915,7 @@ public class RunSession
 						log.debug("Bank visit after {}: deposit {}", stop.getLocation().getDisplayName(),
 							depositNames());
 					}
-					banking = true;
+					visitBank(bank);
 					patches.clearCurrent();
 					instruction = bankStep(bank);
 					break;
@@ -1115,10 +1130,14 @@ public class RunSession
 	 */
 	private String bankStep(BankStop bank)
 	{
-		if (!bankTab.isBankOpen())
+		if (!bankProgress[0])
 		{
 			return bank.getTeleport() != null ? "Use your " + bank.getTeleport().getItemName() + " to teleport to "
-				+ bank.getTeleport().getBankName() + ", then open the bank" : bank.title() + ": open the bank";
+				+ bank.getTeleport().getBankName() : bank.title() + ": walk to the bank";
+		}
+		if (!bankTab.isBankOpen())
+		{
+			return "Open the bank";
 		}
 		if (!bankTab.isTabOpen())
 		{
@@ -1127,18 +1146,91 @@ public class RunSession
 		return "Deposit the outlined items, then take what the Farm run tab shows";
 	}
 
+	/**
+	 * At a bank visit this tick: a new visit starts with nothing done; then what the game shows is added (at the
+	 * bank, the bank open, the Farm run tab open) and stays done until the visit ends.
+	 */
+	private void visitBank(BankStop bank)
+	{
+		if (!banking)
+		{
+			java.util.Arrays.fill(bankProgress, false);
+			java.util.Arrays.fill(bankTicked, false);
+		}
+		banking = true;
+		final boolean open = bankTab.isBankOpen();
+		bankProgress[0] |= open || atBank(bank);
+		bankProgress[1] |= open;
+		bankProgress[2] |= open && bankTab.isTabOpen();
+	}
+
+	/** Close to this visit's bank chest or booth: where its teleport lands, or the bank by the stop. */
+	private boolean atBank(BankStop bank)
+	{
+		final WorldPoint point = bank.getTeleport() != null ? bank.getTeleport().getBankPoint()
+			: TravelTimes.bankPoint(bank.getLocation());
+		final Player player = client.getLocalPlayer();
+		return point != null && player != null && player.getWorldLocation().getPlane() == point.getPlane()
+			&& player.getWorldLocation().distanceTo2D(point) <= AT_BANK_TILES;
+	}
+
+	/**
+	 * A bank visit step ticked or unticked by hand: the first three move the guide on (or back), the last carries on
+	 * without everything from the bank.
+	 */
+	private void setBankStepTicked(int step, boolean ticked)
+	{
+		if (step >= bankProgress.length)
+		{
+			if (ticked && extraBank != null)
+			{
+				declineExtraBank();
+			}
+			else if (ticked)
+			{
+				skipBank(stopIndex);
+			}
+			return;
+		}
+		if (ticked)
+		{
+			// Ticking a step ticks those before it too, as the visit goes in order
+			for (int i = 0; i <= step; i++)
+			{
+				bankTicked[i] |= !bankProgress[i];
+				bankProgress[i] = true;
+			}
+		}
+		else if (bankTicked[step])
+		{
+			for (int i = step; i < bankProgress.length; i++)
+			{
+				if (bankTicked[i])
+				{
+					bankProgress[i] = false;
+					bankTicked[i] = false;
+				}
+			}
+		}
+		evaluate();
+	}
+
 	/** A bank visit's steps, as {@link #bankStep} goes through them, for the bank's row on the Run tab. */
 	private List<RunView.Step> bankSteps(BankStop bank)
 	{
-		final boolean open = bankTab.isBankOpen();
-		final boolean tab = open && bankTab.isTabOpen();
+		final String[] texts = {bank.getTeleport() != null ? capitalised(bank.how()) : "Walk to the bank", "Open the bank",
+			"Open the Farm run tab"};
 		final List<RunView.Step> steps = new ArrayList<>();
-		steps.add(new RunView.Step(bank.getTeleport() != null ? capitalised(bank.how()) + ", open the bank"
-			: "Open the bank", open ? RunView.StopStatus.DONE : RunView.StopStatus.CURRENT, false, false));
-		steps.add(new RunView.Step("Open the Farm run tab", tab ? RunView.StopStatus.DONE
-			: open ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING, false, false));
-		steps.add(new RunView.Step("Deposit and take the marked items", tab ? RunView.StopStatus.CURRENT
-			: RunView.StopStatus.PENDING, false, false));
+		boolean current = false;
+		for (int i = 0; i < texts.length; i++)
+		{
+			final RunView.StopStatus status = bankProgress[i] ? RunView.StopStatus.DONE
+				: !current ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
+			current |= !bankProgress[i];
+			steps.add(new RunView.Step(texts[i], status, false, bankProgress[i] && bankTicked[i]));
+		}
+		steps.add(new RunView.Step("Deposit and take the marked items", current ? RunView.StopStatus.PENDING
+			: RunView.StopStatus.CURRENT, false, false));
 		return steps;
 	}
 
@@ -1211,7 +1303,7 @@ public class RunSession
 		{
 			// Teleporting to the bank: the bank teleport is the item to use, as for any other teleport (Sean)
 			final BankStop bank = activeBank();
-			if (bank != null && bank.getTeleport() != null && !bankTab.isBankOpen())
+			if (bank != null && bank.getTeleport() != null && !bankProgress[0])
 			{
 				final Set<Integer> teleport = new LinkedHashSet<>();
 				for (int id : bank.getTeleport().getItemIds())
