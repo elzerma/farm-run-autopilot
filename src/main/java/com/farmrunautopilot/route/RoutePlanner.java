@@ -42,9 +42,12 @@ public final class RoutePlanner
 	static final double PREFER_WALKING_SECONDS = 8.0;
 	/**
 	 * What spending a quetzal whistle charge is worth in the route's ordering (not its times): charges are few and
-	 * recharged by hand, so Renu from a nearby pad wins a near tie (Sean, 2026-10-13).
+	 * recharged by hand (Sean, 2026-10-13: a charge to reach the Hunter Guild is fine, a long run back to its pad
+	 * from Ortus isn't).
 	 */
-	static final double WHISTLE_CHARGE_PENALTY = 8.0;
+	static final double WHISTLE_CHARGE_PENALTY = 4.0;
+	/** Renu from a nearby pad (free, no runes) wins a near tie with a teleport into Varlamore. */
+	static final double RENU_PREFERENCE = 2.0;
 	/** Switching spellbook at a house altar and back again later (two trips to the altar). */
 	static final double SPELLBOOK_SWAP = 2 * (TravelTimes.TELEPORT + TravelTimes.HOUSE_WALK + 3.0);
 	/** For the ordering only: a leg needing an item or tablet the player doesn't have goes last if it can. */
@@ -690,8 +693,9 @@ public final class RoutePlanner
 				final double estimate = option.seconds + TravelTimes.LEG_OVERHEAD;
 				final double seconds = learned.adjust(from, to, option.method, option.departure, estimate);
 				// A whistle flight spends a charge, Renu from a pad doesn't (Sean: run back to the Kastori pad for Renu)
+				// and needs no runes either, so it wins a tie (Sean: the run back to Kastori's pad is short)
 				final double charge = option.method.getKind() == TravelKind.QUETZAL && option.departure == Departure.DIRECT
-					? WHISTLE_CHARGE_PENALTY : 0;
+					? WHISTLE_CHARGE_PENALTY : option.departure == Departure.RENU ? -RENU_PREFERENCE : 0;
 				final Leg leg = new Leg(option.method, option.departure, seconds, false, charge, option.breakdown
 					+ " + overhead " + round(TravelTimes.LEG_OVERHEAD) + learnedNote(seconds, estimate));
 				final double rank = seconds + charge + teleportPreference() + stylePenalty(leg, to);
