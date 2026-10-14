@@ -1,5 +1,6 @@
 package com.farmrunautopilot;
 
+import com.farmrunautopilot.data.travel.WalkGrid;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.bank.FarmBankTab;
 import com.farmrunautopilot.access.PohDetector;
@@ -184,6 +185,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		settings.load();
+		// Read the bundled walking grid now, not on the client thread when a route is first planned
+		WalkGrid.loaded();
 		bottomlessBucket.reload();
 		itemCharges.reload();
 		accessChecker.requestRefresh();

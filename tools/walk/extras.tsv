@@ -1,0 +1,22 @@
+kind	location	name	x	y	plane	boarding_tiles	requirements	source	note
+spirit_tree	VARROCK	Grand Exchange	3185	3508	0	tree surrounds (SP origin rows)	Tree Gnome Village	spirit_trees.tsv "4: Grand Exchange"	x,y = landing tile
+spirit_tree	GNOME_STRONGHOLD	Gnome Stronghold	2461	3444	0		Tree Gnome Village	spirit_trees.tsv "2: Gnome Stronghold"	
+spirit_tree	TREE_GNOME_VILLAGE	Tree Gnome Village	2542	3170	0		Tree Gnome Village	spirit_trees.tsv "1: Tree Gnome Village"	Inside the maze; exit via Elkoy 2515 3159 -> 2504 3191 (varbit 111>0)
+spirit_tree	FARMING_GUILD	Farming Guild (planted)	1251	3750	0	1251 3749 / 1251 3750 ...	Tree Gnome Village; planted	spirit_trees.tsv "B: Farming Guild"	
+spirit_tree	BRIMHAVEN	Brimhaven (planted)	2800	3203	0		Tree Gnome Village; planted	spirit_trees.tsv "9: Brimhaven"	
+spirit_tree	FALADOR_FARM	Port Sarim (planted)	3058	3257	0		Tree Gnome Village; planted	spirit_trees.tsv "7: Port Sarim"	
+spirit_tree	HOSIDIUS	Hosidius (planted)	1693	3540	0		Tree Gnome Village; planted	spirit_trees.tsv "A: Hosidius"	NOT in the plugin; 45 tiles from the Hosidius herb patch
+fairy_ring	FARMING_GUILD	CIR	1302	3762	0			fairy_rings.tsv "C I R"	
+fairy_ring	NEMUS_RETREAT	AIS	1429	3324	0			fairy_rings.tsv "A I S"	
+fairy_ring	TREE_GNOME_VILLAGE	CIQ	2528	3127	0			fairy_rings.tsv "C I Q"	
+fairy_ring	PORT_PHASMATYS	ALQ	3597	3495	0			fairy_rings.tsv "A L Q"	
+fairy_ring	ARDOUGNE_FARM	BLR	2740	3351	0			fairy_rings.tsv "B L R"	
+fairy_ring	HOSIDIUS	AKR	1826	3540	0			fairy_rings.tsv "A K R"	
+fairy_ring	CIVITAS_ILLA_FORTIS	AJP	1651	3010	0		Children of the Sun	fairy_rings.tsv "A J P"	
+quetzal_pad	CIVITAS_ILLA_FORTIS	Civitas illa Fortis (city pad)	1697	3140	0	1697 3140 0	Twilight's Promise	quetzals.tsv / quetzal_whistle.tsv "Civitas illa Fortis"	Plugin uses 1696 3141 for Renu
+quetzal_pad	CIVITAS_ILLA_FORTIS	Hunter Guild	1585	3053	0	1585 3053 0	Twilight's Promise	quetzals.tsv "Hunter Guild"	Pad for the Ortus herb
+quetzal_pad	KASTORI	Kastori	1344	3022	0	1344 3022 0	Twilight's Promise; VarPlayer 4182&16384 (pad built)	quetzals.tsv "Kastori"	
+quetzal_pad	NEMUS_RETREAT	Auburnvale	1411	3361	0	1411 3361 0	Twilight's Promise	quetzals.tsv "Auburnvale"	
+hot_air_balloon	TAVERLEY	Taverley	2941	3420	0	2938-2941 3420-3423 (8 tiles, "Use Basket 19129")	varbit 2868=2	hot_air_balloons.tsv "Taverley"	SP lists no Items for any balloon (logs not modelled)
+hot_air_balloon	GNOME_STRONGHOLD	Grand Tree	2478	3456	0	2480-2483 3456-3459 (8 tiles, "Use Basket 19129")	varbit 2870=1	hot_air_balloons.tsv "Grand Tree"	
+hot_air_balloon	TREE_GNOME_VILLAGE	Castle Wars	2459	3110	0	2460-2463 3108-3111 (7 tiles, "Use Basket 19129")	varbit 2869=1	hot_air_balloons.tsv "Castle Wars"	About 70 tiles from the Tree Gnome Village patch

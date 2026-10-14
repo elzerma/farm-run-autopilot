@@ -1,0 +1,77 @@
+method	location	x	y	plane	raw_landing	source	confidence	note
+LUMBRIDGE_TELEPORT	LUMBRIDGE	3221	3218	0	3221 3218 0	teleportation_spells.tsv "Lumbridge Teleport"	high	
+LUMBRIDGE_HOME_TELEPORT	LUMBRIDGE	3221	3218	0	3221 3218 0	teleportation_spells_home.tsv "Lumbridge Home Teleport"	high	
+DIARY_CAPE_LUMBRIDGE	LUMBRIDGE	3234	3214	0	3234 3214 0	teleportation_items.tsv "Achievement diary cape: B. Hatius Cosaintus"	high	Sheet had 3239, 3220
+VARROCK_TELEPORT	VARROCK	3213	3424	0	3213 3424 0	teleportation_spells.tsv "Varrock Teleport"	high	GE variant (Varrock medium diary, 3165 3479) not used by this method
+DIARY_CAPE_VARROCK	VARROCK	3225	3415	0	3225 3415 0	teleportation_items.tsv "Achievement diary cape: D. Toby"	high	
+SKILLS_NECKLACE_COOKS_GUILD	VARROCK	3144	3438	0	3144 3438 0	teleportation_items.tsv "Skills necklace: Cooking Guild"	high	Jewellery box: teleportation_boxes.tsv "H: Cooking Guild" same tile
+RING_OF_WEALTH_GRAND_EXCHANGE	VARROCK	3163	3478	0	3163 3478 0	teleportation_items.tsv "Ring of wealth: Grand Exchange"	high	Jewellery box "L: Grand Exchange" same tile
+SPIRIT_TREE_GRAND_EXCHANGE	VARROCK	3185	3508	0	3185 3508 0	spirit_trees.tsv "4: Grand Exchange"	high	Sheet had 3185, 3510
+RING_OF_WEALTH_FALADOR_PARK	FALADOR_PARK	2995	3375	0	2995 3375 0	teleportation_items.tsv "Ring of wealth: Falador Park"	high	Jewellery box "M: Falador Park" same tile
+FALADOR_TELEPORT_TO_PARK	FALADOR_PARK	2964	3378	0	2964 3378 0	teleportation_spells.tsv "Falador Teleport"	high	
+SKILLS_NECKLACE_MINING_GUILD	FALADOR_PARK	3021	3339	0	3049 9763 0	teleportation_items.tsv "Skills necklace: Mining Guild" + transports.tsv "Climb-up Ladder 17386" (3021 9739 0 -> 3021 3339 0)	medium	Walk start is AFTER the ladder: lands underground 3049 9763 0, walk ~30 tiles to the ladder (plugin point 3020 9739), climb up. SP has 3 ladder exits (3017 3339 / 3019 3337 / 3021 3339) by side; 3021 is the side facing the landing. Jewellery box "F: Mining Guild" same landing
+HOUSE_PORTAL_TAVERLEY	TAVERLEY	2893	3465	0	2893 3465 0	teleportation_spells.tsv "Teleport to House (Outside)" 2187=2	high	Outside the Taverley house portal (the cast lands inside the house unless set to outside)
+TAVERLEY_TABLET	TAVERLEY	2893	3465	0	2893 3465 0	teleportation_items.tsv "Taverley tablet"	high	Outside the house portal
+CONSTRUCTION_CAPE_TAVERLEY	TAVERLEY	2892	3465	0	2892 3465 0	teleportation_items.tsv "Construction cape: Taverley"	high	1 tile west of the tablet/spell tile
+FALADOR_TELEPORT_TO_TAVERLEY	TAVERLEY	2964	3378	0	2964 3378 0	teleportation_spells.tsv "Falador Teleport"	high	Walk includes the 66 Agility rocks north of Falador (sheet: 2945, 3439) or round by Taverley's gate; pathfinder should use agility_shortcuts.tsv
+GAMES_NECKLACE_BURTHORPE	TAVERLEY	2899	3553	0	2899 3553 0	teleportation_items.tsv "Games necklace: Burthorpe"	high	Jewellery box "5: Burthorpe" same tile
+COMBAT_BRACELET_WARRIORS_GUILD	TAVERLEY	2882	3547	0	2882 3547 0	teleportation_items.tsv "Combat bracelet: Warriors' Guild"	high	Jewellery box "A: Warriors' Guild" same tile
+SLAYER_RING_STRONGHOLD_CAVE	GNOME_STRONGHOLD	2431	3422	0	2431 3422 0	teleportation_items.tsv "Slayer ring: Stronghold"	high	Sheet had ~2432, 3423
+SPIRIT_TREE_GNOME_STRONGHOLD	GNOME_STRONGHOLD	2461	3444	0	2461 3444 0	spirit_trees.tsv "2: Gnome Stronghold"	high	
+ROYAL_SEED_POD	GNOME_STRONGHOLD	2465	3495	0	2465 3495 0	teleportation_items.tsv "Royal seed pod"	high	
+FARMING_CAPE	FARMING_GUILD	1248	3725	0	1248 3725 0	teleportation_items.tsv "Farming cape: Teleport"	high	Inside the guild
+SKILLS_NECKLACE_FARMING_GUILD	FARMING_GUILD	1248	3725	0	1248 3725 0	teleportation_items.tsv "Skills necklace: Farming Guild" (45 Farming row)	high	With 45 Farming lands inside at 1248 3725; without, the other row lands outside at 1248 3719 0. Jewellery box "J: Farming Guild" lists only 1248 3719
+MAX_CAPE_FARMING_GUILD	FARMING_GUILD	1248	3725	0	1248 3725 0	teleportation_items.tsv "Max cape: Other Teleports: Farming Guild"	high	
+SPIRIT_TREE_FARMING_GUILD	FARMING_GUILD	1251	3750	0	1251 3750 0	spirit_trees.tsv "B: Farming Guild"	high	Planted tree
+FAIRY_RING_CIR	FARMING_GUILD	1302	3762	0	1302 3762 0	fairy_rings.tsv "C I R"	high	
+BATTLEFRONT_TELEPORT	FARMING_GUILD	1347	3740	0	1347 3740 0	teleportation_spells.tsv "Battlefront Teleport"	high	
+RADAS_BLESSING_MOUNT_KARUULM	FARMING_GUILD	1310	3796	0	1310 3796 0	teleportation_items.tsv "Rada's blessing: Mount Karuulm"	medium	Lands on Mount Karuulm; climb down assumed to be plain walking on plane 0 (no SP transport rows checked). Sheet had ~1311, 3807
+PENDANT_OF_ATES_NEMUS_RETREAT	NEMUS_RETREAT	1364	3277	0	1364 3277 0	teleportation_items.tsv "Pendant of ates: 6. Nemus Retreat"	high	
+QUETZAL_AUBURNVALE	NEMUS_RETREAT	1368	3323	0	1411 3361 0	quetzal_whistle.tsv "Quetzal whistle: Auburnvale" + agility_shortcuts.tsv "Climb-into Tunnel 56989" (1368 3327 -> 1368 3323, 33 Agility)	medium	Walk start is AFTER the tunnel: lands 1411 3361 0, walk to the tunnel's north end 1368 3327 0, crawl to 1368 3323 0. Without 33 Agility walk round from the raw landing to the camp entrance
+FAIRY_RING_AIS	NEMUS_RETREAT	1389	3309	0	1429 3324 0	fairy_rings.tsv "A I S" + agility_shortcuts.tsv "Cross Stepping stone 56988" (1399 3309 -> 1393 3309, 36 Agility) + "Climb-over Broken wall 56997" (1391 3309 -> 1389 3309, 24 Agility)	medium	Walk start is AFTER the stones and wall: ring 1429 3324 0, walk to 1399 3309, stones to 1393 3309, wall 1391 -> 1389 3309. Crossing order inferred from SP rows
+SPIRIT_TREE_TREE_GNOME_VILLAGE	TREE_GNOME_VILLAGE	2504	3191	0	2542 3170 0	spirit_trees.tsv "1: Tree Gnome Village" + transports.tsv "Follow Elkoy 4968" (2515 3159 0 -> 2504 3191 0, varbit 111>0)	high	Walk start is AFTER Elkoy: tree lands 2542 3170 0 in the maze, walk to Elkoy's spot 2515 3159 0, Follow -> 2504 3191 0 outside. Sheet had ~2502, 3192
+FAIRY_RING_CIQ	TREE_GNOME_VILLAGE	2528	3127	0	2528 3127 0	fairy_rings.tsv "C I Q"	high	
+CAMELOT_TELEPORT	CATHERBY	2757	3479	0	2757 3479 0	teleportation_spells.tsv "Camelot Teleport"	high	Seers' variant (Kandarin hard diary) lands 2726 3487 0 instead, if chosen
+CATHERBY_TELEPORT	CATHERBY	2801	3449	0	2801 3449 0	teleportation_spells.tsv "Catherby Teleport"	high	DIFFERS from the sheet (~2804, 3434); nexus "Catherby Portal" also 2801 3449
+HOUSE_PORTAL_BRIMHAVEN	BRIMHAVEN	2757	3178	0	2757 3178 0	teleportation_spells.tsv "Teleport to House (Outside)" 2187=5	high	Outside the Brimhaven house portal
+BRIMHAVEN_TABLET	BRIMHAVEN	2757	3179	0	2757 3179 0	teleportation_items.tsv "Brimhaven tablet"	high	1 tile north of the spell's outside tile
+CONSTRUCTION_CAPE_BRIMHAVEN	BRIMHAVEN	2756	3176	0	2756 3176 0	teleportation_items.tsv "Construction cape: Brimhaven"	high	
+SPIRIT_TREE_BRIMHAVEN	BRIMHAVEN	2800	3203	0	2800 3203 0	spirit_trees.tsv "9: Brimhaven"	high	Planted tree
+ARDOUGNE_TELEPORT_AND_BOAT	BRIMHAVEN	2772	3234	0	2662 3305 0	teleportation_spells.tsv "Ardougne Teleport" + ships.tsv "Brimhaven Captain Barnaby 9250" (2683 3271 0 -> 2772 3234 0)	high	Walk start is AFTER the boat: teleport 2662 3305 0, walk to the docks 2683 3271 0 (plugin uses 2683 3272), sail to 2772 3234 0
+GLORY_KARAMJA	BRIMHAVEN	2918	3176	0	2918 3176 0	teleportation_items.tsv "Amulet of glory: Karamja"	high	Jewellery box "P: Karamja" same tile
+TELEPORT_CRYSTAL_LLETYA	LLETYA	2330	3171	0	2330 3171 0	teleportation_items.tsv "Teleport crystal: Lletya"	high	
+QUETZAL_KASTORI	KASTORI	1344	3022	0	1344 3022 0	quetzal_whistle.tsv "Quetzal whistle: Kastori" (VarPlayer 4182&16384)	high	Pad must be built
+PENDANT_OF_ATES_NORTH_KASTORI	KASTORI	1366	3086	0	1366 3086 0	teleportation_items.tsv "Pendant of ates: 5. Kastori"	high	
+EXPLORERS_RING_CABBAGE_PATCH	FALADOR_FARM	3052	3291	0	3052 3291 0	teleportation_items.tsv "Explorer's ring 2: Teleport"	high	
+DRAYNOR_MANOR_TELEPORT	FALADOR_FARM	3109	3351	0	3109 3351 0	teleportation_spells.tsv "Draynor Manor Teleport"	high	Leaves the manor grounds by the south gate (normal walking)
+SPIRIT_TREE_PORT_SARIM	FALADOR_FARM	3058	3257	0	3058 3257 0	spirit_trees.tsv "7: Port Sarim"	high	Planted tree. Sheet had 3060, 3258
+GLORY_DRAYNOR	FALADOR_FARM	3105	3251	0	3105 3251 0	teleportation_items.tsv "Amulet of glory: Draynor Village"	high	Jewellery box "Q: Draynor Village" same tile
+FALADOR_TELEPORT_TO_FARM	FALADOR_FARM	2964	3378	0	2964 3378 0	teleportation_spells.tsv "Falador Teleport"	high	
+FAIRY_RING_ALQ	PORT_PHASMATYS	3597	3495	0	3597 3495 0	fairy_rings.tsv "A L Q"	high	
+ECTOPHIAL	PORT_PHASMATYS	3660	3522	0	3660 3522 0	teleportation_items.tsv "Ectophial"	high	
+FENKENSTRAINS_CASTLE_TELEPORT	PORT_PHASMATYS	3548	3529	0	3548 3529 0	teleportation_spells.tsv "Fenkenstrain's Castle Teleport"	high	Nexus "Fenkenstrain's Castle Portal" same tile
+KHARYRLL_TELEPORT	PORT_PHASMATYS	3494	3473	0	3494 3473 0	teleportation_spells.tsv "Kharyrll Teleport"	high	Nexus "Kharyrll Portal" same tile
+ARDOUGNE_CLOAK_FARM	ARDOUGNE_FARM	2665	3374	0	2665 3374 0	teleportation_items.tsv "Ardougne cloak: Ardougne Farm"	high	Sheet had ~2673, 3375
+SKILLS_NECKLACE_FISHING_GUILD	ARDOUGNE_FARM	2611	3390	0	2611 3390 0	teleportation_items.tsv "Skills necklace: Fishing Guild"	high	Jewellery box "E: Fishing Guild" same tile
+MAX_CAPE_FISHING_GUILD	ARDOUGNE_FARM	2604	3401	0	2604 3401 0	teleportation_items.tsv "Max cape: Fishing Teleports: Fishing Guild"	high	Lands inside the guild (same tile as the Fishing cape)
+FISHING_GUILD_TELEPORT	ARDOUGNE_FARM	2613	3391	0	2613 3391 0	teleportation_spells.tsv "Fishing Guild Teleport"	high	Nexus "Fishing Guild Portal" same tile
+COMBAT_BRACELET_RANGING_GUILD	ARDOUGNE_FARM	2653	3439	0	2653 3439 0	teleportation_items.tsv "Combat bracelet: Ranging Guild"	high	Jewellery box "D: Ranging Guild" same tile
+FAIRY_RING_BLR	ARDOUGNE_FARM	2740	3351	0	2740 3351 0	fairy_rings.tsv "B L R"	high	
+ARDOUGNE_TELEPORT	ARDOUGNE_FARM	2662	3305	0	2662 3305 0	teleportation_spells.tsv "Ardougne Teleport"	high	Nexus "Ardougne Portal" same tile
+XERICS_TALISMAN_GLADE	HOSIDIUS	1752	3566	0	1752 3566 0	teleportation_items.tsv "Xeric's talisman: 2. Xeric's Glade"	high	
+HOUSE_PORTAL_HOSIDIUS	HOSIDIUS	1743	3517	0	1743 3517 0	teleportation_spells.tsv "Teleport to House (Outside)" 2187=8	high	Outside the Hosidius house portal
+HOSIDIUS_TABLET	HOSIDIUS	1743	3517	0	1743 3517 0	teleportation_items.tsv "Hosidius tablet"	high	
+CONSTRUCTION_CAPE_HOSIDIUS	HOSIDIUS	1743	3517	0	1743 3517 0	teleportation_items.tsv "Construction cape: Hosidius"	high	The cape's "Home" row for Hosidius says 1740 3517 0 instead
+KHAREDSTS_MEMOIRS_LANCALLIUMS	HOSIDIUS	1714	3611	0	1714 3611 0	teleportation_items.tsv "Kharedst's memoirs: Lunch by the Lancalliums"	high	
+FAIRY_RING_AKR	HOSIDIUS	1826	3540	0	1826 3540 0	fairy_rings.tsv "A K R"	high	Sheet had 1827, 3538
+SKILLS_NECKLACE_WOODCUTTING_GUILD	HOSIDIUS	1662	3505	0	1662 3505 0	teleportation_items.tsv "Skills necklace: Woodcutting Guild"	high	Walk includes the 45 Agility river jump (not looked up in SP); jewellery box "I: Woodcutting Guild" same tile
+STONY_BASALT_ROOF	TROLL_STRONGHOLD	2837	3695	0	2837 3695 0	teleportation_items.tsv "Stony basalt: Roof" (73 Agility, varbit 4493=1 Fremennik hard)	high	
+STONY_BASALT_ENTRANCE	TROLL_STRONGHOLD	2838	3693	0	2845 3694 0	teleportation_items.tsv "Stony basalt" + agility_shortcuts.tsv "Climb Rocks 16464" (2844 3693 0 -> 2838 3693 0, 73 Agility)	medium	Walk start is AFTER the rocks (73 Agility). Without: Enter at 2840 3690 0, then "Climb-up Troll ladder 18834" exits on the roof at 2831 3676 0 (use that). Nexus "Troll Stronghold Portal" lands 2837 3695 (roof) with Fremennik hard (4493=1), else 2845 3694: answers the UNVERIFIED comment
+TROLLHEIM_TELEPORT	TROLL_STRONGHOLD	2838	3693	0	2890 3679 0	teleportation_spells.tsv "Trollheim Teleport" + agility_shortcuts.tsv "Climb Rocks 16464"	medium	Walk start AFTER the roof climb; the walk down Trollheim (2890 3679 -> 2845 3694, plugin point) is long and should be measured separately. Without 73 Agility the roof ladder exits at 2831 3676 0
+HARMONY_ISLAND_TELEPORT	HARMONY_ISLAND	3797	2866	0	3797 2866 0	teleportation_spells.tsv "Harmony Island Teleport"	high	Nexus "Harmony Island Portal" same tile
+ICY_BASALT	WEISS	2846	3938	0	2846 3938 0	teleportation_items.tsv "Icy basalt"	high	Nexus "Weiss Portal" same tile
+QUETZAL_HUNTER_GUILD	CIVITAS_ILLA_FORTIS	1585	3053	0	1585 3053 0	quetzal_whistle.tsv "Quetzal whistle: Hunter Guild"	high	
+HUNTER_CAPE	CIVITAS_ILLA_FORTIS	1558	3046	0	1558 3046 0	teleportation_items.tsv "Hunter cape: Hunter Guild"	high	Inside the guild building (ground floor); leaving it is part of the walk
+MAX_CAPE_HUNTER_GUILD	CIVITAS_ILLA_FORTIS	1558	3046	0	1558 3046 0	teleportation_items.tsv "Max cape: Other Teleports: Hunter Guild"	high	As HUNTER_CAPE
+CIVITAS_ILLA_FORTIS_TELEPORT	CIVITAS_ILLA_FORTIS	1585	3053	0	1681 3136 0	teleportation_spells.tsv "Civitas illa Fortis Teleport" + quetzals.tsv Renu 1697 3140 0 -> "Hunter Guild" 1585 3053 0	high	Walk start AFTER Renu: teleport 1681 3136 0, walk to the pad 1697 3140 0 (plugin uses 1696 3141), fly to 1585 3053 0. Nexus "Civitas illa Fortis Portal" lands 1681 3133 0 instead
+FAIRY_RING_AJP	CIVITAS_ILLA_FORTIS	1651	3010	0	1651 3010 0	fairy_rings.tsv "A J P"	high	

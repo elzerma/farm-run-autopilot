@@ -1,0 +1,25 @@
+patch	location	x	y	plane	nearby_walkable	source	confidence	note
+LUMBRIDGE_TREE	LUMBRIDGE	3193	3231	0	3188 3232 0	PatchPoints	high	Patch object position (logged in game), not a standing tile; nearby_walkable = SP "Trinket of fairies: Tool Lep - Lumbridge"
+VARROCK_TREE	VARROCK	3229	3459	0		PatchPoints	high	Patch object position (logged in game)
+FALADOR_TREE	FALADOR_PARK	3004	3373	0	3008 3370 0	PatchPoints	high	Object position; nearby = SP Tool Lep - Falador Park
+TAVERLEY_TREE	TAVERLEY	2936	3438	0	2941 3432 0	PatchPoints	high	Object position; nearby = SP Tool Lep - Taverley
+GNOME_STRONGHOLD_TREE	GNOME_STRONGHOLD	2436	3415	0	2439 3414 0	PatchPoints	high	Object position; nearby = SP Tool Lep - Tree Gnome Stronghold West
+FARMING_GUILD_TREE	FARMING_GUILD	1232	3736	0	1236 3732 0	PatchPoints	high	Object position; nearby = SP Tool Lep - Farming Guild
+NEMUS_RETREAT_TREE	NEMUS_RETREAT	1366	3321	0	1369 3317 0	PatchPoints	high	Object position; nearby = SP Tool Lep - Nemus Retreat
+GNOME_STRONGHOLD_FRUIT_TREE	GNOME_STRONGHOLD	2475	3445	0	2478 3444 0	PatchPoints	high	Object position; nearby = SP Tool Lep - Tree Gnome Stronghold East
+TREE_GNOME_VILLAGE_FRUIT_TREE	TREE_GNOME_VILLAGE	2489	3179	0		PatchPoints	high	Object position
+CATHERBY_FRUIT_TREE	CATHERBY	2860	3433	0		PatchPoints	high	Object position
+BRIMHAVEN_FRUIT_TREE	BRIMHAVEN	2764	3212	0	2773 3211 0	PatchPoints	high	Object position; nearby = SP Tool Lep - Brimhaven (9 tiles east)
+LLETYA_FRUIT_TREE	LLETYA	2346	3161	0	2346 3164 0	PatchPoints	high	Object position; nearby = SP Tool Lep - Lletya
+FARMING_GUILD_FRUIT_TREE	FARMING_GUILD	1242	3758	0		PatchPoints	high	Object position
+KASTORI_FRUIT_TREE	KASTORI	1349	3056	0	1352 3057 0	PatchPoints	high	Object position; nearby = SP Tool Lep - Kastori North
+FALADOR_HERB	FALADOR_FARM	3058	3311	0	3053 3305 0	PatchPoints	high	Object position; nearby = SP Tool Lep - Falador Farm
+PORT_PHASMATYS_HERB	PORT_PHASMATYS	3605	3529	0		PatchPoints	high	Object position
+CATHERBY_HERB	CATHERBY	2813	3463	0		PatchPoints	high	Object position
+ARDOUGNE_HERB	ARDOUGNE_FARM	2670	3374	0	2671 3368 0	PatchPoints	high	Object position; nearby = SP Tool Lep - North of Ardougne
+HOSIDIUS_HERB	HOSIDIUS	1738	3550	0	1741 3552 0	PatchPoints	high	Object position; nearby = SP Tool Lep - Hosidius Allotment
+TROLL_STRONGHOLD_HERB	TROLL_STRONGHOLD	2826	3694	0	2825 3685 0	PatchPoints	high	Object position; nearby = SP Tool Lep - Troll Stronghold (9 tiles south)
+HARMONY_ISLAND_HERB	HARMONY_ISLAND	3789	2837	0		PatchPoints (Farming-Helper); same in Zoinkwiz/quest-helper HerbRun.java	medium	Not corrected in game; two plugins agree
+WEISS_HERB	WEISS	2847	3931	0	2848 3930 0	PatchPoints (Farming-Helper)	medium	Not corrected in game. Quest Helper HerbRun.java uses 2848 3934 0 (object MY2ARM_HERBPATCH) instead; SP Tool Lep - Weiss at 2848 3930
+FARMING_GUILD_HERB	FARMING_GUILD	1238	3726	0	1236 3732 0	PatchPoints	high	Object position; nearby = SP Tool Lep - Farming Guild
+CIVITAS_HERB	CIVITAS_ILLA_FORTIS	1581	3094	0		PatchPoints	high	Object position

@@ -9,6 +9,7 @@ import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.travel.BankTeleport;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelTimes;
+import com.farmrunautopilot.data.travel.WalkGrid;
 import com.farmrunautopilot.run.RunTimings;
 import com.farmrunautopilot.run.StepAdvisor;
 import com.farmrunautopilot.settings.PohSetup;
@@ -390,8 +391,8 @@ public class RunService
 
 	/** The stop the player is standing at (near one of its patches), or null. Client thread. */
 	/**
-	 * The stop whose patch is closest to the player, if within {@link #NEARBY_TILES}, so a run can start by
-	 * walking there (e.g. from the Grand Tree to the Stronghold patches); sets {@link #nearTiles}. Another floor
+	 * The stop whose patch is closest to walk to, if within {@link #NEARBY_TILES} walking tiles, so a run can start
+	 * by walking there (e.g. from the Grand Tree to the Stronghold patches); sets {@link #nearTiles}. Another floor
 	 * (the Grand Tree bank is upstairs) counts as a few tiles further.
 	 */
 	private Location nearby()
@@ -414,7 +415,15 @@ public class RunService
 				continue;
 			}
 			final WorldPoint point = e.getValue();
-			final int tiles = point.distanceTo2D(location) + (point.getPlane() != location.getPlane() ? 10 : 0);
+			// Walking distance from the measured grid (Sean: Castle Wars isn't near Lletya); straight-line only if
+			// the grid didn't load
+			final Integer walked = WalkGrid.loaded() ? WalkGrid.tiles(e.getKey().getLocation(), location) : null;
+			if (WalkGrid.loaded() && walked == null)
+			{
+				continue;
+			}
+			final int tiles = walked != null ? walked
+				: point.distanceTo2D(location) + (point.getPlane() != location.getPlane() ? 10 : 0);
 			if (tiles <= NEARBY_TILES && tiles < bestTiles)
 			{
 				best = e.getKey().getLocation();

@@ -1,0 +1,17 @@
+location	x	y	plane	sp_row	straight_line_tiles_from_nearest_patch	quest_req	note
+LUMBRIDGE	3208	3220	2	Lumbridge Castle	15		Top floor of the castle (plane 2)
+VARROCK	3251	3420	0	Varrock	39		Varrock East bank; plugin BANK_POINTS 3253 3420
+FALADOR_PARK	3010	3355	0	Falador	18		Falador East bank; plugin BANK_POINTS 3013 3355
+TAVERLEY	2945	3368	0	Falador	70		Falador West bank, across the wall: walking path much longer than 70
+GNOME_STRONGHOLD	2445	3424	1	Tree Gnome Stronghold	9		Bank by the Slayer Cave/tree patch, plane 1. Plugin BANK_POINTS uses the Grand Tree bank 2449 3482 1 instead
+FARMING_GUILD	1248	3758	0	Farming Guild	6		Chest; nearest to the fruit tree. Plugin BANK_POINTS 1253 3741
+NEMUS_RETREAT	1387	3309	0	Nemus Retreat	21	Children of the Sun	
+TREE_GNOME_VILLAGE	2443	3083	0	Castle Wars	96		Far; through the village gate/walls
+CATHERBY	2807	3441	0	Catherby	22		Plugin BANK_POINTS 2809 3441
+LLETYA	2352	3162	0	Lletya	6	Mourning's End Part I	Plugin BANK_POINTS 2353 3163
+KASTORI	1243	3121	0	Tal Teklan	106	Children of the Sun	Far; plugin treats Kastori as no bank
+FALADOR_FARM	3014	3355	0	Falador	44		Falador East bank (south entrance)
+PORT_PHASMATYS	3687	3466	0	Port Phasmatys	82	Ghosts Ahoy	Inside the town walls (energy barrier/gate). Plugin BANK_POINTS 3688 3467
+ARDOUGNE_FARM	2619	3332	0	Ardougne	51		East Ardougne north bank
+HOSIDIUS	1746	3598	0	Hosidius	48		
+CIVITAS_ILLA_FORTIS	1542	3040	0	Hunter Guild	54	Children of the Sun	Hunter Guild bank (straight line from the Ortus herb)
