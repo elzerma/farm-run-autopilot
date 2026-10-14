@@ -173,3 +173,17 @@ in seconds.
 - Keep the Kastori rule: a stop without a bank is only the start once everything is carried.
 - Scenarios: Falador west bank -> Falador Park; Castle Wars -> not Lletya; Grand Tree -> Gnome Stronghold;
   Grand Exchange -> Varrock; Seers' bank -> Catherby only if the walk beats Camelot Teleport.
+
+## Sprint 8 results (2026-10-13)
+
+- **Done:** licence notice and credit; walks measured on the collision map for every teleport (journeys add the
+  walk before and after the ride; four the map can't measure keep estimates); stop-to-stop, spirit tree,
+  quetzal pad and bank walks (bank from the patch furthest from it); bank tiles from Shortest Path; start
+  points by walking distance (walk-grid.bin, with doors and gates); hot air balloon Grand Tree -> Taverley;
+  walking lines also switch off mounted items, sailing and grapples, clear on logout, and a test pins the keys.
+- **Durations:** left as they are. Sean's recorded legs (Camelot 9 s, ring of wealth 8 s, slayer ring 11 s,
+  village spirit tree 15 s on top of the walk) match the current base + overhead (11-12 s); learned times take
+  over per player anyway. Only the quetzal whistle looks slow (one sample).
+- **Trinket of fairies:** Deadman Mode only (a breach drop), so not added.
+- **Not done:** the Castle Wars balloon after a bank stop there (needs the bank planner to know where a bank
+  visit leaves you); live first-leg queries (not needed now the grid gives walking distance).

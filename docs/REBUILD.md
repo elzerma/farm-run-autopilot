@@ -269,6 +269,7 @@ before/after line count was skipped. The look is written down in docs/BRANDING.m
 - Measure it: visible lines per tab before and after, and screenshots of each tab for Sean to compare.
 - Checks: every control still has its explanation on hover; nothing a player needs is only in a tooltip.
 
+**Built 2026-10-13, awaiting Sean's checks** (results in docs/plans/shortest-path-research.md).
 **Sprint 8: Shortest Path data** (after Sprint 7; plan in docs/plans/shortest-path-research.md). Reuse its BSD-2
 licensed data with credit: bank coordinates, teleport landing points and durations checked against ours, a
 dev-only "Measure walks" tool using its query message to measure every landing-to-patch walk once and save
