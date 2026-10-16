@@ -3,7 +3,6 @@ package com.farmrunautopilot.testing;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
-import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.Spellbook;
@@ -27,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import net.runelite.api.Quest;
 import net.runelite.api.Skill;
 import net.runelite.api.gameval.VarbitID;
 import static com.farmrunautopilot.testing.GuidedTest.Step.ask;
@@ -46,14 +44,10 @@ final class GuidedTests
 	static
 	{
 		TESTS.put(TestItem.SPELLBOOK_SWAP, new SpellbookSwap());
-		TESTS.put(TestItem.WEISS_FIRE, new WeissFire());
 		TESTS.put(TestItem.FORTIS_CHAMPION, new FortisChampion());
 		TESTS.put(TestItem.ATES_CHARGES, new AtesCharges());
-		TESTS.put(TestItem.TALISMAN_CHARGES, new TalismanCharges());
-		TESTS.put(TestItem.KHARYRLL, new Kharyrll());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
 		TESTS.put(TestItem.BUCKET_COMPOST, new BucketCompost());
-		TESTS.put(TestItem.HOT_AIR_BALLOONS, new HotAirBalloons());
 		TESTS.put(TestItem.HOUSE_SCAN, new HouseScan());
 	}
 
@@ -221,52 +215,6 @@ final class GuidedTests
 		}
 	}
 
-	private static final class WeissFire extends GuidedTest
-	{
-		@Override
-		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
-		{
-			return access.isMet(Requirement.quest(Quest.MAKING_FRIENDS_WITH_MY_ARM)) ? Collections.emptyList()
-				: Collections.singletonList("Finish Making Friends with My Arm");
-		}
-
-		@Override
-		public void setUp(RunConfig config, AccountSettings account)
-		{
-			account.getManualUnlocks().remove(Unlock.FIRE_OF_NOURISHMENT);
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				doThis("Go to Weiss", ctx -> ctx.inRegion(11325))
-					.onDone(ctx -> ctx.capture("Arrived at", ctx.location())),
-				doThis("Walk up to the Fire of Nourishment", ctx -> ctx.hasUnlock(Unlock.FIRE_OF_NOURISHMENT))
-					.onDone(ctx -> ctx.capture("Spotted at", ctx.location()))
-					.orAskAfter(SPOT_TICKS, "The plugin hasn't spotted the fire. Have you built it?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (!yes)
-						{
-							ctx.cannotTest("the Fire of Nourishment built");
-							return;
-						}
-						ctx.capture("Fires loaded", ctx.objectsNamed("Fire"));
-						ctx.problem("The built fire wasn't spotted");
-					}));
-		}
-
-		@Override
-		public void keep(AccountSettings kept, AccountSettings during)
-		{
-			if (during.getManualUnlocks().contains(Unlock.FIRE_OF_NOURISHMENT))
-			{
-				kept.getManualUnlocks().add(Unlock.FIRE_OF_NOURISHMENT);
-			}
-		}
-	}
-
 	private static final class FortisChampion extends GuidedTest
 	{
 		@Override
@@ -376,110 +324,6 @@ final class GuidedTests
 		}
 	}
 
-	/** Xeric's talisman. (The quetzal whistle's messages, which work the same way, passed this test in game.) */
-	private static final class TalismanCharges extends GuidedTest
-	{
-		@Override
-		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
-		{
-			return owns(holdings, "a Xeric's talisman", TravelItem.XERICS_TALISMAN);
-		}
-
-		@Override
-		public List<Need> bring()
-		{
-			return Collections.singletonList(new Need("Xeric's talisman", TravelItem.XERICS_TALISMAN.getItemIds()));
-		}
-
-		private static boolean checked(TestContext ctx, String label)
-		{
-			final Integer said = chatCount(ctx, ItemChargeTracker.TALISMAN_CHECK);
-			if (said == null)
-			{
-				return false;
-			}
-			final Integer plugin = ctx.charges(TravelItem.XERICS_TALISMAN);
-			ctx.capture(label + ": Check said", said);
-			ctx.capture(label + ": plugin count", plugin);
-			if (plugin == null || plugin.intValue() != said)
-			{
-				ctx.problem(label + ": the plugin counted " + plugin + " but the Check said " + said);
-			}
-			return true;
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				doThis("Take your Xeric's talisman out of the bank",
-					ctx -> ctx.carries(TravelItem.XERICS_TALISMAN.getItemIds())),
-				doThis("Right-click it and pick Check", ctx -> checked(ctx, "First check")),
-				doThis("Teleport with it once", ctx ->
-				{
-					final Integer now = ctx.charges(TravelItem.XERICS_TALISMAN);
-					final Integer before = ctx.recall("before");
-					return now != null && before != null && now < before;
-				})
-					.onStart(ctx -> ctx.remember("before", ctx.charges(TravelItem.XERICS_TALISMAN)))
-					.orAskAfter(DO_TICKS, "Have you teleported with it?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (yes)
-						{
-							ctx.problem("The plugin's count didn't go down after a teleport");
-						}
-					}),
-				doThis("Check it again", ctx -> checked(ctx, "After teleporting")));
-		}
-	}
-
-	private static final class Kharyrll extends GuidedTest
-	{
-		@Override
-		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
-		{
-			final List<String> missing = new ArrayList<>(patchesUsable(access, Location.PORT_PHASMATYS));
-			if (access.getSpellbook() != Spellbook.ANCIENT)
-			{
-				missing.add("Switch to the Ancient spellbook");
-			}
-			else if (!access.canCast(Spell.KHARYRLL_TELEPORT))
-			{
-				missing.add("Be able to cast Kharyrll Teleport (66 Magic, Desert Treasure I)");
-			}
-			return missing;
-		}
-
-		@Override
-		public void setUp(RunConfig config, AccountSettings account)
-		{
-			onlyPatchesAt(config, Location.PORT_PHASMATYS);
-			travelBy(config, TravelMethod.KHARYRLL_TELEPORT);
-		}
-
-		@Override
-		public boolean usesRun()
-		{
-			return true;
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				startRun(),
-				doThis("Wait for the first step", ctx -> highlightedSpell(ctx) == Spell.KHARYRLL_TELEPORT)
-					.orAskAfter(SPOT_TICKS, "The plugin didn't pick Kharyrll Teleport to highlight. Carry on?")
-					.onAnswer((ctx, yes) ->
-					{
-						ctx.capture("Highlighted spell", highlightedSpell(ctx));
-						ctx.problem("Kharyrll Teleport wasn't the spell to highlight");
-					}),
-				ask("Open your spellbook. Is Kharyrll Teleport outlined?"));
-		}
-	}
-
 	/**
 	 * Which stored-bucket type value means which compost (the game's script only says 1 is empty, higher filled):
 	 * the player says which compost is in theirs, the test captures the value.
@@ -522,35 +366,6 @@ final class GuidedTests
 				isIt(Compost.COMPOST),
 				isIt(Compost.SUPERCOMPOST),
 				isIt(Compost.ULTRACOMPOST));
-		}
-	}
-
-	/** The Grand Tree balloon route's unlock value (from Shortest Path's data, not checked in game). */
-	private static final class HotAirBalloons extends GuidedTest
-	{
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				// Without the route, the value reads 0 whether or not it's the right one, which proves nothing
-				ask("Have you done Enlightened Journey and unlocked the hot air balloon route to the Grand Tree?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (!yes)
-						{
-							ctx.cannotTest("the Grand Tree balloon route unlocked");
-							return;
-						}
-						final int value = ctx.varbit(Unlock.BALLOON_GRAND_TREE.getVarbit());
-						ctx.capture("Grand Tree route value", value);
-						ctx.capture("Taverley route value", ctx.varbit(net.runelite.api.gameval.VarbitID.ZEP_MULTI_PICCARD));
-						if (value <= 0)
-						{
-							ctx.problem("The Grand Tree route is unlocked but its game value is " + value);
-						}
-					}),
-				ask("In Account > Unlocks, is \"Hot air balloon route to the Grand Tree unlocked\" ticked and marked "
-					+ "(detected)?"));
 		}
 	}
 

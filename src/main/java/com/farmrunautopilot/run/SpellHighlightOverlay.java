@@ -42,7 +42,7 @@ public class SpellHighlightOverlay extends Overlay
 		BUTTONS.put(Spell.FENKENSTRAINS_CASTLE_TELEPORT, InterfaceID.MagicSpellbook.TELEPORT_FENKENSTRAIN_CASTLE);
 		BUTTONS.put(Spell.HARMONY_ISLAND_TELEPORT, InterfaceID.MagicSpellbook.TELEPORT_HARMONY_ISLAND);
 		BUTTONS.put(Spell.RESURRECT_CROPS, InterfaceID.MagicSpellbook.RESURRECT_CROPS);
-		// UNVERIFIED: Kharyrll is assumed to be the third Ancient teleport button (Paddewwa, Senntisten, Kharyrll)
+		// The third Ancient teleport button (Paddewwa, Senntisten, Kharyrll), confirmed in game
 		BUTTONS.put(Spell.KHARYRLL_TELEPORT, InterfaceID.MagicSpellbook.ZAROSTELEPORT3);
 		BUTTONS.put(Spell.CURE_PLANT, InterfaceID.MagicSpellbook.CURE_PLANT);
 		BUTTONS.put(Spell.FERTILE_SOIL, InterfaceID.MagicSpellbook.FERTILE_SOIL);

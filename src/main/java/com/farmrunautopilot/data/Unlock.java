@@ -20,9 +20,9 @@ public enum Unlock
 	// 1 once the statue is activated: the game's pendant_of_ates_teleport_unlocked script checks "= 1"
 	ATES_STATUE_NEMUS_RETREAT("Statue of Ates activated at Nemus Retreat", VarbitID.PENDANT_OF_ATES_AUBURN_FOUND, true),
 	ATES_STATUE_NORTH_KASTORI("Statue of Ates activated north of Kastori", VarbitID.PENDANT_OF_ATES_TLATI_FOUND, true),
-	// From Shortest Path's balloon data (1 once the route is unlocked: 60 Firemaking and 3 magic logs after Enlightened
-	// Journey); not checked in game yet (guided test HOT_AIR_BALLOONS)
-	BALLOON_GRAND_TREE("Hot air balloon route to the Grand Tree unlocked (60 Firemaking)", VarbitID.ZEP_MULTI_GNO),
+	// Confirmed in game: non-zero once the route is unlocked (60 Firemaking and 3 magic logs after Enlightened
+	// Journey). It read 1 with the route; Taverley's route read 2, so values above 1 may mean more
+	BALLOON_GRAND_TREE("Hot air balloon route to the Grand Tree unlocked (60 Firemaking)", VarbitID.ZEP_MULTI_GNO, true),
 	FIRE_OF_NOURISHMENT("Fire of Nourishment built at Weiss"),
 	FORTIS_CHAMPION("Champion rank at the Fortis Colosseum");
 

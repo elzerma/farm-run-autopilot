@@ -17,8 +17,9 @@ import net.runelite.api.ObjectComposition;
  * Ticks unlocks the game has no value for once the player sees them: a grown spirit tree they can travel
  * from at a planted spot, or the built Fire of Nourishment at Weiss. Driven by object spawns. Client thread.
  *
- * <p>UNVERIFIED: the region IDs, the names and the "Travel" option are from the wiki and other patches, not
- * checked in game; spotted objects are logged at debug level for checking.
+ * <p>Weiss (region 11325, "Fire of Nourishment") is confirmed in game. UNVERIFIED: the spirit trees' region IDs,
+ * names and "Travel" option are from the wiki and other patches, not checked in game; spotted objects are logged
+ * at debug level for checking.
  */
 @Slf4j
 @Singleton
