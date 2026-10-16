@@ -1,5 +1,6 @@
 package com.farmrunautopilot.run;
 
+import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
@@ -1012,10 +1013,23 @@ public class RunSession
 	private String fromSeedVault()
 	{
 		final List<String> take = new ArrayList<>();
+		final Holdings carried = holdingsTracker.getHoldings().carriedOnly();
+		final List<Patch> here = patchesAt(plan, Location.FARMING_GUILD);
 		for (SupplyLine line : bankSupplies().getLines())
 		{
 			final int vault = line.getWhere().getOrDefault(Holdings.Source.SEED_VAULT, 0);
-			final int stillNeeded = line.getNeed() - line.getCarried();
+			// Only what the guild's own patches still need, less what's carried now: the line's need is the whole
+			// part's (Sean: "Take 2 x Avantoe seed" with one patch left and the seed in his inventory)
+			int neededHere = 0;
+			for (Patch patch : here)
+			{
+				final Crop crop = plan.getSupplies().getPlantings().get(patch);
+				if (crop != null && !patches.isDone(patch) && contains(line.getItemIds(), crop.getPlantItemId()))
+				{
+					neededHere++;
+				}
+			}
+			final int stillNeeded = neededHere - carried.countAny(line.getItemIds());
 			if (vault > 0 && stillNeeded > 0 && line.getGroup() != SupplyLine.Group.OPTIONAL)
 			{
 				take.add(Math.min(vault, stillNeeded) + " x " + line.getName());
@@ -1027,6 +1041,22 @@ public class RunSession
 			return null;
 		}
 		return "Take " + String.join(", ", take) + " from the seed vault (next to the guild's bank)";
+	}
+
+	private static boolean contains(int[] ids, int id)
+	{
+		if (ids == null)
+		{
+			return false;
+		}
+		for (int each : ids)
+		{
+			if (each == id)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static List<Patch> patchesAt(RunPlan plan, Location location)
