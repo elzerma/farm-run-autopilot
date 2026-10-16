@@ -21,11 +21,11 @@ import net.runelite.client.ui.ColorScheme;
 
 /**
  * The sidebar's tab strip: one boxed button per tab sharing the width evenly, an icon each with its name on hover
- * (Sean: five names don't fit across the sidebar). The selected tab's icon is orange with a line under it.
+ * (elzerma: five names don't fit across the sidebar). The selected tab's icon is orange with a line under it.
  */
 class TabBar extends JPanel
 {
-	// Boxed buttons sharing the width evenly (Sean); the selected one has an orange line along its bottom
+	// Boxed buttons sharing the width evenly (elzerma); the selected one has an orange line along its bottom
 	private static final Border SELECTED = BorderFactory.createCompoundBorder(
 		BorderFactory.createMatteBorder(0, 0, 2, 0, ColorScheme.BRAND_ORANGE), new EmptyBorder(5, 0, 3, 0));
 	private static final Border UNSELECTED = new EmptyBorder(5, 0, 5, 0);

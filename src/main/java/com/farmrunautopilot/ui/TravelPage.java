@@ -259,7 +259,7 @@ class TravelPage extends SetupPanel
 	}
 
 	/**
-	 * A way short enough to share a line with the stop's name (Sean): "Falador Teleport, then rocks or gate into
+	 * A way short enough to share a line with the stop's name (elzerma): "Falador Teleport, then rocks or gate into
 	 * Taverley (runes)" is "Falador Teleport", "Quetzal whistle (Kastori)" is "Quetzal whistle".
 	 */
 	static String shortWay(String way)

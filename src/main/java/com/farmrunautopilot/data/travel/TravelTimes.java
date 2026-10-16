@@ -68,7 +68,7 @@ public final class TravelTimes
 		// Tree Gnome Village: out of the maze behind Elkoy, then a short walk
 		tiles(TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, 15);
 		extra(TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, 12);
-		// CIQ is north-west of Yanille: the walk round to the village is long. Sean: "SO slow"; his recorded leg
+		// CIQ is north-west of Yanille: the walk round to the village is long. elzerma: "SO slow"; their recorded leg
 		// took 118 s (2026-10-10), so 47 s on top of the measured walk
 		tiles(TravelMethod.FAIRY_RING_CIQ, 77);
 		extra(TravelMethod.FAIRY_RING_CIQ, 47);
@@ -143,7 +143,7 @@ public final class TravelTimes
 	/** Renu's flight from a landing pad (no whistle charge). */
 	public static final double QUETZAL = 6.0;
 	/**
-	 * Blowing the quetzal whistle, waiting for the quetzal and flying: slower than a teleport. Sean's recorded whistle
+	 * Blowing the quetzal whistle, waiting for the quetzal and flying: slower than a teleport. elzerma's recorded whistle
 	 * leg to the Hunter Guild (2026-10-11) had about 21 s on top of the walk, overhead 8 included.
 	 */
 	public static final double QUETZAL_WHISTLE = 13.0;
@@ -157,7 +157,7 @@ public final class TravelTimes
 	public static final double HOUSE_WALK = 2.0;
 	/**
 	 * Every leg but a walk between neighbouring stops: finishing the last patch, opening the menu or spellbook,
-	 * the animation and the load. Sean's recorded legs (2026-10-10) ran 1-1.3x the estimates with it.
+	 * the animation and the load. elzerma's recorded legs (2026-10-10) ran 1-1.3x the estimates with it.
 	 */
 	public static final double LEG_OVERHEAD = 8;
 	/** A walk between neighbouring stops still means finishing the last patch and setting off. */
@@ -211,7 +211,7 @@ public final class TravelTimes
 		RENU_PAD_WALK.put(Location.KASTORI, 31);
 		RENU_PAD_WALK.put(Location.NEMUS_RETREAT, 71);
 
-		// From the stop's patch furthest from the bank (the one most likely done last, Sean) to the nearest bank,
+		// From the stop's patch furthest from the bank (the one most likely done last, elzerma) to the nearest bank,
 		// measured on Shortest Path's map with its bank tiles. Catherby: herb 38, fruit tree 54. Farming Guild:
 		// fruit tree 2, herb 32, tree 38.
 		BANK_TILES.put(Location.VARROCK, 49);
@@ -224,7 +224,7 @@ public final class TravelTimes
 		BANK_TILES.put(Location.NEMUS_RETREAT, 25);
 		BANK_TILES.put(Location.CATHERBY, 54);
 		BANK_TILES.put(Location.LLETYA, 33);
-		// Across town from the patch, through the gate (estimate; Sean: banking there is slow)
+		// Across town from the patch, through the gate (estimate; elzerma: banking there is slow)
 		BANK_TILES.put(Location.PORT_PHASMATYS, 95);
 		// The Hunter Guild bank (open to anyone)
 		BANK_TILES.put(Location.CIVITAS_ILLA_FORTIS, 89);

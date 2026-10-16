@@ -1,14 +1,14 @@
 # Farm Run Autopilot: UI branding kit
 
 How the plugin looks and speaks, so every screen matches. Set during the Sprint 7 facelift (October 2026) from
-Sean's feedback. The code that applies it is `ui/Style.java` (controls), `ui/Card.java` (cards, group headers,
+elzerma's feedback. The code that applies it is `ui/Style.java` (controls), `ui/Card.java` (cards, group headers,
 chevrons), `ui/TabIcon.java` (tab icons) and `ui/UiText.java` (wrapping). Change those, not each screen.
 
 ## 1. Principles
 
 1. **An updated RuneLite look.** RuneLite's own colours and fonts, made calmer and more even. It should look
    like it belongs in RuneLite, not like another app.
-2. **Flat and square.** No gradients, no shadows, no rounded corners (Sean tried a soft radius and chose
+2. **Flat and square.** No gradients, no shadows, no rounded corners (elzerma tried a soft radius and chose
    square).
 3. **Say each thing in one place.** If the overlay, a tooltip or another tab already says it, don't repeat it.
    A pointer ("set in Account > My house") is fine; repeating the content is not.

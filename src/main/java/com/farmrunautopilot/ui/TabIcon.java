@@ -11,7 +11,7 @@ import java.awt.geom.Path2D;
 import javax.swing.Icon;
 
 /**
- * The sidebar tabs' icons (Sean: icons with tooltips, as five names don't fit), drawn as simple line icons in the
+ * The sidebar tabs' icons (elzerma: icons with tooltips, as five names don't fit), drawn as simple line icons in the
  * tab's colour so they need no image files: a play arrow, a sprout, a map pin, a person and a cog.
  */
 enum TabIcon
@@ -125,7 +125,7 @@ enum TabIcon
 			}
 			default:
 			{
-				// A solid gear: six square teeth round a body with a hole (Sean: thin teeth read as a sun)
+				// A solid gear: six square teeth round a body with a hole (elzerma: thin teeth read as a sun)
 				final Path2D gear = new Path2D.Double(Path2D.WIND_EVEN_ODD);
 				final int teeth = 6;
 				final double outer = 8.2;

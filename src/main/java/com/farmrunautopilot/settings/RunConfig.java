@@ -54,7 +54,7 @@ public class RunConfig
 	private Map<PatchType, Protection> protection = defaultProtection();
 	private Map<Patch, Protection> protectionOverrides = new EnumMap<>(Patch.class);
 	/**
-	 * Use {@link #protectionOverrides}; when off they're kept but ignored (Sean: hidden behind a tick box). Null in
+	 * Use {@link #protectionOverrides}; when off they're kept but ignored (elzerma: hidden behind a tick box). Null in
 	 * settings saved before it existed: on if there are any overrides, so nothing changes for them.
 	 */
 	private Boolean useProtectionOverrides;

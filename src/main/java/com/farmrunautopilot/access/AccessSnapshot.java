@@ -197,7 +197,7 @@ public class AccessSnapshot
 
 	/**
 	 * Whether the player can cast this spell rather than needing its tablet: Magic level, quest, and being on
-	 * its spellbook (or able to switch with a house altar). Sean asked not to hop spellbooks otherwise.
+	 * its spellbook (or able to switch with a house altar). elzerma asked not to hop spellbooks otherwise.
 	 */
 	public boolean canCast(Spell spell)
 	{

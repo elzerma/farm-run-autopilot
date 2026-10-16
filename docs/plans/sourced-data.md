@@ -1,15 +1,15 @@
 # Plan: Sprint 9, source what we can, crowdsource only what we can't
 
-**Sprint order (Sean):** 7 UI facelift (in progress), 8 Shortest Path data, **9 this (sourced data and
+**Sprint order (elzerma):** 7 UI facelift (in progress), 8 Shortest Path data, **9 this (sourced data and
 crowdsourcing)**, **10 tidy and release** (last, only once everything works). First step: renumber in
 `docs/REBUILD.md` (tidy and release → Sprint 10, this plan added as Sprint 9, the "merges into master in
 Sprint 9" line → Sprint 10), `docs/plans/shortest-path-research.md` if it names them, and memory
-`rebuild-plan.md`; commit and push. The rest is built when Sprint 9 comes up (after 7 and 8), unless Sean
+`rebuild-plan.md`; commit and push. The rest is built when Sprint 9 comes up (after 7 and 8), unless elzerma
 says to do the two bug fixes (Karamja diary, bottomless bucket) sooner.
 
 ## Context
 
-Sean asked what data players should help with, then whether any of it can come from the wiki instead. Looking
+elzerma asked what data players should help with, then whether any of it can come from the wiki instead. Looking
 it up (read-only) answered most of the guesses (UNVERIFIED in the code) without players, from three sources:
 
 - **The game's own client scripts** (cs2, published as runelite/cs2-scripts): authoritative for varbit meanings.
@@ -18,7 +18,7 @@ it up (read-only) answered most of the guesses (UNVERIFIED in the code) without 
 - **RuneLite's own code and the wiki**: object/item naming and order.
 
 Two of the guesses turned out **wrong**, so this is also a bug fix. Players are then only needed for things
-no source can tell us, plus real run times (Sean chose an opt-in GitHub report for those).
+no source can tell us, plus real run times (elzerma chose an opt-in GitHub report for those).
 
 ## 1. Answered by sources: fix the code, drop UNVERIFIED (no players needed)
 
@@ -50,7 +50,7 @@ New, one small test:
 - `BUCKET_COMPOST` (Farm): "Store your bottomless bucket with the tool leprechaun. Which compost is in it?"
   (cannotTest without one) → captures the bucket varbit value with their answer, so 2/3/4 can be mapped.
 
-## 3. Layout of Settings > Help improve this plugin (Sean)
+## 3. Layout of Settings > Help improve this plugin (elzerma)
 
 Two features, clearly divided, under one shared explanation:
 
@@ -77,7 +77,7 @@ Help improve this plugin
 - Implemented in `ui/SettingsPage.testingSection()` and `ui/HelpWanted.list(...)` (which currently builds the
   heading and test list; the heading/intro move to SettingsPage, HelpWanted keeps the list).
 
-### Guided tests brought in line with Sprint 7 (Sean asked whether they match: they don't)
+### Guided tests brought in line with Sprint 7 (elzerma asked whether they match: they don't)
 
 Today `HelpWanted.list` is a long text page: full how-to paragraphs in the larger font, a second
 "I NEED YOUR HELP!" heading inside the already-titled section, plain "Run tab"/"Farm tab" labels, unstyled
@@ -123,8 +123,8 @@ plain greyed Done list. Redesign, reusing the Sprint 7 parts:
 ## Verification
 
 - `./gradlew compileJava test`.
-- Dev client: Settings > Debug > Detected shows Karamja tiers right for Sean's account and the statues of Ates
-  (if he has them); leprechaun counts match the leprechaun's own window; an empty stored bucket shows as empty.
+- Dev client: Settings > Debug > Detected shows Karamja tiers right for elzerma's account and the statues of Ates
+  (if they have them); leprechaun counts match the leprechaun's own window; an empty stored bucket shows as empty.
 - Help list: Statues of Ates gone; Bottomless bucket test asks first and captures the value.
 - Share my run times opens a GitHub issue page with the summary.
 - Report the list changes (removed ATES_STATUES, added BUCKET_COMPOST) per CLAUDE.md.

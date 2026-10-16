@@ -14,7 +14,7 @@ import javax.swing.JPanel;
 import net.runelite.client.ui.ColorScheme;
 
 /**
- * Preset management, the first section of the Settings tab (SPEC 13.5; Sean moved it from the Run tab): save, apply, rename and delete named Farm and Travel setups.
+ * Preset management, the first section of the Settings tab (SPEC 13.5; elzerma moved it from the Run tab): save, apply, rename and delete named Farm and Travel setups.
  */
 class PresetsPage extends SetupPanel
 {

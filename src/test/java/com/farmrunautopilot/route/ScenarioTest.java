@@ -15,7 +15,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * Sean's expectations for his own runs (docs/REBUILD.md, Sprint 0), on an account like his. The rebuilt
+ * elzerma's expectations for their own runs (docs/REBUILD.md, Sprint 0), on an account like theirs. The rebuilt
  * planner must pass all of these; ignored ones wait for the sprint named in their reason.
  */
 public class ScenarioTest
@@ -24,7 +24,7 @@ public class ScenarioTest
 
 	private static List<RouteStop> plan(List<Patch> patches, Location near, int nearTiles)
 	{
-		return RoutePlanner.plan(patches, new RunConfig().sanitise(), SeanAccount.access(), SeanAccount.holdings(),
+		return RoutePlanner.plan(patches, new RunConfig().sanitise(), ElzermaAccount.access(), ElzermaAccount.holdings(),
 			new PohSetup(), LearnedTimes.NONE, null, near, nearTiles).getStops();
 	}
 
@@ -67,14 +67,14 @@ public class ScenarioTest
 	public void startsAtTheStopYouAreNear()
 	{
 		// Falador west bank, 57 tiles from the Falador Park patch
-		final List<RouteStop> stops = plan(SeanAccount.patches(ALL), Location.FALADOR_PARK, 57);
+		final List<RouteStop> stops = plan(ElzermaAccount.patches(ALL), Location.FALADOR_PARK, 57);
 		assertEquals(describe(stops), Location.FALADOR_PARK, stops.get(0).getLocation());
 	}
 
 	@Test
 	public void startsAtTheStrongholdFromTheGrandTree()
 	{
-		final List<RouteStop> stops = plan(SeanAccount.patches(ALL), Location.GNOME_STRONGHOLD, 50);
+		final List<RouteStop> stops = plan(ElzermaAccount.patches(ALL), Location.GNOME_STRONGHOLD, 50);
 		assertEquals(describe(stops), Location.GNOME_STRONGHOLD, stops.get(0).getLocation());
 		assertStrongholdChain(stops);
 	}
@@ -84,19 +84,19 @@ public class ScenarioTest
 	@Test
 	public void fullRunChainsStrongholdToTreeGnomeVillage()
 	{
-		assertStrongholdChain(plan(SeanAccount.patches(ALL), null, 0));
+		assertStrongholdChain(plan(ElzermaAccount.patches(ALL), null, 0));
 	}
 
 	@Test
 	public void fullRunNearFaladorStillChainsStrongholdToTreeGnomeVillage()
 	{
-		assertStrongholdChain(plan(SeanAccount.patches(ALL), Location.FALADOR_PARK, 57));
+		assertStrongholdChain(plan(ElzermaAccount.patches(ALL), Location.FALADOR_PARK, 57));
 	}
 
 	@Test
 	public void faladorParkWalksToTaverleyAndTheFarmIsByExplorersRing()
 	{
-		final List<RouteStop> stops = plan(SeanAccount.patches(ALL), null, 0);
+		final List<RouteStop> stops = plan(ElzermaAccount.patches(ALL), null, 0);
 		final int park = indexOf(stops, Location.FALADOR_PARK);
 		final int taverley = indexOf(stops, Location.TAVERLEY);
 		assertEquals(describe(stops), 1, Math.abs(park - taverley));
@@ -108,11 +108,11 @@ public class ScenarioTest
 	@Test
 	public void theWhistleBeatsTheCivitasTeleportToTheHunterGuild()
 	{
-		// Sean, 2026-10-15: on a herb run the Civitas illa Fortis Teleport (then Renu) was picked over his whistle,
+		// elzerma, 2026-10-15: on a herb run the Civitas illa Fortis Teleport (then Renu) was picked over their whistle,
 		// which is faster: the charge penalty is only a tie-breaker
 		final List<Patch> herbs = Arrays.asList(Patch.CIVITAS_HERB, Patch.CATHERBY_HERB, Patch.ARDOUGNE_HERB);
-		final List<RouteStop> stops = RoutePlanner.plan(herbs, new RunConfig().sanitise(), SeanAccount.access(),
-			SeanAccount.holdings(), new PohSetup(), LearnedTimes.NONE, null, null, 0).getStops();
+		final List<RouteStop> stops = RoutePlanner.plan(herbs, new RunConfig().sanitise(), ElzermaAccount.access(),
+			ElzermaAccount.holdings(), new PohSetup(), LearnedTimes.NONE, null, null, 0).getStops();
 		assertEquals(describe(stops), TravelMethod.QUETZAL_HUNTER_GUILD,
 			stops.get(indexOf(stops, Location.CIVITAS_ILLA_FORTIS)).getMethod());
 	}
@@ -125,7 +125,7 @@ public class ScenarioTest
 		// in a full run, Nemus Retreat is reached by fairy ring and isn't part of the chain.)
 		final List<Patch> varlamore = Arrays.asList(Patch.KASTORI_FRUIT_TREE, Patch.NEMUS_RETREAT_TREE, Patch.CIVITAS_HERB);
 		final List<RouteStop> stops = RoutePlanner.plan(varlamore, new RunConfig().sanitise(),
-			SeanAccount.access(), SeanAccount.holdingsWithout(ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE),
+			ElzermaAccount.access(), ElzermaAccount.holdingsWithout(ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE),
 			new PohSetup(), LearnedTimes.NONE, null, null, 0).getStops();
 		int seen = 0;
 		for (RouteStop stop : stops)
@@ -148,7 +148,7 @@ public class ScenarioTest
 	@Test
 	public void herbsOnlyVisitsOnlyHerbStopsAndStartsNearby()
 	{
-		final List<RouteStop> stops = plan(SeanAccount.patches(PatchType.HERB), Location.CATHERBY, 40);
+		final List<RouteStop> stops = plan(ElzermaAccount.patches(PatchType.HERB), Location.CATHERBY, 40);
 		assertEquals(describe(stops), Location.CATHERBY, stops.get(0).getLocation());
 		for (RouteStop stop : stops)
 		{
@@ -160,53 +160,53 @@ public class ScenarioTest
 	@Test
 	public void herbsAndFruitTreesChainStrongholdToTreeGnomeVillage()
 	{
-		assertStrongholdChain(plan(SeanAccount.patches(PatchType.HERB, PatchType.FRUIT_TREE), null, 0));
+		assertStrongholdChain(plan(ElzermaAccount.patches(PatchType.HERB, PatchType.FRUIT_TREE), null, 0));
 	}
 
 	@Test
 	public void herbsAndTreesWalkFaladorParkToTaverley()
 	{
-		final List<RouteStop> stops = plan(SeanAccount.patches(PatchType.HERB, PatchType.TREE), null, 0);
+		final List<RouteStop> stops = plan(ElzermaAccount.patches(PatchType.HERB, PatchType.TREE), null, 0);
 		assertEquals(describe(stops), 1,
 			Math.abs(indexOf(stops, Location.FALADOR_PARK) - indexOf(stops, Location.TAVERLEY)));
 	}
 
-	// Travel times Sean has corrected
+	// Travel times elzerma has corrected
 
 	@Test
 	public void treeGnomeVillageIsQuickerByTheStrongholdSpiritTreeThanByFairyRing()
 	{
 		assertTrue(RoutePlanner.chainsFrom(Location.GNOME_STRONGHOLD, Location.TREE_GNOME_VILLAGE,
-			new RunConfig().sanitise(), SeanAccount.access(), SeanAccount.holdings(), new PohSetup(), LearnedTimes.NONE));
+			new RunConfig().sanitise(), ElzermaAccount.access(), ElzermaAccount.holdings(), new PohSetup(), LearnedTimes.NONE));
 	}
 
 	// Banking partway
 
 	/**
-	 * Sean's full run from near Falador Park with bank visits placed, using a simple slot count (5 tools, one
+	 * elzerma's full run from near Falador Park with bank visits placed, using a simple slot count (5 tools, one
 	 * travel item per stop, two per patch: seed or sapling, and payment or compost), so it needs banking.
 	 */
 	private static BankPlanner.Result bankedFullRun()
 	{
 		final RunConfig config = new RunConfig().sanitise();
-		final Route route = RoutePlanner.plan(SeanAccount.patches(ALL), config, SeanAccount.access(),
-			SeanAccount.holdings(), new PohSetup(), LearnedTimes.NONE, null, Location.FALADOR_PARK, 57);
+		final Route route = RoutePlanner.plan(ElzermaAccount.patches(ALL), config, ElzermaAccount.access(),
+			ElzermaAccount.holdings(), new PohSetup(), LearnedTimes.NONE, null, Location.FALADOR_PARK, 57);
 		final List<RouteStop> stops = route.getStops();
 		final BankPlanner.Slots slots = (a, b) ->
 		{
 			int used = 5;
 			for (RouteStop stop : stops.subList(a, b))
 			{
-				used += 1 + 2 * (int) SeanAccount.patches(ALL).stream()
+				used += 1 + 2 * (int) ElzermaAccount.patches(ALL).stream()
 					.filter(p -> p.getLocation() == stop.getLocation()).count();
 			}
 			return used;
 		};
 		return BankPlanner.place(route, slots, 28,
-			com.farmrunautopilot.data.travel.BankTeleport.best(SeanAccount.access(), SeanAccount.holdings()),
-			(from, to) -> RoutePlanner.chainSaving(from, to, config, SeanAccount.access(), SeanAccount.holdings(),
+			com.farmrunautopilot.data.travel.BankTeleport.best(ElzermaAccount.access(), ElzermaAccount.holdings()),
+			(from, to) -> RoutePlanner.chainSaving(from, to, config, ElzermaAccount.access(), ElzermaAccount.holdings(),
 				new PohSetup(), LearnedTimes.NONE),
-			to -> RoutePlanner.fromAnywhere(to, config, SeanAccount.access(), SeanAccount.holdings(), new PohSetup(),
+			to -> RoutePlanner.fromAnywhere(to, config, ElzermaAccount.access(), ElzermaAccount.holdings(), new PohSetup(),
 				LearnedTimes.NONE));
 	}
 

@@ -57,7 +57,7 @@ class FarmPage extends SetupPanel
 		final CollapsibleSection s = section("Patches", ticked + " of " + usable + " ticked");
 		s.help("Untick patches you don't want in your runs; locked ones show what they need on hover. Choose trees, "
 			+ "fruit trees and herbs at the top of the Run tab: each joins a run once its patches are due.");
-		// One group per type that opens and closes, two tick boxes to a row (Sean)
+		// One group per type that opens and closes, two tick boxes to a row (elzerma)
 		for (PatchType type : PatchType.values())
 		{
 			final List<JComponent> boxes = new ArrayList<>();
@@ -110,7 +110,7 @@ class FarmPage extends SetupPanel
 				rebuild();
 			}));
 
-		// One line per choice (Sean): "1st [drop-down]"; the 3rd only once the 2nd is set
+		// One line per choice (elzerma): "1st [drop-down]"; the 3rd only once the 2nd is set
 		for (PatchType type : PatchType.values())
 		{
 			s.addContent(subheader(type.getDisplayName()));
@@ -137,7 +137,7 @@ class FarmPage extends SetupPanel
 			for (int i = 0; i < RunConfig.MAX_BACKUP_CROPS && i <= backups.size(); i++)
 			{
 				final int index = i;
-				// Each list leaves out the choices above it (Sean)
+				// Each list leaves out the choices above it (elzerma)
 				final List<Crop> above = new ArrayList<>(backups.subList(0, Math.min(index, backups.size())));
 				above.add(firstCrop);
 				s.addContent(labeled(i == 0 ? "2nd" : "3rd", combo(cropChoices(type, farming, true, above),
@@ -297,7 +297,7 @@ class FarmPage extends SetupPanel
 			spinner(config.getDueThresholdPercent(), 1, 100, 5,
 				v -> saveRunQuietly(() -> config.setDueThresholdPercent(v)))));
 
-		// Rarely used, so behind a tick box (Sean); ticking it off keeps the choices but ignores them
+		// Rarely used, so behind a tick box (elzerma); ticking it off keeps the choices but ignores them
 		s.addContent(checkBox("Different protection for single patches", perPatch, true,
 			"Choose another protection for a patch than its type has in Protection. Ticking this off keeps your "
 				+ "choices but ignores them.",

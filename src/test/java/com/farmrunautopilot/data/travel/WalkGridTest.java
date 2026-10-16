@@ -7,7 +7,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
-/** Sean's start-point scenarios (docs/plans/shortest-path-research.md, "Start points by walking distance"). */
+/** elzerma's start-point scenarios (docs/plans/shortest-path-research.md, "Start points by walking distance"). */
 public class WalkGridTest
 {
 	@Test

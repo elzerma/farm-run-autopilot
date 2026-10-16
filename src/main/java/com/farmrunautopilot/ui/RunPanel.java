@@ -64,9 +64,9 @@ import net.runelite.client.ui.PluginPanel;
 @Slf4j
 class RunPanel extends JPanel
 {
-	// The sidebar's width less its 6 px edges and a little for the scroll bar (Sean: text stopped short of the card's edge)
+	// The sidebar's width less its 6 px edges and a little for the scroll bar (elzerma: text stopped short of the card's edge)
 	private static final int TEXT_WIDTH = PluginPanel.PANEL_WIDTH - 16;
-	/** The run clock, big enough to read at a glance (Sean). */
+	/** The run clock, big enough to read at a glance (elzerma). */
 	private static final float CLOCK_FONT_SIZE = 24f;
 	/** Tooltips wrap at this width (in the 13/10 CSS pixels Swing's HTML uses), about the sidebar's. */
 	private static final int TOOLTIP_WIDTH = 190;
@@ -239,7 +239,7 @@ class RunPanel extends JPanel
 			return;
 		}
 		addBuilding();
-		// Shown only with the complete route, i.e. once the run is built (Sean)
+		// Shown only with the complete route, i.e. once the run is built (elzerma)
 		add(heading("Route summary"));
 		addTime();
 		if (settings.editRunConfig().isSupplyFullRun())
@@ -355,7 +355,7 @@ class RunPanel extends JPanel
 	private static JLabel testText(String text, Color colour)
 	{
 		// Narrower than the box: the orange border, padding and scroll bar take about 35px. UiText.wrap scales to
-		// screen pixels; an unscaled width ran off the right edge (Sean)
+		// screen pixels; an unscaled width ran off the right edge (elzerma)
 		final JLabel label = new JLabel(UiText.wrap(text, TEXT_WIDTH - 35));
 		label.setForeground(colour);
 		label.setFont(FontManager.getRunescapeSmallFont());
@@ -385,7 +385,7 @@ class RunPanel extends JPanel
 		{
 			return;
 		}
-		// Which ones, and how they get ticked, is in Account > Unlocks: only the count here (said once, Sean)
+		// Which ones, and how they get ticked, is in Account > Unlocks: only the count here (said once, elzerma)
 		final JLabel label = tipped(note("Check your unlocks: " + review.size() + " not seen yet"),
 			"Click to open Account > Unlocks");
 		label.setForeground(ColorScheme.BRAND_ORANGE);
@@ -413,7 +413,7 @@ class RunPanel extends JPanel
 	}
 
 	/**
-	 * The run's patches by type, one line per inventory, with each bank stop between them (Sean): e.g. "4 trees,
+	 * The run's patches by type, one line per inventory, with each bank stop between them (elzerma): e.g. "4 trees,
 	 * 6 herbs (18/28 slots)", "Bank near Catherby", "3 trees, 2 herbs (12/28 slots)". The slots are here, not
 	 * in Totals.
 	 */
@@ -477,7 +477,7 @@ class RunPanel extends JPanel
 		build.setAlignmentX(LEFT_ALIGNMENT);
 		build.setMaximumSize(new Dimension(Integer.MAX_VALUE, build.getPreferredSize().height));
 		add(build);
-		// How the last run went, one quiet line under the button; the best times are its tooltip (Sean)
+		// How the last run went, one quiet line under the button; the best times are its tooltip (elzerma)
 		final String times = view.getLastRun() != null ? view.getLastRun() : view.getBestTimes();
 		if (times != null)
 		{
@@ -490,7 +490,7 @@ class RunPanel extends JPanel
 			add(line);
 		}
 
-		// No route summary until the run is built: only the types to include (Sean)
+		// No route summary until the run is built: only the types to include (elzerma)
 		addRunTypeStatus(plan.getSelection());
 
 		add(heading("Patch timers"));
@@ -504,7 +504,7 @@ class RunPanel extends JPanel
 
 	/**
 	 * Every usable, selected patch of each ticked type, soonest ready first: one line each (name, then its state),
-	 * under a heading per type that opens and closes and stays that way (Sean: 22 two-line cards was too long).
+	 * under a heading per type that opens and closes and stays that way (elzerma: 22 two-line cards was too long).
 	 */
 	private void fillPatchTimers(JPanel panel)
 	{
@@ -582,7 +582,7 @@ class RunPanel extends JPanel
 	}
 
 	/**
-	 * A shorter name for the timers only (Sean), so it fits beside the state: each list is one patch type, so
+	 * A shorter name for the timers only (elzerma), so it fits beside the state: each list is one patch type, so
 	 * "Falador" is the herb patch there and "Falador Park" the tree.
 	 */
 	private static String timerName(Location location)
@@ -610,7 +610,7 @@ class RunPanel extends JPanel
 		final JPanel row = new JPanel(new BorderLayout(8, 0));
 		row.setOpaque(false);
 		row.setBorder(new EmptyBorder(1, 0, 1, 0));
-		// One line, never wrapped (Sean); a name too long for what's left ends in "..." and is whole on hover
+		// One line, never wrapped (elzerma); a name too long for what's left ends in "..." and is whole on hover
 		final JLabel name = new JLabel(timerName(patch.getLocation()));
 		name.setForeground(Color.WHITE);
 		name.setFont(FontManager.getRunescapeSmallFont());
@@ -643,10 +643,10 @@ class RunPanel extends JPanel
 		buttons.add(Style.button(cancel));
 		buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, buttons.getPreferredSize().height));
 		add(left(buttons));
-		// The next step (open a bank, the Farm run tab...) is under the player only: said once (Sean)
+		// The next step (open a bank, the Farm run tab...) is under the player only: said once (elzerma)
 	}
 
-	/** Hover text for a stop: the plan for each patch there, wrapped so it stays on screen (Sean: it ran off). */
+	/** Hover text for a stop: the plan for each patch there, wrapped so it stays on screen (elzerma: it ran off). */
 	private static String objectivesTooltip(List<String> objectives)
 	{
 		return objectivesTooltip(null, objectives);
@@ -689,7 +689,7 @@ class RunPanel extends JPanel
 		else
 		{
 			// The run finishes by itself after the last stop, so Stop is only for ending it early. The clock, big,
-			// and Stop share one centred line (Sean)
+			// and Stop share one centred line (elzerma)
 			final JPanel bar = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
 			bar.setBackground(ColorScheme.DARK_GRAY_COLOR);
 			clockLabel = new JLabel();
@@ -727,14 +727,14 @@ class RunPanel extends JPanel
 	}
 
 	/**
-	 * A tick box as in Quest Helper (Sean): ticked when done; the plugin's own ticks can't be undone, the player's
+	 * A tick box as in Quest Helper (elzerma): ticked when done; the plugin's own ticks can't be undone, the player's
 	 * can. Disabled when there's nothing the player can do with it.
 	 */
 	private static JCheckBox tickBox(boolean done, boolean enabled, java.util.function.Consumer<Boolean> onChange)
 	{
 		final JCheckBox box = new JCheckBox();
 		// Green when the plugin saw it done (locked), orange when ticked by hand (can be unticked), an outline when it
-		// can be ticked, faint when it can't yet (Sean: the old ones were hard to see)
+		// can be ticked, faint when it can't yet (elzerma: the old ones were hard to see)
 		Style.checkBox(box);
 		box.setSelected(done);
 		box.setEnabled(enabled);
@@ -760,7 +760,7 @@ class RunPanel extends JPanel
 			: step.getStatus() == RunView.StopStatus.CURRENT ? ColorScheme.BRAND_ORANGE : Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
 
-		// Bank visit steps too (Sean: none could be ticked): the plugin ticks what it sees, the player the rest
+		// Bank visit steps too (elzerma: none could be ticked): the plugin ticks what it sees, the player the rest
 		final JCheckBox box = tickBox(done, !done || step.isManual(),
 			ticked -> controls.setStepTicked(index, ticked));
 		final JPanel row = new JPanel(new BorderLayout());
@@ -783,14 +783,14 @@ class RunPanel extends JPanel
 	{
 		final boolean current = stop.getStatus() == RunView.StopStatus.CURRENT;
 		final boolean done = stop.getStatus() == RunView.StopStatus.DONE;
-		// The current one stands out: a lighter card with an orange bar down its edge (Sean: boxed; facelift: a bar)
+		// The current one stands out: a lighter card with an orange bar down its edge (elzerma: boxed; facelift: a bar)
 		final Card cell = new Card(new BorderLayout())
 			.fill(current ? ColorScheme.DARK_GRAY_HOVER_COLOR : ColorScheme.DARKER_GRAY_COLOR)
 			.accent(current || (stop.isBank() && !done) ? ColorScheme.BRAND_ORANGE : null);
 
 		final String name = UiText.escape(number > 0 ? number + ". " + stop.getLocation() : stop.getLocation());
 		final JLabel title = new JLabel(done ? "<html><s>" + name + "</s></html>" : "<html>" + name + "</html>");
-		// Titles in white (Sean); the current one is marked by its orange bar, a bank visit by an orange bar too
+		// Titles in white (elzerma); the current one is marked by its orange bar, a bank visit by an orange bar too
 		title.setForeground(done ? ColorScheme.MEDIUM_GRAY_COLOR : Color.WHITE);
 		title.setFont(current ? FontManager.getRunescapeBoldFont() : FontManager.getRunescapeSmallFont());
 		// Only the current row can be ticked, and a row the player ticked can be unticked while it can be gone back to
@@ -804,7 +804,7 @@ class RunPanel extends JPanel
 		if (current && !stop.getSteps().isEmpty())
 		{
 			// Every step of this row, only while it's current. What to do now is under the player, not repeated
-			// here (Sean: say each thing in one place)
+			// here (elzerma: say each thing in one place)
 			final JPanel steps = new JPanel();
 			steps.setLayout(new BoxLayout(steps, BoxLayout.Y_AXIS));
 			steps.setOpaque(false);
@@ -875,7 +875,7 @@ class RunPanel extends JPanel
 		label.setFont(FontManager.getRunescapeSmallFont());
 		row.add(label, BorderLayout.WEST);
 		row.add(combo, BorderLayout.CENTER);
-		// Saving, renaming and deleting are in Settings > Presets (Sean): a small link there
+		// Saving, renaming and deleting are in Settings > Presets (elzerma): a small link there
 		final JLabel manage = new JLabel("<html><u>Manage</u></html>");
 		manage.setForeground(Color.WHITE);
 		manage.setFont(FontManager.getRunescapeSmallFont());
@@ -907,7 +907,7 @@ class RunPanel extends JPanel
 			box.setToolTipText("Include " + type.getDisplayName().toLowerCase() + " patches in this run");
 			box.setBackground(ColorScheme.DARK_GRAY_COLOR);
 			Style.checkBox(box);
-			// Centred in its third of the row (Sean)
+			// Centred in its third of the row (elzerma)
 			box.setHorizontalAlignment(JCheckBox.CENTER);
 			box.setFont(FontManager.getRunescapeSmallFont());
 			box.addActionListener(e ->
@@ -926,7 +926,7 @@ class RunPanel extends JPanel
 			});
 			types.add(box);
 		}
-		// A little room before the button under it (Sean)
+		// A little room before the button under it (elzerma)
 		types.setBorder(new EmptyBorder(0, 0, 5, 0));
 		types.setMaximumSize(new Dimension(Integer.MAX_VALUE, types.getPreferredSize().height));
 		return left(types);
@@ -952,7 +952,7 @@ class RunPanel extends JPanel
 			{
 				if (override != TypeOverride.INCLUDE)
 				{
-					// Counted in the parts above; no Skip button: unticking the type at the top does that (Sean)
+					// Counted in the parts above; no Skip button: unticking the type at the top does that (elzerma)
 					continue;
 				}
 				text = name + ": included anyway";
@@ -1017,7 +1017,7 @@ class RunPanel extends JPanel
 		}
 		add(tipped(heading("Complete route"), "Hover a stop for its plan. Drag a stop to reorder it (that switches to your "
 			+ "own order)."));
-		// The order is always said, under the heading (Sean): a drag had switched it to his own without him noticing
+		// The order is always said, under the heading (elzerma): a drag had switched it to their own without them noticing
 		if (route.getMode() != RouteMode.OFF)
 		{
 			add(tipped(note(route.getMode() == RouteMode.META ? "Order: the wiki's" : "Order: auto (fastest)"),
@@ -1045,7 +1045,7 @@ class RunPanel extends JPanel
 			add(own);
 		}
 
-		// Stops, each followed by its bank visit if it has one: a row of its own (Sean)
+		// Stops, each followed by its bank visit if it has one: a row of its own (elzerma)
 		final DefaultListModel<Object> model = new DefaultListModel<>();
 		for (int i = 0; i < route.getStops().size(); i++)
 		{
@@ -1060,10 +1060,10 @@ class RunPanel extends JPanel
 		list.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.setCellRenderer(new StopRenderer());
-		// Reorder only on a deliberate drag (Sean: clicks were reordering the route by accident)
+		// Reorder only on a deliberate drag (elzerma: clicks were reordering the route by accident)
 		new Reorder(list, model).install();
-		// A JList is only as wide as its longest row unless told otherwise: stretch it to the panel (Sean: width
-		// wacky). Its height is asked for each layout, as rows wrap differently once it has its real width (Sean: the
+		// A JList is only as wide as its longest row unless told otherwise: stretch it to the panel (elzerma: width
+		// wacky). Its height is asked for each layout, as rows wrap differently once it has its real width (elzerma: the
 		// line under it overlapped the last stop)
 		final JPanel holder = fullWidth();
 		holder.setOpaque(false);
@@ -1156,7 +1156,7 @@ class RunPanel extends JPanel
 			name.setForeground(Color.WHITE);
 			name.setFont(FontManager.getRunescapeSmallFont());
 			final boolean here = index == 0 && controls.view().isAtFirstStop();
-			// The leg time is in the tooltip, above the plan (Sean: fewer three-line rows)
+			// The leg time is in the tooltip, above the plan (elzerma: fewer three-line rows)
 			final JLabel travel = new JLabel(UiText.wrap(here ? "You're here" : stop.describeTravel(), TEXT_WIDTH - 20));
 			travel.setForeground(stop.isNeedsSupplies() ? IN_STORAGE : Color.WHITE);
 			travel.setFont(FontManager.getRunescapeSmallFont());
@@ -1171,8 +1171,8 @@ class RunPanel extends JPanel
 	}
 
 	/**
-	 * Reordering the route by dragging a stop, only when it's deliberate (Sean: clicks were switching his route to
-	 * his own order): the mouse has to go well past the stop's own row, and a bank visit can't be moved (the plan
+	 * Reordering the route by dragging a stop, only when it's deliberate (elzerma: clicks were switching their route to
+	 * their own order): the mouse has to go well past the stop's own row, and a bank visit can't be moved (the plan
 	 * places those). Dropping it saves the order as the player's own.
 	 */
 	private final class Reorder extends MouseAdapter
@@ -1278,7 +1278,7 @@ class RunPanel extends JPanel
 
 	/**
 	 * A panel that fills the width and is as tall as its content, asked at each layout: a height fixed when it's
-	 * built is too small once its text wraps (Sean: the line under the route overlapped the last stop).
+	 * built is too small once its text wraps (elzerma: the line under the route overlapped the last stop).
 	 */
 	private static JPanel fullWidth()
 	{

@@ -10,7 +10,7 @@ import org.junit.Test;
 
 /**
  * The walk-only overrides only work if every key and value is one Shortest Path knows: an unknown one is
- * ignored and the player's own setting wins (the "NONE" vs "None" bug sent Sean to a bank, 2026-10-11).
+ * ignored and the player's own setting wins (the "NONE" vs "None" bug sent elzerma to a bank, 2026-10-11).
  */
 public class ShortestPathBridgeTest
 {

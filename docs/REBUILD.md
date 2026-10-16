@@ -4,9 +4,9 @@ Written 2026-10-11 after a full code review (every file in `src/main`, about 19,
 patching: each fix to the route added another special case, and nobody (human or Claude) can predict what it
 will do any more. This document says what the plugin is for, what we learned, what the review found, what to
 keep, the new design, and the sprints to get there. **Every feature built so far stays;** the core is rebuilt
-so the features work the way Sean intends.
+so the features work the way elzerma intends.
 
-Sean: read "1. What the plugin is for" and "8. Decisions" first. Correct anything that's wrong there before
+elzerma: read "1. What the plugin is for" and "8. Decisions" first. Correct anything that's wrong there before
 Sprint 1 starts; everything else follows from those two sections.
 
 ---
@@ -50,7 +50,7 @@ What it is **not**: an automation tool. Nothing is clicked or typed for the play
    seeds they still need. *Rule: the plan is frozen when the run starts; only the current inventory is
    re-checked against what the player holds.*
 6. **Fixes without a model.** Each in-game report got a one-off constant (CIQ 60 -> 100 tiles, Phasmatys 95,
-   prefer walking 8 s). *Rule: measured data in one table, scenario tests for every chain Sean expects, and a
+   prefer walking 8 s). *Rule: measured data in one table, scenario tests for every chain elzerma expects, and a
    cost breakdown in the log so a bad route can be explained from the log alone.*
 7. **Big classes doing everything.** `RunSession` (1,300 lines) is state machine, navigation, patch guidance,
    banking, highlights, reminders and timing. `SetupPanel` (1,545) is four pages in one class. `RunPanel`
@@ -125,7 +125,7 @@ No Plugin Hub hard-rule violations were found (no reflection, Desktop, file IO, 
 - Overlays (`GuidanceOverlay`, highlight overlays, `HintArrowController`), small UI parts (`TabBar`, `Choice`,
   `CollapsibleSection`, `ExpandableRow`, `UiText`), `SettingsStore` and the `sanitise()` migrations.
 - The search code in `RoutePlanner` (`exactOrder` Held-Karp, `improve` 2-opt/or-opt): correct, reused.
-- Tests: `RouteChainTest` scenarios (Sean's expected chains, the acceptance suite), `RunSelectorTest`,
+- Tests: `RouteChainTest` scenarios (elzerma's expected chains, the acceptance suite), `RunSelectorTest`,
   `LearnedTimesTest`, `SpellbookRuleTest`, supply and decoder tests.
 
 **Rewrite:**
@@ -148,7 +148,7 @@ No Plugin Hub hard-rule violations were found (no reflection, Desktop, file IO, 
 - **Ways between places:** teleports (from anywhere), spirit trees, fairy rings, quetzal/Renu, boats, and
   walks with measured tiles (agility shortcuts as variants with their requirements).
 - **One leg cost in seconds** = cast/rub/animation + measured walk tiles x seconds per tile (0.3 s running
-  today; checked once against Sean's recorded legs in Sprint 1) + fixed per-step extras (boat, Elkoy, gate). The
+  today; checked once against elzerma's recorded legs in Sprint 1) + fixed per-step extras (boat, Elkoy, gate). The
   player's own learned times replace the estimate once there are 3 clean samples, keyed by
   `from -> to -> way`.
 - **Preferences are tie-breaks:** "prefer walking", travel style (fastest / save charges / fewest clicks) only
@@ -201,29 +201,29 @@ snapshots. Planning runs on the client thread only when inputs change, never per
 ## 6. Sprints
 
 Each sprint ends with `./gradlew test` green, a commit on the `rebuild` branch, the dev client relaunched, and a numbered
-in-game checklist for Sean. A sprint isn't done until Sean has run its checks.
+in-game checklist for elzerma. A sprint isn't done until elzerma has run its checks.
 
-**Sprint 0: agree the target (no code).** Sean reads sections 1 and 8, corrects them, and lists anything
-missing from his vision. Turn every chain or behaviour he names into a scenario test (failing is fine).
+**Sprint 0: agree the target (no code).** elzerma reads sections 1 and 8, corrects them, and lists anything
+missing from their vision. Turn every chain or behaviour they name into a scenario test (failing is fine).
 
 **Sprint 1: travel graph and costs.**
 - Build the graph from `TravelTimes`, `PatchPoints`, bank coordinates (measure the missing ones), journeys.
 - One seconds-only leg cost; preferences as tie-break; learned times keyed by from/to/way.
-- Calibrate seconds per tile and per-step extras against Sean's recorded legs (`RunTimings`).
+- Calibrate seconds per tile and per-step extras against elzerma's recorded legs (`RunTimings`).
 - Delete `Walk` buckets and the scattered walk maps. Fix the CIR test.
-- Checks: leg times in the Run tab look right for 5 legs Sean knows (e.g. CIQ is slow, Stronghold spirit tree).
+- Checks: leg times in the Run tab look right for 5 legs elzerma knows (e.g. CIQ is slow, Stronghold spirit tree).
 
 **Sprint 2: route search with bank visits.**
 - Start resolver; ordering with charges inside the search; inventory fitting with bank visits (stop banks
   and bank teleports), any number of them; explain log.
 - Delete the old split code.
 - Checks: near Falador Park the run starts there; Stronghold -> spirit tree -> Tree Gnome Village; a big run
-  banks somewhere Sean agrees with; herbs-only and herbs+trees runs look sensible.
+  banks somewhere elzerma agrees with; herbs-only and herbs+trees runs look sensible.
 
 **Sprint 3: frozen plan and per-inventory supplies.**
 - `RunPlan` with steps and inventories; stock subtracted between inventories; worn items take no slot; run
   record covers the whole run.
-- Checks: the supply counts for each part of a big run add up to what Sean has.
+- Checks: the supply counts for each part of a big run add up to what elzerma has.
 
 **Sprint 4: run guide rewrite.**
 - State machine, navigator, patch guide, bank guide replacing `RunSession`.
@@ -246,27 +246,27 @@ missing from his vision. Turn every chain or behaviour he names into a scenario 
   fix the mislabelled options and hints.
 - Checks: every setting does what its label says (a short list).
 
-**Sprint 7: UI facelift** (Sean, 2026-10-12: "a LOT to look at"). Before the release, so its screenshots show it.
-**Passed Sean's checks 2026-10-13.** Kept: RuneLite's subtle hover grey, the current stop's name bold; the
+**Sprint 7: UI facelift** (elzerma, 2026-10-12: "a LOT to look at"). Before the release, so its screenshots show it.
+**Passed elzerma's checks 2026-10-13.** Kept: RuneLite's subtle hover grey, the current stop's name bold; the
 before/after line count was skipped. The look is written down in docs/BRANDING.md.
-- **Say each thing in one place** (Sean, 2026-10-12, a rule for the whole UI): if the overlay, a tooltip or another tab
+- **Say each thing in one place** (elzerma, 2026-10-12, a rule for the whole UI): if the overlay, a tooltip or another tab
   already says it, the panel doesn't repeat it. E.g. the next step is under the player only, not also on the Run tab.
 - Explanations move into hover tooltips: no note lines under checkboxes and dropdowns; a control's label says what
   it is, its tooltip says why and what it does. Only warnings that need action stay visible.
 - Shorter labels and summaries, the same spacing and fonts everywhere, fewer headings; sections closed by
   default except the one or two changed most.
-- Run checklist as in Quest Helper (Sean, 2026-10-12): tick boxes on stops, bank visits and the current row's
+- Run checklist as in Quest Helper (elzerma, 2026-10-12): tick boxes on stops, bank visits and the current row's
   steps; the plugin ticks what it sees done (locked), the player ticks what it missed and can untick those to go
   back. Mark done and Skip stop go; the clock and Stop share one line. Bank visits are rows of their own.
-- A calculated item missing mid-run turns the current task into a bank visit (Sean, 2026-10-12): straight away
+- A calculated item missing mid-run turns the current task into a bank visit (elzerma, 2026-10-12): straight away
   if the current step needs it, otherwise after the current stop; none if a planned bank visit comes first.
-- Second pass (Sean, 2026-10-12): five icon tabs (Run, Farm, Travel, Account, Settings). Account is what you
+- Second pass (elzerma, 2026-10-12): five icon tabs (Run, Farm, Travel, Account, Settings). Account is what you
   have (house, unlocks, storage); Settings holds Presets, Display, Debug (Detected inside), Reset and the help list
   last. One soft radius and flat controls (FlatLaf style strings, ui/Style.java); white bold headings. Patch
   timers one line each by type; Farm patches in groups two to a row; crops one line per choice; per-patch
   protection behind a tick box; Travel locations one line each.
 - Run tab: the status line, route and buttons only; Account > Detected as a compact two-column list.
-- Measure it: visible lines per tab before and after, and screenshots of each tab for Sean to compare.
+- Measure it: visible lines per tab before and after, and screenshots of each tab for elzerma to compare.
 - Checks: every control still has its explanation on hover; nothing a player needs is only in a tooltip.
 
 **PASSED 2026-10-14** (results in docs/plans/shortest-path-research.md; balloon left to players: needs 60 Firemaking).
@@ -276,7 +276,7 @@ dev-only "Measure walks" tool using its query message to measure every landing-t
 the numbers in TravelTimes, and research on the Trinket of fairies. Also hot air balloons (Taverley, Grand Tree, Castle
 Wars), bank distance from the last patch done at a stop, measured walks for every landing and bank, and start points chosen by walking distance (Castle Wars must not suggest Lletya).
 
-**Sprint 9: sourced data and crowdsourcing** (Sean, 2026-10-12; plan in docs/plans/sourced-data.md). Most
+**Sprint 9: sourced data and crowdsourcing** (elzerma, 2026-10-12; plan in docs/plans/sourced-data.md). Most
 guessed game values come from the game's own client scripts, Shortest Path's data and RuneLite's code instead of
 players: Karamja diary done at 2 (bug), bottomless bucket 1 = empty (bug), leprechaun counts by the script's
 multipliers, statues of Ates confirmed, Trollheim tablet, eternal crystal, Barnaby's spot, the nexus Troll
@@ -284,19 +284,19 @@ Stronghold landing. Players then only test behaviour (the help list, plus a bott
 share their run times through an opt-in GitHub report.
 
 **PASSED 2026-10-14** (leprechaun counts, share run times, bank steps; Karamja diary, Ates statues and an empty
-bucket couldn't be tried on Sean's account and rest on the game's own scripts; BUCKET_COMPOST stays for players).
+bucket couldn't be tried on elzerma's account and rest on the game's own scripts; BUCKET_COMPOST stays for players).
 
-**Sprint 10: tidy and release** (last, and only once everything works: Sean, 2026-10-12).
+**Sprint 10: tidy and release** (last, and only once everything works: elzerma, 2026-10-12).
 - Journey step text that fits the player (e.g. leave out "without 33 Agility, walk round" when they have it).
 - Guided tests: fix the two broken tests and bring every test in line with the rebuilt run, docs (README, delete stale plans),
-  screenshots, Plugin Hub PR update (with Sean's OK).
+  screenshots, Plugin Hub PR update (with elzerma's OK).
 - Starts only when Sprints 1-9 all pass in game; then merge `rebuild` into master and release.
 
 Built 2026-10-14 (f10a7d5..fcba6b3): Agility-dependent journey text, plant cure only when a patch can catch disease (Fortis
 Champion test fixed), house scan test without the nexus, a running test ends on shutdown, Spellbook Swap test points
 at the bank tab, README rewritten, superseded plans deleted, milestone tags gone. **Checks PASSED 2026-10-15**
-(Taverley rocks, Troll Stronghold, plant cure). Left: new screenshots (Sean), merge to master and the Plugin Hub PR
-(with Sean's OK).
+(Taverley rocks, Troll Stronghold, plant cure). Left: new screenshots (elzerma), merge to master and the Plugin Hub PR
+(with elzerma's OK).
 
 ## 7. Features that must survive the rebuild
 
@@ -310,22 +310,22 @@ group storage, leprechaun, bottomless bucket); bank tab; overlay steps and highl
 inventory, spellbook, hint arrow); drop reminders; Shortest Path lines; leg timing and learned times; best
 times; patch details/debug; the help list and guided tests (see decisions).
 
-## 8. Decisions (my defaults; Sean, change any you disagree with)
+## 8. Decisions (my defaults; elzerma, change any you disagree with)
 
 1. **Rebuild on the `rebuild` branch, sprint by sprint**, keeping the parts in section 4. Not a fresh project.
    master stays the working, released plugin (urgent fixes go there and are merged into `rebuild`); `rebuild`
-   merges into master in Sprint 10, the last sprint, once everything works in game (Sean, 2026-10-12).
+   merges into master in Sprint 10, the last sprint, once everything works in game (elzerma, 2026-10-12).
 2. **Any number of bank breaks** per run, placed by the search.
 3. **Bank teleports** considered: crafting cape (Crafting Guild), ring of dueling (Castle Wars), max cape,
    ring of wealth (Grand Exchange), plus regular teleports that land by a bank (Camelot -> Seers' with the
    diary, Varrock, Falador, Ardougne). The plugin brings one only when it's the cheapest way to bank.
 4. **Shortest Path lines:** a Display setting, on by default (only does anything if it's installed).
-5. **Guided tests:** kept for everyone, as now (Sean, 2026-10-11): players run them and open a prefilled GitHub
+5. **Guided tests:** kept for everyone, as now (elzerma, 2026-10-11): players run them and open a prefilled GitHub
    issue with the results; the dev client logs and copies the summary. Each sprint adds or rewords tests for
-   anything Sean can't try on his own account.
+   anything elzerma can't try on their own account.
 6. **Resurrect Crops:** removed until it can be guided properly.
 7. **Run tab:** no supply list; the bank tab is the only place items are listed. Because the bank tab's icon
-   is small and easy to miss, the player is walked to it (Sean, 2026-10-11), at the start and at every
+   is small and easy to miss, the player is walked to it (elzerma, 2026-10-11), at the start and at every
    mid-run bank:
    1. **Bank closed:** the overlay says "Open a bank". At a mid-run bank, that bank's booth or chest is
       outlined and Shortest Path draws the walk to it.
@@ -337,7 +337,7 @@ times; patch details/debug; the help list and guided tests (see decisions).
      or a mid-run bank, so the highlight is a fallback rather than the only cue. This only changes our own
      view of the bank, sends nothing to the server, and must be checked against Plugin Hub rules first.
    - The Run tab's status line shows the same next step ("Open a bank, then the Farm run tab").
-8. **Wear teleport items, and swap them at banks** (Sean, 2026-10-11): rings, capes, necklaces, bracelets and
+8. **Wear teleport items, and swap them at banks** (elzerma, 2026-10-11): rings, capes, necklaces, bracelets and
    Rada's blessing can be worn, one per equipment slot, instead of taking an inventory slot (an outfit such as
    Graceful takes its slots first). The slot count already assumes this (Sprint 3). The guide then says what to
    put on before the run ("Wear your ring of wealth and Ardougne cloak") and at each bank what to swap ("Swap:
@@ -346,4 +346,4 @@ times; patch details/debug; the help list and guided tests (see decisions).
      cloak"), including the outfit chosen in Farm > Extras, so it's obvious without hovering anything.
    - Items to wear get their own highlight colour and a "Wear" label, never the colour used for "use this to
      teleport", so nobody mistakes an item to put on for the next teleport. Once it's worn the highlight goes.
-   - The Run tab's status line says the same, not only a tooltip. (Sean, 2026-10-11)
+   - The Run tab's status line says the same, not only a tooltip. (elzerma, 2026-10-11)

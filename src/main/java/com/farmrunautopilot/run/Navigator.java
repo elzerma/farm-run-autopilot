@@ -105,7 +105,7 @@ class Navigator
 	}
 
 	/**
-	 * "Mark done" while travelling: on one step at a time, the teleport, then each journey step (Sean: it skipped
+	 * "Mark done" while travelling: on one step at a time, the teleport, then each journey step (elzerma: it skipped
 	 * them all). After the last one the stop counts as reached, so the patch's own "Walk to the ... patch" is next.
 	 */
 	void markStepDone(RouteStop stop, long nowMillis)
@@ -182,7 +182,7 @@ class Navigator
 		}
 		// A walk from the last stop (Falador Park to Taverley, or to a stop near the start) has nothing to travel to
 		// first: arrived straight away, so the patch's own "Walk to the ... patch" is the one step, with its walking
-		// line (Sean: it took two Mark done presses)
+		// line (elzerma: it took two Mark done presses)
 		if (stop.getDeparture() == Departure.WALK)
 		{
 			markArrived(nowMillis);

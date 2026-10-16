@@ -24,7 +24,7 @@ import net.runelite.api.QuestState;
 import net.runelite.api.Skill;
 import org.junit.Test;
 
-/** Sean asked not to be sent across spellbooks unless a house altar makes it practical. */
+/** elzerma asked not to be sent across spellbooks unless a house altar makes it practical. */
 public class SpellbookRuleTest
 {
 	private static AccessSnapshot onBook(Spellbook book, Set<Spellbook> altar)

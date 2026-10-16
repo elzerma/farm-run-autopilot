@@ -68,7 +68,7 @@ public enum TravelMethod
 	FALADOR_TELEPORT_TO_TAVERLEY(spell(Location.TAVERLEY, Spell.FALADOR_TELEPORT)
 		.then(JourneyStep.shortcut(66, "Leave Falador by the north gate and Climb-up the rocks into Taverley",
 			"Leave Falador by the north gate and go round to Taverley's gate", "rocks or gate into Taverley"))),
-	// From the Grand Tree's basket after the Gnome Stronghold stop (Sean): 6 tiles from the fruit tree, lands 16 from
+	// From the Grand Tree's basket after the Gnome Stronghold stop (elzerma): 6 tiles from the fruit tree, lands 16 from
 	// the tree patch; one normal log a flight
 	HOT_AIR_BALLOON_TAVERLEY(balloon(Location.TAVERLEY, "Hot air balloon from the Grand Tree")),
 	GAMES_NECKLACE_BURTHORPE(item(Location.TAVERLEY, "Games necklace (Burthorpe)",
@@ -257,7 +257,7 @@ public enum TravelMethod
 	private final List<JourneyStep> rides;
 	/**
 	 * The walking directions in {@link #then} (rocks, gates, stairs): part of the walk to the patch, not tick boxes of
-	 * their own (Sean, 2026-10-15: they ticked early at the Troll Stronghold and don't need boxes).
+	 * their own (elzerma, 2026-10-15: they ticked early at the Troll Stronghold and don't need boxes).
 	 */
 	private final List<JourneyStep> directions;
 	/** Requirements beyond the spell's own and owning the item. */

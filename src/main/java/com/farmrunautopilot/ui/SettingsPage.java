@@ -46,7 +46,7 @@ import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
 /**
- * The Settings tab (Sean: Account is what you have; this is how the plugin behaves): presets are managed here,
+ * The Settings tab (elzerma: Account is what you have; this is how the plugin behaves): presets are managed here,
  * then how the run is shown in game, debug information (what was detected, patch states), resetting, and the
  * testing list last.
  */
@@ -276,7 +276,7 @@ class SettingsPage extends SetupPanel
 	}
 
 	/**
-	 * Debug information (Sean: Detected is purely for debug): what the plugin worked out by itself, a full-run count
+	 * Debug information (elzerma: Detected is purely for debug): what the plugin worked out by itself, a full-run count
 	 * for checking numbers, and every patch's state.
 	 */
 	private JComponent debugSection(RunConfig config)
@@ -309,17 +309,17 @@ class SettingsPage extends SetupPanel
 		return s;
 	}
 
-	/** The help list and guided tests, last on the tab (Sean). */
+	/** The help list and guided tests, last on the tab (elzerma). */
 	private JComponent testingSection()
 	{
 		final CollapsibleSection s = section(TESTING);
-		// Said here, where people come to read it (Sean): what everything in this section has in common, then each
+		// Said here, where people come to read it (elzerma): what everything in this section has in common, then each
 		// part under its own heading with its own explanation
 		s.addContent(note("Everything here ends the same way: a GitHub issue opens in your browser with the details "
 			+ "filled in. You read it, and nothing is sent unless you submit it (a free GitHub account is needed). It "
 			+ "never includes your name or account."));
 
-		// First: sharing run times (Sean), its own part with its own explanation
+		// First: sharing run times (elzerma), its own part with its own explanation
 		s.addContent(divider());
 		s.addContent(subheader("Share your run times"));
 		s.addContent(note("How long each leg of your runs really takes helps set better travel times for everyone. "

@@ -97,7 +97,7 @@ class FarmBankTabButton
 
 	/**
 	 * Each game tick: while the guide is waiting for it, the button flashes between its normal and pressed look so
-	 * it's hard to miss (Sean). Only our own widget is changed.
+	 * it's hard to miss (elzerma). Only our own widget is changed.
 	 */
 	void onGameTick()
 	{

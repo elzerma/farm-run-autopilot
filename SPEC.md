@@ -1,16 +1,16 @@
 # Farm Run Autopilot — Build Spec (v1)
 
 > **Who this is for:** Claude Code, building a RuneLite Plugin Hub plugin in the `farm-run-autopilot` repo (currently the stock RuneLite example template + `AGENTS.md`).
-> **Owner:** Sean (product decisions, in-game testing). Sean is not a developer — explain anything he must do in plain language.
+> **Owner:** elzerma (product decisions, in-game testing). elzerma is not a developer — explain anything they must do in plain language.
 > **Status:** Draft 1, 2026-10-06. Items marked **UNVERIFIED** must be confirmed in-game or against the OSRS wiki before being treated as fact.
 
 ---
 
 ## 0. How to work from this spec (read first)
 
-1. **Follow `AGENTS.md` in the repo at all times.** It contains the RuneLite coding rules and the Plugin Hub forbidden-feature list. If anything in this spec conflicts with `AGENTS.md`, `AGENTS.md` wins — stop and flag it to Sean.
-2. **Build in small milestones (section 15), one at a time.** Each milestone ends with a short in-game test list for Sean. Do not start the next milestone until Sean confirms the current one works. Sean explicitly prefers small chunks over big pushes.
-3. **You cannot test in-game.** Never automate or screen-control the game. Offer `./gradlew run`, tell Sean exactly what to check, and wait.
+1. **Follow `AGENTS.md` in the repo at all times.** It contains the RuneLite coding rules and the Plugin Hub forbidden-feature list. If anything in this spec conflicts with `AGENTS.md`, `AGENTS.md` wins — stop and flag it to elzerma.
+2. **Build in small milestones (section 15), one at a time.** Each milestone ends with a short in-game test list for elzerma. Do not start the next milestone until elzerma confirms the current one works. elzerma explicitly prefers small chunks over big pushes.
+3. **You cannot test in-game.** Never automate or screen-control the game. Offer `./gradlew run`, tell elzerma exactly what to check, and wait.
 4. **Game facts live in data, not logic.** Patches, crops, teleports, rune costs, requirements and walk-time estimates go in one data layer (sections 5–8) so they can be corrected without touching planner/UI code.
 5. **Background research** is in `reference/teleports.md` (travel methods, rune costs, POH, run orders) and `reference/data.md` (crops, varbits, Time Tracking and Quest Helper internals). Use them when a section here is too brief; this spec wins if they disagree.
 6. **Starting from scratch.** Do not fork Farming-Helper (`Speaax/Farming-Helper`, BSD-2-Clause). You may consult it, and you may reuse coordinates/location data from it only if the BSD-2 copyright notice ("Copyright (c) 2025, JThomasDevs") is kept in a `THIRD_PARTY_NOTICES` file.
@@ -31,12 +31,12 @@ A farming-run planner and guide for tree, fruit tree and herb runs that:
 
 ### Non-goals (v1)
 - No automation of any kind: no clicking, no input, no menu entries that send actions to the server (Hub rule).
-- No notifications (Sean's decision — leave them to the core Time Tracking plugin).
+- No notifications (elzerma's decision — leave them to the core Time Tracking plugin).
 - No run types beyond tree / fruit tree / herb (see "Later" in section 2).
 
 ---
 
-## 2. Locked decisions (from Sean)
+## 2. Locked decisions (from elzerma)
 
 | Topic | Decision |
 |---|---|
@@ -46,7 +46,7 @@ A farming-run planner and guide for tree, fruit tree and herb runs that:
 | Later (not v1) | Hardwood/special trees (Fossil Island, Avium Savannah, calquat, celastrus, redwood, spirit tree), allotments/flowers/hops/bushes, seaweed/cactus/mushroom/belladonna. Design the data model so these can be added as new patch types without refactoring. |
 | Combined runs | **One combined route** across all due run types. |
 | Patch access | **Auto-detect** (quests, diaries, Farming level) and grey out locked patches; player can **untick any patch** manually. |
-| Seed choice | **One seed/sapling per run type** by default. Optional **backup choices** (1st/2nd/3rd) used when the player runs out of the 1st; disease-free and protected patches get the best crops first. Optional herb list **"Seeds for disease-free patches"** (multi-select): disease-free patches get those herbs first, most valuable first by GE price, and other patches never get them. (Changed by Sean, 2026-10-07.) |
+| Seed choice | **One seed/sapling per run type** by default. Optional **backup choices** (1st/2nd/3rd) used when the player runs out of the 1st; disease-free and protected patches get the best crops first. Optional herb list **"Seeds for disease-free patches"** (multi-select): disease-free patches get those herbs first, most valuable first by GE price, and other patches never get them. (Changed by elzerma, 2026-10-07.) |
 | Tree/fruit tree protection | Options: **Pay gardener**, **Compost only**, **Per-patch override**, **Pay with noted items** (gardeners accept noted payment — verified on the wiki Farming page). |
 | Clearing | Option to **pay gardener 200 coins** to remove a grown tree/fruit tree (verified on the wiki). Adds 200 coins per relevant patch. |
 | Herb extras | **Compost per herb patch** (with bottomless bucket charge counting), **equipment boosts** as optional "recommended" items (magic secateurs, farming cape/outfit), **plant cure / Cure Plant / Resurrect Crops** as optional backups. |
@@ -61,7 +61,7 @@ A farming-run planner and guide for tree, fruit tree and herb runs that:
 | Due detection | **Auto-skip run types that aren't ready** (e.g. fruit trees on their 16h cycle when only trees/herbs are due). |
 | Run energy | **Live threshold**: if energy is **below 30%** before a walk of **15+ tiles**, the next step becomes "drink a stamina dose" if you have one, otherwise a restore stop (POH pool or Ferox — whichever is quicker from there). Optional stamina doses in the supply list. |
 | Leg timings | **Ship estimates, then self-learn** from the player's actual leg times. |
-| Sidebar | **Run, Farm, Travel and Account tabs** (Sean, 2026-10-10; Settings tab added in Sprint 7; look in docs/BRANDING.md). Run: run types, stages, route, checklist, presets. Farm: what to grow, when, and how to protect it. Travel: defaults for every stop, route, per-location overrides. Account: what the plugin detected, house, unlocks, storage, display. Checklist colours: green carried, yellow in storage, red missing. |
+| Sidebar | **Run, Farm, Travel and Account tabs** (elzerma, 2026-10-10; Settings tab added in Sprint 7; look in docs/BRANDING.md). Run: run types, stages, route, checklist, presets. Farm: what to grow, when, and how to protect it. Travel: defaults for every stop, route, per-location overrides. Account: what the plugin detected, house, unlocks, storage, display. Checklist colours: green carried, yellow in storage, red missing. |
 | Notifications | **None.** |
 
 ---
@@ -93,7 +93,7 @@ A farming-run planner and guide for tree, fruit tree and herb runs that:
 
 ## 5. Data model
 
-All game data is static and lives in `data/` (Java enums/records or a bundled JSON resource loaded with the injected `Gson` — Claude Code's choice; JSON is easier for Sean to correct). Suggested types:
+All game data is static and lives in `data/` (Java enums/records or a bundled JSON resource loaded with the injected `Gson` — Claude Code's choice; JSON is easier for elzerma to correct). Suggested types:
 
 ```
 PatchType        { TREE, FRUIT_TREE, HERB }            // extensible: HARDWOOD, CALQUAT, ...
@@ -381,7 +381,7 @@ For each leg that uses a spell:
 - **Auto teleport choice:** for each location, "Auto" picks the cheapest owned + unlocked method given leg context.
 
 ### 12.3 Run energy (live)
-**Dropped (Sean, 2026-10-08):** not wanted for v1; the reminder and its two Route settings were removed. Kept here for reference.
+**Dropped (elzerma, 2026-10-08):** not wanted for v1; the reminder and its two Route settings were removed. Kept here for reference.
 
 At each step transition: if run energy < **30%** (setting) and the next leg's walk ≥ **15 tiles** (setting):
 1. If stamina potion in inventory → step "Drink a stamina dose".
@@ -419,7 +419,7 @@ Collapsible sections:
 - Implementation reference: Quest Helper `QuestBankTabInterface` + `QuestBankTab` (`getSearchingTagTab` callback, `BANKMAIN_SEARCHING` / `BANKMAIN_FINISHBUILDING` script hooks, reuse item widgets, fix menu `param0` so withdraw works, update scrollbar). Close the view when a real tab, "View all", tag tab, potion store or search is clicked.
 - Simpler fallback if the above proves fragile: core Bank Tags API (`TagManager.registerTag` + `BankTagsService.openBankTag`, `@PluginDependency(BankTagsPlugin.class)`) — loses section headers/quantity text.
 - Also highlight needed items in the normal bank view (outline) and show ✔/✘ next to the checklist.
-- Sean has a screenshot of Quest Helper's needed-items tab to use as the visual reference.
+- elzerma has a screenshot of Quest Helper's needed-items tab to use as the visual reference.
 
 ### 13.4 In-run step guidance (Quest Helper style)
 Step engine with steps: TRAVEL → (WALK) → per patch: CHECK_HEALTH → HARVEST (herbs, fruit) → CLEAR (pay 200, or chop + dig stump) → RAKE (if weeds) → COMPOST → PLANT → PAY → next. Each step knows its **completion signal** (region entered, patch varbit changed, payment chat message, item count changed).
@@ -444,14 +444,14 @@ Save, rename, duplicate, delete named `RunConfig`s (e.g. "Full tree + fruit", "Q
 
 ## 15. Milestones (small, testable chunks)
 
-Each milestone ends with: `./gradlew run`, a short "what to test" list for Sean, and waiting for his OK.
+Each milestone ends with: `./gradlew run`, a short "what to test" list for elzerma, and waiting for their OK.
 
-| # | Milestone | Sean tests |
+| # | Milestone | elzerma tests |
 |---|---|---|
 | M0 | Rename template (package `com.farmrunautopilot`, `FarmRunAutopilotPlugin`, config group, `build.gradle`, `settings.gradle`, `runelite-plugin.properties`, README, BSD-2 licence, THIRD_PARTY_NOTICES). Empty sidebar with Run/Setup tabs. | Plugin appears, sidebar opens, no errors. |
 | M1 | Data layer: patches, crops, travel methods, POH options, meta orders. Unit tests for data integrity and patch-state decoding. | Nothing in-game; review the data tables. |
 | M2 | Patch state tracker + debug list in Setup tab. | Visit 3–4 patches; states and timers look right. |
-| M3 | Access detection + Setup tab (patches, crops, protection, travel dropdowns, POH, storage toggles). | Locked items match what he has; overrides stick after relog. |
+| M3 | Access detection + Setup tab (patches, crops, protection, travel dropdowns, POH, storage toggles). | Locked items match what they have; overrides stick after relog. |
 | M4 | Supply calculator + Run tab checklist (inv/equip/bank/leprechaun; optional group storage/vault). | Numbers match a hand count for one tree run and one herb run. |
 | M5 | Generated bank tab. | Button appears, sections + quantities correct, withdrawing works, closes properly. |
 | M6 | Route planner (Autopilot/Meta/Off) + drag reorder + due detection. | Route order sensible; fruit trees skipped when not due. |
@@ -463,7 +463,7 @@ Each milestone ends with: `./gradlew run`, a short "what to test" list for Sean,
 
 ## 16. Open questions / to verify
 
-1. Seed vault toggle — default off (Sean said "maybe seed vault too"); confirm default.
+1. Seed vault toggle — default off (elzerma said "maybe seed vault too"); confirm default.
 2. Fruit regrow time 40 vs 45 minutes; banana/orange/curry payment item form.
 3. Disease-free status for Hosidius, Harmony, Civitas; Kastori gardener name.
 4. Leprechaun base+EXTRA varbit combination formula; bottomless bucket charge tracking.

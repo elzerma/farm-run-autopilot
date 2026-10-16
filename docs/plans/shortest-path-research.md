@@ -63,7 +63,7 @@ Caveats from the code:
   client thread). Fine under Plugin Hub rules: no reflection, no compile dependency, just messages.
 
 **Recommendation:** don't make planning depend on it. Use it in a **dev-only measuring tool**: a "Measure
-walks" button in Account > Testing & debug that, in Sean's dev client with Shortest Path installed and the
+walks" button in Account > Testing & debug that, in elzerma's dev client with Shortest Path installed and the
 walk-only overrides set, queries every `TravelMethod` landing -> its stop's patches, every bank -> patch,
 every `WALKS` pair, spirit tree / fairy ring / Renu -> patch, then logs a ready-to-paste table. We bake the
 numbers into `TravelTimes` with a source comment. Later, optionally, query live for the one leg we can't
@@ -123,16 +123,16 @@ in seconds.
 4. **Durations.** Set spell/jewellery 2.4 s, fairy ring 3.0, Renu 3.6, home teleport 14.4, then re-check
    `LEG_OVERHEAD` against `RunTimings`. In game: Run tab leg times for 5 known legs still look right.
 5. **Measure walks tool (dev only).** Account > Testing & debug button; queries Shortest Path (walk-only
-   overrides) for every landing/bank/tree/ring/pad -> patch and stop -> stop; logs a table. In game: Sean
+   overrides) for every landing/bank/tree/ring/pad -> patch and stop -> stop; logs a table. In game: elzerma
    presses it once in the dev client (logged in, Shortest Path installed), sends the log.
 6. **Bake the walks.** Replace `TILES`, `WALKS`, `SPIRIT_TREE_WALK`, `RENU_PAD_WALK`, `BANK_TILES` with the
    measured values; list the big changes. In game: plan a herbs+trees run; order and times look sensible.
 7. **Trinket of fairies research** (wiki), then add it as a `TravelItem` if it's what it looks like, with a
-   guided test (Sean may not own it). In game: only if he has it.
+   guided test (elzerma may not own it). In game: only if they have it.
 8. **Optional: live first leg.** Query from the player's tile to the first stop when planning, fall back to
    baked numbers. In game: start a run from an odd spot (e.g. Lumbridge); the first leg's time is believable.
 
-## Risk mitigations (agreed with Sean, 2026-10-11)
+## Risk mitigations (agreed with elzerma, 2026-10-11)
 
 - **License:** a THIRD_PARTY_NOTICES file with their BSD-2 text, a README credit, and a source comment on each
   copied table naming the Shortest Path commit. Copy facts (coordinates, ticks), not code.
@@ -149,7 +149,7 @@ in seconds.
 - **Override keys:** a unit test checks every key and value we send against a list taken from their source
   (the "None" vs "NONE" bug); the dev client logs if one of our walk-only lines contains a teleport.
 
-## Added to Sprint 8, Shortest Path data (Sean, 2026-10-12)
+## Added to Sprint 8, Shortest Path data (elzerma, 2026-10-12)
 
 - **Hot air balloons** as travel options: Taverley's lands 14 walking tiles from the tree patch. Worth it from the
   Gnome Stronghold fruit tree (10 tiles to the Grand Tree balloon, about 20 s to the Taverley tree against about
@@ -162,7 +162,7 @@ in seconds.
 - **Walking distances measured on the collision map** (a one-off BFS over collision-map.zip) for every landing,
   bank and stop-to-stop walk, e.g. Falador Park to Taverley by the gate is 114 tiles (plugin: 100).
 
-## Start points by walking distance (Sean, 2026-10-12)
+## Start points by walking distance (elzerma, 2026-10-12)
 
 "Near a stop" is straight-line today (within 120 tiles), so Castle Wars counts as near Lletya. Plan:
 - A dev-only script walks out from each stop's patches over the collision map (up to ~150 tiles) and saves
@@ -181,7 +181,7 @@ in seconds.
   quetzal pad and bank walks (bank from the patch furthest from it); bank tiles from Shortest Path; start
   points by walking distance (walk-grid.bin, with doors and gates); hot air balloon Grand Tree -> Taverley;
   walking lines also switch off mounted items, sailing and grapples, clear on logout, and a test pins the keys.
-- **Durations:** left as they are. Sean's recorded legs (Camelot 9 s, ring of wealth 8 s, slayer ring 11 s,
+- **Durations:** left as they are. elzerma's recorded legs (Camelot 9 s, ring of wealth 8 s, slayer ring 11 s,
   village spirit tree 15 s on top of the walk) match the current base + overhead (11-12 s); learned times take
   over per player anyway. Only the quetzal whistle looks slow (one sample).
 - **Trinket of fairies:** Deadman Mode only (a breach drop), so not added.

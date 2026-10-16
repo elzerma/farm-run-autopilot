@@ -151,7 +151,7 @@ public class RunService
 			patchTracker::predict, this::itemName, itemManager::getItemPrice);
 		// Starting at the stop the player stands at or near only makes sense if they can start from there: carrying
 		// everything already, or with a bank close by. Otherwise (Kastori, still needing supplies) they'll bank
-		// somewhere first, so plan from anywhere (Sean)
+		// somewhere first, so plan from anywhere (elzerma)
 		final Location startStop = here != null ? here : near;
 		if (startStop != null && TravelTimes.bankTiles(startStop) == null
 			&& supplies.missingCount(startStop == Location.FARMING_GUILD) > 0)
@@ -359,7 +359,7 @@ public class RunService
 
 	/**
 	 * What some stops of a run in progress need, worked out afresh against what the player holds now: for spotting
-	 * an item gone missing mid-run (Sean). Client thread.
+	 * an item gone missing mid-run (elzerma). Client thread.
 	 */
 	public SupplyPlan suppliesFor(RunPlan plan, List<RouteStop> stops)
 	{
@@ -415,7 +415,7 @@ public class RunService
 				continue;
 			}
 			final WorldPoint point = e.getValue();
-			// Walking distance from the measured grid (Sean: Castle Wars isn't near Lletya); straight-line only if
+			// Walking distance from the measured grid (elzerma: Castle Wars isn't near Lletya); straight-line only if
 			// the grid didn't load
 			final Integer walked = WalkGrid.loaded() ? WalkGrid.tiles(e.getKey().getLocation(), location) : null;
 			if (WalkGrid.loaded() && walked == null)

@@ -25,19 +25,19 @@ import net.runelite.api.Skill;
 import net.runelite.api.gameval.ItemID;
 
 /**
- * An account like Sean's, for scenario tests: the patches his full run visits and the teleports his routes use
- * (from his in-game screenshots, 2026-10-10). Not exact; close enough that the planner faces his choices.
+ * An account like elzerma's, for scenario tests: the patches their full run visits and the teleports their routes use
+ * (from their in-game screenshots, 2026-10-10). Not exact; close enough that the planner faces their choices.
  */
-final class SeanAccount
+final class ElzermaAccount
 {
-	/** The stops of his full run (no Harmony Island or Weiss). */
+	/** The stops of their full run (no Harmony Island or Weiss). */
 	static final Set<Location> STOPS = Collections.unmodifiableSet(EnumSet.of(Location.FALADOR_PARK,
 		Location.TAVERLEY, Location.KASTORI, Location.TREE_GNOME_VILLAGE, Location.LLETYA, Location.CATHERBY,
 		Location.BRIMHAVEN, Location.NEMUS_RETREAT, Location.VARROCK, Location.LUMBRIDGE, Location.GNOME_STRONGHOLD,
 		Location.CIVITAS_ILLA_FORTIS, Location.PORT_PHASMATYS, Location.TROLL_STRONGHOLD, Location.HOSIDIUS,
 		Location.ARDOUGNE_FARM, Location.FALADOR_FARM, Location.FARMING_GUILD));
 
-	private SeanAccount()
+	private ElzermaAccount()
 	{
 	}
 

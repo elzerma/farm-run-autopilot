@@ -393,7 +393,7 @@ class PatchGuide
 	 * there, otherwise say it's missing.
 	 */
 	/**
-	 * The current patch step's item is neither carried nor at the tool leprechaun, so only a bank can help (Sean:
+	 * The current patch step's item is neither carried nor at the tool leprechaun, so only a bank can help (elzerma:
 	 * the task then becomes a bank visit).
 	 */
 	boolean currentItemMissing(Highlights highlights)
@@ -449,7 +449,7 @@ class PatchGuide
 
 	/**
 	 * Planting uses the seed or sapling itself, but only works with a seed dibber (herbs) or spade (saplings) in the
-	 * inventory: say so if it isn't there. The tool isn't outlined, since it isn't what gets clicked (Sean).
+	 * inventory: say so if it isn't there. The tool isn't outlined, since it isn't what gets clicked (elzerma).
 	 */
 	String plantingToolReminder()
 	{
@@ -471,7 +471,7 @@ class PatchGuide
 
 	/**
 	 * The inventory is full and something is about to be picked here. Only when full, not when it merely might
-	 * not fit (Sean): herbs and fruit can be noted by the tool leprechaun at every patch.
+	 * not fit (elzerma): herbs and fruit can be noted by the tool leprechaun at every patch.
 	 */
 	String spaceReminder()
 	{

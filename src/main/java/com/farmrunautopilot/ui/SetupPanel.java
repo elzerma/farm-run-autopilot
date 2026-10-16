@@ -125,7 +125,7 @@ abstract class SetupPanel extends JPanel
 	{
 		final JButton button = new JButton(text);
 		button.setFont(FontManager.getRunescapeSmallFont());
-		// Narrow padding, so three to a row still fit "Rename" and "Delete" (Sean: they showed "Ren..." "Del...")
+		// Narrow padding, so three to a row still fit "Rename" and "Delete" (elzerma: they showed "Ren..." "Del...")
 		button.setMargin(new Insets(2, 2, 2, 2));
 		button.setFocusPainted(false);
 		button.setAlignmentX(LEFT_ALIGNMENT);
@@ -181,13 +181,13 @@ abstract class SetupPanel extends JPanel
 	{
 		final JCheckBox box = checkBox(text, selected, enabled, tooltip, onChange);
 		box.setText(wrap(text, CONTROL_WIDTH / 2 - 26));
-		// Rows of two sit closer together (Sean: a little much padding)
+		// Rows of two sit closer together (elzerma: a little much padding)
 		box.setMargin(new Insets(1, 1, 1, 1));
 		return box;
 	}
 
 	/**
-	 * Controls two to a row, each row only as tall as its own contents (Sean: one long name made every row tall
+	 * Controls two to a row, each row only as tall as its own contents (elzerma: one long name made every row tall
 	 * in a grid).
 	 */
 	static JComponent twoPerRow(List<JComponent> items)

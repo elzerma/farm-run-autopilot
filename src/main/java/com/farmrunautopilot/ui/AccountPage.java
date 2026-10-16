@@ -25,7 +25,7 @@ import javax.swing.SwingUtilities;
 import net.runelite.client.util.LinkBrowser;
 
 /**
- * The Account tab: what you have that the plugin can't read by itself (Sean: Account is what you have): your
+ * The Account tab: what you have that the plugin can't read by itself (elzerma: Account is what you have): your
  * house, unlocks and where you store things. Display, debug and testing are on the {@link SettingsPage}.
  */
 class AccountPage extends SetupPanel

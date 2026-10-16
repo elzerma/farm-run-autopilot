@@ -150,7 +150,7 @@ public class TestRunner
 			missing.add("Log in first");
 			return missing;
 		}
-		// A route built but not started doesn't count (Sean: "no run going" was told to stop it); begin clears it
+		// A route built but not started doesn't count (elzerma: "no run going" was told to stop it); begin clears it
 		if (runSession.getView().getState() == RunView.State.RUNNING)
 		{
 			missing.add("Stop your run first");

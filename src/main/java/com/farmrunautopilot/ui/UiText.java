@@ -19,7 +19,7 @@ final class UiText
 	}
 
 	/**
-	 * Hover text that's only as wide as it needs to be, up to {@code width} screen pixels (Sean: short hovers took
+	 * Hover text that's only as wide as it needs to be, up to {@code width} screen pixels (elzerma: short hovers took
 	 * the full width). Each line is measured in the tooltip font; only if one is longer does the text wrap.
 	 */
 	static String tooltip(String text, int width)

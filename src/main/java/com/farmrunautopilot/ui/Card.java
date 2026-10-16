@@ -13,7 +13,7 @@ import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
 
 /**
- * The sidebar's building block (Sprint 7 facelift, Sean: RuneLite's colours, a modern look): a rounded panel in
+ * The sidebar's building block (Sprint 7 facelift, elzerma: RuneLite's colours, a modern look): a rounded panel in
  * RuneLite's darker grey, optionally with a coloured bar down its left edge to mark the current or important one.
  */
 class Card extends JPanel

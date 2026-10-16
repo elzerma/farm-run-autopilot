@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.coords.WorldPoint;
 
 /**
- * How far each stop is to walk from anywhere near it (Sean: start points by walking distance, so Castle Wars
+ * How far each stop is to walk from anywhere near it (elzerma: start points by walking distance, so Castle Wars
  * isn't "near" Lletya across the forest). Walking tiles from each stop's patches out to {@link #MAX_TILES},
  * measured once on Shortest Path's collision map (BSD-2, commit 7e81a40, see THIRD_PARTY_NOTICES) and kept per
  * 4x4-tile block in {@code walk-grid.bin}, which ships with the plugin; nothing is fetched or measured in game.

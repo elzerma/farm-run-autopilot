@@ -95,7 +95,7 @@ public class ItemChargeTracker
 	public boolean onChatMessage(String message)
 	{
 		// Recharged by Soar Leader Pitri: the message has no count, so the old one is wrong; unknown until the next
-		// Check or flight says (Sean, 2026-10-11)
+		// Check or flight says (elzerma, 2026-10-11)
 		if (message.endsWith("Some whistle charges for you!"))
 		{
 			return forget(TravelItem.QUETZAL_WHISTLE);
@@ -167,7 +167,7 @@ public class ItemChargeTracker
 		{
 			// The pendant's varbit says when a charge is really used; the whistle says so in chat after every flight
 			// ("Your quetzal whistle has 19 charges remaining."). Guessing from movement as well counted a Renu flight
-			// after the whistle menu was opened and closed (Sean, 2026-10-11)
+			// after the whistle menu was opened and closed (elzerma, 2026-10-11)
 			if (item == TravelItem.PENDANT_OF_ATES || item == TravelItem.QUETZAL_WHISTLE)
 			{
 				continue;

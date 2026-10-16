@@ -54,7 +54,7 @@ final class HelpWanted
 	}
 
 	/**
-	 * The small line at the bottom of every tab, which opens the list in Settings > Help improve this plugin (Sean: a quiet
+	 * The small line at the bottom of every tab, which opens the list in Settings > Help improve this plugin (elzerma: a quiet
 	 * link rather than a big button).
 	 */
 	static JButton button(SettingsStore settings, boolean developer, Runnable open)
@@ -77,7 +77,7 @@ final class HelpWanted
 	static void refresh(JButton button, SettingsStore settings, boolean developer)
 	{
 		final int count = toTry(settings);
-		// Says it's easy (Sean: no coding or heavy lifting, just run a couple of scenarios)
+		// Says it's easy (elzerma: no coding or heavy lifting, just run a couple of scenarios)
 		button.setText("<html><body style='width:146px'>Help improve this plugin: try a few quick things in game, "
 			+ "no coding needed. <u>Show me</u></body></html>");
 		button.setToolTipText(count == 0 ? "Every test is done" : count + (count == 1 ? " feature" : " features")
@@ -164,7 +164,7 @@ final class HelpWanted
 	{
 		final List<String> missing = runner.missing(item);
 		final ExpandableRow row = new ExpandableRow(item.getTitle(),
-			// Short on the line (Sean: the whole need wrapped into a tall column); what's needed is inside
+			// Short on the line (elzerma: the whole need wrapped into a tall column); what's needed is inside
 			missing.isEmpty() ? "Ready" : "Not yet",
 			item.getHowToTry() + (missing.isEmpty() ? "" : " Needs: " + String.join("; ", missing) + "."),
 			false, TEXT_WIDTH + 40, OPEN_ROWS.contains(item), open ->
@@ -250,7 +250,7 @@ final class HelpWanted
 
 	private static JLabel text(String text, Color colour, int gapBelow)
 	{
-		// UiText.wrap scales to screen pixels; an unscaled width ran off the edge inside an opened test (Sean)
+		// UiText.wrap scales to screen pixels; an unscaled width ran off the edge inside an opened test (elzerma)
 		final JLabel label = new JLabel(text.isEmpty() ? " " : UiText.wrap(text, TEXT_WIDTH));
 		label.setForeground(colour);
 		label.setFont(FontManager.getRunescapeSmallFont());

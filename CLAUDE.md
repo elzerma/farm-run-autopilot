@@ -4,7 +4,7 @@
 
 ## Look and words
 
-Every sidebar screen follows `docs/BRANDING.md` (colours, type, spacing, components, wording, the one-place rule). Build new UI from `ui/Style.java`, `ui/Card.java` and `ui/UiText.java`, and update the kit when Sean changes the look.
+Every sidebar screen follows `docs/BRANDING.md` (colours, type, spacing, components, wording, the one-place rule). Build new UI from `ui/Style.java`, `ui/Card.java` and `ui/UiText.java`, and update the kit when elzerma changes the look.
 
 ## GitHub issues
 

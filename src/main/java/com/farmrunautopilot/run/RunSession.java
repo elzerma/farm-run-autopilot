@@ -90,7 +90,7 @@ public class RunSession
 	/** Travel steps of the current stop ticked by hand (they can be unticked), by index in its steps. */
 	private final Set<Integer> manualSteps = new HashSet<>();
 	/**
-	 * An unplanned bank visit, because an item the plan counted on has gone missing (Sean): after the current stop,
+	 * An unplanned bank visit, because an item the plan counted on has gone missing (elzerma): after the current stop,
 	 * or before finishing it when {@link #extraNow}. Null when there's none.
 	 */
 	private BankStop extraBank;
@@ -103,7 +103,7 @@ public class RunSession
 	/** Since when the current step's item has been missing (epoch millis), 0 if it isn't. */
 	private long missingSince;
 	/**
-	 * The bank visit under way, step by step (Sean: at Castle Wars it still said to use the ring): got to the bank,
+	 * The bank visit under way, step by step (elzerma: at Castle Wars it still said to use the ring): got to the bank,
 	 * opened it, opened the Farm run tab. Each stays done once seen (or ticked by hand) until the visit ends.
 	 */
 	private final boolean[] bankProgress = new boolean[3];
@@ -362,7 +362,7 @@ public class RunSession
 	}
 
 	/**
-	 * A step of the current stop ticked or unticked by hand, as in Quest Helper (Sean): ticking says the guide
+	 * A step of the current stop ticked or unticked by hand, as in Quest Helper (elzerma): ticking says the guide
 	 * missed that it's done, unticking goes back to a step ticked by hand. A step the plugin saw done stays
 	 * ticked. The way there and its journey steps go in order, so ticking one ticks those before it and unticking
 	 * one unticks those after it; a patch is ticked on its own (and the seed vault check with it, as the player
@@ -439,7 +439,7 @@ public class RunSession
 	/**
 	 * How many of the current stop's steps are travel: the way there and its journey steps. None for a walk from
 	 * the stop before (the patch's own "Walk to the ... patch" covers it), nor when the player was already there
-	 * without travelling (Sean: Taverley and Kastori showed the way there ticked already).
+	 * without travelling (elzerma: Taverley and Kastori showed the way there ticked already).
 	 */
 	private int travelSteps(RouteStop stop)
 	{
@@ -539,7 +539,7 @@ public class RunSession
 
 	/**
 	 * A stop ticked by hand is unticked: its patches skipped by hand are to do again, and if it's behind the player
-	 * the guide goes back to it. Any number of stops can be unticked, all the way back to the start (Sean); what
+	 * the guide goes back to it. Any number of stops can be unticked, all the way back to the start (elzerma); what
 	 * the plugin saw done stays done, so the way forward again passes it.
 	 */
 	private void untickStop(int index)
@@ -687,7 +687,7 @@ public class RunSession
 	}
 
 	/**
-	 * An item the plan counted on has gone missing (Sean): the current task becomes a bank visit. When the current
+	 * An item the plan counted on has gone missing (elzerma): the current task becomes a bank visit. When the current
 	 * step needs it, straight away; when a later stop does, after this stop. Not when a planned bank visit comes
 	 * first, or the tool leprechaun has it. Checked when what the player holds changes. Client thread.
 	 */
@@ -886,7 +886,7 @@ public class RunSession
 			}
 
 			// The patches are followed first, even while the seed vault reminder shows, so planting is still seen and the
-			// run can finish (Sean: the reminder stayed up after planting and the run never stopped)
+			// run can finish (elzerma: the reminder stayed up after planting and the run never stopped)
 			instruction = patches.nextStep(stop, here);
 			final String vault = instruction != null && stop.getLocation() == Location.FARMING_GUILD && !vaultChecked
 				? fromSeedVault() : null;
@@ -1023,7 +1023,7 @@ public class RunSession
 		{
 			final int vault = line.getWhere().getOrDefault(Holdings.Source.SEED_VAULT, 0);
 			// Only what the guild's own patches still need, less what's carried now: the line's need is the whole
-			// part's (Sean: "Take 2 x Avantoe seed" with one patch left and the seed in his inventory)
+			// part's (elzerma: "Take 2 x Avantoe seed" with one patch left and the seed in their inventory)
 			int neededHere = 0;
 			for (Patch patch : here)
 			{
@@ -1284,7 +1284,7 @@ public class RunSession
 	}
 
 	/**
-	 * The current stop's steps in order, each done, current or still to do (Sean: show that a stop has several
+	 * The current stop's steps in order, each done, current or still to do (elzerma: show that a stop has several
 	 * steps): the way there and any journey steps after it (a boat, Elkoy), then each patch's plan.
 	 */
 	private List<RunView.Step> steps(RouteStop stop)
@@ -1335,7 +1335,7 @@ public class RunSession
 	{
 		if (banking)
 		{
-			// Teleporting to the bank: the bank teleport is the item to use, as for any other teleport (Sean)
+			// Teleporting to the bank: the bank teleport is the item to use, as for any other teleport (elzerma)
 			final BankStop bank = activeBank();
 			if (bank != null && bank.getTeleport() != null && !bankProgress[0])
 			{

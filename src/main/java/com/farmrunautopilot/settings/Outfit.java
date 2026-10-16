@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Clothing to suggest bringing for a run (added by Sean, 2026-10-07).
+ * Clothing to suggest bringing for a run (added by elzerma, 2026-10-07).
  */
 @Getter
 @RequiredArgsConstructor

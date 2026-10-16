@@ -19,14 +19,14 @@ import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
 /**
- * The sidebar's look (Sprint 7 facelift, Sean: "an updated RuneLite look. No gradients, but slightly softer
+ * The sidebar's look (Sprint 7 facelift, elzerma: "an updated RuneLite look. No gradients, but slightly softer
  * radius, really mature and polished"): RuneLite's own colours and fonts, flat fills, one soft radius. Controls
  * are styled through FlatLaf's style property, which RuneLite's look and feel reads, so they keep their normal
  * behaviour (keyboard, focus, disabled state).
  */
 final class Style
 {
-	/** Corner radius for cards, buttons, drop-downs and number boxes: square (Sean: no radius). */
+	/** Corner radius for cards, buttons, drop-downs and number boxes: square (elzerma: no radius). */
 	static final int ARC = 0;
 	/** Done, due, carried. */
 	static final Color GREEN = new Color(0x4C, 0xC1, 0x52);
@@ -57,7 +57,7 @@ final class Style
 	static JButton primary(JButton button)
 	{
 		button.setFocusPainted(false);
-		// Slimmer than a standard button (Sean: a little smaller)
+		// Slimmer than a standard button (elzerma: a little smaller)
 		button.setFont(FontManager.getRunescapeSmallFont());
 		button.setMargin(new Insets(1, 8, 1, 8));
 		button.putClientProperty(STYLE, "arc: " + ARC + "; borderWidth: 0; focusWidth: 0; innerFocusWidth: 0"
@@ -105,7 +105,7 @@ final class Style
 	}
 
 	/**
-	 * A tick box in the same family (Sean: the old ones were hard to see): flat dark fill and a grey outline that
+	 * A tick box in the same family (elzerma: the old ones were hard to see): flat dark fill and a grey outline that
 	 * turns orange on hover; ticked, filled orange with a dark tick. Ticked but disabled means the plugin saw it
 	 * done (a run step) or read it from the game (a detected unlock): filled green, and it can't be changed.
 	 * Disabled and empty (not yet possible): a faint outline.
@@ -114,9 +114,9 @@ final class Style
 	{
 		box.setFocusPainted(false);
 		box.setIconTextGap(5);
-		// A little room above and below, so it doesn't touch a drop-down (Sean)
+		// A little room above and below, so it doesn't touch a drop-down (elzerma)
 		box.setMargin(new Insets(3, 1, 3, 1));
-		// Drawn here, smaller than the look and feel's (Sean: smaller tick boxes)
+		// Drawn here, smaller than the look and feel's (elzerma: smaller tick boxes)
 		box.setIcon(tick(ColorScheme.DARKER_GRAY_COLOR, ColorScheme.LIGHT_GRAY_COLOR.darker(), null));
 		box.setRolloverIcon(tick(ColorScheme.DARKER_GRAY_COLOR, ColorScheme.BRAND_ORANGE, null));
 		box.setPressedIcon(tick(ColorScheme.DARKER_GRAY_COLOR, ColorScheme.BRAND_ORANGE, null));
@@ -167,7 +167,7 @@ final class Style
 		};
 	}
 
-	/** Titles and headings: RuneLite's normal font, not bold (Sean: back to how it was). */
+	/** Titles and headings: RuneLite's normal font, not bold (elzerma: back to how it was). */
 	static Font titleFont()
 	{
 		return FontManager.getRunescapeFont();

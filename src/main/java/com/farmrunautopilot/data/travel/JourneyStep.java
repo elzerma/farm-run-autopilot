@@ -56,7 +56,7 @@ public class JourneyStep
 	}
 
 	/**
-	 * Directions with an Agility shortcut, shown by the player's level (Sean, Sprint 10: only the way that fits them,
+	 * Directions with an Agility shortcut, shown by the player's level (elzerma, Sprint 10: only the way that fits them,
 	 * not "(66 Agility); without it, ...").
 	 */
 	public static JourneyStep shortcut(int agility, String text, String without, String brief)

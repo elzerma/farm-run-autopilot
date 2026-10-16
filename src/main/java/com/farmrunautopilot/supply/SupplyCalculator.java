@@ -341,7 +341,7 @@ public final class SupplyCalculator
 		if (config.isRecommendEquipmentBoosts() && herbs > 0)
 		{
 			// The bonus works from the inventory too. Worn when the weapon slot is free; with a staff wielded for fairy
-			// rings they go in the inventory (Sean)
+			// rings they go in the inventory (elzerma)
 			final SupplyLine secateurs = changeIn(line(SupplyLine.Group.OPTIONAL, "Magic secateurs", 1, holdings,
 				carried, staffWielded ? "+10% herb yield; in the inventory, as the staff takes the weapon slot"
 				: "+10% herb yield. Wear it: no inventory slot", staffWielded ? 1 : 0, SupplyItems.MAGIC_SECATEURS),

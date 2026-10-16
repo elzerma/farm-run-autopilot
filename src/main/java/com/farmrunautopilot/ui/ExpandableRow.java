@@ -15,7 +15,7 @@ import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
 /**
- * One line, e.g. "Taverley" and "Falador Teleport", that opens to show its controls when clicked (Sean: one line
+ * One line, e.g. "Taverley" and "Falador Teleport", that opens to show its controls when clicked (elzerma: one line
  * per location, the full way on hover and when opened). A yellow bar down its edge marks a row changed from the
  * default.
  */
@@ -45,7 +45,7 @@ class ExpandableRow extends JPanel
 		setBorder(new EmptyBorder(0, 0, 3, 0));
 
 		headCard.accent(overridden ? OVERRIDE : null);
-		// The name gets whatever the value on the right leaves (Sean: a long value squeezed it into a column)
+		// The name gets whatever the value on the right leaves (elzerma: a long value squeezed it into a column)
 		final JLabel measure = new JLabel(shortSummary);
 		measure.setFont(FontManager.getRunescapeSmallFont());
 		final int valueWidth = Math.min(measure.getPreferredSize().width, width / 2);
@@ -53,7 +53,7 @@ class ExpandableRow extends JPanel
 		this.name.setIconTextGap(6);
 		this.name.setFont(FontManager.getRunescapeSmallFont());
 		this.name.setForeground(Color.WHITE);
-		// Only as wide as it needs (Sean: "Not yet" took half the line and cut the name to "Spellbook Swa")
+		// Only as wide as it needs (elzerma: "Not yet" took half the line and cut the name to "Spellbook Swa")
 		final JLabel summary = new JLabel(measure.getPreferredSize().width <= width / 2
 			? shortSummary : UiText.wrap(shortSummary, width / 2));
 		summary.setFont(FontManager.getRunescapeSmallFont());

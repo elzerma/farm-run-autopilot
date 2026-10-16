@@ -57,7 +57,7 @@ public class GuidanceOverlay extends Overlay
 		graphics.setFont(FontManager.getRunescapeBoldFont());
 		final int maxWidth = Math.min(MAX_LINE_WIDTH, client.getCanvasWidth() - 40);
 		int line = 0;
-		// The run clock is on the Run tab, so it isn't repeated here (Sean)
+		// The run clock is on the Run tab, so it isn't repeated here (elzerma)
 		if (view.getState() == RunView.State.ARMED)
 		{
 			draw(graphics, player, "Timer starts when you leave", TIMER, line++);

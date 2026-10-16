@@ -30,7 +30,7 @@ public class ShortestPathBridge
 	{
 		final Map<String, Object> config = new HashMap<>();
 		// Matched exactly against its TeleportationItem type names ("None", not "NONE"). Anything else is ignored
-		// and the player's own setting is used, which sent Sean to a bank for a teleport item (2026-10-11). Key
+		// and the player's own setting is used, which sent elzerma to a bank for a teleport item (2026-10-11). Key
 		// names checked against Shortest Path's ShortestPathConfig on 2026-10-11 and again at commit 7e81a40 (2026-10-13,
 		// ShortestPathBridgeTest pins the list).
 		config.put("useTeleportationItems", "None");
