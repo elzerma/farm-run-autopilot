@@ -1,0 +1,25 @@
+name: Idea
+description: Something new the plugin could do, or a better way to do something it already does.
+labels: ["idea"]
+body:
+  - type: markdown
+    attributes:
+      value: Every idea is read and looked into. Some get built, some don't fit the plugin; either way you'll get an answer here.
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: How would it help your runs?
+      description: The situation where you'd use it, e.g. your account's unlocks, the run you do, what slows you down now.
+    validations:
+      required: true
+  - type: textarea
+    id: elsewhere
+    attributes:
+      label: Seen it anywhere else?
+      description: Another plugin, the wiki, a guide.

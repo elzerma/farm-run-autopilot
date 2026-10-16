@@ -1,0 +1,6 @@
+# Blank issues stay on: the plugin's "Open GitHub issues with prefilled test results" button opens a plain issues/new link
+blank_issues_enabled: true
+contact_links:
+  - name: Share a guided test result
+    url: https://github.com/elzerma/farm-run-autopilot#how-to-use
+    about: Test results come from the plugin itself. In the sidebar, open Settings > Help improve this plugin, run a test, then use the button at the end of the Run tab box.

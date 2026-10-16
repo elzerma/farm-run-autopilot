@@ -1,0 +1,36 @@
+name: Bug report
+description: The plugin did something it shouldn't have, or didn't do something it should.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What the plugin showed or did. Screenshots help a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to see it
+      description: Where you were, which tab and settings, and what you did just before.
+      placeholder: |
+        1. Started a herb run from the Farming Guild
+        2. ...
+  - type: input
+    id: version
+    attributes:
+      label: RuneLite version
+      description: Shown in RuneLite's Info panel.
+  - type: textarea
+    id: log
+    attributes:
+      label: Client log (optional)
+      description: Lines from ~/.runelite/logs/client.log around when it happened. Check there's nothing personal in it first.
+      render: text
