@@ -292,6 +292,12 @@ bucket couldn't be tried on Sean's account and rest on the game's own scripts; B
   screenshots, Plugin Hub PR update (with Sean's OK).
 - Starts only when Sprints 1-9 all pass in game; then merge `rebuild` into master and release.
 
+Built 2026-10-14 (f10a7d5..fcba6b3): Agility-dependent journey text, plant cure only when a patch can catch disease (Fortis
+Champion test fixed), house scan test without the nexus, a running test ends on shutdown, Spellbook Swap test points
+at the bank tab, README rewritten, superseded plans deleted, milestone tags gone. **Checks PASSED 2026-10-15**
+(Taverley rocks, Troll Stronghold, plant cure). Left: new screenshots (Sean), merge to master and the Plugin Hub PR
+(with Sean's OK).
+
 ## 7. Features that must survive the rebuild
 
 Due tracking and timers; run types with per-run Include/Skip; presets; crop choices with backups and
