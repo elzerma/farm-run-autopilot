@@ -890,7 +890,7 @@ public class RunSession
 				patches.clearCurrent();
 				break;
 			}
-			instruction = patches.nextStep(here);
+			instruction = patches.nextStep(stop, here);
 			if (instruction != null || !timing)
 			{
 				break;
@@ -1274,7 +1274,7 @@ public class RunSession
 				status = RunView.StopStatus.PENDING;
 			}
 			final String text = i == 0 ? stop.describeWay()
-				: capitalised(stop.getMethod().getThen().get(i - 1).getBrief());
+				: capitalised(stop.getMethod().getRides().get(i - 1).getBrief());
 			steps.add(new RunView.Step(text, status, i > 0, status == RunView.StopStatus.DONE && manualSteps.contains(i)));
 		}
 		// Each patch's plan, in the same order the objectives were made

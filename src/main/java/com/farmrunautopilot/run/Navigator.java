@@ -150,7 +150,7 @@ class Navigator
 	/** How many journey steps follow the way there (a boat, Elkoy...); none for a walk. */
 	static int journeySteps(RouteStop stop)
 	{
-		return stop.getMethod() == null || stop.getDeparture() == Departure.WALK ? 0 : stop.getMethod().getThen().size();
+		return stop.getMethod() == null || stop.getDeparture() == Departure.WALK ? 0 : stop.getMethod().getRides().size();
 	}
 
 	/**
@@ -199,7 +199,34 @@ class Navigator
 		final JourneyStep step = journeyStep(stop);
 		return !teleported ? stop.describeWay() + " to " + stop.getLocation().getDisplayName()
 			: step != null ? step.textFor(client.getBoostedSkillLevel(Skill.AGILITY))
-			: walkInstruction(here.get(0));
+			: withDirections(stop, walkInstruction(here.get(0)));
+	}
+
+	/**
+	 * The stop's walking directions (rocks, gates, stairs) for the player's Agility level, e.g. "Climb the Rocks
+	 * beside the entrance up to the roof (73 Agility)"; null if none or it's a walk from the last stop.
+	 */
+	String directions(RouteStop stop)
+	{
+		if (stop.getMethod() == null || stop.getDeparture() == Departure.WALK || stop.getMethod().getDirections().isEmpty())
+		{
+			return null;
+		}
+		final int agility = client.getBoostedSkillLevel(Skill.AGILITY);
+		final List<String> parts = new ArrayList<>();
+		for (JourneyStep step : stop.getMethod().getDirections())
+		{
+			parts.add(step.textFor(agility));
+		}
+		return String.join(", then ", parts);
+	}
+
+	/** e.g. "Climb the Rocks ... (73 Agility), then walk to the ... patch": the directions first, if any. */
+	String withDirections(RouteStop stop, String step)
+	{
+		final String directions = directions(stop);
+		return directions == null ? step
+			: directions + ", then " + Character.toLowerCase(step.charAt(0)) + step.substring(1);
 	}
 
 	/**
@@ -321,8 +348,8 @@ class Navigator
 	private JourneyStep journeyStep(RouteStop stop)
 	{
 		final TravelMethod method = stop.getMethod();
-		return teleported && !arrived && method != null && journeyStep < method.getThen().size()
-			? method.getThen().get(journeyStep) : null;
+		return teleported && !arrived && method != null && journeyStep < method.getRides().size()
+			? method.getRides().get(journeyStep) : null;
 	}
 
 	/**
@@ -332,11 +359,11 @@ class Navigator
 	private boolean jumpedToFirstStep(RouteStop stop, WorldPoint from, WorldPoint to)
 	{
 		final TravelMethod method = stop.getMethod();
-		if (method == null || method.getThen().isEmpty() || !jumped(from, to))
+		if (method == null || method.getRides().isEmpty() || !jumped(from, to))
 		{
 			return false;
 		}
-		final WorldPoint at = method.getThen().get(0).getAt();
+		final WorldPoint at = method.getRides().get(0).getAt();
 		return at != null && at.getPlane() == to.getPlane() && at.distanceTo2D(to) <= FIRST_STEP_LANDING_TILES;
 	}
 

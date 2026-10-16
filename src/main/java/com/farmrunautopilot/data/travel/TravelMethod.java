@@ -253,6 +253,13 @@ public enum TravelMethod
 	 * order; empty if it's just a walk. The guide shows them one at a time.
 	 */
 	private final List<JourneyStep> then;
+	/** The rides in {@link #then} (boats, quetzals, Elkoy, a ladder out): each its own tick box on the Run tab. */
+	private final List<JourneyStep> rides;
+	/**
+	 * The walking directions in {@link #then} (rocks, gates, stairs): part of the walk to the patch, not tick boxes of
+	 * their own (Sean, 2026-10-15: they ticked early at the Troll Stronghold and don't need boxes).
+	 */
+	private final List<JourneyStep> directions;
 	/** Requirements beyond the spell's own and owning the item. */
 	private final List<Requirement> requirements;
 	private final Set<PatchType> primaryFor;
@@ -272,6 +279,14 @@ public enum TravelMethod
 		this.fairyRingCode = def.fairyRingCode;
 		this.note = def.note;
 		this.then = Collections.unmodifiableList(def.then);
+		final List<JourneyStep> rides = new ArrayList<>();
+		final List<JourneyStep> directions = new ArrayList<>();
+		for (JourneyStep step : def.then)
+		{
+			(step.getKind() == JourneyStep.Kind.RIDE ? rides : directions).add(step);
+		}
+		this.rides = Collections.unmodifiableList(rides);
+		this.directions = Collections.unmodifiableList(directions);
 		this.requirements = Collections.unmodifiableList(def.requirements);
 		this.primaryFor = Collections.unmodifiableSet(def.primaryFor);
 		this.nexus = def.nexus;

@@ -1,5 +1,6 @@
 package com.farmrunautopilot.run;
 
+import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.AchievementDiary;
@@ -200,8 +201,11 @@ class PatchGuide
 		return found;
 	}
 
-	/** The first unfinished step at this stop, or null when every patch here is done. */
-	String nextStep(List<Patch> here)
+	/**
+	 * The first unfinished step at this stop, or null when every patch here is done. While still far from the patch,
+	 * the stop's walking directions (rocks, gates, stairs) come first.
+	 */
+	String nextStep(RouteStop stop, List<Patch> here)
 	{
 		for (Patch patch : navigator.nearestFirst(here, currentPatch))
 		{
@@ -223,7 +227,8 @@ class PatchGuide
 			{
 				currentPatch = patch;
 				currentAction = StepAdvisor.Action.INSPECT;
-				return "Walk to the " + patch.getDisplayName() + " patch";
+				final String walk = "Walk to the " + patch.getDisplayName() + " patch";
+				return navigator.farFrom(patch) ? navigator.withDirections(stop, walk) : walk;
 			}
 			if (live.getState() != PatchState.GROWING && patchTracker.getPatchesInRange().contains(patch))
 			{
@@ -247,8 +252,8 @@ class PatchGuide
 				if (advice.getAction() != StepAdvisor.Action.INSPECT && navigator.farFrom(patch))
 				{
 					final String text = advice.getText();
-					return "Run to the " + patch.getDisplayName() + " patch, then "
-						+ Character.toLowerCase(text.charAt(0)) + text.substring(1);
+					return navigator.withDirections(stop, "Run to the " + patch.getDisplayName() + " patch, then "
+						+ Character.toLowerCase(text.charAt(0)) + text.substring(1));
 				}
 				return advice.getText();
 			}
