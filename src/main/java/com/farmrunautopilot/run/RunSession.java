@@ -885,13 +885,17 @@ public class RunSession
 				recordLeg(now);
 			}
 
-			instruction = stop.getLocation() == Location.FARMING_GUILD && !vaultChecked ? fromSeedVault() : null;
-			if (instruction != null)
+			// The patches are followed first, even while the seed vault reminder shows, so planting is still seen and the
+			// run can finish (Sean: the reminder stayed up after planting and the run never stopped)
+			instruction = patches.nextStep(stop, here);
+			final String vault = instruction != null && stop.getLocation() == Location.FARMING_GUILD && !vaultChecked
+				? fromSeedVault() : null;
+			if (vault != null)
 			{
+				instruction = vault;
 				patches.clearCurrent();
 				break;
 			}
-			instruction = patches.nextStep(stop, here);
 			if (instruction != null || !timing)
 			{
 				break;
