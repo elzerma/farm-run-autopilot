@@ -106,6 +106,18 @@ public class ScenarioTest
 	}
 
 	@Test
+	public void theWhistleBeatsTheCivitasTeleportToTheHunterGuild()
+	{
+		// Sean, 2026-10-15: on a herb run the Civitas illa Fortis Teleport (then Renu) was picked over his whistle,
+		// which is faster: the charge penalty is only a tie-breaker
+		final List<Patch> herbs = Arrays.asList(Patch.CIVITAS_HERB, Patch.CATHERBY_HERB, Patch.ARDOUGNE_HERB);
+		final List<RouteStop> stops = RoutePlanner.plan(herbs, new RunConfig().sanitise(), SeanAccount.access(),
+			SeanAccount.holdings(), new PohSetup(), LearnedTimes.NONE, null, null, 0).getStops();
+		assertEquals(describe(stops), TravelMethod.QUETZAL_HUNTER_GUILD,
+			stops.get(indexOf(stops, Location.CIVITAS_ILLA_FORTIS)).getMethod());
+	}
+
+	@Test
 	public void withoutAWhistleKastoriIsFirstOrSecondOfTheVarlamoreStops()
 	{
 		// A Varlamore run chained by Renu: the walk back to the Kastori pad is slow, so Kastori isn't left until

@@ -43,9 +43,10 @@ public final class RoutePlanner
 	/**
 	 * What spending a quetzal whistle charge is worth in the route's ordering (not its times): charges are few and
 	 * recharged by hand (Sean, 2026-10-13: a charge to reach the Hunter Guild is fine, a long run back to its pad
-	 * from Ortus isn't).
+	 * from Ortus isn't). Only a tie-breaker: at 4 it lost a faster whistle flight to the Civitas illa Fortis Teleport, which
+	 * costs runes (Sean, 2026-10-15). Renu's preference still keeps the Kastori pad ahead of the whistle.
 	 */
-	static final double WHISTLE_CHARGE_PENALTY = 4.0;
+	static final double WHISTLE_CHARGE_PENALTY = 1.0;
 	/** Renu from a nearby pad (free, no runes) wins a near tie with a teleport into Varlamore. */
 	static final double RENU_PREFERENCE = 2.0;
 	/** Switching spellbook at a house altar and back again later (two trips to the altar). */
