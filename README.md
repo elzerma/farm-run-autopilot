@@ -18,7 +18,10 @@ The plugin never clicks, types or acts for you. It only shows information.
   doesn't fit in one inventory.
 - Backup crop choices for when you run out, and your most valuable herbs sent to disease-free patches first.
 
-<img src="docs/run-tab.png" alt="Run tab: patch timers and the route" width="300">
+<p>
+  <img src="docs/patch-timers.png" alt="Run tab: patch timers for each run type" width="300">
+  <img src="docs/run-tab.png" alt="Run tab: the route summary and complete route after Build run" width="300">
+</p>
 
 **Bank**
 - After you press **Build run**, a flashing "Farm run" button in the bank shows just the items you need, with
@@ -27,8 +30,8 @@ The plugin never clicks, types or acts for you. It only shows information.
 - At a bank stop partway through a big run, it shows what to deposit first, then what to take for the rest.
 
 <p>
-  <img src="docs/bank-tab.png" alt="The Farm run bank tab" width="300">
-  <img src="docs/supplies.png" alt="Supplies with carried, in storage and missing colours" width="300">
+  <img src="docs/bank-tab.jpg" alt="The Farm run bank tab" width="500">
+  <img src="docs/supplies.png" alt="The Farm run tab close up: travel, runes, seeds, payments and tools, with how many you have and need" width="400">
 </p>
 
 **During a run**
@@ -47,15 +50,15 @@ The plugin never clicks, types or acts for you. It only shows information.
   finishes after the last patch, showing your time and your best three times for that kind of run.
 - Route times learn from your own runs.
 
-![The patch outlined with the next step under the player](docs/guidance-patch.webp)
+![The patch outlined with a hint arrow and the next step under the player](docs/guidance-patch.jpg)
 
-![Composting: the compost is outlined in the inventory and finished stops are struck through](docs/guidance-compost.webp)
+![Composting: the compost is outlined in the inventory, with the stop's steps as tick boxes on the Run tab](docs/guidance-compost.jpg)
 
 **Farm tab**
 - Choose your patches, crops (with backups), disease-free herbs, protection (pay the gardener or compost
   only, per patch if you like), compost and plant cures.
 
-<img src="docs/farm-tab.png" alt="Farm tab: patches and crop choices" width="300">
+<img src="docs/farm-tab.png" alt="Farm tab: patches, crops, disease-free herbs, protection and compost" width="300">
 
 **Travel tab**
 - Every stop shows what **Auto (best)** picked, such as "Camelot Teleport (tablet)", and lets you choose the
@@ -70,7 +73,7 @@ The plugin never clicks, types or acts for you. It only shows information.
 
 <p>
   <img src="docs/travel-tab.png" alt="Travel tab: how Auto (best) picks, and defaults for every stop" width="300">
-  <img src="docs/travel-locations.png" alt="Travel tab: each stop's Auto (best) pick, and an override" width="300">
+  <img src="docs/travel-locations.png" alt="Travel tab: a stop opened to choose its teleport" width="300">
 </p>
 
 **Account tab**
