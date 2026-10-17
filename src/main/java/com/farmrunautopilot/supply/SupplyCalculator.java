@@ -9,6 +9,7 @@ import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.SupplyItems;
+import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.Rune;
 import com.farmrunautopilot.data.travel.RuneAmount;
@@ -326,7 +327,8 @@ public final class SupplyCalculator
 				holdings.isAutoweedOn() ? "Some patches have weeds" : "Not needed once Tithe Farm Auto-weed is on",
 				1, ItemID.RAKE));
 		}
-		if (herbs > 0)
+		// Barbarian seed planting plants by hand (issue #6)
+		if (herbs > 0 && !(access.isKnown() && access.isMet(Requirement.unlock(Unlock.BARBARIAN_PLANTING))))
 		{
 			lines.add(line(SupplyLine.Group.TOOLS, "Seed dibber", 1, holdings, carried, null, 1, ItemID.DIBBER));
 		}

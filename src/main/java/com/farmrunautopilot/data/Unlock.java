@@ -23,6 +23,9 @@ public enum Unlock
 	// Confirmed in game: non-zero once the route is unlocked (60 Firemaking and 3 magic logs after Enlightened
 	// Journey). It read 1 with the route; Taverley's route read 2, so values above 1 may mean more
 	BALLOON_GRAND_TREE("Hot air balloon route to the Grand Tree unlocked (60 Firemaking)", VarbitID.ZEP_MULTI_GNO, true),
+	// UNVERIFIED: picked by its name, assumed non-zero once Barbarian Training's seed planting is learned (issue #6);
+	// guided test BARBARIAN_PLANTING
+	BARBARIAN_PLANTING("Barbarian seed planting learned (herb seeds without a seed dibber)", VarbitID.BRUT_FARMING_PLANTING),
 	FIRE_OF_NOURISHMENT("Fire of Nourishment built at Weiss"),
 	FORTIS_CHAMPION("Champion rank at the Fortis Colosseum");
 

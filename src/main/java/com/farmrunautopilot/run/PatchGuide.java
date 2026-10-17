@@ -10,6 +10,7 @@ import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.SupplyItems;
+import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
@@ -458,6 +459,11 @@ class PatchGuide
 			return null;
 		}
 		final boolean herb = currentPatch.getType() == PatchType.HERB;
+		final AccessSnapshot access = accessChecker.getSnapshot();
+		if (herb && access.isKnown() && access.isMet(Requirement.unlock(Unlock.BARBARIAN_PLANTING)))
+		{
+			return null;
+		}
 		final Map<Integer, Integer> inventory = holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY);
 		if (inventory.getOrDefault(herb ? ItemID.DIBBER : ItemID.SPADE, 0) > 0)
 		{

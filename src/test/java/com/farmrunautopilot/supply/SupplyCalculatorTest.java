@@ -11,6 +11,7 @@ import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
+import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.Rune;
 import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RoutePlanner;
@@ -28,6 +29,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import net.runelite.api.Skill;
 import net.runelite.api.gameval.ItemID;
 import org.junit.Test;
 
@@ -98,6 +100,17 @@ public class SupplyCalculatorTest
 		final SupplyPlan atRisk = plan(config, AccessSnapshot.UNKNOWN, holdings(new HashMap<>(), Collections.emptySet()),
 			NEVER_SEEN, true);
 		assertNotNull(find(atRisk, "Plant cure"));
+	}
+
+	@Test
+	public void barbarianPlantingNeedsNoDibber()
+	{
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		levels.put(Skill.FARMING, 99);
+		final AccessSnapshot access = new AccessSnapshot(true, Collections.emptyMap(), levels, Collections.emptySet(),
+			EnumSet.of(Unlock.BARBARIAN_PLANTING), null);
+		final SupplyPlan plan = plan(onlyType(PatchType.HERB), access, Holdings.EMPTY, NEVER_SEEN, true);
+		assertNull(find(plan, "Seed dibber"));
 	}
 
 	@Test
@@ -184,8 +197,8 @@ public class SupplyCalculatorTest
 	{
 		final Set<String> diaries = new HashSet<>();
 		diaries.add(AccessSnapshot.diaryKey(AchievementDiary.FALADOR, AchievementDiary.Tier.ELITE));
-		final Map<net.runelite.api.Skill, Integer> levels = new EnumMap<>(net.runelite.api.Skill.class);
-		levels.put(net.runelite.api.Skill.FARMING, 99);
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		levels.put(Skill.FARMING, 99);
 		final AccessSnapshot access = new AccessSnapshot(true, Collections.emptyMap(), levels, diaries,
 			Collections.emptySet(), null);
 

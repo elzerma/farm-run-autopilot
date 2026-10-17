@@ -28,6 +28,10 @@ public enum TestItem
 	SPIRIT_TREES(Tab.ACCOUNT, "Planted spirit trees",
 		"Untick your planted spirit tree in Account > Unlocks, then go to it (Port Sarim, Brimhaven or the "
 			+ "Farming Guild). It should tick itself once the grown tree is in view."),
+	BARBARIAN_PLANTING(Tab.ACCOUNT, "Planting without a seed dibber",
+		"If you've learned barbarian seed planting (Barbarian Training with Otto Godblessed), Account > Unlocks should "
+			+ "show \"Barbarian seed planting learned\" ticked and (detected), and a herb run shouldn't ask for a seed "
+			+ "dibber."),
 	HOUSE_SCAN(Tab.ACCOUNT, "House scanning (beta)",
 		"Tick \"Detect furniture when I enter my house\" in Account > My house, then enter your house: your "
 			+ "jewellery box, pool, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned). "
