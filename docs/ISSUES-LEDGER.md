@@ -282,3 +282,4 @@ Open questions: bank and vault counts left out, or shown only as present/missing
 - **#5:** no auto-open; the fuse is enough. Done.
 - **#8:** build option 2, a "Farm run" section at the top of the seed vault.
 - **#5:** the fuse was checked in game on 2026-10-16 after it was sped up (0.7 s a lap): "it looks fine to me". The Report a problem button and its Bug form (#17) were checked the same day.
+- **#5, follow-up (2026-10-17):** at elzerma's request the fuse became a growing vine. It grows from the middle of the bottom edge, flowers, then wilts. It's also used for the spell to cast, with a "Growing vine highlights" setting that switches back to plain outlines (a109fe6). elzerma checked it in game: "Looks good".
