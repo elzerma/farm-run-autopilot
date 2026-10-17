@@ -17,7 +17,7 @@ Issues #1 to #5 were answered and closed on 2026-10-15, before this ledger began
 
 ## #6 Seed stabber not needed
 
-**Kind:** Bug · **Status:** open, fix planned · **Reviewed through:** 2026-10-16 elzerma
+**Kind:** Bug · **Status:** open, fixed in ebe46f2, waiting on in-game check (BARBARIAN_PLANTING) · **Reviewed through:** 2026-10-16 elzerma
 
 | Who | What they said | Checked against | Evaluation | Decision |
 |-----|----------------|-----------------|------------|----------|
@@ -55,7 +55,7 @@ Real pass: arrived in region 11325, and the fire was spotted on that tile (`Unlo
 
 ## #10 Test: House scanning (beta) - works
 
-**Kind:** Test report · **Status:** closed 2026-10-16, test to be fixed · **Reviewed through:** 2026-10-16 elwakka (body)
+**Kind:** Test report · **Status:** closed 2026-10-16; test fixed in b2f2ad7 (HOUSE_SCAN revision 3) · **Reviewed through:** 2026-10-16 elwakka (body)
 
 Weak pass. "Before" is captured before the player enters, and a scan only adds, so the report doesn't show the scan filling anything in. The Kharyrll nexus change was a hand tick in Account > My house, not a scan. The other-house half was skipped (ironman). **Decision:** keep HOUSE_SCAN; fix the test so the house is cleared first and the scan has to fill it in; bump its revision; close #10 with thanks.
 
@@ -67,7 +67,7 @@ Weak pass. "Before" is captured before the player enters, and a scan only adds, 
 
 ## #12 Test: Pendant of Ates charges - needs attention
 
-**Kind:** Test report · **Status:** open, replied, fix planned · **Reviewed through:** 2026-10-16 elzerma (triage reply)
+**Kind:** Test report · **Status:** open, replied; fixed in b2f2ad7, waiting on a re-run (ATES_CHARGES revision 2) · **Reviewed through:** 2026-10-16 elzerma (triage reply)
 
 The report is right, though the player thought it was bugged. `CHARGES_PENDANT_OF_ATES_QUANTITY` reads 0 with 4 charges (`ItemChargeTracker.java:140`, UNVERIFIED), so the plugin can't count pendant teleports. Its "advance" after the spirit tree was the 6-minute fallback question. **Decision:** count teleports by click-then-move, as for the talisman; drop the varbit; bump ATES_CHARGES; reply and keep #12 open until a re-run.
 
