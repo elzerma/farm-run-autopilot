@@ -13,9 +13,10 @@ import java.util.Set;
 /**
  * Where everything in the seed vault goes with a Farm run section at the top (issue #8), as plain numbers so it can
  * be tested. It's the grid the game's own seed_vault_build proc (2820) lays the vault out on, at desktop sizes: one
- * scrolling list of categories, each a header, a line and rows of items. The section comes first, laid out like a
- * section of the bank's Farm run tab, and the categories follow it without the items moved into it. Positions are
- * within the vault's main list ({@code InterfaceID.SeedVault.MAIN_VAULT}).
+ * scrolling list of categories, each a header, a line and rows of items. The section comes first, with a header and
+ * line like the categories' and taller rows that fit the bank tab's "/ N" label under each icon, and the categories
+ * follow it without the items moved into it. Positions are within the vault's main list
+ * ({@code InterfaceID.SeedVault.MAIN_VAULT}).
  */
 final class SeedVaultLayout
 {
@@ -35,9 +36,8 @@ final class SeedVaultLayout
 	static final int NAME_BELOW = 32;
 	static final int NAME_HEIGHT = 30;
 
-	/** The section, as on the bank's Farm run tab: a line, its title 5 below it, the items under the title. */
-	static final int SECTION_TITLE_Y = 5;
-	static final int SECTION_ITEMS_Y = 22;
+	/** The section's header and line are the vault's own, so its items start as far below the header as theirs. */
+	static final int SECTION_ITEMS_Y = HEADER_TO_LINE + LINE_TO_ITEMS;
 	/** The "/ N" label under each of the section's icons, as on the bank tab. */
 	static final int COUNTER_BELOW = 33;
 	/** The name goes under the label. */
@@ -96,7 +96,7 @@ final class SeedVaultLayout
 	/** Where the section, the headers and the items go. */
 	static final class Placement
 	{
-		/** The section's line (its title is {@link #SECTION_TITLE_Y} below), or -1 without a section. */
+		/** The section's header (its line is {@link #HEADER_TO_LINE} below), or -1 without a section. */
 		final int sectionY;
 		/** How far the section pushes the categories down; 0 without one. */
 		final int sectionHeight;

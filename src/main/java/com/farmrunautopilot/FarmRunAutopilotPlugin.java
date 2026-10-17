@@ -55,7 +55,6 @@ import net.runelite.api.events.ScriptPreFired;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetClosed;
-import net.runelite.api.events.WidgetDrag;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.InventoryID;
@@ -505,12 +504,6 @@ public class FarmRunAutopilotPlugin extends Plugin
 	{
 		farmBankTab.onScriptPostFired(event);
 		seedVaultSection.onScriptPostFired(event);
-	}
-
-	@Subscribe
-	public void onWidgetDrag(WidgetDrag event)
-	{
-		seedVaultSection.onWidgetDrag(event);
 	}
 
 	// After other plugins, so withdraw clicks are re-pointed last

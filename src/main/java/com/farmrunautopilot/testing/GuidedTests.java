@@ -219,9 +219,10 @@ final class GuidedTests
 	}
 
 	/**
-	 * The Farm run section at the top of the seed vault (issue #8): where the game puts everything in the vault was
-	 * read from its scripts. The first run passed, but elzerma asked for the bank tab's look and counts, for it to
-	 * show the whole time a run is built or done, and found that letting go of a drag elsewhere withdrew (revision 2).
+	 * The Farm Run Autopilot section at the top of the seed vault (issue #8): where the game puts everything in the vault
+	 * was read from its scripts. Revision 2 passed (the counts, staying once everything's taken, opening at the top);
+	 * elzerma then asked for dragging back, the plugin's name with the vault's own header font, and an entry in the
+	 * category list (revision 3).
 	 */
 	private static final class SeedVaultTop extends GuidedTest
 	{
@@ -280,47 +281,58 @@ final class GuidedTests
 						captureVault(ctx, "Seed vault when asked");
 						ctx.problem("The plugin didn't see the seed vault laid out");
 					}),
-				ask("Is there a \"Farm run\" section at the top of the vault, like the bank's Farm run tab, with a \"/ N\" "
-					+ "count under every seed and sapling the run needs?")
+				ask("Is there a \"Farm Run Autopilot\" section at the top of the vault, its title in the same font as the "
+					+ "vault's others, with a \"/ N\" count under every seed and sapling the run needs?")
 					.onAnswer((ctx, yes) ->
 					{
 						captureVault(ctx, "Seed vault when answered");
 						if (!yes)
 						{
-							ctx.problem("Answered No: the Farm run section wasn't at the top with a count under each seed");
+							ctx.problem("Answered No: the section wasn't at the top, titled like the others, with a count under "
+								+ "each seed");
 						}
 					}),
-				ask("Drag a seed and let go of it somewhere else in the vault. Did nothing happen: nothing withdrawn, and "
-					+ "nothing moved?"),
-				ask("Withdraw a seed from the Farm run section. Did it go into your inventory, with its count turning green "
-					+ "and ticked once you had them all?")
+				ask("Is \"Farm Run Autopilot\" in the list on the left too? Scroll the vault down, then click it: does it "
+					+ "take you back to the section?")
+					.onAnswer((ctx, yes) ->
+					{
+						captureVault(ctx, "Seed vault after the list entry");
+						if (!yes)
+						{
+							ctx.problem("Answered No: the list entry wasn't there or didn't go to the section");
+						}
+					}),
+				ask("Drag a seed in one of the vault's categories onto another seed in the same category. Did they swap "
+					+ "places, with the Farm Run Autopilot section and everything else still in place?")
+					.onAnswer((ctx, yes) ->
+					{
+						captureVault(ctx, "Seed vault after swapping");
+						if (!yes)
+						{
+							ctx.problem("Answered No: dragging one seed onto another didn't swap them neatly");
+						}
+					}),
+				ask("Drag a seed and let go of it in an empty space. Did it go back to its place, without being withdrawn?"),
+				ask("Drag one of the Farm Run Autopilot section's seeds and let go of it in an empty space. Is it back in "
+					+ "its place in the section?")
+					.onAnswer((ctx, yes) ->
+					{
+						captureVault(ctx, "Seed vault after dragging from the section");
+						if (!yes)
+						{
+							ctx.problem("Answered No: a seed dragged from the section didn't go back to its place");
+						}
+					}),
+				ask("Click a seed in the Farm Run Autopilot section to withdraw it. Did it go into your inventory?")
 					.onAnswer((ctx, yes) ->
 					{
 						captureVault(ctx, "Seed vault after withdrawing");
 						if (!yes)
 						{
-							ctx.problem("Answered No: withdrawing from the Farm run section didn't work as it should");
+							ctx.problem("Answered No: withdrawing from the section didn't work");
 						}
 					}),
-				ask("Take the rest of what the section shows. Is it still there, with every count green and ticked?")
-					.onAnswer((ctx, yes) ->
-					{
-						captureVault(ctx, "Seed vault with everything taken");
-						if (!yes)
-						{
-							ctx.problem("Answered No: the section didn't stay with everything ticked");
-						}
-					}),
-				ask("Close the seed vault and open it again. Does it open at the top, with the Farm run section showing?")
-					.onAnswer((ctx, yes) ->
-					{
-						captureVault(ctx, "Seed vault opened again");
-						if (!yes)
-						{
-							ctx.problem("Answered No: the vault opened scrolled past the section");
-						}
-					}),
-				ask("Scroll down to the bottom of the vault, then click a few categories on the left. Is everything else "
+				ask("Scroll down to the bottom of the vault, then click a few categories on the left. Is everything "
 					+ "there, with nothing cut off or overlapping?"));
 		}
 	}

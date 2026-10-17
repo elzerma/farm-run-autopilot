@@ -17,16 +17,17 @@ import net.runelite.api.Client;
 import net.runelite.api.FontID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
+import net.runelite.api.ScriptEvent;
 import net.runelite.api.ScriptID;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.ScriptPreFired;
-import net.runelite.api.events.WidgetDrag;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.SpriteID;
 import net.runelite.api.gameval.VarClientID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.ItemQuantityMode;
+import net.runelite.api.widgets.JavaScriptCallback;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetSizeMode;
 import net.runelite.api.widgets.WidgetTextAlignment;
@@ -36,25 +37,27 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.util.Text;
 
 /**
- * The "Farm run" section at the top of the Farming Guild's seed vault (issue #8), whenever the vault is open while a
- * run is being built or done: every seed and sapling the rest of the run plants, laid out like a section of the
- * bank's Farm run tab, with the same "/ N" label under each. Those the vault holds are its own item widgets moved up,
- * so withdrawing works as usual: nothing is sent to the server and no menu option is changed. Those it doesn't hold
- * (or no longer does) are shown faded, so the section stays put, ticked, once everything's taken. The vault's
- * categories close up below it.
+ * The "Farm Run Autopilot" section at the top of the Farming Guild's seed vault (issue #8), whenever the vault is open
+ * while a run is being built or done: every seed and sapling the rest of the run plants, under a header like the
+ * vault's own categories', with the bank's Farm run tab's "/ N" label under each. Those the vault holds are its own
+ * item widgets moved up, so withdrawing works as usual: nothing is sent to the server and no menu option is changed.
+ * Those it doesn't hold (or no longer does) are shown faded, so the section stays put, ticked, once everything's
+ * taken. The vault's categories close up below it, and the category list on the left gets an entry that scrolls
+ * to it.
  *
- * <p>While the section shows, dragging an item does nothing. The game's drag scripts would put items back where it
- * laid them out, so they're taken off, and the drop is cancelled, as Bank Tags does in a tag tab, so the vault isn't
- * reordered. Dragging itself is left on, so letting go elsewhere isn't a click (elzerma: with dragging turned off,
- * it withdrew).
+ * <p>Dragging works as in the game's own vault (elzerma). Each item is still the widget of its own vault slot, so a
+ * drag reorders exactly the slots the player meant; the server then sends the vault again and it's laid out afresh.
+ * The game's drop script puts the dragged item back where the game laid it out, so after each drop everything goes
+ * back where this section put it.
  *
  * <p>The game lays the vault out in its seed_vault_build proc. After each run of it this lays the vault out again
  * ({@link SeedVaultLayout}), and again whenever the section's contents change while it's open. It leaves the vault
  * alone while it's being searched, and when it isn't laid out the way the layout expects, so a game update that
  * changes the vault leaves it as the game made it. Client thread.
  *
- * <p>UNVERIFIED: the procs' IDs and the vault's layout are read from the game's scripts (osrs-dumps), not checked in
- * game (guided test SEED_VAULT_SECTION).
+ * <p>UNVERIFIED: the scripts' IDs and the vault's layout are read from the game's scripts (osrs-dumps). The layout,
+ * the counts and the scroll passed in game (guided test SEED_VAULT_SECTION revision 2); dragging and the category
+ * list entry are untried.
  */
 @Slf4j
 @Singleton
@@ -67,17 +70,29 @@ public class SeedVaultSection
 	static final int BUILD_PROC = 2820;
 	/** The proc that scrolls to a category (seed_vault_catselect), when one is picked or the vault opens. */
 	static final int CATEGORY_PROC = 2817;
-	static final String TITLE = "Farm run";
+	/** The script run when a drag of a vault item ends (seed_vault_drop). */
+	static final int DROP_SCRIPT = 2827;
+	/** The script that makes the category list on the left (seed_vault_build_category_list), when the vault opens. */
+	static final int CATEGORY_LIST_SCRIPT = 2814;
+	/** The section's header, and its entry in the category list (elzerma). */
+	static final String TITLE = "Farm Run Autopilot";
 	/** The search box is open (the game's seed_vault_searching proc). */
 	private static final int SEARCH_MODE = 11;
-	/** The title starts 5 in, as the vault's own headers do; the line 2 in from each side. */
+	/** As the vault's own headers: 5 in from the left, 20 high, in its orange; the line 2 in from each side. */
 	private static final int TITLE_X = 5;
+	private static final int TITLE_HEIGHT = 20;
 	private static final int LINE_X = 2;
 	/** The vault's own icons and names. */
 	private static final int ICON_WIDTH = 36;
 	private static final int ICON_HEIGHT = 32;
 	private static final int NAME_WIDTH = 50;
-	private static final int NAME_COLOUR = 0xff981f;
+	private static final int VAULT_ORANGE = 0xff981f;
+	/** The category list turns an entry white under the mouse, and a clear background is white. */
+	private static final int WHITE = 0xffffff;
+	/** The category list's entries are on backgrounds that alternate between clear and dark. */
+	private static final int CLEAR = 255;
+	private static final int DARK = 225;
+	private static final String SELECT = "Select";
 
 	/** A seed or sapling the run needs: how many, and whether they're carried yet, as the bank tab colours it. */
 	@Value
@@ -107,10 +122,15 @@ public class SeedVaultSection
 	private List<Integer> shown = Collections.emptyList();
 	private int shownHeight;
 	private Placement placed;
-	/** The vault's drag scripts have been taken off since the game last laid it out, so drops are cancelled. */
-	private boolean noDragScripts;
 	/** The section has shown during this visit to the vault, so it's no longer scrolled to by itself. */
 	private boolean shownThisVisit;
+	/** The section's entry in the category list and its background, made once per list; null until then. */
+	private Widget tab;
+	private Widget tabBackground;
+	/** The entry shows, and the game's entries from {@link #tabY} down have moved down {@link #tabHeight} for it. */
+	private boolean tabShown;
+	private int tabY;
+	private int tabHeight;
 
 	@Inject
 	SeedVaultSection(Client client, ClientThread clientThread, ItemManager itemManager)
@@ -135,6 +155,7 @@ public class SeedVaultSection
 			{
 				layOut(Collections.emptyList(), list, list.getScrollY(), shownHeight, false);
 			}
+			showTab(false);
 			wanted = Collections::emptyList;
 			reset();
 		});
@@ -151,6 +172,23 @@ public class SeedVaultSection
 
 	public void onScriptPostFired(ScriptPostFired event)
 	{
+		if (event.getScriptId() == CATEGORY_LIST_SCRIPT)
+		{
+			// The game has just made the category list afresh, without the section's entry; it's usually followed by the
+			// vault being laid out, which adds it, but if the section's already showing, add it now
+			tab = null;
+			tabBackground = null;
+			tabShown = false;
+			showTab(shownHeight > 0);
+			return;
+		}
+		if (event.getScriptId() == DROP_SCRIPT)
+		{
+			// The game's drop script has put the dragged item back where the game laid it out (and swapped it with the
+			// one it was dropped on, as a preview): back to this layout. A reorder comes back as a new layout
+			putBack();
+			return;
+		}
 		if (event.getScriptId() == CATEGORY_PROC)
 		{
 			// The first category is at the top of the vault, so show the section above it too: opening the vault scrolls
@@ -166,29 +204,29 @@ public class SeedVaultSection
 		{
 			return;
 		}
-		// The game has just made every header, line and item again, with its drag scripts, and emptied the layer
-		// this section draws in
+		// The game has just made every header, line and item again, and emptied the layer this section draws in
 		final int viewHeight = shownHeight;
 		shownSeeds = Collections.emptyList();
 		shown = Collections.emptyList();
 		shownHeight = 0;
 		placed = null;
-		noDragScripts = false;
 		laidOutFor = Collections.emptyList();
 		vault = null;
 		unrecognised = null;
 		final Widget list = client.getWidget(InterfaceID.SeedVault.LIST);
 		if (list == null || searching())
 		{
+			showTab(false);
 			return;
 		}
 		vault = read(list);
 		final List<Seed> asked = wanted.get();
 		if (vault == null)
 		{
+			showTab(false);
 			if (!asked.isEmpty())
 			{
-				log.debug("Seed vault not laid out as expected, so no Farm run section: {}", unrecognised);
+				log.debug("Seed vault not laid out as expected, so no Farm Run Autopilot section: {}", unrecognised);
 			}
 			return;
 		}
@@ -212,24 +250,6 @@ public class SeedVaultSection
 		if (!asked.equals(laidOutFor))
 		{
 			layOut(asked, list, list.getScrollY(), shownHeight, false);
-		}
-	}
-
-	/**
-	 * Each client tick while something is dragged: an item of the vault this has laid out drops on nothing, so the
-	 * vault isn't reordered, as Bank Tags does in a tag tab.
-	 */
-	public void onWidgetDrag(WidgetDrag event)
-	{
-		if (!noDragScripts)
-		{
-			return;
-		}
-		final Widget dragged = client.getDraggedWidget();
-		if (dragged != null && (dragged.getId() == InterfaceID.SeedVault.OBJ_LIST
-			|| dragged.getId() == InterfaceID.SeedVault.TEXT_LIST))
-		{
-			client.setDraggedOnWidget(null);
 		}
 	}
 
@@ -281,7 +301,7 @@ public class SeedVaultSection
 		return (items.isEmpty() ? "no section" : "section: " + String.join(", ", items)
 			+ (held ? "" : ", since moved by something else")) + "; " + SeedVaultLayout.perRow(vault.width) + " per row, "
 			+ vault.categories.size() + " categories, section " + shownHeight + " high, scrolled to " + list.getScrollY()
-			+ " of " + list.getScrollHeight();
+			+ " of " + list.getScrollHeight() + ", category list entry " + (tabShown ? "at " + tabY : "not shown");
 	}
 
 	private void reset()
@@ -293,8 +313,10 @@ public class SeedVaultSection
 		shown = Collections.emptyList();
 		shownHeight = 0;
 		placed = null;
-		noDragScripts = false;
 		shownThisVisit = false;
+		tab = null;
+		tabBackground = null;
+		tabShown = false;
 	}
 
 	/** The vault is showing search results, as the game's seed_vault_searching proc decides. */
@@ -405,6 +427,7 @@ public class SeedVaultSection
 				scrollTo(list, SeedVaultLayout.scrollY(viewScroll, viewHeight, 0, false, list.getScrollHeight(),
 					list.getHeight()));
 			}
+			showTab(false);
 			return;
 		}
 		final Placement placement = SeedVaultLayout.place(vault.width, vault.categories, section);
@@ -424,7 +447,154 @@ public class SeedVaultSection
 		shownThisVisit |= shownHeight > 0;
 		scrollTo(list, SeedVaultLayout.scrollY(viewScroll, viewHeight, shownHeight, first, list.getScrollHeight(),
 			list.getHeight()));
-		log.debug("Seed vault: {} in the Farm run section, {} high", section, shownHeight);
+		showTab(shownHeight > 0);
+		log.debug("Seed vault: {} in the Farm Run Autopilot section, {} high", section, shownHeight);
+	}
+
+	/**
+	 * The section's entry in the category list on the left, like the vault's own (elzerma): it scrolls to the section.
+	 * It goes at the top, or under the Farming Contract's entry when that section is above this one, and the game's
+	 * entries below it move down to make room, and back up when it goes.
+	 */
+	private void showTab(boolean show)
+	{
+		final Widget names = client.getWidget(InterfaceID.SeedVault.CATEGORY_LIST);
+		final Widget backgrounds = client.getWidget(InterfaceID.SeedVault.CATEGORY_BACKGROUNDS);
+		if (show == tabShown || names == null || backgrounds == null)
+		{
+			return;
+		}
+		if (!show)
+		{
+			tab.setHidden(true);
+			tabBackground.setHidden(true);
+			moveEntries(names, backgrounds, tabY + tabHeight, -tabHeight);
+			tabShown = false;
+			fitList(names);
+			return;
+		}
+		final Widget first = names.getChild(0);
+		if (first == null)
+		{
+			return;
+		}
+		tabHeight = first.getOriginalHeight();
+		tabY = vault != null && vault.top > 0 ? first.getOriginalY() + tabHeight : first.getOriginalY();
+		// Its background is the other of the one it pushes down, so they still alternate
+		final Widget under = backgroundAt(backgrounds, tabY);
+		final boolean dark = under == null || under.getOpacity() != DARK;
+		moveEntries(names, backgrounds, tabY, tabHeight);
+		if (tab == null)
+		{
+			tabBackground = backgrounds.createChild(-1, WidgetType.RECTANGLE);
+			tabBackground.setFilled(true);
+			tabBackground.setWidthMode(WidgetSizeMode.MINUS);
+			tabBackground.setOriginalWidth(0);
+
+			final Widget text = names.createChild(-1, WidgetType.TEXT);
+			text.setText(TITLE);
+			text.setFontId(FontID.PLAIN_12);
+			text.setTextColor(VAULT_ORANGE);
+			text.setTextShadowed(true);
+			text.setYTextAlignment(WidgetTextAlignment.CENTER);
+			text.setWidthMode(first.getWidthMode());
+			text.setOriginalWidth(first.getOriginalWidth());
+			text.setOriginalX(first.getOriginalX());
+			// Clicked and hovered as the game's own entries are, here in the client
+			text.setHasListener(true);
+			text.setAction(0, SELECT);
+			text.setOnOpListener((JavaScriptCallback) this::onTabClicked);
+			text.setOnMouseOverListener((JavaScriptCallback) event -> text.setTextColor(WHITE));
+			text.setOnMouseLeaveListener((JavaScriptCallback) event -> text.setTextColor(VAULT_ORANGE));
+			tab = text;
+		}
+		tabBackground.setTextColor(dark ? 0 : WHITE);
+		tabBackground.setOpacity(dark ? DARK : CLEAR);
+		for (Widget widget : new Widget[]{tab, tabBackground})
+		{
+			widget.setOriginalHeight(tabHeight);
+			widget.setOriginalY(tabY);
+			widget.setHidden(false);
+			widget.revalidate();
+		}
+		tabShown = true;
+		fitList(names);
+	}
+
+	/** The section's entry in the category list was picked: scroll to the section, as the game's own entries do. */
+	private void onTabClicked(ScriptEvent event)
+	{
+		final Widget list = client.getWidget(InterfaceID.SeedVault.LIST);
+		if (event.getOp() == 1 && list != null && vault != null)
+		{
+			scrollTo(list, Math.max(0, Math.min(vault.top, list.getScrollHeight() - list.getHeight())));
+		}
+	}
+
+	/** The game's category list entries from {@code fromY} down, and their backgrounds, moved down {@code dy}. */
+	private void moveEntries(Widget names, Widget backgrounds, int fromY, int dy)
+	{
+		for (Widget layer : new Widget[]{names, backgrounds})
+		{
+			final Widget[] children = layer.getChildren();
+			for (int i = 0; children != null && i < children.length; i++)
+			{
+				final Widget child = children[i];
+				if (child != null && child != tab && child != tabBackground && child.getOriginalY() >= fromY)
+				{
+					moveTo(child, child.getOriginalX(), child.getOriginalY() + dy);
+				}
+			}
+		}
+	}
+
+	private Widget backgroundAt(Widget backgrounds, int y)
+	{
+		final Widget[] children = backgrounds.getChildren();
+		for (int i = 0; children != null && i < children.length; i++)
+		{
+			if (children[i] != null && children[i] != tabBackground && children[i].getOriginalY() == y)
+			{
+				return children[i];
+			}
+		}
+		return null;
+	}
+
+	/** The category list scrolls only once its entries don't fit, as the game has it. */
+	private void fitList(Widget names)
+	{
+		final Widget leftList = client.getWidget(InterfaceID.SeedVault.LEFT_LIST);
+		final Widget[] children = names.getChildren();
+		if (leftList == null || children == null)
+		{
+			return;
+		}
+		int bottom = 0;
+		for (Widget child : children)
+		{
+			if (child != null && !child.isSelfHidden())
+			{
+				bottom = Math.max(bottom, child.getOriginalY() + child.getOriginalHeight());
+			}
+		}
+		final int scrollHeight = bottom > leftList.getHeight() ? bottom : 0;
+		if (scrollHeight == leftList.getScrollHeight())
+		{
+			return;
+		}
+		leftList.setScrollHeight(scrollHeight);
+		leftList.revalidateScroll();
+		final int y = Math.max(0, Math.min(leftList.getScrollY(), scrollHeight - leftList.getHeight()));
+		leftList.setScrollY(y);
+		clientThread.invokeLater(() ->
+		{
+			if (client.getWidget(InterfaceID.SeedVault.LEFT_LIST) != null)
+			{
+				client.runScript(ScriptID.UPDATE_SCROLLBAR, InterfaceID.SeedVault.LEFT_SCROLL,
+					InterfaceID.SeedVault.LEFT_LIST, y);
+			}
+		});
 	}
 
 	/** Put everything where the placement says and draw the section; false if the vault's widgets have gone. */
@@ -454,27 +624,10 @@ public class SeedVaultSection
 				moveTo(line, line.getOriginalX(), placement.headerY[i] + SeedVaultLayout.HEADER_TO_LINE);
 			}
 		}
-		final boolean section = placement.sectionY >= 0;
-		for (Entry entry : placement.entries.values())
+		moveItems(placement, icons, names);
+		if (placement.sectionY >= 0)
 		{
-			final Widget icon = icons.getChild(entry.index);
-			final Widget name = names.getChild(entry.index);
-			if (icon == null || name == null)
-			{
-				continue;
-			}
-			moveTo(icon, entry.iconX, entry.iconY);
-			moveTo(name, entry.nameX, entry.nameY);
-			if (section)
-			{
-				noDragScripts(icon);
-				noDragScripts(name);
-			}
-		}
-		if (section)
-		{
-			noDragScripts = true;
-			title(faves, placement.sectionY);
+			header(faves, placement.sectionY);
 			for (int i = 0; i < placement.cells.size(); i++)
 			{
 				final Entry cell = placement.cells.get(i);
@@ -488,6 +641,32 @@ public class SeedVaultSection
 		return true;
 	}
 
+	/** Each of the vault's items, icon and name, where the placement says. */
+	private static void moveItems(Placement placement, Widget icons, Widget names)
+	{
+		for (Entry entry : placement.entries.values())
+		{
+			final Widget icon = icons.getChild(entry.index);
+			final Widget name = names.getChild(entry.index);
+			if (icon != null && name != null)
+			{
+				moveTo(icon, entry.iconX, entry.iconY);
+				moveTo(name, entry.nameX, entry.nameY);
+			}
+		}
+	}
+
+	/** After a drag: the vault's items back where this laid them out, if it has since the game last did. */
+	private void putBack()
+	{
+		final Widget icons = client.getWidget(InterfaceID.SeedVault.OBJ_LIST);
+		final Widget names = client.getWidget(InterfaceID.SeedVault.TEXT_LIST);
+		if (placed != null && icons != null && names != null)
+		{
+			moveItems(placed, icons, names);
+		}
+	}
+
 	private static void moveTo(Widget widget, int x, int y)
 	{
 		if (widget.getOriginalX() != x || widget.getOriginalY() != y)
@@ -498,19 +677,21 @@ public class SeedVaultSection
 		}
 	}
 
-	/**
-	 * The game's drag scripts would put a moved item back where the game laid it out. It sets them again whenever it
-	 * lays the vault out; until then a drag drops on nothing ({@link #onWidgetDrag}).
-	 */
-	private static void noDragScripts(Widget widget)
+	/** The section's header and the line under it, like the vault's own categories' (elzerma). */
+	private static void header(Widget faves, int y)
 	{
-		widget.setOnDragListener((Object[]) null);
-		widget.setOnDragCompleteListener((Object[]) null);
-	}
+		final Widget title = faves.createChild(-1, WidgetType.TEXT);
+		title.setText(TITLE);
+		title.setFontId(FontID.BOLD_12);
+		title.setTextColor(VAULT_ORANGE);
+		title.setTextShadowed(true);
+		title.setWidthMode(WidgetSizeMode.MINUS);
+		title.setOriginalWidth(TITLE_X);
+		title.setOriginalHeight(TITLE_HEIGHT);
+		title.setOriginalX(TITLE_X);
+		title.setOriginalY(y);
+		title.revalidate();
 
-	/** The section's line and title, as on the bank's Farm run tab. */
-	private static void title(Widget faves, int y)
-	{
 		final Widget line = faves.createChild(-1, WidgetType.GRAPHIC);
 		line.setSpriteId(SpriteID.TRADEBACKING_DARK);
 		line.setSpriteTiling(true);
@@ -518,20 +699,8 @@ public class SeedVaultSection
 		line.setOriginalWidth(2 * LINE_X);
 		line.setOriginalHeight(FarmBankTab.LINE_HEIGHT);
 		line.setOriginalX(LINE_X);
-		line.setOriginalY(y);
+		line.setOriginalY(y + SeedVaultLayout.HEADER_TO_LINE);
 		line.revalidate();
-
-		final Widget title = faves.createChild(-1, WidgetType.TEXT);
-		title.setText(TITLE);
-		title.setFontId(FontID.PLAIN_11);
-		title.setTextColor(FarmBankTab.HEADER.getRGB());
-		title.setTextShadowed(true);
-		title.setWidthMode(WidgetSizeMode.MINUS);
-		title.setOriginalWidth(TITLE_X);
-		title.setOriginalHeight(FarmBankTab.TEXT_HEIGHT);
-		title.setOriginalX(TITLE_X);
-		title.setOriginalY(y + SeedVaultLayout.SECTION_TITLE_Y);
-		title.revalidate();
 	}
 
 	/** A seed the vault doesn't hold (or no longer does): its icon and name, faded, as the bank tab shows one. */
@@ -552,7 +721,7 @@ public class SeedVaultSection
 		final Widget name = faves.createChild(-1, WidgetType.TEXT);
 		name.setText(client.getItemDefinition(itemId).getName());
 		name.setFontId(FontID.PLAIN_11);
-		name.setTextColor(NAME_COLOUR);
+		name.setTextColor(VAULT_ORANGE);
 		name.setTextShadowed(true);
 		name.setXTextAlignment(WidgetTextAlignment.CENTER);
 		name.setYTextAlignment(WidgetTextAlignment.TOP);

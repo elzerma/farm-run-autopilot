@@ -42,7 +42,7 @@ Issues #1 to #5 were answered and closed on 2026-10-15, before this ledger began
 
 ## #8 explore/add bank tab support for seed vault
 
-**Kind:** Idea · **Status:** open. The Farm run section is built (option 2). Its first test passed with changes asked for. Those changes are built and wait on a re-test (SEED_VAULT_SECTION revision 2). Two write-ups below wait on elzerma: the banking setting, and routing to the guild. · **Reviewed through:** 2026-10-16 elzerma (body)
+**Kind:** Idea · **Status:** open. The section is built (option 2). Tests 1 and 2 passed, and elzerma asked for changes after each. The latest changes are built and wait on revision 3 of SEED_VAULT_SECTION. Two write-ups below wait on elzerma: the banking setting, and routing to the guild. · **Reviewed through:** 2026-10-16 elzerma (body)
 
 | Who | What they said | Checked against | Evaluation | Decision |
 |-----|----------------|-----------------|------------|----------|
@@ -74,6 +74,24 @@ The report also showed the vault opening scrolled to 109, past the section. The 
 - **Scroll:** when the vault scrolls to its first category, as it does on opening, it scrolls to the top so the section shows.
 
 The guided test is now revision 2. It asks about each of these.
+
+**Tested again (2026-10-17, elzerma, revision 2):** passed. The report showed:
+- The section at the top, with a "/ 1" count under each seed. Both seeds were already carried, so the change from yellow to green wasn't seen.
+- The section staying once everything was taken.
+- The vault opening scrolled to 0.
+
+After the test, a seed the vault didn't hold showed faded. elzerma then asked for:
+- Dragging back: "I don't believe that causes issues".
+- The name "Farm Run Autopilot".
+- Its own entry in the list on the left.
+- The title in the same font as the vault's other headers.
+
+**Changed (2026-10-17, revision 3):**
+- **Dragging works as in the game's vault.** The game's drag scripts and drag settings are left alone, and drops are no longer cancelled. Each item is still the widget of its own vault slot, so a drag moves the slots the player meant. After each drop (`seed_vault_drop`, 2827) every item goes back where the section put it, since the game's drop script returns the dragged item to the place the game first gave it.
+- **Name and font.** The header reads "Farm Run Autopilot", in the vault's own header style (bold 12, orange, the line under it).
+- **Left list.** A "Farm Run Autopilot" entry like the game's own scrolls to the section. It sits under the Farming Contract's entry when there is one, and the game's entries below it move down to make room. It's made after the list's script (`seed_vault_build_category_list`, 2814) and hidden while searching.
+
+SEED_VAULT_SECTION is now revision 3, asking about the name, the list entry and dragging.
 
 ### #8 write-up: how a run with seeds in the vault banks partway (not built; elzerma to choose the wording)
 

@@ -207,12 +207,12 @@ public class SeedVaultLayoutTest
 			// The section: its line at the top, then rows of icon, "/ N" label and name, in order
 			assertEquals(SeedVaultLayout.FIRST_HEADER_Y, placed.sectionY);
 			final int rows = SeedVaultLayout.rows(section.size(), 5);
-			assertEquals(105 + (rows - 1) * 98, placed.sectionHeight);
+			assertEquals(120 + (rows - 1) * 98, placed.sectionHeight);
 			assertEquals(section.size(), placed.cells.size());
 			for (int i = 0; i < section.size(); i++)
 			{
 				final int x = (i % 5) * SeedVaultLayout.CELL_WIDTH;
-				final int y = 27 + (i / 5) * 98;
+				final int y = 42 + (i / 5) * 98;
 				final Entry cell = new Entry(section.get(i), x + 14, y, x + 7, y + 48);
 				assertEquals(cell, placed.cells.get(i));
 				if (section.get(i) >= 0)
@@ -253,13 +253,14 @@ public class SeedVaultLayoutTest
 	{
 		final GameVault vault = game(slots(1, 1, 1, 1, 1, 1, 1));
 		final List<List<Integer>> categories = recognised(vault);
-		// One row: line, title, then icon, label and name, and the vault's 5 before its first category
-		assertEquals(105, SeedVaultLayout.place(WIDTH, categories, Collections.singletonList(3)).sectionHeight);
-		assertEquals(105, SeedVaultLayout.place(WIDTH, categories, Arrays.asList(0, 1, 2, 3, 4)).sectionHeight);
-		assertEquals(203, SeedVaultLayout.place(WIDTH, categories, Arrays.asList(0, 1, 2, 3, 4, 5)).sectionHeight);
+		// One row: a header and line like the vault's own, then icon, label and name, and the vault's 5 before its
+		// first category
+		assertEquals(120, SeedVaultLayout.place(WIDTH, categories, Collections.singletonList(3)).sectionHeight);
+		assertEquals(120, SeedVaultLayout.place(WIDTH, categories, Arrays.asList(0, 1, 2, 3, 4)).sectionHeight);
+		assertEquals(218, SeedVaultLayout.place(WIDTH, categories, Arrays.asList(0, 1, 2, 3, 4, 5)).sectionHeight);
 		// Taking 2 of category 1's 7 leaves 5: one row, so the next header moves up a row less the section
 		final Placement placed = SeedVaultLayout.place(WIDTH, categories, Arrays.asList(5, 6));
-		assertEquals(vault.headerY[2] + 105 - SeedVaultLayout.ROW_HEIGHT, placed.headerY[2]);
+		assertEquals(vault.headerY[2] + 120 - SeedVaultLayout.ROW_HEIGHT, placed.headerY[2]);
 	}
 
 	@Test
@@ -282,10 +283,10 @@ public class SeedVaultLayoutTest
 
 		// Only seeds the vault doesn't hold: a section all the same, nothing moved out of the categories
 		final Placement none = SeedVaultLayout.place(WIDTH, categories, Collections.singletonList(-1));
-		assertEquals(105, none.sectionHeight);
+		assertEquals(120, none.sectionHeight);
 		for (Entry entry : vault.entries)
 		{
-			assertEquals(entry.iconY + 105, none.entries.get(entry.index).iconY);
+			assertEquals(entry.iconY + 120, none.entries.get(entry.index).iconY);
 		}
 	}
 
@@ -363,8 +364,8 @@ public class SeedVaultLayoutTest
 		final Placement placed = SeedVaultLayout.place(WIDTH, categories, Arrays.asList(2, 0));
 		// Slot 2 first, as asked, then slot 0, with room for the label between icon and name
 		assertEquals(14, placed.entries.get(2).iconX);
-		assertEquals(27, placed.entries.get(2).iconY);
-		assertEquals(27 + 48, placed.entries.get(2).nameY);
+		assertEquals(42, placed.entries.get(2).iconY);
+		assertEquals(42 + 48, placed.entries.get(2).nameY);
 		assertEquals(14 + 65, placed.entries.get(0).iconX);
 		// Slot 1 is category 1's only item now, first in its row
 		final Entry left = placed.entries.get(1);

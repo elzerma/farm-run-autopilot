@@ -17,10 +17,10 @@ public enum TestItem
 			+ "tab should warn that you need Spellbook Swap, its runes should be on the bank's Farm run tab, and the "
 			+ "spell should be outlined in your spellbook on that step."),
 	SEED_VAULT_SECTION(Tab.RUN, "Farm run section in the seed vault",
-		"Build a run and open the Farming Guild's seed vault: a \"Farm run\" section at the top should show every seed "
-			+ "and sapling the run plants, with a \"/ N\" count under each like the bank's Farm run tab, and stay there, "
-			+ "ticked, once you've taken them. Withdrawing from it works as usual, dragging a seed and letting go "
-			+ "somewhere else does nothing, and the rest of the vault scrolls and looks as usual.", 2),
+		"Build a run and open the Farming Guild's seed vault: a \"Farm Run Autopilot\" section at the top, titled like "
+			+ "the vault's own, should show every seed and sapling the run plants with a \"/ N\" count under each, and the "
+			+ "list on the left should have an entry for it. Seeds can be dragged to rearrange the vault as usual, and "
+			+ "after each drag everything should be back in place.", 3),
 	FORTIS_CHAMPION(Tab.FARM, "Civitas herbs and the Colosseum",
 		"With \"Champion rank at the Fortis Colosseum\" ticked in Account > Unlocks, the Civitas herb patch "
 			+ "should count as disease-free: no plant cure or protection asked for it.", 2),
