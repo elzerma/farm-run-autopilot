@@ -22,6 +22,8 @@ import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.settings.VaultBanking;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
+import com.farmrunautopilot.supply.StaffSwaps;
+import com.farmrunautopilot.supply.SupplyCalculator;
 import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.supply.SupplyPlan;
 import java.util.ArrayList;
@@ -133,6 +135,8 @@ public class RunSession
 	private long finishedAt;
 	private String lastRun;
 	private volatile RunView view = RunView.OFF_VIEW;
+	/** A staff to wield before setting off, outlined to put on; empty when there is none (issue #7). */
+	private Set<Integer> wieldIds = Collections.emptySet();
 
 	@Inject
 	RunSession(Client client, RunService runService, HoldingsTracker holdingsTracker, SettingsStore settings,
@@ -868,6 +872,7 @@ public class RunSession
 		final boolean timing = stage == RunView.State.RUNNING;
 		String instruction = null;
 		vaultStep = false;
+		wieldIds = Collections.emptySet();
 		while (stopIndex < stops.size())
 		{
 			final RouteStop stop = stops.get(stopIndex);
@@ -899,6 +904,14 @@ public class RunSession
 			instruction = navigator.travel(stop, here, now);
 			if (instruction != null)
 			{
+				// Swapping staves (issue #7): the one this leg needs goes on before setting off. Ticking the way there
+				// done skips it.
+				final String wield = timing && !navigator.isTeleported()
+					? wieldStep(partFor(plan, stopIndex, false).getStaffSwaps().getWield().get(stop.getLocation())) : null;
+				if (wield != null)
+				{
+					instruction = wield;
+				}
 				patches.clearCurrent();
 				break;
 			}
@@ -1227,9 +1240,13 @@ public class RunSession
 		{
 			instruction = "Head to your next stop";
 		}
-		// Before leaving and at each bank: what to put on for this part of the run
-		final BankGuide.Wear wear = stage == RunView.State.ARMED || banking || patches.getCurrentPatch() == null
-			? BankGuide.wear(bankSupplies(), holdingsTracker.getHoldings(), settings.getRunConfig().getOutfit())
+		// Before leaving and at each bank: what to put on for this part of the run. On the way, the staves swapped
+		// between are left to their own step (issue #7).
+		final Set<Integer> swapped = stage == RunView.State.RUNNING && !banking
+			? partFor(plan, stopIndex, false).getStaffSwaps().getItemIds() : Collections.emptySet();
+		final BankGuide.Wear wear = !wieldIds.isEmpty() ? new BankGuide.Wear(null, wieldIds)
+			: stage == RunView.State.ARMED || banking || patches.getCurrentPatch() == null
+			? BankGuide.wear(bankSupplies(), holdingsTracker.getHoldings(), settings.getRunConfig().getOutfit(), swapped)
 			: BankGuide.Wear.NONE;
 		final Highlights highlights = highlights(wear);
 		return new RunView(stage, startedAt, stopViews, instruction, false, null, null,
@@ -1293,7 +1310,11 @@ public class RunSession
 		{
 			if (bank.getTrip() != null)
 			{
-				return "Go to the Farming Guild's bank: " + bank.getTrip().describeWay();
+				// By fairy ring, with the staff for it swapped out (issue #7)
+				final String wield = SupplyCalculator.usesFairyRing(bank.getTrip())
+					? wieldStep(partFor(plan, stopIndex, false).getStaffSwaps().getFairyRing()) : null;
+				return (wield != null ? wield + ", then go" : "Go") + " to the Farming Guild's bank: "
+					+ bank.getTrip().describeWay();
 			}
 			return bank.getTeleport() != null ? "Use your " + bank.getTeleport().getItemName() + " to teleport to "
 				+ bank.getTeleport().getBankName() : bank.title() + ": walk to the bank";
@@ -1521,6 +1542,10 @@ public class RunSession
 	/** What the current step points at: the patch and items to use there, or the teleport item while travelling. */
 	private Highlights highlights(BankGuide.Wear wear)
 	{
+		if (!wieldIds.isEmpty())
+		{
+			return new Highlights(null, false, null, Collections.emptySet(), null, wieldIds);
+		}
 		if (banking)
 		{
 			// Teleporting to the bank: the bank teleport is the item to use, as for any other teleport (elzerma)
@@ -1593,6 +1618,38 @@ public class RunSession
 		// An item to put on isn't also outlined as the teleport to use, so the two can't be confused
 		items.removeAll(wear.getItemIds());
 		return new Highlights(null, false, npc, items, patches.castableNow(spell), wear.getItemIds());
+	}
+
+	/**
+	 * "Wield your mist battlestaff" while this staff is in the inventory and not wielded, with it outlined to put on;
+	 * null when it's on already, or isn't carried (the missing items reminder covers that).
+	 */
+	private String wieldStep(StaffSwaps.Swap swap)
+	{
+		if (swap == null)
+		{
+			return null;
+		}
+		final Holdings holdings = holdingsTracker.getHoldings();
+		final Map<Integer, Integer> inventory = holdings.in(Holdings.Source.INVENTORY);
+		final Set<Integer> ids = new LinkedHashSet<>();
+		for (int id : swap.getItemIds())
+		{
+			if (holdings.in(Holdings.Source.WORN).getOrDefault(id, 0) > 0)
+			{
+				return null;
+			}
+			if (inventory.getOrDefault(id, 0) > 0)
+			{
+				ids.add(id);
+			}
+		}
+		if (ids.isEmpty())
+		{
+			return null;
+		}
+		wieldIds = ids;
+		return "Wield your " + swap.getName();
 	}
 
 	private static void travelItems(TravelMethod method, Set<Integer> items)

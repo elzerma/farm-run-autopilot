@@ -72,6 +72,12 @@ final class BankGuide
 	 */
 	static Wear wear(SupplyPlan part, Holdings holdings, Outfit outfit)
 	{
+		return wear(part, holdings, outfit, Collections.emptySet());
+	}
+
+	/** As above, leaving out these items (the staves swapped on the way, which have a step of their own). */
+	static Wear wear(SupplyPlan part, Holdings holdings, Outfit outfit, Set<Integer> skip)
+	{
 		final Map<Integer, Integer> inventory = holdings.in(Holdings.Source.INVENTORY);
 		final Map<Integer, Integer> worn = holdings.in(Holdings.Source.WORN);
 		final List<String> names = new ArrayList<>();
@@ -79,7 +85,8 @@ final class BankGuide
 		for (SupplyLine line : part.getLines())
 		{
 			// Teleport items, the staff and magic secateurs; the outfit is handled below, piece by piece
-			if (!line.isWear() || line.getName().equals(outfit.getDisplayName()) || any(line.getItemIds(), worn))
+			if (!line.isWear() || line.getName().equals(outfit.getDisplayName()) || any(line.getItemIds(), worn)
+				|| java.util.Arrays.stream(line.getItemIds()).anyMatch(skip::contains))
 			{
 				continue;
 			}

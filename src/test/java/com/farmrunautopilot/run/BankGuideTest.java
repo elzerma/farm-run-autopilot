@@ -103,4 +103,16 @@ public class BankGuideTest
 		// A run with fairy rings wields the staff, so the secateurs stay in the inventory
 		assertNull(BankGuide.wear(part(carried), inInventory, Outfit.NONE).getText());
 	}
+
+	@Test
+	public void stavesSwappedOnTheWayAreLeftToTheirOwnStep()
+	{
+		// Issue #7: after swapping to the mist staff, the lava staff (first wielded) is back in the inventory; the
+		// guide's own "Wield your ..." step says when it goes on again, so it's not also "Wear: Lava battlestaff"
+		final SupplyLine lava = travel("Lava battlestaff", true, ItemID.LAVA_BATTLESTAFF);
+		final Holdings swapped = holdings(items(ItemID.LAVA_BATTLESTAFF, 1), items(ItemID.MIST_BATTLESTAFF, 1));
+		assertEquals("Wear: Lava battlestaff", BankGuide.wear(part(lava), swapped, Outfit.NONE).getText());
+		assertNull(BankGuide.wear(part(lava), swapped, Outfit.NONE,
+			new java.util.HashSet<>(Arrays.asList(ItemID.LAVA_BATTLESTAFF, ItemID.MIST_BATTLESTAFF))).getText());
+	}
 }
