@@ -2,11 +2,21 @@ name: Bug report
 description: The plugin did something it shouldn't have, or didn't do something it should.
 labels: ["bug"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 📸 Screenshots help a lot
+        A picture of the sidebar, the overlay or the bank often shows the problem straight away. Paste or drag it into "What happened?" below.
+
+        - **Windows:** press **Win + Shift + S** to open the Snipping Tool, then drag a box round what you want.
+        - **Mac:** press **Cmd + Shift + 4**, then drag a box.
+
+        To keep yourself anonymous if you'd like: collapse the chat box first (click the chat tab that's open), and leave your name out of the box, or crop it off. RuneLite shows it in the top-left corner of the window.
   - type: textarea
     id: what-happened
     attributes:
       label: What happened?
-      description: What the plugin showed or did. Screenshots help a lot.
+      description: What the plugin showed or did. Paste or drag screenshots in here.
     validations:
       required: true
   - type: textarea
