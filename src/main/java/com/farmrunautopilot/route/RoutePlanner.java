@@ -721,6 +721,16 @@ public final class RoutePlanner
 		final double viaHouse = toHouse + (poh.isTeleportOutside() ? TravelTimes.HOUSE_DOOR : 0)
 			+ TravelTimes.HOUSE_WALK;
 		final String viaHouseText = "house " + round(viaHouse);
+		// Into the house by the spirit tree by the last stop (issue #16): every spirit tree offers "Your house" once
+		// one grows in the house. It lands by the house's tree in the garden, beside the portal (estimate)
+		final Integer treeWalk = from == null || !poh.isSpiritTree()
+			|| !access.isMet(Requirement.unlock(Unlock.SPIRIT_TREES)) ? null : spiritTreeWalk(from);
+		final double byTree = treeWalk == null ? 0 : treeWalk * SECONDS_PER_TILE + TravelTimes.SPIRIT_TREE;
+		final String byTreeText = treeWalk == null ? "" : "to the tree " + treeWalk + " tiles "
+			+ round(treeWalk * SECONDS_PER_TILE) + " + tree to the house " + round(TravelTimes.SPIRIT_TREE);
+		// From the garden into the house, as when Teleport to House lands outside
+		final double treeInside = byTree + TravelTimes.HOUSE_DOOR + TravelTimes.HOUSE_WALK;
+		final String treeInsideText = byTreeText + " + indoors " + round(TravelTimes.HOUSE_DOOR + TravelTimes.HOUSE_WALK);
 
 		switch (method.getKind())
 		{
@@ -740,6 +750,11 @@ public final class RoutePlanner
 					options.add(new Option(method, Departure.DIRECT, toHouse + door + walk,
 						"house " + round(toHouse + door) + " + " + landing));
 				}
+				if (treeWalk != null)
+				{
+					options.add(new Option(method, Departure.TREE_HOUSE_PORTAL, byTree + TravelTimes.HOUSE_WALK + walk,
+						byTreeText + " + to the portal " + round(TravelTimes.HOUSE_WALK) + " + " + landing));
+				}
 				break;
 			case FAIRY_RING:
 				if (hasFairyRingStaff())
@@ -748,6 +763,12 @@ public final class RoutePlanner
 					{
 						options.add(new Option(method, Departure.POH_FAIRY_RING, viaHouse + TravelTimes.FAIRY_RING + walk,
 							viaHouseText + " + ring " + round(TravelTimes.FAIRY_RING) + " + " + landing));
+					}
+					if (poh.isFairyRing() && treeWalk != null)
+					{
+						options.add(new Option(method, Departure.TREE_HOUSE_FAIRY_RING,
+							treeInside + TravelTimes.FAIRY_RING + walk,
+							treeInsideText + " + ring " + round(TravelTimes.FAIRY_RING) + " + " + landing));
 					}
 					// No unnamed "some ring nearby": only rings the player has a known way to reach. The chosen way
 					// is a preference: if it can't be used, Auto picks from the rest. The ring by the last stop is
@@ -767,12 +788,12 @@ public final class RoutePlanner
 				}
 				break;
 			case SPIRIT_TREE:
-				final Integer treeWalk = from == null ? null : spiritTreeWalk(from);
-				if (treeWalk != null)
+				final Integer nearTree = from == null ? null : spiritTreeWalk(from);
+				if (nearTree != null)
 				{
 					options.add(new Option(method, Departure.DIRECT,
-						treeWalk * SECONDS_PER_TILE + TravelTimes.SPIRIT_TREE + walk, "to the tree " + treeWalk
-						+ " tiles " + round(treeWalk * SECONDS_PER_TILE) + " + tree " + round(TravelTimes.SPIRIT_TREE)
+						nearTree * SECONDS_PER_TILE + TravelTimes.SPIRIT_TREE + walk, "to the tree " + nearTree
+						+ " tiles " + round(nearTree * SECONDS_PER_TILE) + " + tree " + round(TravelTimes.SPIRIT_TREE)
 						+ " + " + landing));
 				}
 				if (poh.isSpiritTree() && house)
@@ -811,16 +832,28 @@ public final class RoutePlanner
 					+ round(TravelTimes.QUETZAL) + " + " + landing));
 		}
 
-		if (house && method.getNexus() != null && poh.getNexusDestinations().contains(method.getNexus()))
+		final boolean nexus = method.getNexus() != null && poh.getNexusDestinations().contains(method.getNexus());
+		if (house && nexus)
 		{
 			options.add(new Option(method, Departure.POH_NEXUS, viaHouse + TravelTimes.TELEPORT + walk,
 				viaHouseText + " + nexus " + round(TravelTimes.TELEPORT) + " + " + landing));
 		}
-		if (house && method.getJewelleryBox() != null && poh.getJewelleryBox() != null
-			&& poh.getJewelleryBox().includes(method.getJewelleryBox()))
+		if (treeWalk != null && nexus)
+		{
+			options.add(new Option(method, Departure.TREE_HOUSE_NEXUS, treeInside + TravelTimes.TELEPORT + walk,
+				treeInsideText + " + nexus " + round(TravelTimes.TELEPORT) + " + " + landing));
+		}
+		final boolean box = method.getJewelleryBox() != null && poh.getJewelleryBox() != null
+			&& poh.getJewelleryBox().includes(method.getJewelleryBox());
+		if (house && box)
 		{
 			options.add(new Option(method, Departure.POH_JEWELLERY_BOX, viaHouse + TravelTimes.TELEPORT + walk,
 				viaHouseText + " + jewellery box " + round(TravelTimes.TELEPORT) + " + " + landing));
+		}
+		if (treeWalk != null && box)
+		{
+			options.add(new Option(method, Departure.TREE_HOUSE_JEWELLERY_BOX, treeInside + TravelTimes.TELEPORT + walk,
+				treeInsideText + " + jewellery box " + round(TravelTimes.TELEPORT) + " + " + landing));
 		}
 		return options;
 	}
@@ -999,6 +1032,11 @@ public final class RoutePlanner
 	private Cost cost(Leg leg, Location to)
 	{
 		final boolean capeHome = owns(TravelItem.CONSTRUCTION_CAPE) || owns(TravelItem.MAX_CAPE);
+		// Into the house by a spirit tree costs nothing (issue #16)
+		if (leg.departure.isByTree())
+		{
+			return Cost.FREE;
+		}
 		if (leg.departure.isViaHouse() || leg.method.getKind() == TravelKind.HOUSE_PORTAL)
 		{
 			return capeHome ? Cost.FREE : Cost.HOUSE;

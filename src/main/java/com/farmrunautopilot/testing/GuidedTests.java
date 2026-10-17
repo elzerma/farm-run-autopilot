@@ -49,6 +49,7 @@ final class GuidedTests
 		TESTS.put(TestItem.ATES_CHARGES, new AtesCharges());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
 		TESTS.put(TestItem.BUCKET_COMPOST, new BucketCompost());
+		TESTS.put(TestItem.HOUSE_BY_TREE, new HouseByTree());
 		TESTS.put(TestItem.HOUSE_SCAN, new HouseScan());
 	}
 
@@ -367,6 +368,30 @@ final class GuidedTests
 				isIt(Compost.COMPOST),
 				isIt(Compost.SUPERCOMPOST),
 				isIt(Compost.ULTRACOMPOST));
+		}
+	}
+
+	/** A spirit tree as the way into the house (issue #16): the timings are estimates, and the guide's steps untried. */
+	private static final class HouseByTree extends GuidedTest
+	{
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				// Without one, the plan never offers it, which proves nothing
+				ask("Is a spirit tree (or spirit ring) planted in your house?")
+					.onAnswer((ctx, yes) ->
+					{
+						if (!yes)
+						{
+							ctx.cannotTest("a spirit tree planted in your house");
+						}
+					}),
+				ask("Build a run where a stop follows one with a spirit tree nearby, e.g. the Farming Guild then a "
+					+ "patch by your house portal. Does that stop say \"Spirit tree to your house, then...\"?"),
+				ask("Start the run and follow it. Did the guide move on once you were in your house, and again once you'd "
+					+ "left it?"),
+				ask("Was that way quicker than how you'd normally get there?").optional());
 		}
 	}
 

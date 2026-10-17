@@ -22,6 +22,11 @@ public enum TestItem
 	ATES_CHARGES(Tab.TRAVEL, "Pendant of Ates charges",
 		"Check the pendant. Settings > Debug > Detected should show the same number. Teleport once and it should "
 			+ "drop by one, then match a second Check.", 2),
+	HOUSE_BY_TREE(Tab.TRAVEL, "Spirit tree into your house",
+		"With a spirit tree planted in your house, plan a run where a stop is just after one with a spirit tree "
+			+ "nearby (e.g. the Farming Guild, then Hosidius with your house portal there). The stop should say "
+			+ "\"Spirit tree to your house, then...\", and the guide should move on once you're in the house and again "
+			+ "once you've left it."),
 	BUCKET_COMPOST(Tab.FARM, "Bottomless bucket at the tool leprechaun",
 		"With a bottomless compost bucket that has compost in it, store it with any tool leprechaun. Settings > "
 			+ "Debug > Detected should then show the bucket with the right compost and uses."),

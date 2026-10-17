@@ -79,11 +79,11 @@ public final class LearnedTimes
 		return from == null ? null : from + ">" + to + "|" + way;
 	}
 
-	/** Walks, Renu, the fairy ring by the last stop, and the spirit tree by the last stop. */
+	/** Walks, Renu, the fairy ring by the last stop, the spirit tree by the last stop, and that tree into the house. */
 	static boolean dependsOnStart(String method, String departure)
 	{
 		if (method == null || Departure.WALK.name().equals(departure) || Departure.RENU.name().equals(departure)
-			|| Departure.FAIRY_RING_NEARBY.name().equals(departure))
+			|| Departure.FAIRY_RING_NEARBY.name().equals(departure) || departure.startsWith("TREE_HOUSE_"))
 		{
 			return true;
 		}

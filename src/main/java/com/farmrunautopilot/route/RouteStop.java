@@ -83,6 +83,14 @@ public class RouteStop
 				return "House fairy ring: " + method.getDisplayName();
 			case POH_SPIRIT_TREE:
 				return "House spirit tree: " + method.getDisplayName();
+			case TREE_HOUSE_PORTAL:
+				return "Spirit tree to your house, then out of the portal";
+			case TREE_HOUSE_NEXUS:
+				return "Spirit tree to your house, then the portal nexus: " + method.getDisplayName();
+			case TREE_HOUSE_JEWELLERY_BOX:
+				return "Spirit tree to your house, then the jewellery box: " + method.getDisplayName();
+			case TREE_HOUSE_FAIRY_RING:
+				return "Spirit tree to your house, then the fairy ring: " + method.getDisplayName();
 			case FAIRY_RING_NEARBY:
 				return "Walk to the fairy ring here: " + method.getDisplayName();
 			case FAIRY_RING_ARDOUGNE_CLOAK:

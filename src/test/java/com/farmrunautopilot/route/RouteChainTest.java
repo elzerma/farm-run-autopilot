@@ -5,6 +5,7 @@ import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.Unlock;
+import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.PohSetup;
@@ -104,6 +105,34 @@ public class RouteChainTest
 			access(), holdings(ItemID.SLAYER_RING_8, ItemID.RING_OF_WEALTH_5), new PohSetup(), LearnedTimes.NONE,
 			null, Location.FALADOR_PARK, 57).getStops();
 		assertEquals(describe(park), Location.FALADOR_PARK, park.get(0).getLocation());
+	}
+
+	@Test
+	public void spiritTreeIntoTheHouseThenOutOfItsPortal()
+	{
+		// issue #16: Farming Guild, its spirit tree to the house, then out of the house's Hosidius portal. Without the
+		// Magic for Teleport to House (which is quicker when it can be cast) or a tablet
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		for (Skill skill : AccessSnapshot.REAL_SKILLS)
+		{
+			levels.put(skill, 99);
+		}
+		levels.put(Skill.MAGIC, 1);
+		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
+		quests.put(Quest.TREE_GNOME_VILLAGE, QuestState.FINISHED);
+		final AccessSnapshot access = new AccessSnapshot(true, quests, levels, Collections.emptySet(),
+			EnumSet.of(Unlock.SPIRIT_TREES, Unlock.SPIRIT_TREE_FARMING_GUILD), HousePortal.HOSIDIUS, Spellbook.STANDARD,
+			Collections.emptySet());
+		final PohSetup poh = new PohSetup();
+		poh.setPortal(HousePortal.HOSIDIUS);
+		poh.setSpiritTree(true);
+		final RunConfig config = new RunConfig().sanitise();
+		config.setEndNearBank(false);
+		final List<RouteStop> stops = RoutePlanner.plan(Arrays.asList(Patch.FARMING_GUILD_HERB, Patch.HOSIDIUS_HERB),
+			config, access, holdings(), poh, LearnedTimes.NONE, null, Location.FARMING_GUILD, 0).getStops();
+		assertEquals(describe(stops), Location.HOSIDIUS, stops.get(1).getLocation());
+		assertEquals(describe(stops), Departure.TREE_HOUSE_PORTAL, stops.get(1).getDeparture());
+		assertEquals(describe(stops), TravelMethod.HOUSE_PORTAL_HOSIDIUS, stops.get(1).getMethod());
 	}
 
 	@Test

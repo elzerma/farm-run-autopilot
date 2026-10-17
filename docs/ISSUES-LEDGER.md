@@ -159,3 +159,15 @@ Open questions: bank and vault counts left out, or shown only as present/missing
 - **#5:** build the outline now, as an animated "fuse": a bright spark looping around the Farm run button like marquee lights, with little pixel figures shedding off where the spark passes. Auto-open comes later, only after checking how Quest Helper does it and that it fits the Plugin Hub rules.
 - **#16:** build option 1 (a spirit tree into the house).
 - **#17:** build option 1 (the Report a problem button).
+
+### Built and researched (2026-10-16)
+
+- **#5:** the fuse is built (659b0a8). **Auto-open, researched:** Quest Helper has no auto-open setting; it only reopens its tab if the player left it open, which this plugin already does. RuneLite's own Bank Tags reopens the last tag tab by default ("Remember last tag tab"), and the Inventory Setups hub plugin filters the bank on every open (with a "Manual Bank Filter" setting to turn that off). Nothing in the rejected-features list is against it. **Likely allowed** as a setting players can turn off, done the same way as a click (`bankSearch.reset(true)`), never with `client.menuAction`. Waiting on elzerma.
+- **#17:** the Report a problem button is built (93ac387).
+- **#16:** spirit tree into the house is built. New departures TREE_HOUSE_PORTAL, _NEXUS, _JEWELLERY_BOX and _FAIRY_RING need no house tab, rune or cape and cost nothing. Timings are estimates (tree walk + tree + door/walk), so there's a new help-list test, HOUSE_BY_TREE.
+- **#8, researched:** no hub plugin re-lays out the seed vault, and RuneLite has no seed vault hook like the bank's. Its build script (2819, `seed_vault_build`) makes a widget for every vault slot in one scrolling list with category headers, and hides the empty ones. Nothing in the rules forbids moving those widgets, but it hasn't been done before, so expect a closer review. Options, from least to most risk:
+  1. Highlight the needed seeds after 2819 runs (as the chance-man hub plugin dims items). S.
+  2. A "Farm run" section at the top: move the real item widgets into it after 2819 runs, so withdrawing still works; push the vanilla headers down; enlarge the scroll; turn off dragging on the moved items (a drag could reorder the vault on the server); skip while searching. M–L, and may need adjusting after game updates.
+  3. Never use `menuAction` or a server-side vault script.
+
+  Waiting on elzerma.
