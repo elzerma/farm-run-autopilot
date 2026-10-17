@@ -1,6 +1,9 @@
 package com.farmrunautopilot.data;
 
 import static com.farmrunautopilot.data.DataConstants.NONE;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import lombok.Getter;
 import net.runelite.api.gameval.ItemID;
 
@@ -44,7 +47,39 @@ public enum Crop
 	CADANTINE(PatchType.HERB, "Cadantine", 67, ItemID.CADANTINE_SEED, 20, 5, NONE, 0),
 	LANTADYME(PatchType.HERB, "Lantadyme", 73, ItemID.LANTADYME_SEED, 20, 5, NONE, 0),
 	DWARF_WEED(PatchType.HERB, "Dwarf weed", 79, ItemID.DWARF_WEED_SEED, 20, 5, NONE, 0),
-	TORSTOL(PatchType.HERB, "Torstol", 85, ItemID.TORSTOL_SEED, 20, 5, NONE, 0);
+	TORSTOL(PatchType.HERB, "Torstol", 85, ItemID.TORSTOL_SEED, 20, 5, NONE, 0),
+
+	// Allotments: 3 seeds a patch; payment per patch (wiki: Allotment patch/Seeds)
+	POTATO(PatchType.ALLOTMENT, "Potato", 1, ItemID.POTATO_SEED, 3, 10, 5, ItemID.BUCKET_COMPOST, 2),
+	ONION(PatchType.ALLOTMENT, "Onion", 5, ItemID.ONION_SEED, 3, 10, 5, ItemID.SACK_POTATO_10, 1),
+	CABBAGE(PatchType.ALLOTMENT, "Cabbage", 7, ItemID.CABBAGE_SEED, 3, 10, 5, ItemID.SACK_ONION_10, 1),
+	TOMATO(PatchType.ALLOTMENT, "Tomato", 12, ItemID.TOMATO_SEED, 3, 10, 5, ItemID.SACK_CABBAGE_10, 2),
+	SWEETCORN(PatchType.ALLOTMENT, "Sweetcorn", 20, ItemID.SWEETCORN_SEED, 3, 10, 7, ItemID.JUTE_FIBRE, 10),
+	STRAWBERRY(PatchType.ALLOTMENT, "Strawberry", 31, ItemID.STRAWBERRY_SEED, 3, 10, 7, ItemID.BASKET_APPLE_5, 1),
+	WATERMELON(PatchType.ALLOTMENT, "Watermelon", 47, ItemID.WATERMELON_SEED, 3, 10, 9, ItemID.CURRY_LEAF, 10),
+	SNAPE_GRASS(PatchType.ALLOTMENT, "Snape grass", 61, ItemID.SNAPE_GRASS_SEED, 3, 10, 8, ItemID.JANGERBERRIES, 5),
+
+	// Flowers: 1 seed, no gardener protects them
+	MARIGOLD(PatchType.FLOWER, "Marigold", 2, ItemID.MARIGOLD_SEED, 1, 5, 5, NONE, 0),
+	ROSEMARY(PatchType.FLOWER, "Rosemary", 11, ItemID.ROSEMARY_SEED, 1, 5, 5, NONE, 0),
+	// Placed rather than grown (made at 23 Farming); protects sweetcorn
+	SCARECROW(PatchType.FLOWER, "Scarecrow", 23, ItemID.SCARECROW_COMPLETE, 1, 0, 1, NONE, 0),
+	NASTURTIUM(PatchType.FLOWER, "Nasturtium", 24, ItemID.NASTURTIUM_SEED, 1, 5, 5, NONE, 0),
+	WOAD(PatchType.FLOWER, "Woad", 25, ItemID.WOAD_SEED, 1, 5, 5, NONE, 0),
+	LIMPWURT(PatchType.FLOWER, "Limpwurt", 26, ItemID.LIMPWURT_SEED, 1, 5, 5, NONE, 0),
+	WHITE_LILY(PatchType.FLOWER, "White lily", 58, ItemID.WHITE_LILY_SEED, 1, 5, 5, NONE, 0),
+
+	// Hops: 4 seeds, or 3 for the fibre crops (wiki: Hops patch/Seeds)
+	BARLEY(PatchType.HOPS, "Barley", 3, ItemID.BARLEY_SEED, 4, 10, 5, ItemID.BUCKET_COMPOST, 3),
+	HAMMERSTONE(PatchType.HOPS, "Hammerstone", 4, ItemID.HAMMERSTONE_HOP_SEED, 4, 10, 5, ItemID.MARIGOLD, 1),
+	ASGARNIAN(PatchType.HOPS, "Asgarnian", 8, ItemID.ASGARNIAN_HOP_SEED, 4, 10, 6, ItemID.SACK_ONION_10, 1),
+	JUTE(PatchType.HOPS, "Jute", 13, ItemID.JUTE_SEED, 3, 10, 6, ItemID.BARLEY_MALT, 6),
+	YANILLIAN(PatchType.HOPS, "Yanillian", 16, ItemID.YANILLIAN_HOP_SEED, 4, 10, 7, ItemID.BASKET_TOMATO_5, 1),
+	FLAX(PatchType.HOPS, "Flax", 18, ItemID.FLAX_SEED, 3, 20, 4, ItemID.GRAIN, 6),
+	KRANDORIAN(PatchType.HOPS, "Krandorian", 21, ItemID.KRANDORIAN_HOP_SEED, 4, 10, 8, ItemID.SACK_CABBAGE_10, 3),
+	WILDBLOOD(PatchType.HOPS, "Wildblood", 28, ItemID.WILDBLOOD_HOP_SEED, 4, 10, 9, ItemID.NASTURTIUM, 1),
+	HEMP(PatchType.HOPS, "Hemp", 37, ItemID.HEMP_SEED, 3, 20, 5, ItemID.FLAX, 6),
+	COTTON(PatchType.HOPS, "Cotton", 71, ItemID.COTTON_SEED, 3, 20, 6, ItemID.HEMP, 6);
 
 	/**
 	 * Minutes for one fruit to regrow on a grown fruit tree. RuneLite uses 45; the wiki says 40
@@ -57,21 +92,31 @@ public enum Crop
 	private final PatchType type;
 	private final String displayName;
 	private final int farmingLevel;
-	/** Sapling for trees and fruit trees, seed for herbs. */
+	/** Sapling for trees and fruit trees, seed for the rest (the scarecrow item for a scarecrow). */
 	private final int plantItemId;
 	private final int tickMinutes;
 	private final int stages;
-	/** Gardener protection payment, or {@link DataConstants#NONE} for herbs. */
+	/** Gardener protection payment, or {@link DataConstants#NONE} for crops no gardener protects. */
 	private final int paymentItemId;
 	private final int paymentQuantity;
 
+	/** Seeds planted in one patch (allotments 3, hops 4 or 3), 1 for saplings and most seeds. */
+	private final int seedsPerPatch;
+
 	Crop(PatchType type, String displayName, int farmingLevel, int plantItemId, int tickMinutes, int stages,
 		int paymentItemId, int paymentQuantity)
+	{
+		this(type, displayName, farmingLevel, plantItemId, 1, tickMinutes, stages, paymentItemId, paymentQuantity);
+	}
+
+	Crop(PatchType type, String displayName, int farmingLevel, int plantItemId, int seedsPerPatch, int tickMinutes,
+		int stages, int paymentItemId, int paymentQuantity)
 	{
 		this.type = type;
 		this.displayName = displayName;
 		this.farmingLevel = farmingLevel;
 		this.plantItemId = plantItemId;
+		this.seedsPerPatch = seedsPerPatch;
 		this.tickMinutes = tickMinutes;
 		this.stages = stages;
 		this.paymentItemId = paymentItemId;
@@ -81,6 +126,45 @@ public enum Crop
 	public int getGrowthMinutes()
 	{
 		return tickMinutes * (stages - 1);
+	}
+
+	/** Offered as a crop to grow; the scarecrow is only placed to protect sweetcorn. */
+	public boolean isChoosable()
+	{
+		return this != SCARECROW;
+	}
+
+	/** Planted from a stack of seeds with a dibber; saplings (trees, fruit trees) don't stack and need a spade. */
+	public boolean isSeed()
+	{
+		return type != PatchType.TREE && type != PatchType.FRUIT_TREE;
+	}
+
+	/**
+	 * The flowers that protect this allotment crop once fully grown in its set's flower patch, the cheapest first: the
+	 * crop's own flower, then white lily, which protects every allotment crop (wiki: Flower patch, Allotment patch/Seeds).
+	 * Empty for anything that isn't an allotment crop.
+	 */
+	public List<Crop> getProtectingFlowers()
+	{
+		switch (this)
+		{
+			case POTATO:
+			case ONION:
+			case TOMATO:
+				return Arrays.asList(MARIGOLD, WHITE_LILY);
+			case CABBAGE:
+				return Arrays.asList(ROSEMARY, WHITE_LILY);
+			case WATERMELON:
+				return Arrays.asList(NASTURTIUM, WHITE_LILY);
+			case SWEETCORN:
+				return Arrays.asList(SCARECROW, WHITE_LILY);
+			case STRAWBERRY:
+			case SNAPE_GRASS:
+				return Collections.singletonList(WHITE_LILY);
+			default:
+				return Collections.emptyList();
+		}
 	}
 
 	public boolean hasPayment()

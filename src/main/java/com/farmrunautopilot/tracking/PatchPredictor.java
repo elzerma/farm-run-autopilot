@@ -62,7 +62,7 @@ public final class PatchPredictor
 
 			if (state == PatchState.GROWING && stage == stages - 1)
 			{
-				state = patch.getType().isProtectable() ? PatchState.CHECK_HEALTH : PatchState.HARVESTABLE;
+				state = patch.getType().isHealthChecked() ? PatchState.CHECK_HEALTH : PatchState.HARVESTABLE;
 			}
 		}
 
@@ -94,7 +94,7 @@ public final class PatchPredictor
 						return true;
 					case HARVESTABLE:
 						// Trees only reach HARVESTABLE through the player's check-health.
-						return !type.isProtectable();
+						return !type.isHealthChecked();
 					default:
 						return false;
 				}

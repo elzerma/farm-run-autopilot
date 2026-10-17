@@ -20,3 +20,7 @@ quetzal_pad	NEMUS_RETREAT	Auburnvale	1411	3361	0	1411 3361 0	Twilight's Promise	
 hot_air_balloon	TAVERLEY	Taverley	2941	3420	0	2938-2941 3420-3423 (8 tiles, "Use Basket 19129")	varbit 2868=2	hot_air_balloons.tsv "Taverley"	SP lists no Items for any balloon (logs not modelled)
 hot_air_balloon	GNOME_STRONGHOLD	Grand Tree	2478	3456	0	2480-2483 3456-3459 (8 tiles, "Use Basket 19129")	varbit 2870=1	hot_air_balloons.tsv "Grand Tree"	
 hot_air_balloon	TREE_GNOME_VILLAGE	Castle Wars	2459	3110	0	2460-2463 3108-3111 (7 tiles, "Use Basket 19129")	varbit 2869=1	hot_air_balloons.tsv "Castle Wars"	About 70 tiles from the Tree Gnome Village patch
+quetzal_pad	ALDARIN_HOPS	Aldarin	1389	2901	0	1389 2901 0	Twilight's Promise	quetzals.tsv "Aldarin"	
+fairy_ring	SEERS_VILLAGE_HOPS	ALS	2644	3495	0			fairy_rings.tsv "A L S"	
+fairy_ring	YANILLE_HOPS	CIQ	2528	3127	0			fairy_rings.tsv "C I Q"	
+fairy_ring	ALDARIN_HOPS	CKQ	1359	2941	0		Children of the Sun	fairy_rings.tsv "C K Q"	

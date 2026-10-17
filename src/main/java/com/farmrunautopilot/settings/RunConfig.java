@@ -29,7 +29,8 @@ public class RunConfig
 	public static final int MAX_BACKUP_CROPS = 2;
 
 	// Run types
-	private Set<PatchType> enabledTypes = EnumSet.allOf(PatchType.class);
+	/** New players start with trees, fruit trees and herbs; the types added later are ticked by the player (elzerma). */
+	private Set<PatchType> enabledTypes = originalTypes();
 	/** Include a run type when at least this percent of its patches are due (SPEC 10). */
 	private int dueThresholdPercent = DEFAULT_DUE_THRESHOLD;
 
@@ -122,7 +123,7 @@ public class RunConfig
 		{
 			useProtectionOverrides = protectionOverrides != null && !protectionOverrides.isEmpty();
 		}
-		enabledTypes = cleanSet(enabledTypes, PatchType.class, EnumSet.allOf(PatchType.class));
+		enabledTypes = cleanSet(enabledTypes, PatchType.class, originalTypes());
 		disabledPatches = cleanSet(disabledPatches, Patch.class, EnumSet.noneOf(Patch.class));
 		payToClear = cleanSet(payToClear, PatchType.class, EnumSet.noneOf(PatchType.class));
 		runesNotTabsAt = cleanSet(runesNotTabsAt, Location.class, EnumSet.noneOf(Location.class));
@@ -231,7 +232,7 @@ public class RunConfig
 		Crop best = null;
 		for (Crop crop : Crop.values())
 		{
-			if (crop.getType() == type && (best == null || crop.getFarmingLevel() <= farmingLevel))
+			if (crop.getType() == type && crop.isChoosable() && (best == null || crop.getFarmingLevel() <= farmingLevel))
 			{
 				best = crop;
 			}
@@ -270,6 +271,9 @@ public class RunConfig
 		final Map<PatchType, Protection> map = new EnumMap<>(PatchType.class);
 		map.put(PatchType.TREE, Protection.PAY_GARDENER);
 		map.put(PatchType.FRUIT_TREE, Protection.PAY_GARDENER);
+		// elzerma: allotments are protected by a flower in their set by default, changeable per set
+		map.put(PatchType.ALLOTMENT, Protection.FLOWER);
+		map.put(PatchType.HOPS, Protection.COMPOST_ONLY);
 		return map;
 	}
 
@@ -279,7 +283,23 @@ public class RunConfig
 		map.put(PatchType.TREE, Compost.NONE);
 		map.put(PatchType.FRUIT_TREE, Compost.NONE);
 		map.put(PatchType.HERB, Compost.ULTRACOMPOST);
+		map.put(PatchType.ALLOTMENT, Compost.ULTRACOMPOST);
+		map.put(PatchType.FLOWER, Compost.NONE);
+		map.put(PatchType.HOPS, Compost.ULTRACOMPOST);
 		return map;
+	}
+
+	private static Set<PatchType> originalTypes()
+	{
+		final Set<PatchType> types = EnumSet.noneOf(PatchType.class);
+		for (PatchType type : PatchType.values())
+		{
+			if (PatchType.isOriginal(type))
+			{
+				types.add(type);
+			}
+		}
+		return types;
 	}
 
 	private static List<Crop> cleanBackups(PatchType type, List<Crop> list)

@@ -114,7 +114,8 @@ public final class SupplyCalculator
 			final List<Patch> ofType = new ArrayList<>();
 			for (Patch patch : patches)
 			{
-				if (patch.getType() == type)
+				// Flowers kept for protecting allotments get the flower that suits them, below
+				if (patch.getType() == type && !FlowerProtection.isProtecting(patch, config, access))
 				{
 					ofType.add(patch);
 				}
@@ -127,6 +128,7 @@ public final class SupplyCalculator
 					type == PatchType.HERB ? reservedHerbs : Collections.emptyList()));
 			}
 		}
+		plantings.putAll(protectingFlowers(patches, plantings, config, access, farming, holdings, predictions));
 
 		for (Patch patch : patches)
 		{
@@ -137,7 +139,8 @@ public final class SupplyCalculator
 
 			if (type.isProtectable())
 			{
-				if (needsClearing(state))
+				// Only trees are cleared; a grown allotment or hops patch is just picked
+				if (type.isHealthChecked() && needsClearing(state))
 				{
 					if (config.getPayToClear().contains(type))
 					{
@@ -151,7 +154,8 @@ public final class SupplyCalculator
 
 				final Crop crop = plantings.get(patch);
 				final boolean freeProtection = patch == Patch.FALADOR_TREE && faladorElite;
-				if (config.protectionFor(patch) == Protection.PAY_GARDENER && !freeProtection)
+				if (FlowerProtection.effective(patch, config, access, plantings, predictions) == Protection.PAY_GARDENER
+					&& !freeProtection && crop.hasPayment())
 				{
 					payments.merge(crop.getPaymentItemId(), crop.getPaymentQuantity(), Integer::sum);
 				}
@@ -164,6 +168,14 @@ public final class SupplyCalculator
 			}
 		}
 
+		final Set<Crop> protectors = EnumSet.noneOf(Crop.class);
+		plantings.forEach((patch, crop) ->
+		{
+			if (FlowerProtection.isProtecting(patch, config, access))
+			{
+				protectors.add(crop);
+			}
+		});
 		// Seeds and saplings, one line per crop
 		final Map<Crop, List<String>> plantedAt = new LinkedHashMap<>();
 		plantings.forEach((patch, crop) -> plantedAt.computeIfAbsent(crop, k -> new ArrayList<>())
@@ -171,12 +183,12 @@ public final class SupplyCalculator
 		plantedAt.forEach((crop, places) ->
 		{
 			final int id = crop.getPlantItemId();
-			final int n = places.size();
-			// Seeds stack; saplings don't.
-			final int slots = crop.getType() == PatchType.HERB ? 1 : n;
-			final String role = cropRole(crop, config, farming, reservedHerbs);
+			final int n = places.size() * crop.getSeedsPerPatch();
+			// Seeds stack; saplings and scarecrows don't.
+			final int slots = crop.isSeed() && crop != Crop.SCARECROW ? 1 : n;
+			final String role = protectors.contains(crop) ? "protects allotments" : cropRole(crop, config, farming, reservedHerbs);
 			lines.add(line(SupplyLine.Group.SEEDS, itemName.apply(id) + (role.isEmpty() ? "" : " - " + role), n, holdings,
-				carried, "Planting at: " + String.join(", ", places), slots, id).usedUp());
+				carried, "Planting at: " + placesText(places), slots, id).usedUp());
 		});
 
 		// Payments
@@ -283,13 +295,16 @@ public final class SupplyCalculator
 
 		// Spells used on patches
 		final int herbs = patchCounts.getOrDefault(PatchType.HERB, 0);
+		// Magic secateurs also add to allotment and hops yields (wiki: Magic secateurs)
+		final int boosted = herbs + patchCounts.getOrDefault(PatchType.ALLOTMENT, 0) + patchCounts.getOrDefault(PatchType.HOPS, 0);
+		final boolean seeds = plantings.values().stream().anyMatch(crop -> crop.isSeed() && crop != Crop.SCARECROW);
 		if (config.isUseCurePlant() && herbs > 0)
 		{
 			addRunes(runeNeed, Spell.CURE_PLANT);
 		}
 
 		// Who gets each equipment slot, now that the runes are known (issue #7). Put on at the bank, never mid-run.
-		final boolean secateursWanted = config.isRecommendEquipmentBoosts() && herbs > 0;
+		final boolean secateursWanted = config.isRecommendEquipmentBoosts() && boosted > 0;
 		final List<Wearable> extras = new ArrayList<>();
 		if (fairyStaff)
 		{
@@ -362,7 +377,7 @@ public final class SupplyCalculator
 				1, ItemID.RAKE));
 		}
 		// Barbarian seed planting plants by hand (issue #6)
-		if (herbs > 0 && !(access.isKnown() && access.isMet(Requirement.unlock(Unlock.BARBARIAN_PLANTING))))
+		if (seeds && !(access.isKnown() && access.isMet(Requirement.unlock(Unlock.BARBARIAN_PLANTING))))
 		{
 			lines.add(line(SupplyLine.Group.TOOLS, "Seed dibber", 1, holdings, carried, null, 1, ItemID.DIBBER));
 		}
@@ -383,8 +398,8 @@ public final class SupplyCalculator
 			final String takenBy = weapon instanceof Integer ? itemName.apply((Integer) weapon).toLowerCase()
 				: "staff for fairy rings";
 			final SupplyLine secateurs = changeIn(line(SupplyLine.Group.OPTIONAL, "Magic secateurs", 1, holdings,
-				carried, wearSecateurs ? "+10% herb yield. Wear it: no inventory slot"
-				: "+10% herb yield; in the inventory, as the " + takenBy + " takes the weapon slot",
+				carried, wearSecateurs ? (herbs == boosted ? "+10% herb yield" : "+10% yield") + ". Wear it: no inventory slot"
+				: (herbs == boosted ? "+10% herb yield" : "+10% yield") + "; in the inventory, as the " + takenBy + " takes the weapon slot",
 				wearSecateurs ? 0 : 1, SupplyItems.MAGIC_SECATEURS), RUN_OPTIONS);
 			lines.add(wearSecateurs ? secateurs.worn() : secateurs);
 		}
@@ -634,6 +649,63 @@ public final class SupplyCalculator
 	 * How a crop got on the list, e.g. "1st choice" or "disease-free only". Empty with a single choice and no
 	 * disease-free herbs, where there's nothing to explain.
 	 */
+	/**
+	 * The flower for each flower patch in the run that's kept for protecting its allotments: one that protects what the
+	 * allotments get this run (or hold now), at the player's level, one they hold first. Where none protects them all,
+	 * the patch gets the player's own flower choice and the allotments' gardener is paid instead.
+	 */
+	static Map<Patch, Crop> protectingFlowers(List<Patch> patches, Map<Patch, Crop> plantings, RunConfig config,
+		AccessSnapshot access, int farming, Holdings holdings, Function<Patch, PatchPrediction> predictions)
+	{
+		final Map<Patch, Crop> flowers = new LinkedHashMap<>();
+		final Map<Crop, Integer> used = new EnumMap<>(Crop.class);
+		for (Patch patch : patches)
+		{
+			if (!FlowerProtection.isProtecting(patch, config, access))
+			{
+				continue;
+			}
+			final List<Crop> allotmentCrops = new ArrayList<>();
+			for (Patch mate : patch.getSetMates())
+			{
+				if (mate.getType() != PatchType.ALLOTMENT || !config.isPatchSelected(mate)
+					|| config.protectionFor(mate) != Protection.FLOWER)
+				{
+					continue;
+				}
+				Crop crop = plantings.get(mate);
+				if (crop == null)
+				{
+					final PatchPrediction now = predictions.apply(mate);
+					crop = now != null && now.getState() == PatchState.GROWING ? now.getCrop() : null;
+				}
+				allotmentCrops.add(crop != null ? crop : config.cropFor(PatchType.ALLOTMENT, farming));
+			}
+			Crop flower = FlowerProtection.flowerFor(allotmentCrops, farming,
+				crop -> holdings.count(crop.getPlantItemId()) - used.getOrDefault(crop, 0));
+			if (flower == null)
+			{
+				flower = config.cropFor(PatchType.FLOWER, farming);
+			}
+			used.merge(flower, 1, Integer::sum);
+			flowers.put(patch, flower);
+		}
+		return flowers;
+	}
+
+	/** "Catherby, Falador farm (south) x2": each stop once, with how many patches there. */
+	static String placesText(List<String> places)
+	{
+		final Map<String, Integer> counts = new LinkedHashMap<>();
+		for (String place : places)
+		{
+			counts.merge(place, 1, Integer::sum);
+		}
+		final List<String> parts = new ArrayList<>();
+		counts.forEach((place, n) -> parts.add(n > 1 ? place + " x" + n : place));
+		return String.join(", ", parts);
+	}
+
 	static String cropRole(Crop crop, RunConfig config, int farming, List<Crop> reservedHerbs)
 	{
 		final List<Crop> choices = config.cropChoices(crop.getType(), farming);
@@ -684,8 +756,16 @@ public final class SupplyCalculator
 		{
 			return true;
 		}
-		return patch.getType().isProtectable()
-			&& (config.protectionFor(patch) == Protection.PAY_GARDENER || (patch == Patch.FALADOR_TREE && faladorElite));
+		final Protection protection = config.protectionFor(patch);
+		// A flower-protected allotment counts as safe when its set has a flower patch the player uses (the flower is
+		// picked to suit the crop, so it's known only after the crops are)
+		if (protection == Protection.FLOWER)
+		{
+			final Patch flowerPatch = FlowerProtection.flowerPatchOf(patch);
+			return flowerPatch != null && FlowerProtection.isProtecting(flowerPatch, config, access);
+		}
+		return patch.getType().isProtectable() && patch.hasGardener()
+			&& (protection == Protection.PAY_GARDENER || (patch == Patch.FALADOR_TREE && faladorElite));
 	}
 
 	/**

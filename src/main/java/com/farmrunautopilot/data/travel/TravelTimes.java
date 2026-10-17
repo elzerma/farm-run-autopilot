@@ -130,6 +130,21 @@ public final class TravelTimes
 		tiles(TravelMethod.CIVITAS_ILLA_FORTIS_TELEPORT, 60);
 		extra(TravelMethod.CIVITAS_ILLA_FORTIS_TELEPORT, 8);
 		tiles(TravelMethod.FAIRY_RING_AJP, 91);
+		// Allotment and hops stops (Sprint 1a), measured the same way on Shortest Path c7a4937 (2026-10-17) to the
+		// wiki's map point for each patch (not yet logged in game)
+		tiles(TravelMethod.TELEPORT_CRYSTAL_PRIFDDINAS, 59);
+		tiles(TravelMethod.HOUSE_PORTAL_PRIFDDINAS, 75);
+		tiles(TravelMethod.LUMBRIDGE_TELEPORT_HOPS, 119);
+		tiles(TravelMethod.VARROCK_TELEPORT_HOPS, 109);
+		tiles(TravelMethod.COMBAT_BRACELET_CHAMPIONS_GUILD, 56);
+		tiles(TravelMethod.CAMELOT_TELEPORT_SEERS_HOPS, 91);
+		tiles(TravelMethod.FAIRY_RING_ALS, 82);
+		tiles(TravelMethod.COMBAT_BRACELET_RANGING_GUILD_HOPS, 98);
+		tiles(TravelMethod.HOUSE_PORTAL_YANILLE, 33);
+		tiles(TravelMethod.FAIRY_RING_CIQ_HOPS, 82);
+		tiles(TravelMethod.FAIRY_RING_CKQ, 4);
+		tiles(TravelMethod.QUETZAL_ALDARIN, 43);
+		tiles(TravelMethod.HOUSE_PORTAL_ALDARIN, 61);
 	}
 
 	// Everything else the route needs to know about distances, in one place (docs/REBUILD.md, Sprint 1)
@@ -190,6 +205,7 @@ public final class TravelTimes
 		// Agility it's 75
 		walk(Location.FALADOR_PARK, Location.FALADOR_FARM, 108);
 		walk(Location.FALADOR_PARK, Location.TAVERLEY, 112);
+		walk(Location.LUMBRIDGE, Location.LUMBRIDGE_HOPS, 108);
 
 		// From the stop's nearest patch to the tree, measured (Shortest Path's map and tree tiles)
 		SPIRIT_TREE_WALK.put(Location.GNOME_STRONGHOLD, 11);
@@ -210,6 +226,7 @@ public final class TravelTimes
 		RENU_PAD_WALK.put(Location.CIVITAS_ILLA_FORTIS, 45);
 		RENU_PAD_WALK.put(Location.KASTORI, 31);
 		RENU_PAD_WALK.put(Location.NEMUS_RETREAT, 71);
+		RENU_PAD_WALK.put(Location.ALDARIN_HOPS, 42);
 
 		// From the stop's patch furthest from the bank (the one most likely done last, elzerma) to the nearest bank,
 		// measured on Shortest Path's map with its bank tiles. Catherby: herb 38, fruit tree 54. Farming Guild:
@@ -228,6 +245,10 @@ public final class TravelTimes
 		BANK_TILES.put(Location.PORT_PHASMATYS, 95);
 		// The Hunter Guild bank (open to anyone)
 		BANK_TILES.put(Location.CIVITAS_ILLA_FORTIS, 89);
+		BANK_TILES.put(Location.SEERS_VILLAGE_HOPS, 66);
+		BANK_TILES.put(Location.YANILLE_HOPS, 33);
+		BANK_TILES.put(Location.ALDARIN_HOPS, 32);
+		BANK_TILES.put(Location.PRIFDDINAS, 42);
 
 		// Bank booths and chests, from Shortest Path's bank list
 		BANK_POINTS.put(Location.CATHERBY, new WorldPoint(2807, 3441, 0));
@@ -239,6 +260,10 @@ public final class TravelTimes
 		BANK_POINTS.put(Location.FARMING_GUILD, new WorldPoint(1248, 3758, 0));
 		BANK_POINTS.put(Location.NEMUS_RETREAT, new WorldPoint(1387, 3309, 0));
 		BANK_POINTS.put(Location.CIVITAS_ILLA_FORTIS, new WorldPoint(1542, 3040, 0));
+		BANK_POINTS.put(Location.SEERS_VILLAGE_HOPS, new WorldPoint(2724, 3493, 0));
+		BANK_POINTS.put(Location.YANILLE_HOPS, new WorldPoint(2613, 3092, 0));
+		BANK_POINTS.put(Location.ALDARIN_HOPS, new WorldPoint(1399, 2927, 0));
+		BANK_POINTS.put(Location.PRIFDDINAS, new WorldPoint(3256, 6106, 0));
 	}
 
 	private TravelTimes()

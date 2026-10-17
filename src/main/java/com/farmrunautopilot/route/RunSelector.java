@@ -1,12 +1,15 @@
 package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.settings.RunConfig;
+import com.farmrunautopilot.supply.FlowerProtection;
 import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchStatusText;
+import net.runelite.api.Skill;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -24,6 +27,8 @@ import java.util.function.Function;
  * <li>A ticked run type is included when at least the threshold percentage of its usable patches are due
  * (100% by default), unless the player overrides it for this run.</li>
  * <li>Within an included type, patches that aren't due are left out with a reason.</li>
+ * <li>A flower patch kept for protecting its allotments (docs/plans/crop-types.md) joins whenever the allotments do
+ * and it doesn't already hold a flower that protects them, whether or not flowers are ticked.</li>
  * </ul>
  */
 public final class RunSelector
@@ -53,7 +58,8 @@ public final class RunSelector
 			final List<Patch> usable = new ArrayList<>();
 			for (Patch patch : Patch.values())
 			{
-				if (patch.getType() == type && config.isPatchSelected(patch) && access.missingFor(patch).isEmpty())
+				if (patch.getType() == type && config.isPatchSelected(patch) && access.missingFor(patch).isEmpty()
+					&& !FlowerProtection.isProtecting(patch, config, access))
 				{
 					usable.add(patch);
 				}
@@ -104,6 +110,21 @@ public final class RunSelector
 				else
 				{
 					notDue.add(patch.getDisplayName() + ": " + PatchStatusText.describe(prediction, now));
+				}
+			}
+		}
+
+		if (included.contains(PatchType.ALLOTMENT))
+		{
+			final int farming = access.isKnown() ? access.level(Skill.FARMING) : 99;
+			final Crop allotmentCrop = config.cropFor(PatchType.ALLOTMENT, farming);
+			for (Patch patch : Patch.values())
+			{
+				if (FlowerProtection.isProtecting(patch, config, access)
+					&& (fullRun || FlowerProtection.isDue(predictions.apply(patch), allotmentCrop)))
+				{
+					patches.add(patch);
+					included.add(PatchType.FLOWER);
 				}
 			}
 		}

@@ -1,7 +1,10 @@
 package com.farmrunautopilot.data.travel;
 
+import static com.farmrunautopilot.data.PatchType.ALLOTMENT;
+import static com.farmrunautopilot.data.PatchType.FLOWER;
 import static com.farmrunautopilot.data.PatchType.FRUIT_TREE;
 import static com.farmrunautopilot.data.PatchType.HERB;
+import static com.farmrunautopilot.data.PatchType.HOPS;
 import static com.farmrunautopilot.data.PatchType.TREE;
 import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Location;
@@ -85,10 +88,10 @@ public enum TravelMethod
 
 	// Farming Guild (tree, herb, fruit tree)
 	FARMING_CAPE(item(Location.FARMING_GUILD, "Farming cape", TravelKind.CAPE, TravelItem.FARMING_CAPE)
-		.primaryFor(TREE, FRUIT_TREE, HERB)),
+		.primaryFor(TREE, FRUIT_TREE, HERB, ALLOTMENT, FLOWER)),
 	SKILLS_NECKLACE_FARMING_GUILD(item(Location.FARMING_GUILD, "Skills necklace (Farming Guild)",
 		TravelKind.JEWELLERY, TravelItem.SKILLS_NECKLACE).jewelleryBox(JewelleryBoxTier.FANCY)
-		.primaryFor(TREE, FRUIT_TREE, HERB).note("Lands inside the guild with 45 Farming")),
+		.primaryFor(TREE, FRUIT_TREE, HERB, ALLOTMENT, FLOWER).note("Lands inside the guild with 45 Farming")),
 	MAX_CAPE_FARMING_GUILD(item(Location.FARMING_GUILD, "Max cape (Farming Guild)",
 		TravelKind.CAPE, TravelItem.MAX_CAPE)),
 	SPIRIT_TREE_FARMING_GUILD(spiritTree(Location.FARMING_GUILD, "Spirit tree (Farming Guild)")
@@ -122,7 +125,7 @@ public enum TravelMethod
 	// Catherby (herb + fruit tree)
 	CAMELOT_TELEPORT(spell(Location.CATHERBY, Spell.CAMELOT_TELEPORT).primaryFor(FRUIT_TREE)),
 	CATHERBY_TELEPORT(spell(Location.CATHERBY, Spell.CATHERBY_TELEPORT)
-		.nexus(PortalNexus.Destination.CATHERBY).primaryFor(HERB)),
+		.nexus(PortalNexus.Destination.CATHERBY).primaryFor(HERB, ALLOTMENT, FLOWER)),
 
 	// Brimhaven
 	HOUSE_PORTAL_BRIMHAVEN(housePortal(Location.BRIMHAVEN, HousePortal.BRIMHAVEN).primaryFor(FRUIT_TREE).then(JourneyStep.LEAVE_HOUSE)),
@@ -146,13 +149,13 @@ public enum TravelMethod
 
 	// Kastori
 	QUETZAL_KASTORI(quetzal(Location.KASTORI, "Quetzal whistle (Kastori)")
-		.requires(Requirement.unlock(Unlock.QUETZAL_KASTORI)).primaryFor(FRUIT_TREE)),
+		.requires(Requirement.unlock(Unlock.QUETZAL_KASTORI)).primaryFor(FRUIT_TREE, FLOWER)),
 	PENDANT_OF_ATES_NORTH_KASTORI(item(Location.KASTORI, "Pendant of Ates (North of Kastori)",
 		TravelKind.ITEM, TravelItem.PENDANT_OF_ATES).requires(Requirement.unlock(Unlock.ATES_STATUE_NORTH_KASTORI))),
 
 	// Falador farm (herb)
 	EXPLORERS_RING_CABBAGE_PATCH(item(Location.FALADOR_FARM, "Explorer's ring (cabbage patch)",
-		TravelKind.DIARY_ITEM, TravelItem.EXPLORERS_RING).primaryFor(HERB).note("Ring 2: 3 uses per day")),
+		TravelKind.DIARY_ITEM, TravelItem.EXPLORERS_RING).primaryFor(HERB, ALLOTMENT, FLOWER).note("Ring 2: 3 uses per day")),
 	DRAYNOR_MANOR_TELEPORT(spell(Location.FALADOR_FARM, Spell.DRAYNOR_MANOR_TELEPORT)
 		.then(JourneyStep.way("Leave the manor grounds by the south gate", "out of the manor grounds"))),
 	SPIRIT_TREE_PORT_SARIM(spiritTree(Location.FALADOR_FARM, "Spirit tree (Port Sarim)")
@@ -162,7 +165,7 @@ public enum TravelMethod
 	FALADOR_TELEPORT_TO_FARM(spell(Location.FALADOR_FARM, Spell.FALADOR_TELEPORT)),
 
 	// Port Phasmatys (herb)
-	FAIRY_RING_ALQ(fairyRing(Location.PORT_PHASMATYS, "ALQ").primaryFor(HERB)),
+	FAIRY_RING_ALQ(fairyRing(Location.PORT_PHASMATYS, "ALQ").primaryFor(HERB, ALLOTMENT, FLOWER)),
 	ECTOPHIAL(item(Location.PORT_PHASMATYS, "Ectophial", TravelKind.ITEM, TravelItem.ECTOPHIAL)),
 	FENKENSTRAINS_CASTLE_TELEPORT(spell(Location.PORT_PHASMATYS, Spell.FENKENSTRAINS_CASTLE_TELEPORT)
 		.nexus(PortalNexus.Destination.FENKENSTRAINS_CASTLE)),
@@ -171,7 +174,7 @@ public enum TravelMethod
 
 	// Ardougne farm (herb)
 	ARDOUGNE_CLOAK_FARM(item(Location.ARDOUGNE_FARM, "Ardougne cloak (farm)",
-		TravelKind.DIARY_ITEM, TravelItem.ARDOUGNE_CLOAK).primaryFor(HERB)
+		TravelKind.DIARY_ITEM, TravelItem.ARDOUGNE_CLOAK).primaryFor(HERB, ALLOTMENT, FLOWER)
 		.note("Cloak 2: 3 uses per day, cloak 3: 5, cloak 4: unlimited")),
 	SKILLS_NECKLACE_FISHING_GUILD(item(Location.ARDOUGNE_FARM, "Skills necklace (Fishing Guild)",
 		TravelKind.JEWELLERY, TravelItem.SKILLS_NECKLACE).jewelleryBox(JewelleryBoxTier.FANCY)),
@@ -187,7 +190,7 @@ public enum TravelMethod
 
 	// Hosidius (herb)
 	XERICS_TALISMAN_GLADE(item(Location.HOSIDIUS, "Xeric's talisman (Xeric's Glade)",
-		TravelKind.ITEM, TravelItem.XERICS_TALISMAN).primaryFor(HERB)),
+		TravelKind.ITEM, TravelItem.XERICS_TALISMAN).primaryFor(HERB, ALLOTMENT, FLOWER)),
 	HOUSE_PORTAL_HOSIDIUS(housePortal(Location.HOSIDIUS, HousePortal.HOSIDIUS).then(JourneyStep.LEAVE_HOUSE)),
 	HOSIDIUS_TABLET(item(Location.HOSIDIUS, "Hosidius teleport tablet",
 		TravelKind.TABLET, TravelItem.HOSIDIUS_TABLET)),
@@ -217,14 +220,15 @@ public enum TravelMethod
 
 	// Harmony Island (herb)
 	HARMONY_ISLAND_TELEPORT(spell(Location.HARMONY_ISLAND, Spell.HARMONY_ISLAND_TELEPORT)
-		.nexus(PortalNexus.Destination.HARMONY_ISLAND).primaryFor(HERB)),
+		.nexus(PortalNexus.Destination.HARMONY_ISLAND).primaryFor(HERB, ALLOTMENT)),
 
 	// Weiss (herb)
 	ICY_BASALT(item(Location.WEISS, "Icy basalt", TravelKind.ITEM, TravelItem.ICY_BASALT)
 		.nexus(PortalNexus.Destination.WEISS).primaryFor(HERB)),
 
 	// Civitas illa Fortis / Ortus Farm (herb)
-	QUETZAL_HUNTER_GUILD(quetzal(Location.CIVITAS_ILLA_FORTIS, "Quetzal whistle (Hunter Guild)").primaryFor(HERB)),
+	QUETZAL_HUNTER_GUILD(quetzal(Location.CIVITAS_ILLA_FORTIS, "Quetzal whistle (Hunter Guild)")
+		.primaryFor(HERB, ALLOTMENT, FLOWER)),
 	HUNTER_CAPE(item(Location.CIVITAS_ILLA_FORTIS, "Hunter cape", TravelKind.CAPE, TravelItem.HUNTER_CAPE)
 		.then(JourneyStep.way("Leave the Hunter Guild and head north-east to the farm", "out of the guild"))),
 	MAX_CAPE_HUNTER_GUILD(item(Location.CIVITAS_ILLA_FORTIS, "Max cape (Hunter Guild)",
@@ -235,7 +239,35 @@ public enum TravelMethod
 		// The quetzal at the city's landing pad, Renu, is matched by name: its ID is one of the baby quetzal colours
 		.then(JourneyStep.ride("Renu", "Take the quetzal to the Hunter Guild", "quetzal to the Hunter Guild",
 			new WorldPoint(1696, 3141, 0)))),
-	FAIRY_RING_AJP(fairyRing(Location.CIVITAS_ILLA_FORTIS, "AJP"));
+	FAIRY_RING_AJP(fairyRing(Location.CIVITAS_ILLA_FORTIS, "AJP")),
+
+	// Prifddinas (allotments)
+	TELEPORT_CRYSTAL_PRIFDDINAS(item(Location.PRIFDDINAS, "Teleport crystal (Prifddinas)",
+		TravelKind.ITEM, TravelItem.TELEPORT_CRYSTAL).requires(Requirement.quest(Quest.SONG_OF_THE_ELVES))
+		.primaryFor(ALLOTMENT, FLOWER)),
+	HOUSE_PORTAL_PRIFDDINAS(housePortal(Location.PRIFDDINAS, HousePortal.PRIFDDINAS).then(JourneyStep.LEAVE_HOUSE)),
+
+	// Hops, north of Lumbridge
+	LUMBRIDGE_TELEPORT_HOPS(spell(Location.LUMBRIDGE_HOPS, Spell.LUMBRIDGE_TELEPORT)),
+	VARROCK_TELEPORT_HOPS(spell(Location.LUMBRIDGE_HOPS, Spell.VARROCK_TELEPORT)),
+	COMBAT_BRACELET_CHAMPIONS_GUILD(item(Location.LUMBRIDGE_HOPS, "Combat bracelet (Champions' Guild)",
+		TravelKind.JEWELLERY, TravelItem.COMBAT_BRACELET).jewelleryBox(JewelleryBoxTier.FANCY).primaryFor(HOPS)),
+
+	// Hops, Seers' Village (north of McGrubor's Wood)
+	CAMELOT_TELEPORT_SEERS_HOPS(spell(Location.SEERS_VILLAGE_HOPS, Spell.CAMELOT_TELEPORT).primaryFor(HOPS)),
+	FAIRY_RING_ALS(fairyRing(Location.SEERS_VILLAGE_HOPS, "ALS")),
+	COMBAT_BRACELET_RANGING_GUILD_HOPS(item(Location.SEERS_VILLAGE_HOPS, "Combat bracelet (Ranging Guild)",
+		TravelKind.JEWELLERY, TravelItem.COMBAT_BRACELET).jewelleryBox(JewelleryBoxTier.FANCY)),
+
+	// Hops, Yanille
+	HOUSE_PORTAL_YANILLE(housePortal(Location.YANILLE_HOPS, HousePortal.YANILLE).primaryFor(HOPS)
+		.then(JourneyStep.LEAVE_HOUSE)),
+	FAIRY_RING_CIQ_HOPS(fairyRing(Location.YANILLE_HOPS, "CIQ")),
+
+	// Hops, Aldarin
+	FAIRY_RING_CKQ(fairyRing(Location.ALDARIN_HOPS, "CKQ").primaryFor(HOPS)),
+	QUETZAL_ALDARIN(quetzal(Location.ALDARIN_HOPS, "Quetzal whistle (Aldarin)")),
+	HOUSE_PORTAL_ALDARIN(housePortal(Location.ALDARIN_HOPS, HousePortal.ALDARIN).then(JourneyStep.LEAVE_HOUSE));
 
 	private final Location destination;
 	private final String displayName;

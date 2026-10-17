@@ -23,3 +23,8 @@ HARMONY_ISLAND_HERB	HARMONY_ISLAND	3789	2837	0		PatchPoints (Farming-Helper); sa
 WEISS_HERB	WEISS	2847	3931	0	2848 3930 0	PatchPoints (Farming-Helper)	medium	Not corrected in game. Quest Helper HerbRun.java uses 2848 3934 0 (object MY2ARM_HERBPATCH) instead; SP Tool Lep - Weiss at 2848 3930
 FARMING_GUILD_HERB	FARMING_GUILD	1238	3726	0	1236 3732 0	PatchPoints	high	Object position; nearby = SP Tool Lep - Farming Guild
 CIVITAS_HERB	CIVITAS_ILLA_FORTIS	1581	3094	0		PatchPoints	high	Object position
+LUMBRIDGE_HOPS	LUMBRIDGE_HOPS	3229	3315	0		wiki Hops patch/Patches map	medium	Map centre of the patch, not logged in game
+SEERS_VILLAGE_HOPS	SEERS_VILLAGE_HOPS	2667	3526	0	2663 3521 0	wiki Hops patch/Patches map	medium	Map centre; nearby = SP Tool Lep - North of McGrubor's Wood
+YANILLE_HOPS	YANILLE_HOPS	2576	3105	0	2573 3108 0	wiki Hops patch/Patches map	medium	Map centre; nearby = SP Tool Lep - Yanille
+ALDARIN_HOPS	ALDARIN_HOPS	1365	2939	0	1364 2943 0	wiki Hops patch/Patches map	medium	Map centre; nearby = SP Tool Lep - Aldarin
+PRIFDDINAS_ALLOTMENT	PRIFDDINAS	3291	6100	0	3295 6105 0	wiki Allotment patch/Patches map	medium	Map centre of the allotment set; nearby = SP Tool Lep - Prifddinas

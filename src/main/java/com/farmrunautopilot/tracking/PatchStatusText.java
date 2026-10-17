@@ -1,5 +1,6 @@
 package com.farmrunautopilot.tracking;
 
+import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.PatchType;
 
 /**
@@ -34,6 +35,10 @@ public final class PatchStatusText
 				{
 					return "Something else growing";
 				}
+				if (p.getCrop() == Crop.SCARECROW)
+				{
+					return "Scarecrow - in place";
+				}
 				return crop + " - ready in " + duration(p.getDoneAt() - now);
 			case CHECK_HEALTH:
 				return crop + " - check health";
@@ -42,7 +47,7 @@ public final class PatchStatusText
 				{
 					return "Something else ready";
 				}
-				if (type == PatchType.HERB)
+				if (!type.isHealthChecked())
 				{
 					return crop + " - ready to pick";
 				}

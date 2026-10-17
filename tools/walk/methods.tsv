@@ -75,3 +75,16 @@ HUNTER_CAPE	CIVITAS_ILLA_FORTIS	1558	3046	0	1558 3046 0	teleportation_items.tsv 
 MAX_CAPE_HUNTER_GUILD	CIVITAS_ILLA_FORTIS	1558	3046	0	1558 3046 0	teleportation_items.tsv "Max cape: Other Teleports: Hunter Guild"	high	As HUNTER_CAPE
 CIVITAS_ILLA_FORTIS_TELEPORT	CIVITAS_ILLA_FORTIS	1585	3053	0	1681 3136 0	teleportation_spells.tsv "Civitas illa Fortis Teleport" + quetzals.tsv Renu 1697 3140 0 -> "Hunter Guild" 1585 3053 0	high	Walk start AFTER Renu: teleport 1681 3136 0, walk to the pad 1697 3140 0 (plugin uses 1696 3141), fly to 1585 3053 0. Nexus "Civitas illa Fortis Portal" lands 1681 3133 0 instead
 FAIRY_RING_AJP	CIVITAS_ILLA_FORTIS	1651	3010	0	1651 3010 0	fairy_rings.tsv "A J P"	high	
+LUMBRIDGE_TELEPORT_HOPS	LUMBRIDGE_HOPS	3221	3218	0	3221 3218 0	teleportation_spells.tsv "Lumbridge Teleport"	high	
+VARROCK_TELEPORT_HOPS	LUMBRIDGE_HOPS	3213	3424	0	3213 3424 0	teleportation_spells.tsv "Varrock Teleport"	high	
+COMBAT_BRACELET_CHAMPIONS_GUILD	LUMBRIDGE_HOPS	3192	3368	0	3192 3368 0	teleportation_items.tsv "Combat bracelet: Champions' Guild"	high	
+CAMELOT_TELEPORT_SEERS_HOPS	SEERS_VILLAGE_HOPS	2757	3479	0	2757 3479 0	teleportation_spells.tsv "Camelot Teleport"	high	
+FAIRY_RING_ALS	SEERS_VILLAGE_HOPS	2644	3495	0	2644 3495 0	fairy_rings.tsv "A L S"	high	
+COMBAT_BRACELET_RANGING_GUILD_HOPS	SEERS_VILLAGE_HOPS	2653	3439	0	2653 3439 0	teleportation_items.tsv "Combat bracelet: Ranging Guild"	high	
+HOUSE_PORTAL_YANILLE	YANILLE_HOPS	2544	3095	0	2544 3095 0	teleportation_items.tsv "Construction cape: Yanille" (house portal)	high	
+FAIRY_RING_CIQ_HOPS	YANILLE_HOPS	2528	3127	0	2528 3127 0	fairy_rings.tsv "C I Q"	high	
+HOUSE_PORTAL_ALDARIN	ALDARIN_HOPS	1422	2965	0	1422 2965 0	teleportation_items.tsv "Construction cape: Aldarin" (house portal)	high	
+FAIRY_RING_CKQ	ALDARIN_HOPS	1359	2941	0	1359 2941 0	fairy_rings.tsv "C K Q"	high	
+QUETZAL_ALDARIN	ALDARIN_HOPS	1389	2901	0	1389 2901 0	quetzal_whistle.tsv "Quetzal whistle: Aldarin"	high	
+TELEPORT_CRYSTAL_PRIFDDINAS	PRIFDDINAS	3264	6066	0	3264 6066 0	teleportation_items.tsv "Teleport crystal: Prifddinas"	high	
+HOUSE_PORTAL_PRIFDDINAS	PRIFDDINAS	3239	6076	0	3239 6076 0	teleportation_items.tsv "Construction cape: Prifddinas" (house portal)	high	

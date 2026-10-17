@@ -7,9 +7,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import java.util.Arrays;
-import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.VarbitID;
@@ -18,12 +19,17 @@ import org.junit.Test;
 public class PatchDataTest
 {
 	@Test
-	public void catalogueHas24Patches()
+	public void catalogueHas54Patches()
 	{
-		assertEquals(24, Patch.values().length);
+		assertEquals(54, Patch.values().length);
 		assertEquals(7, countOfType(PatchType.TREE));
 		assertEquals(7, countOfType(PatchType.FRUIT_TREE));
 		assertEquals(10, countOfType(PatchType.HERB));
+		// Eight sets of two plus Harmony Island's one
+		assertEquals(17, countOfType(PatchType.ALLOTMENT));
+		assertEquals(9, countOfType(PatchType.FLOWER));
+		// Entrana left out for now
+		assertEquals(4, countOfType(PatchType.HOPS));
 	}
 
 	@Test
@@ -40,8 +46,8 @@ public class PatchDataTest
 	public void varbitsAreFarmingTransmitVarbits()
 	{
 		final List<Integer> transmit = Arrays.asList(VarbitID.FARMING_TRANSMIT_A, VarbitID.FARMING_TRANSMIT_B,
-			VarbitID.FARMING_TRANSMIT_D, VarbitID.FARMING_TRANSMIT_E, VarbitID.FARMING_TRANSMIT_G,
-			VarbitID.FARMING_TRANSMIT_K);
+			VarbitID.FARMING_TRANSMIT_C, VarbitID.FARMING_TRANSMIT_D, VarbitID.FARMING_TRANSMIT_E, VarbitID.FARMING_TRANSMIT_G,
+			VarbitID.FARMING_TRANSMIT_H, VarbitID.FARMING_TRANSMIT_K);
 		for (Patch patch : Patch.values())
 		{
 			assertTrue(patch.name(), transmit.contains(patch.getVarbitId()));
@@ -67,7 +73,8 @@ public class PatchDataTest
 	{
 		for (Patch patch : Patch.values())
 		{
-			if (patch.getType().isProtectable())
+			// Harmony Island's allotment has nobody to pay (wiki)
+			if (patch.getType().isProtectable() && patch != Patch.HARMONY_ISLAND_ALLOTMENT)
 			{
 				assertTrue(patch.name(), patch.hasGardener());
 				assertNotNull(patch.name(), patch.getGardenerName());
@@ -81,38 +88,53 @@ public class PatchDataTest
 	}
 
 	@Test
-	public void gardenerNpcsAreUnique()
+	public void gardenerNpcsAreUniqueToOneStop()
 	{
-		final Set<Integer> seen = new HashSet<>();
+		// An allotment gardener looks after both allotments of their set, nothing else
+		final Map<Integer, Location> seen = new HashMap<>();
 		for (Patch patch : Patch.values())
 		{
 			if (patch.hasGardener())
 			{
-				assertTrue("duplicate gardener for " + patch, seen.add(patch.getGardenerNpcId()));
+				final Location before = seen.putIfAbsent(patch.getGardenerNpcId(), patch.getLocation());
+				assertTrue("gardener shared across stops: " + patch, before == null || before == patch.getLocation());
 			}
 		}
 	}
 
 	@Test
-	public void everyLocationHasAtMostOnePatchPerType()
+	public void patchesOfOneTypeAtAStopAreToldApart()
 	{
 		for (Location location : Location.values())
 		{
 			final List<Patch> patches = location.getPatches();
 			assertFalse(location + " has no patches", patches.isEmpty());
 
-			final Set<PatchType> types = EnumSet.noneOf(PatchType.class);
+			final Set<String> names = new HashSet<>();
 			for (Patch patch : patches)
 			{
-				assertTrue(location + " has two " + patch.getType() + " patches", types.add(patch.getType()));
+				assertTrue(location + " has two patches called " + patch.getDisplayName(), names.add(patch.getDisplayName()));
 			}
 		}
 	}
 
 	@Test
+	public void allotmentsComeInNamedPairsWithAFlowerPatch()
+	{
+		assertEquals("Falador farm (south) north-west allotment", Patch.FALADOR_ALLOTMENT_NW.getDisplayName());
+		assertEquals("Falador farm (south) herb", Patch.FALADOR_HERB.getDisplayName());
+		assertTrue(Patch.FALADOR_ALLOTMENT_NW.getSetMates().contains(Patch.FALADOR_ALLOTMENT_SE));
+		assertTrue(Patch.FALADOR_ALLOTMENT_NW.getSetMates().contains(Patch.FALADOR_FLOWER));
+		assertFalse(Patch.FALADOR_ALLOTMENT_NW.getSetMates().contains(Patch.FALADOR_HERB));
+		assertEquals(Patch.FALADOR_ALLOTMENT_NW.getGardenerNpcId(), Patch.FALADOR_ALLOTMENT_SE.getGardenerNpcId());
+		assertFalse(Patch.HARMONY_ISLAND_ALLOTMENT.hasGardener());
+		assertNull(Patch.HARMONY_ISLAND_ALLOTMENT.getPart());
+	}
+
+	@Test
 	public void farmingGuildPatches()
 	{
-		assertEquals(3, Location.FARMING_GUILD.getPatches().size());
+		assertEquals(6, Location.FARMING_GUILD.getPatches().size());
 		for (Patch patch : Location.FARMING_GUILD.getPatches())
 		{
 			assertEquals(4922, patch.getRegionId());

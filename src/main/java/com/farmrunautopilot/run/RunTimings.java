@@ -185,7 +185,7 @@ public class RunTimings
 			final int n = counts.getOrDefault(type, 0);
 			if (n > 0)
 			{
-				parts.add(n + " " + type.getDisplayName().toLowerCase() + (n == 1 ? "" : "s"));
+				parts.add(n + " " + (n == 1 ? type.getDisplayName() : type.getPluralName()).toLowerCase());
 			}
 		}
 		return String.join(", ", parts);

@@ -92,7 +92,7 @@ public final class CropAllocator
 			Crop pick = null;
 			for (Crop crop : candidates)
 			{
-				if (stock.get(crop) > 0)
+				if (stock.get(crop) >= crop.getSeedsPerPatch())
 				{
 					pick = crop;
 					break;
@@ -103,7 +103,7 @@ public final class CropAllocator
 				// Everything is out: use the first normal choice this patch may have.
 				pick = safe.test(patch) ? choices.get(0) : unsafeChoices.get(0);
 			}
-			stock.merge(pick, -1, Integer::sum);
+			stock.merge(pick, -pick.getSeedsPerPatch(), Integer::sum);
 			byPatch.put(patch, pick);
 		}
 

@@ -18,6 +18,7 @@ import com.farmrunautopilot.settings.Compost;
 import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
+import com.farmrunautopilot.supply.FlowerProtection;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.supply.SupplyCalculator;
@@ -179,12 +180,15 @@ class PatchGuide
 		}
 	}
 
-	/** The one patch of the type a message names ("fruit tree patch", "herb patch", "tree patch"), or null. */
+	/** The one patch of the type a message names ("fruit tree patch", "herb patch", "allotment", ...), or null. */
 	static Patch patchNamed(String message, List<Patch> here)
 	{
 		final String text = message.toLowerCase();
 		final PatchType type = text.contains("fruit tree") ? PatchType.FRUIT_TREE
 			: text.contains("herb") ? PatchType.HERB
+			: text.contains("allotment") ? PatchType.ALLOTMENT
+			: text.contains("flower") ? PatchType.FLOWER
+			: text.contains("hops") ? PatchType.HOPS
 			: text.contains("tree") ? PatchType.TREE : null;
 		Patch found = null;
 		for (Patch patch : here)
@@ -208,7 +212,7 @@ class PatchGuide
 	 */
 	String nextStep(RouteStop stop, List<Patch> here)
 	{
-		for (Patch patch : navigator.nearestFirst(here, currentPatch))
+		for (Patch patch : protectingFlowersFirst(navigator.nearestFirst(here, currentPatch)))
 		{
 			final Progress p = progress(patch);
 			if (p.skipped)
@@ -234,6 +238,13 @@ class PatchGuide
 			if (live.getState() != PatchState.GROWING && patchTracker.getPatchesInRange().contains(patch))
 			{
 				p.sawUnplanted = true;
+			}
+			// A flower planted this run still gets its compost, if any
+			if (keepsProtectingFlower(patch, live) && (live.getState() != PatchState.GROWING || !p.sawUnplanted))
+			{
+				// Picking it would end the allotments' protection
+				p.done = true;
+				continue;
 			}
 			final StepAdvisor.Advice advice = StepAdvisor.advise(goal(patch, p), live);
 			if (advice.getAction() == StepAdvisor.Action.PAY)
@@ -284,6 +295,46 @@ class PatchGuide
 		}
 	}
 
+	/**
+	 * A flower kept for protecting its allotments goes first at its stop: it only protects them once fully grown, so
+	 * the sooner it's in, the shorter the gap (docs/plans/crop-types.md).
+	 */
+	private List<Patch> protectingFlowersFirst(List<Patch> patches)
+	{
+		final List<Patch> ordered = new ArrayList<>();
+		final RunConfig config = settings.getRunConfig();
+		final AccessSnapshot access = accessChecker.getSnapshot();
+		for (Patch patch : patches)
+		{
+			if (FlowerProtection.isProtecting(patch, config, access))
+			{
+				ordered.add(patch);
+			}
+		}
+		for (Patch patch : patches)
+		{
+			if (!ordered.contains(patch))
+			{
+				ordered.add(patch);
+			}
+		}
+		return ordered;
+	}
+
+	/** A protecting flower that's growing or grown and suits the crop this run plants next to it: leave it be. */
+	private boolean keepsProtectingFlower(Patch patch, PatchPrediction live)
+	{
+		if (!FlowerProtection.isProtecting(patch, settings.getRunConfig(), accessChecker.getSnapshot()))
+		{
+			return false;
+		}
+		final Crop allotmentCrop = patch.getSetMates().stream()
+			.map(mate -> plan.getSupplies().getPlantings().get(mate))
+			.filter(crop -> crop != null && crop.getType() == PatchType.ALLOTMENT)
+			.findFirst().orElse(null);
+		return !FlowerProtection.isDue(live, allotmentCrop);
+	}
+
 	private StepAdvisor.PatchGoal goal(Patch patch, Progress p)
 	{
 		final RunConfig config = settings.getRunConfig();
@@ -292,7 +343,8 @@ class PatchGuide
 		final boolean faladorElite = patch == Patch.FALADOR_TREE && access.isKnown()
 			&& access.isMet(Requirement.diary(AchievementDiary.FALADOR, AchievementDiary.Tier.ELITE));
 		final boolean protectionNeeded = patch.getType().isProtectable() && crop != null && crop.hasPayment()
-			&& config.protectionFor(patch) == Protection.PAY_GARDENER && !faladorElite;
+			&& FlowerProtection.effective(patch, config, access, plan.getSupplies().getPlantings(), patchTracker::predict)
+			== Protection.PAY_GARDENER && !faladorElite;
 		final String plantName = crop != null ? runService.itemName(crop.getPlantItemId()) : "your seed";
 		final String payment = protectionNeeded
 			? crop.getPaymentQuantity() + " x " + runService.itemName(crop.getPaymentItemId())
@@ -458,7 +510,13 @@ class PatchGuide
 		{
 			return null;
 		}
-		final boolean herb = currentPatch.getType() == PatchType.HERB;
+		final Crop crop = plan.getSupplies().getPlantings().get(currentPatch);
+		if (crop == Crop.SCARECROW)
+		{
+			return null;
+		}
+		// Seeds go in with a dibber, saplings with a spade
+		final boolean herb = crop != null ? crop.isSeed() : !currentPatch.getType().isHealthChecked();
 		final AccessSnapshot access = accessChecker.getSnapshot();
 		if (herb && access.isKnown() && access.isMet(Requirement.unlock(Unlock.BARBARIAN_PLANTING)))
 		{
@@ -496,8 +554,9 @@ class PatchGuide
 	/** Inventory slots the next harvest here will take (herbs and fruit), 0 if none. */
 	static int expectedHarvest(Patch patch, StepAdvisor.Action action, PatchPrediction live)
 	{
-		if (patch.getType() == PatchType.HERB)
+		if (!patch.getType().isHealthChecked())
 		{
+			// Herbs, allotments and hops: a handful each (flowers are a few)
 			return action == StepAdvisor.Action.PICK ? SupplyCalculator.HERBS_PER_PATCH : 0;
 		}
 		if (patch.getType() == PatchType.FRUIT_TREE)

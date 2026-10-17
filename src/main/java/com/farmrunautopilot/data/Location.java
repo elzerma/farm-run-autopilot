@@ -32,7 +32,13 @@ public enum Location
 	TROLL_STRONGHOLD("Troll Stronghold"),
 	HARMONY_ISLAND("Harmony Island"),
 	WEISS("Weiss"),
-	CIVITAS_ILLA_FORTIS("Civitas illa Fortis (Ortus Farm)");
+	CIVITAS_ILLA_FORTIS("Civitas illa Fortis (Ortus Farm)"),
+	// Allotments and hops (docs/plans/crop-types.md, Sprint 1a)
+	PRIFDDINAS("Prifddinas"),
+	LUMBRIDGE_HOPS("Lumbridge (north farm)"),
+	SEERS_VILLAGE_HOPS("Seers' Village"),
+	YANILLE_HOPS("Yanille"),
+	ALDARIN_HOPS("Aldarin");
 
 	private final String displayName;
 

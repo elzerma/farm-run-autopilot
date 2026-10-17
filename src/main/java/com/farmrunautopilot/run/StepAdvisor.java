@@ -76,7 +76,7 @@ public final class StepAdvisor
 		}
 		final String gardener = patch.getGardenerName() != null ? patch.getGardenerName() : "the gardener";
 		final String what = live.getCrop() != null ? live.getCrop().getDisplayName().toLowerCase() : "plant";
-		final boolean tree = patch.getType().isProtectable();
+		final boolean tree = patch.getType().isHealthChecked();
 
 		switch (live.getState())
 		{
@@ -89,7 +89,8 @@ public final class StepAdvisor
 				}
 				if (goal.isPlantedThisRun() && goal.isProtectionNeeded() && !goal.isPaid())
 				{
-					return new Advice(Action.PAY, "Pay " + gardener + ": " + goal.getPaymentText());
+					return new Advice(Action.PAY, "Pay " + gardener + (patch.getPart() != null ? " for the " + patch.getPart() + " "
+						+ patch.getType().getDisplayName().toLowerCase() : "") + ": " + goal.getPaymentText());
 				}
 				return new Advice(Action.DONE, "Done");
 			case CHECK_HEALTH:
@@ -97,7 +98,8 @@ public final class StepAdvisor
 					? what + " tree" : patch.getType().getDisplayName().toLowerCase()) + " (replanting: "
 					+ goal.getPlantName() + ")");
 			case HARVESTABLE:
-				if (patch.getType() == PatchType.HERB)
+				// Herbs, allotments, flowers and hops are picked, then replanted
+				if (!tree)
 				{
 					return new Advice(Action.PICK, "Pick the " + what);
 				}
@@ -123,7 +125,12 @@ public final class StepAdvisor
 				{
 					return compost(goal);
 				}
-				return new Advice(Action.PLANT, "Plant: " + goal.getPlantName());
+				if (goal.getCrop() == Crop.SCARECROW)
+				{
+					return new Advice(Action.PLANT, "Put the scarecrow in the flower patch: it protects the sweetcorn");
+				}
+				return new Advice(Action.PLANT, "Plant: " + goal.getPlantName() + (goal.getCrop() != null
+					&& goal.getCrop().getSeedsPerPatch() > 1 ? " (" + goal.getCrop().getSeedsPerPatch() + ")" : ""));
 			default:
 				return new Advice(Action.INSPECT, "Inspect the patch");
 		}

@@ -1,6 +1,7 @@
 package com.farmrunautopilot.data;
 
 import static com.farmrunautopilot.data.DataConstants.NONE;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -149,7 +150,138 @@ public enum Patch
 		{
 			return Requirement.unlock(Unlock.FORTIS_CHAMPION);
 		}
-	};
+	},
+
+	// Allotments: two to a set, protected one at a time by the set's gardener, or by a grown flower in the set's flower
+	// patch (docs/plans/crop-types.md). Region, varbit and gardener from RuneLite FarmingWorld; the part names are its.
+	FALADOR_ALLOTMENT_NW("north-west", Location.FALADOR_FARM, PatchType.ALLOTMENT, 12083, regions(),
+		VarbitID.FARMING_TRANSMIT_A, NpcID.ELSTAN, "Elstan")
+	{
+		@Override
+		public boolean isInBounds(WorldPoint loc)
+		{
+			return loc.getY() >= 3272;
+		}
+	},
+	FALADOR_ALLOTMENT_SE("south-east", Location.FALADOR_FARM, PatchType.ALLOTMENT, 12083, regions(),
+		VarbitID.FARMING_TRANSMIT_B, NpcID.ELSTAN, "Elstan")
+	{
+		@Override
+		public boolean isInBounds(WorldPoint loc)
+		{
+			return loc.getY() >= 3272;
+		}
+	},
+	CATHERBY_ALLOTMENT_N("north", Location.CATHERBY, PatchType.ALLOTMENT, 11062, regions(11061, 11318, 11317),
+		VarbitID.FARMING_TRANSMIT_A, NpcID.DANTAERA, "Dantaera")
+	{
+		@Override
+		public boolean isInBounds(WorldPoint loc)
+		{
+			return CATHERBY_HERB.isInBounds(loc);
+		}
+	},
+	CATHERBY_ALLOTMENT_S("south", Location.CATHERBY, PatchType.ALLOTMENT, 11062, regions(11061, 11318, 11317),
+		VarbitID.FARMING_TRANSMIT_B, NpcID.DANTAERA, "Dantaera")
+	{
+		@Override
+		public boolean isInBounds(WorldPoint loc)
+		{
+			return CATHERBY_HERB.isInBounds(loc);
+		}
+	},
+	ARDOUGNE_ALLOTMENT_N("north", Location.ARDOUGNE_FARM, PatchType.ALLOTMENT, 10548, regions(),
+		VarbitID.FARMING_TRANSMIT_A, NpcID.KRAGEN, "Kragen"),
+	ARDOUGNE_ALLOTMENT_S("south", Location.ARDOUGNE_FARM, PatchType.ALLOTMENT, 10548, regions(),
+		VarbitID.FARMING_TRANSMIT_B, NpcID.KRAGEN, "Kragen"),
+	// The wiki lists no requirement; Morytania needs Priest in Peril as for the herb patch next to it
+	PORT_PHASMATYS_ALLOTMENT_NW("north-west", Location.PORT_PHASMATYS, PatchType.ALLOTMENT, 14391, regions(14390),
+		VarbitID.FARMING_TRANSMIT_A, NpcID.LYRA, "Lyra", Requirement.quest(Quest.PRIEST_IN_PERIL)),
+	PORT_PHASMATYS_ALLOTMENT_SE("south-east", Location.PORT_PHASMATYS, PatchType.ALLOTMENT, 14391, regions(14390),
+		VarbitID.FARMING_TRANSMIT_B, NpcID.LYRA, "Lyra", Requirement.quest(Quest.PRIEST_IN_PERIL)),
+	HOSIDIUS_ALLOTMENT_NE("north-east", Location.HOSIDIUS, PatchType.ALLOTMENT, 6967, regions(6711),
+		VarbitID.FARMING_TRANSMIT_A, NpcID.HOSIDIUS_ALLOTMENT_GARDENER, "Marisi")
+	{
+		@Override
+		public Requirement getDiseaseFreeRequirement()
+		{
+			return HOSIDIUS_HERB.getDiseaseFreeRequirement();
+		}
+	},
+	HOSIDIUS_ALLOTMENT_SW("south-west", Location.HOSIDIUS, PatchType.ALLOTMENT, 6967, regions(6711),
+		VarbitID.FARMING_TRANSMIT_B, NpcID.HOSIDIUS_ALLOTMENT_GARDENER, "Marisi")
+	{
+		@Override
+		public Requirement getDiseaseFreeRequirement()
+		{
+			return HOSIDIUS_HERB.getDiseaseFreeRequirement();
+		}
+	},
+	FARMING_GUILD_ALLOTMENT_N("north", Location.FARMING_GUILD, PatchType.ALLOTMENT, 4922, farmingGuildRegions(),
+		VarbitID.FARMING_TRANSMIT_C, NpcID.FARMING_GARDENER_FARMGUILD_T1, "Alan", Requirement.skill(Skill.FARMING, 45)),
+	FARMING_GUILD_ALLOTMENT_S("south", Location.FARMING_GUILD, PatchType.ALLOTMENT, 4922, farmingGuildRegions(),
+		VarbitID.FARMING_TRANSMIT_D, NpcID.FARMING_GARDENER_FARMGUILD_T1, "Alan", Requirement.skill(Skill.FARMING, 45)),
+	CIVITAS_ALLOTMENT_N("north", Location.CIVITAS_ILLA_FORTIS, PatchType.ALLOTMENT, 6192,
+		regions(6447, 6448, 6449, 6191, 6193), VarbitID.FARMING_TRANSMIT_A, NpcID.FORTIS_GARDENER, "Harminia",
+		Requirement.quest(Quest.CHILDREN_OF_THE_SUN)),
+	CIVITAS_ALLOTMENT_S("south", Location.CIVITAS_ILLA_FORTIS, PatchType.ALLOTMENT, 6192,
+		regions(6447, 6448, 6449, 6191, 6193), VarbitID.FARMING_TRANSMIT_B, NpcID.FORTIS_GARDENER, "Harminia",
+		Requirement.quest(Quest.CHILDREN_OF_THE_SUN)),
+	PRIFDDINAS_ALLOTMENT_N("north", Location.PRIFDDINAS, PatchType.ALLOTMENT, 13151, prifddinasRegions(),
+		VarbitID.FARMING_TRANSMIT_A, NpcID.PRIF_GARDENER, "Oswallt", Requirement.quest(Quest.SONG_OF_THE_ELVES)),
+	PRIFDDINAS_ALLOTMENT_S("south", Location.PRIFDDINAS, PatchType.ALLOTMENT, 13151, prifddinasRegions(),
+		VarbitID.FARMING_TRANSMIT_B, NpcID.PRIF_GARDENER, "Oswallt", Requirement.quest(Quest.SONG_OF_THE_ELVES)),
+	// One allotment, no flower patch and no gardener: it can't be protected (wiki: Harmony Island)
+	HARMONY_ISLAND_ALLOTMENT(Location.HARMONY_ISLAND, PatchType.ALLOTMENT, 15148, regions(), VarbitID.FARMING_TRANSMIT_A,
+		Requirement.questStarted(Quest.THE_GREAT_BRAIN_ROBBERY)),
+
+	// Flowers: no gardener protects them (wiki: Farming)
+	FALADOR_FLOWER(Location.FALADOR_FARM, PatchType.FLOWER, 12083, regions(), VarbitID.FARMING_TRANSMIT_C)
+	{
+		@Override
+		public boolean isInBounds(WorldPoint loc)
+		{
+			return loc.getY() >= 3272;
+		}
+	},
+	CATHERBY_FLOWER(Location.CATHERBY, PatchType.FLOWER, 11062, regions(11061, 11318, 11317), VarbitID.FARMING_TRANSMIT_C)
+	{
+		@Override
+		public boolean isInBounds(WorldPoint loc)
+		{
+			return CATHERBY_HERB.isInBounds(loc);
+		}
+	},
+	ARDOUGNE_FLOWER(Location.ARDOUGNE_FARM, PatchType.FLOWER, 10548, regions(), VarbitID.FARMING_TRANSMIT_C),
+	PORT_PHASMATYS_FLOWER(Location.PORT_PHASMATYS, PatchType.FLOWER, 14391, regions(14390), VarbitID.FARMING_TRANSMIT_C,
+		Requirement.quest(Quest.PRIEST_IN_PERIL)),
+	HOSIDIUS_FLOWER(Location.HOSIDIUS, PatchType.FLOWER, 6967, regions(6711), VarbitID.FARMING_TRANSMIT_C)
+	{
+		@Override
+		public Requirement getDiseaseFreeRequirement()
+		{
+			return HOSIDIUS_HERB.getDiseaseFreeRequirement();
+		}
+	},
+	FARMING_GUILD_FLOWER(Location.FARMING_GUILD, PatchType.FLOWER, 4922, farmingGuildRegions(), VarbitID.FARMING_TRANSMIT_H,
+		Requirement.skill(Skill.FARMING, 45)),
+	CIVITAS_FLOWER(Location.CIVITAS_ILLA_FORTIS, PatchType.FLOWER, 6192, regions(6447, 6448, 6449, 6191, 6193),
+		VarbitID.FARMING_TRANSMIT_C, Requirement.quest(Quest.CHILDREN_OF_THE_SUN)),
+	PRIFDDINAS_FLOWER(Location.PRIFDDINAS, PatchType.FLOWER, 13151, prifddinasRegions(), VarbitID.FARMING_TRANSMIT_C,
+		Requirement.quest(Quest.SONG_OF_THE_ELVES)),
+	// On its own, with no allotments to protect
+	KASTORI_FLOWER(Location.KASTORI, PatchType.FLOWER, 5423, regions(5167, 5424), VarbitID.FARMING_TRANSMIT_C,
+		Requirement.quest(Quest.CHILDREN_OF_THE_SUN)),
+
+	// Hops. Entrana is left out for now: its no-weapons rule may stop magic secateurs and worn teleports (UNVERIFIED).
+	LUMBRIDGE_HOPS(Location.LUMBRIDGE_HOPS, PatchType.HOPS, 12851, regions(), VarbitID.FARMING_TRANSMIT_A,
+		NpcID.FARMING_GARDENER_HOPS_3, "Vasquen"),
+	SEERS_VILLAGE_HOPS(Location.SEERS_VILLAGE_HOPS, PatchType.HOPS, 10551, regions(10550), VarbitID.FARMING_TRANSMIT_A,
+		NpcID.FARMING_GARDENER_HOPS_4, "Rhonen"),
+	YANILLE_HOPS(Location.YANILLE_HOPS, PatchType.HOPS, 10288, regions(), VarbitID.FARMING_TRANSMIT_A,
+		NpcID.FARMING_GARDENER_HOPS_1, "Selena"),
+	ALDARIN_HOPS(Location.ALDARIN_HOPS, PatchType.HOPS, 5421, regions(5165, 5166, 5422, 5677, 5678),
+		VarbitID.FARMING_TRANSMIT_A, NpcID.FARMING_GARDENER_HOPS_5, "Ercos", Requirement.quest(Quest.CHILDREN_OF_THE_SUN));
 
 	private final Location location;
 	private final PatchType type;
@@ -160,10 +292,13 @@ public enum Patch
 	private final int gardenerNpcId;
 	private final String gardenerName;
 	private final List<Requirement> requirements;
+	/** Which one of two of a type at a stop ("north-west" allotment), or null. */
+	private final String part;
 
-	Patch(Location location, PatchType type, int regionId, int[] extraRegionIds, int varbitId,
+	Patch(String part, Location location, PatchType type, int regionId, int[] extraRegionIds, int varbitId,
 		int gardenerNpcId, String gardenerName, Requirement... requirements)
 	{
+		this.part = part;
 		this.location = location;
 		this.type = type;
 		this.regionId = regionId;
@@ -175,9 +310,15 @@ public enum Patch
 	}
 
 	Patch(Location location, PatchType type, int regionId, int[] extraRegionIds, int varbitId,
+		int gardenerNpcId, String gardenerName, Requirement... requirements)
+	{
+		this(null, location, type, regionId, extraRegionIds, varbitId, gardenerNpcId, gardenerName, requirements);
+	}
+
+	Patch(Location location, PatchType type, int regionId, int[] extraRegionIds, int varbitId,
 		Requirement... requirements)
 	{
-		this(location, type, regionId, extraRegionIds, varbitId, NONE, null, requirements);
+		this(null, location, type, regionId, extraRegionIds, varbitId, NONE, null, requirements);
 	}
 
 	public int[] getExtraRegionIds()
@@ -217,12 +358,32 @@ public enum Patch
 
 	public String getDisplayName()
 	{
-		return location.getDisplayName() + " " + type.getDisplayName().toLowerCase();
+		return location.getDisplayName() + " " + (part != null ? part + " " : "") + type.getDisplayName().toLowerCase();
+	}
+
+	/** The other patches of the same set at this stop: the allotments and flower patch that share a gardener and flower. */
+	public List<Patch> getSetMates()
+	{
+		final List<Patch> mates = new ArrayList<>();
+		for (Patch patch : location.getPatches())
+		{
+			if (patch != this && (patch.type == PatchType.ALLOTMENT || patch.type == PatchType.FLOWER))
+			{
+				mates.add(patch);
+			}
+		}
+		return mates;
 	}
 
 	private static int[] regions(int... ids)
 	{
 		return ids;
+	}
+
+	/** All of Prifddinas and its underground (RuneLite FarmingWorld). */
+	private static int[] prifddinasRegions()
+	{
+		return new int[]{12895, 12894, 13150, 12994, 12993, 12737, 12738, 12126, 12127, 13250};
 	}
 
 	/** Full 3x3 region area centred on the Farming Guild. */

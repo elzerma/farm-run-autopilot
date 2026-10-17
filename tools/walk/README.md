@@ -10,7 +10,8 @@ list (BSD-2, see `THIRD_PARTY_NOTICES`) from a local clone and write numbers the
   `src/main/resources/com/farmrunautopilot/walk-grid.bin` (read by `WalkGrid.java`).
 - `Walk.java`: loads the collision map; the shared walking rules (8 directions, the game's diagonal rule).
 
-The `.tsv` files are the coordinates used (Shortest Path commit 7e81a40, plus `PatchPoints`).
+The `.tsv` files are the coordinates used (Shortest Path commit 7e81a40, plus `PatchPoints`). The allotment and hops
+stops (Sprint 1a) were added and measured on Shortest Path c7a4937 (2026-10-17), which also rebuilt the grid.
 
 To refresh after a Shortest Path update (clone it next to this folder first):
 

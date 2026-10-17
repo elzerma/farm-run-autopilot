@@ -102,8 +102,8 @@ public class SceneTracker
 			final WorldPoint point = PatchPoints.of(patch);
 			if (same && point.getPlane() == location.getPlane() && point.distanceTo2D(location) <= GARDENER_TILES)
 			{
+				// One gardener looks after both allotments of a set
 				gardeners.put(patch, npc);
-				return;
 			}
 		}
 	}

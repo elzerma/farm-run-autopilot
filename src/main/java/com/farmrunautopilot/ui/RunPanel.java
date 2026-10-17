@@ -459,7 +459,7 @@ class RunPanel extends JPanel
 		for (Map.Entry<PatchType, Integer> e : counts.entrySet())
 		{
 			final int n = e.getValue();
-			parts.add(n + " " + e.getKey().getDisplayName().toLowerCase() + (n == 1 ? "" : "s"));
+			parts.add(n + " " + (n == 1 ? e.getKey().getDisplayName() : e.getKey().getPluralName()).toLowerCase());
 		}
 		return parts.isEmpty() ? "No patches" : String.join(", ", parts);
 	}
@@ -546,7 +546,7 @@ class RunPanel extends JPanel
 			}
 			final String key = "Patch timers: " + type.name();
 			final boolean open = settings.isSectionOpen(key);
-			panel.add(timerGroupHeader(type.getDisplayName() + "s", due + " of " + patches.size() + " due", open, () ->
+			panel.add(timerGroupHeader(type.getPluralName(), due + " of " + patches.size() + " due", open, () ->
 			{
 				settings.setSectionOpen(key, !open);
 				fillPatchTimers(panel);
@@ -943,7 +943,7 @@ class RunPanel extends JPanel
 			{
 				continue;
 			}
-			final String name = type.getDisplayName() + "s";
+			final String name = type.getPluralName();
 			final TypeOverride override = current.get(type);
 			final String text;
 			final String buttonText;

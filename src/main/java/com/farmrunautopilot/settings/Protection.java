@@ -4,14 +4,16 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * How a tree or fruit tree patch is protected from disease (SPEC 2, 13.2).
+ * How a patch is protected from disease (SPEC 2, 13.2).
  */
 @Getter
 @RequiredArgsConstructor
 public enum Protection
 {
 	PAY_GARDENER("Pay gardener"),
-	COMPOST_ONLY("Compost only");
+	COMPOST_ONLY("Compost only"),
+	/** Allotments only: a fully grown flower (or scarecrow) in the set's flower patch protects both allotments. */
+	FLOWER("Flower");
 
 	private final String displayName;
 

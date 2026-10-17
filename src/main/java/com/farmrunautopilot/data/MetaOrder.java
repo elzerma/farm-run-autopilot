@@ -1,5 +1,6 @@
 package com.farmrunautopilot.data;
 
+import static com.farmrunautopilot.data.Location.ALDARIN_HOPS;
 import static com.farmrunautopilot.data.Location.ARDOUGNE_FARM;
 import static com.farmrunautopilot.data.Location.BRIMHAVEN;
 import static com.farmrunautopilot.data.Location.CATHERBY;
@@ -13,13 +14,17 @@ import static com.farmrunautopilot.data.Location.HOSIDIUS;
 import static com.farmrunautopilot.data.Location.KASTORI;
 import static com.farmrunautopilot.data.Location.LLETYA;
 import static com.farmrunautopilot.data.Location.LUMBRIDGE;
+import static com.farmrunautopilot.data.Location.LUMBRIDGE_HOPS;
 import static com.farmrunautopilot.data.Location.NEMUS_RETREAT;
 import static com.farmrunautopilot.data.Location.PORT_PHASMATYS;
+import static com.farmrunautopilot.data.Location.PRIFDDINAS;
+import static com.farmrunautopilot.data.Location.SEERS_VILLAGE_HOPS;
 import static com.farmrunautopilot.data.Location.TAVERLEY;
 import static com.farmrunautopilot.data.Location.TREE_GNOME_VILLAGE;
 import static com.farmrunautopilot.data.Location.TROLL_STRONGHOLD;
 import static com.farmrunautopilot.data.Location.VARROCK;
 import static com.farmrunautopilot.data.Location.WEISS;
+import static com.farmrunautopilot.data.Location.YANILLE_HOPS;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,6 +46,18 @@ public final class MetaOrder
 	private static final List<Location> HERB = Collections.unmodifiableList(Arrays.asList(
 		FALADOR_FARM, PORT_PHASMATYS, ARDOUGNE_FARM, CATHERBY, HOSIDIUS, FARMING_GUILD, CIVITAS_ILLA_FORTIS,
 		TROLL_STRONGHOLD, WEISS, HARMONY_ISLAND));
+
+	// Allotments and flowers sit by the herb patches, so they follow the herb order; hops go round from Lumbridge
+	private static final List<Location> ALLOTMENT = Collections.unmodifiableList(Arrays.asList(
+		FALADOR_FARM, PORT_PHASMATYS, ARDOUGNE_FARM, CATHERBY, HOSIDIUS, FARMING_GUILD, CIVITAS_ILLA_FORTIS, HARMONY_ISLAND,
+		PRIFDDINAS));
+
+	private static final List<Location> FLOWER = Collections.unmodifiableList(Arrays.asList(
+		FALADOR_FARM, PORT_PHASMATYS, ARDOUGNE_FARM, CATHERBY, HOSIDIUS, FARMING_GUILD, CIVITAS_ILLA_FORTIS, KASTORI,
+		PRIFDDINAS));
+
+	private static final List<Location> HOPS = Collections.unmodifiableList(Arrays.asList(
+		LUMBRIDGE_HOPS, SEERS_VILLAGE_HOPS, YANILLE_HOPS, ALDARIN_HOPS));
 
 	private MetaOrder()
 	{
@@ -70,6 +87,12 @@ public final class MetaOrder
 				return FRUIT_TREE;
 			case HERB:
 				return HERB;
+			case ALLOTMENT:
+				return ALLOTMENT;
+			case FLOWER:
+				return FLOWER;
+			case HOPS:
+				return HOPS;
 			default:
 				throw new IllegalArgumentException("No meta order for " + type);
 		}

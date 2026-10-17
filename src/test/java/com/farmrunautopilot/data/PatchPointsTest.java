@@ -17,7 +17,9 @@ public class PatchPointsTest
 		{
 			for (Patch b : Patch.values())
 			{
-				if (a.ordinal() < b.ordinal() && a.getVarbitId() == b.getVarbitId())
+				// Bounds keep some apart: the game sends the Catherby allotments' varbits only away from the fruit tree
+				if (a.ordinal() < b.ordinal() && a.getVarbitId() == b.getVarbitId()
+					&& a.isInBounds(PatchPoints.of(b)) && b.isInBounds(PatchPoints.of(a)))
 				{
 					final int distance = PatchPoints.of(a).distanceTo2D(PatchPoints.of(b));
 					assertTrue(a + " and " + b + " are only " + distance + " tiles apart", distance > 60);
