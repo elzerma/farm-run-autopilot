@@ -336,3 +336,9 @@ runelite/plugin-hub#18748 merged at 12:04 UTC, so 62f3070 is live. Replies poste
 - **#16:** told it's live, with the HOUSE_BY_TREE test. Stays open until someone with a house spirit tree tries it.
 
 Still open: #8 (seed vault, waiting on edge-case checks and elzerma's choices on the banking setting and the routing), #12 and #16. The vine (bank, vault and spellbook) and the seed vault section are on master after 62f3070, and go out in the next update.
+
+## #18 Help wanted: 7 quick in-game tests
+
+**Kind:** Help wanted (opened and pinned by elzerma's OK, 2026-10-17) · **Status:** open, pinned · **Reviewed through:** 2026-10-17 elzerma (body)
+
+Lists the help-list tests elzerma's account can't run: SPELLBOOK_SWAP, FORTIS_CHAMPION, BUCKET_COMPOST, SPIRIT_TREES, HOUSE_BY_TREE, ATES_CHARGES and HOUSE_SCAN. Update the table when a test is added, passes or is removed. Close it when the list is empty.
