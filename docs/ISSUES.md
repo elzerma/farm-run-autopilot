@@ -60,7 +60,7 @@ Show the table, then ask with the **AskUserQuestion tool** (the radio-button pic
 - Ask one question per row that needs a decision, at most 4 per call, issue by issue, until every row has an answer. Chatter stays in the table but isn't asked about.
 - Give 2–4 options, Claude's pick first and marked "(Recommended)". Each option says what will happen, e.g. "Close as passed, remove ATES_CHARGES from the help list".
 - "Other" is where elzerma gives a short answer of their own (a different verdict, a tweak, "ask them X"). Follow it as written, and ask again only if it's unclear.
-- Before anything is sent to GitHub (a reply, close comment, split issue or labels), show the exact wording in the option preview, with the options *Post as written*, *Post with my edit* (via Other) and *Don't post*.
+- Before anything is sent to GitHub (a reply, close comment, split issue or labels), write each draft in the message as a lettered quote (A, B, C...), since the option preview isn't always shown. Then ask about each letter in the picker: *Post as written* or *Don't post*, with Other for an edit.
 - Save each answer in the ledger: the verdict, plus elzerma's short answer if there was one.
 
 ## 6. Act, only on what was approved

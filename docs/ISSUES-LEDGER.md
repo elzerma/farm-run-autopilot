@@ -26,7 +26,7 @@ Issues #1 to #5 were answered and closed on 2026-10-15, before this ledger began
 
 ## #7 Equiping magical secateurs not needed
 
-**Kind:** Bug + ideas · **Status:** open, fix planned · **Reviewed through:** 2026-10-16 elwakka
+**Kind:** Bug + ideas · **Status:** open, fix planned; reply posted, ideas split to #16 (house) and #17 (report a problem) · **Reviewed through:** 2026-10-16 elzerma (triage reply)
 
 | Who | What they said | Checked against | Evaluation | Decision |
 |-----|----------------|-----------------|------------|----------|
@@ -49,42 +49,54 @@ Issues #1 to #5 were answered and closed on 2026-10-15, before this ledger began
 
 ## #9 Test: Fire of Nourishment at Weiss - works
 
-**Kind:** Test report · **Reviewed through:** 2026-10-16 elwakka (body)
+**Kind:** Test report · **Status:** closed as passed 2026-10-16 · **Reviewed through:** 2026-10-16 elwakka (body)
 
 Real pass: arrived in region 11325, and the fire was spotted on that tile (`UnlockSpotter.java:49`). "a q p" under Anything else is noise. **Decision:** close as passed and remove WEISS_FIRE. Narrow the UNVERIFIED note in `UnlockSpotter`, which also covers the spirit trees.
 
 ## #10 Test: House scanning (beta) - works
 
-**Kind:** Test report · **Reviewed through:** 2026-10-16 elwakka (body)
+**Kind:** Test report · **Status:** closed 2026-10-16, test to be fixed · **Reviewed through:** 2026-10-16 elwakka (body)
 
 Weak pass. "Before" is captured before the player enters, and a scan only adds, so the report doesn't show the scan filling anything in. The Kharyrll nexus change was a hand tick in Account > My house, not a scan. The other-house half was skipped (ironman). **Decision:** keep HOUSE_SCAN; fix the test so the house is cleared first and the scan has to fill it in; bump its revision; close #10 with thanks.
 
 ## #11 Test: Pendant of Ates test
 
-**Kind:** Test feedback · **Reviewed through:** 2026-10-16 elwakka (body)
+**Kind:** Test feedback · **Status:** closed as duplicate of #12 · **Reviewed through:** 2026-10-16 elwakka (body)
 
 "Doesn't go to the next step after teleporting" is true, and caused by #12's bug. **Decision:** close as a duplicate of #12.
 
 ## #12 Test: Pendant of Ates charges - needs attention
 
-**Kind:** Test report · **Reviewed through:** 2026-10-16 elwakka (body)
+**Kind:** Test report · **Status:** open, replied, fix planned · **Reviewed through:** 2026-10-16 elzerma (triage reply)
 
 The report is right, though the player thought it was bugged. `CHARGES_PENDANT_OF_ATES_QUANTITY` reads 0 with 4 charges (`ItemChargeTracker.java:140`, UNVERIFIED), so the plugin can't count pendant teleports. Its "advance" after the spirit tree was the 6-minute fallback question. **Decision:** count teleports by click-then-move, as for the talisman; drop the varbit; bump ATES_CHARGES; reply and keep #12 open until a re-run.
 
 ## #13 Test: Xeric's talisman charges - works
 
-**Kind:** Test report · **Reviewed through:** 2026-10-16 elwakka (body)
+**Kind:** Test report · **Status:** closed as passed 2026-10-16 · **Reviewed through:** 2026-10-16 elwakka (body)
 
 Real pass: 13 = 13, then a detected teleport, then 12 = 12. **Decision:** close as passed and remove TALISMAN_CHARGES.
 
 ## #14 Test: Kharyrll Teleport highlight - works
 
-**Kind:** Test report · **Reviewed through:** 2026-10-16 elwakka (body)
+**Kind:** Test report · **Status:** closed as passed 2026-10-16 · **Reviewed through:** 2026-10-16 elwakka (body)
 
 Real pass: the player confirmed the outline on `ZAROSTELEPORT3`. **Decision:** close as passed; remove KHARYRLL and its UNVERIFIED note in `SpellHighlightOverlay`.
 
 ## #15 Test: Hot air balloon from the Grand Tree - works
 
-**Kind:** Test report · **Reviewed through:** 2026-10-16 elwakka (body)
+**Kind:** Test report · **Status:** closed as passed 2026-10-16 · **Reviewed through:** 2026-10-16 elwakka (body)
 
 Real pass: `ZEP_MULTI_GNO` = 1 with the route unlocked. Taverley's value of 2 hints that values above 1 mean something, but "above 0 = unlocked" holds. **Decision:** close as passed, remove HOT_AIR_BALLOONS, and mark BALLOON_GRAND_TREE confirmed.
+
+## #16 Use the house as a way through (arrive by spirit tree)
+
+**Kind:** Idea · **Status:** open · **Reviewed through:** 2026-10-16 elzerma (body)
+
+Split from #7 (elwakka). **Explore**: arriving at the house through a spirit tree, or on foot at the portal, isn't modelled (`RoutePlanner.java:945`). Measure it against today's route first, e.g. Farming Guild → house spirit tree → Hosidius portal.
+
+## #17 Report a problem from the plugin, with anonymised run data
+
+**Kind:** Idea · **Status:** open · **Reviewed through:** 2026-10-16 elzerma (body)
+
+Split from #7 (elzerma). **Explore**: could reuse `TestReport.url`, capped at 6000 characters.
