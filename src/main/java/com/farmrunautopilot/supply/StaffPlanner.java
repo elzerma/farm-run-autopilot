@@ -22,6 +22,9 @@ import java.util.Set;
  * of its own; without one, each type takes a slot. A plan with swaps is only used when it frees at least one whole
  * slot over keeping one staff on.
  *
+ * <p>One staff is wielded per cast, so a cast needing two rune types is only fully covered by a combination staff
+ * (or a staff and a tome); carrying a second staff only pays when different casts need different runes.
+ *
  * <p>Staves are only swapped just before setting off for a stop, so the staff wielded for the way there is also the
  * one at its patches (for Cure plant).
  */

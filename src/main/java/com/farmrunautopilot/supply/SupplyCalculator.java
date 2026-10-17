@@ -655,12 +655,19 @@ public final class SupplyCalculator
 		/** The dramen or lunar staff, wielded for fairy rings. */
 		static final Object FAIRY_RING_STAFF = "fairy ring staff";
 		static final Object MAGIC_SECATEURS = "magic secateurs";
+		/**
+		 * One inventory slot in {@link #value}: twelfths, so a rune pouch's share of a slot (1/2, 1/3, 1/4) is whole.
+		 * Magic secateurs are worth 1, below any staff (elzerma: secateurs last).
+		 */
+		static final int SLOT = 12;
 
 		/** A {@link TravelItem}, a rune item ID from {@link SupplyItems#INFINITE_RUNE_ITEMS}, or a marker above. */
 		final Object item;
 		final TravelItem.WearSlot slot;
-		/** What wearing it saves: inventory slots or rune types, or {@link #NEEDED}. Higher wins. */
+		/** What wearing it saves, in twelfths of a slot ({@link #SLOT}), or {@link #NEEDED}. Higher wins. */
 		final int value;
+		/** Runes it saves this run, which breaks ties in value (20 fire beat 2 water). */
+		final int runes;
 		/** Breaks ties in value, lower first (magic secateurs come after a staff). */
 		final int rank;
 		/** Already worn, which breaks remaining ties. */
@@ -668,9 +675,15 @@ public final class SupplyCalculator
 
 		Wearable(Object item, TravelItem.WearSlot slot, int value, int rank, boolean worn)
 		{
+			this(item, slot, value, 0, rank, worn);
+		}
+
+		Wearable(Object item, TravelItem.WearSlot slot, int value, int runes, int rank, boolean worn)
+		{
 			this.item = item;
 			this.slot = slot;
 			this.value = value;
+			this.runes = runes;
 			this.rank = rank;
 			this.worn = worn;
 		}
@@ -680,6 +693,10 @@ public final class SupplyCalculator
 			if (value != other.value)
 			{
 				return value > other.value;
+			}
+			if (runes != other.runes)
+			{
+				return runes > other.runes;
 			}
 			if (rank != other.rank)
 			{
@@ -718,7 +735,8 @@ public final class SupplyCalculator
 			if (item.getWearSlot() != null
 				&& (item != TravelItem.KHAREDSTS_MEMOIRS || holdings.count(ItemID.BOOK_OF_THE_DEAD) > 0))
 			{
-				candidates.add(new Wearable(item, item.getWearSlot(), 1, 0, wornAny(holdings, item.getItemIds())));
+				candidates.add(new Wearable(item, item.getWearSlot(), Wearable.SLOT, 0,
+					wornAny(holdings, item.getItemIds())));
 			}
 		}
 		candidates.addAll(extras);
@@ -737,14 +755,18 @@ public final class SupplyCalculator
 	}
 
 	/**
-	 * The staves and tomes the player owns that supply runes this run needs, each worth the number of rune types it
-	 * covers. Lowest item ID first, so the pick doesn't depend on map order.
+	 * The staves and tomes the player owns that supply runes this run needs, each worth the slots its rune types take
+	 * (with a rune pouch, each type's share of it: StaffPlanner.runeSlots), then the runes it saves. Lowest item ID
+	 * first, so the pick doesn't depend on map order.
 	 */
 	static List<Wearable> runeItems(Map<Rune, Integer> need, Holdings holdings)
 	{
 		final List<Wearable> items = new ArrayList<>();
 		final List<Integer> ids = new ArrayList<>(SupplyItems.INFINITE_RUNE_ITEMS.keySet());
 		Collections.sort(ids);
+		// What one rune type takes on average, in twelfths of a slot: a whole slot without a pouch, 1/3 in a full one
+		final int perType = need.isEmpty() ? 0
+			: Wearable.SLOT * StaffPlanner.runeSlots(need.size(), StaffPlanner.pouchTypes(holdings)) / need.size();
 		for (int id : ids)
 		{
 			if (holdings.count(id) == 0)
@@ -752,13 +774,15 @@ public final class SupplyCalculator
 				continue;
 			}
 			int covers = 0;
+			int runes = 0;
 			for (Rune rune : SupplyItems.INFINITE_RUNE_ITEMS.get(id))
 			{
 				covers += need.containsKey(rune) ? 1 : 0;
+				runes += need.getOrDefault(rune, 0);
 			}
 			if (covers > 0)
 			{
-				items.add(new Wearable(id, runeItemSlot(id), covers, 0,
+				items.add(new Wearable(id, runeItemSlot(id), covers * perType, runes, 0,
 					holdings.in(Holdings.Source.WORN).getOrDefault(id, 0) > 0));
 			}
 		}

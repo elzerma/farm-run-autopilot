@@ -510,6 +510,61 @@ public class SupplyCalculatorTest
 	}
 
 	@Test
+	public void theStaffSavingMoreRunesWinsATie()
+	{
+		// Both cover one rune type; 20 fire beat 2 water, whatever their item IDs
+		final Map<Integer, Integer> bank = new HashMap<>();
+		bank.put(ItemID.STAFF_OF_WATER, 1);
+		bank.put(ItemID.STAFF_OF_FIRE, 1);
+		final Holdings held = wornAndBank(new HashMap<>(), bank);
+		final Map<Rune, Integer> need = new EnumMap<>(Rune.class);
+		need.put(Rune.FIRE, 20);
+		need.put(Rune.WATER, 2);
+		assertEquals(ItemID.STAFF_OF_FIRE, SupplyCalculator.toWear(Collections.emptySet(),
+			SupplyCalculator.runeItems(need, held), Outfit.NONE, held).get(TravelItem.WearSlot.WEAPON));
+		need.put(Rune.FIRE, 2);
+		need.put(Rune.WATER, 20);
+		assertEquals(ItemID.STAFF_OF_WATER, SupplyCalculator.toWear(Collections.emptySet(),
+			SupplyCalculator.runeItems(need, held), Outfit.NONE, held).get(TravelItem.WearSlot.WEAPON));
+	}
+
+	@Test
+	public void oneCastNeedingTwoRunesIsNeverSplitBetweenTwoStaves()
+	{
+		// A teleport needing fire and water, with a fire staff and a water staff: only one is wielded for the cast, so
+		// carrying the other staff saves nothing. Wield the fire staff (more fire) and carry the water runes.
+		final Map<Integer, Integer> bank = new HashMap<>();
+		bank.put(ItemID.STAFF_OF_WATER, 1);
+		bank.put(ItemID.STAFF_OF_FIRE, 1);
+		final Holdings held = wornAndBank(new HashMap<>(), bank);
+		final Map<Rune, Integer> need = new EnumMap<>(Rune.class);
+		need.put(Rune.FIRE, 2);
+		need.put(Rune.WATER, 1);
+		need.put(Rune.LAW, 2);
+		final List<StaffPlanner.Leg> legs = Collections.singletonList(new StaffPlanner.Leg(
+			com.farmrunautopilot.data.Location.TROLL_STRONGHOLD, need, new EnumMap<>(Rune.class), false));
+		final List<SupplyCalculator.Wearable> items = SupplyCalculator.runeItems(need, held);
+		final Map<TravelItem.WearSlot, Object> wear = SupplyCalculator.toWear(Collections.emptySet(), items,
+			Outfit.NONE, held);
+		assertEquals(ItemID.STAFF_OF_FIRE, wear.get(TravelItem.WearSlot.WEAPON));
+		final List<Object> staves = SupplyCalculator.swappableStaves(items, need, Collections.emptySet(),
+			wear.get(TravelItem.WearSlot.WEAPON));
+		assertEquals(2, staves.size());
+		assertNull(StaffPlanner.plan(legs, need, staves, wear.get(TravelItem.WearSlot.WEAPON), Collections.emptySet(),
+			0));
+		// Even forced to carry both, the one cast can't have both runes covered
+		final StaffPlanner.Plan both = StaffPlanner.evaluate(legs, need, staves, Collections.emptySet(), 0);
+		assertEquals(1, both.runes.keySet().stream().filter(r -> r == Rune.FIRE || r == Rune.WATER).count());
+
+		final SupplyCalculator.RuneResult runes = SupplyCalculator.runes(need, SupplyCalculator.infiniteRunes(wear, held),
+			held, held.carriedOnly(), id -> "rune " + id);
+		final Set<String> names = new HashSet<>();
+		runes.lines.forEach(line -> names.add(line.getName()));
+		assertTrue(names.contains("rune " + Rune.WATER.getItemId()));
+		assertFalse(names.contains("rune " + Rune.FIRE.getItemId()));
+	}
+
+	@Test
 	public void theArdougneCloakGivesWayToTheCapeAlreadyWorn()
 	{
 		final Set<TravelItem> used = EnumSet.of(TravelItem.ARDOUGNE_CLOAK, TravelItem.QUEST_POINT_CAPE);
