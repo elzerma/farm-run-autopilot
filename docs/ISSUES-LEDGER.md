@@ -102,3 +102,53 @@ Split from #7 (elwakka). **Explore**: arriving at the house through a spirit tre
 **Kind:** Idea · **Status:** open · **Reviewed through:** 2026-10-16 elzerma (body)
 
 Split from #7 (elzerma). **Explore**: could reuse `TestReport.url`, capped at 6000 characters.
+
+## Explore write-ups (2026-10-16)
+
+Options for the ideas marked **Explore** above. None of these is being built until elzerma picks one.
+
+### #8 seed vault
+
+The vault already has its own category tabs, eight favourites and a search (`InterfaceID.SeedVault`: CATEGORY_LIST, FAVES, SEARCH, OBJ_LIST; `VarbitID.SEED_VAULT_CATEGORY`). The plugin already knows the needed seeds and what's in the vault (`HoldingsTracker`, `RunSession.fromSeedVault()`).
+
+| Option | Suggested by | Size | Notes |
+|--------|--------------|------|-------|
+| 1. Step-by-step highlight: outline the category tab with the next seed, then the seed, then move on once it's in the inventory (Easy Blast Furnace style) | elzerma | S–M, ~150–250 lines | Allowed (highlight only). Unknown: mapping each seed to its category. **Recommended.** |
+| 2. Outline the needed seeds wherever they show | Claude | S, ~100 lines | A subset of option 1 |
+| 3. A "Farm run" view inside the vault, ported from the bank tab | elzerma | L, ~600–900 lines | The bank tab relies on hooks only the bank has (`getSearchingTagTab`, BANKMAIN_*); the vault's build script (2819) is undocumented. Likely to break on game updates. |
+
+### #5 bank icon cue
+
+The button flashes while the run needs the bank (`FarmBankTabButton.onGameTick`). REBUILD decision 7 also planned an outline and a setting to open the tab by itself; neither was built.
+
+| Option | Size | Notes |
+|--------|------|-------|
+| 1. Outline around the button, pulsing with the flash | XS, ~30–40 lines | Finishes decision 7 (i) |
+| 2. Open the Farm run tab by itself when the bank opens and the guide is waiting for it, once per visit | S, ~30–50 lines + a setting | The same local redraw a click does; needs a Plugin Hub rules check (and a look at how Quest Helper does it) |
+| 3. One-line hint by the button the first time | S, ~50–70 lines | Only if players still miss it |
+
+Recommended: 1, then 2 after the rules check.
+
+### #16 house as a way through
+
+Today the only way into the house is Teleport to House (`RoutePlanner.canTeleportHome`, ~945). Spirit trees are only destinations, and the house portal has no location to walk to.
+
+| Option | Size | Notes |
+|--------|------|-------|
+| 1. Spirit tree into the house, feeding the existing ways out (exit portal, nexus, jewellery box, fairy ring) | M, ~120–200 lines in 4–6 files | Must not ask for a house tab when the way in is a tree (`SupplyCalculator` ~217, `RunSession` ~1382). Needs in-game timings: arrival point and walk to the portal or nexus. **Recommended.** |
+| 2. Option 1, plus walking in at the portal from nearby stops | +60–100 lines + walk measurements | |
+| 3. One hard-coded chain, e.g. tree → house → Hosidius portal | S, ~30–50 lines | Quick to compare against today's route; doesn't generalise |
+
+To check on the wiki: "Your house" is on spirit trees only with a spirit tree or spirit ring built in the house (Superior garden), and the arrival point.
+
+### #17 report a problem from the plugin
+
+It would follow the "Share your run times" pattern: a button in Settings > Help improve this plugin opens a prefilled issue in the browser (`LinkBrowser`), and nothing is sent unless the player submits it. The plugin makes no request, so the third-party server rule doesn't apply. Leave out the name, position, bank, seed-vault and group-storage counts, and the full levels, quests and diaries list (close to a hiscores fingerprint).
+
+| Option | Size | Notes |
+|--------|------|-------|
+| 1. A button that prefills the Bug form (`template=bug.yml`, `version` and `log` fields) with a coarse plan: stops and ways, supply need/carried/status, worn items, the unlocks used, settings, warnings | S, ~80 lines | **Recommended** |
+| 2. Option 1, plus a preview before opening and a pointer from the Run tab | M | |
+| 3. Make it the expected way to report bugs: a README link, and the last few plugin warnings and errors kept for the report | L | |
+
+Open questions: bank and vault counts left out, or shown only as present/missing? Is a preview wanted, or is the GitHub page enough (as for run times)?
