@@ -6,12 +6,9 @@ body:
     attributes:
       value: |
         ### 📸 Screenshots help a lot
-        A picture of the sidebar, the overlay or the bank often shows the problem straight away. Paste or drag it into "What happened?" below.
+        **Windows:** Win + Shift + S · **Mac:** Cmd + Ctrl + Shift + 4, then paste below.
 
-        - **Windows:** press **Win + Shift + S** to open the Snipping Tool, then drag a box round what you want.
-        - **Mac:** press **Cmd + Ctrl + Shift + 4**, then drag a box. It's copied, ready to paste here.
-
-        To keep yourself anonymous if you'd like: collapse the chat box first (click the chat tab that's open), and leave your name out of the box, or crop it off. RuneLite shows it in the top-left corner of the window.
+        To stay anonymous, collapse the chat box and leave out your name (top left of the RuneLite window).
   - type: textarea
     id: what-happened
     attributes:
