@@ -11,21 +11,26 @@ import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
+import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.Rune;
+import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RoutePlanner;
 import com.farmrunautopilot.route.RunSelection;
 import com.farmrunautopilot.route.RunSelector;
 import com.farmrunautopilot.settings.Compost;
+import com.farmrunautopilot.settings.Outfit;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.tracking.PatchPrediction;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -421,5 +426,106 @@ public class SupplyCalculatorTest
 
 		// No bucket at all: plain buckets, no note
 		assertNull(compost(ultracompostFor(6), Holdings.EMPTY, new java.util.ArrayList<>()).get(0).getNote());
+	}
+
+	private static Holdings wornAndBank(Map<Integer, Integer> worn, Map<Integer, Integer> bank)
+	{
+		final Map<Holdings.Source, Map<Integer, Integer>> items = new EnumMap<>(Holdings.Source.class);
+		items.put(Holdings.Source.WORN, worn);
+		items.put(Holdings.Source.BANK, bank);
+		final Set<Rune> infinite = EnumSet.noneOf(Rune.class);
+		worn.keySet().forEach(id -> infinite.addAll(SupplyItems.INFINITE_RUNE_ITEMS.getOrDefault(id,
+			Collections.emptySet())));
+		return new Holdings(items, Collections.emptyMap(), infinite, true, false);
+	}
+
+	@Test
+	public void aStaffCoveringTheRunesBeatsMagicSecateurs()
+	{
+		// Issue #7: wearing the secateurs knocked the lava battlestaff off, so the plan asked for earth runes
+		final Map<Integer, Integer> worn = new HashMap<>();
+		worn.put(ItemID.LAVA_BATTLESTAFF, 1);
+		final Map<Integer, Integer> bank = new HashMap<>();
+		bank.put(ItemID.FAIRY_ENCHANTED_SECATEURS, 1);
+		final RunConfig config = onlyType(PatchType.HERB);
+		config.setUseCurePlant(true);
+		final SupplyPlan plan = plan(config, AccessSnapshot.UNKNOWN, wornAndBank(worn, bank), NEVER_SEEN, true);
+
+		final SupplyLine staff = find(plan, "item " + ItemID.LAVA_BATTLESTAFF);
+		assertNotNull(staff);
+		assertTrue(staff.isWear());
+		assertEquals(0, staff.getSlots());
+		final SupplyLine earth = find(plan, "item " + Rune.EARTH.getItemId());
+		assertTrue(earth.isMet());
+		assertEquals(0, earth.getSlots());
+		final SupplyLine secateurs = find(plan, "Magic secateurs");
+		assertFalse(secateurs.isWear());
+		assertEquals(1, secateurs.getSlots());
+		assertTrue(secateurs.getNote().contains("item " + ItemID.LAVA_BATTLESTAFF));
+
+		// A staff in the bank counts too, as the plan says to wield it
+		final SupplyPlan fromBank = plan(config, AccessSnapshot.UNKNOWN, wornAndBank(bank, worn), NEVER_SEEN, true);
+		assertTrue(find(fromBank, "item " + Rune.EARTH.getItemId()).isMet());
+		assertTrue(find(fromBank, "item " + ItemID.LAVA_BATTLESTAFF).isWear());
+
+		// No runes to save: the staff isn't a candidate, and the secateurs are worn
+		final Holdings held = wornAndBank(worn, bank);
+		assertTrue(SupplyCalculator.runeItems(Collections.emptyMap(), held).isEmpty());
+		final Map<TravelItem.WearSlot, Object> wear = SupplyCalculator.toWear(Collections.emptySet(),
+			Collections.singletonList(new SupplyCalculator.Wearable(SupplyCalculator.Wearable.MAGIC_SECATEURS,
+				TravelItem.WearSlot.WEAPON, 1, 1, false)), Outfit.NONE, held);
+		assertEquals(SupplyCalculator.Wearable.MAGIC_SECATEURS, wear.get(TravelItem.WearSlot.WEAPON));
+		assertFalse(SupplyCalculator.infiniteRunes(wear, held).contains(Rune.FIRE));
+	}
+
+	@Test
+	public void theFairyRingStaffBeatsAStaffSavingRunes()
+	{
+		final Map<Integer, Integer> worn = new HashMap<>();
+		worn.put(ItemID.LAVA_BATTLESTAFF, 1);
+		final Map<Integer, Integer> bank = new HashMap<>();
+		bank.put(ItemID.DRAMEN_STAFF, 1);
+		final Holdings held = wornAndBank(worn, bank);
+		final Map<Rune, Integer> need = new EnumMap<>(Rune.class);
+		need.put(Rune.EARTH, 8);
+
+		final List<SupplyCalculator.Wearable> extras = new ArrayList<>();
+		extras.add(new SupplyCalculator.Wearable(SupplyCalculator.Wearable.FAIRY_RING_STAFF, TravelItem.WearSlot.WEAPON,
+			SupplyCalculator.Wearable.NEEDED, 0, false));
+		extras.addAll(SupplyCalculator.runeItems(need, held));
+		extras.add(new SupplyCalculator.Wearable(SupplyCalculator.Wearable.MAGIC_SECATEURS, TravelItem.WearSlot.WEAPON,
+			1, 1, false));
+		final Map<TravelItem.WearSlot, Object> wear = SupplyCalculator.toWear(Collections.emptySet(), extras,
+			Outfit.NONE, held);
+		assertEquals(SupplyCalculator.Wearable.FAIRY_RING_STAFF, wear.get(TravelItem.WearSlot.WEAPON));
+		// The lava staff comes off for the dramen staff, so its runes no longer count
+		final Set<Rune> infinite = SupplyCalculator.infiniteRunes(wear, held);
+		assertFalse(infinite.contains(Rune.EARTH));
+		final SupplyCalculator.RuneResult runes = SupplyCalculator.runes(need, infinite, held, held.carriedOnly(),
+			id -> "rune " + id);
+		assertFalse(runes.lines.get(0).isMet());
+
+		// Without fairy rings the lava staff stays on, ahead of the secateurs
+		final Map<TravelItem.WearSlot, Object> noRings = SupplyCalculator.toWear(Collections.emptySet(),
+			extras.subList(1, extras.size()), Outfit.NONE, held);
+		assertEquals(ItemID.LAVA_BATTLESTAFF, noRings.get(TravelItem.WearSlot.WEAPON));
+		assertTrue(SupplyCalculator.infiniteRunes(noRings, held).contains(Rune.EARTH));
+	}
+
+	@Test
+	public void theArdougneCloakGivesWayToTheCapeAlreadyWorn()
+	{
+		final Set<TravelItem> used = EnumSet.of(TravelItem.ARDOUGNE_CLOAK, TravelItem.QUEST_POINT_CAPE);
+		final Map<Integer, Integer> bank = new HashMap<>();
+		bank.put(ItemID.ARDY_CAPE_ELITE, 1);
+		final Map<Integer, Integer> worn = new HashMap<>();
+		worn.put(ItemID.SKILLCAPE_QP, 1);
+		// The cloak teleports from the inventory too, so wearing it is only to save a slot
+		assertEquals(EnumSet.of(TravelItem.QUEST_POINT_CAPE),
+			SupplyCalculator.toWear(used, Outfit.NONE, wornAndBank(worn, bank)));
+		// Neither worn: the first used gets the cape slot, the other is carried
+		bank.putAll(worn);
+		assertEquals(EnumSet.of(TravelItem.ARDOUGNE_CLOAK),
+			SupplyCalculator.toWear(used, Outfit.NONE, wornAndBank(new HashMap<>(), bank)));
 	}
 }

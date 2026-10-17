@@ -106,14 +106,18 @@ public enum TravelItem
 		return itemIds.clone();
 	}
 
-	/** Where it's worn; one item per slot can be worn instead of taking an inventory slot. */
+	/**
+	 * Where it's worn; one item per slot can be worn instead of taking an inventory slot. No teleport item goes in
+	 * the weapon slot: it's for the fairy-ring staff, a staff saving runes, or magic secateurs (SupplyCalculator).
+	 */
 	public enum WearSlot
 	{
 		RING,
 		NECK,
 		CAPE,
 		HANDS,
-		SHIELD
+		SHIELD,
+		WEAPON
 	}
 
 	/** The equipment slot it's worn in, or null if it can't be worn. */

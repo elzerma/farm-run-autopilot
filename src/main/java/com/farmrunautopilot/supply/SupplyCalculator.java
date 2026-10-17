@@ -277,29 +277,9 @@ public final class SupplyCalculator
 		}
 		tablets.forEach((id, n) -> lines.add(line(SupplyLine.Group.TRAVEL, itemName.apply(id), n, holdings, carried,
 			null, 1, id).usedUp()));
-		final Set<TravelItem> worn = toWear(travelItems.keySet(), config.getOutfit(), holdings);
-		travelItems.forEach((item, stops) ->
-		{
-			final String used = stops > 1 ? "Used at " + stops + " stops" : "Used once";
-			final SupplyLine line = line(SupplyLine.Group.TRAVEL, item.getDisplayName(), 1, holdings, carried,
-				worn.contains(item) ? used + ". Wear it: no inventory slot" : used, worn.contains(item) ? 0 : 1,
-				item.getItemIds());
-			lines.add(worn.contains(item) ? line.worn() : line);
-		});
-		if (balloonFlights > 0)
-		{
-			lines.add(line(SupplyLine.Group.TRAVEL, "Logs", balloonFlights, holdings, carried,
-				"The hot air balloon takes one normal log a flight", 1, ItemID.LOGS).usedUp());
-		}
 		// Fairy rings need a staff wielded, which takes the weapon slot
-		final boolean staffWielded = fairyRing && !(access.isKnown()
+		final boolean fairyStaff = fairyRing && !(access.isKnown()
 			&& access.isMet(Requirement.diary(AchievementDiary.LUMBRIDGE_DRAYNOR, AchievementDiary.Tier.ELITE)));
-		if (staffWielded)
-		{
-			lines.add(line(SupplyLine.Group.TRAVEL, "Dramen or lunar staff", 1, holdings, carried,
-				"Needed for fairy rings until the Elite Lumbridge & Draynor diary. Wield it: fairy rings need it wielded",
-				0, SupplyItems.FAIRY_RING_STAFFS).worn());
-		}
 
 		// Spells used on patches
 		final int herbs = patchCounts.getOrDefault(PatchType.HERB, 0);
@@ -308,8 +288,62 @@ public final class SupplyCalculator
 			addRunes(runeNeed, Spell.CURE_PLANT);
 		}
 
-		// Runes
-		final RuneResult runes = runes(runeNeed, holdings, carried, itemName);
+		// Who gets each equipment slot, now that the runes are known (issue #7). Put on at the bank, never mid-run.
+		final boolean secateursWanted = config.isRecommendEquipmentBoosts() && herbs > 0;
+		final List<Wearable> extras = new ArrayList<>();
+		if (fairyStaff)
+		{
+			extras.add(new Wearable(Wearable.FAIRY_RING_STAFF, TravelItem.WearSlot.WEAPON, Wearable.NEEDED, 0,
+				wornAny(holdings, SupplyItems.FAIRY_RING_STAFFS)));
+		}
+		extras.addAll(runeItems(runeNeed, holdings));
+		if (secateursWanted)
+		{
+			// Their bonus works from the inventory, so they come last
+			extras.add(new Wearable(Wearable.MAGIC_SECATEURS, TravelItem.WearSlot.WEAPON, 1, 1,
+				wornAny(holdings, SupplyItems.MAGIC_SECATEURS)));
+		}
+		final Map<TravelItem.WearSlot, Object> wear = toWear(travelItems.keySet(), extras, config.getOutfit(), holdings);
+		travelItems.forEach((item, stops) ->
+		{
+			final boolean worn = wear.containsValue(item);
+			final String used = stops > 1 ? "Used at " + stops + " stops" : "Used once";
+			final SupplyLine line = line(SupplyLine.Group.TRAVEL, item.getDisplayName(), 1, holdings, carried,
+				worn ? used + ". Wear it: no inventory slot" : used, worn ? 0 : 1, item.getItemIds());
+			lines.add(worn ? line.worn() : line);
+		});
+		if (balloonFlights > 0)
+		{
+			lines.add(line(SupplyLine.Group.TRAVEL, "Logs", balloonFlights, holdings, carried,
+				"The hot air balloon takes one normal log a flight", 1, ItemID.LOGS).usedUp());
+		}
+		if (fairyStaff)
+		{
+			lines.add(line(SupplyLine.Group.TRAVEL, "Dramen or lunar staff", 1, holdings, carried,
+				"Needed for fairy rings until the Elite Lumbridge & Draynor diary. Wield it: fairy rings need it wielded",
+				0, SupplyItems.FAIRY_RING_STAFFS).worn());
+		}
+
+		// Runes, with the staff or tome the plan puts on
+		for (Object item : wear.values())
+		{
+			if (item instanceof Integer)
+			{
+				final int id = (Integer) item;
+				final List<String> covered = new ArrayList<>();
+				for (Rune rune : SupplyItems.INFINITE_RUNE_ITEMS.get(id))
+				{
+					if (runeNeed.containsKey(rune))
+					{
+						covered.add(rune.name().toLowerCase());
+					}
+				}
+				lines.add(line(SupplyLine.Group.RUNES, itemName.apply(id), 1, holdings, carried, "Covers the "
+					+ String.join(" and ", covered) + " runes. " + (SupplyItems.RUNE_TOMES.contains(id) ? "Wear" : "Wield")
+					+ " it: no runes to carry", 0, id).worn());
+			}
+		}
+		final RuneResult runes = runes(runeNeed, infiniteRunes(wear, holdings), holdings, carried, itemName);
 		lines.addAll(runes.lines);
 
 		// Coins
@@ -340,15 +374,19 @@ public final class SupplyCalculator
 		lines.addAll(compostLines(compost, holdings, carried, warnings));
 
 		// Optional
-		if (config.isRecommendEquipmentBoosts() && herbs > 0)
+		if (secateursWanted)
 		{
-			// The bonus works from the inventory too. Worn when the weapon slot is free; with a staff wielded for fairy
-			// rings they go in the inventory (elzerma)
+			// The bonus works from the inventory too. Worn when nothing else wants the weapon slot; otherwise they go
+			// in the inventory (elzerma)
+			final Object weapon = wear.get(TravelItem.WearSlot.WEAPON);
+			final boolean wearSecateurs = weapon == Wearable.MAGIC_SECATEURS;
+			final String takenBy = weapon instanceof Integer ? itemName.apply((Integer) weapon).toLowerCase()
+				: "staff for fairy rings";
 			final SupplyLine secateurs = changeIn(line(SupplyLine.Group.OPTIONAL, "Magic secateurs", 1, holdings,
-				carried, staffWielded ? "+10% herb yield; in the inventory, as the staff takes the weapon slot"
-				: "+10% herb yield. Wear it: no inventory slot", staffWielded ? 1 : 0, SupplyItems.MAGIC_SECATEURS),
-				RUN_OPTIONS);
-			lines.add(staffWielded ? secateurs : secateurs.worn());
+				carried, wearSecateurs ? "+10% herb yield. Wear it: no inventory slot"
+				: "+10% herb yield; in the inventory, as the " + takenBy + " takes the weapon slot",
+				wearSecateurs ? 0 : 1, SupplyItems.MAGIC_SECATEURS), RUN_OPTIONS);
+			lines.add(wearSecateurs ? secateurs.worn() : secateurs);
 		}
 		if (config.getOutfit() != Outfit.NONE)
 		{
@@ -398,46 +436,172 @@ public final class SupplyCalculator
 			runes.summary, slots, Collections.unmodifiableMap(plantings));
 	}
 
-	/**
-	 * The teleport items to wear rather than carry: one per equipment slot, the one already worn if any, else the
-	 * first used. Slots the outfit takes (Graceful's cape and gloves) are left out.
-	 */
+	/** Something that could go in an equipment slot; one per slot is put on at the bank (issue #7). */
+	static final class Wearable
+	{
+		/** The value of something that only works worn: it always gets its slot. */
+		static final int NEEDED = Integer.MAX_VALUE;
+		/** The dramen or lunar staff, wielded for fairy rings. */
+		static final Object FAIRY_RING_STAFF = "fairy ring staff";
+		static final Object MAGIC_SECATEURS = "magic secateurs";
+
+		/** A {@link TravelItem}, a rune item ID from {@link SupplyItems#INFINITE_RUNE_ITEMS}, or a marker above. */
+		final Object item;
+		final TravelItem.WearSlot slot;
+		/** What wearing it saves: inventory slots or rune types, or {@link #NEEDED}. Higher wins. */
+		final int value;
+		/** Breaks ties in value, lower first (magic secateurs come after a staff). */
+		final int rank;
+		/** Already worn, which breaks remaining ties. */
+		final boolean worn;
+
+		Wearable(Object item, TravelItem.WearSlot slot, int value, int rank, boolean worn)
+		{
+			this.item = item;
+			this.slot = slot;
+			this.value = value;
+			this.rank = rank;
+			this.worn = worn;
+		}
+
+		boolean beats(Wearable other)
+		{
+			if (value != other.value)
+			{
+				return value > other.value;
+			}
+			if (rank != other.rank)
+			{
+				return rank < other.rank;
+			}
+			return worn && !other.worn;
+		}
+	}
+
+	/** The teleport items to wear rather than carry, with nothing else competing for their slots. */
 	static Set<TravelItem> toWear(Set<TravelItem> items, Outfit outfit, Holdings holdings)
 	{
-		final Set<TravelItem.WearSlot> taken = outfit == Outfit.GRACEFUL
-			? EnumSet.of(TravelItem.WearSlot.CAPE, TravelItem.WearSlot.HANDS) : EnumSet.noneOf(TravelItem.WearSlot.class);
-		final Map<TravelItem.WearSlot, TravelItem> wear = new EnumMap<>(TravelItem.WearSlot.class);
-		for (TravelItem item : items)
-		{
-			final TravelItem.WearSlot slot = item.getWearSlot();
-			if (slot == null || taken.contains(slot))
-			{
-				continue;
-			}
-			// Kharedst's memoirs can't be worn; the Book of the dead (its upgrade) can
-			if (item == TravelItem.KHAREDSTS_MEMOIRS && holdings.count(ItemID.BOOK_OF_THE_DEAD) == 0)
-			{
-				continue;
-			}
-			if (holdings.in(Holdings.Source.WORN).keySet().stream().anyMatch(id -> contains(item.getItemIds(), id)))
-			{
-				wear.put(slot, item);
-			}
-			else
-			{
-				wear.putIfAbsent(slot, item);
-			}
-		}
 		final Set<TravelItem> result = EnumSet.noneOf(TravelItem.class);
-		result.addAll(wear.values());
+		for (Object item : toWear(items, Collections.emptyList(), outfit, holdings).values())
+		{
+			result.add((TravelItem) item);
+		}
 		return result;
 	}
 
-	private static boolean contains(int[] ids, int id)
+	/**
+	 * What goes in each equipment slot: the teleport items (each saves an inventory slot) and {@code extras}, ranked
+	 * by {@link Wearable#beats}; among equals the first listed keeps the slot, teleport items in the order they're
+	 * used. Every teleport item here works from the inventory too (all Ardougne cloak tiers, per the wiki), so
+	 * whatever loses its slot is carried. Slots the outfit takes (Graceful's cape and gloves) are left out.
+	 */
+	static Map<TravelItem.WearSlot, Object> toWear(Set<TravelItem> items, List<Wearable> extras, Outfit outfit,
+		Holdings holdings)
 	{
-		for (int i : ids)
+		final Set<TravelItem.WearSlot> taken = outfit == Outfit.GRACEFUL
+			? EnumSet.of(TravelItem.WearSlot.CAPE, TravelItem.WearSlot.HANDS) : EnumSet.noneOf(TravelItem.WearSlot.class);
+		final List<Wearable> candidates = new ArrayList<>();
+		for (TravelItem item : items)
 		{
-			if (i == id)
+			// Kharedst's memoirs can't be worn; the Book of the dead (its upgrade) can
+			if (item.getWearSlot() != null
+				&& (item != TravelItem.KHAREDSTS_MEMOIRS || holdings.count(ItemID.BOOK_OF_THE_DEAD) > 0))
+			{
+				candidates.add(new Wearable(item, item.getWearSlot(), 1, 0, wornAny(holdings, item.getItemIds())));
+			}
+		}
+		candidates.addAll(extras);
+		final Map<TravelItem.WearSlot, Wearable> best = new EnumMap<>(TravelItem.WearSlot.class);
+		for (Wearable candidate : candidates)
+		{
+			final Wearable current = best.get(candidate.slot);
+			if (!taken.contains(candidate.slot) && (current == null || candidate.beats(current)))
+			{
+				best.put(candidate.slot, candidate);
+			}
+		}
+		final Map<TravelItem.WearSlot, Object> wear = new EnumMap<>(TravelItem.WearSlot.class);
+		best.forEach((slot, wearable) -> wear.put(slot, wearable.item));
+		return wear;
+	}
+
+	/**
+	 * The staves and tomes the player owns that supply runes this run needs, each worth the number of rune types it
+	 * covers. Lowest item ID first, so the pick doesn't depend on map order.
+	 */
+	static List<Wearable> runeItems(Map<Rune, Integer> need, Holdings holdings)
+	{
+		final List<Wearable> items = new ArrayList<>();
+		final List<Integer> ids = new ArrayList<>(SupplyItems.INFINITE_RUNE_ITEMS.keySet());
+		Collections.sort(ids);
+		for (int id : ids)
+		{
+			if (holdings.count(id) == 0)
+			{
+				continue;
+			}
+			int covers = 0;
+			for (Rune rune : SupplyItems.INFINITE_RUNE_ITEMS.get(id))
+			{
+				covers += need.containsKey(rune) ? 1 : 0;
+			}
+			if (covers > 0)
+			{
+				items.add(new Wearable(id, runeItemSlot(id), covers, 0,
+					holdings.in(Holdings.Source.WORN).getOrDefault(id, 0) > 0));
+			}
+		}
+		return items;
+	}
+
+	/**
+	 * Runes supplied without limit once the plan's equipment is on: what's worn now, less the staves and tomes that
+	 * give up their slot, plus the ones put on.
+	 */
+	static Set<Rune> infiniteRunes(Map<TravelItem.WearSlot, Object> wear, Holdings holdings)
+	{
+		final Set<Rune> infinite = EnumSet.noneOf(Rune.class);
+		infinite.addAll(holdings.getInfiniteRunes());
+		final Set<Rune> kept = EnumSet.noneOf(Rune.class);
+		for (Integer id : holdings.in(Holdings.Source.WORN).keySet())
+		{
+			final Set<Rune> runes = SupplyItems.INFINITE_RUNE_ITEMS.get(id);
+			if (runes == null)
+			{
+				continue;
+			}
+			final Object replacement = wear.get(runeItemSlot(id));
+			if (replacement == null || id.equals(replacement))
+			{
+				kept.addAll(runes);
+			}
+			else
+			{
+				infinite.removeAll(runes);
+			}
+		}
+		infinite.addAll(kept);
+		for (Object item : wear.values())
+		{
+			if (item instanceof Integer)
+			{
+				infinite.addAll(SupplyItems.INFINITE_RUNE_ITEMS.get(item));
+			}
+		}
+		return infinite;
+	}
+
+	private static TravelItem.WearSlot runeItemSlot(int id)
+	{
+		return SupplyItems.RUNE_TOMES.contains(id) ? TravelItem.WearSlot.SHIELD : TravelItem.WearSlot.WEAPON;
+	}
+
+	private static boolean wornAny(Holdings holdings, int[] ids)
+	{
+		final Map<Integer, Integer> worn = holdings.in(Holdings.Source.WORN);
+		for (int id : ids)
+		{
+			if (worn.getOrDefault(id, 0) > 0)
 			{
 				return true;
 			}
@@ -601,31 +765,38 @@ public final class SupplyCalculator
 		final Map<Integer, Integer> comboUsed = new LinkedHashMap<>();
 	}
 
-	/**
-	 * Rune lines after free sources: equipped staves cover their runes completely, then combination runes
-	 * are spent on the biggest shortfalls first (SPEC 11.3). Worked out twice: for everything held, and for
-	 * what is carried.
-	 */
+	/** Rune lines, with the staves and tomes worn now. */
 	static RuneResult runes(Map<Rune, Integer> need, Holdings holdings, Holdings carried, IntFunction<String> itemName)
+	{
+		return runes(need, holdings.getInfiniteRunes(), holdings, carried, itemName);
+	}
+
+	/**
+	 * Rune lines after free sources: the staves and tomes the plan has on cover their runes ({@code infinite})
+	 * completely, then combination runes are spent on the biggest shortfalls first (SPEC 11.3). Worked out twice: for
+	 * everything held, and for what is carried.
+	 */
+	static RuneResult runes(Map<Rune, Integer> need, Set<Rune> infinite, Holdings holdings, Holdings carried,
+		IntFunction<String> itemName)
 	{
 		final RuneResult result = new RuneResult();
 		if (need.isEmpty())
 		{
 			return result;
 		}
-		final RuneAllocation all = allocateRunes(need, holdings);
-		final RuneAllocation onYou = allocateRunes(need, carried);
+		final RuneAllocation all = allocateRunes(need, infinite, holdings);
+		final RuneAllocation onYou = allocateRunes(need, infinite, carried);
 
 		final List<String> bring = new ArrayList<>();
 		final List<String> free = new ArrayList<>();
 		need.forEach((rune, n) ->
 		{
-			final boolean infinite = holdings.getInfiniteRunes().contains(rune);
+			final boolean staffCovers = infinite.contains(rune);
 			final String name = itemName.apply(rune.getItemId());
 			String note = null;
-			if (infinite)
+			if (staffCovers)
 			{
-				note = "Your equipped staff or tome supplies these";
+				note = "Your staff or tome supplies these";
 				free.add("staff covers " + title(rune.name()));
 			}
 			else
@@ -638,7 +809,7 @@ public final class SupplyCalculator
 				}
 			}
 			result.lines.add(new SupplyLine(SupplyLine.Group.RUNES, name, n, all.have.get(rune), onYou.have.get(rune),
-				holdings.where(rune.getItemId()), note, infinite || inPouch(holdings, rune) ? 0 : 1, false,
+				holdings.where(rune.getItemId()), note, staffCovers || inPouch(holdings, rune) ? 0 : 1, false,
 				TRAVEL + " (teleport, or runes instead of a tablet)", new int[]{rune.getItemId()}, true));
 		});
 		all.comboUsed.forEach((id, n) -> free.add(n + " " + itemName.apply(id).toLowerCase()));
@@ -646,13 +817,13 @@ public final class SupplyCalculator
 		return result;
 	}
 
-	private static RuneAllocation allocateRunes(Map<Rune, Integer> need, Holdings holdings)
+	private static RuneAllocation allocateRunes(Map<Rune, Integer> need, Set<Rune> infinite, Holdings holdings)
 	{
 		final RuneAllocation result = new RuneAllocation();
 		final Map<Rune, Integer> shortfall = new EnumMap<>(Rune.class);
 		need.forEach((rune, n) ->
 		{
-			final int held = holdings.getInfiniteRunes().contains(rune) ? n : holdings.count(rune.getItemId());
+			final int held = infinite.contains(rune) ? n : holdings.count(rune.getItemId());
 			result.have.put(rune, held);
 			shortfall.put(rune, Math.max(0, n - held));
 		});

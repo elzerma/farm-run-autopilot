@@ -6,9 +6,11 @@ import static com.farmrunautopilot.data.travel.Rune.FIRE;
 import static com.farmrunautopilot.data.travel.Rune.SOUL;
 import static com.farmrunautopilot.data.travel.Rune.WATER;
 import com.farmrunautopilot.data.travel.Rune;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import net.runelite.api.gameval.ItemID;
@@ -81,6 +83,9 @@ public final class SupplyItems
 
 	/** Equipped items that supply unlimited runes of these types (staves, battlestaves, tomes). */
 	public static final Map<Integer, Set<Rune>> INFINITE_RUNE_ITEMS;
+	/** The rune items above worn in the shield slot; the rest are wielded. */
+	public static final Set<Integer> RUNE_TOMES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+		ItemID.TOME_OF_WATER, ItemID.TOME_OF_EARTH, ItemID.TOME_OF_FIRE)));
 
 	/**
 	 * Combination runes and the runes each one counts as. Sunfire counts as fire; aether as soul (and cosmic,
