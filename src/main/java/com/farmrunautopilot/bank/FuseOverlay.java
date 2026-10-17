@@ -4,11 +4,16 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import javax.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.gameval.SpriteID;
+import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -18,6 +23,7 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  * elzerma): a spark runs round the button like marquee lights, the fuse behind it glows, and little pixel
  * figures leap off where the spark passes. Drawing only; the button itself is untouched.
  */
+@Slf4j
 public class FuseOverlay extends Overlay
 {
 	/** One lap of the spark. */
@@ -42,6 +48,15 @@ public class FuseOverlay extends Overlay
 	private static final Color SPARK = new Color(0xFF, 0xF4, 0xC0);
 
 	private final FarmBankTabButton button;
+	private final SpriteManager spriteManager;
+	/**
+	 * The drawn part of the button's sprite, as fractions of its size (it has see-through edges, so the widget's own
+	 * bounds left the frame off-centre: elzerma); null until the sprite is loaded.
+	 */
+	private volatile double[] art;
+	private boolean artRequested;
+	/** For the debug log: where the fuse was last put. */
+	private Rectangle lastDrawn;
 	private final Random random = new Random();
 	private final List<Figure> figures = new ArrayList<>();
 	private long lastFrame;
@@ -57,9 +72,10 @@ public class FuseOverlay extends Overlay
 	}
 
 	@Inject
-	FuseOverlay(FarmBankTabButton button)
+	FuseOverlay(FarmBankTabButton button, SpriteManager spriteManager)
 	{
 		this.button = button;
+		this.spriteManager = spriteManager;
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_WIDGETS);
 	}
@@ -67,14 +83,15 @@ public class FuseOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		final Rectangle bounds = button.callingBounds();
+		final Rectangle widget = button.callingBounds();
 		final long now = System.currentTimeMillis();
-		if (bounds == null)
+		if (widget == null)
 		{
 			figures.clear();
 			lastFrame = now;
 			return null;
 		}
+		final Rectangle bounds = visible(widget);
 		final Rectangle fuse = new Rectangle(bounds.x - GAP, bounds.y - GAP, bounds.width + 2 * GAP - 1,
 			bounds.height + 2 * GAP - 1);
 		final double perimeter = 2.0 * (fuse.width + fuse.height);
@@ -112,6 +129,65 @@ public class FuseOverlay extends Overlay
 		drawFigures(graphics, now);
 		lastFrame = now;
 		return null;
+	}
+
+	/** The part of the button that's actually drawn, or the whole widget until its sprite has been measured. */
+	private Rectangle visible(Rectangle widget)
+	{
+		if (!artRequested)
+		{
+			artRequested = true;
+			spriteManager.getSpriteAsync(SpriteID.Miscgraphics3.UNKNOWN_BUTTON_SQUARE_SMALL, 0, sprite ->
+			{
+				art = drawnPart(sprite);
+				log.debug("Farm run button sprite {}x{}, drawn part {}", sprite.getWidth(), sprite.getHeight(),
+					Arrays.toString(art));
+			});
+		}
+		final double[] a = art;
+		if (a == null)
+		{
+			return widget;
+		}
+		final int x = widget.x + (int) Math.round(a[0] * widget.width);
+		final int y = widget.y + (int) Math.round(a[1] * widget.height);
+		final Rectangle drawn = new Rectangle(x, y, widget.x + (int) Math.round(a[2] * widget.width) - x,
+			widget.y + (int) Math.round(a[3] * widget.height) - y);
+		if (!drawn.equals(lastDrawn))
+		{
+			lastDrawn = drawn;
+			log.debug("Farm run button widget {}, fuse round {}", widget, drawn);
+		}
+		return drawn;
+	}
+
+	/** Left, top, right and bottom of the sprite's non-transparent pixels, as fractions of its size. */
+	static double[] drawnPart(BufferedImage sprite)
+	{
+		final int w = sprite.getWidth();
+		final int h = sprite.getHeight();
+		int left = w;
+		int top = h;
+		int right = 0;
+		int bottom = 0;
+		for (int y = 0; y < h; y++)
+		{
+			for (int x = 0; x < w; x++)
+			{
+				if ((sprite.getRGB(x, y) >>> 24) != 0)
+				{
+					left = Math.min(left, x);
+					top = Math.min(top, y);
+					right = Math.max(right, x + 1);
+					bottom = Math.max(bottom, y + 1);
+				}
+			}
+		}
+		if (right <= left || bottom <= top)
+		{
+			return new double[]{0, 0, 1, 1};
+		}
+		return new double[]{left / (double) w, top / (double) h, right / (double) w, bottom / (double) h};
 	}
 
 	/** A figure jumping outwards from the spark's edge of the fuse. */
