@@ -1,5 +1,6 @@
 package com.farmrunautopilot.bank;
 
+import java.awt.Rectangle;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.Getter;
@@ -113,6 +114,16 @@ class FarmBankTabButton
 			background.setSpriteId(sprite);
 			background.revalidate();
 		}
+	}
+
+	/** Where the button is on screen while the guide is waiting for it to be clicked, else null (see FuseOverlay). */
+	Rectangle callingBounds()
+	{
+		if (!attention || active || background == null || background.isHidden() || isBankHidden())
+		{
+			return null;
+		}
+		return background.getBounds();
 	}
 
 	/** The bank is open (and our button can be shown). */
