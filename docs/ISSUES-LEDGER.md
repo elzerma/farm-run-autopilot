@@ -42,7 +42,7 @@ Issues #1 to #5 were answered and closed on 2026-10-15, before this ledger began
 
 ## #8 explore/add bank tab support for seed vault
 
-**Kind:** Idea · **Status:** open. The section is built (option 2). Tests 1 and 2 passed, and elzerma asked for changes after each. The latest changes are built and wait on revision 3 of SEED_VAULT_SECTION. Two write-ups below wait on elzerma: the banking setting, and routing to the guild. · **Reviewed through:** 2026-10-16 elzerma (body)
+**Kind:** Idea · **Status:** open. The section is built (option 2). Tests 1 to 3 passed, and elzerma asked for changes after each. The latest change is built and waits on revision 4 of SEED_VAULT_SECTION. Two write-ups below wait on elzerma: the banking setting, and routing to the guild. · **Reviewed through:** 2026-10-16 elzerma (body)
 
 | Who | What they said | Checked against | Evaluation | Decision |
 |-----|----------------|-----------------|------------|----------|
@@ -105,6 +105,35 @@ SEED_VAULT_SECTION is now revision 3, asking about the name, the list entry and 
 - **Scroll:** opening the vault goes to the top only for the scroll the game does as the vault opens (`seed_vault_catvar`, 2816, within a tick of opening). Clicking Favourite Slots (`seed_vault_catop`) goes to its own place, below the section.
 
 Revision 3 now asks about the button, Favourite Slots, reopening and hiding. No result had been recorded for its earlier steps.
+
+**Later the same day:** the button came down to 22 pixels, centred on the close button's line, to sit in the title bar (elzerma: "might need to come down to like 22-23 pixels").
+
+**Tested (2026-10-17, elzerma, revision 3):** passed. The report shows:
+- The vault opening with the view off and the button calling.
+- With the button clicked, the section at the top: 120 high, both seeds yellow (in storage), scrolled to 0.
+- With the button clicked again, the section gone and the button calling again.
+
+The capture after Favourite Slots ("scrolled to 0") was taken too early to count; elzerma's hand check covers it. elzerma's 11 hand checks all passed:
+- Favourite Slots lands just below the section.
+- The counts go up on withdrawing and down on depositing.
+- Seeds missing everywhere show red, and seeds only in the bank show yellow with 0.
+- Dragging in or onto the section does nothing ("can only swap within categories").
+- Drags elsewhere still swap.
+- Searching works.
+- There's no button without a run built.
+- Herbs for other patches are included.
+- With the vine switched off, the button only flashes.
+- Fixed and resizable layouts both line up.
+
+elzerma then asked: "previously indicated that farm run autopilot shouldn't create a tab in the list on the left. I want that feature back, but only show that tab when the button has been toggled on".
+
+**Changed (2026-10-17, revision 4):** the "Farm Run Autopilot" entry is back in the list on the left (the same code as before). It now shows only while the view is on, so it comes and goes with the button.
+- It goes at the top, or under "Farming contract" when that section is above.
+- It scrolls to the section.
+- The game's entries move down a row for it and back up when it goes.
+- Favourite Slots and the other entries still go to their own places: only the scroll as the vault opens is sent to the top now.
+
+Revision 4 asks about the entry with the view on and off.
 
 ### #8 write-up: how a run with seeds in the vault banks partway (not built; elzerma to choose the wording)
 

@@ -19,8 +19,8 @@ public enum TestItem
 	SEED_VAULT_SECTION(Tab.RUN, "Farm run section in the seed vault",
 		"Build a run and open the Farming Guild's seed vault: the button by its close button should flash, with the "
 			+ "same outline round it as the bank's Farm run button. Clicking it shows a \"Farm Run Autopilot\" section at "
-			+ "the top, titled like the vault's own, with a \"/ N\" count under each seed, and clicking again hides it. "
-			+ "Favourite Slots on the left goes to its own place below the section, and seeds drag as usual.", 3),
+			+ "the top, with a \"/ N\" count under each seed, and a \"Farm Run Autopilot\" entry at the top of the list on "
+			+ "the left that goes back to it. Clicking the button again hides both.", 4),
 	FORTIS_CHAMPION(Tab.FARM, "Civitas herbs and the Colosseum",
 		"With \"Champion rank at the Fortis Colosseum\" ticked in Account > Unlocks, the Civitas herb patch "
 			+ "should count as disease-free: no plant cure or protection asked for it.", 2),

@@ -70,7 +70,8 @@ sharing `FarmBankTab`'s). The vault's own items keep the vault's look, names inc
 hold is shown faded, as on the bank tab. The view is switched on and off by a button just left of the vault's close
 button that looks and calls for attention exactly as the bank's Farm run button does: the same square button and
 farming icon, pressed while the view is on, flashing with the same outline round it (`VineOverlay`) while it's off
-and the vault holds something the run needs.
+and the vault holds something the run needs. While the view is on, the category list on the left also has a
+"Farm Run Autopilot" entry like the game's own: plain 12, orange, white under the mouse.
 
 ## 3. Type
 

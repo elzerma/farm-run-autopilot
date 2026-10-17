@@ -220,10 +220,9 @@ final class GuidedTests
 
 	/**
 	 * The Farm Run Autopilot view of the seed vault (issue #8): where the game puts everything in the vault was read
-	 * from its scripts. Revision 2 passed (the counts, staying once everything's taken, opening at the top), and
-	 * elzerma's own checks passed dragging, the name and the header font. Revision 3 asks about the button by the close
-	 * button, which shows and hides the view as the bank's Farm run button does its tab, and Favourite Slots going to
-	 * its own place.
+	 * from its scripts. Revisions 2 and 3 passed, with elzerma's own checks: the counts, staying once everything's
+	 * taken, opening at the top, dragging, the button by the close button and Favourite Slots. Revision 4 asks about the
+	 * view's entry in the list on the left, which shows only while the view is on (elzerma).
 	 */
 	private static final class SeedVaultTop extends GuidedTest
 	{
@@ -283,10 +282,8 @@ final class GuidedTests
 						captureVault(ctx, "Seed vault when asked");
 						ctx.problem("The plugin didn't see the seed vault laid out");
 					}),
-				ask("Is the button by the vault's close button flashing, with the same outline round it as the bank's "
-					+ "Farm run button has?"),
-				ask("Click it. Is there a \"Farm Run Autopilot\" section at the top of the vault, titled like the vault's "
-					+ "others, with a \"/ N\" count under every seed and sapling the run needs?")
+				ask("Click the button by the vault's close button. Is there a \"Farm Run Autopilot\" section at the top, "
+					+ "and a \"Farm Run Autopilot\" entry at the top of the list on the left?")
 					.onAnswer((ctx, yes) ->
 					{
 						captureVault(ctx, "Seed vault with the view on");
@@ -296,12 +293,20 @@ final class GuidedTests
 						}
 						if (!yes)
 						{
-							ctx.problem("Answered No: the section wasn't at the top, titled like the others, with a count under "
-								+ "each seed");
+							ctx.problem("Answered No: the section or its entry in the list wasn't there");
 						}
 					}),
-				ask("Scroll down, then click Favourite Slots on the left. Does it go to Favourite Slots, just below the "
-					+ "section, not to the very top?")
+				ask("Scroll down, then click Farm Run Autopilot in the list on the left. Does it take you back to the "
+					+ "section?")
+					.onAnswer((ctx, yes) ->
+					{
+						captureVault(ctx, "Seed vault after the list entry");
+						if (!yes)
+						{
+							ctx.problem("Answered No: the list entry didn't go to the section");
+						}
+					}),
+				ask("Click Favourite Slots in the list. Does it go to Favourite Slots, just below the section?")
 					.onAnswer((ctx, yes) ->
 					{
 						captureVault(ctx, "Seed vault after Favourite Slots");
@@ -310,17 +315,8 @@ final class GuidedTests
 							ctx.problem("Answered No: Favourite Slots didn't go to its own place");
 						}
 					}),
-				ask("Close the seed vault and open it again. Is the section still showing, at the top?")
-					.onAnswer((ctx, yes) ->
-					{
-						captureVault(ctx, "Seed vault opened again");
-						if (!yes)
-						{
-							ctx.problem("Answered No: the section wasn't showing at the top after opening the vault again");
-						}
-					}),
-				ask("Drag a seed and let go of it in an empty space. Did it go back to its place, without being withdrawn?"),
-				ask("Click the button again. Does the section go, leaving the vault as usual?")
+				ask("Click the button again. Do the section and its entry in the list both go, leaving the vault and the "
+					+ "list as usual?")
 					.onAnswer((ctx, yes) ->
 					{
 						captureVault(ctx, "Seed vault with the view off");
@@ -330,7 +326,7 @@ final class GuidedTests
 						}
 						if (!yes)
 						{
-							ctx.problem("Answered No: the vault didn't go back to usual");
+							ctx.problem("Answered No: the vault or the list didn't go back to usual");
 						}
 					}));
 		}
