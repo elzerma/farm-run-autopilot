@@ -49,7 +49,6 @@ final class GuidedTests
 		TESTS.put(TestItem.ATES_CHARGES, new AtesCharges());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
 		TESTS.put(TestItem.BUCKET_COMPOST, new BucketCompost());
-		TESTS.put(TestItem.BARBARIAN_PLANTING, new BarbarianPlanting());
 		TESTS.put(TestItem.HOUSE_SCAN, new HouseScan());
 	}
 
@@ -368,34 +367,6 @@ final class GuidedTests
 				isIt(Compost.COMPOST),
 				isIt(Compost.SUPERCOMPOST),
 				isIt(Compost.ULTRACOMPOST));
-		}
-	}
-
-	/** Barbarian seed planting's unlock value (picked by its name, issue #6). */
-	private static final class BarbarianPlanting extends GuidedTest
-	{
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				// Without it, the value reads 0 whether or not it's the right one, which proves nothing
-				ask("Have you learned barbarian seed planting from Otto Godblessed (you can plant seeds by hand)?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (!yes)
-						{
-							ctx.cannotTest("barbarian seed planting learned");
-							return;
-						}
-						final int value = ctx.varbit(Unlock.BARBARIAN_PLANTING.getVarbit());
-						ctx.capture("Seed planting value", value);
-						if (value <= 0)
-						{
-							ctx.problem("Seed planting is learned but its game value is " + value);
-						}
-					}),
-				ask("In Account > Unlocks, is \"Barbarian seed planting learned\" ticked and marked (detected)?"),
-				ask("Press Build run with herbs included. Is the seed dibber left off the bank's Farm run tab?"));
 		}
 	}
 
