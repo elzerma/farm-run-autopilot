@@ -1,7 +1,7 @@
 # Farm Run Autopilot
 
-Plans and guides combined tree, fruit tree and herb farming runs: what's due, the fastest route, exactly what
-to bring, and step-by-step guidance at every patch.
+Plans and guides combined tree, fruit tree, herb, allotment, flower and hops farming runs: what's due, the
+fastest route, exactly what to bring, and step-by-step guidance at every patch.
 
 The plugin never clicks, types or acts for you. It only shows information.
 

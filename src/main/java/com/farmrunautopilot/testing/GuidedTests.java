@@ -2,8 +2,11 @@ package com.farmrunautopilot.testing;
 
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.access.PohDetector;
+import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
+import com.farmrunautopilot.data.PatchPoints;
+import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.Spellbook;
@@ -15,6 +18,7 @@ import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.Compost;
+import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.VaultBanking;
 import com.farmrunautopilot.supply.Holdings;
@@ -31,7 +35,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.runelite.api.GameObject;
 import net.runelite.api.Skill;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
 import static com.farmrunautopilot.testing.GuidedTest.Step.ask;
 import static com.farmrunautopilot.testing.GuidedTest.Step.doThis;
@@ -52,6 +59,9 @@ final class GuidedTests
 		TESTS.put(TestItem.SEED_VAULT_SECTION, new SeedVaultTop());
 		TESTS.put(TestItem.VAULT_SEEDS_FOR_LATER, new VaultSeedsForLater());
 		TESTS.put(TestItem.VAULT_BANK_AT_GUILD, new VaultBankAtGuild());
+		TESTS.put(TestItem.ALLOTMENT_PAYMENT, new AllotmentPayment());
+		TESTS.put(TestItem.NEW_PATCH_POINTS, new NewPatchPoints());
+		TESTS.put(TestItem.ALLOTMENT_FLOWER_PROTECTION, new AllotmentFlowerProtection());
 		TESTS.put(TestItem.FORTIS_CHAMPION, new FortisChampion());
 		TESTS.put(TestItem.ATES_CHARGES, new AtesCharges());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
@@ -168,7 +178,216 @@ final class GuidedTests
 		return null;
 	}
 
+	/**
+	 * Just the allotments (and their flower patch) at the farm south of Falador, planting potatoes with no compost, so
+	 * all the test needs is seeds and the tools.
+	 */
+	private static void faladorAllotments(RunConfig config, Protection protection)
+	{
+		onlyPatchesAt(config, Location.FALADOR_FARM);
+		config.getEnabledTypes().remove(PatchType.HERB);
+		config.getDisabledPatches().add(Patch.FALADOR_HERB);
+		config.getCrops().put(PatchType.ALLOTMENT, Crop.POTATO);
+		config.getProtection().put(PatchType.ALLOTMENT, protection);
+		config.getProtectionOverrides().remove(Patch.FALADOR_ALLOTMENT_NW);
+		config.getProtectionOverrides().remove(Patch.FALADOR_ALLOTMENT_SE);
+		config.getCompost().put(PatchType.ALLOTMENT, Compost.NONE);
+		config.getCompost().put(PatchType.FLOWER, Compost.NONE);
+	}
+
+	/** Each allotment, flower and hops patch loaded nearby: where its object is, against its map point. */
+	private static String newPatchObjects(TestContext ctx)
+	{
+		final List<String> found = new ArrayList<>();
+		for (Patch patch : Patch.values())
+		{
+			if (patch.getType() != PatchType.ALLOTMENT && patch.getType() != PatchType.FLOWER
+				&& patch.getType() != PatchType.HOPS)
+			{
+				continue;
+			}
+			final List<GameObject> objects = ctx.getScene().objectsFor(patch);
+			if (!objects.isEmpty())
+			{
+				final WorldPoint at = objects.get(0).getWorldLocation();
+				found.add(patch + " at " + at + " (map point " + PatchPoints.of(patch) + ", "
+					+ at.distanceTo2D(PatchPoints.of(patch)) + " tiles off)");
+			}
+		}
+		return found.isEmpty() ? "none" : String.join("; ", found);
+	}
+
 	// The tests
+
+	/**
+	 * Flower protection for allotments (docs/plans/crop-types.md, Sprint 1a). UNVERIFIED: that a marigold planted on the
+	 * same visit is enough (the wiki only says it protects once fully grown), and how the game says a patch is protected.
+	 */
+	private static final class AllotmentFlowerProtection extends GuidedTest
+	{
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			return patchesUsable(access, Location.FALADOR_FARM);
+		}
+
+		@Override
+		public void setUp(RunConfig config, AccountSettings account)
+		{
+			faladorAllotments(config, Protection.FLOWER);
+		}
+
+		@Override
+		public List<Need> bring()
+		{
+			return Arrays.asList(new Need("6 potato seeds", new int[]{ItemID.POTATO_SEED}),
+				new Need("A marigold seed", new int[]{ItemID.MARIGOLD_SEED}));
+		}
+
+		@Override
+		public boolean usesRun()
+		{
+			return true;
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				ask("Does the Run tab's list have a Marigold seed \"protects allotments\", and no compost for paying Elstan?")
+					.onStart(ctx -> ctx.capture("Supply list", supplyNames(ctx))),
+				startRun(),
+				doThis("Go to the farm south of Falador: the first patch step should be the flower patch",
+					ctx -> ctx.runView().getHighlights().getPatch() == Patch.FALADOR_FLOWER)
+					.onDone(ctx ->
+					{
+						ctx.capture("First step", instruction(ctx));
+						ctx.capture("Patch objects", newPatchObjects(ctx));
+					})
+					.orAskAfter(DO_TICKS, "The plugin didn't start at the flower patch. Carry on?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Step instead", instruction(ctx));
+						ctx.problem("The flower patch wasn't first");
+					}),
+				ask("Follow the steps until both allotments are planted. Did the steps ever ask you to pay Elstan?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Last step", instruction(ctx));
+						if (yes)
+						{
+							ctx.problem("Asked to pay Elstan with the marigold protecting the allotments");
+						}
+					}),
+				ask("Right-click an allotment and pick Inspect. Does the message say it's protected?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Inspect message", String.join(" | ", ctx.chat()));
+						ctx.capture("Says protected", yes);
+					}));
+		}
+	}
+
+	/** Paying an allotment gardener for one of their two patches. UNVERIFIED: how the game asks which one. */
+	private static final class AllotmentPayment extends GuidedTest
+	{
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			return patchesUsable(access, Location.FALADOR_FARM);
+		}
+
+		@Override
+		public void setUp(RunConfig config, AccountSettings account)
+		{
+			faladorAllotments(config, Protection.PAY_GARDENER);
+		}
+
+		@Override
+		public List<Need> bring()
+		{
+			return Arrays.asList(new Need("6 potato seeds", new int[]{ItemID.POTATO_SEED}),
+				new Need("4 buckets of compost", new int[]{ItemID.BUCKET_COMPOST}));
+		}
+
+		@Override
+		public boolean usesRun()
+		{
+			return true;
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				startRun(),
+				doThis("Go to the farm south of Falador and plant the first allotment",
+					ctx -> instruction(ctx).startsWith("Pay Elstan for the"))
+					.onDone(ctx -> ctx.remember("pay step", instruction(ctx)))
+					.orAskAfter(DO_TICKS, "The plugin hasn't asked you to pay Elstan for one allotment. Carry on?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Step instead", instruction(ctx));
+						ctx.problem("No \"Pay Elstan for the ... allotment\" step");
+					}),
+				doThis("Pay Elstan for the allotment the step names (right-click him, or talk to him)",
+					ctx -> ctx.recall("pay step") != null && !instruction(ctx).equals(ctx.recall("pay step")))
+					.onStart(ctx -> ctx.capture("Pay step", ctx.recall("pay step")))
+					.onDone(ctx -> ctx.capture("Next step", instruction(ctx)))
+					.orAskAfter(DO_TICKS, "The step didn't move on. Did you pay Elstan?")
+					.onAnswer((ctx, yes) -> ctx.problem(yes ? "Paid, but the step didn't move on" : "Couldn't pay")),
+				ask("Could you choose which allotment you paid for, and was it the one the step named?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Messages", String.join(" | ", ctx.chat()));
+						if (!yes)
+						{
+							ctx.problem("Paying didn't let them pick the allotment the step named");
+						}
+					}));
+		}
+	}
+
+	/** The wiki's map points for the new patches. UNVERIFIED until the objects' real places are logged. */
+	private static final class NewPatchPoints extends GuidedTest
+	{
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			for (Patch patch : Patch.values())
+			{
+				if ((patch.getType() == PatchType.ALLOTMENT || patch.getType() == PatchType.HOPS)
+					&& access.missingFor(patch).isEmpty())
+				{
+					return Collections.emptyList();
+				}
+			}
+			return Collections.singletonList("Unlock an allotment or hops patch");
+		}
+
+		private static Step visit(String text)
+		{
+			return doThis(text, ctx -> !"none".equals(newPatchObjects(ctx)))
+				.onDone(ctx -> ctx.capture("Patches at " + ctx.location(), newPatchObjects(ctx)))
+				.orAskAfter(DO_TICKS, "The plugin hasn't seen an allotment, flower or hops patch yet. Are you by one?")
+				.onAnswer((ctx, yes) ->
+				{
+					if (yes)
+					{
+						ctx.problem("By a patch at " + ctx.location() + " but its object wasn't matched");
+					}
+				});
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				visit("Go to any allotment set or hops patch and stand by it"),
+				visit("Now another one (a different place)").optional(),
+				visit("And one more, if you can").optional());
+		}
+	}
 
 	private static final class SpellbookSwap extends GuidedTest
 	{

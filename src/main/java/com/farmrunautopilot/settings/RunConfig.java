@@ -213,9 +213,14 @@ public class RunConfig
 		return Boolean.TRUE.equals(useProtectionOverrides);
 	}
 
+	/**
+	 * The patch's own choice, else its type's. Allotments are chosen per set (Farm > Protection > Each set), which always
+	 * counts; other patches' own choices only while per-patch protection is switched on.
+	 */
 	public Protection protectionFor(Patch patch)
 	{
-		final Protection override = isUsingProtectionOverrides() ? protectionOverrides.get(patch) : null;
+		final Protection override = isUsingProtectionOverrides() || patch.getType() == PatchType.ALLOTMENT
+			? protectionOverrides.get(patch) : null;
 		return override != null ? override : protection.get(patch.getType());
 	}
 

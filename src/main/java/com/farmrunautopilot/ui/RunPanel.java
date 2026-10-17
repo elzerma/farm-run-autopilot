@@ -2,6 +2,7 @@ package com.farmrunautopilot.ui;
 
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
@@ -19,6 +20,7 @@ import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.settings.RouteMode;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
+import com.farmrunautopilot.supply.FlowerProtection;
 import com.farmrunautopilot.supply.SupplyPlan;
 import com.farmrunautopilot.testing.TestView;
 import com.farmrunautopilot.tracking.PatchPrediction;
@@ -38,8 +40,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
@@ -54,6 +58,7 @@ import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
+import net.runelite.api.Skill;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
@@ -73,7 +78,7 @@ class RunPanel extends JPanel
 	private static final Color CARRIED = new Color(0x4C, 0xC1, 0x52);
 	private static final Color IN_STORAGE = new Color(0xE8, 0xC5, 0x3A);
 	/** Run type labels short enough for three across the sidebar, in {@link PatchType} order. */
-	private static final String[] SHORT_TYPE_NAMES = {"Trees", "Fruit", "Herbs"};
+	private static final String[] SHORT_TYPE_NAMES = {"Trees", "Fruit", "Herbs", "Allotments", "Flowers", "Hops"};
 	/** Shown in the preset picker when the settings no longer match any preset. */
 	private static final String EDITED_PRESET = "Custom (changed)";
 
@@ -533,13 +538,31 @@ class RunPanel extends JPanel
 			{
 				continue;
 			}
+			// A flower kept for protecting allotments is due only when it needs replacing (docs/plans/crop-types.md)
+			final int farming = access.isKnown() ? access.level(Skill.FARMING) : 99;
+			final Crop allotmentCrop = config.cropFor(PatchType.ALLOTMENT, farming);
+			final Set<Patch> protecting = EnumSet.noneOf(Patch.class);
+			final Set<Patch> duePatches = EnumSet.noneOf(Patch.class);
+			for (Patch patch : patches)
+			{
+				final boolean keeps = FlowerProtection.isProtecting(patch, config, access);
+				if (keeps)
+				{
+					protecting.add(patch);
+				}
+				if (keeps ? FlowerProtection.isDue(predictions.get(patch), allotmentCrop)
+					: RunSelector.isDue(predictions.get(patch)))
+				{
+					duePatches.add(patch);
+				}
+			}
 			// Due patches first, then by when they'll be ready
-			patches.sort(Comparator.comparingLong(p -> RunSelector.isDue(predictions.get(p))
+			patches.sort(Comparator.comparingLong(p -> duePatches.contains(p) || predictions.get(p) == null
 				? Long.MIN_VALUE : predictions.get(p).getDoneAt()));
 			int due = 0;
 			for (Patch patch : patches)
 			{
-				if (RunSelector.isDue(predictions.get(patch)))
+				if (duePatches.contains(patch))
 				{
 					due++;
 				}
@@ -557,7 +580,8 @@ class RunPanel extends JPanel
 				rows.setLayout(new BoxLayout(rows, BoxLayout.Y_AXIS));
 				for (Patch patch : patches)
 				{
-					rows.add(patchTimer(patch, predictions.get(patch), now));
+					rows.add(patchTimer(patch, predictions.get(patch), now, duePatches.contains(patch),
+						protecting.contains(patch)));
 				}
 				final JPanel wrapper = fullWidth();
 				wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -600,10 +624,15 @@ class RunPanel extends JPanel
 		}
 	}
 
-	/** One patch on one line: where on the left, its state on the right (green when due); crop and all on hover. */
-	private static JComponent patchTimer(Patch patch, PatchPrediction prediction, long now)
+	/**
+	 * One patch on one line: where on the left, its state on the right (green when due); crop and all on hover. A flower
+	 * kept for protecting allotments that doesn't need replacing says so.
+	 */
+	private static JComponent patchTimer(Patch patch, PatchPrediction prediction, long now, boolean due,
+		boolean protecting)
 	{
-		final String described = PatchStatusText.describe(prediction, now);
+		final String described = protecting && !due && prediction != null && prediction.getCrop() != null
+			? prediction.getCrop().getDisplayName() + " - protecting the allotments" : PatchStatusText.describe(prediction, now);
 		// "Maple - check health": the state on the line, the whole thing in the tooltip
 		final int dash = described.indexOf(" - ");
 		final String state = dash >= 0 ? described.substring(dash + 3) : described;
@@ -611,17 +640,18 @@ class RunPanel extends JPanel
 		row.setOpaque(false);
 		row.setBorder(new EmptyBorder(1, 0, 1, 0));
 		// One line, never wrapped (elzerma); a name too long for what's left ends in "..." and is whole on hover
-		final JLabel name = new JLabel(timerName(patch.getLocation()));
+		final String part = patch.getPartInitials();
+		final JLabel name = new JLabel(timerName(patch.getLocation()) + (part.isEmpty() ? "" : " " + part));
 		name.setForeground(Color.WHITE);
 		name.setFont(FontManager.getRunescapeSmallFont());
 		name.setVerticalAlignment(JLabel.TOP);
 		final JLabel status = new JLabel(state);
-		status.setForeground(RunSelector.isDue(prediction) ? CARRIED : Color.WHITE);
+		status.setForeground(due ? CARRIED : Color.WHITE);
 		status.setFont(FontManager.getRunescapeSmallFont());
 		status.setVerticalAlignment(JLabel.TOP);
 		row.add(name, BorderLayout.CENTER);
 		row.add(status, BorderLayout.EAST);
-		row.setToolTipText(patch.getLocation().getDisplayName() + ": " + described);
+		row.setToolTipText(patch.getPlaceName() + ": " + described);
 		row.setAlignmentX(LEFT_ALIGNMENT);
 		return row;
 	}
@@ -898,13 +928,16 @@ class RunPanel extends JPanel
 
 	private JComponent runTypeToggles()
 	{
-		final JPanel types = new JPanel(new GridLayout(1, PatchType.values().length));
+		// Three to a row (two rows since allotments, flowers and hops)
+		final JPanel types = new JPanel(new GridLayout(0, 3));
 		types.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		for (PatchType type : PatchType.values())
 		{
 			final JCheckBox box = new JCheckBox(SHORT_TYPE_NAMES[type.ordinal()],
 				settings.editRunConfig().getEnabledTypes().contains(type));
-			box.setToolTipText("Include " + type.getDisplayName().toLowerCase() + " patches in this run");
+			box.setToolTipText(type == PatchType.FLOWER
+				? "Include flower patches in this run. Flowers that protect your allotments come with them anyway"
+				: "Include " + type.getDisplayName().toLowerCase() + " patches in this run");
 			box.setBackground(ColorScheme.DARK_GRAY_COLOR);
 			Style.checkBox(box);
 			// Centred in its third of the row (elzerma)

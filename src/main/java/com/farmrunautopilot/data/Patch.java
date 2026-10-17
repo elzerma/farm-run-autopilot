@@ -361,6 +361,27 @@ public enum Patch
 		return location.getDisplayName() + " " + (part != null ? part + " " : "") + type.getDisplayName().toLowerCase();
 	}
 
+	/** Where it is, for lists already grouped by type: "Falador farm (south)", or "... (north-west)" for one of two. */
+	public String getPlaceName()
+	{
+		return location.getDisplayName() + (part != null ? " (" + part + ")" : "");
+	}
+
+	/** "NW" for a north-west allotment, or "" if it's the only one of its type at its stop. */
+	public String getPartInitials()
+	{
+		if (part == null)
+		{
+			return "";
+		}
+		final StringBuilder initials = new StringBuilder();
+		for (String word : part.split("-"))
+		{
+			initials.append(Character.toUpperCase(word.charAt(0)));
+		}
+		return initials.toString();
+	}
+
 	/** The other patches of the same set at this stop: the allotments and flower patch that share a gardener and flower. */
 	public List<Patch> getSetMates()
 	{

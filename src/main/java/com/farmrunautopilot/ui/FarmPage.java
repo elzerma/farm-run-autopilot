@@ -55,8 +55,8 @@ class FarmPage extends SetupPanel
 			}
 		}
 		final CollapsibleSection s = section("Patches", ticked + " of " + usable + " ticked");
-		s.help("Untick patches you don't want in your runs; locked ones show what they need on hover. Choose trees, "
-			+ "fruit trees and herbs at the top of the Run tab: each joins a run once its patches are due.");
+		s.help("Untick patches you don't want in your runs; locked ones show what they need on hover. Choose the run "
+			+ "types at the top of the Run tab: each joins a run once its patches are due.");
 		// One group per type that opens and closes, two tick boxes to a row (elzerma)
 		for (PatchType type : PatchType.values())
 		{
@@ -75,7 +75,7 @@ class FarmPage extends SetupPanel
 				typeUsable += locked ? 0 : 1;
 				typeTicked += on ? 1 : 0;
 				// Locked ones are greyed, with what they need on hover
-				boxes.add(halfCheckBox(patch.getLocation().getDisplayName(), on, !locked,
+				boxes.add(halfCheckBox(patch.getPlaceName(), on, !locked,
 					locked ? "Locked: " + AccessSnapshot.describe(missing) : null,
 					tick -> saveRun(() ->
 					{
@@ -209,7 +209,7 @@ class FarmPage extends SetupPanel
 		}
 		for (Crop crop : Crop.values())
 		{
-			if (crop.getType() == type && !taken.contains(crop))
+			if (crop.getType() == type && crop.isChoosable() && !taken.contains(crop))
 			{
 				final boolean canPlant = crop.getFarmingLevel() <= farming;
 				choices.add(new Choice<>(crop, crop.getDisplayName() + " (" + crop.getFarmingLevel() + ")", canPlant,
@@ -249,8 +249,19 @@ class FarmPage extends SetupPanel
 				continue;
 			}
 			s.addContent(subheader(type.getDisplayName() + " patches"));
-			s.addContent(combo(enumChoices(Protection.values()), config.getProtection().get(type),
-				p -> saveRun(() -> config.getProtection().put(type, p))));
+			s.addContent(combo(protectionChoices(type), config.getProtection().get(type), p ->
+			{
+				saveRun(() -> config.getProtection().put(type, p));
+				rebuild();
+			}));
+			if (type == PatchType.ALLOTMENT)
+			{
+				s.addContent(allotmentSets(config));
+			}
+			if (!type.isHealthChecked())
+			{
+				continue;
+			}
 			s.addContent(checkBox("Pay 200 coins to clear grown " + type.getDisplayName().toLowerCase() + "s",
 				config.getPayToClear().contains(type), true,
 				"The gardener removes the old tree, so no axe is needed",
@@ -267,6 +278,77 @@ class FarmPage extends SetupPanel
 				})));
 		}
 		return s;
+	}
+
+	/** Flower protection is for allotments only. */
+	private static List<Choice<Protection>> protectionChoices(PatchType type)
+	{
+		final List<Choice<Protection>> choices = new ArrayList<>();
+		for (Choice<Protection> choice : enumChoices(Protection.values()))
+		{
+			if (choice.getValue() != Protection.FLOWER || type == PatchType.ALLOTMENT)
+			{
+				choices.add(choice);
+			}
+		}
+		return choices;
+	}
+
+	/**
+	 * One choice per allotment set (elzerma: the player picks per set), stored on both of its allotments. Sets without
+	 * a flower patch or gardener (Harmony Island) have nothing to choose.
+	 */
+	private JComponent allotmentSets(RunConfig config)
+	{
+		int changed = 0;
+		final List<Patch> firsts = new ArrayList<>();
+		for (Patch patch : Patch.values())
+		{
+			if (patch.getType() == PatchType.ALLOTMENT && patch.hasGardener() && firsts.stream()
+				.noneMatch(other -> other.getLocation() == patch.getLocation()))
+			{
+				firsts.add(patch);
+				changed += config.getProtectionOverrides().containsKey(patch) ? 1 : 0;
+			}
+		}
+		final CollapsibleSection sets = section("Each set", changed == 0 ? null : changed + " changed");
+		sets.help("Flower: the set's flower patch gets the flower that protects what's planted (a scarecrow for "
+			+ "sweetcorn, white lily for anything), and a grown one is left in place. Where no flower you can plant covers "
+			+ "the crop, the gardener is paid instead.");
+		final List<Choice<Protection>> choices = new ArrayList<>();
+		choices.add(Choice.of(null, "Same as all allotments"));
+		choices.addAll(protectionChoices(PatchType.ALLOTMENT));
+		for (Patch first : firsts)
+		{
+			final List<Patch> both = new ArrayList<>();
+			for (Patch patch : first.getLocation().getPatches())
+			{
+				if (patch.getType() == PatchType.ALLOTMENT)
+				{
+					both.add(patch);
+				}
+			}
+			sets.addContent(label(first.getLocation().getDisplayName()));
+			sets.addContent(combo(choices, config.getProtectionOverrides().get(first), p ->
+			{
+				saveRun(() ->
+				{
+					for (Patch patch : both)
+					{
+						if (p == null)
+						{
+							config.getProtectionOverrides().remove(patch);
+						}
+						else
+						{
+							config.getProtectionOverrides().put(patch, p);
+						}
+					}
+				});
+				rebuild();
+			}));
+		}
+		return sets;
 	}
 
 	/** Compost for each patch type, and what to do about disease. */
@@ -292,7 +374,8 @@ class FarmPage extends SetupPanel
 	{
 		final boolean perPatch = config.isUsingProtectionOverrides();
 		final CollapsibleSection s = section("Advanced",
-			perPatch ? overrides(config.getProtectionOverrides().size()) : null);
+			perPatch ? overrides((int) config.getProtectionOverrides().keySet().stream()
+				.filter(p -> p.getType() != PatchType.ALLOTMENT).count()) : null);
 		s.addContent(spinnerRow("Include a run type when this % of its patches are due",
 			spinner(config.getDueThresholdPercent(), 1, 100, 5,
 				v -> saveRunQuietly(() -> config.setDueThresholdPercent(v)))));
@@ -313,12 +396,13 @@ class FarmPage extends SetupPanel
 		// Only the patches that differ, then a way to add another
 		final List<Choice<Protection>> choices = new ArrayList<>();
 		choices.add(Choice.of(null, "Same as its type"));
-		choices.addAll(enumChoices(Protection.values()));
+		choices.addAll(protectionChoices(PatchType.TREE));
 		final List<Choice<Patch>> addable = new ArrayList<>();
 		addable.add(Choice.of(null, "Add a patch..."));
 		for (Patch patch : Patch.values())
 		{
-			if (!patch.getType().isProtectable())
+			// Allotments are chosen per set under Protection
+			if (!patch.getType().isProtectable() || patch.getType() == PatchType.ALLOTMENT)
 			{
 				continue;
 			}
@@ -370,7 +454,8 @@ class FarmPage extends SetupPanel
 		s.addContent(label("Outfit"));
 		s.addContent(combo(enumChoices(Outfit.values()), config.getOutfit(), o -> saveRun(() -> config.setOutfit(o))));
 		s.addContent(checkBox("Suggest yield boosts", config.isRecommendEquipmentBoosts(), true,
-			"Magic secateurs (+10% herb yield) as an optional item; worn when nothing else needs the weapon slot",
+			"Magic secateurs (+10% herb, allotment and hops yield) as an optional item; worn when nothing else needs "
+				+ "the weapon slot",
 			on -> saveRun(() -> config.setRecommendEquipmentBoosts(on))));
 		return s;
 	}

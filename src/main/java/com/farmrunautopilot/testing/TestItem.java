@@ -33,6 +33,19 @@ public enum TestItem
 			+ "the guild's own stop, or \"Bank at the Farming Guild\" with the way there. At its bank, once the Farm run "
 			+ "tab is done, the step should say \"Take ... from the seed vault (next to the bank)\", and the vault's "
 			+ "Farm Run Autopilot section should show only the seeds for the rest of the run."),
+	ALLOTMENT_PAYMENT(Tab.RUN, "Paying for one allotment",
+		"At the farm south of Falador, with potato seeds and 4 buckets of compost, set Farm > Protection > Allotment "
+			+ "patches to Pay gardener and run just that farm's allotments. After planting each allotment the step should "
+			+ "say \"Pay Elstan for the north-west allotment: 2 x Compost\" (then the south-east one), and move on once "
+			+ "you've paid for it."),
+	NEW_PATCH_POINTS(Tab.RUN, "Where the new patches are",
+		"Tick Allotments, Flowers or Hops on the Run tab and stand by any allotment set or hops patch you can use. "
+			+ "The patch should be outlined when it's the next step, and the hint arrow should point at it, not a few "
+			+ "tiles away."),
+	ALLOTMENT_FLOWER_PROTECTION(Tab.FARM, "Flowers protecting allotments",
+		"At the farm south of Falador, with a marigold seed and potato seeds, leave Farm > Protection > Allotment "
+			+ "patches on Flower and run just that farm's allotments. The steps should start at the flower patch with "
+			+ "the marigold, never ask you to pay Elstan, and leave the grown marigold alone on your next run."),
 	FORTIS_CHAMPION(Tab.FARM, "Civitas herbs and the Colosseum",
 		"With \"Champion rank at the Fortis Colosseum\" ticked in Account > Unlocks, the Civitas herb patch "
 			+ "should count as disease-free: no plant cure or protection asked for it.", 2),

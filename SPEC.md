@@ -32,7 +32,8 @@ A farming-run planner and guide for tree, fruit tree and herb runs that:
 ### Non-goals (v1)
 - No automation of any kind: no clicking, no input, no menu entries that send actions to the server (Hub rule).
 - No notifications (elzerma's decision — leave them to the core Time Tracking plugin).
-- No run types beyond tree / fruit tree / herb (see "Later" in section 2).
+- No run types beyond tree / fruit tree / herb (see "Later" in section 2). Allotments, flowers and hops were added later
+  (docs/plans/crop-types.md, Sprint 1a), off until the player ticks them.
 
 ---
 
@@ -70,7 +71,7 @@ A farming-run planner and guide for tree, fruit tree and herb runs that:
 
 - **Patch** — one farming plot (e.g. "Gnome Stronghold tree patch").
 - **Location / stop** — a place you travel to; may contain several patches (Farming Guild has a tree, fruit tree and herb patch).
-- **Run type** — tree, fruit tree or herb.
+- **Run type** — tree, fruit tree or herb (and since Sprint 1a allotment, flower or hops).
 - **Due** — a patch is ready to harvest/check (or dead/diseased/empty and needs replanting).
 - **Leg** — travel from one stop to the next, using one travel method.
 - **Travel method** — any way of getting to a location: a spell, tab, jewellery, fairy ring, spirit tree, POH portal, etc.
