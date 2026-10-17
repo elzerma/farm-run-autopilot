@@ -49,6 +49,7 @@ The user uses this list as their test checklist. Keep it current without being a
 - **Reword** an item when the feature it describes changes. Never rename a `TestItem` constant that has been released: its name keys the saved result. A test someone has run (pass or not) is greyed out for them and not asked again; when a fix means earlier results no longer count, bump the item's `revision` so players are asked again.
 - Put each item on the tab where the player would see the feature.
 - Mention any change to the list when reporting back.
+- The pinned GitHub issue #18 ("Help wanted") lists the tests that need other players. When one of those is added, passes or is removed, draft an edit to its table and get elzerma's OK first, as for any GitHub post (docs/ISSUES.md).
 
 **Reading the results:** when the user pastes a `Guided test finished:` line or says they've been testing, find the matching `Guided test report:` in the dev client's log: the output file of the background `./gradlew run` task, or `~/.runelite/logs/client.log` and the dated `client_*.log` files. Then:
 
