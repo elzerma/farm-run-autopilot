@@ -39,7 +39,7 @@ final class GuidanceSettings
 	void resetDefaults()
 	{
 		for (String key : new String[]{"highlightPatch", "hintArrow", "highlightGardener", "highlightItems",
-			"highlightSpell", "shortestPathLines", "patchColour", "npcColour", "itemColour"})
+			"highlightSpell", "vineHighlights", "shortestPathLines", "patchColour", "npcColour", "itemColour"})
 		{
 			configManager.unsetConfiguration(FarmRunAutopilotConfig.GROUP, key);
 		}

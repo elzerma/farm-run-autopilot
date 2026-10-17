@@ -54,6 +54,7 @@ public class SpellHighlightOverlay extends Overlay
 	private final Client client;
 	private final RunSession session;
 	private final FarmRunAutopilotConfig config;
+	private final VineFrame vine = new VineFrame();
 
 	@Inject
 	SpellHighlightOverlay(Client client, RunSession session, FarmRunAutopilotConfig config)
@@ -77,15 +78,22 @@ public class SpellHighlightOverlay extends Overlay
 		final Spell spell = session.getView().getHighlights().getSpell();
 		if (spell == null || !config.highlightSpell())
 		{
+			vine.clear();
 			return null;
 		}
 		final Integer button = BUTTONS.get(spell);
 		final Widget widget = button != null ? client.getWidget(button) : null;
 		if (widget == null || widget.isHidden())
 		{
+			vine.clear();
 			return null;
 		}
 		final Rectangle bounds = widget.getBounds();
+		if (config.vineHighlights())
+		{
+			vine.draw(graphics, bounds);
+			return null;
+		}
 		graphics.setColor(config.itemColour());
 		graphics.setStroke(new BasicStroke(2));
 		graphics.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);

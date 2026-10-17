@@ -89,6 +89,18 @@ public interface FarmRunAutopilotConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "vineHighlights",
+		name = "Vine highlights",
+		description = "A growing vine round the spell to cast and the bank's Farm run button, instead of a plain outline",
+		hidden = true,
+		position = 10
+	)
+	default boolean vineHighlights()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "shortestPathLines",
 		name = "Walking lines (Shortest Path)",
 		description = "Ask the Shortest Path plugin, if installed, to draw the walk for each \"walk to\" step",
