@@ -93,6 +93,19 @@ After the test, a seed the vault didn't hold showed faded. elzerma then asked fo
 
 SEED_VAULT_SECTION is now revision 3, asking about the name, the list entry and dragging.
 
+**Checked by hand (2026-10-17, elzerma):** the name and font, dragging (a swap, letting go in an empty space, dragging out of the section), withdrawing by click, and the bottom of the vault were all good. One problem: Favourite Slots in the left list also went to the very top. The fix for opening at the top ran whenever the vault scrolled to its first category, clicks included. elzerma then asked for:
+- A button just left of the vault's close button that switches the view with the section on and off, instead of the list entry.
+- On that button, the same attention look as the bank's Farm run button.
+
+**Changed (2026-10-17):**
+- **The button:** the bank's Farm run button again (same square button, farming icon and click sound), just left of the close button. It switches the Farm Run Autopilot view on and off, and is pressed while it's on.
+- **On or off:** like the bank's tab, the view starts off, stays as left through the run, and is off again for the next run.
+- **Attention:** while the view is off and the vault holds a seed the run still needs, the button flashes and has the bank button's outline round it (`VineOverlay`, which another session changed from the fuse to a vine the same day). The gathering step says "Farm run: click the flashing button at the top of the seed vault".
+- **Left list:** the list entry is gone.
+- **Scroll:** opening the vault goes to the top only for the scroll the game does as the vault opens (`seed_vault_catvar`, 2816, within a tick of opening). Clicking Favourite Slots (`seed_vault_catop`) goes to its own place, below the section.
+
+Revision 3 now asks about the button, Favourite Slots, reopening and hiding. No result had been recorded for its earlier steps.
+
 ### #8 write-up: how a run with seeds in the vault banks partway (not built; elzerma to choose the wording)
 
 Only for a run too big for one inventory, so it banks partway, with some of its seeds kept in the seed vault. elzerma: "the decision I can't make is whether it should guide users to bank again at the farming guild or if it should have them withdraw all for a farm run from vault, deposit to main bank, then withdraw only what is needed from bank for remainder of run. That is the decision to be left with users, but I need to be sure it's described really well."

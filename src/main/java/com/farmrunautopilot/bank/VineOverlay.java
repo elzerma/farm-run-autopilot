@@ -16,9 +16,10 @@ import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
- * A vine round the bank's Farm run button while the guide is waiting for it to be clicked (issue #5, elzerma):
- * it sprouts from the middle of the bottom edge, grows both ways and up the sides to meet at the top, blooms,
- * drops a few petals, then fades and grows again. Drawing only; the button itself is untouched.
+ * A vine round the bank's Farm run button while the guide is waiting for it to be clicked (issue #5, elzerma), or
+ * round the seed vault's Farm Run Autopilot button the same way (issue #8): it sprouts from the middle of the bottom
+ * edge, grows both ways and up the sides to meet at the top, blooms, drops a few petals, then fades and grows again.
+ * Drawing only; the button itself is untouched.
  */
 public class VineOverlay extends Overlay
 {
@@ -43,6 +44,7 @@ public class VineOverlay extends Overlay
 		new Color(0xFF, 0xF4, 0xF8)};
 
 	private final FarmBankTabButton button;
+	private final SeedVaultSection seedVault;
 	private final Random random = new Random();
 	private final List<Petal> petals = new ArrayList<>();
 	private long lastFrame;
@@ -58,9 +60,10 @@ public class VineOverlay extends Overlay
 	}
 
 	@Inject
-	VineOverlay(FarmBankTabButton button)
+	VineOverlay(FarmBankTabButton button, SeedVaultSection seedVault)
 	{
 		this.button = button;
+		this.seedVault = seedVault;
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_WIDGETS);
 	}
@@ -68,7 +71,9 @@ public class VineOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		final Rectangle bounds = button.callingBounds();
+		// The bank and the seed vault are never open together, so it's one or the other
+		final Rectangle bank = button.callingBounds();
+		final Rectangle bounds = bank != null ? bank : seedVault.callingBounds();
 		final long now = System.currentTimeMillis();
 		if (bounds == null)
 		{

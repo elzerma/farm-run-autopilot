@@ -67,8 +67,10 @@ The "Farm Run Autopilot" section at the top of the Farming Guild's seed vault ha
 categories (elzerma: the same font as the others): `#ff981f`, bold 12 with a shadow, and the dark line under it.
 Under each seed is the bank tab's "/ N" label in the colours above, ticked or crossed (`bank/SeedVaultSection.java`,
 sharing `FarmBankTab`'s). The vault's own items keep the vault's look, names included; a seed the vault doesn't
-hold is shown faded, as on the bank tab. The category list on the left gets a "Farm Run Autopilot" entry like the
-game's own: plain 12, orange, white under the mouse.
+hold is shown faded, as on the bank tab. The view is switched on and off by a button just left of the vault's close
+button that looks and calls for attention exactly as the bank's Farm run button does: the same square button and
+farming icon, pressed while the view is on, flashing with the same outline round it (`VineOverlay`) while it's off
+and the vault holds something the run needs.
 
 ## 3. Type
 

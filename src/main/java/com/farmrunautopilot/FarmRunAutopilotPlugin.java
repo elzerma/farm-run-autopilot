@@ -320,6 +320,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 			if (shownRunView == null || shownRunView.getState() != runView.getState())
 			{
 				farmBankTab.setEnabled(runView.getState() != RunView.State.OFF);
+				seedVaultSection.onRunState(runView.getState() != RunView.State.OFF);
 			}
 			shownRunView = runView;
 			showPlanLater(runService.getPlan(), client.getGameState() == GameState.LOGGED_IN);

@@ -219,10 +219,11 @@ final class GuidedTests
 	}
 
 	/**
-	 * The Farm Run Autopilot section at the top of the seed vault (issue #8): where the game puts everything in the vault
-	 * was read from its scripts. Revision 2 passed (the counts, staying once everything's taken, opening at the top);
-	 * elzerma then asked for dragging back, the plugin's name with the vault's own header font, and an entry in the
-	 * category list (revision 3).
+	 * The Farm Run Autopilot view of the seed vault (issue #8): where the game puts everything in the vault was read
+	 * from its scripts. Revision 2 passed (the counts, staying once everything's taken, opening at the top), and
+	 * elzerma's own checks passed dragging, the name and the header font. Revision 3 asks about the button by the close
+	 * button, which shows and hides the view as the bank's Farm run button does its tab, and Favourite Slots going to
+	 * its own place.
 	 */
 	private static final class SeedVaultTop extends GuidedTest
 	{
@@ -256,8 +257,9 @@ final class GuidedTests
 		{
 			return Arrays.asList(
 				doThis("On the Run tab, press Build run", ctx -> ctx.runView().getState() != RunView.State.OFF),
-				// Without them in the vault there's nothing to withdraw from the section, which proves nothing
-				ask("Are some of the seeds or saplings the bank's Farm run tab lists in the Farming Guild's seed vault?")
+				// Without them in the vault the button has nothing to call for and the section nothing to show
+				ask("Are some of the seeds or saplings the bank's Farm run tab lists in the Farming Guild's seed vault, "
+					+ "and not in your inventory?")
 					.onAnswer((ctx, yes) ->
 					{
 						ctx.capture("Supply list", supplyNames(ctx));
@@ -270,9 +272,9 @@ final class GuidedTests
 					.onDone(ctx ->
 					{
 						captureVault(ctx, "Seed vault when opened");
-						if (ctx.seedVault().shownCount() == 0)
+						if (!ctx.seedVault().isCalling())
 						{
-							ctx.problem("No Farm run section in the seed vault");
+							ctx.problem("The button by the close button wasn't asking to be clicked");
 						}
 					})
 					.orAskAfter(DO_TICKS, "The plugin hasn't seen the seed vault open. Is it open?")
@@ -281,59 +283,56 @@ final class GuidedTests
 						captureVault(ctx, "Seed vault when asked");
 						ctx.problem("The plugin didn't see the seed vault laid out");
 					}),
-				ask("Is there a \"Farm Run Autopilot\" section at the top of the vault, its title in the same font as the "
-					+ "vault's others, with a \"/ N\" count under every seed and sapling the run needs?")
+				ask("Is the button by the vault's close button flashing, with the same outline round it as the bank's "
+					+ "Farm run button has?"),
+				ask("Click it. Is there a \"Farm Run Autopilot\" section at the top of the vault, titled like the vault's "
+					+ "others, with a \"/ N\" count under every seed and sapling the run needs?")
 					.onAnswer((ctx, yes) ->
 					{
-						captureVault(ctx, "Seed vault when answered");
+						captureVault(ctx, "Seed vault with the view on");
+						if (ctx.seedVault().shownCount() == 0)
+						{
+							ctx.problem("No Farm Run Autopilot section once the button was clicked");
+						}
 						if (!yes)
 						{
 							ctx.problem("Answered No: the section wasn't at the top, titled like the others, with a count under "
 								+ "each seed");
 						}
 					}),
-				ask("Is \"Farm Run Autopilot\" in the list on the left too? Scroll the vault down, then click it: does it "
-					+ "take you back to the section?")
+				ask("Scroll down, then click Favourite Slots on the left. Does it go to Favourite Slots, just below the "
+					+ "section, not to the very top?")
 					.onAnswer((ctx, yes) ->
 					{
-						captureVault(ctx, "Seed vault after the list entry");
+						captureVault(ctx, "Seed vault after Favourite Slots");
 						if (!yes)
 						{
-							ctx.problem("Answered No: the list entry wasn't there or didn't go to the section");
+							ctx.problem("Answered No: Favourite Slots didn't go to its own place");
 						}
 					}),
-				ask("Drag a seed in one of the vault's categories onto another seed in the same category. Did they swap "
-					+ "places, with the Farm Run Autopilot section and everything else still in place?")
+				ask("Close the seed vault and open it again. Is the section still showing, at the top?")
 					.onAnswer((ctx, yes) ->
 					{
-						captureVault(ctx, "Seed vault after swapping");
+						captureVault(ctx, "Seed vault opened again");
 						if (!yes)
 						{
-							ctx.problem("Answered No: dragging one seed onto another didn't swap them neatly");
+							ctx.problem("Answered No: the section wasn't showing at the top after opening the vault again");
 						}
 					}),
 				ask("Drag a seed and let go of it in an empty space. Did it go back to its place, without being withdrawn?"),
-				ask("Drag one of the Farm Run Autopilot section's seeds and let go of it in an empty space. Is it back in "
-					+ "its place in the section?")
+				ask("Click the button again. Does the section go, leaving the vault as usual?")
 					.onAnswer((ctx, yes) ->
 					{
-						captureVault(ctx, "Seed vault after dragging from the section");
+						captureVault(ctx, "Seed vault with the view off");
+						if (ctx.seedVault().shownCount() > 0)
+						{
+							ctx.problem("The section was still there once the button was clicked again");
+						}
 						if (!yes)
 						{
-							ctx.problem("Answered No: a seed dragged from the section didn't go back to its place");
+							ctx.problem("Answered No: the vault didn't go back to usual");
 						}
-					}),
-				ask("Click a seed in the Farm Run Autopilot section to withdraw it. Did it go into your inventory?")
-					.onAnswer((ctx, yes) ->
-					{
-						captureVault(ctx, "Seed vault after withdrawing");
-						if (!yes)
-						{
-							ctx.problem("Answered No: withdrawing from the section didn't work");
-						}
-					}),
-				ask("Scroll down to the bottom of the vault, then click a few categories on the left. Is everything "
-					+ "there, with nothing cut off or overlapping?"));
+					}));
 		}
 	}
 

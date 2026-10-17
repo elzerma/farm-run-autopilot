@@ -73,6 +73,7 @@ public class RunSession
 	private final Navigator navigator;
 	private final PatchGuide patches;
 	private final FarmBankTab bankTab;
+	private final SeedVaultSection seedVault;
 
 	private RunView.State stage = RunView.State.OFF;
 	/** Frozen when the run arms; null while off or building. */
@@ -126,7 +127,7 @@ public class RunSession
 	@Inject
 	RunSession(Client client, RunService runService, HoldingsTracker holdingsTracker, SettingsStore settings,
 		RunTimings timings, SceneTracker scene, ShortestPathBridge shortestPath, Navigator navigator,
-		PatchGuide patches, FarmBankTab bankTab)
+		PatchGuide patches, FarmBankTab bankTab, SeedVaultSection seedVault)
 	{
 		this.client = client;
 		this.runService = runService;
@@ -138,6 +139,7 @@ public class RunSession
 		this.navigator = navigator;
 		this.patches = patches;
 		this.bankTab = bankTab;
+		this.seedVault = seedVault;
 	}
 
 	public RunView getView()
@@ -1339,6 +1341,11 @@ public class RunSession
 	private String gatheringStep(int missing)
 	{
 		final String items = missing + (missing == 1 ? " item" : " items");
+		// At the seed vault with its Farm Run Autopilot view off, while it holds something the run needs
+		if (seedVault.isCalling())
+		{
+			return "Farm run: click the flashing button at the top of the seed vault";
+		}
 		if (!bankTab.isBankOpen())
 		{
 			return "Farm run: open a bank to get " + items;
