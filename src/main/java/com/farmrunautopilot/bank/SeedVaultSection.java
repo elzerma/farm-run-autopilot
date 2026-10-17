@@ -93,12 +93,13 @@ public class SeedVaultSection
 	private static final int NAME_WIDTH = 50;
 	private static final int VAULT_ORANGE = 0xff981f;
 	/**
-	 * The button is the bank's Farm run button (25 square, the farming icon 3 in), just left of the vault's close
-	 * button (16 square, 10 down and 10 in from the right of the title bar).
+	 * The button is the bank's Farm run button, smaller to sit in the title bar (elzerma: 22 or so; the bank's is 25),
+	 * with the farming icon 3 in. It's centred on the line of the vault's close button (16 square, 10 down and 10 in
+	 * from the right of the title bar), 3 to its left.
 	 */
-	private static final int BUTTON_SIZE = 25;
-	private static final int BUTTON_RIGHT = 28;
-	private static final int BUTTON_TOP = 6;
+	private static final int BUTTON_SIZE = 22;
+	private static final int BUTTON_RIGHT = 29;
+	private static final int BUTTON_TOP = 7;
 	private static final int ICON_INSET = 3;
 	private static final String SHOW = "Show";
 	private static final String HIDE = "Hide";
