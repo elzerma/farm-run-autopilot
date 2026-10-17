@@ -17,7 +17,7 @@ Issues #1 to #5 were answered and closed on 2026-10-15, before this ledger began
 
 ## #6 Seed stabber not needed
 
-**Kind:** Bug · **Status:** open, fixed in ebe46f2, passed in game 2026-10-16 (value 1 once learned); reply to be drafted · **Reviewed through:** 2026-10-16 elzerma
+**Kind:** Bug · **Status:** open, fixed in ebe46f2, passed in game 2026-10-16 (value 1 once learned); reply posted, left open until release · **Reviewed through:** 2026-10-16 elzerma (fix reply)
 
 | Who | What they said | Checked against | Evaluation | Decision |
 |-----|----------------|-----------------|------------|----------|
