@@ -13,6 +13,7 @@ import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
+import com.farmrunautopilot.settings.VaultBanking;
 import java.awt.Rectangle;
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 import net.runelite.client.util.LinkBrowser;
 
@@ -218,6 +220,19 @@ class AccountPage extends SetupPanel
 			on -> saveRun(() -> config.setUseGroupStorage(on))));
 		s.addContent(checkBox("Seed vault", config.isUseSeedVault(), true, null,
 			on -> saveRun(() -> config.setUseSeedVault(on))));
+		if (config.isUseSeedVault())
+		{
+			// Wording chosen by elzerma (issue #8)
+			final List<Choice<VaultBanking>> ways = new ArrayList<>();
+			for (VaultBanking way : VaultBanking.values())
+			{
+				ways.add(new Choice<>(way, way.getDisplayName(), true, way.getTooltip()));
+			}
+			final JLabel label = label("When a run banks partway");
+			label.setToolTipText("For seeds you keep in the seed vault, on a run too big for one inventory.");
+			s.addContent(label);
+			s.addContent(combo(ways, config.getVaultBanking(), way -> saveRun(() -> config.setVaultBanking(way))));
+		}
 		return s;
 	}
 

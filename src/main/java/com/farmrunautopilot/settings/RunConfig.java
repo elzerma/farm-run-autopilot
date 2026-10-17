@@ -109,6 +109,8 @@ public class RunConfig
 	private boolean useSeedVault = true;
 	/** Null in saves from before storage was on by default: switches both on once. */
 	private Boolean storageOnByDefault;
+	/** How a run that banks partway gets the seeds kept in the seed vault (issue #8). */
+	private VaultBanking vaultBanking = VaultBanking.TAKE_ALL_AT_START;
 
 	/**
 	 * Fills in anything Gson left null (new fields, or enum names that no longer exist) and clamps
@@ -134,6 +136,10 @@ public class RunConfig
 		if (travelStyle == null)
 		{
 			travelStyle = TravelStyle.FASTEST;
+		}
+		if (vaultBanking == null)
+		{
+			vaultBanking = VaultBanking.TAKE_ALL_AT_START;
 		}
 		if (useRunesNotTabs)
 		{

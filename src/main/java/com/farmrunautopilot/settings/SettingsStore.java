@@ -396,6 +396,7 @@ public class SettingsStore
 		final RunConfig result = copy(preset);
 		result.setUseGroupStorage(runConfig.isUseGroupStorage());
 		result.setUseSeedVault(runConfig.isUseSeedVault());
+		result.setVaultBanking(runConfig.getVaultBanking());
 		result.setRemindToDrop(runConfig.isRemindToDrop());
 		result.setSupplyFullRun(runConfig.isSupplyFullRun());
 		return result;

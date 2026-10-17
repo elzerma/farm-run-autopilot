@@ -42,7 +42,7 @@ Issues #1 to #5 were answered and closed on 2026-10-15, before this ledger began
 
 ## #8 explore/add bank tab support for seed vault
 
-**Kind:** Idea · **Status:** open. The section is built (option 2). Tests 1 to 3 passed, and elzerma asked for changes after each. The latest change is built and waits on revision 4 of SEED_VAULT_SECTION. Two write-ups below wait on elzerma: the banking setting, and routing to the guild. · **Reviewed through:** 2026-10-16 elzerma (body)
+**Kind:** Idea · **Status:** open. The section is built (option 2). Tests 1 to 3 passed, and elzerma asked for changes after each. The list entry (revision 4) passed elzerma's hand checks; its guided test is still to run. The banking setting and routing to the guild are being built (decisions below). · **Reviewed through:** 2026-10-16 elzerma (body)
 
 | Who | What they said | Checked against | Evaluation | Decision |
 |-----|----------------|-----------------|------------|----------|
@@ -135,14 +135,22 @@ elzerma then asked: "previously indicated that farm run autopilot shouldn't crea
 
 Revision 4 asks about the entry with the view on and off.
 
+**Checked by hand (2026-10-17, elzerma, revision 4 change):** checks 1 to 6 passed: the entry comes and goes with the view, in the same font, with the others moved down a row and still alternating; it scrolls back to the section; Favourite Slots and Trees go to their own headings; it lights up under the mouse; the list is back as the game has it with the view off; and reopening the vault with the view on shows both. The log agrees (the section 120 high with the view on, gone with it off, no errors). Not tried: a farming contract in progress (none active), where "Farming contract" should stay first. The revision 4 guided test hasn't been run yet.
+
 **Decisions (2026-10-17, elzerma, picker):**
 1. Build the banking setting as drafted below. It's "When a run banks partway", under the Seed vault tick box and shown only while that's ticked, with both choices; "Take all seeds at the start" is the default.
 2. Seeds only in the vault, on a run that doesn't start at the guild: option 4 now, then option 1 (see the routing write-up). The open questions in option 1 (which way there, whether to ask first) are left to Claude.
 
 **Built (2026-10-17), one commit each:**
 - **Option 4:** when the bank has nothing left to give before the run, the gathering step names the seeds that only the seed vault can make up: "Farm run: take 6 x Ranarr seed from the seed vault in the Farming Guild" (`SupplyPlan.onlyInVault`). It takes all that's still to get from the vault if the vault holds that many, so it's one trip. Not when the run starts at the guild, where the guild's own vault step covers them. That step now names items without the "- 3rd choice".
+- **The setting:** "When a run banks partway" in Account > Storage sources, under the Seed vault tick box and only while it's ticked, with the label, choices and tooltips as drafted (`settings/VaultBanking.java`). "Take all seeds at the start" is the default. "Bank at the Farming Guild" can be picked, but until its own commit it works as before.
+- **Take all seeds at the start:** on a run that banks partway, the gathering step adds the later parts' seeds that only the vault has: "Farm run: take 12 x Ranarr seed from the seed vault in the Farming Guild, and put the ones for later in your bank". Once they're taken it says "Farm run: put 6 x Ranarr seed in your bank for later in the run", with them outlined while the bank is open. The run waits for both before it's ready; Start now skips them.
+  - Only seeds seen in the vault for the later parts are asked about, so seeds the player keeps in their inventory anyway are left alone.
+  - When the run starts at the guild, the first part's vault seeds come out in the same trip.
+  - Before the run starts, the vault section counts the later parts' seeds in the bank as done, so it doesn't ask for them again.
+  - At the bank visit they're in the bank, so it works as for anything else.
 
-### #8 write-up: how a run with seeds in the vault banks partway (not built; elzerma to choose the wording)
+### #8 write-up: how a run with seeds in the vault banks partway (wording chosen 2026-10-17; see Built above)
 
 Only for a run too big for one inventory, so it banks partway, with some of its seeds kept in the seed vault. elzerma: "the decision I can't make is whether it should guide users to bank again at the farming guild or if it should have them withdraw all for a farm run from vault, deposit to main bank, then withdraw only what is needed from bank for remainder of run. That is the decision to be left with users, but I need to be sure it's described really well."
 
