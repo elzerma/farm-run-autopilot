@@ -60,7 +60,11 @@ Show the table, then ask with the **AskUserQuestion tool** (the radio-button pic
 - Ask one question per row that needs a decision, at most 4 per call, issue by issue, until every row has an answer. Chatter stays in the table but isn't asked about.
 - Give 2–4 options, Claude's pick first and marked "(Recommended)". Each option says what will happen, e.g. "Close as passed, remove ATES_CHARGES from the help list".
 - "Other" is where elzerma gives a short answer of their own (a different verdict, a tweak, "ask them X"). Follow it as written, and ask again only if it's unclear.
-- Before anything is sent to GitHub (a reply, close comment, split issue or labels), write each draft in the message as a lettered quote (A, B, C...), since the option preview isn't always shown. Then ask about each letter in the picker: *Post as written* or *Don't post*, with Other for an edit.
+- Anything sent to GitHub (a reply, close comment, split issue or labels) takes two turns, in this order:
+  1. **Draft.** Write each draft as a lettered quote (A, B, C...) in the turn's closing message, and end the turn there. That's the drafting step, and it isn't done until elzerma has seen the drafts. Don't rely on the picker's option preview, which isn't always shown.
+  2. **Ask.** On a later turn, once elzerma has replied, ask about each letter in the picker: *Post as written* or *Don't post*, with Other for an edit.
+
+  Never ask about a draft in the same turn it was written, and never ask about one elzerma hasn't seen yet.
 - Save each answer in the ledger: the verdict, plus elzerma's short answer if there was one.
 
 ## 6. Act, only on what was approved
