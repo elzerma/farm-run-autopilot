@@ -73,6 +73,8 @@ class SettingsPage extends SetupPanel
 	private final GuidanceSettings guidance;
 	/** The player's learned leg times, for "Share your run times". */
 	private Supplier<LearnedTimes> learnedTimes = () -> LearnedTimes.NONE;
+	/** The current plan for "Report a problem", or null until the panel provides it. */
+	private Supplier<List<String>> problemSummary;
 
 	SettingsPage(SettingsStore settings, AccessChecker accessChecker, PatchTracker patchTracker, Runnable changed,
 		GuidanceSettings guidance, PresetsPage presets)
@@ -334,6 +336,19 @@ class SettingsPage extends SetupPanel
 			RuneLiteProperties.getVersion(), travelUnlocks(), learnedTimes.get().summary()))));
 		s.addContent(share);
 		s.addContent(divider());
+
+		// Reporting a problem (issue #17): the Bug form with the plan filled in
+		s.addContent(subheader("Report a problem"));
+		s.addContent(note("Something wrong with a run? The report includes your current plan: the stops, how you "
+			+ "travel, and what you need and carry. You describe what happened."));
+		final JButton report = smallButton("Report a problem");
+		report.setToolTipText(UiText.tooltip("Opens GitHub's bug form with the plugin version and your current plan "
+			+ "filled in. No bank counts, levels or location. Nothing is sent unless you submit it.", 250));
+		report.addActionListener(e -> LinkBrowser.browse(TestReport.problemUrl(RuneLiteProperties.getVersion(),
+			problemSummary.get())));
+		report.setEnabled(problemSummary != null);
+		s.addContent(report);
+		s.addContent(divider());
 		if (testRunner != null)
 		{
 			s.addContent(subheader("Guided tests"));
@@ -378,6 +393,13 @@ class SettingsPage extends SetupPanel
 	void showRunTimes(Supplier<LearnedTimes> learnedTimes)
 	{
 		this.learnedTimes = learnedTimes;
+		rebuild();
+	}
+
+	/** Where "Report a problem" gets the current plan from. */
+	void showProblemReport(Supplier<List<String>> problemSummary)
+	{
+		this.problemSummary = problemSummary;
 		rebuild();
 	}
 

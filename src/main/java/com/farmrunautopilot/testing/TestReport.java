@@ -89,6 +89,24 @@ public final class TestReport
 		return b.length() <= MAX_BODY ? b.toString() : b.substring(0, MAX_BODY) + "\n```\n\n(cut short)\n";
 	}
 
+	/**
+	 * "Report a problem" (issue #17): the Bug form, with the version and the current plan filled in; what happened
+	 * and what was expected are left for the player. Cut short like a test report if it's long.
+	 *
+	 * @param plan from {@code RunService.problemSummary()}
+	 */
+	public static String problemUrl(String version, List<String> plan)
+	{
+		final StringBuilder b = new StringBuilder("Plan from Farm Run Autopilot\n");
+		for (String line : plan)
+		{
+			b.append(line).append('\n');
+		}
+		final String log = b.length() <= MAX_BODY ? b.toString() : b.substring(0, MAX_BODY) + "\n(cut short)\n";
+		return NEW_ISSUE_URL + "?template=bug.yml&title=" + encode("Problem: ") + "&version=" + encode(version)
+			+ "&log=" + encode(log);
+	}
+
 	public static String url(String title, String body)
 	{
 		return NEW_ISSUE_URL + "?title=" + encode(title) + "&body=" + encode(body);

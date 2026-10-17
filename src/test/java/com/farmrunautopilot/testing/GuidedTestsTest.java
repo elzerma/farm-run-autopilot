@@ -44,4 +44,14 @@ public class GuidedTestsTest
 		assertTrue(url.contains("&body="));
 		assertFalse(url.contains(" "));
 	}
+
+	@Test
+	public void problemReportFillsTheBugForm()
+	{
+		final String url = TestReport.problemUrl("1.13.2", Arrays.asList("Run types: [HERB]", "1. Catherby: walk, 9 s"));
+		assertTrue(url.startsWith("https://github.com/elzerma/farm-run-autopilot/issues/new?template=bug.yml&title="));
+		assertTrue(url.contains("&version=1.13.2&log="));
+		assertTrue(url.contains("Catherby"));
+		assertFalse(url.contains(" "));
+	}
 }

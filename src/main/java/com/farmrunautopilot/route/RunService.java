@@ -101,6 +101,48 @@ public class RunService
 		return getPlan().getSupplies();
 	}
 
+	/**
+	 * The current plan for a "Report a problem" issue (issue #17): what's in the run, each stop and its way, the
+	 * bank visits, and each supply line's need and whether it's carried. Nothing that says who or where the player
+	 * is, and no bank, vault or storage counts. Any thread.
+	 */
+	public List<String> problemSummary()
+	{
+		final RunConfig config = settings.getRunConfig();
+		final RunPlan plan = getPlan();
+		final List<String> lines = new ArrayList<>();
+		lines.add("Run types: " + config.getEnabledTypes());
+		lines.add("Start: " + (config.getStartLocation() != null ? config.getStartLocation().getDisplayName() : "nearest"));
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		if (stops.isEmpty())
+		{
+			lines.add("No run built");
+			return lines;
+		}
+		for (int i = 0; i < stops.size(); i++)
+		{
+			final RouteStop stop = stops.get(i);
+			lines.add((i + 1) + ". " + stop.getLocation().getDisplayName() + ": " + stop.describeTravel() + ", "
+				+ Math.round(stop.getLegSeconds()) + " s");
+			final BankStop bank = plan.bankAfter(i);
+			if (bank != null)
+			{
+				lines.add("   Bank: " + bank.how());
+			}
+		}
+		lines.add("Supplies (first part):");
+		for (SupplyLine line : plan.getSupplies().getLines())
+		{
+			lines.add("- " + line.getName() + ": need " + line.getNeed() + ", carried " + line.getCarried() + ", "
+				+ line.getStatus() + (line.isWear() ? ", wear" : ""));
+		}
+		for (String warning : plan.getSupplies().getWarnings())
+		{
+			lines.add("Warning: " + warning);
+		}
+		return lines;
+	}
+
 	/** Forget the last plan (login, account switch) so the next one is always published. Any thread. */
 	public void reset()
 	{
