@@ -436,3 +436,9 @@ Run tab: one "Special trees" box. Farm tab: one Patches group per tree type, a s
    Anglers' Retreat, Great Conch): include? Recommended: yes.
 
 Questions 1-4 are asked first; 5-7 can wait until their sprint starts.
+
+**Answered by elzerma (2026-10-17):**
+1. Allotment protection: **the player picks per set** (Flower / Pay gardener / Compost only), starting on Flower.
+2. Special trees **join the main combined run** when due, with their own tick box.
+3. Sprint order **1a → 1b → 1c**.
+4. New run types are **off** for new players.
