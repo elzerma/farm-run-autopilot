@@ -183,3 +183,20 @@ cactus, celastrus and redwood join the runs. For contracts:
 3. Should the run ever take a contract on its own initiative, or only when the player has one already?
 4. Is (d) wanted at all, given it mostly helps players who pre-plant?
 5. Do contracts wait for the crop types work, or start with herb/tree/fruit tree and grow with it?
+
+## 7. Decisions (elzerma, 2026-10-17)
+
+- **First: (c)**, planning the contract into the run (supplies, the turn-in, a stop at Guildmaster Jane), building
+  what it needs of (a) and (b) on the way.
+- **Guild patches: a toggle, not a1 or a2.** In elzerma's words: "Runs will eventually encompass contracts with a
+  toggle-able setting for if user would like the plugin to build that into a run." With the toggle on, the guild
+  patches are run for contracts, using the pre-plants the wiki already sets out
+  ([Ironman Guide/Farming, Farming contracts](https://oldschool.runescape.wiki/w/Ironman_Guide/Farming#Farming_contracts):
+  the Medium and Hard pre-plant tables in section 1). So c2 (pre-plant planning) is part of (c), with the wiki's
+  table as the plan, and the run keeps those pre-plants unchecked until a contract asks for them. With it off, runs
+  use the guild patches as they do today.
+- **(d), the tier suggestion: yes, after (c).**
+
+Still open: questions 3 and 5 in section 6 (whether the run takes a new contract on its own, and whether
+contracts start with herb/tree/fruit tree or wait for the crop types work). Nothing is built until elzerma
+asks for the build plan.
