@@ -5,6 +5,7 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Value;
@@ -82,6 +83,31 @@ public class SupplyPlan
 			}
 		}
 		return missing;
+	}
+
+	/**
+	 * Lines still to get that need the seed vault (issue #8): what's carried, at the tool leprechaun, in the bank and
+	 * in other storage isn't enough, and the vault holds some. With how many to take from the vault: all that's still
+	 * to get, if it holds that many, so it's one trip.
+	 */
+	public Map<SupplyLine, Integer> onlyInVault()
+	{
+		final Map<SupplyLine, Integer> take = new LinkedHashMap<>();
+		for (SupplyLine line : lines)
+		{
+			if (line.getGroup() == SupplyLine.Group.OPTIONAL || line.isCoveredOtherwise())
+			{
+				continue;
+			}
+			final int vault = line.getWhere().getOrDefault(Holdings.Source.SEED_VAULT, 0);
+			final int leprechaun = line.getWhere().getOrDefault(Holdings.Source.LEPRECHAUN, 0);
+			final int toGet = line.getNeed() - line.getCarried() - leprechaun;
+			if (vault > 0 && toGet > 0 && line.getHave() - vault < line.getNeed())
+			{
+				take.put(line, Math.min(vault, toGet));
+			}
+		}
+		return take;
 	}
 
 	/** What the player has left once this part of the run has used up its seeds, payments, runes and so on. */

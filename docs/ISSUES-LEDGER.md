@@ -135,6 +135,13 @@ elzerma then asked: "previously indicated that farm run autopilot shouldn't crea
 
 Revision 4 asks about the entry with the view on and off.
 
+**Decisions (2026-10-17, elzerma, picker):**
+1. Build the banking setting as drafted below. It's "When a run banks partway", under the Seed vault tick box and shown only while that's ticked, with both choices; "Take all seeds at the start" is the default.
+2. Seeds only in the vault, on a run that doesn't start at the guild: option 4 now, then option 1 (see the routing write-up). The open questions in option 1 (which way there, whether to ask first) are left to Claude.
+
+**Built (2026-10-17), one commit each:**
+- **Option 4:** when the bank has nothing left to give before the run, the gathering step names the seeds that only the seed vault can make up: "Farm run: take 6 x Ranarr seed from the seed vault in the Farming Guild" (`SupplyPlan.onlyInVault`). It takes all that's still to get from the vault if the vault holds that many, so it's one trip. Not when the run starts at the guild, where the guild's own vault step covers them. That step now names items without the "- 3rd choice".
+
 ### #8 write-up: how a run with seeds in the vault banks partway (not built; elzerma to choose the wording)
 
 Only for a run too big for one inventory, so it banks partway, with some of its seeds kept in the seed vault. elzerma: "the decision I can't make is whether it should guide users to bank again at the farming guild or if it should have them withdraw all for a farm run from vault, deposit to main bank, then withdraw only what is needed from bank for remainder of run. That is the decision to be left with users, but I need to be sure it's described really well."

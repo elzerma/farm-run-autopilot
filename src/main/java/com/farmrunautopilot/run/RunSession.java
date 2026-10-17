@@ -1020,14 +1020,13 @@ public class RunSession
 	 */
 	private String fromSeedVault()
 	{
-		final List<String> take = new ArrayList<>();
-		toTakeFromVault().forEach((line, count) -> take.add(count + " x " + line.getName()));
+		final Map<SupplyLine, Integer> take = toTakeFromVault();
 		if (take.isEmpty())
 		{
 			vaultChecked = true;
 			return null;
 		}
-		return "Take " + String.join(", ", take) + " from the seed vault (next to the guild's bank)";
+		return "Take " + amounts(take) + " from the seed vault (next to the guild's bank)";
 	}
 
 	/**
@@ -1337,14 +1336,25 @@ public class RunSession
 		return steps;
 	}
 
-	/** Gathering supplies, one step at a time: open a bank, open the Farm run tab, take what it shows. */
-	private String gatheringStep(int missing)
+	/**
+	 * Gathering supplies, one step at a time: open a bank, open the Farm run tab, take what it shows; then what only
+	 * the seed vault has.
+	 *
+	 * @param missing lines still to get from the bank (or that the player has nowhere)
+	 * @param vault lines only the seed vault can make up, with how many to take from it
+	 */
+	private String gatheringStep(int missing, Map<SupplyLine, Integer> vault)
 	{
 		final String items = missing + (missing == 1 ? " item" : " items");
 		// At the seed vault with its Farm Run Autopilot view off, while it holds something the run needs
 		if (seedVault.isCalling())
 		{
 			return "Farm run: click the flashing button at the top of the seed vault";
+		}
+		if (missing <= 0 && !vault.isEmpty())
+		{
+			// Where they are, since the bank can't help (issue #8)
+			return "Farm run: take " + amounts(vault) + " from the seed vault in the Farming Guild";
 		}
 		if (!bankTab.isBankOpen())
 		{
@@ -1613,9 +1623,12 @@ public class RunSession
 		if (!current.getRoute().getStops().isEmpty())
 		{
 			final int missing = missingCount(current);
-			notice = gatheringStep(missing);
-			// Flash the Farm run tab until it's open, while there's something to take
-			bankTab.setAttention(missing > 0 && !bankTab.isTabOpen());
+			// Seeds only the seed vault has: unless the run starts at the guild, they're taken from it before it starts
+			final Map<SupplyLine, Integer> vault = startsAtGuild(current) ? Collections.emptyMap()
+				: current.getSupplies().onlyInVault();
+			notice = gatheringStep(missing - vault.size(), vault);
+			// Flash the Farm run tab until it's open, while there's something to take from the bank
+			bankTab.setAttention(missing > vault.size() && !bankTab.isTabOpen());
 		}
 		final List<RouteStop> stops = current.getRoute().getStops();
 		final boolean atFirstStop = !stops.isEmpty() && navigator.inRange(patchesAt(current, stops.get(0).getLocation()));
@@ -1639,9 +1652,22 @@ public class RunSession
 	static int missingCount(RunPlan plan)
 	{
 		// The seed vault is in the Farming Guild: a run starting there can take what's in it on arrival
+		return missingCount(plan.getSupplies(), startsAtGuild(plan));
+	}
+
+	/** The run's first stop is the Farming Guild, so the seed vault is on hand as it starts. */
+	static boolean startsAtGuild(RunPlan plan)
+	{
 		final List<RouteStop> stops = plan.getRoute().getStops();
-		final boolean vaultFirst = !stops.isEmpty() && stops.get(0).getLocation() == Location.FARMING_GUILD;
-		return missingCount(plan.getSupplies(), vaultFirst);
+		return !stops.isEmpty() && stops.get(0).getLocation() == Location.FARMING_GUILD;
+	}
+
+	/** e.g. "6 x Ranarr seed, 1 x Maple sapling", by the items' own names. */
+	private String amounts(Map<SupplyLine, Integer> take)
+	{
+		final List<String> parts = new ArrayList<>();
+		take.forEach((line, count) -> parts.add(count + " x " + runService.itemName(line.getItemIds()[0])));
+		return String.join(", ", parts);
 	}
 
 	/** @param vaultHere the seed vault can be used here (the Farming Guild) */
