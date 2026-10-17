@@ -27,7 +27,17 @@ The plugin never clicks, types or acts for you. It only shows information.
 - After you press **Build run**, a flashing "Farm run" button in the bank shows just the items you need, with
   how many of each: seeds and saplings, gardener payments (noted is fine), compost, tools, coins, runes or
   tablets and travel items. Green is carried, yellow is in your bank or at the tool leprechaun, red is missing.
+  A vine grows round the button while it waits for you.
+- Equipment is chosen slot by slot: a staff that covers the run's runes is wielded ahead of magic secateurs.
+- Barbarian seed planting is read from the game; once you've learned it, herb runs don't ask for a seed dibber.
 - At a bank stop partway through a big run, it shows what to deposit first, then what to take for the rest.
+
+**Seed vault**
+- In the Farming Guild's seed vault, a button by the close button shows a "Farm Run Autopilot" section at the
+  top with the run's seeds and how many you have and need. Withdraw from it as usual.
+- Seeds only the vault has are named with where to take them. For a run that banks partway, choose on the
+  Account tab whether to take every seed at the start and keep the later ones in your bank, or to bank at the
+  Farming Guild.
 
 <p>
   <img src="docs/bank-tab.jpg" alt="The Farm run bank tab" width="500">
@@ -39,7 +49,8 @@ The plugin never clicks, types or acts for you. It only shows information.
   as tick boxes on the Run tab and the current step under your character: where to go next, then what to do
   at each patch (pick, check health, clear, rake, compost, plant, pay the gardener).
 - The patch is outlined with a hint arrow over it; the gardener is outlined when it's time to pay; the seed,
-  compost, tool or teleport to use next is outlined in your inventory.
+  compost, tool or teleport to use next is outlined in your inventory, and the spell to cast in your spellbook
+  gets the growing vine. Untick "Growing vine highlights" in Settings for plain outlines.
 - Journeys are spelled out: boats, quetzals, Elkoy, hot air balloons, and Agility shortcuts when you have the
   level (the way round when you don't).
 - With [Shortest Path](https://github.com/Skretzo/shortest-path) installed, a walking line to the next patch or
@@ -68,8 +79,10 @@ The plugin never clicks, types or acts for you. It only shows information.
 - Tablets come first; tick "Use runes instead" for any stop. Spells from another spellbook are only planned
   when your house altar or Lunar's Spellbook Swap can reach them.
 - Charges are tracked across the whole run: jewellery charges, daily-limited teleports (Ardougne cloak,
-  Explorer's ring) and items charged by hand (quetzal whistle, Xeric's talisman, pendant of Ates). When one
-  runs out partway, Auto picks the next best way.
+  Explorer's ring) and items charged by hand (quetzal whistle, Xeric's talisman, pendant of Ates, counted from
+  your teleports). When one runs out partway, Auto picks the next best way.
+- A spirit tree near your last stop can be the way into your house, then out through its portal, nexus,
+  jewellery box or fairy ring.
 
 <p>
   <img src="docs/travel-tab.png" alt="Travel tab: how Auto (best) picks, and defaults for every stop" width="300">
@@ -88,6 +101,7 @@ The plugin never clicks, types or acts for you. It only shows information.
 - **Help improve this plugin:** share your run times to improve everyone's estimates, or try a guided test of a
   feature the author couldn't test. A test walks you through it on the Run tab and puts your settings back
   afterwards. The small "Help improve this plugin" line at the bottom of each tab opens this section.
+  "Report a problem" there opens GitHub's bug form with the plugin version and your current plan filled in.
 
 ## How to use
 
@@ -95,9 +109,9 @@ The plugin never clicks, types or acts for you. It only shows information.
 2. Set things up once: patches, crops, protection and compost on the Farm tab; teleports and the route on
    the Travel tab; your house, unlocks and storage on the Account tab.
 3. On the Run tab, tick the run types and press **Build run**.
-4. Open your bank and click the flashing "Farm run" button to take what you need. The run starts itself once
-   you have everything; the timer starts when you teleport or click your first patch (or press
-   **Start now**).
+4. Open your bank and click the flashing "Farm run" button to take what you need (seeds you keep in the
+   seed vault show in its Farm Run Autopilot section). The run starts itself once you have everything; the
+   timer starts when you teleport or click your first patch (or press **Start now**).
 5. Follow the steps under your character.
 
 Patches are tracked as you visit them. Until then, the plugin uses RuneLite's Time Tracking data if it has
@@ -105,9 +119,10 @@ any.
 
 ## Privacy
 
-Everything is stored in your RuneLite profile. The plugin makes no network requests. "Share your run times"
-and a guided test's report only open a GitHub issue in your browser when you press their button; nothing is
-sent unless you submit it there, and they never include your character name or where you've been.
+Everything is stored in your RuneLite profile. The plugin makes no network requests. "Share your run times",
+a guided test's report and "Report a problem" only open a GitHub issue in your browser when you press their
+button; nothing is sent unless you submit it there, and they never include your character name or where
+you've been.
 
 ## Credits
 
