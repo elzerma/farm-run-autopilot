@@ -122,12 +122,15 @@ public final class SupplyItems
 		staves.put(ItemID.LAVA_BATTLESTAFF, EnumSet.of(EARTH, FIRE));
 		staves.put(ItemID.LAVA_BATTLESTAFF_PRETTY, EnumSet.of(EARTH, FIRE));
 		staves.put(ItemID.MYSTIC_LAVA_STAFF, EnumSet.of(EARTH, FIRE));
+		staves.put(ItemID.MYSTIC_LAVA_STAFF_PRETTY, EnumSet.of(EARTH, FIRE));
 		staves.put(ItemID.MUD_BATTLESTAFF, EnumSet.of(WATER, EARTH));
 		staves.put(ItemID.MYSTIC_MUD_STAFF, EnumSet.of(WATER, EARTH));
 		staves.put(ItemID.STEAM_BATTLESTAFF, EnumSet.of(WATER, FIRE));
 		staves.put(ItemID.STEAM_BATTLESTAFF_PRETTY, EnumSet.of(WATER, FIRE));
 		staves.put(ItemID.MYSTIC_STEAM_BATTLESTAFF, EnumSet.of(WATER, FIRE));
 		staves.put(ItemID.MYSTIC_STEAM_BATTLESTAFF_PRETTY, EnumSet.of(WATER, FIRE));
+		// The wiki: "an infinite source of fire and water runes ... like the steam battlestaff"
+		staves.put(ItemID.TWINFLAME_STAFF, EnumSet.of(WATER, FIRE));
 		staves.put(ItemID.SMOKE_BATTLESTAFF, EnumSet.of(AIR, FIRE));
 		staves.put(ItemID.MYSTIC_SMOKE_BATTLESTAFF, EnumSet.of(AIR, FIRE));
 		staves.put(ItemID.MIST_BATTLESTAFF, EnumSet.of(AIR, WATER));
