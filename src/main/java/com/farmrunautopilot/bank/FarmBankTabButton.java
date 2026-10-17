@@ -116,7 +116,7 @@ class FarmBankTabButton
 		}
 	}
 
-	/** Where the button is on screen while the guide is waiting for it to be clicked, else null (see FuseOverlay). */
+	/** Where the button is on screen while the guide is waiting for it to be clicked, else null (see VineOverlay). */
 	Rectangle callingBounds()
 	{
 		if (!attention || active || background == null || background.isHidden() || isBankHidden())

@@ -3,7 +3,7 @@ package com.farmrunautopilot;
 import com.farmrunautopilot.data.travel.WalkGrid;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.bank.FarmBankTab;
-import com.farmrunautopilot.bank.FuseOverlay;
+import com.farmrunautopilot.bank.VineOverlay;
 import com.farmrunautopilot.bank.SeedVaultSection;
 import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.access.UnlockSpotter;
@@ -130,7 +130,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private FarmBankTab farmBankTab;
 
 	@Inject
-	private FuseOverlay fuseOverlay;
+	private VineOverlay vineOverlay;
 
 	@Inject
 	private SeedVaultSection seedVaultSection;
@@ -208,7 +208,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		overlayManager.add(highlightOverlay);
 		overlayManager.add(itemHighlightOverlay);
 		overlayManager.add(spellHighlightOverlay);
-		overlayManager.add(fuseOverlay);
+		overlayManager.add(vineOverlay);
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
 		navButton = NavigationButton.builder()
@@ -233,7 +233,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		overlayManager.remove(highlightOverlay);
 		overlayManager.remove(itemHighlightOverlay);
 		overlayManager.remove(spellHighlightOverlay);
-		overlayManager.remove(fuseOverlay);
+		overlayManager.remove(vineOverlay);
 		itemHighlightOverlay.clearCache();
 		clientThread.invoke(() ->
 		{
