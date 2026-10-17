@@ -6,7 +6,9 @@ body:
     attributes:
       value: |
         ### 📸 Screenshots help a lot
-        **Windows:** Win + Shift + S · **Mac:** Cmd + Ctrl + Shift + 4, then paste below.
+        **Windows:** Win + Shift + S<br>
+        **Mac:** Cmd + Ctrl + Shift + 4<br>
+        Then paste below.
 
         To stay anonymous, collapse the chat box and leave out your name (top left of the RuneLite window).
   - type: textarea
