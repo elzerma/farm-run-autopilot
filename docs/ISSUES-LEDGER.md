@@ -171,3 +171,8 @@ Open questions: bank and vault counts left out, or shown only as present/missing
   3. Never use `menuAction` or a server-side vault script.
 
   Waiting on elzerma.
+
+### Decisions (2026-10-16, elzerma)
+
+- **#5:** no auto-open; the fuse is enough. Done.
+- **#8:** build option 2, a "Farm run" section at the top of the seed vault.
