@@ -63,9 +63,10 @@ Wear blue is only for "put this on", so it's never confused with an item to use.
 
 ### Seed vault
 
-The "Farm run" section at the top of the Farming Guild's seed vault looks like the vault's own categories, so
-it reads as part of the vault: the header in `#ff981f`, bold 12 with a shadow, and the dark line under it
-(`bank/SeedVaultSection.java`). Its items are the vault's own, so they keep the vault's look.
+The "Farm run" section at the top of the Farming Guild's seed vault is laid out like a section of the bank tab
+(elzerma): its line, then its title in the section header colour, and the same "/ N" label under each seed in
+the colours above, ticked or crossed (`bank/SeedVaultSection.java`, sharing `FarmBankTab`'s). The vault's own
+items keep the vault's look, names included. A seed the vault doesn't hold is shown faded, as on the bank tab.
 
 ## 3. Type
 

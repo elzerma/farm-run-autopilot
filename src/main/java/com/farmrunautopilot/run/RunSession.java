@@ -11,6 +11,7 @@ import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.bank.FarmBankTab;
+import com.farmrunautopilot.bank.SeedVaultSection;
 import com.farmrunautopilot.route.BankStop;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.RouteStop;
@@ -114,8 +115,6 @@ public class RunSession
 	private static final int AT_BANK_TILES = 20;
 	/** At the Farming Guild, everything needed from the seed vault has been taken (or skipped). */
 	private boolean vaultChecked;
-	/** The step shown is to take seeds from the seed vault, so its Farm run section shows them. */
-	private boolean vaultStep;
 	/** The time for the leg to the current stop has been saved. */
 	private boolean legRecorded;
 	private long legStartedAt;
@@ -828,7 +827,6 @@ public class RunSession
 
 	private void evaluate()
 	{
-		vaultStep = false;
 		if (stage == RunView.State.OFF)
 		{
 			view = offView();
@@ -897,7 +895,6 @@ public class RunSession
 			if (vault != null)
 			{
 				instruction = vault;
-				vaultStep = true;
 				patches.clearCurrent();
 				break;
 			}
@@ -1032,28 +1029,60 @@ public class RunSession
 	}
 
 	/**
-	 * What the Farm run section at the top of the seed vault shows: the seeds and saplings the step "Take ... from
-	 * the seed vault" asks for, by item ID in the plan's order. Empty unless that's the step shown.
+	 * What the Farm run section at the top of the seed vault shows while a run is being built or done (elzerma: the
+	 * whole time, not only at the guild's own step): each seed and sapling the rest of the run plants, how many, and
+	 * whether they're carried yet, in the bank tab's order. The whole run even when it banks partway, until elzerma
+	 * picks how a run with seeds in the vault should bank. Empty with no run.
 	 */
-	public List<Integer> seedVaultItems()
+	public List<SeedVaultSection.Seed> seedVaultSeeds()
 	{
-		if (!vaultStep || plan == null)
+		final RunPlan shown = stage == RunView.State.BUILDING ? runService.getPlan() : plan;
+		if (stage == RunView.State.OFF || shown == null)
 		{
 			return Collections.emptyList();
 		}
-		final Map<Integer, Integer> vault = holdingsTracker.getHoldings().in(Holdings.Source.SEED_VAULT);
-		final List<Integer> items = new ArrayList<>();
-		for (SupplyLine line : toTakeFromVault().keySet())
+		// The bank tab's order: each part's seeds and saplings, then anything else planted
+		final Map<Integer, Integer> need = new LinkedHashMap<>();
+		final List<SupplyPlan> parts = new ArrayList<>();
+		parts.add(shown.getSupplies());
+		for (BankStop bank : shown.getBankStops())
 		{
-			for (int id : line.getItemIds() != null ? line.getItemIds() : new int[0])
+			parts.add(bank.getSupplies());
+		}
+		for (SupplyPlan part : parts)
+		{
+			for (SupplyLine line : part.getLines())
 			{
-				if (vault.getOrDefault(id, 0) > 0 && !items.contains(id))
+				if (line.getGroup() == SupplyLine.Group.SEEDS && line.getItemIds() != null)
 				{
-					items.add(id);
+					for (int id : line.getItemIds())
+					{
+						need.putIfAbsent(id, 0);
+					}
 				}
 			}
 		}
-		return items;
+		for (Patch patch : shown.getSelection().getPatches())
+		{
+			final Crop crop = shown.getSupplies().getPlantings().get(patch);
+			// What's planted already has been used
+			if (crop != null && (stage == RunView.State.BUILDING || !patches.isDone(patch)))
+			{
+				need.merge(crop.getPlantItemId(), 1, Integer::sum);
+			}
+		}
+		final Holdings holdings = holdingsTracker.getHoldings();
+		final Holdings carried = holdings.carriedOnly();
+		final List<SeedVaultSection.Seed> seeds = new ArrayList<>();
+		need.forEach((id, n) ->
+		{
+			if (n > 0)
+			{
+				seeds.add(new SeedVaultSection.Seed(id, n, carried.count(id) >= n ? SupplyLine.Status.CARRIED
+					: holdings.count(id) >= n ? SupplyLine.Status.IN_STORAGE : SupplyLine.Status.MISSING));
+			}
+		});
+		return seeds;
 	}
 
 	/** At the Farming Guild: each line the guild's patches still need from the seed vault, with how many to take. */

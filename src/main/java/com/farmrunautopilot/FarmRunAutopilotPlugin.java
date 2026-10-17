@@ -55,6 +55,7 @@ import net.runelite.api.events.ScriptPreFired;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetClosed;
+import net.runelite.api.events.WidgetDrag;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.InventoryID;
@@ -203,7 +204,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		settings.addSaveListener(onSettingsSaved);
 		clientThread.invoke(holdingsTracker::loadCaches);
 		farmBankTab.startUp(runSession::bankSupplies, runSession::depositNow);
-		seedVaultSection.startUp(runSession::seedVaultItems);
+		seedVaultSection.startUp(runSession::seedVaultSeeds);
 		overlayManager.add(guidanceOverlay);
 		overlayManager.add(highlightOverlay);
 		overlayManager.add(itemHighlightOverlay);
@@ -294,7 +295,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		}
 
 		runSession.onGameTick();
-		// The seed vault's Farm run section follows the step just worked out
+		// The seed vault's Farm run section follows the run just worked out
 		seedVaultSection.onGameTick();
 		// Redraw the bank tab when a line or its colour changes. The bank redraws itself on every withdrawal, but a
 		// tick before the plan catches up, so without this it would show the previous step. During a run the tab
@@ -504,6 +505,12 @@ public class FarmRunAutopilotPlugin extends Plugin
 	{
 		farmBankTab.onScriptPostFired(event);
 		seedVaultSection.onScriptPostFired(event);
+	}
+
+	@Subscribe
+	public void onWidgetDrag(WidgetDrag event)
+	{
+		seedVaultSection.onWidgetDrag(event);
 	}
 
 	// After other plugins, so withdraw clicks are re-pointed last

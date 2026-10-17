@@ -176,12 +176,6 @@ public class TestContext
 		return seedVault;
 	}
 
-	/** What the guide's "Take ... from the seed vault" step asks for, by item ID; empty when that isn't the step. */
-	public List<Integer> seedVaultItems()
-	{
-		return runSession.seedVaultItems();
-	}
-
 	/** Ticked or detected in the plugin's settings right now. */
 	public boolean hasUnlock(Unlock unlock)
 	{

@@ -220,7 +220,8 @@ final class GuidedTests
 
 	/**
 	 * The Farm run section at the top of the seed vault (issue #8): where the game puts everything in the vault was
-	 * read from its scripts, and moving the vault's widgets hasn't been tried.
+	 * read from its scripts. The first run passed, but elzerma asked for the bank tab's look and counts, for it to
+	 * show the whole time a run is built or done, and found that letting go of a drag elsewhere withdrew (revision 2).
 	 */
 	private static final class SeedVaultTop extends GuidedTest
 	{
@@ -254,28 +255,17 @@ final class GuidedTests
 		{
 			return Arrays.asList(
 				doThis("On the Run tab, press Build run", ctx -> ctx.runView().getState() != RunView.State.OFF),
-				// Without them in the vault there's no section to show, which proves nothing
-				ask("Are the seeds or saplings the bank's Farm run tab lists in the Farming Guild's seed vault, and not in "
-					+ "your inventory?")
+				// Without them in the vault there's nothing to withdraw from the section, which proves nothing
+				ask("Are some of the seeds or saplings the bank's Farm run tab lists in the Farming Guild's seed vault?")
 					.onAnswer((ctx, yes) ->
 					{
 						ctx.capture("Supply list", supplyNames(ctx));
 						if (!yes)
 						{
-							ctx.cannotTest("the seeds or saplings for the Farming Guild's patches in its seed vault");
+							ctx.cannotTest("some of the seeds or saplings for the Farming Guild's patches in its seed vault");
 						}
 					}),
-				doThis("Take everything else the bank's Farm run tab lists, leaving those seeds in the vault, then go to the "
-					+ "Farming Guild until the guide says to take them from the seed vault",
-					ctx -> !ctx.seedVaultItems().isEmpty())
-					.onDone(ctx -> ctx.capture("Step", ctx.runView().getInstruction()))
-					.orAskAfter(DO_TICKS, "The guide hasn't said to take anything from the seed vault. Carry on?")
-					.onAnswer((ctx, yes) ->
-					{
-						ctx.capture("Step", ctx.runView().getInstruction());
-						ctx.problem("The guide didn't say to take anything from the seed vault");
-					}),
-				doThis("Open the seed vault", ctx -> ctx.seedVault().isLaidOut())
+				doThis("Go to the Farming Guild and open its seed vault", ctx -> ctx.seedVault().isLaidOut())
 					.onDone(ctx ->
 					{
 						captureVault(ctx, "Seed vault when opened");
@@ -290,37 +280,48 @@ final class GuidedTests
 						captureVault(ctx, "Seed vault when asked");
 						ctx.problem("The plugin didn't see the seed vault laid out");
 					}),
-				ask("Is there a \"Farm run\" section at the top of the vault, with just the seeds the guide asked for?")
+				ask("Is there a \"Farm run\" section at the top of the vault, like the bank's Farm run tab, with a \"/ N\" "
+					+ "count under every seed and sapling the run needs?")
 					.onAnswer((ctx, yes) ->
 					{
 						captureVault(ctx, "Seed vault when answered");
 						if (!yes)
 						{
-							ctx.problem("Answered No: the Farm run section wasn't at the top with just those seeds");
+							ctx.problem("Answered No: the Farm run section wasn't at the top with a count under each seed");
 						}
 					}),
-				ask("Try to drag one of the vault's seeds to another place. Does it stay where it was?"),
-				ask("Withdraw one of the seeds in the Farm run section. Did it go into your inventory?")
+				ask("Drag a seed and let go of it somewhere else in the vault. Did nothing happen: nothing withdrawn, and "
+					+ "nothing moved?"),
+				ask("Withdraw a seed from the Farm run section. Did it go into your inventory, with its count turning green "
+					+ "and ticked once you had them all?")
 					.onAnswer((ctx, yes) ->
 					{
 						captureVault(ctx, "Seed vault after withdrawing");
 						if (!yes)
 						{
-							ctx.problem("Answered No: withdrawing from the Farm run section didn't work");
+							ctx.problem("Answered No: withdrawing from the Farm run section didn't work as it should");
+						}
+					}),
+				ask("Take the rest of what the section shows. Is it still there, with every count green and ticked?")
+					.onAnswer((ctx, yes) ->
+					{
+						captureVault(ctx, "Seed vault with everything taken");
+						if (!yes)
+						{
+							ctx.problem("Answered No: the section didn't stay with everything ticked");
+						}
+					}),
+				ask("Close the seed vault and open it again. Does it open at the top, with the Farm run section showing?")
+					.onAnswer((ctx, yes) ->
+					{
+						captureVault(ctx, "Seed vault opened again");
+						if (!yes)
+						{
+							ctx.problem("Answered No: the vault opened scrolled past the section");
 						}
 					}),
 				ask("Scroll down to the bottom of the vault, then click a few categories on the left. Is everything else "
-					+ "there, with nothing cut off or overlapping?"),
-				ask("Take the rest of what the guide asked for. Did the section go, leaving the vault as usual?")
-					.onAnswer((ctx, yes) ->
-					{
-						captureVault(ctx, "Seed vault at the end");
-						if (!yes)
-						{
-							ctx.problem("Answered No: the vault didn't go back to normal");
-						}
-					})
-					.optional());
+					+ "there, with nothing cut off or overlapping?"));
 		}
 	}
 

@@ -13,9 +13,9 @@ import java.util.Set;
 /**
  * Where everything in the seed vault goes with a Farm run section at the top (issue #8), as plain numbers so it can
  * be tested. It's the grid the game's own seed_vault_build proc (2820) lays the vault out on, at desktop sizes: one
- * scrolling list of categories, each a header, a line and rows of items. The section is laid out like one more
- * category, first, and the categories follow it without the items moved into it. Positions are within the vault's
- * main list ({@code InterfaceID.SeedVault.MAIN_VAULT}).
+ * scrolling list of categories, each a header, a line and rows of items. The section comes first, laid out like a
+ * section of the bank's Farm run tab, and the categories follow it without the items moved into it. Positions are
+ * within the vault's main list ({@code InterfaceID.SeedVault.MAIN_VAULT}).
  */
 final class SeedVaultLayout
 {
@@ -33,6 +33,19 @@ final class SeedVaultLayout
 	static final int NAME_X = 7;
 	/** The name sits under the 32 high icon. */
 	static final int NAME_BELOW = 32;
+	static final int NAME_HEIGHT = 30;
+
+	/** The section, as on the bank's Farm run tab: a line, its title 5 below it, the items under the title. */
+	static final int SECTION_TITLE_Y = 5;
+	static final int SECTION_ITEMS_Y = 22;
+	/** The "/ N" label under each of the section's icons, as on the bank tab. */
+	static final int COUNTER_BELOW = 33;
+	/** The name goes under the label. */
+	static final int SECTION_NAME_BELOW = 48;
+	/** A row of the section: the icon, its label and its name, then the vault's 20 gap. */
+	static final int SECTION_ROW_HEIGHT = SECTION_NAME_BELOW + NAME_HEIGHT + 20;
+	/** The vault's first category starts this far below the section's last names, as its categories do. */
+	static final int AFTER_SECTION = 5;
 
 	private SeedVaultLayout()
 	{
@@ -83,21 +96,28 @@ final class SeedVaultLayout
 	/** Where the section, the headers and the items go. */
 	static final class Placement
 	{
-		/** The section's header (its line is {@link #HEADER_TO_LINE} below), or -1 without a section. */
+		/** The section's line (its title is {@link #SECTION_TITLE_Y} below), or -1 without a section. */
 		final int sectionY;
 		/** How far the section pushes the categories down; 0 without one. */
 		final int sectionHeight;
+		/**
+		 * The section's items in order: where each icon and name goes, with the vault's child index, or -1 for one
+		 * the vault doesn't hold. The "/ N" label is {@link #COUNTER_BELOW} under the icon.
+		 */
+		final List<Entry> cells;
 		/** Each category's header (its line is {@link #HEADER_TO_LINE} below). */
 		final int[] headerY;
-		/** Every item's place, by child index. */
+		/** Every vault item's place, by child index. */
 		final Map<Integer, Entry> entries;
 		/** Where the game measures the end of the list from: the row after the last category's last full row. */
 		final int bottom;
 
-		Placement(int sectionY, int sectionHeight, int[] headerY, Map<Integer, Entry> entries, int bottom)
+		Placement(int sectionY, int sectionHeight, List<Entry> cells, int[] headerY, Map<Integer, Entry> entries,
+			int bottom)
 		{
 			this.sectionY = sectionY;
 			this.sectionHeight = sectionHeight;
+			this.cells = cells;
 			this.headerY = headerY;
 			this.entries = entries;
 			this.bottom = bottom;
@@ -200,24 +220,39 @@ final class SeedVaultLayout
 	}
 
 	/**
-	 * The layout with these items (child indices, in order) in a section at the top, and each category closing up
-	 * where they were. With no section it's the game's own layout.
+	 * The layout with a section at the top holding these items in order: the vault's child index of each, or -1 for
+	 * one the vault doesn't hold (shown faded in its place). Each category closes up where its items were. With no
+	 * section it's the game's own layout.
 	 */
 	static Placement place(int width, List<List<Integer>> categories, List<Integer> section)
 	{
 		final int perRow = perRow(width);
 		final Map<Integer, Entry> entries = new HashMap<>();
+		final List<Entry> cells = new ArrayList<>();
+		final Set<Integer> moved = new HashSet<>();
 		int y = FIRST_HEADER_Y;
 		int sectionY = -1;
 		int sectionHeight = 0;
 		if (!section.isEmpty())
 		{
 			sectionY = y;
-			placeRows(section, y, perRow, entries);
-			sectionHeight = HEADER_TO_LINE + rows(section.size(), perRow) * ROW_HEIGHT;
+			final int top = y + SECTION_ITEMS_Y;
+			for (int i = 0; i < section.size(); i++)
+			{
+				final int x = (i % perRow) * CELL_WIDTH;
+				final int iconY = top + (i / perRow) * SECTION_ROW_HEIGHT;
+				final Entry cell = new Entry(section.get(i), x + ICON_X, iconY, x + NAME_X, iconY + SECTION_NAME_BELOW);
+				cells.add(cell);
+				if (cell.index >= 0)
+				{
+					entries.put(cell.index, cell);
+					moved.add(cell.index);
+				}
+			}
+			final int lastRow = (rows(section.size(), perRow) - 1) * SECTION_ROW_HEIGHT;
+			sectionHeight = SECTION_ITEMS_Y + lastRow + SECTION_NAME_BELOW + NAME_HEIGHT + AFTER_SECTION;
 			y += sectionHeight;
 		}
-		final Set<Integer> moved = new HashSet<>(section);
 		final int[] headerY = new int[categories.size()];
 		int bottom = y;
 		for (int i = 0; i < categories.size(); i++)
@@ -236,7 +271,7 @@ final class SeedVaultLayout
 			bottom = itemsTop(y) + (items.size() / perRow + 1) * ROW_HEIGHT;
 			y += HEADER_TO_LINE + rows(items.size(), perRow) * ROW_HEIGHT;
 		}
-		return new Placement(sectionY, sectionHeight, headerY, entries, bottom);
+		return new Placement(sectionY, sectionHeight, cells, headerY, entries, bottom);
 	}
 
 	private static int itemsTop(int headerY)

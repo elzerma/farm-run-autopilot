@@ -42,7 +42,7 @@ Issues #1 to #5 were answered and closed on 2026-10-15, before this ledger began
 
 ## #8 explore/add bank tab support for seed vault
 
-**Kind:** Idea · **Status:** open, the Farm run section is built (option 2), waiting on an in-game test (SEED_VAULT_SECTION) · **Reviewed through:** 2026-10-16 elzerma (body)
+**Kind:** Idea · **Status:** open. The Farm run section is built (option 2). Its first test passed with changes asked for. Those changes are built and wait on a re-test (SEED_VAULT_SECTION revision 2). Two write-ups below wait on elzerma: the banking setting, and routing to the guild. · **Reviewed through:** 2026-10-16 elzerma (body)
 
 | Who | What they said | Checked against | Evaluation | Decision |
 |-----|----------------|-----------------|------------|----------|
@@ -50,6 +50,78 @@ Issues #1 to #5 were answered and closed on 2026-10-15, before this ledger began
 | elzerma | Options: (1) seed vault tabs like the bank tag plugin, built into this plugin with credit; (2) highlight each tab in turn, as Easy Blast Furnace does | | Both possible. A third way, outlining the needed seeds in the vault (~100 lines), was offered and not picked. | **Explore**, keeping elzerma's two options |
 
 **Built (2026-10-16):** `bank/SeedVaultSection.java`, with the layout maths in `bank/SeedVaultLayout.java` (unit-tested against the game's own layout loop). While the guide's step is "Take ... from the seed vault", the vault's own widgets for those seeds move into a "Farm run" section at the top, with a header like the vault's; the categories below close up without them. The real widgets move, so withdrawing works with no menu changes and nothing is sent to the server. It runs after every vault build: the proc `seed_vault_build` (2820), not only the 2819 script, which just calls it when the vault's contents change; opening the vault and searching call the proc directly. It also follows each tick when the step changes. While the section shows, no item in the vault can be dragged, as while searching: the game's drag scripts would put a moved item back where the game laid it out, and a drag reorders the vault on the server. It does nothing while the vault is searched, or when the vault isn't laid out exactly as the game's script would lay it out (checked on every build), so after a game update that changes the vault it shows the vault as the game made it. New help-list test SEED_VAULT_SECTION.
+
+**Tested (2026-10-16, elzerma, dev client):** passed. Avantoe seed moved to the top, was withdrawn, and the section then went. elzerma asked for changes:
+- Letting go of a drag somewhere else withdrew the seed.
+- Show the section for the whole banking stage, from Build run, not only at the guild's own step, and keep it once everything's taken.
+- Add the bank tab's counts: "There is no x/y counter like the bank shows."
+- Make it look like the bank's Farm run tab, without hiding the rest of the vault.
+- Cover the whole run, not only the guild's patches.
+
+The report also showed the vault opening scrolled to 109, past the section. The vault scrolls to the last category picked when it opens, and that category's header had moved down by the section.
+
+**Decisions (2026-10-16, elzerma, picker):**
+1. Show the section for the whole banking and gathering stage (before the run and at a bank stop), whenever the vault is opened. It stays once everything's been taken, with done items shown as done.
+2. Show the seeds for every patch in the run. Whether that's the whole run or only the current part depends on the banking setting below; it shows the whole run until that's decided.
+3. Routing through the guild for seeds only in the vault: explore first (write-up below).
+
+**Changed (2026-10-17):**
+- **When it shows:** whenever the vault is open while a run is being built or done (the same rule as the bank's Farm run button).
+- **What it shows:** every seed and sapling the rest of the run plants (the whole run, bank visits included), in the bank tab's order. It's laid out like a bank tab section, with the line and title in its colours.
+- **Counts:** each item has the bank tab's "/ N" label, tick and cross, in the same colours (shared with `FarmBankTab`).
+- **Seeds the vault doesn't hold** (or no longer does) show faded, as on the bank tab, so the section stays, ticked, once everything's taken. An empty slot's placeholder is moved up in its place.
+- **Dragging:** the game's own drag settings are kept, so letting go elsewhere ends a drag instead of counting as a click. The game's drag scripts come off the items that moved, and each tick a vault item is dragged its drop is cancelled (`client.setDraggedOnWidget(null)` on `WidgetDrag`, as RuneLite's Bank Tags does for "Prevent tag tab item dragging"). Nothing is withdrawn or reordered.
+- **Scroll:** when the vault scrolls to its first category, as it does on opening, it scrolls to the top so the section shows.
+
+The guided test is now revision 2. It asks about each of these.
+
+### #8 write-up: how a run with seeds in the vault banks partway (not built; elzerma to choose the wording)
+
+Only for a run too big for one inventory, so it banks partway, with some of its seeds kept in the seed vault. elzerma: "the decision I can't make is whether it should guide users to bank again at the farming guild or if it should have them withdraw all for a farm run from vault, deposit to main bank, then withdraw only what is needed from bank for remainder of run. That is the decision to be left with users, but I need to be sure it's described really well."
+
+**The setting (draft wording).** It goes in Account > Storage sources, under the "Seed vault" tick box, and only shows while that's ticked.
+
+| | Words |
+|---|---|
+| Label | When a run banks partway |
+| Label tooltip | For seeds you keep in the seed vault, on a run too big for one inventory. |
+| Choice 1 | Bank at the Farming Guild |
+| Choice 1 tooltip | Take only the seeds this part of the run needs from the seed vault. When the run banks partway, it banks at the Farming Guild, so the rest come from the vault then. |
+| Choice 2 | Take all seeds at the start |
+| Choice 2 tooltip | Take every seed the run needs from the seed vault before you set off, and put the ones for later in your bank. When the run banks partway, take them from your bank. |
+
+Another label, if the one above reads oddly: "Seed vault on longer runs".
+
+**What each choice needs from the planner:**
+- **Bank at the Farming Guild:**
+  - The bank visit before a part that needs vault seeds must be at the guild. That's right after the guild's stop if the run has one and splitting there fits. Otherwise it's a trip there (skills necklace, farming cape, spirit tree, fairy ring CIR) and on from the guild. `BankPlanner.place` has to weigh that trip against banking elsewhere, so the route can change shape and be slower.
+  - A bank visit at the guild has to count the vault. Today no bank visit does; RunSession checks them with the vault off.
+  - The vault section would show only the part being banked for.
+  - Size: L.
+- **Take all seeds at the start:**
+  - The run has to start at the Farming Guild, where the vault and a bank are side by side, or the gathering step has to send the player there first (see the routing write-up). Today the vault only counts when the run starts there.
+  - Two new guide steps at the start: take the whole run's vault seeds (the section already shows the whole run), then put the later parts' seeds in the bank (the bank tab's "Deposit first" list can show them).
+  - The first part's slot count must leave those seeds out.
+  - Later parts need nothing new: their seeds are in the bank by then, which the plugin reads when the bank opens.
+  - Size: M.
+
+**Recommended default:** Take all seeds at the start. The bank visit partway happens either way, so this adds no trip, and it needs less from the planner.
+
+### #8 write-up: routing through the Farming Guild for seeds only in the vault (Explore; not built)
+
+**Today:**
+- The plugin picks crops from everything you hold, the vault included (`SupplyCalculator`, `holdings.count`).
+- The vault only counts as usable when the run starts at the Farming Guild (`RunSession.missingCount`), or mid-run when the rest of the run passes the guild.
+- Otherwise vault-only seeds are yellow (in storage) on the bank tab, and "take the N items marked in red or yellow" includes them, so the player fetches them by hand. From 2026-10-17 the vault section shows them while the run is being built.
+
+| Option | Size | Notes |
+|--------|------|-------|
+| 1. Start at the guild: when a seed the run plants is only in the vault, plan the run from the Farming Guild and say so in the gathering step ("Go to the Farming Guild: Ranarr seed is in the seed vault") | M | Works with either banking choice. Open questions: which way there (the guild teleports you have), and whether to ask first. |
+| 2. Pick another crop: count vault seeds only when the run passes the guild, otherwise take the next crop choice you hold elsewhere, with a note | S | Overrides your crop order, so it has to be said where it happens |
+| 3. A trip to the guild partway: the bank planner adds a vault visit before the part that plants them | L | Needed anyway for "Bank at the Farming Guild" above |
+| 4. Say where they are: keep the plan, and have the gathering step name the vault ("Take 6 Ranarr seed from the seed vault in the Farming Guild") | XS | Clear, and changes no routes |
+
+**Recommended:** 4 now, then 1 if the plugin should route there itself. 3 only goes with the first banking choice.
 
 ## #9 Test: Fire of Nourishment at Weiss - works
 

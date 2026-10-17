@@ -68,16 +68,17 @@ public class FarmBankTab
 	private static final int ITEM_HORIZONTAL_SPACING = 48;
 	private static final int ITEM_ROW_START = 51;
 	private static final int LINE_VERTICAL_SPACING = 5;
-	private static final int LINE_HEIGHT = 2;
-	private static final int TEXT_HEIGHT = 15;
-	private static final int ICON_SIZE = 10;
+	// The look of this tab's sections and "/ N" labels, which the seed vault's Farm run section shares
+	static final int LINE_HEIGHT = 2;
+	static final int TEXT_HEIGHT = 15;
+	static final int ICON_SIZE = 10;
 	/** Planned items get taller rows, with room for the "/ N" label under each item. */
 	private static final int PLANNED_ROW_SPACING = 50;
-	private static final int ITEM_HEIGHT = 32;
-	private static final int LABEL_WIDTH = 46;
-	private static final int LABEL_HEIGHT = 14;
-	private static final int FADED = 120;
-	private static final Color HEADER = new Color(228, 216, 162);
+	static final int ITEM_HEIGHT = 32;
+	static final int LABEL_WIDTH = 46;
+	static final int LABEL_HEIGHT = 14;
+	static final int FADED = 120;
+	static final Color HEADER = new Color(228, 216, 162);
 	private static final Color CARRIED = new Color(0x4C, 0xC1, 0x52);
 	private static final Color IN_STORAGE = new Color(0xE8, 0xC5, 0x3A);
 	private static final Color MISSING = new Color(0xE0, 0x55, 0x55);
@@ -539,29 +540,45 @@ public class FarmBankTab
 	/** "/ N" under the item, in bold, coloured like the sidebar, ticked when carried, crossed when missing. */
 	private static PendingText neededText(Widget widget, SupplyLine line)
 	{
-		final String needed = "/ " + QuantityFormatter.quantityToStackSize(line.getNeed());
 		// The item is 36 wide in a 48 wide slot; centre the label under it.
 		final int x = widget.getOriginalX() - (LABEL_WIDTH - BANK_ITEM_WIDTH) / 2;
 		final int y = widget.getOriginalY() + ITEM_HEIGHT + 1;
+		return new PendingText(neededLabel(line.getNeed()), neededColour(line.getStatus()), x, y,
+			neededSprite(line.getStatus()));
+	}
 
-		final Color colour;
-		final int sprite;
-		switch (line.getStatus())
+	/** The "/ N" label's text. */
+	static String neededLabel(int need)
+	{
+		return "/ " + QuantityFormatter.quantityToStackSize(need);
+	}
+
+	/** The label's colour, as in the sidebar: green carried, yellow in storage, red missing. */
+	static int neededColour(SupplyLine.Status status)
+	{
+		switch (status)
 		{
 			case CARRIED:
-				colour = CARRIED;
-				sprite = SpriteID.Checkbox.CHECKED;
-				break;
+				return CARRIED.getRGB();
 			case IN_STORAGE:
-				colour = IN_STORAGE;
-				sprite = -1;
-				break;
+				return IN_STORAGE.getRGB();
 			default:
-				colour = MISSING;
-				sprite = SpriteID.Checkbox.CROSSED;
-				break;
+				return MISSING.getRGB();
 		}
-		return new PendingText(needed, colour.getRGB(), x, y, sprite);
+	}
+
+	/** The tick when carried, the cross when missing, none when in storage (-1). */
+	static int neededSprite(SupplyLine.Status status)
+	{
+		switch (status)
+		{
+			case CARRIED:
+				return SpriteID.Checkbox.CHECKED;
+			case IN_STORAGE:
+				return -1;
+			default:
+				return SpriteID.Checkbox.CROSSED;
+		}
 	}
 	private void showDetails(SupplyLine line)
 	{
