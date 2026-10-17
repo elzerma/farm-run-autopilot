@@ -355,3 +355,4 @@ Still open: #8 (seed vault, waiting on edge-case checks and elzerma's choices on
 **Kind:** Help wanted (opened and pinned by elzerma's OK, 2026-10-17) · **Status:** open, pinned · **Reviewed through:** 2026-10-17 elzerma (body)
 
 Lists the help-list tests elzerma's account can't run: SPELLBOOK_SWAP, FORTIS_CHAMPION, BUCKET_COMPOST, SPIRIT_TREES, HOUSE_BY_TREE, ATES_CHARGES and HOUSE_SCAN. Update the table when a test is added, passes or is removed. Close it when the list is empty.
+- **#7, follow-up (2026-10-17, elzerma in game):** with a lava staff suggested, the list still showed an earth rune line with a green tick, which read as something to bring. Runes covered by a staff or tome no longer get a line of their own; the staff's line ("Covers the earth and fire runes") and the rune summary say it once.

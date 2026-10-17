@@ -871,25 +871,23 @@ public final class SupplyCalculator
 		final List<String> free = new ArrayList<>();
 		need.forEach((rune, n) ->
 		{
-			final boolean staffCovers = infinite.contains(rune);
+			// Runes a staff or tome covers get no line of their own: the staff's line says so, and a ticked "earth
+			// rune" line read as something to bring (elzerma)
+			if (infinite.contains(rune))
+			{
+				free.add("staff covers " + title(rune.name()));
+				return;
+			}
 			final String name = itemName.apply(rune.getItemId());
 			String note = null;
-			if (staffCovers)
+			bring.add(n + " " + rune.name().toLowerCase());
+			final int inPouch = holdings.getRunePouch().getOrDefault(rune.getItemId(), 0);
+			if (inPouch > 0)
 			{
-				note = "Your staff or tome supplies these";
-				free.add("staff covers " + title(rune.name()));
-			}
-			else
-			{
-				bring.add(n + " " + rune.name().toLowerCase());
-				final int inPouch = holdings.getRunePouch().getOrDefault(rune.getItemId(), 0);
-				if (inPouch > 0)
-				{
-					note = "Rune pouch has " + inPouch;
-				}
+				note = "Rune pouch has " + inPouch;
 			}
 			result.lines.add(new SupplyLine(SupplyLine.Group.RUNES, name, n, all.have.get(rune), onYou.have.get(rune),
-				holdings.where(rune.getItemId()), note, staffCovers || inPouch(holdings, rune) ? 0 : 1, false,
+				holdings.where(rune.getItemId()), note, inPouch(holdings, rune) ? 0 : 1, false,
 				TRAVEL + " (teleport, or runes instead of a tablet)", new int[]{rune.getItemId()}, true));
 		});
 		all.comboUsed.forEach((id, n) -> free.add(n + " " + itemName.apply(id).toLowerCase()));

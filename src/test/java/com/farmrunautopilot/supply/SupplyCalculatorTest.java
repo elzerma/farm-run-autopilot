@@ -238,15 +238,13 @@ public class SupplyCalculatorTest
 		// 2 air + 3 dust = 5 of 6 air; dust also covers the 1 earth; the staff covers fire.
 		assertEquals(5, byName.get("rune " + Rune.AIR.getItemId()).getHave());
 		assertEquals(1, byName.get("rune " + Rune.EARTH.getItemId()).getHave());
-		final SupplyLine fire = byName.get("rune " + Rune.FIRE.getItemId());
-		assertTrue(fire.isMet());
-		assertEquals(0, fire.getSlots());
+		// Fire, which the staff covers, gets no line of its own: only the summary says so
+		assertNull(byName.get("rune " + Rune.FIRE.getItemId()));
 		assertTrue(result.summary.contains("staff covers Fire"));
 
-		// Everything is in the bank, so nothing is carried: air is short, earth is in storage, fire is carried.
+		// Everything is in the bank, so nothing is carried: air is short, earth is in storage.
 		assertEquals(SupplyLine.Status.MISSING, byName.get("rune " + Rune.AIR.getItemId()).getStatus());
 		assertEquals(SupplyLine.Status.IN_STORAGE, byName.get("rune " + Rune.EARTH.getItemId()).getStatus());
-		assertEquals(SupplyLine.Status.CARRIED, fire.getStatus());
 	}
 
 	@Test
@@ -455,9 +453,8 @@ public class SupplyCalculatorTest
 		assertNotNull(staff);
 		assertTrue(staff.isWear());
 		assertEquals(0, staff.getSlots());
-		final SupplyLine earth = find(plan, "item " + Rune.EARTH.getItemId());
-		assertTrue(earth.isMet());
-		assertEquals(0, earth.getSlots());
+		// The staff covers the earth runes, so there's no earth rune line to bring
+		assertNull(find(plan, "item " + Rune.EARTH.getItemId()));
 		final SupplyLine secateurs = find(plan, "Magic secateurs");
 		assertFalse(secateurs.isWear());
 		assertEquals(1, secateurs.getSlots());
@@ -465,7 +462,7 @@ public class SupplyCalculatorTest
 
 		// A staff in the bank counts too, as the plan says to wield it
 		final SupplyPlan fromBank = plan(config, AccessSnapshot.UNKNOWN, wornAndBank(bank, worn), NEVER_SEEN, true);
-		assertTrue(find(fromBank, "item " + Rune.EARTH.getItemId()).isMet());
+		assertNull(find(fromBank, "item " + Rune.EARTH.getItemId()));
 		assertTrue(find(fromBank, "item " + ItemID.LAVA_BATTLESTAFF).isWear());
 
 		// No runes to save: the staff isn't a candidate, and the secateurs are worn
