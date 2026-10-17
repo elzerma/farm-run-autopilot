@@ -347,3 +347,9 @@ times; patch details/debug; the help list and guided tests (see decisions).
    - Items to wear get their own highlight colour and a "Wear" label, never the colour used for "use this to
      teleport", so nobody mistakes an item to put on for the next teleport. Once it's worn the highlight goes.
    - The Run tab's status line says the same, not only a tooltip. (elzerma, 2026-10-11)
+   - The one exception, staves (issue #7, elzerma 2026-10-17): when carrying a second staff (or the dramen staff
+     in the inventory) frees at least one inventory slot over carrying the runes, the plan swaps staves on the way.
+     Before setting off for a stop that needs another staff, the step is "Wield your mist battlestaff", with it
+     outlined in the wear colour, and it moves on once the game shows it wielded. Slots: the wielded staff takes
+     none, each carried one a slot; a rune pouch is one slot shared by the rune types in it (3, or 4 for the divine
+     pouch: 1/3 or 1/4 each), and types that don't fit take a slot each (`supply/StaffPlanner.java`).

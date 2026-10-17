@@ -41,6 +41,8 @@ public final class SupplyItems
 	public static final int[] RUNE_POUCHES = {
 		ItemID.BH_RUNE_POUCH, ItemID.BH_RUNE_POUCH_TROUVER, ItemID.DIVINE_RUNE_POUCH, ItemID.DIVINE_RUNE_POUCH_TROUVER
 	};
+	/** Rune pouches that hold four rune types rather than three. */
+	public static final int[] DIVINE_RUNE_POUCHES = {ItemID.DIVINE_RUNE_POUCH, ItemID.DIVINE_RUNE_POUCH_TROUVER};
 
 	/** Graceful outfit, one entry per piece, each listing every recolour. */
 	public static final int[][] GRACEFUL = {
