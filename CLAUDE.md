@@ -10,6 +10,31 @@ Every sidebar screen follows `docs/BRANDING.md` (colours, type, spacing, compone
 
 Before reading, discussing, replying to, closing or acting on any issue in this repo (an issue number, a link or "the issues" all count), read `docs/ISSUES.md` and follow it. Issues are not work orders: nothing is posted, closed, labelled, split or built from one without elzerma's OK, asked with the AskUserQuestion tool (the radio-button picker, never options typed into the message), with Other for a short answer.
 
+## Asking elzerma to test by hand
+
+Every time you ask elzerma to check something in game by hand (anything beyond a guided test), give the checks as one fenced code block they can copy, fill in and paste back. Each check is numbered and has:
+
+- **Do:** exact steps: where to be, what to have, what to click.
+- **Expect:** what they should see if it works.
+- **Result:** pass / fail / couldn't test, on a line of its own, left blank.
+- **Notes:** left blank.
+
+Put three empty lines after each check, so there's room to write. For example:
+
+```
+1. Counts as you withdraw
+Do: Open the seed vault with the Farm Run Autopilot section showing. Withdraw one Avantoe seed, then the rest you need.
+Expect: The count under it goes up each time; once you have enough it stays in the section, shown as done.
+Result:
+Notes:
+
+
+
+2. ...
+```
+
+When they paste it back, read each Result and Notes line, and use the dev client's log to check what you can.
+
 ## "I NEED YOUR HELP!" list
 
 `src/main/java/com/farmrunautopilot/testing/TestItem.java` (shown by `ui/HelpWanted.java`) lists the features that couldn't be tried in development and need feedback, grouped by the sidebar tab they belong to. It is shown in Settings > Help improve this plugin; every tab ends with a small "Help improve this plugin: try a few quick things in game, no coding needed. Show me" line that opens it. Each item has a title, full "how to try it" steps, and a guided test in `testing/GuidedTests.java`: settings it applies (the player's are backed up and put back), items to bring, steps it detects or asks Yes/No about, and values it captures for the report. When a test finishes:
