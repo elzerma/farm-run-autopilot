@@ -136,7 +136,8 @@ final class BankPlanner
 			}
 			travel += visitOnly(v, stops, chainSaving);
 		}
-		return new Result(new Route(onward, route.getMode(), travel, route.getPatchSeconds()), visits);
+		return new Result(new Route(onward, route.getMode(), travel, route.getPatchSeconds(), route.getStartsFrom()),
+			visits);
 	}
 
 	/** The cheaper of banking near the stop or by teleport, or null if neither fits. */

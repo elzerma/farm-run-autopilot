@@ -149,6 +149,11 @@ Revision 4 asks about the entry with the view on and off.
   - When the run starts at the guild, the first part's vault seeds come out in the same trip.
   - Before the run starts, the vault section counts the later parts' seeds in the bank as done, so it doesn't ask for them again.
   - At the bank visit they're in the bank, so it works as for anything else.
+- **Option 1, the run starts at the Farming Guild:** when a seed the run plants is only in the seed vault, the run is planned from the guild (`RunService.plansFromGuild`, the planner's `startFrom`).
+  - If the guild is a stop, the run starts there, by the way Auto picks, and the guild's own vault step says what to take, as before.
+  - If it isn't, the first leg is planned from the guild (its spirit tree, fairy ring CIR, or the best teleport) and the gathering step says so: "Farm run: take 6 x Ranarr seed from the seed vault in the Farming Guild, where the run starts".
+  - While the player is in the guild and it isn't a stop, the run sets off from there too, so the route stays the same once the seeds are taken.
+  - The open questions, decided by Claude: it plans from the guild without asking, since the seeds have to come from there anyway. A start picked in the Run options wins. With the Seed vault tick box off nothing changes.
 
 ### #8 write-up: how a run with seeds in the vault banks partway (wording chosen 2026-10-17; see Built above)
 
@@ -182,7 +187,7 @@ Another label, if the one above reads oddly: "Seed vault on longer runs".
 
 **Recommended default:** Take all seeds at the start. The bank visit partway happens either way, so this adds no trip, and it needs less from the planner.
 
-### #8 write-up: routing through the Farming Guild for seeds only in the vault (Explore; not built)
+### #8 write-up: routing through the Farming Guild for seeds only in the vault (options 4 and 1 built 2026-10-17; see Built above)
 
 **Today:**
 - The plugin picks crops from everything you hold, the vault included (`SupplyCalculator`, `holdings.count`).

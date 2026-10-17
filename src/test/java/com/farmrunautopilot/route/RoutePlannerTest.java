@@ -2,6 +2,8 @@ package com.farmrunautopilot.route;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Location;
@@ -190,6 +192,42 @@ public class RoutePlannerTest
 		assertEquals(Location.FARMING_GUILD, route.getStops().get(0).getLocation());
 		assertEquals(Location.LUMBRIDGE, route.getStops().get(1).getLocation());
 		assertEquals(Location.TAVERLEY, route.getStops().get(2).getLocation());
+	}
+
+	private static Route fromGuild(List<Patch> patches, RunConfig config)
+	{
+		return RoutePlanner.plan(patches, config, AccessSnapshot.UNKNOWN, Holdings.EMPTY, new PohSetup(),
+			LearnedTimes.NONE, null, null, 0, Location.FARMING_GUILD);
+	}
+
+	@Test
+	public void seedsInTheVaultStartTheRunAtTheGuild()
+	{
+		// Issue #8: the guild is a stop, so the run starts there, the usual way
+		final RunConfig config = new RunConfig().sanitise();
+		final List<Patch> withGuild = Arrays.asList(Patch.TAVERLEY_TREE, Patch.LUMBRIDGE_TREE, Patch.FARMING_GUILD_TREE);
+		final Route there = fromGuild(withGuild, config);
+		assertEquals(Location.FARMING_GUILD, there.getStops().get(0).getLocation());
+		assertNull(there.getStartsFrom());
+		assertTrue(there.setsOffFrom(Location.FARMING_GUILD));
+
+		// A start picked in the Run options comes first
+		config.setStartLocation(Location.TAVERLEY);
+		assertEquals(Location.TAVERLEY, fromGuild(withGuild, config).getStops().get(0).getLocation());
+		assertFalse(fromGuild(withGuild, config).setsOffFrom(Location.FARMING_GUILD));
+	}
+
+	@Test
+	public void withoutAGuildStopTheFirstLegSetsOffFromTheGuild()
+	{
+		// From the guild, its spirit tree reaches the Stronghold; from anywhere there's no tree to start from
+		final RunConfig config = new RunConfig().sanitise();
+		final Route route = fromGuild(Collections.singletonList(Patch.GNOME_STRONGHOLD_FRUIT_TREE), config);
+		assertEquals(Location.FARMING_GUILD, route.getStartsFrom());
+		assertTrue(route.setsOffFrom(Location.FARMING_GUILD));
+		assertEquals(TravelMethod.SPIRIT_TREE_GNOME_STRONGHOLD, route.getStops().get(0).getMethod());
+		assertNull(RoutePlanner.plan(Collections.singletonList(Patch.GNOME_STRONGHOLD_FRUIT_TREE), config,
+			AccessSnapshot.UNKNOWN, Holdings.EMPTY, new PohSetup()).getStartsFrom());
 	}
 
 	@Test

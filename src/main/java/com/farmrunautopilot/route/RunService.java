@@ -75,6 +75,8 @@ public class RunService
 	/** The stop the player is close to but not at, and how far (tiles); null if none. */
 	private Location near;
 	private int nearTiles;
+	/** The player was in the Farming Guild on the last tick. */
+	private boolean guild;
 
 	@Inject
 	RunService(Client client, ItemManager itemManager, SettingsStore settings, AccessChecker accessChecker,
@@ -168,9 +170,11 @@ public class RunService
 		final boolean holdingsChanged = holdingsTracker.rebuildIfDirty();
 		final Location nowAt = standingAt();
 		final Location nearNow = nearby();
-		final boolean moved = nowAt != here || nearNow != near;
+		final boolean guildNow = inGuild();
+		final boolean moved = nowAt != here || nearNow != near || guildNow != guild;
 		here = nowAt;
 		near = nearNow;
+		guild = guildNow;
 		if (moved)
 		{
 			log.debug("Route start: at {}, near {} ({} tiles)", here, near, nearTiles);
@@ -187,8 +191,10 @@ public class RunService
 		final Holdings holdings = holdingsTracker.getHoldings();
 		final RunSelection selection = RunSelector.select(config, access, patchTracker::predict,
 			Instant.now().getEpochSecond(), config.isSupplyFullRun(), overrides.get());
+		// In the Farming Guild, where it isn't a stop: the run sets off from there (issue #8)
 		Route route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
-			settings.getAccount().getPoh(), timings.learned(), here, near, nearTiles);
+			settings.getAccount().getPoh(), timings.learned(), here, near, nearTiles,
+			guild ? Location.FARMING_GUILD : null);
 		SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 			patchTracker::predict, this::itemName, itemManager::getItemPrice);
 		// Starting at the stop the player stands at or near only makes sense if they can start from there: carrying
@@ -200,6 +206,15 @@ public class RunService
 		{
 			route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
 				settings.getAccount().getPoh(), timings.learned(), null, null, 0);
+			supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
+				patchTracker::predict, this::itemName, itemManager::getItemPrice);
+		}
+		// Seeds the run plants that only the seed vault has: the player fetches them from the Farming Guild, so the run
+		// sets off from there (issue #8)
+		if (plansFromGuild(config, route, supplies))
+		{
+			route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
+				settings.getAccount().getPoh(), timings.learned(), null, null, 0, Location.FARMING_GUILD);
 			supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 				patchTracker::predict, this::itemName, itemManager::getItemPrice);
 		}
@@ -252,12 +267,33 @@ public class RunService
 	}
 
 	/**
+	 * The run should set off from the Farming Guild, as seeds it plants are only in the guild's seed vault (issue #8):
+	 * unless it does already, or the player picked where runs start.
+	 */
+	static boolean plansFromGuild(RunConfig config, Route route, SupplyPlan supplies)
+	{
+		return config.getStartLocation() == null && !route.getStops().isEmpty()
+			&& !route.setsOffFrom(Location.FARMING_GUILD) && !supplies.onlyInVault().isEmpty();
+	}
+
+	/** In the Farming Guild's area, where its bank and seed vault are. Client thread. */
+	private boolean inGuild()
+	{
+		final Player player = client.getLocalPlayer();
+		return player != null && player.getWorldLocation().getRegionID() == Patch.FARMING_GUILD_HERB.getRegionId();
+	}
+
+	/**
 	 * The route leg by leg with how each time was worked out, and where it banks, so a strange route can be
 	 * explained from the log alone (docs/REBUILD.md).
 	 */
 	private static String explain(RunPlan plan)
 	{
 		final StringBuilder b = new StringBuilder();
+		if (plan.getRoute().getStartsFrom() != null)
+		{
+			b.append("From ").append(plan.getRoute().getStartsFrom().getDisplayName()).append('\n');
+		}
 		final List<RouteStop> stops = plan.getRoute().getStops();
 		for (int i = 0; i < stops.size(); i++)
 		{

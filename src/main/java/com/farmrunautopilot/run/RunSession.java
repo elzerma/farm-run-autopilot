@@ -1370,10 +1370,11 @@ public class RunSession
 	 *
 	 * @param missing lines still to get from the bank (or that the player has nowhere)
 	 * @param vault what only the seed vault can make up, by item, with how many to take from it
+	 * @param startsThere the run sets off from the Farming Guild
 	 * @param forLaterToo some of it is for the run's later parts, to put in the bank
 	 * @param toBank seeds for the later parts that are carried, by item, with how many to put in the bank
 	 */
-	private String gatheringStep(int missing, Map<Integer, Integer> vault, boolean forLaterToo,
+	private String gatheringStep(int missing, Map<Integer, Integer> vault, boolean startsThere, boolean forLaterToo,
 		Map<Integer, Integer> toBank)
 	{
 		final String items = missing + (missing == 1 ? " item" : " items");
@@ -1384,8 +1385,9 @@ public class RunSession
 		}
 		if (missing <= 0 && !vault.isEmpty())
 		{
-			// Where they are, since the bank can't help (issue #8)
+			// Where they are, since the bank can't help, and that the run is planned from there (issue #8)
 			return "Farm run: take " + amounts(vault) + " from the seed vault in the Farming Guild"
+				+ (startsThere ? ", where the run starts" : "")
 				+ (forLaterToo ? ", and put the ones for later in your bank" : "");
 		}
 		if (missing <= 0 && !toBank.isEmpty())
@@ -1673,7 +1675,8 @@ public class RunSession
 				- vault.size();
 			final Map<Integer, Integer> take = byItem(vault);
 			later.forEach((id, n) -> take.merge(id, n, Integer::sum));
-			notice = gatheringStep(fromBank, take, !later.isEmpty(), toBank);
+			notice = gatheringStep(fromBank, take, current.getRoute().setsOffFrom(Location.FARMING_GUILD),
+				!later.isEmpty(), toBank);
 			// Flash the Farm run tab until it's open, while there's something to take from the bank
 			bankTab.setAttention(fromBank > 0 && !bankTab.isTabOpen());
 			// The seeds to put in the bank are outlined while it's open, as at a bank visit

@@ -76,6 +76,8 @@ public final class RoutePlanner
 	/** A stop the player is close to but not at, so the run can start by walking there; null if none. */
 	private Location near;
 	private int nearTiles;
+	/** Where the run sets off from for a reason (the Farming Guild, for its seed vault), or null. */
+	private Location startFrom;
 
 	private RoutePlanner(RunConfig config, AccessSnapshot access, Holdings holdings, PohSetup poh,
 		LearnedTimes learned)
@@ -151,6 +153,17 @@ public final class RoutePlanner
 	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
 		PohSetup poh, LearnedTimes learned, Location here, Location near, int nearTiles)
 	{
+		return plan(patches, config, access, holdings, poh, learned, here, near, nearTiles, null);
+	}
+
+	/**
+	 * @param startFrom where the run sets off from, or null (issue #8): the Farming Guild, for seeds only in its seed
+	 *     vault or when the player is in the guild. The run starts there if it's a stop; otherwise the first legs are
+	 *     from there. Standing at a stop or a start picked in the Run options comes first.
+	 */
+	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
+		PohSetup poh, LearnedTimes learned, Location here, Location near, int nearTiles, Location startFrom)
+	{
 		final List<Location> stops = new ArrayList<>();
 		for (Location location : Location.values())
 		{
@@ -170,6 +183,7 @@ public final class RoutePlanner
 		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, learned);
 		planner.near = near;
 		planner.nearTiles = nearTiles;
+		planner.startFrom = startFrom;
 		return planner.plan(stops, patches.size(), here);
 	}
 
@@ -222,10 +236,22 @@ public final class RoutePlanner
 		}
 		// Already standing at a stop: start there, with nothing to travel or bring for it
 		final int standingAt = here == null ? -1 : stops.indexOf(here);
+		final int chosenStart = stops.indexOf(config.getStartLocation());
+		// Setting off from the Farming Guild for its seed vault (issue #8): there if it's a stop, otherwise the first
+		// legs are from there
+		final int fromStop = startFrom == null ? -1 : stops.indexOf(startFrom);
+		final boolean offStop = startFrom != null && fromStop < 0 && standingAt < 0 && chosenStart < 0;
 		int walkFirst = -1;
 		if (standingAt >= 0)
 		{
 			firstLeg[standingAt] = new Leg(null, Departure.WALK, 0, false, "standing here");
+		}
+		else if (offStop)
+		{
+			for (int j = 0; j < n; j++)
+			{
+				firstLeg[j] = bestLeg(startFrom, stops.get(j));
+			}
 		}
 		else if (near != null && stops.indexOf(near) >= 0)
 		{
@@ -242,8 +268,8 @@ public final class RoutePlanner
 			}
 			walkFirst = j;
 		}
-		final int chosenStart = stops.indexOf(config.getStartLocation());
-		final int start = standingAt >= 0 ? standingAt : chosenStart >= 0 ? chosenStart : walkFirst;
+		final int start = standingAt >= 0 ? standingAt : chosenStart >= 0 ? chosenStart : fromStop >= 0 ? fromStop
+			: walkFirst;
 
 		final int[] order;
 		switch (config.getRouteMode())
@@ -272,7 +298,8 @@ public final class RoutePlanner
 			travel += leg.seconds;
 		}
 		travel += endCost[order[order.length - 1]];
-		return new Route(result, config.getRouteMode(), travel, patchCount * SECONDS_PER_PATCH);
+		return new Route(result, config.getRouteMode(), travel, patchCount * SECONDS_PER_PATCH,
+			offStop ? startFrom : null);
 	}
 
 	// Ordering
