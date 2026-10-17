@@ -21,14 +21,14 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 public class FuseOverlay extends Overlay
 {
 	/** One lap of the spark. */
-	private static final long LAP_MILLIS = 1400;
+	private static final long LAP_MILLIS = 700;
 	/** How much of the lap glows behind the spark. */
 	private static final double TRAIL = 0.45;
 	/** Room between the button and the fuse. */
 	private static final int GAP = 2;
 	/** Marquee bulbs every few pixels. */
 	private static final int BULB_SPACING = 4;
-	private static final long EMIT_MILLIS = 80;
+	private static final long EMIT_MILLIS = 45;
 	private static final long FIGURE_LIFE_MILLIS = 750;
 	private static final int MAX_FIGURES = 30;
 	/** Pixels per second squared. */
@@ -94,7 +94,8 @@ public class FuseOverlay extends Overlay
 			{
 				graphics.setColor(FUSE);
 			}
-			graphics.fillRect(p[0], p[1], 2, 2);
+			// Bulbs grow outwards from the line, so the gap to the button is the same on every side
+			graphics.fillRect(p[0] == fuse.x ? p[0] - 1 : p[0], p[1] == fuse.y ? p[1] - 1 : p[1], 2, 2);
 		}
 
 		final int[] s = pointAt(fuse, spark);
