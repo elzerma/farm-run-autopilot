@@ -152,3 +152,10 @@ It would follow the "Share your run times" pattern: a button in Settings > Help 
 | 3. Make it the expected way to report bugs: a README link, and the last few plugin warnings and errors kept for the report | L | |
 
 Open questions: bank and vault counts left out, or shown only as present/missing? Is a preview wanted, or is the GitHub page enough (as for run times)?
+
+### Decisions on the write-ups (2026-10-16, elzerma)
+
+- **#8:** explore a Bank Tags-style view inside the seed vault, if the rules allow (Other: "Explore options like bank tab plugin if rules allow"). No code yet.
+- **#5:** build the outline now, as an animated "fuse": a bright spark looping around the Farm run button like marquee lights, with little pixel figures shedding off where the spark passes. Auto-open comes later, only after checking how Quest Helper does it and that it fits the Plugin Hub rules.
+- **#16:** build option 1 (a spirit tree into the house).
+- **#17:** build option 1 (the Report a problem button).
