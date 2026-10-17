@@ -27,6 +27,7 @@ import com.farmrunautopilot.supply.SupplyPlan;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -123,6 +124,8 @@ public class RunSession
 	 * the start" (issue #8): once taken, the ones for later go in the bank before the run starts.
 	 */
 	private final Set<Integer> forLater = new LinkedHashSet<>();
+	/** The bank visit's step is the seed vault's, so the bank's Farm run tab has nothing left to flash for. */
+	private boolean vaultStep;
 	/** The time for the leg to the current stop has been saved. */
 	private boolean legRecorded;
 	private long legStartedAt;
@@ -864,6 +867,7 @@ public class RunSession
 		// Armed shows the first step but doesn't time legs or move on until the timer starts
 		final boolean timing = stage == RunView.State.RUNNING;
 		String instruction = null;
+		vaultStep = false;
 		while (stopIndex < stops.size())
 		{
 			final RouteStop stop = stops.get(stopIndex);
@@ -980,7 +984,7 @@ public class RunSession
 			checkMissing(now);
 		}
 		shortestPath.setTarget(timing ? walkTarget(stops.get(stopIndex)) : null);
-		bankTab.setAttention(banking && !bankTab.isTabOpen());
+		bankTab.setAttention(banking && !vaultStep && !bankTab.isTabOpen());
 		view = runningView(instruction);
 	}
 
@@ -993,8 +997,12 @@ public class RunSession
 		if (banking)
 		{
 			final BankStop bank = activeBank();
-			// By teleport, the bank is right where it lands
-			return bank == null || bank.getTeleport() != null ? null : TravelTimes.bankPoint(bank.getLocation());
+			// By teleport, the bank is right where it lands; by a trip to the Farming Guild, once the player's there
+			if (bank == null || bank.getTeleport() != null || bank.getTrip() != null && !inGuild())
+			{
+				return null;
+			}
+			return TravelTimes.bankPoint(bank.getBankLocation());
 		}
 		if (!navigator.isArrived())
 		{
@@ -1047,7 +1055,8 @@ public class RunSession
 	 * What the Farm run section at the top of the seed vault shows while a run is being built or done (elzerma: the
 	 * whole time, not only at the guild's own step): each seed and sapling the rest of the run plants, how many, and
 	 * whether they're carried yet, in the bank tab's order. The whole run even when it banks partway, as "Take all
-	 * seeds at the start" takes them all from the vault. Empty with no run.
+	 * seeds at the start" takes them all from the vault; with "Bank at the Farming Guild", only the part being
+	 * gathered or banked for, as the rest comes from the vault at the guild's bank. Empty with no run.
 	 */
 	public List<SeedVaultSection.Seed> seedVaultSeeds()
 	{
@@ -1056,13 +1065,30 @@ public class RunSession
 		{
 			return Collections.emptyList();
 		}
+		final boolean running = stage == RunView.State.RUNNING;
+		final boolean partOnly = !shown.getBankStops().isEmpty() && RunService.guildBanking(settings.getRunConfig());
+		final int at = running ? stopIndex : 0;
+		final boolean atBank = running && (banking || banksDone.contains(stopIndex));
+		final int[] range = partOnly ? partStops(shown, at, atBank) : new int[]{0, shown.getRoute().getStops().size()};
+		final Set<Location> inPart = EnumSet.noneOf(Location.class);
+		for (RouteStop stop : shown.getRoute().getStops().subList(range[0], range[1]))
+		{
+			inPart.add(stop.getLocation());
+		}
 		// The bank tab's order: each part's seeds and saplings, then anything else planted
 		final Map<Integer, Integer> need = new LinkedHashMap<>();
 		final List<SupplyPlan> parts = new ArrayList<>();
-		parts.add(shown.getSupplies());
-		for (BankStop bank : shown.getBankStops())
+		if (partOnly)
 		{
-			parts.add(bank.getSupplies());
+			parts.add(partFor(shown, at, atBank));
+		}
+		else
+		{
+			parts.add(shown.getSupplies());
+			for (BankStop bank : shown.getBankStops())
+			{
+				parts.add(bank.getSupplies());
+			}
 		}
 		for (SupplyPlan part : parts)
 		{
@@ -1081,7 +1107,8 @@ public class RunSession
 		{
 			final Crop crop = shown.getSupplies().getPlantings().get(patch);
 			// What's planted already has been used
-			if (crop != null && (stage == RunView.State.BUILDING || !patches.isDone(patch)))
+			if (crop != null && inPart.contains(patch.getLocation())
+				&& (stage == RunView.State.BUILDING || !patches.isDone(patch)))
 			{
 				need.merge(crop.getPlantItemId(), 1, Integer::sum);
 			}
@@ -1256,14 +1283,32 @@ public class RunSession
 
 	/**
 	 * A bank visit, one step at a time (decision 8.7): get to the bank, open the Farm run tab (it flashes), then
-	 * deposit what's outlined and take what the tab shows.
+	 * deposit what's outlined and take what the tab shows. At the Farming Guild's bank, what only its seed vault has
+	 * comes from the vault last.
 	 */
 	private String bankStep(BankStop bank)
 	{
+		vaultStep = false;
 		if (!bankProgress[0])
 		{
+			if (bank.getTrip() != null)
+			{
+				return "Go to the Farming Guild's bank: " + bank.getTrip().describeWay();
+			}
 			return bank.getTeleport() != null ? "Use your " + bank.getTeleport().getItemName() + " to teleport to "
 				+ bank.getTeleport().getBankName() : bank.title() + ": walk to the bank";
+		}
+		// Issue #8: with the vault open and its view off, or once the bank has given everything else
+		if (bank.isAtGuild() && seedVault.isCalling())
+		{
+			vaultStep = true;
+			return "Click the flashing button at the top of the seed vault";
+		}
+		final Map<SupplyLine, Integer> vault = vaultAtBank(bank);
+		if (!vault.isEmpty() && missingCount(bankSupplies(), false) <= vault.size())
+		{
+			vaultStep = true;
+			return "Take " + amounts(byItem(vault)) + " from the seed vault (next to the bank)";
 		}
 		if (!bankTab.isBankOpen())
 		{
@@ -1274,6 +1319,12 @@ public class RunSession
 			return "Deposit the outlined items, then click the flashing Farm run tab at the top of the bank";
 		}
 		return "Deposit the outlined items, then take what the Farm run tab shows";
+	}
+
+	/** At the Farming Guild's bank: what the part being banked for still needs that only the seed vault has. */
+	private Map<SupplyLine, Integer> vaultAtBank(BankStop bank)
+	{
+		return bank.isAtGuild() ? bankSupplies().onlyInVault() : Collections.emptyMap();
 	}
 
 	/**
@@ -1294,11 +1345,18 @@ public class RunSession
 		bankProgress[2] |= open && bankTab.isTabOpen();
 	}
 
-	/** Close to this visit's bank chest or booth: where its teleport lands, or the bank by the stop. */
+	/** In the Farming Guild's area, where its bank and seed vault are. */
+	private boolean inGuild()
+	{
+		final Player player = client.getLocalPlayer();
+		return player != null && player.getWorldLocation().getRegionID() == Patch.FARMING_GUILD_HERB.getRegionId();
+	}
+
+	/** Close to this visit's bank chest or booth: where its teleport lands, the bank by the stop, or the guild's. */
 	private boolean atBank(BankStop bank)
 	{
 		final WorldPoint point = bank.getTeleport() != null ? bank.getTeleport().getBankPoint()
-			: TravelTimes.bankPoint(bank.getLocation());
+			: TravelTimes.bankPoint(bank.getBankLocation());
 		final Player player = client.getLocalPlayer();
 		return point != null && player != null && player.getWorldLocation().getPlane() == point.getPlane()
 			&& player.getWorldLocation().distanceTo2D(point) <= AT_BANK_TILES;
@@ -1348,8 +1406,8 @@ public class RunSession
 	/** A bank visit's steps, as {@link #bankStep} goes through them, for the bank's row on the Run tab. */
 	private List<RunView.Step> bankSteps(BankStop bank)
 	{
-		final String[] texts = {bank.getTeleport() != null ? capitalised(bank.how()) : "Walk to the bank", "Open the bank",
-			"Open the Farm run tab"};
+		final String[] texts = {bank.getTeleport() != null || bank.getTrip() != null ? capitalised(bank.how())
+			: "Walk to the bank", "Open the bank", "Open the Farm run tab"};
 		final List<RunView.Step> steps = new ArrayList<>();
 		boolean current = false;
 		for (int i = 0; i < texts.length; i++)
@@ -1359,8 +1417,16 @@ public class RunSession
 			current |= !bankProgress[i];
 			steps.add(new RunView.Step(texts[i], status, false, bankProgress[i] && bankTicked[i]));
 		}
+		// At the Farming Guild's bank, the seed vault comes last (issue #8)
+		final Map<SupplyLine, Integer> vault = vaultAtBank(bank);
+		final boolean vaultNow = !vault.isEmpty() && missingCount(bankSupplies(), false) <= vault.size();
 		steps.add(new RunView.Step("Deposit and take the marked items", current ? RunView.StopStatus.PENDING
-			: RunView.StopStatus.CURRENT, false, false));
+			: vaultNow ? RunView.StopStatus.DONE : RunView.StopStatus.CURRENT, false, false));
+		if (!vault.isEmpty())
+		{
+			steps.add(new RunView.Step("Take the seeds from the seed vault", vaultNow ? RunView.StopStatus.CURRENT
+				: RunView.StopStatus.PENDING, false, false));
+		}
 		return steps;
 	}
 
@@ -1468,6 +1534,11 @@ public class RunSession
 				}
 				return new Highlights(null, false, null, teleport, null, wear.getItemIds());
 			}
+			// On the way to the Farming Guild's bank: what gets the player there, as for a stop (issue #8)
+			if (bank != null && bank.getTrip() != null && !bankProgress[0])
+			{
+				return travelHighlights(bank.getTrip(), wear, null);
+			}
 			return new Highlights(null, false, null, BankGuide.toDeposit(bankSupplies(), holdingsTracker.getHoldings(),
 				runService::notedId), null, wear.getItemIds());
 		}
@@ -1476,8 +1547,13 @@ public class RunSession
 		{
 			return atPatch;
 		}
-		// Travelling. Main item first: reminders name it
 		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
+		return travelHighlights(stop, wear, navigator.travelNpc(stop));
+	}
+
+	/** Travelling: the item, spell and NPC that get the player there. Main item first: reminders name it. */
+	private Highlights travelHighlights(RouteStop stop, BankGuide.Wear wear, String npc)
+	{
 		final Set<Integer> items = new LinkedHashSet<>();
 		if (stop.getDeparture() == Departure.DIRECT && stop.getMethod() != null)
 		{
@@ -1516,8 +1592,7 @@ public class RunSession
 		}
 		// An item to put on isn't also outlined as the teleport to use, so the two can't be confused
 		items.removeAll(wear.getItemIds());
-		return new Highlights(null, false, navigator.travelNpc(stop), items, patches.castableNow(spell),
-			wear.getItemIds());
+		return new Highlights(null, false, npc, items, patches.castableNow(spell), wear.getItemIds());
 	}
 
 	private static void travelItems(TravelMethod method, Set<Integer> items)
@@ -1632,6 +1707,28 @@ public class RunSession
 		return part;
 	}
 
+	/**
+	 * The stops of the part of the run carried at this stop, or banked for at a bank visit right after it, as
+	 * {from, to}: the same part as {@link #partFor}.
+	 */
+	static int[] partStops(RunPlan plan, int stopIndex, boolean atBank)
+	{
+		int from = 0;
+		int to = plan.getRoute().getStops().size();
+		for (BankStop bank : plan.getBankStops())
+		{
+			if (bank.getAfterStop() < stopIndex || (bank.getAfterStop() == stopIndex && atBank))
+			{
+				from = bank.getAfterStop() + 1;
+			}
+			else
+			{
+				to = Math.min(to, bank.getAfterStop() + 1);
+			}
+		}
+		return new int[]{from, to};
+	}
+
 	/** Patches in the whole run per type (not only the part before the first bank). */
 	static Map<PatchType, Integer> patchCounts(RunPlan plan)
 	{
@@ -1744,7 +1841,7 @@ public class RunSession
 	 * What the later parts of a run that banks partway need that only the seed vault has, by item, adding up the
 	 * parts: with "Take all seeds at the start" it's taken with the first part's and put in the bank for later.
 	 */
-	static Map<Integer, Integer> laterFromVault(RunPlan plan)
+	public static Map<Integer, Integer> laterFromVault(RunPlan plan)
 	{
 		final Map<Integer, Integer> take = new LinkedHashMap<>();
 		for (BankStop bank : plan.getBankStops())

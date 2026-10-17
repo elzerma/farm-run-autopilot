@@ -9,11 +9,14 @@ import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.route.BankStop;
 import com.farmrunautopilot.route.Departure;
+import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.Compost;
 import com.farmrunautopilot.settings.RunConfig;
+import com.farmrunautopilot.settings.VaultBanking;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.ItemChargeTracker;
 import com.farmrunautopilot.supply.SupplyLine;
@@ -25,6 +28,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.runelite.api.Skill;
@@ -46,6 +50,8 @@ final class GuidedTests
 	{
 		TESTS.put(TestItem.SPELLBOOK_SWAP, new SpellbookSwap());
 		TESTS.put(TestItem.SEED_VAULT_SECTION, new SeedVaultTop());
+		TESTS.put(TestItem.VAULT_SEEDS_FOR_LATER, new VaultSeedsForLater());
+		TESTS.put(TestItem.VAULT_BANK_AT_GUILD, new VaultBankAtGuild());
 		TESTS.put(TestItem.FORTIS_CHAMPION, new FortisChampion());
 		TESTS.put(TestItem.ATES_CHARGES, new AtesCharges());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
@@ -328,6 +334,192 @@ final class GuidedTests
 						{
 							ctx.problem("Answered No: the vault or the list didn't go back to usual");
 						}
+					}));
+		}
+	}
+
+	/** The step under the player, or "" when there's none. */
+	private static String instruction(TestContext ctx)
+	{
+		final String text = ctx.runView().getInstruction();
+		return text == null ? "" : text;
+	}
+
+	/** The run's bank visits, e.g. "after 4 Catherby: Bank at the Farming Guild (Farming cape to the guild's bank)". */
+	private static String bankVisits(TestContext ctx)
+	{
+		final List<String> visits = new ArrayList<>();
+		for (BankStop bank : ctx.plan().getBankStops())
+		{
+			visits.add("after " + (bank.getAfterStop() + 1) + " " + bank.getLocation().getDisplayName() + ": "
+				+ bank.title() + " (" + bank.how() + ")" + (bank.isAtGuild() ? ", at the guild" : ""));
+		}
+		return visits.isEmpty() ? "none" : String.join(" | ", visits);
+	}
+
+	/**
+	 * A run that banks partway, with seeds for after the visit only in the seed vault: asked first, then checked.
+	 *
+	 * @param onYes what else to check once the player says they have that
+	 */
+	private static GuidedTest.Step banksWithVaultSeedsForLater(Consumer<TestContext> onYes)
+	{
+		return ask("Does the Run tab show a bank visit partway through the run, with seeds for after it only in the "
+			+ "Farming Guild's seed vault? (Open the vault once first, so the plugin has seen what's in it.)")
+			.onAnswer((ctx, yes) ->
+			{
+				ctx.capture("Bank visits", bankVisits(ctx));
+				if (!yes)
+				{
+					ctx.cannotTest("a run that banks partway, with seeds for after the bank visit only in the seed vault");
+					return;
+				}
+				if (ctx.plan().getBankStops().isEmpty())
+				{
+					ctx.problem("The plugin didn't plan a bank visit");
+				}
+				onYes.accept(ctx);
+			});
+	}
+
+	/**
+	 * "Take all seeds at the start" (issue #8): the gathering steps for the seed vault's seeds for after the bank
+	 * visit, and the run waiting for them.
+	 */
+	private static final class VaultSeedsForLater extends GuidedTest
+	{
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			return Collections.emptyList();
+		}
+
+		@Override
+		public void setUp(RunConfig config, AccountSettings account)
+		{
+			config.setUseSeedVault(true);
+			config.setVaultBanking(VaultBanking.TAKE_ALL_AT_START);
+		}
+
+		@Override
+		public boolean usesRun()
+		{
+			return true;
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				doThis("On the Run tab, press Build run", ctx -> ctx.runView().getState() != RunView.State.OFF),
+				banksWithVaultSeedsForLater(ctx ->
+				{
+					final Map<Integer, Integer> later = RunSession.laterFromVault(ctx.plan());
+					ctx.capture("Seeds for later only in the vault", later);
+					if (later.isEmpty())
+					{
+						ctx.problem("The plugin didn't see seeds for after the bank visit only in the seed vault");
+					}
+				}),
+				doThis("Get what the bank's Farm run tab lists, until the step names the seed vault",
+					ctx -> instruction(ctx).contains("and put the ones for later in your bank"))
+					.onDone(ctx -> ctx.capture("Vault step", instruction(ctx)))
+					.orAskAfter(DO_TICKS, "The step hasn't said to put seeds for later in your bank. Carry on?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Step when asked", instruction(ctx));
+						ctx.problem("The step never said to take the seeds for later from the vault");
+					}),
+				doThis("Take them from the seed vault", ctx -> instruction(ctx).contains("in your bank for later in the run"))
+					.onDone(ctx -> ctx.capture("Bank step", instruction(ctx)))
+					.orAskAfter(DO_TICKS, "The step hasn't said to put them in your bank. Carry on?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Step when asked", instruction(ctx));
+						ctx.problem("The step never said to put the seeds for later in the bank");
+					}),
+				doThis("Put them in your bank", ctx -> ctx.runView().getState() == RunView.State.ARMED
+					|| ctx.runView().getState() == RunView.State.RUNNING)
+					.onDone(ctx -> ctx.capture("Seed vault section", ctx.seedVault().describe()))
+					.orAskAfter(DO_TICKS, "The run isn't ready yet. Are the seeds for later in your bank?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Step when asked", instruction(ctx));
+						ctx.problem(yes ? "The run didn't get ready with the seeds for later in the bank"
+							: "Answered No: the seeds for later weren't put in the bank");
+					}),
+				ask("Do the run to its bank visit. Does the bank's Farm run tab show the seeds for later, to take from "
+					+ "your bank?")
+					.optional());
+		}
+	}
+
+	/**
+	 * "Bank at the Farming Guild" (issue #8): the bank visit before seeds only the seed vault has is at the guild, and
+	 * there the vault comes last, showing only the rest of the run.
+	 */
+	private static final class VaultBankAtGuild extends GuidedTest
+	{
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			return Collections.emptyList();
+		}
+
+		@Override
+		public void setUp(RunConfig config, AccountSettings account)
+		{
+			config.setUseSeedVault(true);
+			config.setVaultBanking(VaultBanking.BANK_AT_GUILD);
+		}
+
+		@Override
+		public boolean usesRun()
+		{
+			return true;
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				doThis("On the Run tab, press Build run", ctx -> ctx.runView().getState() != RunView.State.OFF),
+				banksWithVaultSeedsForLater(ctx ->
+				{
+					if (ctx.plan().getBankStops().stream().noneMatch(BankStop::isAtGuild))
+					{
+						ctx.problem("No bank visit at the Farming Guild");
+					}
+				}),
+				startRun(),
+				doThis("Do the run up to the bank visit at the Farming Guild, then take what the bank's Farm run tab "
+					+ "lists", ctx -> instruction(ctx).contains("from the seed vault (next to the bank)")
+					|| instruction(ctx).contains("flashing button at the top of the seed vault"))
+					.onDone(ctx -> ctx.capture("Vault step", instruction(ctx)))
+					.orAskAfter(3 * DO_TICKS, "The step hasn't said to take seeds from the seed vault. Carry on?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Step when asked", instruction(ctx));
+						ctx.problem("The bank visit never said to take seeds from the seed vault");
+					}),
+				ask("Open the seed vault and click the button by its close button. Does the Farm Run Autopilot section "
+					+ "show only the seeds for the rest of the run?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Seed vault section", ctx.seedVault().describe());
+						if (!yes)
+						{
+							ctx.problem("Answered No: the section didn't show only the rest of the run");
+						}
+					}),
+				doThis("Take them", ctx -> !instruction(ctx).contains("seed vault"))
+					.onDone(ctx -> ctx.capture("Next step", instruction(ctx)))
+					.orAskAfter(DO_TICKS, "The step still says to take seeds from the seed vault. Have you taken them?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Step when asked", instruction(ctx));
+						ctx.problem(yes ? "The guide didn't move on once the seeds were taken"
+							: "Answered No: the seeds weren't taken");
 					}));
 		}
 	}

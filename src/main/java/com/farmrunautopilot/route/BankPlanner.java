@@ -17,7 +17,10 @@ import lombok.Value;
  * <ul>
  * <li>the bank near the stop just finished: walk there, and walk back only if the next leg sets off from that
  * stop (a walk, its spirit tree, Renu) and that's quicker than a teleport from the bank; or</li>
- * <li>a bank teleport the player carries (crafting cape, ring of dueling...), then the next stop from there.</li>
+ * <li>a bank teleport the player carries (crafting cape, ring of dueling...), then the next stop from there; or</li>
+ * <li>with "Bank at the Farming Guild" (issue #8), a trip to the guild's bank and seed vault, then the next stop
+ * from the guild. The visit before a part that plants seeds only the vault has is always at the guild: after the
+ * guild's own stop, or by that trip.</li>
  * </ul>
  * Pure: the slot counts, chain savings and onward legs are passed in, so this can be tested without a client.
  */
@@ -32,6 +35,19 @@ final class BankPlanner
 		int of(int from, int to);
 	}
 
+	/** The Farming Guild's seed vault, for "Bank at the Farming Guild" (issue #8). */
+	interface Guild
+	{
+		/** The stops in [from, to) plant seeds only the seed vault has, counted against what the stops before leave. */
+		boolean needsVault(int from, int to);
+
+		/** The way from a stop to the Farming Guild. */
+		RouteStop to(Location from);
+
+		/** The leg from the Farming Guild's bank to a stop. */
+		RouteStop from(Location to);
+	}
+
 	@Value
 	static class Visit
 	{
@@ -43,6 +59,14 @@ final class BankPlanner
 		BankTeleport teleport;
 		/** Getting there (and back, if the next leg sets off from the stop) plus banking. */
 		double seconds;
+		/** The way to the Farming Guild, for a visit to its bank from another stop; null otherwise. */
+		RouteStop trip;
+
+		/** At the Farming Guild's bank, where the seed vault is. */
+		boolean isAtGuild()
+		{
+			return trip != null || teleport == null && location == Location.FARMING_GUILD;
+		}
 	}
 
 	@Value
@@ -67,6 +91,16 @@ final class BankPlanner
 	static Result place(Route route, Slots slots, int slotLimit, BankTeleport teleport,
 		BiFunction<Location, Location, Double> chainSaving, Function<Location, RouteStop> fromAnywhere)
 	{
+		return place(route, slots, slotLimit, teleport, chainSaving, fromAnywhere, null);
+	}
+
+	/**
+	 * @param guild with "Bank at the Farming Guild": a part that plants seeds only the seed vault has comes after a
+	 *     visit to the guild's bank; null to bank wherever is quickest
+	 */
+	static Result place(Route route, Slots slots, int slotLimit, BankTeleport teleport,
+		BiFunction<Location, Location, Double> chainSaving, Function<Location, RouteStop> fromAnywhere, Guild guild)
+	{
 		final List<RouteStop> stops = route.getStops();
 		final int n = stops.size();
 		if (n == 0 || slots.of(0, n) <= slotLimit)
@@ -74,53 +108,77 @@ final class BankPlanner
 			return new Result(route, Collections.emptyList());
 		}
 
-		// best[b]: cheapest way to do stops [0, b) and bank right after stop b - 1 (or finish, at b = n)
-		final double[] best = new double[n + 1];
-		final int[] from = new int[n + 1];
-		final Visit[] visit = new Visit[n + 1];
-		java.util.Arrays.fill(best, Double.MAX_VALUE);
-		best[0] = 0;
+		// best[b][g]: cheapest way to do stops [0, b) and bank right after stop b - 1 (or finish, at b = n), where
+		// g = 1 when that visit is at the Farming Guild's bank, so the part after it can take from the seed vault
+		final double[][] best = new double[n + 1][2];
+		final int[][] from = new int[n + 1][2];
+		final int[][] fromGuild = new int[n + 1][2];
+		final Visit[][] visit = new Visit[n + 1][2];
+		for (double[] row : best)
+		{
+			java.util.Arrays.fill(row, Double.MAX_VALUE);
+		}
+		best[0][0] = 0;
 		for (int a = 0; a < n; a++)
 		{
-			if (best[a] == Double.MAX_VALUE)
+			for (int g = 0; g < 2; g++)
 			{
-				continue;
-			}
-			for (int b = a + 1; b <= n; b++)
-			{
-				final int used = slots.of(a, b);
-				if (used > slotLimit)
+				if (best[a][g] == Double.MAX_VALUE)
 				{
-					// A longer stretch only needs more
-					break;
-				}
-				if (b == n)
-				{
-					if (best[a] < best[n])
-					{
-						best[n] = best[a];
-						from[n] = a;
-					}
 					continue;
 				}
-				final Visit v = cheapestVisit(stops, b - 1, used, slotLimit, teleport, chainSaving);
-				if (v != null && best[a] + v.seconds < best[b])
+				for (int b = a + 1; b <= n; b++)
 				{
-					best[b] = best[a] + v.seconds;
-					from[b] = a;
-					visit[b] = v;
+					final int used = slots.of(a, b);
+					if (used > slotLimit)
+					{
+						// A longer stretch only needs more
+						break;
+					}
+					// The seeds for the first part are taken before the run; later parts get theirs at the guild
+					if (a > 0 && g == 0 && guild != null && guild.needsVault(a, b))
+					{
+						continue;
+					}
+					if (b == n)
+					{
+						if (best[a][g] < best[n][0])
+						{
+							best[n][0] = best[a][g];
+							from[n][0] = a;
+							fromGuild[n][0] = g;
+						}
+						continue;
+					}
+					final Visit[] ways = {cheapestVisit(stops, b - 1, used, slotLimit, teleport, chainSaving, guild != null),
+						guild == null ? null : guildVisit(stops, b - 1, used, slotLimit, chainSaving, guild)};
+					for (int h = 0; h < 2; h++)
+					{
+						final Visit v = ways[h];
+						if (v != null && best[a][g] + v.seconds < best[b][h])
+						{
+							best[b][h] = best[a][g] + v.seconds;
+							from[b][h] = a;
+							fromGuild[b][h] = g;
+							visit[b][h] = v;
+						}
+					}
 				}
 			}
 		}
-		if (best[n] == Double.MAX_VALUE)
+		if (best[n][0] == Double.MAX_VALUE)
 		{
 			return null;
 		}
 
 		final List<Visit> visits = new ArrayList<>();
-		for (int b = from[n]; b > 0; b = from[b])
+		int g = fromGuild[n][0];
+		for (int b = from[n][0]; b > 0; )
 		{
-			visits.add(0, visit[b]);
+			visits.add(0, visit[b][g]);
+			final int a = from[b][g];
+			g = fromGuild[b][g];
+			b = a;
 		}
 		final List<RouteStop> onward = new ArrayList<>(stops);
 		double travel = route.getTravelSeconds();
@@ -128,7 +186,14 @@ final class BankPlanner
 		{
 			final int next = v.afterStop + 1;
 			final RouteStop leg = stops.get(next);
-			if (!walksBack(v, stops, chainSaving))
+			if (v.trip != null)
+			{
+				// On from the guild
+				final RouteStop fresh = guild.from(leg.getLocation());
+				onward.set(next, fresh);
+				travel += fresh.getLegSeconds() - leg.getLegSeconds();
+			}
+			else if (!walksBack(v, stops, chainSaving))
 			{
 				final RouteStop fresh = fromAnywhere.apply(leg.getLocation());
 				onward.set(next, fresh);
@@ -140,30 +205,72 @@ final class BankPlanner
 			visits);
 	}
 
-	/** The cheaper of banking near the stop or by teleport, or null if neither fits. */
+	/**
+	 * The cheaper of banking near the stop or by teleport, or null if neither fits.
+	 *
+	 * @param notGuild leave out banking near the Farming Guild's stop, which counts as a visit to the guild
+	 */
 	private static Visit cheapestVisit(List<RouteStop> stops, int after, int used, int slotLimit,
-		BankTeleport teleport, BiFunction<Location, Location, Double> chainSaving)
+		BankTeleport teleport, BiFunction<Location, Location, Double> chainSaving, boolean notGuild)
 	{
 		final Location here = stops.get(after).getLocation();
-		final double chain = chainSaving.apply(here, stops.get(after + 1).getLocation());
-		Visit best = null;
-		final Integer tiles = TravelTimes.bankTiles(here);
-		if (tiles != null)
-		{
-			final double walk = tiles * TravelTimes.SECONDS_PER_TILE;
-			// Walk back to keep the chain, or set off from the bank and lose it, whichever is quicker
-			best = new Visit(after, here, null, walk + Math.min(walk, chain) + BANK_SECONDS);
-		}
+		Visit best = notGuild && here == Location.FARMING_GUILD ? null : nearVisit(stops, after, chainSaving);
 		// The teleport item takes a slot until it's used
 		if (teleport != null && used + 1 <= slotLimit)
 		{
-			final Visit byTeleport = new Visit(after, here, teleport, teleport.getSeconds() + chain + BANK_SECONDS);
+			final double chain = chainSaving.apply(here, stops.get(after + 1).getLocation());
+			final Visit byTeleport = new Visit(after, here, teleport, teleport.getSeconds() + chain + BANK_SECONDS, null);
 			if (best == null || byTeleport.seconds < best.seconds)
 			{
 				best = byTeleport;
 			}
 		}
 		return best;
+	}
+
+	/** Banking near the stop just finished, or null if there's no bank near it. */
+	private static Visit nearVisit(List<RouteStop> stops, int after, BiFunction<Location, Location, Double> chainSaving)
+	{
+		final Location here = stops.get(after).getLocation();
+		final Integer tiles = TravelTimes.bankTiles(here);
+		if (tiles == null)
+		{
+			return null;
+		}
+		final double chain = chainSaving.apply(here, stops.get(after + 1).getLocation());
+		final double walk = tiles * TravelTimes.SECONDS_PER_TILE;
+		// Walk back to keep the chain, or set off from the bank and lose it, whichever is quicker
+		return new Visit(after, here, null, walk + Math.min(walk, chain) + BANK_SECONDS, null);
+	}
+
+	/**
+	 * Banking at the Farming Guild, by its seed vault: near its stop, or by a trip there and on from the guild. Null
+	 * if the trip's item doesn't fit.
+	 */
+	private static Visit guildVisit(List<RouteStop> stops, int after, int used, int slotLimit,
+		BiFunction<Location, Location, Double> chainSaving, Guild guild)
+	{
+		final Location here = stops.get(after).getLocation();
+		if (here == Location.FARMING_GUILD)
+		{
+			return nearVisit(stops, after, chainSaving);
+		}
+		final RouteStop trip = guild.to(here);
+		// Only a way the player can make now; an item to get there takes a slot until it's used, like a bank teleport
+		if (trip.isNeedsSupplies() || trip.getDeparture() == Departure.NONE
+			|| trip.getMethod() != null && trip.getMethod().getItem() != null && used + 1 > slotLimit)
+		{
+			return null;
+		}
+		final RouteStop next = stops.get(after + 1);
+		return new Visit(after, here, null, trip.getLegSeconds() + guildBankWalk() + BANK_SECONDS
+			+ guild.from(next.getLocation()).getLegSeconds() - next.getLegSeconds(), trip);
+	}
+
+	/** From the guild's patches, where the ways there arrive, to its bank. */
+	private static double guildBankWalk()
+	{
+		return TravelTimes.bankTiles(Location.FARMING_GUILD) * TravelTimes.SECONDS_PER_TILE;
 	}
 
 	/** Whether the player walks back from the bank to the stop to keep the next leg's chain. */
@@ -184,6 +291,10 @@ final class BankPlanner
 		if (v.teleport != null)
 		{
 			return v.teleport.getSeconds() + BANK_SECONDS;
+		}
+		if (v.trip != null)
+		{
+			return v.trip.getLegSeconds() + guildBankWalk() + BANK_SECONDS;
 		}
 		final double walk = TravelTimes.bankTiles(v.location) * TravelTimes.SECONDS_PER_TILE;
 		return walk + (walksBack(v, stops, chainSaving) ? walk : 0) + BANK_SECONDS;

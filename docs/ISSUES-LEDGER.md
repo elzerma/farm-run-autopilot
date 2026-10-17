@@ -143,7 +143,7 @@ Revision 4 asks about the entry with the view on and off.
 
 **Built (2026-10-17), one commit each:**
 - **Option 4:** when the bank has nothing left to give before the run, the gathering step names the seeds that only the seed vault can make up: "Farm run: take 6 x Ranarr seed from the seed vault in the Farming Guild" (`SupplyPlan.onlyInVault`). It takes all that's still to get from the vault if the vault holds that many, so it's one trip. Not when the run starts at the guild, where the guild's own vault step covers them. That step now names items without the "- 3rd choice".
-- **The setting:** "When a run banks partway" in Account > Storage sources, under the Seed vault tick box and only while it's ticked, with the label, choices and tooltips as drafted (`settings/VaultBanking.java`). "Take all seeds at the start" is the default. "Bank at the Farming Guild" can be picked, but until its own commit it works as before.
+- **The setting:** "When a run banks partway" in Account > Storage sources, under the Seed vault tick box and only while it's ticked, with the label, choices and tooltips as drafted (`settings/VaultBanking.java`). "Take all seeds at the start" is the default.
 - **Take all seeds at the start:** on a run that banks partway, the gathering step adds the later parts' seeds that only the vault has: "Farm run: take 12 x Ranarr seed from the seed vault in the Farming Guild, and put the ones for later in your bank". Once they're taken it says "Farm run: put 6 x Ranarr seed in your bank for later in the run", with them outlined while the bank is open. The run waits for both before it's ready; Start now skips them.
   - Only seeds seen in the vault for the later parts are asked about, so seeds the player keeps in their inventory anyway are left alone.
   - When the run starts at the guild, the first part's vault seeds come out in the same trip.
@@ -154,6 +154,14 @@ Revision 4 asks about the entry with the view on and off.
   - If it isn't, the first leg is planned from the guild (its spirit tree, fairy ring CIR, or the best teleport) and the gathering step says so: "Farm run: take 6 x Ranarr seed from the seed vault in the Farming Guild, where the run starts".
   - While the player is in the guild and it isn't a stop, the run sets off from there too, so the route stays the same once the seeds are taken.
   - The open questions, decided by Claude: it plans from the guild without asking, since the seeds have to come from there anyway. A start picked in the Run options wins. With the Seed vault tick box off nothing changes.
+- **Bank at the Farming Guild:** a run that banks partway banks at the guild before any part that plants seeds only the seed vault has (`BankPlanner`, `RunService.guild`).
+  - That's right after the guild's own stop when the run can split there. Otherwise it's a trip to the guild from the stop before, by the way Auto picks, then on from the guild. Its row on the Run tab says "Bank at the Farming Guild", and the trip's item (skills necklace, farming cape) is added to the part before.
+  - The planner weighs this against banking elsewhere and keeps the route's order. If no plan can bank at the guild (an item that doesn't fit), it banks wherever is quickest, as before.
+  - The first part's vault seeds come out before the run (options 4 and 1), so they don't move the bank visits. With this choice, the run is planned from the guild only when the first part needs the vault.
+  - At the guild's bank, once the Farm run tab is done, the step says "Take 6 x Ranarr seed from the seed vault (next to the bank)", or to click the vault's flashing button, and the visit waits for them. The bank's Farm run tab stops flashing for that step.
+  - The vault section shows only the part being gathered or banked for.
+  - Scenario test on elzerma's full run: with the last stop needing the vault, it banks right after the guild's own stop, and keeps the start and the Stronghold chain.
+- **Help list:** VAULT_SEEDS_FOR_LATER and VAULT_BANK_AT_GUILD, on the Run tab, each with a guided test that sets the choice and captures the steps, the bank visits and the vault section.
 
 ### #8 write-up: how a run with seeds in the vault banks partway (wording chosen 2026-10-17; see Built above)
 

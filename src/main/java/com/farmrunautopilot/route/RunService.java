@@ -15,6 +15,7 @@ import com.farmrunautopilot.run.StepAdvisor;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
+import com.farmrunautopilot.settings.VaultBanking;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.supply.SupplyCalculator;
@@ -30,6 +31,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -210,8 +213,10 @@ public class RunService
 				patchTracker::predict, this::itemName, itemManager::getItemPrice);
 		}
 		// Seeds the run plants that only the seed vault has: the player fetches them from the Farming Guild, so the run
-		// sets off from there (issue #8)
-		if (plansFromGuild(config, route, supplies))
+		// sets off from there (issue #8). With "Bank at the Farming Guild" on a run that banks partway, only the first
+		// part's come out before the run, so that's checked once the bank visits are placed.
+		final boolean guildBanks = guildBanking(config) && supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS;
+		if (!guildBanks && plansFromGuild(config, route, supplies))
 		{
 			route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
 				settings.getAccount().getPoh(), timings.learned(), null, null, 0, Location.FARMING_GUILD);
@@ -222,7 +227,16 @@ public class RunService
 		final List<BankStop> bankStops = new ArrayList<>();
 		if (supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
 		{
-			final Banked banked = bankStops(config, access, holdings, selection, route);
+			Banked banked = bankStops(config, access, holdings, selection, route);
+			if (banked != null && guildBanks && plansFromGuild(config, banked.route, banked.first))
+			{
+				route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
+					settings.getAccount().getPoh(), timings.learned(), null, null, 0, Location.FARMING_GUILD);
+				supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
+					patchTracker::predict, this::itemName, itemManager::getItemPrice);
+				banked = supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS
+					? bankStops(config, access, holdings, selection, route) : null;
+			}
 			if (banked != null)
 			{
 				route = banked.route;
@@ -274,6 +288,12 @@ public class RunService
 	{
 		return config.getStartLocation() == null && !route.getStops().isEmpty()
 			&& !route.setsOffFrom(Location.FARMING_GUILD) && !supplies.onlyInVault().isEmpty();
+	}
+
+	/** "Bank at the Farming Guild": a run that banks partway gets the seed vault's seeds at the guild then (issue #8). */
+	public static boolean guildBanking(RunConfig config)
+	{
+		return config.isUseSeedVault() && config.getVaultBanking() == VaultBanking.BANK_AT_GUILD;
 	}
 
 	/** In the Farming Guild's area, where its bank and seed vault are. Client thread. */
@@ -339,10 +359,20 @@ public class RunService
 		final Map<Long, Integer> slots = new HashMap<>();
 		final BankPlanner.Slots slotsOf = (a, b) -> slots.computeIfAbsent((long) a * 1000 + b,
 			k -> part(config, access, holdings, selection, stops.subList(a, b), route).getSlots());
-		final BankPlanner.Result result = BankPlanner.place(route, slotsOf, SupplyCalculator.INVENTORY_SLOTS,
-			BankTeleport.best(access, holdings),
-			(from, to) -> RoutePlanner.chainSaving(from, to, config, access, holdings, poh, timings.learned()),
-			to -> RoutePlanner.fromAnywhere(to, config, access, holdings, poh, timings.learned()));
+		final BankTeleport teleport = BankTeleport.best(access, holdings);
+		final BiFunction<Location, Location, Double> chainSaving = (from, to) -> RoutePlanner.chainSaving(from, to,
+			config, access, holdings, poh, timings.learned());
+		final Function<Location, RouteStop> fromAnywhere = to -> RoutePlanner.fromAnywhere(to, config, access,
+			holdings, poh, timings.learned());
+		BankPlanner.Result result = BankPlanner.place(route, slotsOf, SupplyCalculator.INVENTORY_SLOTS, teleport,
+			chainSaving, fromAnywhere, guildBanking(config) ? guild(config, access, holdings, selection, route, poh) : null);
+		if (result == null && guildBanking(config))
+		{
+			// No way to bank at the guild before every part that needs its vault (an item that doesn't fit): bank
+			// wherever is quickest, and the vault's seeds are fetched by hand as before
+			result = BankPlanner.place(route, slotsOf, SupplyCalculator.INVENTORY_SLOTS, teleport, chainSaving,
+				fromAnywhere);
+		}
 		if (result == null || result.getVisits().isEmpty())
 		{
 			return null;
@@ -363,6 +393,10 @@ public class RunService
 			{
 				part = withTeleport(part, visits.get(i).getTeleport(), left);
 			}
+			if (i < visits.size() && visits.get(i).getTrip() != null)
+			{
+				part = withTrip(part, visits.get(i).getTrip(), left);
+			}
 			parts.add(part);
 			left = part.leftAfter(left);
 			start = end;
@@ -371,7 +405,7 @@ public class RunService
 		for (int i = 0; i < visits.size(); i++)
 		{
 			final BankPlanner.Visit v = visits.get(i);
-			bankStops.add(new BankStop(v.getAfterStop(), v.getLocation(), parts.get(i + 1), v.getTeleport()));
+			bankStops.add(new BankStop(v.getAfterStop(), v.getLocation(), parts.get(i + 1), v.getTeleport(), v.getTrip()));
 		}
 
 		// The guide needs every patch's crop, not only the first part's
@@ -392,6 +426,73 @@ public class RunService
 	{
 		return supplies(config, access, holdings, selection, patchesAt(selection, stops),
 			new Route(new ArrayList<>(stops), route.getMode(), 0, 0));
+	}
+
+	/**
+	 * "Bank at the Farming Guild" for the bank planner (issue #8): which parts of the route need the seed vault, and
+	 * the ways to and from the guild.
+	 */
+	private BankPlanner.Guild guild(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
+		Route route, PohSetup poh)
+	{
+		final List<RouteStop> stops = route.getStops();
+		final Map<Long, Boolean> needs = new HashMap<>();
+		final Map<Integer, Holdings> leftBefore = new HashMap<>();
+		return new BankPlanner.Guild()
+		{
+			@Override
+			public boolean needsVault(int from, int to)
+			{
+				return needs.computeIfAbsent((long) from * 1000 + to, k -> !part(config, access, left(from), selection,
+					stops.subList(from, to), route).onlyInVault().isEmpty());
+			}
+
+			/** What the player has left after the stops before this one, with each part counted on its own. */
+			private Holdings left(int stop)
+			{
+				return leftBefore.computeIfAbsent(stop, k -> k == 0 ? holdings
+					: part(config, access, holdings, selection, stops.subList(0, k), route).leftAfter(holdings));
+			}
+
+			@Override
+			public RouteStop to(Location from)
+			{
+				return RoutePlanner.between(from, Location.FARMING_GUILD, config, access, holdings, poh, timings.learned());
+			}
+
+			@Override
+			public RouteStop from(Location to)
+			{
+				if (to == Location.FARMING_GUILD)
+				{
+					// From the guild's bank out to its patches
+					final int tiles = TravelTimes.bankTiles(Location.FARMING_GUILD);
+					return new RouteStop(to, null, Departure.WALK, tiles * TravelTimes.SECONDS_PER_TILE, false,
+						"from the bank " + tiles + " tiles");
+				}
+				return RoutePlanner.between(Location.FARMING_GUILD, to, config, access, holdings, poh, timings.learned());
+			}
+		};
+	}
+
+	/**
+	 * A part's supplies with the item for the trip to the Farming Guild's bank, used at the end of it (issue #8). Ways
+	 * with nothing to bring (a spirit tree, a fairy ring with a staff kept on) add nothing.
+	 */
+	private static SupplyPlan withTrip(SupplyPlan before, RouteStop trip, Holdings holdings)
+	{
+		if (trip.getMethod() == null || trip.getMethod().getItem() == null)
+		{
+			return before;
+		}
+		final int[] ids = trip.getMethod().getItem().getItemIds();
+		final List<SupplyLine> lines = new ArrayList<>(before.getLines());
+		lines.add(new SupplyLine(SupplyLine.Group.TRAVEL, trip.getMethod().getItem().getDisplayName()
+			+ " (bank at the Farming Guild)", 1, holdings.countAny(ids), holdings.carriedOnly().countAny(ids),
+			holdings.where(ids), "To bank partway at the Farming Guild, by its seed vault", 1, false, null, ids));
+		return new SupplyPlan(lines, before.getPatchCounts(), before.getNotDue(), before.getTravelPlan(),
+			before.getWarnings(), before.getCoins(), before.getRuneSummary(), before.getSlots() + 1,
+			before.getPlantings());
 	}
 
 	/** A part's supplies with the bank teleport to bring, used at the bank that ends it. */

@@ -125,7 +125,14 @@ public final class RoutePlanner
 	static RouteStop fromAnywhere(Location to, RunConfig config, AccessSnapshot access, Holdings holdings,
 		PohSetup poh, LearnedTimes learned)
 	{
-		final Leg leg = new RoutePlanner(config, access, holdings, poh, learned).bestLeg(null, to);
+		return between(null, to, config, access, holdings, poh, learned);
+	}
+
+	/** The best way from one place to another, e.g. from a stop to the Farming Guild's bank; from anywhere if null. */
+	static RouteStop between(Location from, Location to, RunConfig config, AccessSnapshot access, Holdings holdings,
+		PohSetup poh, LearnedTimes learned)
+	{
+		final Leg leg = new RoutePlanner(config, access, holdings, poh, learned).bestLeg(from, to);
 		return new RouteStop(to, leg.method, leg.departure, leg.seconds, leg.needsSupplies, leg.breakdown);
 	}
 

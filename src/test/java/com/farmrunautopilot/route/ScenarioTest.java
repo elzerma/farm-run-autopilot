@@ -188,10 +188,42 @@ public class ScenarioTest
 	 */
 	private static BankPlanner.Result bankedFullRun()
 	{
+		return bankedFullRun(null);
+	}
+
+	/**
+	 * @param vaultOnly with "Bank at the Farming Guild", the stop whose seed or sapling is only in the seed vault
+	 *     (issue #8); null to bank wherever is quickest
+	 */
+	private static BankPlanner.Result bankedFullRun(Location vaultOnly)
+	{
 		final RunConfig config = new RunConfig().sanitise();
 		final Route route = RoutePlanner.plan(ElzermaAccount.patches(ALL), config, ElzermaAccount.access(),
 			ElzermaAccount.holdings(), new PohSetup(), LearnedTimes.NONE, null, Location.FALADOR_PARK, 57);
 		final List<RouteStop> stops = route.getStops();
+		final BankPlanner.Guild guild = vaultOnly == null ? null : new BankPlanner.Guild()
+		{
+			@Override
+			public boolean needsVault(int from, int to)
+			{
+				final int at = indexOf(stops, vaultOnly);
+				return at >= from && at < to;
+			}
+
+			@Override
+			public RouteStop to(Location from)
+			{
+				return RoutePlanner.between(from, Location.FARMING_GUILD, config, ElzermaAccount.access(),
+					ElzermaAccount.holdings(), new PohSetup(), LearnedTimes.NONE);
+			}
+
+			@Override
+			public RouteStop from(Location to)
+			{
+				return RoutePlanner.between(Location.FARMING_GUILD, to, config, ElzermaAccount.access(),
+					ElzermaAccount.holdings(), new PohSetup(), LearnedTimes.NONE);
+			}
+		};
 		final BankPlanner.Slots slots = (a, b) ->
 		{
 			int used = 5;
@@ -207,7 +239,7 @@ public class ScenarioTest
 			(from, to) -> RoutePlanner.chainSaving(from, to, config, ElzermaAccount.access(), ElzermaAccount.holdings(),
 				new PohSetup(), LearnedTimes.NONE),
 			to -> RoutePlanner.fromAnywhere(to, config, ElzermaAccount.access(), ElzermaAccount.holdings(), new PohSetup(),
-				LearnedTimes.NONE));
+				LearnedTimes.NONE), guild);
 	}
 
 	private static String describe(BankPlanner.Result result)
@@ -216,9 +248,61 @@ public class ScenarioTest
 		for (BankPlanner.Visit v : result.getVisits())
 		{
 			b.append("bank after ").append(v.getAfterStop() + 1).append(": ")
-				.append(v.getTeleport() != null ? v.getTeleport().name() : "near " + v.getLocation()).append('\n');
+				.append(v.getTeleport() != null ? v.getTeleport().name() : v.getTrip() != null
+					? "the Farming Guild by " + v.getTrip().describeTravel() : "near " + v.getLocation()).append('\n');
 		}
 		return b.toString();
+	}
+
+	/** The last bank visit before this stop, or null if it's in the first part. */
+	private static BankPlanner.Visit visitBefore(BankPlanner.Result result, Location location)
+	{
+		final int at = indexOf(result.getRoute().getStops(), location);
+		BankPlanner.Visit before = null;
+		for (BankPlanner.Visit v : result.getVisits())
+		{
+			if (v.getAfterStop() < at)
+			{
+				before = v;
+			}
+		}
+		return before;
+	}
+
+	@Test
+	public void bankAtTheGuildTakesTheLastPartsVaultSeedsAtTheGuild()
+	{
+		// Issue #8: the run's last stop plants a seed only the seed vault has
+		final List<RouteStop> classic = bankedFullRun().getRoute().getStops();
+		final Location last = classic.get(classic.size() - 1).getLocation();
+		final BankPlanner.Result result = bankedFullRun(last);
+		final BankPlanner.Visit before = visitBefore(result, last);
+		assertTrue(describe(result), before != null && before.isAtGuild());
+		// The same stops in the same order: only where it banks changes
+		assertEquals(describe(result), classic.size(), result.getRoute().getStops().size());
+		for (int i = 0; i < classic.size(); i++)
+		{
+			assertEquals(describe(result), classic.get(i).getLocation(), result.getRoute().getStops().get(i).getLocation());
+		}
+	}
+
+	@Test
+	public void bankAtTheGuildLeavesTheStartAndTheStrongholdChain()
+	{
+		final List<RouteStop> classic = bankedFullRun().getRoute().getStops();
+		final BankPlanner.Result result = bankedFullRun(classic.get(classic.size() - 1).getLocation());
+		final List<RouteStop> stops = result.getRoute().getStops();
+		assertEquals(describe(result), Location.FALADOR_PARK, stops.get(0).getLocation());
+		assertStrongholdChain(stops);
+	}
+
+	@Test
+	public void vaultSeedsInTheFirstPartDontMoveTheBankVisits()
+	{
+		// They're taken from the vault before the run starts, so banking is as it was
+		final BankPlanner.Result classic = bankedFullRun();
+		final BankPlanner.Result first = bankedFullRun(classic.getRoute().getStops().get(0).getLocation());
+		assertEquals(describe(first), classic.getVisits(), first.getVisits());
 	}
 
 	@Test

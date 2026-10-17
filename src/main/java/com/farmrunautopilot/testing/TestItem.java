@@ -21,6 +21,18 @@ public enum TestItem
 			+ "same outline round it as the bank's Farm run button. Clicking it shows a \"Farm Run Autopilot\" section at "
 			+ "the top, with a \"/ N\" count under each seed, and a \"Farm Run Autopilot\" entry at the top of the list on "
 			+ "the left that goes back to it. Clicking the button again hides both.", 4),
+	VAULT_SEEDS_FOR_LATER(Tab.RUN, "Seed vault seeds for later in the run",
+		"Pick \"Take all seeds at the start\" under Account > Storage sources, with a run too big for one inventory "
+			+ "and seeds for after its bank visit only in the Farming Guild's seed vault. After Build run, the step "
+			+ "should say to take them from the seed vault \"and put the ones for later in your bank\", then \"put ... "
+			+ "in your bank for later in the run\", and only then is the run ready. At the bank visit they come out of "
+			+ "your bank."),
+	VAULT_BANK_AT_GUILD(Tab.RUN, "Banking at the Farming Guild",
+		"Pick \"Bank at the Farming Guild\" under Account > Storage sources, with a run too big for one inventory and "
+			+ "seeds for after its bank visit only in the seed vault. The run should bank at the Farming Guild: after "
+			+ "the guild's own stop, or \"Bank at the Farming Guild\" with the way there. At its bank, once the Farm run "
+			+ "tab is done, the step should say \"Take ... from the seed vault (next to the bank)\", and the vault's "
+			+ "Farm Run Autopilot section should show only the seeds for the rest of the run."),
 	FORTIS_CHAMPION(Tab.FARM, "Civitas herbs and the Colosseum",
 		"With \"Champion rank at the Fortis Colosseum\" ticked in Account > Unlocks, the Civitas herb patch "
 			+ "should count as disease-free: no plant cure or protection asked for it.", 2),
