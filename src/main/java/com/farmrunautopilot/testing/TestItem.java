@@ -33,6 +33,11 @@ public enum TestItem
 			+ "the guild's own stop, or \"Bank at the Farming Guild\" with the way there. At its bank, once the Farm run "
 			+ "tab is done, the step should say \"Take ... from the seed vault (next to the bank)\", and the vault's "
 			+ "Farm Run Autopilot section should show only the seeds for the rest of the run."),
+	STAFF_SWAPS(Tab.RUN, "Swapping staves on the way",
+		"With two staves in your bank (e.g. a dramen staff and a lava battlestaff) and a run that casts teleports from "
+			+ "runes, press Build run: when a second staff saves an inventory slot, the list has one staff to wield at the "
+			+ "bank and another to carry. During the run, before the stop that needs the other staff, the step should say "
+			+ "\"Wield your ...\" with that staff outlined in blue, and move on once it's wielded."),
 	ALLOTMENT_PAYMENT(Tab.RUN, "Paying for one allotment",
 		"At the farm south of Falador, with potato seeds and 4 buckets of compost, set Farm > Protection > Allotment "
 			+ "patches to Pay gardener and run just that farm's allotments. After planting each allotment the step should "

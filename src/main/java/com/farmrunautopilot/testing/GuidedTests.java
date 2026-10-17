@@ -2,12 +2,16 @@ package com.farmrunautopilot.testing;
 
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.access.PohDetector;
+import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.PatchType;
+import com.farmrunautopilot.data.Requirement;
+import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.Unlock;
+import com.farmrunautopilot.data.travel.Rune;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelItem;
@@ -29,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,6 +73,7 @@ final class GuidedTests
 		TESTS.put(TestItem.BUCKET_COMPOST, new BucketCompost());
 		TESTS.put(TestItem.HOUSE_BY_TREE, new HouseByTree());
 		TESTS.put(TestItem.HOUSE_SCAN, new HouseScan());
+		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
 	}
 
 	private GuidedTests()
@@ -218,6 +224,94 @@ final class GuidedTests
 	}
 
 	// The tests
+
+	/**
+	 * Swapping staves on the way (issue #7). Untried in game: that the "Wield your ..." step comes before setting off,
+	 * outlines the staff, and moves on once the game shows it wielded.
+	 */
+	private static final class StaffSwapGuide extends GuidedTest
+	{
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			// Two staves that cover different runes, or the fairy ring staff (while rings need it) and a rune staff
+			final Set<Set<Rune>> kinds = new HashSet<>();
+			SupplyItems.INFINITE_RUNE_ITEMS.forEach((id, runes) ->
+			{
+				if (!SupplyItems.RUNE_TOMES.contains(id) && holdings.count(id) > 0)
+				{
+					kinds.add(runes);
+				}
+			});
+			if (holdings.countAny(SupplyItems.FAIRY_RING_STAFFS) > 0 && !(access.isKnown() && access.isMet(
+				Requirement.diary(AchievementDiary.LUMBRIDGE_DRAYNOR, AchievementDiary.Tier.ELITE))))
+			{
+				kinds.add(Collections.emptySet());
+			}
+			return kinds.size() >= 2 ? Collections.emptyList() : Collections.singletonList(
+				"Have two staves, e.g. a dramen staff and a lava battlestaff, in your bank or on you");
+		}
+
+		@Override
+		public void setUp(RunConfig config, AccountSettings account)
+		{
+			// Teleports from runes, so the staves have runes to save
+			config.getRunesNotTabsAt().addAll(EnumSet.allOf(Location.class));
+		}
+
+		@Override
+		public boolean usesRun()
+		{
+			return true;
+		}
+
+		private static String swaps(TestContext ctx)
+		{
+			final List<String> parts = new ArrayList<>();
+			ctx.plan().getSupplies().getStaffSwaps().getWield().forEach((location, swap) ->
+				parts.add(location.getDisplayName() + ": " + swap.getName()));
+			return parts.isEmpty() ? "none" : String.join(", ", parts);
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				doThis("On the Run tab, press Build run", ctx -> ctx.runView().getState() != RunView.State.OFF)
+					.onDone(ctx ->
+					{
+						ctx.capture("Supply list", supplyNames(ctx));
+						ctx.capture("Staves wielded before", swaps(ctx));
+						if (ctx.plan().getSupplies().getStaffSwaps().isEmpty())
+						{
+							ctx.cannotTest("a run where carrying a second staff frees an inventory slot (try more stops, "
+								+ "or leave your rune pouch in the bank)");
+						}
+					}),
+				ask("Does the Run tab's list have one staff to wield at the bank and another to carry, \"wield it when "
+					+ "the guide says\"?"),
+				startRun(),
+				doThis("Follow the guide until it says to wield a staff",
+					ctx -> instruction(ctx).startsWith("Wield your"))
+					.onDone(ctx ->
+					{
+						ctx.capture("Wield step", instruction(ctx));
+						ctx.capture("Outlined to wear", ctx.runView().getHighlights().getWearItemIds());
+					})
+					.orAskAfter(DO_TICKS, "The guide hasn't said to wield a staff. Carry on?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Step instead", instruction(ctx));
+						ctx.problem("No step to wield a staff");
+					}),
+				ask("Is that staff outlined in your inventory, with a blue \"Wear\" label?"),
+				doThis("Wield it", ctx -> !instruction(ctx).startsWith("Wield your"))
+					.onDone(ctx -> ctx.capture("Step after wielding", instruction(ctx)))
+					.orAskAfter(SPOT_TICKS, "The step didn't move on. Is the staff wielded?")
+					.onAnswer((ctx, yes) -> ctx.problem(yes ? "Wielded, but the step didn't move on" : "Couldn't wield it")),
+				ask("Does the step now say to set off for that stop (the teleport or fairy ring)?"));
+		}
+	}
 
 	/**
 	 * Flower protection for allotments (docs/plans/crop-types.md, Sprint 1a). UNVERIFIED: that a marigold planted on the
