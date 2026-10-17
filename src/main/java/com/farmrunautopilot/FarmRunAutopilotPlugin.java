@@ -4,6 +4,7 @@ import com.farmrunautopilot.data.travel.WalkGrid;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.bank.FarmBankTab;
 import com.farmrunautopilot.bank.FuseOverlay;
+import com.farmrunautopilot.bank.SeedVaultSection;
 import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.access.UnlockSpotter;
 import com.farmrunautopilot.settings.SettingsStore;
@@ -132,6 +133,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private FuseOverlay fuseOverlay;
 
 	@Inject
+	private SeedVaultSection seedVaultSection;
+
+	@Inject
 	private RunSession runSession;
 
 	@Inject
@@ -199,6 +203,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		settings.addSaveListener(onSettingsSaved);
 		clientThread.invoke(holdingsTracker::loadCaches);
 		farmBankTab.startUp(runSession::bankSupplies, runSession::depositNow);
+		seedVaultSection.startUp(runSession::seedVaultItems);
 		overlayManager.add(guidanceOverlay);
 		overlayManager.add(highlightOverlay);
 		overlayManager.add(itemHighlightOverlay);
@@ -223,6 +228,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		settings.removeListener(onSettingsReloaded);
 		settings.removeSaveListener(onSettingsSaved);
 		farmBankTab.shutDown();
+		seedVaultSection.shutDown();
 		overlayManager.remove(guidanceOverlay);
 		overlayManager.remove(highlightOverlay);
 		overlayManager.remove(itemHighlightOverlay);
@@ -288,6 +294,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 		}
 
 		runSession.onGameTick();
+		// The seed vault's Farm run section follows the step just worked out
+		seedVaultSection.onGameTick();
 		// Redraw the bank tab when a line or its colour changes. The bank redraws itself on every withdrawal, but a
 		// tick before the plan catches up, so without this it would show the previous step. During a run the tab
 		// shows the part of the run being banked for, counted against what's held now.
@@ -488,12 +496,14 @@ public class FarmRunAutopilotPlugin extends Plugin
 	public void onScriptPreFired(ScriptPreFired event)
 	{
 		farmBankTab.onScriptPreFired(event);
+		seedVaultSection.onScriptPreFired(event);
 	}
 
 	@Subscribe
 	public void onScriptPostFired(ScriptPostFired event)
 	{
 		farmBankTab.onScriptPostFired(event);
+		seedVaultSection.onScriptPostFired(event);
 	}
 
 	// After other plugins, so withdraw clicks are re-pointed last

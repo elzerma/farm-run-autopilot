@@ -42,12 +42,14 @@ Issues #1 to #5 were answered and closed on 2026-10-15, before this ledger began
 
 ## #8 explore/add bank tab support for seed vault
 
-**Kind:** Idea · **Status:** open, exploring · **Reviewed through:** 2026-10-16 elzerma (body)
+**Kind:** Idea · **Status:** open, the Farm run section is built (option 2), waiting on an in-game test (SEED_VAULT_SECTION) · **Reviewed through:** 2026-10-16 elzerma (body)
 
 | Who | What they said | Checked against | Evaluation | Decision |
 |-----|----------------|-----------------|------------|----------|
 | elwakka (via #5) | Seeds in the seed vault are hard to pick out; a farm tab there too? | `RunSession.fromSeedVault()`, `HoldingsTracker.java:151` | A text reminder exists (6583e4d). There's no highlighting in the vault interface. | **Explore** |
 | elzerma | Options: (1) seed vault tabs like the bank tag plugin, built into this plugin with credit; (2) highlight each tab in turn, as Easy Blast Furnace does | | Both possible. A third way, outlining the needed seeds in the vault (~100 lines), was offered and not picked. | **Explore**, keeping elzerma's two options |
+
+**Built (2026-10-16):** `bank/SeedVaultSection.java`, with the layout maths in `bank/SeedVaultLayout.java` (unit-tested against the game's own layout loop). While the guide's step is "Take ... from the seed vault", the vault's own widgets for those seeds move into a "Farm run" section at the top, with a header like the vault's; the categories below close up without them. The real widgets move, so withdrawing works with no menu changes and nothing is sent to the server. It runs after every vault build: the proc `seed_vault_build` (2820), not only the 2819 script, which just calls it when the vault's contents change; opening the vault and searching call the proc directly. It also follows each tick when the step changes. While the section shows, no item in the vault can be dragged, as while searching: the game's drag scripts would put a moved item back where the game laid it out, and a drag reorders the vault on the server. It does nothing while the vault is searched, or when the vault isn't laid out exactly as the game's script would lay it out (checked on every build), so after a game update that changes the vault it shows the vault as the game made it. New help-list test SEED_VAULT_SECTION.
 
 ## #9 Test: Fire of Nourishment at Weiss - works
 

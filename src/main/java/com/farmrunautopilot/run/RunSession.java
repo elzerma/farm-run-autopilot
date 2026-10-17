@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -113,6 +114,8 @@ public class RunSession
 	private static final int AT_BANK_TILES = 20;
 	/** At the Farming Guild, everything needed from the seed vault has been taken (or skipped). */
 	private boolean vaultChecked;
+	/** The step shown is to take seeds from the seed vault, so its Farm run section shows them. */
+	private boolean vaultStep;
 	/** The time for the leg to the current stop has been saved. */
 	private boolean legRecorded;
 	private long legStartedAt;
@@ -825,6 +828,7 @@ public class RunSession
 
 	private void evaluate()
 	{
+		vaultStep = false;
 		if (stage == RunView.State.OFF)
 		{
 			view = offView();
@@ -893,6 +897,7 @@ public class RunSession
 			if (vault != null)
 			{
 				instruction = vault;
+				vaultStep = true;
 				patches.clearCurrent();
 				break;
 			}
@@ -1017,6 +1022,44 @@ public class RunSession
 	private String fromSeedVault()
 	{
 		final List<String> take = new ArrayList<>();
+		toTakeFromVault().forEach((line, count) -> take.add(count + " x " + line.getName()));
+		if (take.isEmpty())
+		{
+			vaultChecked = true;
+			return null;
+		}
+		return "Take " + String.join(", ", take) + " from the seed vault (next to the guild's bank)";
+	}
+
+	/**
+	 * What the Farm run section at the top of the seed vault shows: the seeds and saplings the step "Take ... from
+	 * the seed vault" asks for, by item ID in the plan's order. Empty unless that's the step shown.
+	 */
+	public List<Integer> seedVaultItems()
+	{
+		if (!vaultStep || plan == null)
+		{
+			return Collections.emptyList();
+		}
+		final Map<Integer, Integer> vault = holdingsTracker.getHoldings().in(Holdings.Source.SEED_VAULT);
+		final List<Integer> items = new ArrayList<>();
+		for (SupplyLine line : toTakeFromVault().keySet())
+		{
+			for (int id : line.getItemIds() != null ? line.getItemIds() : new int[0])
+			{
+				if (vault.getOrDefault(id, 0) > 0 && !items.contains(id))
+				{
+					items.add(id);
+				}
+			}
+		}
+		return items;
+	}
+
+	/** At the Farming Guild: each line the guild's patches still need from the seed vault, with how many to take. */
+	private Map<SupplyLine, Integer> toTakeFromVault()
+	{
+		final Map<SupplyLine, Integer> take = new LinkedHashMap<>();
 		final Holdings carried = holdingsTracker.getHoldings().carriedOnly();
 		final List<Patch> here = patchesAt(plan, Location.FARMING_GUILD);
 		for (SupplyLine line : bankSupplies().getLines())
@@ -1036,15 +1079,10 @@ public class RunSession
 			final int stillNeeded = neededHere - carried.countAny(line.getItemIds());
 			if (vault > 0 && stillNeeded > 0 && line.getGroup() != SupplyLine.Group.OPTIONAL)
 			{
-				take.add(Math.min(vault, stillNeeded) + " x " + line.getName());
+				take.put(line, Math.min(vault, stillNeeded));
 			}
 		}
-		if (take.isEmpty())
-		{
-			vaultChecked = true;
-			return null;
-		}
-		return "Take " + String.join(", ", take) + " from the seed vault (next to the guild's bank)";
+		return take;
 	}
 
 	private static boolean contains(int[] ids, int id)

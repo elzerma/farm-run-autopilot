@@ -3,6 +3,7 @@ package com.farmrunautopilot.testing;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.access.PohDetector;
+import com.farmrunautopilot.bank.SeedVaultSection;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.route.RunPlan;
@@ -48,6 +49,7 @@ public class TestContext
 	private final SceneTracker scene;
 	private final PohDetector pohDetector;
 	private final SettingsStore settings;
+	private final SeedVaultSection seedVault;
 
 	/** Game messages since the last check. */
 	private final List<String> chat = new ArrayList<>();
@@ -63,7 +65,7 @@ public class TestContext
 
 	TestContext(Client client, AccessChecker accessChecker, HoldingsTracker holdingsTracker,
 		ItemChargeTracker itemCharges, RunSession runSession, RunService runService, SceneTracker scene,
-		PohDetector pohDetector, SettingsStore settings)
+		PohDetector pohDetector, SettingsStore settings, SeedVaultSection seedVault)
 	{
 		this.client = client;
 		this.accessChecker = accessChecker;
@@ -74,6 +76,7 @@ public class TestContext
 		this.scene = scene;
 		this.pohDetector = pohDetector;
 		this.settings = settings;
+		this.seedVault = seedVault;
 	}
 
 	void addChat(String message)
@@ -165,6 +168,18 @@ public class TestContext
 	public RunPlan plan()
 	{
 		return runService.getPlan();
+	}
+
+	/** The Farm run section at the top of the seed vault. */
+	public SeedVaultSection seedVault()
+	{
+		return seedVault;
+	}
+
+	/** What the guide's "Take ... from the seed vault" step asks for, by item ID; empty when that isn't the step. */
+	public List<Integer> seedVaultItems()
+	{
+		return runSession.seedVaultItems();
 	}
 
 	/** Ticked or detected in the plugin's settings right now. */

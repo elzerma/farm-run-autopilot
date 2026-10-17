@@ -61,6 +61,12 @@ Wear blue is only for "put this on", so it's never confused with an item to use.
 | Missing | `#e05555` |
 | Deposit first | `#ff981f` |
 
+### Seed vault
+
+The "Farm run" section at the top of the Farming Guild's seed vault looks like the vault's own categories, so
+it reads as part of the vault: the header in `#ff981f`, bold 12 with a shadow, and the dark line under it
+(`bank/SeedVaultSection.java`). Its items are the vault's own, so they keep the vault's look.
+
 ## 3. Type
 
 All RuneScape fonts from `FontManager`. No other fonts, no added bold.

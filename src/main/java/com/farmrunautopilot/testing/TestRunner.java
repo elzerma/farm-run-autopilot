@@ -2,6 +2,7 @@ package com.farmrunautopilot.testing;
 
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.PohDetector;
+import com.farmrunautopilot.bank.SeedVaultSection;
 import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
@@ -53,6 +54,7 @@ public class TestRunner
 	private final RunService runService;
 	private final SceneTracker scene;
 	private final PohDetector pohDetector;
+	private final SeedVaultSection seedVault;
 	/** The dev client: the whole report also goes to the log, to be read back without submitting it. */
 	private final boolean developerMode;
 
@@ -74,7 +76,8 @@ public class TestRunner
 	@Inject
 	TestRunner(Client client, ClientThread clientThread, SettingsStore settings, AccessChecker accessChecker,
 		HoldingsTracker holdingsTracker, ItemChargeTracker itemCharges, RunSession runSession, RunService runService,
-		SceneTracker scene, PohDetector pohDetector, @Named("developerMode") boolean developerMode)
+		SceneTracker scene, PohDetector pohDetector, SeedVaultSection seedVault,
+		@Named("developerMode") boolean developerMode)
 	{
 		this.client = client;
 		this.clientThread = clientThread;
@@ -86,6 +89,7 @@ public class TestRunner
 		this.runService = runService;
 		this.scene = scene;
 		this.pohDetector = pohDetector;
+		this.seedVault = seedVault;
 		this.developerMode = developerMode;
 	}
 
@@ -182,7 +186,7 @@ public class TestRunner
 		this.steps = test.steps();
 		this.stepIndex = -1;
 		this.context = new TestContext(client, accessChecker, holdingsTracker, itemCharges, runSession, runService,
-			scene, pohDetector, settings);
+			scene, pohDetector, settings, seedVault);
 		results.clear();
 		nextStep();
 	}

@@ -16,6 +16,11 @@ public enum TestItem
 			+ "plan a stop whose teleport is from another spellbook and that you have no tablet for. The Run "
 			+ "tab should warn that you need Spellbook Swap, its runes should be on the bank's Farm run tab, and the "
 			+ "spell should be outlined in your spellbook on that step."),
+	SEED_VAULT_SECTION(Tab.RUN, "Farm run section in the seed vault",
+		"Leave the seeds or saplings for your Farming Guild patches in its seed vault, build a run that stops at the "
+			+ "guild and go there. When the guide says to take them from the seed vault, open it: a \"Farm run\" section "
+			+ "at the top should show just those, and withdrawing from it should work as usual. While it shows, the "
+			+ "vault's seeds can't be dragged, and the rest of the vault should scroll and look as usual."),
 	FORTIS_CHAMPION(Tab.FARM, "Civitas herbs and the Colosseum",
 		"With \"Champion rank at the Fortis Colosseum\" ticked in Account > Unlocks, the Civitas herb patch "
 			+ "should count as disease-free: no plant cure or protection asked for it.", 2),

@@ -45,6 +45,7 @@ final class GuidedTests
 	static
 	{
 		TESTS.put(TestItem.SPELLBOOK_SWAP, new SpellbookSwap());
+		TESTS.put(TestItem.SEED_VAULT_SECTION, new SeedVaultTop());
 		TESTS.put(TestItem.FORTIS_CHAMPION, new FortisChampion());
 		TESTS.put(TestItem.ATES_CHARGES, new AtesCharges());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
@@ -213,6 +214,112 @@ final class GuidedTests
 				ask("Open your spellbook. Is Spellbook Swap outlined?"),
 				ask("Cast Spellbook Swap and pick the standard spellbook. Is Camelot Teleport outlined now?")
 					.onStart(ctx -> ctx.capture("Spellbook before the swap", ctx.access().getSpellbook()))
+					.optional());
+		}
+	}
+
+	/**
+	 * The Farm run section at the top of the seed vault (issue #8): where the game puts everything in the vault was
+	 * read from its scripts, and moving the vault's widgets hasn't been tried.
+	 */
+	private static final class SeedVaultTop extends GuidedTest
+	{
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			return patchesUsable(access, Location.FARMING_GUILD);
+		}
+
+		@Override
+		public void setUp(RunConfig config, AccountSettings account)
+		{
+			onlyPatchesAt(config, Location.FARMING_GUILD);
+			config.setUseSeedVault(true);
+		}
+
+		@Override
+		public boolean usesRun()
+		{
+			return true;
+		}
+
+		/** What the section shows (and where), for the report under this name. */
+		private static void captureVault(TestContext ctx, String label)
+		{
+			ctx.capture(label, ctx.seedVault().describe());
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				doThis("On the Run tab, press Build run", ctx -> ctx.runView().getState() != RunView.State.OFF),
+				// Without them in the vault there's no section to show, which proves nothing
+				ask("Are the seeds or saplings the bank's Farm run tab lists in the Farming Guild's seed vault, and not in "
+					+ "your inventory?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Supply list", supplyNames(ctx));
+						if (!yes)
+						{
+							ctx.cannotTest("the seeds or saplings for the Farming Guild's patches in its seed vault");
+						}
+					}),
+				doThis("Take everything else the bank's Farm run tab lists, leaving those seeds in the vault, then go to the "
+					+ "Farming Guild until the guide says to take them from the seed vault",
+					ctx -> !ctx.seedVaultItems().isEmpty())
+					.onDone(ctx -> ctx.capture("Step", ctx.runView().getInstruction()))
+					.orAskAfter(DO_TICKS, "The guide hasn't said to take anything from the seed vault. Carry on?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Step", ctx.runView().getInstruction());
+						ctx.problem("The guide didn't say to take anything from the seed vault");
+					}),
+				doThis("Open the seed vault", ctx -> ctx.seedVault().isLaidOut())
+					.onDone(ctx ->
+					{
+						captureVault(ctx, "Seed vault when opened");
+						if (ctx.seedVault().shownCount() == 0)
+						{
+							ctx.problem("No Farm run section in the seed vault");
+						}
+					})
+					.orAskAfter(DO_TICKS, "The plugin hasn't seen the seed vault open. Is it open?")
+					.onAnswer((ctx, yes) ->
+					{
+						captureVault(ctx, "Seed vault when asked");
+						ctx.problem("The plugin didn't see the seed vault laid out");
+					}),
+				ask("Is there a \"Farm run\" section at the top of the vault, with just the seeds the guide asked for?")
+					.onAnswer((ctx, yes) ->
+					{
+						captureVault(ctx, "Seed vault when answered");
+						if (!yes)
+						{
+							ctx.problem("Answered No: the Farm run section wasn't at the top with just those seeds");
+						}
+					}),
+				ask("Try to drag one of the vault's seeds to another place. Does it stay where it was?"),
+				ask("Withdraw one of the seeds in the Farm run section. Did it go into your inventory?")
+					.onAnswer((ctx, yes) ->
+					{
+						captureVault(ctx, "Seed vault after withdrawing");
+						if (!yes)
+						{
+							ctx.problem("Answered No: withdrawing from the Farm run section didn't work");
+						}
+					}),
+				ask("Scroll down to the bottom of the vault, then click a few categories on the left. Is everything else "
+					+ "there, with nothing cut off or overlapping?"),
+				ask("Take the rest of what the guide asked for. Did the section go, leaving the vault as usual?")
+					.onAnswer((ctx, yes) ->
+					{
+						captureVault(ctx, "Seed vault at the end");
+						if (!yes)
+						{
+							ctx.problem("Answered No: the vault didn't go back to normal");
+						}
+					})
 					.optional());
 		}
 	}
