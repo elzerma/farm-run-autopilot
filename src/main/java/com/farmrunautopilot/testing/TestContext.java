@@ -188,6 +188,12 @@ public class TestContext
 		return String.valueOf(settings.getAccount().getPoh());
 	}
 
+	/** The house has been scanned since its furniture was last cleared. */
+	public boolean houseScanned()
+	{
+		return settings.getAccount().getPoh().getLastDetected() > 0;
+	}
+
 	public WorldPoint location()
 	{
 		final Player player = client.getLocalPlayer();

@@ -17,16 +17,15 @@ import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.MenuOptionClicked;
-import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.util.Text;
 
 /**
  * Charges of teleport items the player charges themselves, which the game only shows in chat: the quetzal
  * whistle, Xeric's talisman and the pendant of Ates. Set from their Check and charging messages (wiki
- * transcripts) and the whistle's own "...charges remaining" after each flight. Xeric's talisman, which may
- * not say, is counted down by one when a teleport click is followed by the player being moved (picking a
- * destination can take a while; a cancelled teleport or a closed menu uses nothing). A count from the game wins,
- * so a use is never counted twice. Saved per account. Kharedst's memoirs / Book of the dead have no known
+ * transcripts) and the whistle's own "...charges remaining" after each flight. Xeric's talisman and the pendant,
+ * which may not say, are counted down by one when a teleport click is followed by the player being moved (picking a
+ * destination can take a while; a cancelled teleport or a closed menu uses nothing). The whistle isn't, so a use
+ * is never counted twice. Saved per account. Kharedst's memoirs / Book of the dead have no known
  * messages, so aren't tracked.
  *
  * <p>Client thread, except that settings are written on the Swing thread.
@@ -137,17 +136,6 @@ public class ItemChargeTracker
 	}
 
 	/**
-	 * The pendant of Ates keeps its charges in a varbit (UNVERIFIED: picked by its name), which is exact, so it
-	 * replaces the chat and click counting for the pendant whenever it changes.
-	 *
-	 * @return whether a charge count changed
-	 */
-	public boolean onVarbitChanged(int varbitId, int value)
-	{
-		return varbitId == VarbitID.CHARGES_PENDANT_OF_ATES_QUANTITY && record(TravelItem.PENDANT_OF_ATES, value);
-	}
-
-	/**
 	 * A teleport chosen from one of these items: it uses a charge once the player is moved (see
 	 * {@link #onGameTick}).
 	 *
@@ -165,10 +153,11 @@ public class ItemChargeTracker
 		}
 		for (TravelItem item : TRACKED)
 		{
-			// The pendant's varbit says when a charge is really used; the whistle says so in chat after every flight
-			// ("Your quetzal whistle has 19 charges remaining."). Guessing from movement as well counted a Renu flight
-			// after the whistle menu was opened and closed (elzerma, 2026-10-11)
-			if (item == TravelItem.PENDANT_OF_ATES || item == TravelItem.QUETZAL_WHISTLE)
+			// The whistle says in chat after every flight ("Your quetzal whistle has 19 charges remaining."). Guessing
+			// from movement as well counted a Renu flight after the whistle menu was opened and closed (elzerma,
+			// 2026-10-11). The pendant is counted by movement: CHARGES_PENDANT_OF_ATES_QUANTITY read 0 with 4 charges
+			// in game (issue #12)
+			if (item == TravelItem.QUETZAL_WHISTLE)
 			{
 				continue;
 			}

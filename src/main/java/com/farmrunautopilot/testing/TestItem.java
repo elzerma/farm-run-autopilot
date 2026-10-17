@@ -20,8 +20,8 @@ public enum TestItem
 		"With \"Champion rank at the Fortis Colosseum\" ticked in Account > Unlocks, the Civitas herb patch "
 			+ "should count as disease-free: no plant cure or protection asked for it.", 2),
 	ATES_CHARGES(Tab.TRAVEL, "Pendant of Ates charges",
-		"With the pendant on you, Settings > Debug > Detected should show the same charges as its Check. Teleport once "
-			+ "and it should drop by one. Start a teleport and cancel it: it shouldn't change."),
+		"Check the pendant. Settings > Debug > Detected should show the same number. Teleport once and it should "
+			+ "drop by one, then match a second Check.", 2),
 	BUCKET_COMPOST(Tab.FARM, "Bottomless bucket at the tool leprechaun",
 		"With a bottomless compost bucket that has compost in it, store it with any tool leprechaun. Settings > "
 			+ "Debug > Detected should then show the bucket with the right compost and uses."),
@@ -31,7 +31,7 @@ public enum TestItem
 	HOUSE_SCAN(Tab.ACCOUNT, "House scanning (beta)",
 		"Tick \"Detect furniture when I enter my house\" in Account > My house, then enter your house: your "
 			+ "jewellery box, pool, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned). "
-			+ "Then visit someone else's house: nothing of yours should change.", 2);
+			+ "Then visit someone else's house: nothing of yours should change.", 3);
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter

@@ -1,6 +1,7 @@
 package com.farmrunautopilot.testing;
 
 import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.Unlock;
@@ -280,47 +281,47 @@ final class GuidedTests
 			return Collections.singletonList(new Need("Pendant of Ates", TravelItem.PENDANT_OF_ATES.getItemIds()));
 		}
 
+		/** The pendant's Check message, compared with the plugin's count. */
+		private static boolean checked(TestContext ctx, String label)
+		{
+			final Integer said = chatCount(ctx, ItemChargeTracker.PENDANT_CHECK);
+			if (said == null)
+			{
+				return false;
+			}
+			final Integer plugin = ctx.charges(TravelItem.PENDANT_OF_ATES);
+			ctx.capture(label + ": Check said", said);
+			ctx.capture(label + ": plugin count", plugin);
+			if (plugin == null || plugin.intValue() != said)
+			{
+				ctx.problem(label + ": the plugin counted " + plugin + " but the Check said " + said);
+			}
+			return true;
+		}
+
 		@Override
 		public List<Step> steps()
 		{
+			// Counted like Xeric's talisman (a teleport click, then being moved), which passed in game (issue #13)
 			return Arrays.asList(
 				doThis("Take the pendant of Ates out of the bank", ctx -> ctx.carries(TravelItem.PENDANT_OF_ATES.getItemIds())),
-				doThis("Right-click the pendant and pick Check", ctx ->
+				doThis("Right-click the pendant and pick Check", ctx -> checked(ctx, "First check")),
+				doThis("Teleport with the pendant once", ctx ->
 				{
-					final Integer said = chatCount(ctx, ItemChargeTracker.PENDANT_CHECK);
-					if (said == null)
-					{
-						return false;
-					}
-					final int game = ctx.varbit(VarbitID.CHARGES_PENDANT_OF_ATES_QUANTITY);
-					ctx.capture("Check said", said);
-					ctx.capture("Game value", game);
-					if (game != said)
-					{
-						ctx.problem("The game value (" + game + ") isn't the pendant's charges (" + said + ")");
-					}
-					return true;
-				}),
-				doThis("Teleport somewhere with the pendant",
-					ctx -> ctx.varbit(VarbitID.CHARGES_PENDANT_OF_ATES_QUANTITY) < ctx.<Integer>recall("before"))
-					.onStart(ctx -> ctx.remember("before", ctx.varbit(VarbitID.CHARGES_PENDANT_OF_ATES_QUANTITY)))
-					.onDone(ctx ->
-					{
-						ctx.capture("Game value after", ctx.varbit(VarbitID.CHARGES_PENDANT_OF_ATES_QUANTITY));
-						ctx.capture("Plugin count after", ctx.charges(TravelItem.PENDANT_OF_ATES));
-					})
+					final Integer now = ctx.charges(TravelItem.PENDANT_OF_ATES);
+					final Integer before = ctx.recall("before");
+					return now != null && before != null && now < before;
+				})
+					.onStart(ctx -> ctx.remember("before", ctx.charges(TravelItem.PENDANT_OF_ATES)))
 					.orAskAfter(DO_TICKS, "Have you teleported with the pendant?")
 					.onAnswer((ctx, yes) ->
 					{
-						ctx.capture("Game value after", ctx.varbit(VarbitID.CHARGES_PENDANT_OF_ATES_QUANTITY));
 						if (yes)
 						{
-							ctx.problem("The game value didn't go down after a teleport");
+							ctx.problem("The plugin's count didn't go down after a teleport");
 						}
 					}),
-				ask("Does Settings > Debug > Detected show the same charges as the pendant's Check would now?"),
-				ask("Start a pendant teleport, then cancel it before it happens. Did Settings > Debug > Detected keep the "
-					+ "same count?").optional());
+				doThis("Check it again", ctx -> checked(ctx, "After teleporting")));
 		}
 	}
 
@@ -441,6 +442,9 @@ final class GuidedTests
 		public void setUp(RunConfig config, AccountSettings account)
 		{
 			account.setAutoDetectHouse(true);
+			// Start empty, so only the scan can fill the furniture in (issue #10: it was already filled in, which
+			// proved nothing). The player's own is put back unless the scan ran (see keep)
+			PohDetector.clearDetected(account.getPoh());
 		}
 
 		@Override
@@ -448,12 +452,16 @@ final class GuidedTests
 		{
 			return Arrays.asList(
 				doThis("Enter your own house", TestContext::inOwnHouse)
-					.onStart(ctx -> ctx.capture("My house before", ctx.houseSummary())),
+					.onStart(ctx -> ctx.capture("My house before (cleared)", ctx.houseSummary())),
 				ask("Look at Account > My house. Do the jewellery box, pool, altar, fairy ring and spirit tree match your "
 					+ "house? (The portal nexus isn't scanned: it stays as you set it.)")
 					.onAnswer((ctx, yes) ->
 					{
 						ctx.capture("My house after", ctx.houseSummary());
+						if (!ctx.houseScanned())
+						{
+							ctx.problem("The house wasn't scanned");
+						}
 						if (!yes)
 						{
 							ctx.problem("My house didn't match the house after scanning");
@@ -484,8 +492,11 @@ final class GuidedTests
 		@Override
 		public void keep(AccountSettings kept, AccountSettings during)
 		{
-			// What the scan found is the point of the test
-			kept.setPoh(during.getPoh());
+			// What the scan found is the point of the test; without a scan the cleared house would lose the player's
+			if (during.getPoh().getLastDetected() > 0)
+			{
+				kept.setPoh(during.getPoh());
+			}
 		}
 	}
 }
