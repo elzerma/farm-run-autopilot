@@ -283,3 +283,12 @@ Open questions: bank and vault counts left out, or shown only as present/missing
 - **#8:** build option 2, a "Farm run" section at the top of the seed vault.
 - **#5:** the fuse was checked in game on 2026-10-16 after it was sped up (0.7 s a lap): "it looks fine to me". The Report a problem button and its Bug form (#17) were checked the same day.
 - **#5, follow-up (2026-10-17):** at elzerma's request the fuse became a growing vine. It grows from the middle of the bottom edge, flowers, then wilts. It's also used for the spell to cast, with a "Growing vine highlights" setting that switches back to plain outlines (a109fe6). elzerma checked it in game: "Looks good".
+
+### Release 2026-10-17
+
+runelite/plugin-hub#18748 merged at 12:04 UTC, so 62f3070 is live. Replies posted as approved:
+- **#6, #7, #17:** closed as completed.
+- **#12:** told the fix is live and the test is asked again. Stays open until it passes.
+- **#16:** told it's live, with the HOUSE_BY_TREE test. Stays open until someone with a house spirit tree tries it.
+
+Still open: #8 (seed vault, waiting on edge-case checks and elzerma's choices on the banking setting and the routing), #12 and #16. The vine (bank, vault and spellbook) and the seed vault section are on master after 62f3070, and go out in the next update.
