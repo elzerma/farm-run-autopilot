@@ -55,7 +55,7 @@ public enum TravelItem
 		needs(Requirement.diary(AchievementDiary.KOUREND_KEBOS, AchievementDiary.Tier.HARD)),
 		ItemID.ZEAH_BLESSING_HARD, ItemID.ZEAH_BLESSING_ELITE),
 	XERICS_TALISMAN("Xeric's talisman", ItemID.XERIC_TALISMAN),
-	KHAREDSTS_MEMOIRS("Kharedst's memoirs / Book of the dead", needs(Requirement.quest(Quest.CLIENT_OF_KOUREND)),
+	KHAREDSTS_MEMOIRS("Kharedst's memoirs / Book of the Dead", needs(Requirement.quest(Quest.CLIENT_OF_KOUREND)),
 		ItemID.VEOS_KHAREDSTS_MEMOIRS, ItemID.BOOK_OF_THE_DEAD),
 	ECTOPHIAL("Ectophial", needs(Requirement.quest(Quest.GHOSTS_AHOY)), ItemID.ECTOPHIAL),
 	STONY_BASALT("Stony basalt", needs(Requirement.quest(Quest.MAKING_FRIENDS_WITH_MY_ARM)), ItemID.STRONGHOLD_TELEPORT_BASALT),
