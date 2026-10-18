@@ -456,8 +456,10 @@ text, far less zipped in the jar) and `tools/atlas/report.md`; `../../gradlew -p
 read on the client thread, transport families, planted spirit trees) and builds legs (`AtlasLegs`: a way, a teleport
 and a way, or a hop on foot or after a teleport). In the dev client (debug logging), every planned route is followed
 in the log by `Atlas shadow:` with each leg's plugin estimate and the atlas's quickest leg for the same player, and the
-totals. Nothing a player sees changes, and the atlas isn't read at all outside the dev client. Not yet: the house
-(T3) and the start leg from where the player stands (the first leg is "from anywhere").
+totals. Nothing a player sees changes, and the atlas isn't read at all outside the dev client. The house counts too
+(`AtlasHouse`, from the player's house set-up: Teleport to House in, then a nexus portal by name, the jewellery box's
+exits up to its tier, or the house's fairy ring or spirit tree). Not yet: the spirit tree into the house (issue #16)
+and the start leg from where the player stands (the first leg is "from anywhere").
 
 **Check (needs elzerma):** play one run in the dev client and send the log; the `Atlas shadow:` lines are the evidence
 for switching the planner in T3.

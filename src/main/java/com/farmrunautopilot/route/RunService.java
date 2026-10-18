@@ -11,6 +11,7 @@ import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.data.travel.WalkGrid;
 import com.farmrunautopilot.data.travel.atlas.AtlasAccount;
+import com.farmrunautopilot.data.travel.atlas.AtlasHouse;
 import com.farmrunautopilot.data.travel.atlas.AtlasNeed;
 import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.run.RunTimings;
@@ -282,8 +283,9 @@ public class RunService
 			final TravelAtlas atlas = TravelAtlas.ifLoaded();
 			if (atlas != null && !atlas.isEmpty())
 			{
-				log.debug("Atlas shadow:\n{}", AtlasShadow.compare(atlas, atlasAccount(atlas, access, holdings),
-					next.getRoute(), selection.getPatches()));
+				final AtlasAccount account = atlasAccount(atlas, access, holdings);
+				log.debug("Atlas shadow:\n{}", AtlasShadow.compare(atlas, account,
+					AtlasHouse.of(atlas, account, settings.getAccount().getPoh()), next.getRoute(), selection.getPatches()));
 			}
 		}
 		plan = next;

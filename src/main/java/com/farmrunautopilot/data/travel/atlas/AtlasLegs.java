@@ -26,6 +26,8 @@ public final class AtlasLegs
 
 	private final TravelAtlas atlas;
 	private final AtlasAccount account;
+	/** The player's house as a way out, or null. */
+	private final AtlasHouse house;
 	private final List<TravelAtlas.Jump> teleports = new ArrayList<>();
 
 	/** One leg: its seconds (before overhead), what it is, and whether it's only walking (no teleport or hop). */
@@ -39,8 +41,17 @@ public final class AtlasLegs
 
 	public AtlasLegs(TravelAtlas atlas, AtlasAccount account)
 	{
+		this(atlas, account, null);
+	}
+
+	/**
+	 * @param house the player's house as a way out (AtlasHouse.of), or null
+	 */
+	public AtlasLegs(TravelAtlas atlas, AtlasAccount account, AtlasHouse house)
+	{
 		this.atlas = atlas;
 		this.account = account;
+		this.house = house;
 		for (TravelAtlas.Jump t : atlas.getTeleports())
 		{
 			if (!COOLDOWN.contains(t.getType()) && !HOUSE.contains(t.getType()) && account.meetsAll(atlas, t.getNeeds()))
@@ -73,6 +84,14 @@ public final class AtlasLegs
 			for (TravelAtlas.Jump t : teleports)
 			{
 				best = better(best, walk(t.getTo(), target, t.getTicks() * SECONDS_PER_TICK, t.getName() + " > "));
+			}
+			if (house != null)
+			{
+				for (AtlasHouse.Exit exit : house.getExits())
+				{
+					best = better(best, walk(exit.getLanding(), target,
+						house.getSeconds() + exit.getTicks() * SECONDS_PER_TICK, "House > " + exit.getName() + " > "));
+				}
 			}
 			// A hop: to its hub on foot or after a teleport, the hop, then the way from where it lands
 			for (int landing : atlas.into(target))

@@ -3,6 +3,7 @@ package com.farmrunautopilot.route;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.travel.atlas.AtlasAccount;
+import com.farmrunautopilot.data.travel.atlas.AtlasHouse;
 import com.farmrunautopilot.data.travel.atlas.AtlasLegs;
 import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.data.travel.TravelTimes;
@@ -26,9 +27,9 @@ final class AtlasShadow
 	 * One line per leg, e.g. "3. Catherby: plugin 29 s (Camelot Teleport) | atlas 26 s (Camelot Teleport > walk 58
 	 * tiles), 3 s quicker", and the totals.
 	 */
-	static String compare(TravelAtlas atlas, AtlasAccount account, Route route, List<Patch> patches)
+	static String compare(TravelAtlas atlas, AtlasAccount account, AtlasHouse house, Route route, List<Patch> patches)
 	{
-		final AtlasLegs legs = new AtlasLegs(atlas, account);
+		final AtlasLegs legs = new AtlasLegs(atlas, account, house);
 		final Map<Location, List<Integer>> places = new LinkedHashMap<>();
 		for (Patch patch : patches)
 		{
@@ -43,7 +44,8 @@ final class AtlasShadow
 			}
 		}
 		final StringBuilder s = new StringBuilder();
-		s.append(legs.usableTeleports()).append(" teleports usable\n");
+		s.append(legs.usableTeleports()).append(" teleports usable, ")
+			.append(house == null ? "no house" : house.getExits().size() + " ways out of the house").append('\n');
 		double plugin = 0;
 		double atlasTotal = 0;
 		int from = -1;

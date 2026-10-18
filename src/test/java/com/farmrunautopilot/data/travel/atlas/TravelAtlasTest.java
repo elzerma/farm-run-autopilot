@@ -8,6 +8,9 @@ import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.Unlock;
+import com.farmrunautopilot.data.poh.HousePortal;
+import com.farmrunautopilot.data.poh.PortalNexus;
+import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.supply.Holdings;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -20,6 +23,7 @@ import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
 import net.runelite.api.Skill;
 import net.runelite.api.gameval.ItemID;
+import net.runelite.api.gameval.VarbitID;
 import org.junit.Test;
 
 /**
@@ -104,6 +108,27 @@ public class TravelAtlasTest
 		assertTrue(leg.getHow(), leg.getHow().contains("Brother Tranquility"));
 	}
 
+	@Test
+	public void theHouseNexusPortalIsAWayOut()
+	{
+		// A Rimmington house teleported into by tablet (its location and "inside" setting as the game has them)
+		final Map<Integer, Integer> held = items(ItemID.POH_TABLET_TELEPORTTOHOUSE, 10);
+		final AtlasAccount account = new AtlasAccount(access(99), holdings(held),
+			Map.of(VarbitID.POH_HOUSE_LOCATION, 1, VarbitID.POH_TELE_TOGGLE, 1), Map.of(), Set.of());
+		final PohSetup poh = new PohSetup();
+		poh.setPortal(HousePortal.RIMMINGTON);
+		poh.setNexusDestinations(EnumSet.of(PortalNexus.Destination.CATHERBY));
+		final AtlasHouse house = AtlasHouse.of(ATLAS, account, poh);
+		assertNotNull(house);
+		assertTrue(house.getExits().stream().anyMatch(e -> e.getName().equals("nexus: Catherby Portal")));
+
+		final AtlasLegs.Leg with = new AtlasLegs(ATLAS, account, house).quickest(-1, places("CATHERBY_HERB"));
+		final AtlasLegs.Leg without = new AtlasLegs(ATLAS, account).quickest(-1, places("CATHERBY_HERB"));
+		assertNotNull(with);
+		assertTrue(with.getHow(), with.getHow().startsWith("House > nexus: Catherby Portal"));
+		assertTrue(without == null || without.getSeconds() > with.getSeconds());
+	}
+
 	private static List<Integer> places(String patch)
 	{
 		return List.of(ATLAS.patchPlace(patch).getId());
@@ -119,6 +144,11 @@ public class TravelAtlasTest
 	/** Every quest done, every skill at {@code level}, no diaries or unlocks, holding these items in the bank. */
 	private static AtlasAccount account(int level, Map<Integer, Integer> bank)
 	{
+		return new AtlasAccount(access(level), holdings(bank), Map.of(), Map.of(), Set.of());
+	}
+
+	private static AccessSnapshot access(int level)
+	{
 		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
 		for (Quest quest : Quest.values())
 		{
@@ -129,11 +159,13 @@ public class TravelAtlasTest
 		{
 			levels.put(skill, level);
 		}
-		final AccessSnapshot access = new AccessSnapshot(true, quests, levels, Collections.emptySet(),
-			EnumSet.noneOf(Unlock.class), null);
+		return new AccessSnapshot(true, quests, levels, Collections.emptySet(), EnumSet.noneOf(Unlock.class), null);
+	}
+
+	private static Holdings holdings(Map<Integer, Integer> bank)
+	{
 		final Map<Holdings.Source, Map<Integer, Integer>> items = new EnumMap<>(Holdings.Source.class);
 		items.put(Holdings.Source.BANK, bank);
-		final Holdings holdings = new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false);
-		return new AtlasAccount(access, holdings, Map.of(), Map.of(), Set.of());
+		return new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false);
 	}
 }
