@@ -10,6 +10,9 @@ import com.farmrunautopilot.data.travel.BankTeleport;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.data.travel.WalkGrid;
+import com.farmrunautopilot.data.travel.atlas.AtlasAccount;
+import com.farmrunautopilot.data.travel.atlas.AtlasNeed;
+import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.run.RunTimings;
 import com.farmrunautopilot.run.StepAdvisor;
 import com.farmrunautopilot.settings.PohSetup;
@@ -275,9 +278,44 @@ public class RunService
 			|| !next.getBankStops().equals(plan.getBankStops())) && log.isDebugEnabled())
 		{
 			log.debug("Route planned:\n{}", explain(next));
+			// Sprint T2 of docs/plans/travel-rework.md: the atlas's legs beside the planner's, in the dev client only
+			final TravelAtlas atlas = TravelAtlas.ifLoaded();
+			if (atlas != null && !atlas.isEmpty())
+			{
+				log.debug("Atlas shadow:\n{}", AtlasShadow.compare(atlas, atlasAccount(atlas, access, holdings),
+					next.getRoute(), selection.getPatches()));
+			}
 		}
 		plan = next;
 		return true;
+	}
+
+	/** Read the travel atlas now (plugin start-up), not on the client thread; only the dev client's log uses it yet. */
+	public void startUp()
+	{
+		if (log.isDebugEnabled())
+		{
+			TravelAtlas.get();
+		}
+	}
+
+	/** The player as the atlas needs them: with the varbits and varplayers it names read now. Client thread. */
+	private AtlasAccount atlasAccount(TravelAtlas atlas, AccessSnapshot access, Holdings holdings)
+	{
+		final Map<Integer, Integer> varbits = new HashMap<>();
+		final Map<Integer, Integer> varps = new HashMap<>();
+		for (AtlasNeed need : atlas.getNeeds())
+		{
+			if (need.getKind() == AtlasNeed.Kind.VARBIT)
+			{
+				varbits.computeIfAbsent(need.getVar(), client::getVarbitValue);
+			}
+			else if (need.getKind() == AtlasNeed.Kind.VARP)
+			{
+				varps.computeIfAbsent(need.getVar(), client::getVarpValue);
+			}
+		}
+		return new AtlasAccount(access, holdings, varbits, varps);
 	}
 
 	/**

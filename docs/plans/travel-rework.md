@@ -161,6 +161,17 @@ main sources unchanged from a pinned local clone (next to the repo, as `tools/wa
     lists every leg where Shortest Path is quicker. That list is the evidence elzerma asked for.
 11. **Refresh** at each plugin release: rebuild, read the report, commit data and report together.
 
+**As built in T1 (2026-10-18), where it differs from the steps above:** the transport networks (fairy rings, spirit
+trees, quetzals, gnome gliders, charter ships, magic carpets, mushtrees, canoes, minecarts, balloons, obelisks) are
+**hops the plugin adds itself**, like teleports: ways walk, use doors, stairs, shortcuts and single boats, and go to a
+network's **hubs** (a ring, a tree, a pad) as places; `hops.tsv` lists every hop from a hub to where it lands. With the
+networks inside the ways, nearly every landing was "near" nearly every patch (62,378 pairs; hours to build). Patches of
+one type at one stop within 8 tiles share a place, landings within 2 tiles are one, and starts are asked about only
+within 300 of Shortest Path's units (150 for banks and hubs). The files are `places.tsv`, `ways.tsv`, `teleports.tsv`,
+`hops.tsv`, `transports.tsv` and `requirements.tsv` in `src/main/resources/com/farmrunautopilot/atlas/`
+(`tools/atlas/README.md`). `walk-grid.bin` is left as it is until the plugin's stops change. Mockito wasn't needed: the
+pretend client and settings are plain Java proxies.
+
 **Licence and credit:** Shortest Path's code runs only on a developer's machine; the plugin ships derived facts, as
 the notice already says for Sprint 8's walks. Update `THIRD_PARTY_NOTICES` (commit, which files, what's derived) and
 the README credit. The harness is ours; the way it fakes a client follows their tests, credited in its README.
@@ -175,10 +186,11 @@ the README credit. The harness is ours; the way it fakes a client follows their 
   `AccessSnapshot` and `Holdings` (varbits read on the client thread, as now). Their `UNLOCK_*` tokens map to our
   `Unlock` entries. Varbits we haven't confirmed get guided tests (section 8).
 - **Legs:** from where the player is (the last patch done, a bank, or their tile via the walk grid) to the next stop's
-  first patch, the cheapest of: the atlas answer from here (walks, plus any boat, spirit tree, fairy ring, quetzal pad
-  or balloon nearby, so those stop being special cases); each usable teleport plus the answer from its landing; the
-  house (`PohSetup`: teleport in, then each portal, nexus, jewellery box, fairy ring or spirit tree exit, plus the
-  spirit tree into the house from issue #16) plus the answer from that exit's landing.
+  first patch, the cheapest of: the atlas way from here; each usable teleport plus the way from its landing; a hop
+  (fairy ring, spirit tree, quetzal pad, balloon...) reached on foot or after a teleport, plus the way from where it
+  lands, so those stop being special cases; the house (`PohSetup`: teleport in, then each portal, nexus, jewellery box,
+  fairy ring or spirit tree exit, plus the spirit tree into the house from issue #16) plus the way from that exit's
+  landing. (`data/travel/atlas/AtlasLegs` does all but the house since T2.)
 - **Fairy ring ways** (`FairyRingAccess`: Ardougne cloak to the monastery ring, slayer ring, quest cape) become ordinary
   teleports whose atlas answer walks to the ring and hops. Most `Departure` values go; the house ones stay.
 - **Inside a stop:** patch order and patch-to-patch walks from the atlas; the bank walk from the actual last patch.
@@ -407,6 +419,48 @@ royal seed pod, Nemus by pendant (2 s quicker on the map), Falador Park to Falad
 - Player-planted spirit trees count as not planted in the bubble; give the maxed account grown trees.
 - Speed for the full atlas: reuse one Shortest Path config per pretend account (each refresh rereads every
   transport), ask with a set of target tiles per stop, and use several threads; about 0.4 s a question today.
+
+### T1 results (2026-10-18)
+
+**Built:** `tools/atlas` (`../../gradlew -p . atlas`, about 8 minutes on 22 threads) writes the six atlas files (1.2 MB of
+text, far less zipped in the jar) and `tools/atlas/report.md`; `../../gradlew -p . referee` writes
+`tools/atlas/referee.tsv`. `tools/atlas/patches.tsv` lists every farming patch in the game (100 rows: the plugin's 54,
+46 more for crop types to come), the plugin's rows checked against `PatchPoints` by `AtlasPatchListTest`.
+
+- **Size:** 822 places (71 patch places, 124 banks, 435 landings, 192 hubs), 986 teleports, 6,935 hops; 11,429 pairs
+  asked with 34,208 questions; 20,533 ways kept. No search hit the time limit.
+- **Checks:** every patch the plugin runs has a way from a teleport or hop landing. No way at all to six atlas-only
+  patches: the two underwater seaweed patches and the two coral nurseries (Shortest Path's map doesn't go there), the
+  Farming Guild's redwood and Hespori (their climb and hole aren't in its transports). They need hand steps when
+  their crop types are added.
+- **Today's 89 travel methods against the atlas** (report.md): 78 within 3 s. Nine of the eleven that aren't are
+  T0's findings or like them (CIQ, Trollheim, Rada's blessing, the Troll Stronghold entrance, Taverley by Falador
+  Teleport, the Mining Guild ladder, Auburnvale, AIS, the Ardougne boat). The other two compare different things:
+  Kastori's flower patch, which the plugin now runs, is beside the quetzal pad, and Civitas then Renu is a hop the
+  plugin adds itself.
+- **Referee:** the plugin's legs built from the atlas (`AtlasLegs`) agree with Shortest Path's own fastest answer,
+  teleports included, within 3 s on 577 of 600 legs between the stops the plugin runs, for the pretend player like
+  elzerma. The other 23 are the test's pretend vars, not the atlas (`AtlasRefereeTest`).
+- **Fixed on the way:** an item need is any one of its branches (any charge of a skills necklace), not all of them;
+  a hop from or to a player-planted spirit tree needs it planted (Shortest Path checks that outside its data); the
+  referee leaves the house out.
+- **Found:** `PatchPoints` puts the Weiss herb patch at 2847 3931, which the game cache says is the My Arm's Big
+  Adventure goutweed patch beside it; the herb patch is at 2848 3934. Left as it is (a follow-up, with its guided
+  test). Shortest Path's data gives 0 ticks to many climbs and stepping stones (listed in the report); they count as
+  1 tick, 2 for an agility shortcut, until real durations are set.
+
+### T2 status (2026-10-18)
+
+**Built, shadow mode only:** `data/travel/atlas/` reads the atlas (`TravelAtlas`), checks needs for a player
+(`AtlasNeed`, `AtlasAccount`: levels and quests from `AccessSnapshot`, items from `Holdings`, varbits and varplayers
+read on the client thread, transport families, planted spirit trees) and builds legs (`AtlasLegs`: a way, a teleport
+and a way, or a hop on foot or after a teleport). In the dev client (debug logging), every planned route is followed
+in the log by `Atlas shadow:` with each leg's plugin estimate and the atlas's quickest leg for the same player, and the
+totals. Nothing a player sees changes, and the atlas isn't read at all outside the dev client. Not yet: the house
+(T3) and the start leg from where the player stands (the first leg is "from anywhere").
+
+**Check (needs elzerma):** play one run in the dev client and send the log; the `Atlas shadow:` lines are the evidence
+for switching the planner in T3.
 
 ## 10. Risks
 
