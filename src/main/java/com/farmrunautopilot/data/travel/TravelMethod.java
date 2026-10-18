@@ -197,7 +197,8 @@ public enum TravelMethod
 	CONSTRUCTION_CAPE_HOSIDIUS(item(Location.HOSIDIUS, "Construction cape (Hosidius)",
 		TravelKind.CAPE, TravelItem.CONSTRUCTION_CAPE)),
 	KHAREDSTS_MEMOIRS_LANCALLIUMS(item(Location.HOSIDIUS,
-		"Book of the Dead / Kharedst's memoirs (Lunch by the Lancalliums)", TravelKind.ITEM, TravelItem.KHAREDSTS_MEMOIRS).requires(Requirement.quest(Quest.THE_DEPTHS_OF_DESPAIR))),
+		"Book of the Dead / Kharedst's memoirs (Lunch by the Lancalliums)", TravelKind.ITEM, TravelItem.KHAREDSTS_MEMOIRS)
+		.requires(Requirement.quest(Quest.THE_DEPTHS_OF_DESPAIR))),
 	FAIRY_RING_AKR(fairyRing(Location.HOSIDIUS, "AKR")),
 	SKILLS_NECKLACE_WOODCUTTING_GUILD(item(Location.HOSIDIUS, "Skills necklace (Woodcutting Guild)",
 		TravelKind.JEWELLERY, TravelItem.SKILLS_NECKLACE).jewelleryBox(JewelleryBoxTier.FANCY)
