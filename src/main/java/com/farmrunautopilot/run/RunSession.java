@@ -489,14 +489,23 @@ public class RunSession
 		{
 			return lastRunTypes;
 		}
-		final Map<PatchType, Integer> counts = patchCounts(current);
+		Map<PatchType, Integer> counts = patchCounts(current);
+		final List<Map<PatchType, TypeTimes.Part>> history = timings.typeHistory();
+		// Nothing due yet: the best times for the last run's patches (elzerma: they only showed once a run was ready)
+		if (counts.isEmpty() && !history.isEmpty())
+		{
+			counts = new EnumMap<>(PatchType.class);
+			for (Map.Entry<PatchType, TypeTimes.Part> e : history.get(history.size() - 1).entrySet())
+			{
+				counts.put(e.getKey(), e.getValue().getPatches());
+			}
+		}
 		final String makeup = RunTimings.makeup(counts);
 		if (makeup.isEmpty())
 		{
 			return null;
 		}
 		// Per type, like with like: the best for this many patches of each type, and its median per patch
-		final List<Map<PatchType, TypeTimes.Part>> history = timings.typeHistory();
 		final List<String> bests = new ArrayList<>();
 		final List<String> lines = new ArrayList<>();
 		for (Map.Entry<PatchType, Integer> e : counts.entrySet())

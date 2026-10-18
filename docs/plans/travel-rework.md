@@ -464,6 +464,18 @@ and the start leg from where the player stands (the first leg is "from anywhere"
 **Check (needs elzerma):** play one run in the dev client and send the log; the `Atlas shadow:` lines are the evidence
 for switching the planner in T3.
 
+**T2 evidence (elzerma's dev-client run, 2026-10-18):** over the legs of two planned routes, the atlas's legs total
+541 s against the plugin's 700 s, and 442 s against 490 s. About half the legs agree within 2 s (Hosidius, Catherby,
+Lumbridge, Varrock, Port Phasmatys, Lletya, Gnome Stronghold, Falador Park, Explorer's ring). The atlas is quicker
+where the hand list is wrong or short: Troll Stronghold (8-22 s), Brimhaven by the sailors' amulet, Taverley by the
+skills necklace and the Crafting Guild balloon, Seers' Village by the Camelot Teleport's Seers' option, Nemus by the
+Mountain Guide, the Lumbridge north farm by the Chronicle; and it shows the plugin's own guesses were optimistic (from
+the Stronghold's tree patch the spirit tree is 36 tiles, not 11). T3 must still bring in what the atlas legs don't
+know yet: the quetzal whistle's real wait (the plugin's measured 13 s against Shortest Path's 4 ticks; the Kastori,
+Civitas and Nemus legs look 9 s too quick), charges and daily uses (Ardougne cloak, Explorer's ring), and the first
+leg from where the player stands. The `Shortest Path (live)` lines used the player's own Shortest Path settings, which
+use no teleport items, so they don't compare. elzerma: "i don't want to be locked to our list of travel methods".
+
 **T3 groundwork (2026-10-18), no behaviour change:** `AtlasLinks` ties an atlas teleport to the plugin's `TravelItem`
 (by the items it needs) or `Spell` (by name, or its tablet), for charges, daily uses, runes, Spellbook Swap and
 highlights. `AtlasLinksTest`: every `TravelMethod`'s item or spell has an atlas teleport, and each lands within 3
