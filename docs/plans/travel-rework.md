@@ -1,0 +1,311 @@
+# Plan: travel rework (a travel atlas built with Shortest Path in a bubble)
+
+Written 2026-10-17, planning only (nothing built). Answers elzerma's "MAJOR issues with travelling data" and their idea of
+using Shortest Path's data and pathfinding to find the fastest way to every patch. Shortest Path was checked at commit
+`d98d478` (2026-10-17, `master`); the plugin's earlier research is in `shortest-path-research.md`,
+`travel-research.md` and `sourced-data.md`.
+
+## 0. In short
+
+- **Your idea works, but not inside the game.** The plugin can't move or teleport you, and a script that clicks through
+  teleports breaks Jagex's rules and gets accounts banned. It doesn't need the game, though: **Shortest Path's
+  pathfinder runs on its own on a computer**, with a pretend account (made-up levels, quests, unlocks and items) on its
+  real map and transport data. Its own tests already do this. That is the "bubble".
+- **What the bubble does:** a tool run by us (not by players) asks it thousands of "fastest way from here to that
+  patch" questions: from every teleport landing, patch and bank to every patch of every type. It writes the answers
+  to a data file the plugin ships. Nothing from Shortest Path runs in the plugin, and players don't need it installed.
+- **Teleports you don't have:** the pretend account starts with everything. For each answer the tool then takes away
+  what it used (45 Agility, a quest, a dramen staff, a planted spirit tree), asks again, and keeps the next-best way.
+  Each answer says what it needs, so in game the plugin picks the fastest way **your** account can use. Methods
+  nobody on the team owns are still covered.
+- **Debug mode:** Shortest Path has none for this, and we don't need one: the bubble asks it directly.
+- **Timing (your rule, 2026-10-17):** no crowdsourcing. Routes come from the map data only. Your own times are only
+  used for how long the plugin says a run will take, and for a personal best to beat (with splits per stop).
+
+## 1. Problems found
+
+elzerma's examples (picker, 2026-10-17): Harmony Island has only the teleport, the tablet and the nexus, where
+Shortest Path would still find a way; the plugin picks slow teleports; leg times are wrong; ways to travel are missing.
+No stop stands out ("just know that we can do better"). Reading the code and the history explains why:
+
+1. **A hand-kept list of 90 ways** (`data/travel/TravelMethod.java`), each "one teleport, then walk to the nearest
+   patch". A journey that isn't typed in doesn't exist. Harmony Island (line 223) has only the spell, tablet and nexus;
+   the charter ship or Trouble Brewing teleport to Mos Le'Harmless, then Brother Tranquility, are unknown (both are in
+   Shortest Path's `charter_ships.tsv`, `teleportation_minigames.tsv` and `transports.tsv`). The same goes for every
+   gnome glider, charter ship, canoe, minecart, magic carpet and mushtree, apart from the few typed in by hand (the
+   Ardougne boat to Brimhaven, the Grand Tree balloon); the class comment says the rest "are not planned".
+2. **Numbers copied by hand** from a tool's output into `TravelTimes.java`, with estimates still in it: royal seed pod
+   (line 54), Mount Karuulm (62), Stony basalt entrance (123), the Tree Gnome Village tree (216), the Stronghold bank
+   (240), the Port Phasmatys bank (248). Hosidius by skills necklace was a 76-tile guess until today (79 plus the 45
+   Agility stepping stone, 121 without it: `236f96a`).
+3. **One walk per way**, to the stop's nearest patch, whichever patch is visited first or last. Only three walks between
+   stops are known (`TravelTimes` 209-211); no other pair of stops can be walked.
+4. **What a walk needs is coded case by case.** Only Falador to Taverley switches on Agility (66 rocks). Hosidius assumes
+   the 45 stepping stone and Nemus the 33 tunnel, so players without them get times that are far too short.
+5. **The time model has fudge factors:** one 8 s `LEG_OVERHEAD` for everything, flat cast times (3.0 / 3.6 s against
+   Shortest Path's 4 ticks = 2.4 s), and extras from single recorded legs (CIQ +47 s, lines 71-74).
+6. **Learned times choose the route.** `RoutePlanner.quickest` blends the player's recorded legs into the choice. A way
+   that loses is never used, so never timed again: one slow Book of the Dead leg locked it out (`a3af137` added an
+   outlier rule to patch that). It also makes routes differ between runs and hard to test.
+7. **Special cases pile up:** fairy ring ways, Renu from a pad, the balloon basket, the spirit tree into the house, each
+   with its own code in `RoutePlanner.options` and a `Departure` value. `docs/REBUILD.md` already asked for "one travel
+   graph, one place for every distance"; Sprint 8 measured walks but kept the hand list.
+8. **Every new stop needs hand research.** Crop types 1b and 1c (`crop-types.md`) add Rimmington, Champions' Guild,
+   Etceteria, Al Kharid, Canifis, Draynor Manor, Fossil Island (underwater), Tai Bwo Wannai, the Farming Guild's special
+   trees and more. With the current design each one is a new research table and more hand-copied numbers.
+
+## 2. The idea, honestly, and the approach
+
+### What the plugin may and may not do in game
+
+- **May not:** move the player, teleport, click, type, or run any "script" in the game. Injecting input is forbidden by
+  the Plugin Hub rules and Jagex's guidelines (AGENTS.md). Timing every teleport by hand would also need every teleport.
+- **May:** watch where the player is each game tick while they play normally, time runs and legs, and send Shortest
+  Path messages (it already draws our walking lines).
+
+### What Shortest Path offers (BSD-2)
+
+- **Data:** the collision map (`collision-map.zip`, 1.6 MB) and 26 transport files (about 10,000 rows): spells, items,
+  tablets, minigame and home teleports, POH portals, jewellery box, fairy rings, spirit trees, quetzals, boats, charter
+  ships, gliders, balloons, carpets, minecarts, canoes, agility shortcuts, doors, ladders and NPC transports. Each row
+  has its landing, duration in ticks and what it needs: skills, quests, items, varbits, varplayers, wilderness level.
+  Format: `docs/Transport-TSV-format.md` in their repo.
+- **A pathfinder that runs outside the game.** `src/test/.../pathfinder/PathfinderTest.java`, `TestPathfinderConfig.java`
+  and `TestWorldData.java` load the real map and transports, mock the RuneLite `Client` (levels, quest states, varbits,
+  inventory, worn items, bank) and run `new Pathfinder(config, start, targets).run()`. The result has the path's tiles,
+  whether it got there, the cost, and every transport used with its menu text and object or NPC id.
+- **An in-game API** (`docs/Cross-plugin-communication.md`): `query` returns a `result` with the path, the cost in
+  ticks, the transports used and a reason, so it can do more than draw. But it needs Shortest Path installed and
+  running, uses the player's own Shortest Path settings and "bank as last seen", always uses its older pathfinder,
+  is cancelled whenever a new path is drawn (ours included), answers later on its own thread, and counts a walked tile
+  as one tick, so walking weighs twice what running does next to a teleport.
+
+### Recommended: the travel atlas
+
+A dev-only tool (outside the plugin build, like `tools/walk`) runs Shortest Path's own pathfinder and data, at a pinned
+commit, with pretend accounts. It answers "the fastest way from this place to that patch, with no further teleport"
+for every place a route can be (teleport landings, patches, banks, house exits) and every patch and bank of every patch
+type, including the 1b and 1c types once their patches are listed. Each answer keeps a few alternatives, each with
+what it needs. The plugin ships the answers as a data file and adds the teleport choice itself:
+
+> leg = the best usable start (no teleport, or a teleport the player can cast or rub) + the atlas answer from where it
+> lands, using the fastest alternative the player meets.
+
+Why this one:
+- It fixes the causes, not the cases: missing ways appear on their own (Harmony by charter ship and Brother Tranquility
+  is just another answer), guesses and hand copying go, and what each walk needs is checked per player.
+- Every patch type and every method is covered, whether or not anyone on the team owns it.
+- One source for every distance, rebuilt by one command, with a report of what changed.
+- No runtime dependency: planning stays instant, works without Shortest Path, and the plugin stays our own. Only facts
+  (tiles, ticks, steps, requirements) ship, with the BSD-2 notice.
+
+### Alternatives rejected
+
+| Alternative | Why not |
+|---|---|
+| A. An in-game script that times every teleport | Not allowed (input automation, account bans) and impossible without owning everything. |
+| B. Plan live through Shortest Path's `query` API | Players would need it installed; a route needs thousands of legs and options; answers are slow, cancellable and use the player's Shortest Path settings; walking cost is doubled; it can't answer "what if I fetch X from the bank". Kept only as a dev-client second opinion (sprint T7). |
+| C. Copy Shortest Path's pathfinder into the plugin | Ships their code, which elzerma doesn't want; holds the 1.6 MB map in memory; heavy work while planning; breaks whenever they change it. |
+| D. Keep the hand tables and fix case by case | What we have done since 2026-10-10 (sections 1.1-1.8); it can't find ways nobody typed in. |
+| E. Our own pathfinder over Shortest Path's data | Works, and is the fallback if the bubble harness turns out fragile (decided in T0), but we'd have to copy their rules for doors, transports and requirements and keep them in step. |
+
+## 3. The data pipeline (dev only)
+
+New folder `tools/atlas/` with its own small Gradle build, never part of the plugin's build. It compiles Shortest Path's
+main sources unchanged from a pinned local clone (next to the repo, as `tools/walk/README.md` does), with our harness,
+`runelite-client` and Mockito for the pretend client.
+
+1. **Pin.** The Shortest Path commit the Plugin Hub ships, recorded in the output and in `THIRD_PARTY_NOTICES`.
+2. **Our inputs.** `patches.tsv`: every patch tile of every type and stop (generated from `data/Patch` and
+   `PatchPoints`, so it can't drift), plus the 1b/1c patches when their sprint starts. `extras.tsv`: steps Shortest
+   Path can't model (following Elkoy through the maze, the Troll Stronghold inside, the Grand Tree door), each with a
+   source note.
+3. **Places to search from.** The landing of every teleport usable from anywhere (spells, items, tablets, minigame and
+   home teleports, POH portal, nexus and jewellery box destinations), every patch, every bank by a stop. Seasonal and
+   Leagues rows are left out; Wilderness rows are kept and marked.
+4. **Places to reach.** Every patch (each one, not "the stop") and every bank by a stop.
+5. **Ask the bubble.** For each pair worth asking (a quick walking estimate drops pairs that can't be useful, except
+   through a transport), run the pathfinder with teleports off and every other transport on, for a pretend account
+   with everything.
+6. **Peel for alternatives.** Collect what the answer used (a level, a quest, items, a varbit), take each away in turn
+   (the level one below, the quest not started, the items gone, the varbit unset) and ask again; repeat on the new
+   answers, keeping at most 6 per pair and always the "needs nothing" way when there is one.
+7. **Re-time.** Shortest Path's cost counts a walked tile as a tick, so the tool stores **walking tiles** and
+   **transport ticks** separately and the plugin turns them into seconds at running speed (section 5).
+8. **Write** `src/main/resources/com/farmrunautopilot/travel-atlas.tsv` (answers: tiles, ticks, requirements and steps,
+   each step with its kind, menu text, object or NPC id and tiles), `teleports.tsv` (each teleport: landing, cast
+   ticks, items, levels, quests, varbits, charges or cooldown, Wilderness level, name), and rebuild `walk-grid.bin`
+   the same way. Target under 1 MB; read with our own parser (no Java serialization).
+9. **Report** `tools/atlas/report.md`: ways added and removed since the last build, times that moved more than 10%,
+   patches nothing reaches, and pretend-account checks (every patch reachable by a maxed account; which patches a fresh
+   account can't reach).
+10. **Referee.** The same bubble with teleports on, for three pretend accounts (one like elzerma's, a mid-level one, a
+    maxed one), from 20 starting points to every stop. A test then compares the plugin's own leg choice with it and
+    lists every leg where Shortest Path is quicker. That list is the evidence elzerma asked for.
+11. **Refresh** at each plugin release: rebuild, read the report, commit data and report together.
+
+**Licence and credit:** Shortest Path's code runs only on a developer's machine; the plugin ships derived facts, as
+the notice already says for Sprint 8's walks. Update `THIRD_PARTY_NOTICES` (commit, which files, what's derived) and
+the README credit. The harness is ours; the way it fakes a client follows their tests, credited in its README.
+
+## 4. Runtime changes
+
+- **New data classes** in `data/travel/`: `TravelAtlas` (loads the atlas, loaded the way `WalkGrid` is), `Teleport`
+  (one row of `teleports.tsv`), `AtlasStep`. `TravelMethod` stops being a hand list: generic teleports come from data,
+  and a small link table ties a teleport to our `TravelItem` / `Spell` / `ItemCharges` / `DailyLimits` where we track
+  charges, runes, daily limits, Spellbook Swap and highlights.
+- **Requirements from data:** Shortest Path's skills, quests, varbits, varplayers and items map onto our `Requirement`,
+  `AccessSnapshot` and `Holdings` (varbits read on the client thread, as now). Their `UNLOCK_*` tokens map to our
+  `Unlock` entries. Varbits we haven't confirmed get guided tests (section 8).
+- **Legs:** from where the player is (the last patch done, a bank, or their tile via the walk grid) to the next stop's
+  first patch, the cheapest of: the atlas answer from here (walks, plus any boat, spirit tree, fairy ring, quetzal pad
+  or balloon nearby, so those stop being special cases); each usable teleport plus the answer from its landing; the
+  house (`PohSetup`: teleport in, then each portal, nexus, jewellery box, fairy ring or spirit tree exit, plus the
+  spirit tree into the house from issue #16) plus the answer from that exit's landing.
+- **Fairy ring ways** (`FairyRingAccess`: Ardougne cloak to the monastery ring, slayer ring, quest cape) become ordinary
+  teleports whose atlas answer walks to the ring and hops. Most `Departure` values go; the house ones stay.
+- **Inside a stop:** patch order and patch-to-patch walks from the atlas; the bank walk from the actual last patch.
+- **Items a way needs** (coins for a charter ship or boat, logs for a balloon, a dramen staff) go onto the supply list
+  through `BankPlanner`, as the balloon's log does now.
+- **Choosing stays as it is** (seconds plus the travel style's tie-breaks and charge costs), minus learned times.
+- **Deleted:** `TILES`, `EXTRA_SECONDS`, `WALKS`, `SPIRIT_TREE_WALK`, `RENU_PAD_WALK`, `BALLOON_WALK`, `BANK_TILES`,
+  `BANK_POINTS` and most hand `JourneyStep`s; `LearnedTimes.adjust` in `RoutePlanner.quickest` and the outlier rules.
+
+## 5. Timing: an estimate and a personal best
+
+elzerma, 2026-10-17: "I don't want to crowdsource route time path data anything like that. The timing is really
+entirely to give user an idea of how long it will take and then also as a 'gamification' to beat the best time
+you've set."
+
+- **The estimate is the same for everyone:** set off (finish the patch, open the menu) + cast or animation
+  (`teleports.tsv` ticks x 0.6 s) + walking tiles x 0.3 s (running) + transport ticks + a menu or dialogue allowance per
+  transport kind. The few constants are set from elzerma's own dev-client logs (each leg is already logged with its
+  estimate), as Sprint 8 did, never from other players.
+- **Your pace (display only):** after three complete runs, the Run tab's estimate is scaled by your median "actual over
+  estimate" from your last five runs. Hover: "Map estimate 8:10; your recent runs are 6% quicker." It never changes
+  which way the route takes.
+- **Personal best:** kept per route shape (the same set of stops and patch types, in any order). The Run tab shows your
+  best before you start, a split at each stop while running (ahead or behind your best at that point), and at the end
+  "New best: 6:58 (was 7:05)" there and in the game chat. A run with a skipped stop doesn't count; a bank detour does.
+  "Reset personal bests" in Settings.
+- **Removed:** "Share your run times" (Settings > Help improve this plugin), `LearnedTimes.summary()` and its report in
+  `TestReport`. `RunTimings` keeps recording runs and legs on the player's computer for splits and pace. Old leg
+  samples are left in the saved settings unused (no key renames).
+
+## 6. The Travel tab
+
+Ideas taken from Shortest Path's settings (transport families with their own on/off, item modes, avoid the Wilderness,
+house options), rebuilt in our own kit (`docs/BRANDING.md`: `Card`, `ExpandableRow`, `Style`, white text, square, one
+orange accent, explanations on hover, one line where possible).
+
+```
+Travel
+  Ways to travel
+    [x] Spells                          9 usable   >
+    [x] Teleport items                 14 usable   >
+    [x] Tablets                         6 usable   >
+    [x] House                    set in Account > My house
+    [x] Fairy rings                    11 usable   >
+    [x] Spirit trees                    5 usable   >
+    [x] Quetzals                        4 usable   >
+    [x] Boats and ships                 7 usable   >   (some cost coins)
+    [x] Gliders, balloons, carts        3 usable   >
+    [ ] Minigame teleports (cooldown)   2 usable   >
+    [x] Agility shortcuts           by your level  >
+    [x] Avoid the Wilderness
+    Travel style                        Fastest  v
+  Locations
+    Hosidius        Book of the Dead, 34 s     >
+      (hover: every step; open: other ways with their times and what they need,
+       e.g. "Skills necklace, 41 s"; "Xeric's talisman, needs the talisman"; pick one to override)
+```
+
+- The counts and times above are examples, not measured.
+- Opening a family lists each way with its state on the right: "ready", "needs 45 Agility", "no charges", "off".
+- Turning a family off is a preference the route follows (as Shortest Path's toggles do); per-location overrides stay.
+- The fairy ring way drop-down goes (those ways are ordinary teleports now).
+- A location's hover may say what would help most ("with 45 Agility: 13 s quicker"); said there only.
+- The Run tab keeps leg times on hover (say it once) and adds the best time and splits from section 5.
+
+## 7. Tests
+
+- **Tool:** the parser reads every pinned transport file; every patch is reachable by the maxed account; peeling ends
+  with a "needs nothing" answer wherever one exists; the report lists changes.
+- **Plugin unit tests:** the atlas and teleport files load; requirement mapping (a level, a quest, a varbit, items
+  carried or banked); the fastest alternative the account meets is picked; no learned time changes a choice.
+- **Scenario tests (expected routes),** added to `RouteChainTest` / `ScenarioTest` with `ElzermaAccount` and two new
+  accounts (fresh mid-level, maxed):
+
+| Scenario | Account | Expected |
+|---|---|---|
+| Harmony Island herb, no Harmony teleport, tablet or nexus | Cabin Fever done | Charter ship or Trouble Brewing teleport to Mos Le'Harmless, then Brother Tranquility; never "no way there" |
+| Harmony Island herb with a Harmony tablet | any | The tablet |
+| Hosidius, Book of the Dead and skills necklace, 50 Agility | no Xeric's | Book of the Dead unless the necklace plus stepping stone is quicker on the atlas; with 30 Agility the necklace's walk is the long way round |
+| Falador Park to Taverley | 66 / 60 Agility | Over the rocks / round by the gate |
+| Gnome Stronghold to Tree Gnome Village | spirit trees | Spirit tree, then Elkoy |
+| Civitas illa Fortis to Kastori | Twilight's Promise | Renu from the pad, no whistle charge |
+| Troll Stronghold | 73 Agility and the diary / neither | Basalt to the roof / entrance and the way up inside |
+| Catherby herb and fruit tree, then bank | any | Patch order by the atlas; bank walk from the last patch |
+| Every enabled stop | fresh account | A way there, or listed as unreachable with what's missing |
+| A recorded slow leg | elzerma's | The same route as without it (times don't choose) |
+
+- The existing scenario suites (elzerma's expected chains) keep passing or are updated with the reason.
+- **Route snapshots:** the full planned route for the three accounts, saved and diffed whenever the atlas is rebuilt.
+- **Referee comparison** (section 3, step 10) runs in the tool, not in the plugin's tests.
+
+## 8. Help-list guided tests
+
+Added only for things elzerma can't try or values no source confirms (CLAUDE.md rules; `cannotTest` when the player
+lacks what's needed):
+
+- **`TRAVEL_NEW_JOURNEY` (Travel):** follow one journey the plugin couldn't plan before (Harmony Island by charter ship
+  or Trouble Brewing then Brother Tranquility; a gnome glider; a charter ship). Captures the steps shown, whether the NPC
+  or object outline appeared (ids from Shortest Path), and the arrival.
+- **`TRAVEL_UNLOCKS` (Account):** unlocks the plugin newly reads from varbits taken from Shortest Path (quetzal sites,
+  balloon routes, others found in T2). Captures each value with the player's Yes/No; passed ones are marked `confirmed`
+  in `data/Unlock.java`.
+- None for timing or personal bests: elzerma tests those in the dev client.
+- When a test that needs other players is added, draft the edit to pinned issue #18's table and ask first
+  (docs/ISSUES.md).
+
+## 9. Sprints
+
+One planner-changing sprint at a time (roadmap rule). Sizes: small is about one session, medium one or two, large two or
+three.
+
+| Sprint | What | Size | Check |
+|---|---|---|---|
+| T0 | Bubble spike: run Shortest Path's pathfinder headless at the pinned commit for about 10 known legs (Hosidius both ways, Harmony, Taverley rocks, Catherby, Tree Gnome Village, Kastori); compare with `TravelTimes`; first evidence list. Decide bubble or fallback E. | small | elzerma reads the list |
+| T1 | Atlas builder: places, peeling, re-timing, data files, report, referee | large | The report |
+| T2 | Atlas in the plugin, shadow mode: load, requirement mapping, teleports from data; the old planner still chooses; the dev log shows old against new per leg | medium | elzerma plays one run in the dev client, sends the log |
+| T3 | Planner on the atlas: legs composed as in section 4, special cases and hand tables removed, learned times out of choosing, scenario tests and snapshots | large | Hand checks: three runs |
+| T4 | Journeys from atlas steps: generated step text, NPC and object outlines, walking lines to each step | medium | Hand checks: a boat or NPC journey |
+| T5 | Estimate and personal best: time constants, pace, best times and splits; remove "Share your run times" | medium | Hand checks: a run, then a faster one |
+| T6 | Travel tab: ways to travel, Wilderness, locations with alternatives | medium | Hand checks on the tab |
+| T7 | Optional dev-client second opinion: at each leg, ask Shortest Path's `query` from the player's tile and log when its way is quicker | small | Log |
+| T8 | Help list, README, notices, release notes | small | None |
+
+**When:** after crop types 1a's hand checks and before 1b (recommended), so 1b and 1c only list their patch tiles and
+rebuild the atlas instead of researching travel per stop. Other sessions shouldn't edit travel files while T1-T3 run.
+
+## 10. Risks
+
+- **Shortest Path changes its internals:** pinned commit; a small harness; fallback E.
+- **Their cost counts walking as ticks:** we re-time; a path inside one answer may rarely differ from the running
+  optimum; the referee flags real cases.
+- **Things the map can't model** (the gnome maze, POH instances, underwater seaweed): `extras.tsv` with source notes,
+  and our own house hub.
+- **Wrong requirement mapping:** shadow mode, unit tests and guided tests for new varbits.
+- **Routes change for current players:** release notes, and the shadow-mode evidence before the switch.
+- **Data size:** pruning by a time budget; target under 1 MB.
+
+## 11. Open questions for elzerma
+
+1. Approach: the atlas built with Shortest Path in a bubble (recommended), our own pathfinder over its data, or keep
+   fixing the tables?
+2. When: before crop types 1b (recommended) or after 1c?
+3. "Share your run times": remove it (recommended, per your no-crowdsourcing rule) or keep it?
+4. Which ways Auto uses by default: everything except the Wilderness and cooldown (minigame) teleports, each a tick box
+   (recommended); everything; or only ways that cost nothing?
+5. Personal best compared per same set of stops (recommended) or per run type (herb run, tree run)?
+6. Splits at each stop while running (recommended), or only the total at the end?
