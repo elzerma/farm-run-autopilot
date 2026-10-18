@@ -1933,14 +1933,15 @@ public class RunSession
 	 * Gathering supplies, one step at a time: open a bank, open the Farm run tab, take what it shows; then what only
 	 * the seed vault has; then, on a run that banks partway, put the seeds and saplings for later in the bank.
 	 *
-	 * @param missing lines still to get from the bank (or that the player has nowhere)
+	 * @param missing lines still to get from the bank (or other storage) while it has some
 	 * @param vault what only the seed vault can make up, by item, with how many to take from it
 	 * @param startsThere the run sets off from the Farming Guild
 	 * @param forLaterToo some of it is for the run's later parts, to put in the bank
 	 * @param toBank seeds and saplings for the later parts that are carried, by item, with how many to put in the bank
+	 * @param nowhere what's still short with none left anywhere the player keeps things, e.g. "6 x White lily seed"
 	 */
 	private String gatheringStep(int missing, Map<Integer, Integer> vault, boolean startsThere, boolean forLaterToo,
-		Map<Integer, Integer> toBank)
+		Map<Integer, Integer> toBank, List<String> nowhere)
 	{
 		final String items = missing + (missing == 1 ? " item" : " items");
 		// At the seed vault with its Farm Run Autopilot view off, while it holds something the run needs
@@ -1958,6 +1959,10 @@ public class RunSession
 		if (missing <= 0 && !toBank.isEmpty())
 		{
 			return "Farm run: put " + keeping(toBank, holdingsTracker.getHoldings()) + " in your bank for later in the run";
+		}
+		if (missing <= 0 && !nowhere.isEmpty())
+		{
+			return "Farm run: you don't have " + String.join(", ", nowhere) + ": get them, or press Start now to go without";
 		}
 		if (!bankTab.isBankOpen())
 		{
@@ -2358,12 +2363,33 @@ public class RunSession
 			final boolean onArrival = startsAtGuild(current) && later.isEmpty();
 			final Map<SupplyLine, Integer> vault = onArrival ? Collections.emptyMap()
 				: current.getSupplies().onlyInVault();
-			final int fromBank = (onArrival ? missingCount(current) : missingCount(current.getSupplies(), false))
-				- vault.size();
+			// Still to get: from the bank (or other storage) while it has some, else nowhere the player keeps them, which
+			// is named rather than waited for (elzerma: stuck on "Take the 1 item it marks" for a seed they don't have)
+			int fromBank = 0;
+			final List<String> nowhere = new ArrayList<>();
+			for (Map.Entry<SupplyLine, Integer> e : current.getSupplies().missingLines(onArrival).entrySet())
+			{
+				final SupplyLine line = e.getKey();
+				if (vault.containsKey(line))
+				{
+					continue;
+				}
+				final Map<Holdings.Source, Integer> where = line.getWhere();
+				final int stored = line.getHave() - line.getCarried() - where.getOrDefault(Holdings.Source.LEPRECHAUN, 0)
+					- where.getOrDefault(Holdings.Source.SEED_VAULT, 0);
+				if (stored > 0)
+				{
+					fromBank++;
+				}
+				else
+				{
+					nowhere.add(e.getValue() + " x " + line.getName());
+				}
+			}
 			final Map<Integer, Integer> take = byItem(vault);
 			later.forEach((id, n) -> take.merge(id, n, Integer::sum));
 			notice = gatheringStep(fromBank, take, current.getRoute().setsOffFrom(Location.FARMING_GUILD),
-				!later.isEmpty(), toBank);
+				!later.isEmpty(), toBank, nowhere);
 			if (seedVault.isOpen())
 			{
 				// The first part's seeds, and with "Take all seeds at the start" the later parts' too
@@ -2381,7 +2407,7 @@ public class RunSession
 				}
 				vaultCounts = vaultCounts(take, wanted);
 			}
-			final List<RunView.Step> steps = gatheringSteps(fromBank, take, !later.isEmpty(), toBank);
+			final List<RunView.Step> steps = gatheringSteps(fromBank, take, !later.isEmpty(), toBank, nowhere);
 			if (!steps.isEmpty())
 			{
 				ready = Collections.singletonList(new RunView.Stop("Getting ready", null, RunView.StopStatus.CURRENT,
@@ -2414,9 +2440,10 @@ public class RunSession
 	 * @param vault what to take from the seed vault, by item
 	 * @param forLaterToo some of that is for the run's later parts, to put in the bank
 	 * @param toBank seeds and saplings for the later parts that are carried, by item, with how many to put in the bank
+	 * @param nowhere what's still short with none left anywhere the player keeps things: last, to get or go without
 	 */
 	private List<RunView.Step> gatheringSteps(int fromBank, Map<Integer, Integer> vault, boolean forLaterToo,
-		Map<Integer, Integer> toBank)
+		Map<Integer, Integer> toBank, List<String> nowhere)
 	{
 		if (!vault.isEmpty())
 		{
@@ -2460,6 +2487,11 @@ public class RunSession
 		{
 			texts.add(gatherToBank);
 			done.add(toBank.isEmpty() && !forLaterToo);
+		}
+		if (!nowhere.isEmpty())
+		{
+			texts.add("Get " + String.join(", ", nowhere) + ", or press Start now to go without");
+			done.add(false);
 		}
 
 		final List<RunView.Step> steps = new ArrayList<>();
