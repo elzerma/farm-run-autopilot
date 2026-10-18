@@ -33,6 +33,16 @@ final class BubbleConfig extends PathfinderConfig
 		return account.questsNotDone.contains(quest) ? QuestState.NOT_STARTED : QuestState.FINISHED;
 	}
 
+	/**
+	 * A closed door or gate costs the pathfinder its real time, so a way round wins when it's as quick. In Shortest
+	 * Path's units a walked tile is one; the plugin runs, two tiles a tick.
+	 */
+	@Override
+	public int getAdditionalTransportCost(Transport transport)
+	{
+		return super.getAdditionalTransportCost(transport) + (Way.isDoor(transport) ? 2 * Way.DOOR_EXTRA_TICKS : 0);
+	}
+
 	@Override
 	public boolean varbitChecks(Transport transport, long evaluationTimeMinutes)
 	{

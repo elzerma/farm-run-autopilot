@@ -60,7 +60,8 @@ All in `src/main/resources/com/farmrunautopilot/atlas/`, tab separated, generate
   and what it needs. A leg can be a way to a hub, the hop, and a way from where it lands, with or without a teleport
   first.
 - `transports.tsv`: each transport a way uses (boats, doors, shortcuts, spirit trees...), with its ticks; `guessed`
-  marks a 0 in Shortest Path's data counted as 1 tick (2 for an agility shortcut).
+  marks a 0 in Shortest Path's data counted as 1 tick (2 for an agility shortcut). A closed door or gate counts 2
+  ticks more than its data says: it opens, then the player walks on.
 - `requirements.tsv`: a level, quest, varbit or varplayer condition, items, or a transport type (also a Travel tab
   family).
 
@@ -72,7 +73,8 @@ All in `src/main/resources/com/farmrunautopilot/atlas/`, tab separated, generate
 - `Account`: a pretend account (levels, quests, items, locked vars, transport types off). It stands in for RuneLite's
   client and Shortest Path's settings, the way Shortest Path's own tests (`TestPathfinderConfig`) do. Teleports are
   off unless a leg asks for them, so each answer is "from here, with no further teleport".
-- `BubbleConfig`: Shortest Path's `PathfinderConfig`, answering quests and vars for the pretend account.
+- `BubbleConfig`: Shortest Path's `PathfinderConfig`, answering quests and vars for the pretend account, and charging
+  a closed door or gate its extra time, so the pathfinder walks round when that's as quick (the referee too).
 - `Requirement`: what a transport on the path needs (a level, a quest, a var, items, its type). Taking each away and
   asking again gives the next-best way ("peeling").
 - `Bubble`: asks the questions, counts walking tiles and transport ticks separately (Shortest Path counts a walked

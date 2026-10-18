@@ -522,7 +522,8 @@ whistle's real wait, and the first leg from where I stand." Built; the hand chec
   it when it runs out, as before); a spell needs casting (levels, quests, a spellbook it can get to) and costs a
   spellbook swap off its book; the supply list brings the runes. Daily uses are matched by where the teleport lands.
 - **Times from the plugin, not Shortest Path's animations:** the whistle 13 s (its measured wait, not 4 ticks), Renu
-  6 s, fairy rings 4 s, spirit trees and balloons 4.5 s, other hops their ticks (at least 3 s), spells 3 s, items 3.6 s,
+  6 s, spirit trees 4.5 s, and since run 1 (below) fairy rings 15 s, balloons 26 s, charter ships 9 s and other menu
+  hops at least 8 s (first built with 4 s, 4.5 s and their ticks), spells 3 s, items 3.6 s,
   out of the house's door when Teleport to House lands inside; walking tiles x 0.3 s and transport ticks x 0.6 s; the
   same set-off overhead as before. The referee keeps Shortest Path's ticks (577 of 600 still agree).
 - **Recognised as the plugin's own methods** (`route/AtlasTravel`): where a teleport, hop or house exit lands where one
@@ -562,6 +563,30 @@ whistle's real wait, and the first leg from where I stand." Built; the hand chec
   through the Troll Stronghold without 73 Agility (44 s inside against about 15; 101 s and 109 s legs against 66 and
   75), the Ectophial's leg through the energy barrier (49 s against 29, but 29 on 2026-10-15), and every leg after a
   bank visit (7-12 s over, for T4's bank costs).
+- **elzerma's notes from run 1, each worked through (2026-10-18):**
+  - Written directions that Shortest Path's line already shows (down into the Troll Stronghold, up to the roof) are
+    "Follow the line to the ... patch" while the line is drawn (2cf561a).
+  - The growing vine rings the place to pick on Renu's, the whistle's and a balloon's map (847f620), twice as thick
+    there and lit and shaded (2cf561a); a teleport item's right-click option is coloured, and its place ringed in the
+    list (a46601d); once landed, the teleport's item and spell are no longer outlined (2cf561a).
+  - The sidebar lists a stop's patches in the order the guide takes them (2cf561a).
+  - Protection falls back in order: pay the gardener, then the best compost held (ultra, super, compost); paid trees
+    and fruit trees get no compost, paid allotments and hops still do (e0c8a53).
+  - Each part of a run carries only its own seeds and saplings: extras are outlined at a bank visit with how many to
+    keep, and the later parts' go in the bank before setting off (4049ecf).
+  - Getting ready is spelled out on the Run tab when the seed vault is part of it (f40d000).
+  - A missing item is named on the Run tab with Bank for them or Skip, instead of the next step becoming a bank visit
+    (453f675). Run 1 had two of those visits, both ticked away by hand.
+  - Closed doors: Shortest Path's data counts a door as 1 tick, so its line goes through Lumbridge castle's doors. The
+    atlas now counts 2 ticks more for a door or gate, and its pathfinder pays them, so a way round wins when it's as
+    quick. Shortest Path's own line in game is its own and still goes through.
+  - A line through tiles a permanently open door blocks (Quetzacalli Gorge, by the Mountain Guide) is Shortest Path's
+    map: a report for them, drafted for elzerma's OK first.
+  - The Troll Stronghold's line goes round by the second rocks; the atlas way is the same as Shortest Path's, so the
+    straight way from the top rocks to the entrance is likely blocked in its map: worth trying in game.
+  - "Ditch the Travel tab's list and use Shortest Path's ways for every run, simulating at the bank": the planner has
+    planned from the atlas since 92d4624; the list goes in T7 (section 6), planning from the bank with the inventory in
+    T4.
 - **Not yet:** deleting the old tables (after the hand checks); the patch order inside a stop; journeys written from
   the atlas's steps beyond boats and NPCs (T5); spells the plugin doesn't know (Watchtower, Kourend Castle...) are
   planned only with their runes owned and on the spellbook in use, and their runes go on the supply list as items;

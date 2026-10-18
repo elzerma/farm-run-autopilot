@@ -31,16 +31,35 @@ final class Way
 	}
 
 	/**
+	 * Ticks a closed door or gate takes beyond Shortest Path's 1: it opens, then the player walks on (elzerma,
+	 * 2026-10-18: a route through Lumbridge castle's doors, which let one through at a time).
+	 */
+	static final int DOOR_EXTRA_TICKS = 2;
+
+	/**
 	 * A transport's ticks. With {@code minimum}, a 0 in Shortest Path's data (a gap, not a free climb) counts as 2
-	 * ticks for an agility shortcut and 1 for anything else.
+	 * ticks for an agility shortcut and 1 for anything else, and a door or gate gets its extra ticks.
 	 */
 	static int ticks(Transport t, boolean minimum)
 	{
-		if (!minimum || t.getDuration() > 0)
+		if (!minimum)
 		{
 			return t.getDuration();
 		}
-		return t.getType() == TransportType.AGILITY_SHORTCUT ? 2 : 1;
+		final int ticks = t.getDuration() > 0 ? t.getDuration() : t.getType() == TransportType.AGILITY_SHORTCUT ? 2 : 1;
+		return ticks + (isDoor(t) ? DOOR_EXTRA_TICKS : 0);
+	}
+
+	/** A closed door or gate to open or go through (not a trapdoor, which is climbed). */
+	static boolean isDoor(Transport t)
+	{
+		if (t.getType() != TransportType.TRANSPORT || t.getObjectInfo() == null)
+		{
+			return false;
+		}
+		final String info = t.getObjectInfo().toLowerCase(Locale.ROOT);
+		return (info.startsWith("open ") || info.startsWith("go-through ") || info.startsWith("pass "))
+			&& (info.contains("door") || info.contains("gate")) && !info.contains("trapdoor");
 	}
 
 	/** Whether this transport's 0 ticks were raised to a minimum. */

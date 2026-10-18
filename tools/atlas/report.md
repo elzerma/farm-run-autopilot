@@ -13,12 +13,12 @@ Built 2026-10-18 by `tools/atlas` from Shortest Path `37abff3a3345185fc11fccecae
 | Teleports (anywhere, or from the house) | 986 |
 | Hops (fairy rings, spirit trees, quetzals, gliders, charter ships...) | 6935 |
 | Pairs asked (start within the sweep budget) | 11429 |
-| Questions asked | 34208 |
-| Searches stopped at the 4 s limit | 7 |
+| Questions asked | 34186 |
+| Searches stopped at the 4 s limit | 0 |
 | Pairs with at least one way | 11398 |
-| Ways kept | 20533 |
+| Ways kept | 20526 |
 | Hops kept (walked to and leading somewhere) | 6935 |
-| Build time (s) | 464 |
+| Build time (s) | 530 |
 | `places.tsv` | 50 KB |
 | `teleports.tsv` | 82 KB |
 | `hops.tsv` | 488 KB |
@@ -39,8 +39,8 @@ Each `TravelMethod` from its landing (`tools/walk/methods.tsv`) to the nearest p
 
 | Method | Plugin | Atlas fastest | Needs | Atlas, needs nothing | Gap |
 |---|---|---|---|---|---|
-| LUMBRIDGE_TELEPORT | 13.5 s | 13.8 s (walk 42 tiles; Open Large door (1t) > Open Door (1t)) | nothing | 13.8 s | +0.3 s |
-| LUMBRIDGE_HOME_TELEPORT | 13.5 s | 13.8 s (walk 42 tiles; Open Large door (1t) > Open Door (1t)) | nothing | 13.8 s | +0.3 s |
+| LUMBRIDGE_TELEPORT | 13.5 s | 13.8 s (walk 46) | nothing | 13.8 s | +0.3 s |
+| LUMBRIDGE_HOME_TELEPORT | 13.5 s | 13.8 s (walk 46) | nothing | 13.8 s | +0.3 s |
 | DIARY_CAPE_LUMBRIDGE | 15.3 s | 15.6 s (walk 52) | nothing | 15.6 s | +0.3 s |
 | VARROCK_TELEPORT | 11.1 s | 11.4 s (walk 38) | nothing | 11.4 s | +0.3 s |
 | DIARY_CAPE_VARROCK | 13.8 s | 14.4 s (walk 48) | nothing | 14.4 s | +0.6 s |
@@ -58,7 +58,7 @@ Each `TravelMethod` from its landing (`tools/walk/methods.tsv`) to the nearest p
 | COMBAT_BRACELET_WARRIORS_GUILD | 34.5 s | 34.8 s (walk 116) | nothing | 34.8 s | +0.3 s |
 | SLAYER_RING_STRONGHOLD_CAVE | 1.5 s | 1.8 s (walk 6) | nothing | 1.8 s | +0.3 s |
 | SPIRIT_TREE_GNOME_STRONGHOLD | 3.6 s | 3.9 s (walk 13) | nothing | 3.9 s | +0.3 s |
-| ROYAL_SEED_POD | 15.0 s | 14.1 s (walk 45 tiles; Open Tree Door (1t)) | nothing | 14.1 s | -0.9 s |
+| ROYAL_SEED_POD | 15.0 s | 15.3 s (walk 45 tiles; Open Tree Door (1t)) | nothing | 15.3 s | +0.3 s |
 | FARMING_CAPE | 2.4 s | 2.7 s (walk 9) | nothing | 2.7 s | +0.3 s |
 | SKILLS_NECKLACE_FARMING_GUILD | 2.4 s | 2.7 s (walk 9) | nothing | 2.7 s | +0.3 s |
 | MAX_CAPE_FARMING_GUILD | 2.4 s | 2.7 s (walk 9) | nothing | 2.7 s | +0.3 s |
@@ -206,7 +206,7 @@ Counted as 1 tick (2 for an agility shortcut). Worth a real duration from the wi
 - TRANSPORT: Jump on Rubber cap mushroom
 - TRANSPORT: Jump-over Low fence (2)
 - TRANSPORT: Jump-to Floorboards (4)
-- TRANSPORT: Open Gate (6)
+- TRANSPORT: Open Gate (9)
 - TRANSPORT: Open Pyramid entrance
 - TRANSPORT: Pass Fallen Tree
 - TRANSPORT: Pass Magical Barrier (2)
@@ -218,4 +218,10 @@ Counted as 1 tick (2 for an agility shortcut). Worth a real duration from the wi
 
 ## Changes since the last build
 
-First build.
+Pairs added: 0, removed: 0, fastest way moved more than 10%: 5.
+
+- LANDING 2933 3295 0 > BANK 2935 3280 0: 6.0 s, was 4.8 s
+- LANDING 3144 3438 0 > BANK 3147 3450 0: 5.1 s, was 3.9 s
+- LANDING 2923 3302 0 > BANK 2935 3280 0: 9.0 s, was 7.8 s
+- LANDING 2931 3286 0 > HUB 2926 3301 0: 6.6 s, was 5.4 s
+- LANDING 2931 3286 0 > HUB 2923 3302 0: 6.9 s, was 5.7 s
