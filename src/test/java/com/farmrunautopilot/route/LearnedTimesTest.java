@@ -31,19 +31,33 @@ public class LearnedTimesTest
 	@Test
 	public void blendsUntilThreeSamples()
 	{
-		// One sample of 60s against a 30s estimate: one third of the way
-		assertEquals(40, adjust(with(60.0), 30), 1e-9);
-		// Three samples averaging 45s replace the estimate
-		assertEquals(45, adjust(with(40.0, 45.0, 50.0), 30), 1e-9);
+		// One sample of 42s against a 30s estimate: one third of the way
+		assertEquals(34, adjust(with(42.0), 30), 1e-9);
+		// Three samples averaging 42s replace the estimate
+		assertEquals(42, adjust(with(40.0, 42.0, 44.0), 30), 1e-9);
 	}
 
 	@Test
 	public void ignoresOutliers()
 	{
 		// 200s is more than three times the 30s estimate (e.g. the player went to the bank)
-		assertEquals(45, adjust(with(40.0, 45.0, 50.0, 200.0), 30), 1e-9);
+		assertEquals(42, adjust(with(40.0, 42.0, 44.0, 200.0), 30), 1e-9);
 		// So is 4s, under a third of it (a stop skipped through without going there)
-		assertEquals(45, adjust(with(40.0, 45.0, 50.0, 4.0), 30), 1e-9);
+		assertEquals(42, adjust(with(40.0, 42.0, 44.0, 4.0), 30), 1e-9);
+	}
+
+	@Test
+	public void aLoneSlowLegIsSetAsideUntilASecondAgrees()
+	{
+		// elzerma's Book of the Dead leg to Hosidius: 59 s against a 34 s estimate, once. Counting it would make the book
+		// lose to the necklace, and then it would never be used (or timed) again
+		assertEquals(30, adjust(with(59.0), 30), 1e-9);
+		// Its other times still count
+		assertEquals(31, adjust(with(59.0, 33.0), 30), 1e-9);
+		// A second slow leg agrees: both count, a third of the way each until there are three
+		assertEquals(50, adjust(with(60.0, 60.0), 30), 1e-9);
+		// Exactly 1.5 times isn't slow
+		assertEquals(35, adjust(with(45.0), 30), 1e-9);
 	}
 
 	@Test

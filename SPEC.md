@@ -389,7 +389,7 @@ At each step transition: if run energy < **30%** (setting) and the next leg's wa
 2. Else insert a restore step: POH pool (only if pool tier ≥ revitalisation) or Ferox Enclave (ring of dueling / POH jewellery box) — whichever adds less time; Explorer's ring charge if available.
 
 ### 12.4 Self-learning timings
-Record each leg from the moment the player leaves the previous stop (teleport animation / region change) to entering the patch's area. Keep a rolling average per (location, method), ignore outliers (> 3× estimate), and blend with the estimate until at least 3 samples exist. Store per RS profile in config.
+Record each leg from the moment the player leaves the previous stop (teleport animation / region change) to entering the patch's area. Keep a rolling average per (location, method), ignore outliers (> 3× estimate), set aside a lone leg over 1.5× the estimate until a second slow one agrees (elzerma, 2026-10-17: one slow run mustn't lock a teleport out), and blend with the estimate until at least 3 samples exist. Store per RS profile in config.
 
 ---
 

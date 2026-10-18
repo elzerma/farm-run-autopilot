@@ -10,7 +10,8 @@ import java.util.Map;
 /**
  * The player's own recorded leg times, blended into the route's estimates (SPEC 12.4): samples more than
  * three times the estimate or under a third of it are ignored (a trip to the bank mid-leg, a leg skipped
- * through), and the estimate keeps some weight until there are three samples.
+ * through), one more than 1.5 times it is set aside until a second slow one agrees, and the estimate keeps some
+ * weight until there are three samples.
  *
  * <p>A teleport takes the same time wherever it's cast, but a walk, the spirit tree or fairy ring by the stop
  * just finished, and Renu from its landing pad depend on where the leg starts; those are kept per starting
@@ -22,6 +23,13 @@ public final class LearnedTimes
 	/** Samples needed before the player's own times replace the estimate completely. */
 	static final int FULL_WEIGHT_SAMPLES = 3;
 	private static final double OUTLIER_FACTOR = 3.0;
+	/**
+	 * A leg this much slower than the estimate counts only once {@link #SLOW_SAMPLES_TO_COUNT} of them agree (elzerma,
+	 * 2026-10-17): one slow run (out of run energy, a detour) mustn't lock a teleport out, since a way that loses is never
+	 * used, so never timed again. Seen with the Book of the Dead to Hosidius: one 59 s leg against a 34 s estimate.
+	 */
+	static final double SLOW_FACTOR = 1.5;
+	static final int SLOW_SAMPLES_TO_COUNT = 2;
 	/** The method name recorded for a walk between stops. */
 	private static final String WALK = "WALK";
 
@@ -112,11 +120,19 @@ public final class LearnedTimes
 		{
 			return estimate;
 		}
+		int slow = 0;
+		for (double seconds : times)
+		{
+			if (usable(seconds, estimate) && seconds > estimate * SLOW_FACTOR)
+			{
+				slow++;
+			}
+		}
 		double total = 0;
 		int n = 0;
 		for (double seconds : times)
 		{
-			if (seconds >= estimate / OUTLIER_FACTOR && seconds <= estimate * OUTLIER_FACTOR)
+			if (usable(seconds, estimate) && (seconds <= estimate * SLOW_FACTOR || slow >= SLOW_SAMPLES_TO_COUNT))
 			{
 				total += seconds;
 				n++;
@@ -128,5 +144,11 @@ public final class LearnedTimes
 		}
 		final double weight = Math.min(n, FULL_WEIGHT_SAMPLES) / (double) FULL_WEIGHT_SAMPLES;
 		return weight * (total / n) + (1 - weight) * estimate;
+	}
+
+	/** Not an outlier: not more than three times the estimate, nor under a third of it. */
+	private static boolean usable(double seconds, double estimate)
+	{
+		return seconds >= estimate / OUTLIER_FACTOR && seconds <= estimate * OUTLIER_FACTOR;
 	}
 }
