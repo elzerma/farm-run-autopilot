@@ -123,6 +123,12 @@ public class RunSession
 	private static final int AT_BANK_TILES = 20;
 	/** At the Farming Guild, everything needed from the seed vault has been taken (or skipped). */
 	private boolean vaultChecked;
+	/**
+	 * While gathering: the seed vault's step and the bank's for the seeds for later, once they've come up, so the
+	 * Getting ready list keeps them, ticked, when done.
+	 */
+	private String gatherVault;
+	private String gatherToBank;
 	/** The current stop's patches in the order its checklist last showed them, so a tick goes to the patch shown. */
 	private List<Patch> shownPatches = Collections.emptyList();
 	/** The stop those were shown for, or -1. */
@@ -179,6 +185,8 @@ public class RunSession
 		}
 		stage = RunView.State.BUILDING;
 		lastRun = null;
+		gatherVault = null;
+		gatherToBank = null;
 		log.debug("Building a run");
 		evaluate();
 	}
@@ -2038,6 +2046,7 @@ public class RunSession
 	{
 		String notice = null;
 		Set<Integer> outlined = Collections.emptySet();
+		List<RunView.Stop> ready = Collections.emptyList();
 		if (!current.getRoute().getStops().isEmpty())
 		{
 			// Seeds only the seed vault has: unless the run starts at the guild, they're taken from it before it starts.
@@ -2051,6 +2060,12 @@ public class RunSession
 			later.forEach((id, n) -> take.merge(id, n, Integer::sum));
 			notice = gatheringStep(fromBank, take, current.getRoute().setsOffFrom(Location.FARMING_GUILD),
 				!later.isEmpty(), toBank);
+			final List<RunView.Step> steps = gatheringSteps(fromBank, take, !later.isEmpty(), toBank);
+			if (!steps.isEmpty())
+			{
+				ready = Collections.singletonList(new RunView.Stop("Getting ready", null, RunView.StopStatus.CURRENT,
+					null, Collections.emptyList(), steps, false, false));
+			}
 			// Flash the Farm run tab until it's open, while there's something to take from the bank
 			bankTab.setAttention(fromBank > 0 && !bankTab.isTabOpen());
 			// The seeds to put in the bank are outlined while it's open, as at a bank visit
@@ -2063,9 +2078,79 @@ public class RunSession
 		final boolean atFirstStop = !stops.isEmpty() && navigator.inRange(patchesAt(current, stops.get(0).getLocation()));
 		final BankGuide.Wear wear = BankGuide.wear(current.getSupplies(), holdingsTracker.getHoldings(),
 			settings.getRunConfig().getOutfit());
-		return new RunView(RunView.State.BUILDING, 0, new ArrayList<>(), notice, atFirstStop, null,
+		return new RunView(RunView.State.BUILDING, 0, ready, notice, atFirstStop, null,
 			bestTimes(current), null, wear.getText(), new Highlights(null, false, null, outlined, null,
 			wear.getItemIds()), null);
+	}
+
+	/**
+	 * Getting ready as a checklist for the Run tab, when it's more than the bank (elzerma, 2026-10-18: make clear at
+	 * the start what the guide takes the player through): the bank, then the seed vault, then the seeds for later back
+	 * in the bank, ticked as the plugin sees them done. What to do now is under the player, as for a stop. Empty for a
+	 * run that only needs the bank.
+	 *
+	 * @param fromBank lines still to get from the bank
+	 * @param vault what to take from the seed vault, by item
+	 * @param forLaterToo some of that is for the run's later parts, to put in the bank
+	 * @param toBank seeds and saplings for the later parts that are carried, by item, with how many to put in the bank
+	 */
+	private List<RunView.Step> gatheringSteps(int fromBank, Map<Integer, Integer> vault, boolean forLaterToo,
+		Map<Integer, Integer> toBank)
+	{
+		if (!vault.isEmpty())
+		{
+			gatherVault = "Take " + amounts(vault) + " from the seed vault";
+		}
+		if (!toBank.isEmpty())
+		{
+			gatherToBank = "Put " + keeping(toBank, holdingsTracker.getHoldings()) + " in your bank for later in the run";
+		}
+		else if (forLaterToo && gatherToBank == null)
+		{
+			gatherToBank = "Put the seeds for later in your bank";
+		}
+		if (gatherVault == null && gatherToBank == null)
+		{
+			return Collections.emptyList();
+		}
+
+		final boolean banked = fromBank <= 0;
+		final boolean open = bankTab.isBankOpen();
+		final List<String> texts = new ArrayList<>();
+		final List<Boolean> done = new ArrayList<>();
+		texts.add("Open a bank");
+		done.add(banked || open);
+		texts.add("Open the Farm run tab at the top of the bank");
+		done.add(banked || open && bankTab.isTabOpen());
+		texts.add(banked ? "Take the items it marks" : "Take the " + fromBank + (fromBank == 1 ? " item" : " items")
+			+ " it marks in red or yellow");
+		done.add(banked);
+		if (gatherVault != null)
+		{
+			final boolean taken = vault.isEmpty();
+			texts.add("Go to the seed vault in the Farming Guild, beside its bank");
+			done.add(taken || seedVault.isOpen());
+			texts.add("Click the flashing button at the top of the seed vault");
+			done.add(taken || seedVault.isOpen() && !seedVault.isCalling());
+			texts.add(gatherVault);
+			done.add(taken);
+		}
+		if (gatherToBank != null)
+		{
+			texts.add(gatherToBank);
+			done.add(toBank.isEmpty() && !forLaterToo);
+		}
+
+		final List<RunView.Step> steps = new ArrayList<>();
+		boolean current = false;
+		for (int i = 0; i < texts.size(); i++)
+		{
+			final RunView.StopStatus status = done.get(i) ? RunView.StopStatus.DONE
+				: !current ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
+			current |= !done.get(i);
+			steps.add(new RunView.Step(texts.get(i), status, false, false));
+		}
+		return steps;
 	}
 
 	/**

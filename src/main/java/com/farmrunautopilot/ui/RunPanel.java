@@ -248,6 +248,7 @@ class RunPanel extends JPanel
 			return;
 		}
 		addBuilding();
+		addGettingReady(view);
 		// Shown only with the complete route, i.e. once the run is built (elzerma)
 		add(heading("Route summary"));
 		addTime();
@@ -696,6 +697,44 @@ class RunPanel extends JPanel
 		// The next step (open a bank, the Farm run tab...) is under the player only: said once (elzerma)
 	}
 
+	/**
+	 * Getting ready, when the seed vault or seeds for later are part of it (elzerma, 2026-10-18): every step in order,
+	 * ticked as the plugin sees it done, boxed like the current stop. What to do now is under the player, not repeated
+	 * here.
+	 */
+	private void addGettingReady(RunView view)
+	{
+		if (view.getStops().isEmpty())
+		{
+			return;
+		}
+		final RunView.Stop ready = view.getStops().get(0);
+		final Card cell = new Card(new BorderLayout())
+			.fill(ColorScheme.DARK_GRAY_HOVER_COLOR)
+			.accent(ColorScheme.BRAND_ORANGE);
+		final JLabel title = new JLabel(UiText.escape(ready.getLocation()));
+		title.setForeground(Color.WHITE);
+		title.setFont(FontManager.getRunescapeBoldFont());
+		cell.add(title, BorderLayout.NORTH);
+		final JPanel steps = new JPanel();
+		steps.setLayout(new BoxLayout(steps, BoxLayout.Y_AXIS));
+		steps.setOpaque(false);
+		steps.setBorder(new EmptyBorder(2, 12, 0, 0));
+		for (RunView.Step step : ready.getSteps())
+		{
+			steps.add(stepRow(step, false, ticked ->
+			{
+			}));
+		}
+		cell.add(steps, BorderLayout.CENTER);
+
+		final JPanel wrapper = fullWidth();
+		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		wrapper.setBorder(new EmptyBorder(0, 0, 3, 0));
+		wrapper.add(cell, BorderLayout.CENTER);
+		add(left(wrapper));
+	}
+
 	/** Hover text for a stop: the plan for each patch there, wrapped so it stays on screen (elzerma: it ran off). */
 	private static String objectivesTooltip(List<String> objectives)
 	{
@@ -807,6 +846,16 @@ class RunPanel extends JPanel
 	/** One step of the current stop: its tick box, struck through when done, orange when in hand. */
 	private JComponent stepRow(int index, RunView.Step step)
 	{
+		return stepRow(step, true, ticked -> controls.setStepTicked(index, ticked));
+	}
+
+	/**
+	 * A step's row.
+	 *
+	 * @param tickable whether the player can tick it (a stop's steps), or only the plugin (getting ready)
+	 */
+	private JComponent stepRow(RunView.Step step, boolean tickable, java.util.function.Consumer<Boolean> onTick)
+	{
 		final String text = UiText.escape(step.getText());
 		final String open = "<html><body style='width:" + ((TEXT_WIDTH - 60) * 10 / 13) + "px'>";
 		final String close = "</body></html>";
@@ -817,8 +866,7 @@ class RunPanel extends JPanel
 		label.setFont(FontManager.getRunescapeSmallFont());
 
 		// Bank visit steps too (elzerma: none could be ticked): the plugin ticks what it sees, the player the rest
-		final JCheckBox box = tickBox(done, !done || step.isManual(),
-			ticked -> controls.setStepTicked(index, ticked));
+		final JCheckBox box = tickBox(done, tickable && (!done || step.isManual()), onTick);
 		final JPanel row = new JPanel(new BorderLayout());
 		row.setOpaque(false);
 		// Journey steps sit further in, under the teleport they follow
