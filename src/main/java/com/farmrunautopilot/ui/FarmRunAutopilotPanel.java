@@ -116,6 +116,18 @@ public class FarmRunAutopilotPanel extends PluginPanel
 				}
 
 				@Override
+				public void bankForMissing()
+				{
+					clientThread.invoke(runSession::bankForMissing);
+				}
+
+				@Override
+				public void skipMissing()
+				{
+					clientThread.invoke(runSession::skipMissing);
+				}
+
+				@Override
 				public void openUnlocks()
 				{
 					accountPanel.revealUnlocks();

@@ -119,6 +119,12 @@ class RunPanel extends JPanel
 		/** A stop or bank visit row ticked or unticked by hand (row index, bank visits included). */
 		void setRowTicked(int row, boolean ticked);
 
+		/** Items have gone missing: go to a bank for them. */
+		void bankForMissing();
+
+		/** Items have gone missing: carry on without them. */
+		void skipMissing();
+
 		/** Show Account > Unlocks. */
 		void openUnlocks();
 
@@ -801,6 +807,7 @@ class RunPanel extends JPanel
 			}
 		}
 
+		addMissing(view.getMissing());
 		add(tipped(heading("Complete route"), "Ticks itself as you go. If it misses something, tick it yourself; "
 			+ "a box you ticked can be unticked to go back to it"));
 		int number = 1;
@@ -810,6 +817,38 @@ class RunPanel extends JPanel
 			final RunView.Stop stop = stops.get(row);
 			add(runningStop(stop.isBank() ? 0 : number++, row, stop));
 		}
+	}
+
+	/**
+	 * Items the run counts on have gone missing (elzerma, 2026-10-18): named, with the choice of a bank visit for them
+	 * or carrying on without them.
+	 */
+	private void addMissing(List<String> missing)
+	{
+		if (missing.isEmpty())
+		{
+			return;
+		}
+		final Card box = new Card(new BorderLayout(0, 4)).accent(ColorScheme.BRAND_ORANGE);
+		final JLabel names = new JLabel(UiText.wrap("Missing: " + String.join(", ", missing), TEXT_WIDTH - 40));
+		names.setForeground(Color.WHITE);
+		names.setFont(FontManager.getRunescapeSmallFont());
+		box.add(names, BorderLayout.NORTH);
+		final JPanel buttons = new JPanel(new GridLayout(1, 2, 4, 0));
+		buttons.setOpaque(false);
+		final JButton bank = smallButton("Bank for them", controls::bankForMissing);
+		bank.setToolTipText("Adds a bank visit: before finishing this stop if its step needs them, else after it");
+		final JButton skip = smallButton("Skip", controls::skipMissing);
+		skip.setToolTipText("Carry on without them until your next bank visit: a step that needs them is skipped");
+		buttons.add(Style.primary(bank));
+		buttons.add(skip);
+		box.add(buttons, BorderLayout.CENTER);
+
+		final JPanel wrapper = fullWidth();
+		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		wrapper.setBorder(new EmptyBorder(0, 0, 3, 0));
+		wrapper.add(box, BorderLayout.CENTER);
+		add(left(wrapper));
 	}
 
 	private static JButton smallButton(String text, Runnable onClick)

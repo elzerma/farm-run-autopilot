@@ -60,7 +60,7 @@ public class RunView
 	}
 
 	public static final RunView OFF_VIEW = new RunView(State.OFF, 0, Collections.emptyList(), null, false, null,
-		null, null, null, Highlights.NONE, null);
+		null, null, null, Highlights.NONE, null, Collections.emptyList());
 
 	State state;
 	/** When the run timer started (epoch millis), 0 until it has. */
@@ -84,4 +84,9 @@ public class RunView
 	Highlights highlights;
 	/** While running: after each stop, e.g. "-0:12 against your best pace"; null without a best pace yet. */
 	String split;
+	/**
+	 * Items the plan counts on that aren't carried, by name, while the Run tab asks whether to bank for them now or
+	 * carry on without them (elzerma, 2026-10-18); empty otherwise.
+	 */
+	List<String> missing;
 }

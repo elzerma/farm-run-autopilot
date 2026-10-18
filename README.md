@@ -60,6 +60,8 @@ The plugin never clicks, types or acts for you. It only shows information.
   bank. Your Shortest Path settings are put back afterwards.
 - Reminders to drop weeds, empty plant pots and buckets, to take an item from the tool leprechaun, or to note
   produce when your inventory is nearly full.
+- If something the run needs goes missing, the Run tab names it: Bank for them adds a bank visit, Skip carries
+  on without them (a step that needs them is skipped).
 - Steps tick off on their own (planting, composting, paying), and you can tick or untick any yourself. The run
   finishes after the last patch, showing your time and your best three times for that kind of run.
 - Route times learn from your own runs.

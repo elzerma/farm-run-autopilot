@@ -26,6 +26,7 @@ import com.farmrunautopilot.supply.SupplyCalculator;
 import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -152,6 +153,33 @@ class PatchGuide
 		}
 		clearCurrent();
 		return skipped;
+	}
+
+	/**
+	 * The step in hand needs an item the player chose to do without (elzerma, 2026-10-18): composting or paying the
+	 * gardener is left out; anything else (planting, curing, chopping) leaves the patch for this run.
+	 */
+	void skipCurrentStep()
+	{
+		if (currentPatch == null || currentAction == null)
+		{
+			return;
+		}
+		final Progress p = progress(currentPatch);
+		if (currentAction == StepAdvisor.Action.COMPOST)
+		{
+			p.composted = true;
+			clearCurrent();
+		}
+		else if (currentAction == StepAdvisor.Action.PAY)
+		{
+			p.paid = true;
+			clearCurrent();
+		}
+		else
+		{
+			skipAll(Collections.singletonList(currentPatch));
+		}
 	}
 
 	/** Untick a patch ticked by hand: the guide looks at it again. */

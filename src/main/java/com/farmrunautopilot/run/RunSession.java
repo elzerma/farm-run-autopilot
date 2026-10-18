@@ -28,6 +28,7 @@ import com.farmrunautopilot.supply.SupplyCalculator;
 import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.supply.SupplyPlan;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -37,6 +38,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -108,6 +110,19 @@ public class RunSession
 	private boolean extraNow;
 	/** An unplanned bank visit was ticked away by hand: no more until the next planned one. */
 	private boolean declinedExtra;
+	/**
+	 * Items the plan counts on have gone missing, and the Run tab names them and asks whether to bank for them or skip
+	 * (elzerma, 2026-10-18: not straight to a bank visit): what the rest of this part needs, or null when nothing's
+	 * asked.
+	 */
+	private SupplyPlan missingAsk;
+	/** The seed vault was on the way when that was asked, so what's in it counts. */
+	private boolean missingAskVault;
+	/**
+	 * Items the player chose to do without (Skip, or a planned bank visit ticked by hand), until the next planned bank
+	 * visit: not asked about again, and a step that needs one of them is skipped.
+	 */
+	private final Set<Integer> skippedItems = new HashSet<>();
 	/** What the player held when items were last checked for the rest of this part. */
 	private Holdings checkedHoldings;
 	/** Since when the current step's item has been missing (epoch millis), 0 if it isn't. */
@@ -256,6 +271,7 @@ public class RunSession
 		manualSteps.clear();
 		clearExtraBank();
 		declinedExtra = false;
+		skippedItems.clear();
 		final Player player = client.getLocalPlayer();
 		lastLocation = player != null ? player.getWorldLocation() : null;
 		log.debug("Run armed with {} stops", plan.getRoute().getStops().size());
@@ -767,6 +783,12 @@ public class RunSession
 			return;
 		}
 		log.debug("Bank visit ticked by hand");
+		// Carrying on without what the visit was for: not asked about straight after (elzerma's first run)
+		final BankStop bank = plan.bankAfter(afterStop);
+		if (bank != null)
+		{
+			skip(bank.getSupplies().counted(holdingsTracker.getHoldings()).missingLines(false).keySet());
+		}
 		banksDone.add(afterStop);
 		manualBanks.add(afterStop);
 		banking = false;
@@ -873,34 +895,126 @@ public class RunSession
 		extraNow = false;
 		checkedHoldings = null;
 		missingSince = 0;
+		missingAsk = null;
 	}
 
 	/**
-	 * An item the plan counted on has gone missing (elzerma): the current task becomes a bank visit. When the current
-	 * step needs it, straight away; when a later stop does, after this stop. Not when a planned bank visit comes
-	 * first, or the tool leprechaun has it. Checked when what the player holds changes. Client thread.
+	 * "Bank for them": an unplanned bank visit for the missing items, before finishing this stop if its step needs
+	 * them, else after it. Client thread.
+	 */
+	public void bankForMissing()
+	{
+		if (stage != RunView.State.RUNNING || missingAsk == null || banking || extraBank != null)
+		{
+			return;
+		}
+		missingAsk = null;
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		final int end = partEnd();
+		final boolean now = patches.currentItemMissing(view.getHighlights()) || stopIndex >= end;
+		startExtraBank(runService.suppliesFor(plan, stops.subList(now ? stopIndex : stopIndex + 1, end + 1)), now);
+		evaluate();
+	}
+
+	/**
+	 * "Skip": carry on without the missing items until the next planned bank visit. A step that needs one of them is
+	 * skipped (composting or paying left out, or the patch left for this run). Client thread.
+	 */
+	public void skipMissing()
+	{
+		if (missingAsk == null)
+		{
+			return;
+		}
+		final Set<SupplyLine> lines = missingAsk.counted(holdingsTracker.getHoldings()).missingLines(missingAskVault)
+			.keySet();
+		log.debug("Missing items skipped: {}", lines.stream().map(SupplyLine::getName).collect(Collectors.joining(", ")));
+		skip(lines);
+		missingAsk = null;
+		evaluate();
+	}
+
+	private void skip(Collection<SupplyLine> lines)
+	{
+		for (SupplyLine line : lines)
+		{
+			for (int id : line.getItemIds())
+			{
+				skippedItems.add(id);
+			}
+		}
+	}
+
+	/** The missing items asked about, e.g. "2 x Palm sapling", while the Run tab asks; empty otherwise. */
+	private List<String> missingAsked()
+	{
+		if (missingAsk == null)
+		{
+			return Collections.emptyList();
+		}
+		final List<String> names = new ArrayList<>();
+		missingAsk.counted(holdingsTracker.getHoldings()).missingLines(missingAskVault)
+			.forEach((line, n) -> names.add(n + " x " + line.getName()));
+		return names;
+	}
+
+	/** The last stop of the part of the run under way: up to the next planned bank visit, or the end. */
+	private int partEnd()
+	{
+		for (BankStop bank : plan.getBankStops())
+		{
+			if (bank.getAfterStop() >= stopIndex)
+			{
+				return bank.getAfterStop();
+			}
+		}
+		return plan.getRoute().getStops().size() - 1;
+	}
+
+	/** What's missing of these supplies, leaving out what the player chose to do without. */
+	private Map<SupplyLine, Integer> unskipped(SupplyPlan needed, boolean vaultHere)
+	{
+		final Map<SupplyLine, Integer> missing = new LinkedHashMap<>(needed.missingLines(vaultHere));
+		missing.keySet().removeIf(line -> java.util.Arrays.stream(line.getItemIds()).anyMatch(skippedItems::contains));
+		return missing;
+	}
+
+	/**
+	 * An item the plan counted on has gone missing: the Run tab names it and asks whether to bank for it or skip
+	 * (elzerma, 2026-10-18; it used to go straight to a bank visit). Asked when the current step needs it, or a later
+	 * stop in this part does. Not when a planned bank visit comes first, the tool leprechaun has it, or the player
+	 * chose to do without it; a step needing an item done without is skipped. Checked when what the player holds
+	 * changes. Client thread.
 	 */
 	private void checkMissing(long now)
 	{
+		if (missingAsk != null)
+		{
+			// Got them after all, or they were there: nothing to ask
+			if (unskipped(missingAsk.counted(holdingsTracker.getHoldings()), missingAskVault).isEmpty())
+			{
+				log.debug("Missing items carried after all");
+				missingAsk = null;
+			}
+			return;
+		}
 		if (banking || extraBank != null || declinedExtra)
 		{
 			return;
 		}
 		final List<RouteStop> stops = plan.getRoute().getStops();
-		// This part of the run: up to the next planned bank visit, or the end
-		int end = stops.size() - 1;
-		for (BankStop bank : plan.getBankStops())
-		{
-			if (bank.getAfterStop() >= stopIndex)
-			{
-				end = bank.getAfterStop();
-				break;
-			}
-		}
+		final int end = partEnd();
 
 		// Needed now: the step in hand can't be done; a moment's grace, as the inventory changes mid-step
 		if (patches.currentItemMissing(view.getHighlights()))
 		{
+			if (view.getHighlights().getItemIds().stream().anyMatch(skippedItems::contains))
+			{
+				log.debug("Step skipped: its item was skipped");
+				patches.skipCurrentStep();
+				missingSince = 0;
+				return;
+			}
 			if (missingSince == 0)
 			{
 				missingSince = now;
@@ -908,10 +1022,8 @@ public class RunSession
 			else if (now - missingSince >= MISSING_GRACE_MILLIS)
 			{
 				final List<RouteStop> part = stops.subList(stopIndex, end + 1);
-				final SupplyPlan needed = runService.suppliesFor(plan, part);
-				if (needed.missingCount(passesGuild(part)) > 0)
+				if (ask(runService.suppliesFor(plan, part), passesGuild(part), "now"))
 				{
-					startExtraBank(needed, true);
 					return;
 				}
 			}
@@ -921,7 +1033,7 @@ public class RunSession
 			missingSince = 0;
 		}
 
-		// Needed later in this part: bank after this stop
+		// Needed later in this part
 		final Holdings holdings = holdingsTracker.getHoldings();
 		if (holdings == checkedHoldings || stopIndex >= end)
 		{
@@ -929,11 +1041,23 @@ public class RunSession
 		}
 		checkedHoldings = holdings;
 		final List<RouteStop> part = stops.subList(stopIndex + 1, end + 1);
-		final SupplyPlan needed = runService.suppliesFor(plan, part);
-		if (needed.missingCount(passesGuild(part)) > 0)
+		ask(runService.suppliesFor(plan, part), passesGuild(part), "for later");
+	}
+
+	/** Ask about what's missing of these supplies, if anything not done without is. */
+	private boolean ask(SupplyPlan needed, boolean vaultHere, String when)
+	{
+		final Map<SupplyLine, Integer> missing = unskipped(needed, vaultHere);
+		if (missing.isEmpty())
 		{
-			startExtraBank(needed, false);
+			return false;
 		}
+		missingAsk = needed;
+		missingAskVault = vaultHere;
+		log.debug("Item missing {} at {}, asking Bank or Skip: {}", when,
+			plan.getRoute().getStops().get(stopIndex).getLocation().getDisplayName(),
+			missing.keySet().stream().map(SupplyLine::getName).collect(Collectors.joining(", ")));
+		return true;
 	}
 
 	/** The seed vault, in the Farming Guild, is on the way, so what's in it counts. */
@@ -1143,6 +1267,7 @@ public class RunSession
 					banksDone.add(stopIndex);
 					// A planned visit starts a new part: missing items count again
 					declinedExtra = false;
+					skippedItems.clear();
 				}
 				legStartedAt = now;
 			}
@@ -1432,7 +1557,7 @@ public class RunSession
 			: BankGuide.Wear.NONE;
 		final Highlights highlights = highlights(wear);
 		return new RunView(stage, startedAt, stopViews, instruction, false, null, null,
-			reminders(highlights), wear.getText(), highlights, split);
+			reminders(highlights), wear.getText(), highlights, split, missingAsked());
 	}
 
 	/** A bank visit's row: planned, or unplanned because an item went missing. */
@@ -1941,6 +2066,11 @@ public class RunSession
 		{
 			lines.add(missing);
 		}
+		if (missingAsk != null)
+		{
+			// The items are named on the Run tab, by its buttons
+			lines.add("Items missing: Bank for them or Skip, on the Run tab");
+		}
 		final String tool = patches.plantingToolReminder();
 		if (tool != null)
 		{
@@ -2033,7 +2163,7 @@ public class RunSession
 		final String notice = lastRun != null && System.currentTimeMillis() - finishedAt < FINISHED_NOTICE_MILLIS
 			? lastRun : null;
 		return new RunView(RunView.State.OFF, 0, new ArrayList<>(), notice, false, lastRun, bestTimes(current),
-			null, null, Highlights.NONE, null);
+			null, null, Highlights.NONE, null, Collections.emptyList());
 	}
 
 	/**
@@ -2080,7 +2210,7 @@ public class RunSession
 			settings.getRunConfig().getOutfit());
 		return new RunView(RunView.State.BUILDING, 0, ready, notice, atFirstStop, null,
 			bestTimes(current), null, wear.getText(), new Highlights(null, false, null, outlined, null,
-			wear.getItemIds()), null);
+			wear.getItemIds()), null, Collections.emptyList());
 	}
 
 	/**

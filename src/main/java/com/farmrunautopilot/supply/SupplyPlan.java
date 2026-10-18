@@ -105,7 +105,13 @@ public class SupplyPlan
 	 */
 	public int missingCount(boolean vaultHere)
 	{
-		int missing = 0;
+		return missingLines(vaultHere).size();
+	}
+
+	/** Those lines, each with how many are short. */
+	public Map<SupplyLine, Integer> missingLines(boolean vaultHere)
+	{
+		final Map<SupplyLine, Integer> missing = new LinkedHashMap<>();
 		for (SupplyLine line : lines)
 		{
 			if (line.getGroup() == SupplyLine.Group.OPTIONAL || line.isCoveredOtherwise())
@@ -114,9 +120,10 @@ public class SupplyPlan
 			}
 			final int leprechaun = line.getWhere().getOrDefault(Holdings.Source.LEPRECHAUN, 0);
 			final int vault = vaultHere ? line.getWhere().getOrDefault(Holdings.Source.SEED_VAULT, 0) : 0;
-			if (line.getCarried() + leprechaun + vault < line.getNeed())
+			final int shortBy = line.getNeed() - line.getCarried() - leprechaun - vault;
+			if (shortBy > 0)
 			{
-				missing++;
+				missing.put(line, shortBy);
 			}
 		}
 		return missing;
