@@ -15,8 +15,11 @@ import net.runelite.api.gameval.VarbitID;
 public final class DailyLimits
 {
 	/**
-	 * The game value counting today's uses of each, both confirmed in game: they matched "You have used 1 of
-	 * your 3 Ardougne Farm teleports for today." and "You have used 1 of your 3 Cabbage teleports for today."
+	 * The game value counting today's uses of each: they matched "You have used 1 of your 3 Ardougne Farm teleports
+	 * for today." and "You have used 1 of your 3 Cabbage teleports for today." But with all 3 of an Ardougne cloak 2's
+	 * used, a route still counted on it (elzerma, 2026-10-18; by its name the cloak's may hold only the count's low
+	 * bits), so what the game says in chat is kept too and the higher counts ({@code supply.DailyUseTracker}); the dev
+	 * log says when the two differ.
 	 */
 	private static final Map<TravelMethod, Integer> USED_TODAY = new EnumMap<>(TravelMethod.class);
 

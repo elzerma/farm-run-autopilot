@@ -625,6 +625,20 @@ public class RunService
 	}
 
 	/**
+	 * The best way to a stop with what the player has now, for a run in progress whose leg can't be taken as planned
+	 * (a daily teleport with no uses left). Client thread.
+	 *
+	 * @param from the stop it sets off from, or null for wherever the player is
+	 */
+	public RouteStop leg(Location from, Location to)
+	{
+		final AccessSnapshot access = accessChecker.getSnapshot();
+		final Holdings holdings = holdingsTracker.getHoldings();
+		return RoutePlanner.between(from, to, settings.getRunConfig(), access, holdings, settings.getAccount().getPoh(),
+			routeAtlas(access, holdings));
+	}
+
+	/**
 	 * What some stops of a run in progress need, worked out afresh against what the player holds now: for spotting
 	 * an item gone missing mid-run (elzerma). Client thread.
 	 */

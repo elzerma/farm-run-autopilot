@@ -14,7 +14,9 @@ import com.farmrunautopilot.bank.FarmBankTab;
 import com.farmrunautopilot.bank.SeedVaultSection;
 import com.farmrunautopilot.route.AtlasLeg;
 import com.farmrunautopilot.route.BankStop;
+import com.farmrunautopilot.route.ChargeBudget;
 import com.farmrunautopilot.route.Departure;
+import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
@@ -110,6 +112,8 @@ public class RunSession
 	private boolean extraNow;
 	/** An unplanned bank visit was ticked away by hand: no more until the next planned one. */
 	private boolean declinedExtra;
+	/** A daily teleport the game just refused for having no uses left today, whose leg is to be planned again. */
+	private TravelMethod usedUpDaily;
 	/**
 	 * Items the plan counts on have gone missing, and the Run tab names them and asks whether to bank for them or skip
 	 * (elzerma, 2026-10-18: not straight to a bank visit): what the rest of this part needs, or null when nothing's
@@ -306,6 +310,7 @@ public class RunSession
 		clearExtraBank();
 		declinedExtra = false;
 		skippedItems.clear();
+		usedUpDaily = null;
 		final Player player = client.getLocalPlayer();
 		lastLocation = player != null ? player.getWorldLocation() : null;
 		log.debug("Run armed with {} stops", plan.getRoute().getStops().size());
@@ -945,6 +950,61 @@ public class RunSession
 	}
 
 	/**
+	 * The game refused a daily teleport for having no uses left today ("You have already used all of your available
+	 * teleports for today", elzerma's run 2026-10-18): if the leg in hand counts on it, it's planned again without it.
+	 * Client thread.
+	 */
+	public void dailyUsedUp(TravelMethod method)
+	{
+		usedUpDaily = method;
+	}
+
+	/**
+	 * The leg to the current stop, planned again once the holdings say the refused teleport has nothing left today,
+	 * so the new way doesn't use it either. A new way, so it isn't timed as a sample.
+	 */
+	private void replanUsedUpLeg()
+	{
+		final TravelMethod method = usedUpDaily;
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		if (method == null || stopIndex >= stops.size() || navigator.isArrived())
+		{
+			usedUpDaily = null;
+			return;
+		}
+		final RouteStop stop = stops.get(stopIndex);
+		if (stop.getMethod() != method && (stop.getAtlas() == null || stop.getAtlas().getDaily() != method))
+		{
+			usedUpDaily = null;
+			return;
+		}
+		final Integer left = ChargeBudget.leftToday(method, holdingsTracker.getHoldings());
+		if (left != null && left > 0)
+		{
+			// The holdings haven't caught up with the message yet
+			return;
+		}
+		usedUpDaily = null;
+		final RouteStop leg = runService.leg(stopIndex == 0 ? null : stops.get(stopIndex - 1).getLocation(),
+			stop.getLocation());
+		if (leg == null || leg.getMethod() == method)
+		{
+			return;
+		}
+		log.debug("{} has no uses left today: {} now by {}", method, stop.getLocation().getDisplayName(),
+			leg.describeTravel());
+		final List<RouteStop> next = new ArrayList<>(stops);
+		next.set(stopIndex, leg);
+		final Route route = plan.getRoute();
+		plan = new RunPlan(plan.getSelection(), new Route(Collections.unmodifiableList(next), route.getMode(),
+			route.getTravelSeconds() - stop.getLegSeconds() + leg.getLegSeconds(), route.getPatchSeconds(),
+			route.getStartsFrom()), plan.getSupplies(), plan.getObjectives(), plan.getBankStops());
+		navigator.nextStop();
+		manualSteps.clear();
+		legRecorded = true;
+	}
+
+	/**
 	 * "Bank for them": an unplanned bank visit for the missing items, before finishing this stop if its step needs
 	 * them, else after it. Client thread.
 	 */
@@ -1212,6 +1272,7 @@ public class RunSession
 			arm(current);
 		}
 
+		replanUsedUpLeg();
 		final List<RouteStop> stops = plan.getRoute().getStops();
 		final long now = System.currentTimeMillis();
 		// Armed shows the first step but doesn't time legs or move on until the timer starts

@@ -2,6 +2,7 @@ package com.farmrunautopilot.settings;
 
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.TravelItem;
+import com.farmrunautopilot.data.travel.TravelMethod;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
@@ -28,11 +29,17 @@ public class AccountSettings
 	private Compost bottomlessCompost;
 	/** Charges of self-charged teleport items (quetzal whistle, Xeric's talisman, pendant of Ates), from chat. */
 	private Map<TravelItem, Integer> itemCharges = new EnumMap<>(TravelItem.class);
+	/**
+	 * Uses of the teleports limited per day, from chat: the game's day it was for (days since 1970, UTC) times 1000,
+	 * plus the uses that day.
+	 */
+	private Map<TravelMethod, Long> dailyUses = new EnumMap<>(TravelMethod.class);
 
 	public AccountSettings sanitise()
 	{
 		manualUnlocks = RunConfig.cleanSet(manualUnlocks, Unlock.class, EnumSet.noneOf(Unlock.class));
 		itemCharges = RunConfig.cleanMap(itemCharges, TravelItem.class);
+		dailyUses = RunConfig.cleanMap(dailyUses, TravelMethod.class);
 		if (poh == null)
 		{
 			poh = new PohSetup();

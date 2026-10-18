@@ -1,5 +1,6 @@
 package com.farmrunautopilot;
 
+import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.data.travel.WalkGrid;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.bank.FarmBankTab;
@@ -9,6 +10,7 @@ import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.access.UnlockSpotter;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.BottomlessBucketTracker;
+import com.farmrunautopilot.supply.DailyUseTracker;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.supply.ItemChargeTracker;
@@ -115,6 +117,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private ItemChargeTracker itemCharges;
 
 	@Inject
+	private DailyUseTracker dailyUses;
+
+	@Inject
 	private UnlockSpotter unlockSpotter;
 
 	@Inject
@@ -195,6 +200,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			bottomlessBucket.reload();
 			itemCharges.reload();
+			dailyUses.reload();
 			holdingsTracker.markDirty();
 		});
 	};
@@ -217,6 +223,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		runService.startUp();
 		bottomlessBucket.reload();
 		itemCharges.reload();
+		dailyUses.reload();
 		accessChecker.requestRefresh();
 		panel = injector.getInstance(FarmRunAutopilotPanel.class);
 		settings.addListener(onSettingsReloaded);
@@ -422,6 +429,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		settings.load();
 		bottomlessBucket.reload();
 		itemCharges.reload();
+		dailyUses.reload();
 		holdingsTracker.markDirty();
 		final FarmRunAutopilotPanel p = panel;
 		if (p != null)
@@ -498,9 +506,16 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			final String message = Text.removeTags(event.getMessage());
 			runSession.onChatMessage(message);
-			if (bottomlessBucket.onChatMessage(message) | itemCharges.onChatMessage(message))
+			if (bottomlessBucket.onChatMessage(message) | itemCharges.onChatMessage(message)
+				| dailyUses.onChatMessage(message))
 			{
 				holdingsTracker.markDirty();
+			}
+			// A daily teleport refused for having no uses left: the leg is planned again once the holdings say so
+			final TravelMethod refused = dailyUses.takeRefused();
+			if (refused != null)
+			{
+				runSession.dailyUsedUp(refused);
 			}
 			// After the trackers, so a guided test sees their new counts
 			testRunner.onChatMessage(message);

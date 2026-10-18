@@ -91,6 +91,9 @@ public class HoldingsTracker
 	private final SettingsStore settings;
 	private final BottomlessBucketTracker bucket;
 	private final ItemChargeTracker itemCharges;
+	private final DailyUseTracker dailyUses;
+	/** The last difference between a daily teleport's game value and chat count that was logged. */
+	private String loggedDaily;
 
 	private Map<Integer, Integer> bank;
 	private Map<Integer, Integer> groupStorage;
@@ -100,7 +103,8 @@ public class HoldingsTracker
 
 	@Inject
 	HoldingsTracker(Client client, ConfigManager configManager, Gson gson, ItemManager itemManager,
-		SettingsStore settings, BottomlessBucketTracker bucket, ItemChargeTracker itemCharges)
+		SettingsStore settings, BottomlessBucketTracker bucket, ItemChargeTracker itemCharges,
+		DailyUseTracker dailyUses)
 	{
 		this.client = client;
 		this.configManager = configManager;
@@ -109,6 +113,7 @@ public class HoldingsTracker
 		this.settings = settings;
 		this.bucket = bucket;
 		this.itemCharges = itemCharges;
+		this.dailyUses = dailyUses;
 	}
 
 	public Holdings getHoldings()
@@ -313,11 +318,27 @@ public class HoldingsTracker
 		return counts;
 	}
 
-	/** Today's uses of each teleport limited per day. */
+	/**
+	 * Today's uses of each teleport limited per day: the game value, or what the game last said in chat today if
+	 * that's more (the value left a used-up Ardougne cloak planned, elzerma's run 2026-10-18).
+	 */
 	private Map<TravelMethod, Integer> readUsedToday()
 	{
+		final Map<TravelMethod, Integer> said = dailyUses.usedToday();
 		final Map<TravelMethod, Integer> used = new EnumMap<>(TravelMethod.class);
-		DailyLimits.usedTodayVarbits().forEach((method, varbit) -> used.put(method, client.getVarbitValue(varbit)));
+		DailyLimits.usedTodayVarbits().forEach((method, varbit) ->
+		{
+			final int value = client.getVarbitValue(varbit);
+			final Integer chat = said.get(method);
+			final String differs = method + " used today: game value " + value + ", chat " + chat;
+			if (chat != null && chat != value && chat != DailyUseTracker.ALL && !differs.equals(loggedDaily))
+			{
+				// Once per change, for checking what the game value counts
+				loggedDaily = differs;
+				log.debug(differs);
+			}
+			used.put(method, chat != null ? Math.max(value, chat) : value);
+		});
 		return Collections.unmodifiableMap(used);
 	}
 
