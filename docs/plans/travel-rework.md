@@ -462,6 +462,12 @@ totals. Nothing a player sees changes, and the atlas isn't read at all outside t
 **Check (needs elzerma):** play one run in the dev client and send the log; the `Atlas shadow:` lines are the evidence
 for switching the planner in T3.
 
+**T8 built early (2026-10-18), as it feeds that check:** in the dev client, each newly planned route also asks the
+Shortest Path plugin (when installed) for its own fastest way for every leg, with the player's own Shortest Path
+settings and real account, and logs `Shortest Path (live):` beside the plugin's estimate (`run/ShortestPathSecondOpinion`).
+It only asks while none of our walking lines is drawn (they switch Shortest Path to walking only, and a drawn path
+cancels questions), so during a run it waits until the line is cleared.
+
 ## 10. Risks
 
 - **Shortest Path changes its internals:** pinned commit; a small harness; fallback E.

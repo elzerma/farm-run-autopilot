@@ -78,6 +78,12 @@ public class ShortestPathBridge
 		eventBus.post(new PluginMessage(NAMESPACE, "path", data));
 	}
 
+	/** One of our walking lines is drawn, so Shortest Path is set to walking only until it's cleared. */
+	public boolean isDrawing()
+	{
+		return target != null;
+	}
+
 	public void clear()
 	{
 		if (target != null)

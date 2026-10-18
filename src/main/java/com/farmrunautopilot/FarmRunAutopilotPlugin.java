@@ -27,6 +27,7 @@ import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.run.SceneTracker;
 import com.farmrunautopilot.run.ShortestPathBridge;
+import com.farmrunautopilot.run.ShortestPathSecondOpinion;
 import com.farmrunautopilot.run.SpellHighlightOverlay;
 import com.farmrunautopilot.tracking.PatchTracker;
 import com.farmrunautopilot.ui.FarmRunAutopilotPanel;
@@ -64,6 +65,7 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.PluginMessage;
 import net.runelite.client.events.RuneScapeProfileChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -116,6 +118,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 
 	@Inject
 	private ShortestPathBridge shortestPath;
+
+	@Inject
+	private ShortestPathSecondOpinion secondOpinion;
 
 	@Inject
 	private RunService runService;
@@ -263,6 +268,12 @@ public class FarmRunAutopilotPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onPluginMessage(PluginMessage event)
+	{
+		secondOpinion.onPluginMessage(event);
+	}
+
+	@Subscribe
 	public void onGameTick(GameTick tick)
 	{
 		// Patch states first, so the run guide and the plan see this tick's, not last tick's
@@ -282,6 +293,11 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			final RunPlan plan = runService.getPlan();
 			showPlanLater(plan, true);
+			// Dev client: Shortest Path's own answer for each leg, beside the plugin's (docs/plans/travel-rework.md, T8)
+			if (log.isDebugEnabled() && !shortestPath.isDrawing())
+			{
+				secondOpinion.ask(plan);
+			}
 		}
 		// Detected (charges, leprechaun, bucket) follows what's held, even when the plan stays the same (a recharge)
 		final Holdings held = holdingsTracker.getHoldings();
