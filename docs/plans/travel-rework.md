@@ -576,7 +576,8 @@ whistle's real wait, and the first leg from where I stand." Built; the hand chec
   Guild. Nothing was asked missing at the start (the vault step took the part's seeds); the bank visit after Nemus
   Retreat listed "4 x Guam seed (keep 1)" to deposit; at Varrock the Run tab asked about a mystic air staff and earth
   runes and Bank for them added the visit (an 881 s leg with the detour). Only the Troll Stronghold and Catherby were
-  seen planted; every other stop was ticked off by hand seconds after arriving. Legs that ran straight: Civitas illa
+  planted; every other stop was ticked off by hand on purpose, to keep the patches for more test runs. Legs that ran
+  straight: Civitas illa
   Fortis 35 s against 36, Port Phasmatys 24 against 29, Catherby 29 against 28. Over: the Troll Stronghold 82 against 66
   (the way up inside, as in run 1); the Ardougne cloak 30 against 13 and the slayer ring 26 against 13, both over in
   run 2 as well, mostly before the teleport (worth timing apart); Falador Park after the bank 48 against 23 (T4's bank
