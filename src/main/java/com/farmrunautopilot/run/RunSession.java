@@ -241,6 +241,16 @@ public class RunSession
 		if (stage == RunView.State.BUILDING && !runService.getPlan().getRoute().getStops().isEmpty())
 		{
 			arm(runService.getPlan());
+			// Started without everything: what's missing counts as skipped, not asked about straight away (elzerma's
+			// second run, started at Gnome Stronghold without its saplings, seeds or payments)
+			final List<RouteStop> first = plan.getRoute().getStops().subList(0, partEnd() + 1);
+			final Set<SupplyLine> missing = plan.getSupplies().counted(holdingsTracker.getHoldings())
+				.missingLines(passesGuild(first)).keySet();
+			if (!missing.isEmpty())
+			{
+				log.debug("Started without: {}", missing.stream().map(SupplyLine::getName).collect(Collectors.joining(", ")));
+				skip(missing);
+			}
 		}
 		if (stage == RunView.State.ARMED)
 		{

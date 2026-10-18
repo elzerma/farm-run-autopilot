@@ -563,6 +563,15 @@ whistle's real wait, and the first leg from where I stand." Built; the hand chec
   through the Troll Stronghold without 73 Agility (44 s inside against about 15; 101 s and 109 s legs against 66 and
   75), the Ectophial's leg through the energy barrier (49 s against 29, but 29 on 2026-10-15), and every leg after a
   bank visit (7-12 s over, for T4's bank costs).
+- **Hand check, run 2 (elzerma, 2026-10-18, on the 847f620 build):** 14 stops in 25:43 (trees and herbs), started
+  with Start now at Gnome Stronghold without the later stops' saplings, seeds and payments, and used to look the guide
+  over, so few legs are clean timings. Those that ran straight landed near their estimates: Gnome Stronghold 8 s
+  against 8, Catherby 30 against 28, Hosidius 33 against 34, Taverley 30 against 30, Lumbridge 21 against 25, Varrock 18
+  against 22, the Ectophial 23 against 29, the Explorer's ring 13 against 18; the Ardougne cloak 20 against 13. The
+  Troll Stronghold was ticked off 14 tiles from its patch, at the rocks; Civitas illa Fortis, Falador Park, Nemus
+  Retreat and the Farming Guild include pauses (3 minutes before the teleport, a right-click menu, the open door at
+  Quetzacalli Gorge, fetching a skills necklace). The bank visit that came up the moment Start now was pressed, for the
+  items it started without, is why Start now now counts them as skipped.
 - **elzerma's notes from run 1, each worked through (2026-10-18):**
   - Written directions that Shortest Path's line already shows (down into the Troll Stronghold, up to the roof) are
     "Follow the line to the ... patch" while the line is drawn (2cf561a).

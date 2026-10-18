@@ -691,7 +691,7 @@ class RunPanel extends JPanel
 		final JButton startNow = new JButton("Start now");
 		startNow.setFocusPainted(false);
 		startNow.setEnabled(!plan.getRoute().getStops().isEmpty());
-		startNow.setToolTipText("Start the run and its timer without everything");
+		startNow.setToolTipText("Start the run and its timer without everything: steps that need what's missing are skipped");
 		startNow.addActionListener(e -> controls.startNow());
 		final JButton cancel = new JButton("Cancel");
 		cancel.setFocusPainted(false);
