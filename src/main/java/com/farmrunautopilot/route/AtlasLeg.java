@@ -56,4 +56,6 @@ public class AtlasLeg
 	boolean consumable;
 	/** Where to pick on Renu's, the whistle's or a balloon's map on the way. */
 	List<MenuPick> picks;
+	/** The teleport item's option or list entry to pick, e.g. "Crafting Guild" for a skills necklace; null if none. */
+	String option;
 }

@@ -406,8 +406,8 @@ class SettingsPage extends SetupPanel
 			"Outline the gardener when paying them, and the quetzal after the Civitas teleport",
 			on -> guidance.set("highlightGardener", on)));
 		s.addContent(checkBox("Highlight items to use", c.highlightItems(), true,
-			"Outline the seed, compost, tool or teleport to use next in your inventory and equipment",
-			on -> guidance.set("highlightItems", on)));
+			"Outline the seed, compost, tool or teleport to use next in your inventory and equipment, and the teleport's "
+				+ "option to pick in its right-click menu or list of places", on -> guidance.set("highlightItems", on)));
 		s.addContent(checkBox("Highlight the spell or place to pick", c.highlightSpell(), true,
 			"Outline the teleport (or Cure Plant) to cast next in your spellbook, and where to go on Renu's, the quetzal "
 				+ "whistle's or a hot air balloon's map", on -> guidance.set("highlightSpell", on)));

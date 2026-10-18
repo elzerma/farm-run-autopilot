@@ -125,6 +125,35 @@ public class RouteStop
 		}
 	}
 
+	/**
+	 * The teleport item's option or list entry to pick on the way here, e.g. "Farming Guild" for a skills necklace, as
+	 * the plugin's own methods name it in brackets ("Skills necklace (Farming Guild)", "Slayer ring (Fremennik Slayer
+	 * Dungeon), ring AJR"); null if the leg needs none.
+	 */
+	public String teleportOption()
+	{
+		if (atlas != null)
+		{
+			return atlas.getOption();
+		}
+		final String name;
+		if (departure == Departure.DIRECT && method != null && method.getItem() != null)
+		{
+			name = method.getDisplayName();
+		}
+		else if (departure.getFairyRingAccess() != null && !departure.getFairyRingAccess().getItems().isEmpty())
+		{
+			name = departure.getFairyRingAccess().getDisplayName();
+		}
+		else
+		{
+			return null;
+		}
+		final int open = name.indexOf('(');
+		final int close = name.indexOf(')', open + 1);
+		return open < 0 || close < 0 ? null : name.substring(open + 1, close);
+	}
+
 	/** The teleport item this leg uses (the method's, or the atlas leg's), or null. */
 	public TravelItem travelItem()
 	{

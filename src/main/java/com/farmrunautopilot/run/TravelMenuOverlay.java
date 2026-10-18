@@ -21,9 +21,10 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.util.Text;
 
 /**
- * Rings the place to pick on a travel map while travelling there (elzerma, 2026-10-18): the landing site on Renu's map
- * or the quetzal whistle's, or the destination on a hot air balloon's. A growing vine, or the item colour's outline with
- * vines off, under the same setting as the spell to cast. Only drawn while that map is open.
+ * Rings the place to pick while travelling there (elzerma, 2026-10-18): the landing site on Renu's map or the quetzal
+ * whistle's, or the destination on a hot air balloon's (under the setting for the spell to cast, twice as thick: the
+ * maps are big), and the place in a teleport item's list of places (under the setting for items to use). A growing
+ * vine, or the item colour's outline with vines off. Only drawn while that map or list is open.
  */
 @Slf4j
 public class TravelMenuOverlay extends Overlay
@@ -59,18 +60,25 @@ public class TravelMenuOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		final List<MenuPick> picks = session.getView().getHighlights().getMenuPicks();
+		final Highlights highlights = session.getView().getHighlights();
 		Rectangle bounds = null;
+		boolean map = false;
 		if (config.highlightSpell())
 		{
-			for (MenuPick pick : picks)
+			for (MenuPick pick : highlights.getMenuPicks())
 			{
 				bounds = bounds(pick);
 				if (bounds != null)
 				{
+					map = true;
 					break;
 				}
 			}
+		}
+		// A teleport item's list of places (a jewellery item's "Rub", a cape's "Teleport"): the place this leg needs
+		if (bounds == null && highlights.getTeleportOption() != null && config.highlightItems())
+		{
+			bounds = listEntry(highlights.getTeleportOption());
 		}
 		if (bounds == null)
 		{
@@ -79,14 +87,26 @@ public class TravelMenuOverlay extends Overlay
 		}
 		if (config.vineHighlights())
 		{
-			// Thicker than round a button: the maps are big (elzerma, 2026-10-18)
-			vine.draw(graphics, bounds, 2);
+			// Thicker than round a button on the maps, which are big (elzerma, 2026-10-18)
+			vine.draw(graphics, bounds, map ? 2 : 1);
 			return null;
 		}
 		graphics.setColor(config.itemColour());
 		graphics.setStroke(new BasicStroke(2));
 		graphics.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
 		return null;
+	}
+
+	/** The entry naming the place in an open list of options (the chatbox's "Select an option"), or null. */
+	private Rectangle listEntry(String place)
+	{
+		final Widget options = client.getWidget(InterfaceID.Chatmenu.OPTIONS);
+		if (options == null || options.isHidden())
+		{
+			return null;
+		}
+		final Widget found = find(options, place.toLowerCase(Locale.ROOT), 0);
+		return found != null && !found.isHidden() ? found.getBounds() : null;
 	}
 
 	/** Where the place is on its map, if that map is open. */

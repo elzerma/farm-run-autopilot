@@ -1768,7 +1768,8 @@ public class RunSession
 	{
 		if (landed)
 		{
-			return new Highlights(null, false, npc, Collections.emptySet(), null, wear.getItemIds(), stop.menuPicks());
+			return new Highlights(null, false, npc, Collections.emptySet(), null, wear.getItemIds(), stop.menuPicks(),
+				null);
 		}
 		final Set<Integer> items = new LinkedHashSet<>();
 		if (stop.getDeparture() == Departure.DIRECT && stop.getMethod() != null)
@@ -1838,7 +1839,8 @@ public class RunSession
 		}
 		// An item to put on isn't also outlined as the teleport to use, so the two can't be confused
 		items.removeAll(wear.getItemIds());
-		return new Highlights(null, false, npc, items, patches.castableNow(spell), wear.getItemIds(), stop.menuPicks());
+		return new Highlights(null, false, npc, items, patches.castableNow(spell), wear.getItemIds(), stop.menuPicks(),
+			stop.teleportOption());
 	}
 
 	/**

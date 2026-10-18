@@ -67,7 +67,8 @@ public interface FarmRunAutopilotConfig extends Config
 	@ConfigItem(
 		keyName = "highlightItems",
 		name = "Highlight items to use",
-		description = "Outline the seed, compost, tool or teleport to use next in your inventory and equipment",
+		description = "Outline the seed, compost, tool or teleport to use next in your inventory and equipment, and the "
+			+ "teleport's option to pick in its right-click menu or list of places",
 		hidden = true,
 		position = 4
 	)

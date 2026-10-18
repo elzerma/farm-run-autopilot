@@ -50,7 +50,8 @@ The plugin never clicks, types or acts for you. It only shows information.
   at each patch (pick, check health, clear, rake, compost, plant, pay the gardener).
 - The patch is outlined with a hint arrow over it; the gardener is outlined when it's time to pay; the seed,
   compost, tool or teleport to use next is outlined in your inventory, and the spell to cast in your spellbook
-  gets the growing vine, as does the place to pick on Renu's, the quetzal whistle's or a hot air balloon's map.
+  gets the growing vine, as does the place to pick on Renu's, the quetzal whistle's or a hot air balloon's map. A
+  teleport item's option to pick is coloured in its right-click menu and ringed in its list of places.
   Untick "Growing vine highlights" in Settings for plain outlines.
 - Journeys are spelled out: boats, quetzals, Elkoy, hot air balloons, and Agility shortcuts when you have the
   level (the way round when you don't).

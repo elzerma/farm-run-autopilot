@@ -29,6 +29,7 @@ import com.farmrunautopilot.run.SceneTracker;
 import com.farmrunautopilot.run.ShortestPathBridge;
 import com.farmrunautopilot.run.ShortestPathSecondOpinion;
 import com.farmrunautopilot.run.SpellHighlightOverlay;
+import com.farmrunautopilot.run.TeleportMenuHighlighter;
 import com.farmrunautopilot.run.TravelMenuOverlay;
 import com.farmrunautopilot.tracking.PatchTracker;
 import com.farmrunautopilot.ui.FarmRunAutopilotPanel;
@@ -48,6 +49,7 @@ import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.MenuOpened;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
@@ -158,6 +160,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 
 	@Inject
 	private TravelMenuOverlay travelMenuOverlay;
+
+	@Inject
+	private TeleportMenuHighlighter teleportMenuHighlighter;
 
 	@Inject
 	private SceneTracker sceneTracker;
@@ -530,6 +535,12 @@ public class FarmRunAutopilotPlugin extends Plugin
 	{
 		farmBankTab.onScriptPostFired(event);
 		seedVaultSection.onScriptPostFired(event);
+	}
+
+	@Subscribe
+	public void onMenuOpened(MenuOpened event)
+	{
+		teleportMenuHighlighter.onMenuOpened(event);
 	}
 
 	// After other plugins, so withdraw clicks are re-pointed last

@@ -335,7 +335,22 @@ final class AtlasTravel
 		return new AtlasLeg(way, landing, start, item, spell, option.getKind() == AtlasOption.Kind.HOUSE,
 			option.getKind() == AtlasOption.Kind.TREE_HOUSE, fairyRing, balloons, items, rides,
 			teleport == null ? null : daily(atlas, teleport), teleport != null && teleport.isConsumable() && item == null
-			&& spell == null, picks(teleport, hop));
+			&& spell == null, picks(teleport, hop), option(teleport));
+	}
+
+	/**
+	 * The option or list entry a teleport item needs, from its name: "Skills necklace: Crafting Guild" is "Crafting Guild".
+	 * None for spells (cast from the spellbook) or an item with one teleport.
+	 */
+	private static String option(TravelAtlas.Jump teleport)
+	{
+		if (teleport == null || teleport.getType().startsWith("TELEPORTATION_SPELL"))
+		{
+			return null;
+		}
+		final String name = teleportName(teleport);
+		final int colon = name.indexOf(": ");
+		return colon < 0 ? null : name.substring(colon + 2);
 	}
 
 	/** Where to pick on the whistle's map (the teleport), or Renu's or a balloon's (the hop). */

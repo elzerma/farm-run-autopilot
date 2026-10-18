@@ -31,6 +31,11 @@ public class Highlights
 	Set<Integer> wearItemIds;
 	/** Where to pick on Renu's, the quetzal whistle's or a hot air balloon's map while travelling; empty if nowhere. */
 	List<MenuPick> menuPicks;
+	/**
+	 * The option to pick on the teleport item (in {@link #itemIds}) in its right-click menu or its list of places, e.g.
+	 * "Crafting Guild"; null if none.
+	 */
+	String teleportOption;
 
 	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell)
 	{
@@ -40,11 +45,11 @@ public class Highlights
 	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell,
 		Set<Integer> wearItemIds)
 	{
-		this(patch, gardener, travelNpc, itemIds, spell, wearItemIds, Collections.emptyList());
+		this(patch, gardener, travelNpc, itemIds, spell, wearItemIds, Collections.emptyList(), null);
 	}
 
 	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell,
-		Set<Integer> wearItemIds, List<MenuPick> menuPicks)
+		Set<Integer> wearItemIds, List<MenuPick> menuPicks, String teleportOption)
 	{
 		this.patch = patch;
 		this.gardener = gardener;
@@ -53,5 +58,6 @@ public class Highlights
 		this.spell = spell;
 		this.wearItemIds = wearItemIds;
 		this.menuPicks = menuPicks;
+		this.teleportOption = teleportOption;
 	}
 }
