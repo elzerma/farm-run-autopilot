@@ -139,6 +139,13 @@ public class RunSession
 	/** At the Farming Guild, everything needed from the seed vault has been taken (or skipped). */
 	private boolean vaultChecked;
 	/**
+	 * The Farming Guild's seed vault step for its row on the Run tab, kept once shown so it stays listed, ticked, when
+	 * done (elzerma, 2026-10-18: say at the start what the guide is doing); null at other stops.
+	 */
+	private String vaultStepText;
+	/** That step was ticked by hand, so it can be unticked. */
+	private boolean vaultTicked;
+	/**
 	 * While gathering: the seed vault's step and the bank's for the seeds for later, once they've come up, so the
 	 * Getting ready list keeps them, ticked, when done.
 	 */
@@ -277,6 +284,8 @@ public class RunSession
 		banksDone.clear();
 		manualBanks.clear();
 		vaultChecked = false;
+		vaultStepText = null;
+		vaultTicked = false;
 		legRecorded = false;
 		manualSteps.clear();
 		clearExtraBank();
@@ -624,11 +633,17 @@ public class RunSession
 				patches.clearCurrent();
 			}
 		}
+		else if (step == travelSteps(stop) && vaultSteps(stop) > 0)
+		{
+			// The seed vault by hand: done (or to do again) whatever's carried
+			vaultChecked = ticked;
+			vaultTicked = ticked;
+		}
 		else
 		{
 			// The patches in the order the sidebar showed them
 			final List<Patch> here = shownPatchesStop == stopIndex ? shownPatches : patchesAt(plan, stop.getLocation());
-			final int index = step - travelSteps(stop);
+			final int index = step - travelSteps(stop) - vaultSteps(stop);
 			if (index >= here.size())
 			{
 				return;
@@ -663,6 +678,12 @@ public class RunSession
 			return 0;
 		}
 		return Navigator.journeySteps(stop) + 1;
+	}
+
+	/** 1 when the stop's steps list the seed vault (at the Farming Guild, once there's been something to take), else 0. */
+	private int vaultSteps(RouteStop stop)
+	{
+		return stop.getLocation() == Location.FARMING_GUILD && vaultStepText != null ? 1 : 0;
 	}
 
 	/** The way there (step 0) or a journey step after it is done, as {@link #steps} shows it. */
@@ -1051,7 +1072,9 @@ public class RunSession
 		}
 		checkedHoldings = holdings;
 		final List<RouteStop> part = stops.subList(stopIndex + 1, end + 1);
-		ask(runService.suppliesFor(plan, part), passesGuild(part), "for later");
+		// At the Farming Guild, what the seed vault holds counts until leaving it: its step takes them (elzerma's third
+		// run was asked about the later stops' seeds while standing at the vault)
+		ask(runService.suppliesFor(plan, part), passesGuild(stops.subList(stopIndex, end + 1)), "for later");
 	}
 
 	/** Ask about what's missing of these supplies, if anything not done without is. */
@@ -1118,6 +1141,8 @@ public class RunSession
 		banking = false;
 		clearExtraBank();
 		manualSteps.clear();
+		vaultStepText = null;
+		vaultTicked = false;
 		navigator.nextStop();
 		patches.clearCurrent();
 		legRecorded = true;
@@ -1292,6 +1317,10 @@ public class RunSession
 			stopIndex++;
 			navigator.nextStop();
 			manualSteps.clear();
+			vaultStepText = null;
+			vaultTicked = false;
+			// What's carried is checked against the rest of the part again from here (the seed vault no longer counts)
+			checkedHoldings = null;
 			if (extraBank != null)
 			{
 				// After an unplanned visit the next leg starts at a bank: not a sample
@@ -1378,7 +1407,12 @@ public class RunSession
 			vaultChecked = true;
 			return null;
 		}
-		return "Take " + amounts(byItem(take)) + " from the seed vault (next to the guild's bank)";
+		final String amounts = amounts(byItem(take));
+		if (vaultStepText == null)
+		{
+			vaultStepText = "Take " + amounts + " from the seed vault";
+		}
+		return "Take " + amounts + " from the seed vault (next to the guild's bank)";
 	}
 
 	/**
@@ -1471,28 +1505,39 @@ public class RunSession
 		return seeds;
 	}
 
-	/** At the Farming Guild: each line the guild's patches still need from the seed vault, with how many to take. */
+	/** At the Farming Guild: each line this part of the run still needs from the seed vault, with how many to take. */
 	private Map<SupplyLine, Integer> toTakeFromVault()
 	{
 		final Map<SupplyLine, Integer> take = new LinkedHashMap<>();
 		final Holdings carried = holdingsTracker.getHoldings().carriedOnly();
-		final List<Patch> here = patchesAt(plan, Location.FARMING_GUILD);
+		// The patches still to plant in this part of the run, from the guild's own to the next planned bank visit: a
+		// run setting off from the guild takes the whole part's seeds here (elzerma's third run was told 1 Guam seed of
+		// the 7 the part plants), and one passing it only what it still lacks (elzerma: "Take 2 x Avantoe seed" with
+		// one patch left and the seed in their inventory)
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		final List<Patch> rest = new ArrayList<>();
+		for (int i = stopIndex; i <= partEnd(); i++)
+		{
+			rest.addAll(patchesAt(plan, stops.get(i).getLocation()));
+		}
 		for (SupplyLine line : bankSupplies().getLines())
 		{
 			final int vault = line.getWhere().getOrDefault(Holdings.Source.SEED_VAULT, 0);
-			// Only what the guild's own patches still need, less what's carried now: the line's need is the whole
-			// part's (elzerma: "Take 2 x Avantoe seed" with one patch left and the seed in their inventory)
-			int neededHere = 0;
-			for (Patch patch : here)
+			if (vault <= 0 || line.getGroup() == SupplyLine.Group.OPTIONAL)
+			{
+				continue;
+			}
+			int needed = 0;
+			for (Patch patch : rest)
 			{
 				final Crop crop = plan.getSupplies().getPlantings().get(patch);
 				if (crop != null && !patches.isDone(patch) && contains(line.getItemIds(), crop.getPlantItemId()))
 				{
-					neededHere++;
+					needed += crop.getSeedsPerPatch();
 				}
 			}
-			final int stillNeeded = neededHere - carried.countAny(line.getItemIds());
-			if (vault > 0 && stillNeeded > 0 && line.getGroup() != SupplyLine.Group.OPTIONAL)
+			final int stillNeeded = needed - carried.countAny(line.getItemIds());
+			if (stillNeeded > 0)
 			{
 				take.put(line, Math.min(vault, stillNeeded));
 			}
@@ -1840,6 +1885,13 @@ public class RunSession
 			final String text = i == 0 ? stop.describeWay()
 				: capitalised(stop.rides().get(i - 1).getBrief());
 			steps.add(new RunView.Step(text, status, i > 0, status == RunView.StopStatus.DONE && manualSteps.contains(i)));
+		}
+		// At the Farming Guild, the seed vault comes first (elzerma: say at the start what the guide is doing)
+		if (vaultSteps(stop) > 0)
+		{
+			final RunView.StopStatus status = vaultChecked ? RunView.StopStatus.DONE
+				: arrived ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
+			steps.add(new RunView.Step(vaultStepText, status, false, vaultChecked && vaultTicked));
 		}
 		// Each patch's plan, in the order the guide takes them; the objectives were made in the plan's order
 		final List<Patch> inPlan = patchesAt(plan, stop.getLocation());
