@@ -9,7 +9,9 @@ using Shortest Path's data and pathfinding to find the fastest way to every patc
 methods to determine a true fastest, then develop our own algo for selecting methods for saving inv slots (potentially
 reducing expected amounts of bank trips)" (section 4, last part); **this comes first**: crop types wait and will run on
 it, planned for the day the plugin handles **all** crop types (section 3, step 2); "Share your run times" is removed;
-Auto uses every way except Wilderness and cooldown teleports by default. Questions 5-7 (section 11) are still open.
+Auto uses every way except Wilderness and cooldown teleports by default; times are compared per patch type, with a
+split at each stop (section 5); a bank stop's time is balanced against the fastest ways (section 4). Only whether the
+"Fewest items" style goes is left, for the start of T4.
 
 ## 0. In short
 
@@ -198,8 +200,10 @@ rune pouch, pooled charges, the "Fewest items" style). This sprint joins them in
   per kind; coins one slot shared by every fee; a balloon log; the dramen staff. Footprints combine as a **set**: one
   skills necklace serves the Farming Guild, Hosidius (Woodcutting Guild) and Ardougne (Fishing Guild) legs for one slot,
   and every spell needing law runes shares that rune's slot.
-- **The goal is the run's total time**, legs plus bank trips. A bank trip costs its real detour from the atlas (to the
-  bank, the banking itself, and on to the next stop), so a slot that saves a bank trip is worth that many seconds.
+- **The goal is the run's total time**, legs plus bank trips (elzerma: "a bank stop is going to cost some amount of
+  time. it needs to balance between making another bank stop and being absolute fastest"). A bank trip costs its real
+  detour from the atlas (to the bank and on to the next stop) plus the banking itself (opening, depositing, withdrawing;
+  set from elzerma's dev logs), so a slot that saves a bank trip is worth that many seconds, and no more.
 - **The search, given the stop order:**
   1. Start from each leg's fastest way and let `BankPlanner` place the bank trips the supplies and footprint need.
   2. Try moves: switch one leg to another way; "use this item wherever it's nearly as quick" (fills the shared slot);
@@ -210,7 +214,8 @@ rune pouch, pooled charges, the "Fewest items" style). This sprint joins them in
 - **Explained:** the Run tab's hover and the dev log say why a slower way was chosen, e.g. "skills necklace to Hosidius,
   4 s slower, frees a slot: no bank trip (saves 45 s)".
 - **Reused:** `ChargeBudget`, the staff and rune pouch slot rules, `BankPlanner`'s bank-trip search, worn items taking
-  no slot. "Fewest items" becomes a style that values a slot above its time (question 7).
+  no slot. The "Fewest items" style looks unneeded once Fastest balances by time (question 7): confirm with elzerma at
+  the start of T4 before removing it, and move a saved "Fewest items" choice to Fastest.
 
 ## 5. Timing: an estimate and a personal best
 
@@ -225,10 +230,24 @@ you've set."
 - **Your pace (display only):** after three complete runs, the Run tab's estimate is scaled by your median "actual over
   estimate" from your last five runs. Hover: "Map estimate 8:10; your recent runs are 6% quicker." It never changes
   which way the route takes.
-- **Personal best:** kept per route shape (the same set of stops and patch types, in any order). The Run tab shows your
-  best before you start, a split at each stop while running (ahead or behind your best at that point), and at the end
-  "New best: 6:58 (was 7:05)" there and in the game chat. A run with a skipped stop doesn't count; a bank detour does.
-  "Reset personal bests" in Settings.
+- **Your times by patch type** (elzerma: "like quantities of the same type are compared to each other", with a median
+  or mean time per type at the end of each run). Each finished run records, per patch type, how many patches and the
+  time spent on them: the leg into each stop plus the time at it, shared between the stop's types by patch count.
+  Bank trips are their own line.
+- **Like with like:** 9 herbs are compared with your other runs of 9 herbs (best and median). Every type also gets a
+  time per patch (median over your last 10 runs, whatever the count), so runs of different sizes still compare.
+- **End of the run** on the Run tab (new bests also in the game chat; the numbers are examples):
+
+  ```
+  Herbs     9   6:12   41 s each   best 6:05   median 6:30
+  Trees     4   2:50   43 s each   best 2:41
+  Banking   1   0:48
+  Total         9:50
+  ```
+
+- **Splits at each stop** (elzerma): after each stop, ahead or behind your best pace, i.e. the time so far against
+  your best time per patch for each type done so far.
+- A run with a skipped stop doesn't count; "Reset personal bests" in Settings.
 - **Removed:** "Share your run times" (Settings > Help improve this plugin), `LearnedTimes.summary()` and its report in
   `TestReport`. `RunTimings` keeps recording runs and legs on the player's computer for splits and pace. Old leg
   samples are left in the saved settings unused (no key renames).
@@ -274,6 +293,9 @@ Travel
   with a "needs nothing" answer wherever one exists; the report lists changes.
 - **Plugin unit tests:** the atlas and teleport files load; requirement mapping (a level, a quest, a varbit, items
   carried or banked); the fastest alternative the account meets is picked; no learned time changes a choice.
+- **Times by type:** a mixed stop's leg and patch time are shared by patch count; bank trips stay separate; bests are
+  per type and count; the per-patch median uses the last 10 runs; a run with a skipped stop records nothing; splits
+  compare with the best pace per type.
 - **Scenario tests (expected routes),** added to `RouteChainTest` / `ScenarioTest` with `ElzermaAccount` and two new
   accounts (fresh mid-level, maxed):
 
@@ -357,7 +379,8 @@ Other sessions don't edit travel files (`data/travel/`, the leg code in `route/`
 2. ~~When~~ Decided: first; crop types wait and run on it; plan for all crop types.
 3. ~~"Share your run times"~~ Decided: remove it.
 4. ~~Default ways~~ Decided: everything except Wilderness and cooldown (minigame) teleports, each a tick box.
-5. Personal best compared per same set of stops (recommended) or per run type (herb run, tree run)?
-6. Splits at each stop while running (recommended), or only the total at the end?
-7. "Fewest items": keep it as a style that values an inventory slot above its time (recommended), or drop it now that
-   Fastest already saves slots when that saves a bank trip?
+5. ~~Personal best~~ Decided: times per patch type, like quantities compared, a median per type at the end of each
+   run (section 5).
+6. ~~Splits~~ Decided: a split at each stop.
+7. "Fewest items": elzerma's answer was the rule ("balance between making another bank stop and being absolute
+   fastest"), now in section 4. Whether the style itself goes is confirmed at the start of T4.
