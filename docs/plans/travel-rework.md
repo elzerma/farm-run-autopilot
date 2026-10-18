@@ -577,11 +577,10 @@ whistle's real wait, and the first leg from where I stand." Built; the hand chec
   Retreat listed "4 x Guam seed (keep 1)" to deposit; at Varrock the Run tab asked about a mystic air staff and earth
   runes and Bank for them added the visit (an 881 s leg with the detour). Only the Troll Stronghold and Catherby were
   planted; every other stop was ticked off by hand on purpose, to keep the patches for more test runs. Legs that ran
-  straight: Civitas illa
-  Fortis 35 s against 36, Port Phasmatys 24 against 29, Catherby 29 against 28. Over: the Troll Stronghold 82 against 66
-  (the way up inside, as in run 1); the Ardougne cloak 30 against 13 and the slayer ring 26 against 13, both over in
-  run 2 as well, mostly before the teleport (worth timing apart); Falador Park after the bank 48 against 23 (T4's bank
-  costs); Nemus Retreat 169 s, 2 minutes of it at Civitas illa Fortis before Renu.
+  straight: Civitas illa Fortis 35 s against 36, Port Phasmatys 24 against 29, Catherby 29 against 28. Over: the Troll
+  Stronghold 82 against 66 (the way up inside, as in run 1); the Ardougne cloak 30 against 13 and the slayer ring 26
+  against 13, both over in run 2 as well, mostly before the teleport (worth timing apart); Falador Park after the bank
+  48 against 23 (T4's bank costs); Nemus Retreat 169 s, 2 minutes of it at Civitas illa Fortis before Renu.
 - **elzerma's notes from run 1, each worked through (2026-10-18):**
   - Written directions that Shortest Path's line already shows (down into the Troll Stronghold, up to the roof) are
     "Follow the line to the ... patch" while the line is drawn (2cf561a).
