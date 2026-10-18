@@ -2,13 +2,15 @@ package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.travel.Spell;
+import com.farmrunautopilot.route.MenuPick;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import lombok.Value;
 
 /**
- * What the current step points at in the game (SPEC 13.4): the patch, the gardener, the items to use and the
- * spell to cast. Immutable, so overlays can read it every frame without locking.
+ * What the current step points at in the game (SPEC 13.4): the patch, the gardener, the items to use, the spell to
+ * cast and the place to pick on a travel map. Immutable, so overlays can read it every frame without locking.
  */
 @Value
 public class Highlights
@@ -27,6 +29,8 @@ public class Highlights
 	Spell spell;
 	/** Items to put on, outlined in their own colour with a "Wear" label, never as an item to use. */
 	Set<Integer> wearItemIds;
+	/** Where to pick on Renu's, the quetzal whistle's or a hot air balloon's map while travelling; empty if nowhere. */
+	List<MenuPick> menuPicks;
 
 	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell)
 	{
@@ -36,11 +40,18 @@ public class Highlights
 	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell,
 		Set<Integer> wearItemIds)
 	{
+		this(patch, gardener, travelNpc, itemIds, spell, wearItemIds, Collections.emptyList());
+	}
+
+	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell,
+		Set<Integer> wearItemIds, List<MenuPick> menuPicks)
+	{
 		this.patch = patch;
 		this.gardener = gardener;
 		this.travelNpc = travelNpc;
 		this.itemIds = itemIds;
 		this.spell = spell;
 		this.wearItemIds = wearItemIds;
+		this.menuPicks = menuPicks;
 	}
 }

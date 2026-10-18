@@ -89,6 +89,42 @@ public class RouteStop
 		return atlas != null ? atlas.getRides() : method != null ? method.getRides() : Collections.emptyList();
 	}
 
+	/**
+	 * Where to pick on Renu's, the quetzal whistle's or a hot air balloon's map on the way here; empty if none. The
+	 * plugin's own quetzal methods name their pad in brackets, e.g. "Quetzal whistle (Kastori)".
+	 */
+	public List<MenuPick> menuPicks()
+	{
+		if (atlas != null)
+		{
+			return atlas.getPicks();
+		}
+		if (method == null || departure == Departure.WALK)
+		{
+			return Collections.emptyList();
+		}
+		switch (method.getKind())
+		{
+			case QUETZAL:
+			{
+				final String name = method.getDisplayName();
+				final String pad = name.substring(name.indexOf('(') + 1, name.indexOf(')'));
+				if (departure == Departure.RENU || departure == Departure.DIRECT)
+				{
+					return Collections.singletonList(new MenuPick(departure == Departure.RENU ? MenuPick.Menu.RENU
+						: MenuPick.Menu.WHISTLE, pad));
+				}
+				return Collections.emptyList();
+			}
+			case BALLOON:
+				return Collections.singletonList(new MenuPick(MenuPick.Menu.BALLOON, location.getDisplayName()));
+			default:
+				// The Civitas illa Fortis Teleport then Renu to the Hunter Guild, its only quetzal
+				return method == TravelMethod.CIVITAS_ILLA_FORTIS_TELEPORT
+					? Collections.singletonList(new MenuPick(MenuPick.Menu.RENU, "Hunter Guild")) : Collections.emptyList();
+		}
+	}
+
 	/** The teleport item this leg uses (the method's, or the atlas leg's), or null. */
 	public TravelItem travelItem()
 	{

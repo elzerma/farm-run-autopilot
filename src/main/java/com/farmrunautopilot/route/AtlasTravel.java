@@ -335,7 +335,28 @@ final class AtlasTravel
 		return new AtlasLeg(way, landing, start, item, spell, option.getKind() == AtlasOption.Kind.HOUSE,
 			option.getKind() == AtlasOption.Kind.TREE_HOUSE, fairyRing, balloons, items, rides,
 			teleport == null ? null : daily(atlas, teleport), teleport != null && teleport.isConsumable() && item == null
-			&& spell == null);
+			&& spell == null, picks(teleport, hop));
+	}
+
+	/** Where to pick on the whistle's map (the teleport), or Renu's or a balloon's (the hop). */
+	private static List<MenuPick> picks(TravelAtlas.Jump teleport, TravelAtlas.Jump hop)
+	{
+		final List<MenuPick> picks = new ArrayList<>();
+		if (teleport != null && teleport.getType().equals("QUETZAL_WHISTLE"))
+		{
+			// "Quetzal whistle: Kastori"
+			final String name = teleport.getName();
+			picks.add(new MenuPick(MenuPick.Menu.WHISTLE, name.substring(name.indexOf(": ") + 2)));
+		}
+		if (hop != null && hop.getType().equals("QUETZAL"))
+		{
+			picks.add(new MenuPick(MenuPick.Menu.RENU, destination(hop)));
+		}
+		if (hop != null && hop.getType().equals("HOT_AIR_BALLOON"))
+		{
+			picks.add(new MenuPick(MenuPick.Menu.BALLOON, destination(hop)));
+		}
+		return picks;
 	}
 
 	/**

@@ -1823,7 +1823,7 @@ public class RunSession
 		}
 		// An item to put on isn't also outlined as the teleport to use, so the two can't be confused
 		items.removeAll(wear.getItemIds());
-		return new Highlights(null, false, npc, items, patches.castableNow(spell), wear.getItemIds());
+		return new Highlights(null, false, npc, items, patches.castableNow(spell), wear.getItemIds(), stop.menuPicks());
 	}
 
 	/**

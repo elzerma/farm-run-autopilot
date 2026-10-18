@@ -408,11 +408,12 @@ class SettingsPage extends SetupPanel
 		s.addContent(checkBox("Highlight items to use", c.highlightItems(), true,
 			"Outline the seed, compost, tool or teleport to use next in your inventory and equipment",
 			on -> guidance.set("highlightItems", on)));
-		s.addContent(checkBox("Highlight the spell to cast", c.highlightSpell(), true,
-			"Outline the teleport (or Cure Plant) to cast next in your spellbook", on -> guidance.set("highlightSpell", on)));
+		s.addContent(checkBox("Highlight the spell or place to pick", c.highlightSpell(), true,
+			"Outline the teleport (or Cure Plant) to cast next in your spellbook, and where to go on Renu's, the quetzal "
+				+ "whistle's or a hot air balloon's map", on -> guidance.set("highlightSpell", on)));
 		s.addContent(checkBox("Growing vine highlights", c.vineHighlights(), true,
-			"A vine that grows, flowers and wilts round the spell to cast and the bank's Farm run button. Untick for a "
-				+ "plain outline.", on -> guidance.set("vineHighlights", on)));
+			"A vine that grows, flowers and wilts round the spell to cast, the place to pick on a travel map and the bank's "
+				+ "Farm run button. Untick for a plain outline.", on -> guidance.set("vineHighlights", on)));
 		s.addContent(checkBox("Walking lines (Shortest Path)", c.shortestPathLines(), true,
 			"If the Shortest Path plugin is installed, it draws the walk for each \"walk to\" step: walking only, no "
 				+ "teleports. Your own Shortest Path settings come back when the step changes.",

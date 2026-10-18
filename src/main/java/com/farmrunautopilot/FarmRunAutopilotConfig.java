@@ -78,8 +78,8 @@ public interface FarmRunAutopilotConfig extends Config
 
 	@ConfigItem(
 		keyName = "highlightSpell",
-		name = "Highlight the spell to cast",
-		description = "Outline the teleport (or Cure Plant) to cast next in your spellbook",
+		name = "Highlight the spell or place to pick",
+		description = "Outline the teleport (or Cure Plant) to cast next in your spellbook, and where to go on a travel map",
 		hidden = true,
 		position = 5
 	)
@@ -91,7 +91,8 @@ public interface FarmRunAutopilotConfig extends Config
 	@ConfigItem(
 		keyName = "vineHighlights",
 		name = "Vine highlights",
-		description = "A growing vine round the spell to cast and the bank's Farm run button, instead of a plain outline",
+		description = "A growing vine round the spell to cast, the place to pick on a travel map and the bank's Farm run "
+			+ "button, instead of a plain outline",
 		hidden = true,
 		position = 10
 	)

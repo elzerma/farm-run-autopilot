@@ -10,9 +10,10 @@ import java.util.Random;
 
 /**
  * A growing vine round something the player should click (elzerma, issue #5): the bank's Farm run button, the seed
- * vault's button and the spell to cast. A thick stem with leaves and curling tendrils sprouts from the middle of the
- * bottom edge, grows both ways and up the sides to meet at the top, opens into flowers, then wilts (browning,
- * drooping, dropping its petals) and grows again. Each highlight keeps its own, since the falling petals are state.
+ * vault's button, the spell to cast and the place to pick on a travel map. A thick stem with leaves and curling tendrils
+ * sprouts from the middle of the bottom edge, grows both ways and up the sides to meet at the top, opens into flowers,
+ * then wilts (browning, drooping, dropping its petals) and grows again. Each highlight keeps its own, since the falling
+ * petals are state.
  * Drawing only; client thread.
  */
 public final class VineFrame

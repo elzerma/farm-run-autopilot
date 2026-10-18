@@ -54,4 +54,6 @@ public class AtlasLeg
 	TravelMethod daily;
 	/** A teleport used up or limited only by its own item (a tablet the plugin doesn't track, say). */
 	boolean consumable;
+	/** Where to pick on Renu's, the whistle's or a balloon's map on the way. */
+	List<MenuPick> picks;
 }
