@@ -205,7 +205,7 @@ public final class AtlasLegs
 		}
 	}
 
-	/** The plugin's timing for a hop: rings, trees, Renu and balloons; others at their ticks, at least 3 s. */
+	/** The plugin's timing for a hop (TravelTimes, from elzerma's logs): rings, trees, Renu, balloons, charter ships; others at their ticks, at least TravelTimes.OTHER_HOP. */
 	double hopSeconds(TravelAtlas.Jump hop)
 	{
 		if (shortestPathTiming)
@@ -222,8 +222,10 @@ public final class AtlasLegs
 				return TravelTimes.QUETZAL;
 			case "HOT_AIR_BALLOON":
 				return TravelTimes.BALLOON;
+			case "CHARTER_SHIP":
+				return TravelTimes.CHARTER_SHIP;
 			default:
-				return Math.max(3, hop.getTicks() * SECONDS_PER_TICK);
+				return Math.max(TravelTimes.OTHER_HOP, hop.getTicks() * SECONDS_PER_TICK);
 		}
 	}
 

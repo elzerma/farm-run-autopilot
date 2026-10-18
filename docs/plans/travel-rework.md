@@ -542,6 +542,18 @@ whistle's real wait, and the first leg from where I stand." Built; the hand chec
   Guide) against the whistle (31 s) and AIS (40 s); the Farming Guild by Kharedst's memoirs and the Lovakengj minecart;
   Brimhaven by Ardougne Teleport and the boat, 34 s against the old 42 s; Yanille's hops by the Watchtower Teleport.
 - **Dev client:** after each `Route planned:`, `The old tables' route (not used):` with the same run on the old tables.
+- **Hand check, run 1 (elzerma, 2026-10-18):** 22 stops in 1:05:34 (six crop types), no errors. Every new leg's
+  teleport, hop, boat and guide was spotted without a hand tick. Plain teleports and spirit trees landed on their
+  estimates (Catherby 27 s against 28, Lumbridge 21 against 25, Varrock 25 against 22, Civitas illa Fortis by its
+  teleport and Renu 35 against 36, Tree Gnome Village by the Grand Exchange's tree and Elkoy 46 against 41). The map
+  loads in the log time each part of a leg, and showed the hops' times were Shortest Path's animations: a fairy ring took
+  about 15 s and 20 s from the ring to landing (4 s planned; their CIR leg of 2026-10-15 ran 38 s over), the hot air
+  balloon about 26 s (4.5), a charter ship about 9 s (3.6). `TravelTimes` now has those, from their logs as section 5
+  says, and other menu hops (gliders, minecarts, carpets, mushtrees, canoes) at least 8 s until they're timed. Renu took
+  6, 14 and 10 s: left at 6 until more runs (at 10 the whistle takes over Varlamore's chains). Still over: the way up
+  through the Troll Stronghold without 73 Agility (44 s inside against about 15; 101 s and 109 s legs against 66 and
+  75), the Ectophial's leg through the energy barrier (49 s against 29, but 29 on 2026-10-15), and every leg after a
+  bank visit (7-12 s over, for T4's bank costs).
 - **Not yet:** deleting the old tables (after the hand checks); the patch order inside a stop; journeys written from
   the atlas's steps beyond boats and NPCs (T5); spells the plugin doesn't know (Watchtower, Kourend Castle...) are
   planned only with their runes owned and on the spellbook in use, and their runes go on the supply list as items;
