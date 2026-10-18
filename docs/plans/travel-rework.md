@@ -462,6 +462,11 @@ totals. Nothing a player sees changes, and the atlas isn't read at all outside t
 **Check (needs elzerma):** play one run in the dev client and send the log; the `Atlas shadow:` lines are the evidence
 for switching the planner in T3.
 
+**T3 groundwork (2026-10-18), no behaviour change:** `AtlasLinks` ties an atlas teleport to the plugin's `TravelItem`
+(by the items it needs) or `Spell` (by name, or its tablet), for charges, daily uses, runes, Spellbook Swap and
+highlights. `AtlasLinksTest`: every `TravelMethod`'s item or spell has an atlas teleport, and each lands within 3
+tiles of where one of them does.
+
 **T8 built early (2026-10-18), as it feeds that check:** in the dev client, each newly planned route also asks the
 Shortest Path plugin (when installed) for its own fastest way for every leg, with the player's own Shortest Path
 settings and real account, and logs `Shortest Path (live):` beside the plugin's estimate (`run/ShortestPathSecondOpinion`).
