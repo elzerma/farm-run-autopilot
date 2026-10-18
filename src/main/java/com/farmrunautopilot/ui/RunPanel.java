@@ -808,8 +808,8 @@ class RunPanel extends JPanel
 		}
 
 		addMissing(view.getMissing());
-		add(tipped(heading("Complete route"), "Ticks itself as you go. If it misses something, tick it yourself; "
-			+ "a box you ticked can be unticked to go back to it"));
+		add(tipped(heading("Complete route"), "Ticks itself as you go (green). If it misses something, tick it "
+			+ "yourself (orange); a box you ticked can be unticked to go back to it"));
 		int number = 1;
 		final List<RunView.Stop> stops = view.getStops();
 		for (int row = 0; row < stops.size(); row++)

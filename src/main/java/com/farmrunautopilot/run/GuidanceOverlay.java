@@ -22,9 +22,9 @@ import net.runelite.client.ui.overlay.OverlayUtil;
  */
 public class GuidanceOverlay extends Overlay
 {
-	private static final Color INSTRUCTION = new Color(0xFF, 0xD7, 0x00);
+	static final Color INSTRUCTION = new Color(0xFF, 0xD7, 0x00);
 	private static final Color TIMER = Color.WHITE;
-	private static final Color REMINDER = new Color(0xFF, 0x98, 0x1F);
+	static final Color REMINDER = new Color(0xFF, 0x98, 0x1F);
 	/** Long instructions wrap at this width (pixels). */
 	private static final int MAX_LINE_WIDTH = 360;
 	/** Pixels below the player's feet for the first line, and between lines. */

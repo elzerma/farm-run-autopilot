@@ -1,12 +1,15 @@
 package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.FarmRunAutopilotConfig;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.events.MenuOpened;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.Text;
 
@@ -16,6 +19,7 @@ import net.runelite.client.util.Text;
  * When the item's places are behind "Rub" (or "Teleport", "Reminisce"...), that option instead; TravelMenuOverlay then
  * rings the place in the list. Only colours options the menu has: adds none, removes none. Client thread.
  */
+@Slf4j
 @Singleton
 public class TeleportMenuHighlighter
 {
@@ -24,12 +28,14 @@ public class TeleportMenuHighlighter
 
 	private final RunSession session;
 	private final FarmRunAutopilotConfig config;
+	private final ItemManager itemManager;
 
 	@Inject
-	TeleportMenuHighlighter(RunSession session, FarmRunAutopilotConfig config)
+	TeleportMenuHighlighter(RunSession session, FarmRunAutopilotConfig config, ItemManager itemManager)
 	{
 		this.session = session;
 		this.config = config;
+		this.itemManager = itemManager;
 	}
 
 	public void onMenuOpened(MenuOpened event)
@@ -43,16 +49,48 @@ public class TeleportMenuHighlighter
 		final MenuEntry[] entries = event.getMenuEntries();
 		final String[] options = new String[entries.length];
 		final int[] items = new int[entries.length];
+		Set<String> names = null;
+		boolean teleportItem = false;
 		for (int i = 0; i < entries.length; i++)
 		{
 			options[i] = entries[i].getOption();
 			items[i] = entries[i].getItemId();
+			if (!highlights.getItemIds().contains(items[i]) && entries[i].getTarget() != null)
+			{
+				// A worn item's options may not carry its item id; its name, in the target, does
+				if (names == null)
+				{
+					names = names(highlights.getItemIds());
+				}
+				final String target = Text.removeTags(entries[i].getTarget()).toLowerCase(Locale.ROOT);
+				if (names.contains(target))
+				{
+					items[i] = highlights.getItemIds().iterator().next();
+				}
+			}
+			teleportItem |= highlights.getItemIds().contains(items[i]);
 		}
 		final int pick = pick(options, items, highlights.getItemIds(), option);
 		if (pick >= 0)
 		{
 			entries[pick].setOption(ColorUtil.wrapWithColorTag(Text.removeTags(options[pick]), config.itemColour()));
+			log.debug("Menu option coloured for '{}': {}", option, Text.removeTags(options[pick]));
 		}
+		else if (teleportItem)
+		{
+			log.debug("Menu option for '{}' not found in: {}", option, String.join(", ", options));
+		}
+	}
+
+	/** The items' names, lower case, as a menu's target shows them. */
+	private Set<String> names(Set<Integer> itemIds)
+	{
+		final Set<String> names = new HashSet<>();
+		for (int id : itemIds)
+		{
+			names.add(itemManager.getItemComposition(id).getName().toLowerCase(Locale.ROOT));
+		}
+		return names;
 	}
 
 	/**

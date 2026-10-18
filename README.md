@@ -36,6 +36,8 @@ The plugin never clicks, types or acts for you. It only shows information.
 **Seed vault**
 - In the Farming Guild's seed vault, a button by the close button shows a "Farm Run Autopilot" section at the
   top with the run's seeds and how many you have and need. Withdraw from it as usual.
+- While you take seeds from it for a step, the inventory beside it counts down how many more to take, and says how
+  many to put back if you took too many.
 - Seeds only the vault has are named with where to take them. For a run that banks partway, choose on the
   Account tab whether to take every seed at the start and keep the later ones in your bank, or to bank at the
   Farming Guild.

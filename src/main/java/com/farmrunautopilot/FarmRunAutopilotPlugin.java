@@ -26,6 +26,7 @@ import com.farmrunautopilot.run.ItemHighlightOverlay;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.run.SceneTracker;
+import com.farmrunautopilot.run.SeedVaultCountOverlay;
 import com.farmrunautopilot.run.ShortestPathBridge;
 import com.farmrunautopilot.run.ShortestPathSecondOpinion;
 import com.farmrunautopilot.run.SpellHighlightOverlay;
@@ -162,6 +163,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private TravelMenuOverlay travelMenuOverlay;
 
 	@Inject
+	private SeedVaultCountOverlay seedVaultCountOverlay;
+
+	@Inject
 	private TeleportMenuHighlighter teleportMenuHighlighter;
 
 	@Inject
@@ -225,6 +229,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		overlayManager.add(itemHighlightOverlay);
 		overlayManager.add(spellHighlightOverlay);
 		overlayManager.add(travelMenuOverlay);
+		overlayManager.add(seedVaultCountOverlay);
 		overlayManager.add(vineOverlay);
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "icon.png");
@@ -252,6 +257,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		overlayManager.remove(itemHighlightOverlay);
 		overlayManager.remove(spellHighlightOverlay);
 		overlayManager.remove(travelMenuOverlay);
+		overlayManager.remove(seedVaultCountOverlay);
 		overlayManager.remove(vineOverlay);
 		itemHighlightOverlay.clearCache();
 		clientThread.invoke(() ->
