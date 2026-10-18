@@ -308,6 +308,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			holdingsTracker.markDirty();
 		}
+		dailyUses.onGameTick();
 		pohDetector.onGameTick();
 		if (accessChecker.onGameTick())
 		{
@@ -574,6 +575,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			holdingsTracker.markDirty();
 		}
+		dailyUses.onMenuOptionClicked(event.getMenuOption(), event.getMenuTarget());
 		pohDetector.onMenuOptionClicked(event);
 		farmBankTab.onMenuOptionClicked(event);
 	}

@@ -23,20 +23,18 @@ public final class DailyLimits
 	 */
 	private static final Map<TravelMethod, Integer> USED_TODAY = new EnumMap<>(TravelMethod.class);
 	/**
-	 * The varbit holding the rest of a count split in two: the Ardougne cloak's is ARDOUGNE_CLOAK_LOWBITS plus high
-	 * bits in varbit 6070, the unnamed one beside it (the game's other split counts are named in pairs, e.g.
-	 * BOOKOFSCROLLS_WATSON_LOWBITS and _HIGHBITS). Read alone, the low bits made all 3 of a cloak 2's uses look like
-	 * 1, so a used-up cloak was planned (elzerma, 2026-10-18). UNVERIFIED until the dev log shows the two adding up.
+	 * The varbit holding the rest of a count split in two. The Ardougne cloak's is: ARDOUGNE_CLOAK_LOWBITS is one bit
+	 * (varp 635 bit 18, from when cloak 2 gave one farm teleport a day), so all 3 of a cloak 2's uses read as 1 and a
+	 * used-up cloak was planned (elzerma, 2026-10-18). Its high bits aren't in varp 635 (full) nor varbit 6070 (0 with
+	 * 3 used); {@code supply.DailyUseTracker} logs the game variables that change on a farm teleport, so the second use
+	 * of a day shows where they are. Until then, none: the low bit and the chat count.
 	 */
 	private static final Map<TravelMethod, Integer> HIGH_BITS = new EnumMap<>(TravelMethod.class);
-	/** Varbit 6070, which RuneLite's game values don't name. */
-	public static final int ARDOUGNE_CLOAK_HIGHBITS = 6070;
 
 	static
 	{
 		USED_TODAY.put(TravelMethod.ARDOUGNE_CLOAK_FARM, VarbitID.ARDOUGNE_CLOAK_LOWBITS);
 		USED_TODAY.put(TravelMethod.EXPLORERS_RING_CABBAGE_PATCH, VarbitID.LUMBRIDGE_CABBAGE_TELEPORT);
-		HIGH_BITS.put(TravelMethod.ARDOUGNE_CLOAK_FARM, ARDOUGNE_CLOAK_HIGHBITS);
 	}
 
 	private DailyLimits()

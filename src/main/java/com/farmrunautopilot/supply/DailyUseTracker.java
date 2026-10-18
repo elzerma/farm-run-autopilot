@@ -13,6 +13,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Client;
+import net.runelite.client.util.Text;
 
 /**
  * Today's uses of the teleports limited per day, from the game's own messages, both seen in elzerma's runs:
@@ -37,15 +39,60 @@ public class DailyUseTracker
 		"Ardougne Farm", TravelMethod.ARDOUGNE_CLOAK_FARM,
 		"Cabbage", TravelMethod.EXPLORERS_RING_CABBAGE_PATCH);
 
+	private final Client client;
 	private final SettingsStore settings;
 	private volatile Map<TravelMethod, Long> uses = Collections.emptyMap();
 	/** A teleport the game just refused for having no uses left today, until it's taken; null if none. */
 	private TravelMethod refused;
+	/**
+	 * The game variables as they were when an Ardougne cloak's farm teleport was clicked, to log which change with the
+	 * use (where the cloak's count keeps its high bits isn't known); null otherwise.
+	 */
+	private int[] varpsBefore;
+	/** Ticks until those are compared with the game's now, once the use is confirmed; 0 when not waiting. */
+	private int compareIn;
 
 	@Inject
-	DailyUseTracker(SettingsStore settings)
+	DailyUseTracker(Client client, SettingsStore settings)
 	{
+		this.client = client;
 		this.settings = settings;
+	}
+
+	/** An Ardougne cloak's farm teleport clicked: keep the game variables as they are, to compare after. */
+	public void onMenuOptionClicked(String option, String target)
+	{
+		if (option != null && target != null && option.contains("Farm") && Text.removeTags(target).contains("Ardougne"))
+		{
+			varpsBefore = client.getVarps().clone();
+		}
+	}
+
+	/** A tick after the use is confirmed: the dev log lists the game variables that changed with it. */
+	public void onGameTick()
+	{
+		if (compareIn <= 0 || --compareIn > 0)
+		{
+			return;
+		}
+		final int[] before = varpsBefore;
+		varpsBefore = null;
+		if (before == null)
+		{
+			return;
+		}
+		final int[] now = client.getVarps();
+		final StringBuilder changed = new StringBuilder();
+		for (int i = 0; i < Math.min(before.length, now.length); i++)
+		{
+			if (before[i] != now[i])
+			{
+				changed.append(changed.length() == 0 ? "" : ", ").append("varp ").append(i).append(": ").append(before[i])
+					.append(" -> ").append(now[i]).append(" (bits ").append(Integer.toBinaryString(before[i] ^ now[i]))
+					.append(')');
+			}
+		}
+		log.debug("Ardougne Farm teleport, game variables changed: {}", changed.length() == 0 ? "none" : changed);
 	}
 
 	/** Read the saved counts for the current account. Call after settings load. */
@@ -79,6 +126,11 @@ public class DailyUseTracker
 		if (m.matches())
 		{
 			final TravelMethod method = BY_PLACE.get(m.group(3));
+			if (method == TravelMethod.ARDOUGNE_CLOAK_FARM && varpsBefore != null)
+			{
+				log.debug("Ardougne Farm teleport {} of {}", m.group(1), m.group(2));
+				compareIn = 2;
+			}
 			return method != null && record(method, Integer.parseInt(m.group(1)));
 		}
 		final TravelMethod method = refusedBy(message);
