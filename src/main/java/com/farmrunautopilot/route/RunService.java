@@ -21,6 +21,7 @@ import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.settings.VaultBanking;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
+import com.farmrunautopilot.supply.PatchCare;
 import com.farmrunautopilot.supply.SupplyCalculator;
 import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.supply.SupplyPlan;
@@ -493,14 +494,17 @@ public class RunService
 
 		// The guide needs every patch's crop, not only the first part's
 		final Map<Patch, Crop> plantings = new EnumMap<>(Patch.class);
+		final Map<Patch, PatchCare> care = new EnumMap<>(Patch.class);
 		for (SupplyPlan part : parts)
 		{
 			plantings.putAll(part.getPlantings());
+			care.putAll(part.getCare());
 		}
 		final SupplyPlan first = parts.get(0);
 		return new Banked(result.getRoute(), new SupplyPlan(first.getLines(), first.getPatchCounts(),
 			first.getNotDue(), first.getTravelPlan(), first.getWarnings(), first.getCoins(), first.getRuneSummary(),
-			first.getSlots(), Collections.unmodifiableMap(plantings), first.getStaffSwaps()), bankStops);
+			first.getSlots(), Collections.unmodifiableMap(plantings), first.getStaffSwaps(),
+			Collections.unmodifiableMap(care)), bankStops);
 	}
 
 	/** The supplies for some of the route's stops on their own. */
@@ -576,7 +580,7 @@ public class RunService
 			holdings.where(ids), "To bank partway at the Farming Guild, by its seed vault", 1, false, null, ids));
 		return new SupplyPlan(lines, before.getPatchCounts(), before.getNotDue(), before.getTravelPlan(),
 			before.getWarnings(), before.getCoins(), before.getRuneSummary(), before.getSlots() + 1,
-			before.getPlantings(), before.getStaffSwaps());
+			before.getPlantings(), before.getStaffSwaps(), before.getCare());
 	}
 
 	/** A part's supplies with the bank teleport to bring, used at the bank that ends it. */
@@ -589,7 +593,7 @@ public class RunService
 			"To bank partway through the run: teleport to " + teleport.getBankName(), 1, false, null, ids));
 		return new SupplyPlan(lines, before.getPatchCounts(), before.getNotDue(), before.getTravelPlan(),
 			before.getWarnings(), before.getCoins(), before.getRuneSummary(), before.getSlots() + 1,
-			before.getPlantings(), before.getStaffSwaps());
+			before.getPlantings(), before.getStaffSwaps(), before.getCare());
 	}
 
 	private static List<Patch> patchesAt(RunSelection selection, List<RouteStop> stops)

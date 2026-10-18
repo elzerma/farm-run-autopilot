@@ -238,6 +238,9 @@ class FarmPage extends SetupPanel
 	private JComponent protectionSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("Protection", overrides(config.getProtectionOverrides().size()));
+		s.help("Pay gardener: when there's not enough of the payment, the patch gets the best compost you have instead "
+			+ "(ultracompost, then supercompost, then compost). Paid trees and fruit trees get no compost; paid "
+			+ "allotments and hops still do, as it raises the harvest.");
 		s.addContent(checkBox("Bring gardener payments noted", config.isPayWithNotes(), true,
 			"Gardeners accept noted payment; one inventory slot per item type",
 			on -> saveRun(() -> config.setPayWithNotes(on))));

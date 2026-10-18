@@ -21,6 +21,7 @@ import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.FlowerProtection;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
+import com.farmrunautopilot.supply.PatchCare;
 import com.farmrunautopilot.supply.SupplyCalculator;
 import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchTracker;
@@ -375,17 +376,26 @@ class PatchGuide
 		final Crop crop = plan.getSupplies().getPlantings().get(patch);
 		final boolean faladorElite = patch == Patch.FALADOR_TREE && access.isKnown()
 			&& access.isMet(Requirement.diary(AchievementDiary.FALADOR, AchievementDiary.Tier.ELITE));
-		final boolean protectionNeeded = patch.getType().isProtectable() && crop != null && crop.hasPayment()
-			&& FlowerProtection.effective(patch, config, access, plan.getSupplies().getPlantings(), patchTracker::predict)
-			== Protection.PAY_GARDENER && !faladorElite;
+		// As the supplies were worked out: paid, or protected with compost when the payment couldn't be had
+		final PatchCare care = plan.getSupplies().getCare().get(patch);
+		final boolean protectionNeeded = care != null ? care.isPaid() : patch.getType().isProtectable() && crop != null
+			&& crop.hasPayment() && FlowerProtection.effective(patch, config, access, plan.getSupplies().getPlantings(),
+			patchTracker::predict) == Protection.PAY_GARDENER && !faladorElite;
 		final String plantName = crop != null ? runService.itemName(crop.getPlantItemId()) : "your seed";
 		final String payment = protectionNeeded
 			? crop.getPaymentQuantity() + " x " + runService.itemName(crop.getPaymentItemId())
 			+ (config.isPayWithNotes() ? " (noted is fine)" : "")
 			: null;
-		return new StepAdvisor.PatchGoal(patch, crop, plantName, config.getCompost().get(patch.getType()),
+		return new StepAdvisor.PatchGoal(patch, crop, plantName, compostFor(patch),
 			protectionNeeded, payment, config.getPayToClear().contains(patch.getType()), p.composted, p.paid,
 			p.sawUnplanted);
+	}
+
+	/** The compost a patch gets: as the supplies were worked out (falling back to what the player has), else its type's. */
+	private Compost compostFor(Patch patch)
+	{
+		final PatchCare care = plan.getSupplies().getCare().get(patch);
+		return care != null ? care.getCompost() : settings.getRunConfig().getCompost().get(patch.getType());
 	}
 
 	private Progress progress(Patch patch)
@@ -414,7 +424,7 @@ class PatchGuide
 				}
 				break;
 			case COMPOST:
-				final Compost compost = settings.getRunConfig().getCompost().get(currentPatch.getType());
+				final Compost compost = compostFor(currentPatch);
 				if (compost != null && compost != Compost.NONE)
 				{
 					items.add(compost.getItemId());

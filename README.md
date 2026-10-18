@@ -69,7 +69,8 @@ The plugin never clicks, types or acts for you. It only shows information.
 
 **Farm tab**
 - Choose your patches, crops (with backups), disease-free herbs, protection (pay the gardener or compost
-  only, per patch if you like), compost and plant cures.
+  only, per patch if you like; short of a payment, the best compost you have is used instead), compost and
+  plant cures.
 
 <img src="docs/farm-tab.png" alt="Farm tab: patches, crops, disease-free herbs, protection and compost" width="300">
 

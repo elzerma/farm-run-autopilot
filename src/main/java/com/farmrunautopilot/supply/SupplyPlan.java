@@ -36,10 +36,20 @@ public class SupplyPlan
 	Map<Patch, Crop> plantings;
 	/** The staves swapped during this part of the run, and when (issue #7). */
 	StaffSwaps staffSwaps;
+	/** Whether each patch's gardener is paid and which compost it gets (used by the step guide). */
+	Map<Patch, PatchCare> care;
 
 	public SupplyPlan(List<SupplyLine> lines, Map<PatchType, Integer> patchCounts, List<String> notDue,
 		List<String> travelPlan, List<String> warnings, int coins, String runeSummary, int slots,
 		Map<Patch, Crop> plantings, StaffSwaps staffSwaps)
+	{
+		this(lines, patchCounts, notDue, travelPlan, warnings, coins, runeSummary, slots, plantings, staffSwaps,
+			Collections.emptyMap());
+	}
+
+	public SupplyPlan(List<SupplyLine> lines, Map<PatchType, Integer> patchCounts, List<String> notDue,
+		List<String> travelPlan, List<String> warnings, int coins, String runeSummary, int slots,
+		Map<Patch, Crop> plantings, StaffSwaps staffSwaps, Map<Patch, PatchCare> care)
 	{
 		this.lines = lines;
 		this.patchCounts = patchCounts;
@@ -51,6 +61,7 @@ public class SupplyPlan
 		this.slots = slots;
 		this.plantings = plantings;
 		this.staffSwaps = staffSwaps;
+		this.care = care;
 	}
 
 	/** With no staves swapped. */
@@ -83,7 +94,7 @@ public class SupplyPlan
 			now.add(line.counted(holdings));
 		}
 		return new SupplyPlan(Collections.unmodifiableList(now), patchCounts, notDue, travelPlan, warnings, coins,
-			runeSummary, slots, plantings, staffSwaps);
+			runeSummary, slots, plantings, staffSwaps, care);
 	}
 
 	/**

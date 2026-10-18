@@ -32,8 +32,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -131,6 +133,15 @@ public final class SupplyCalculator
 		}
 		plantings.putAll(protectingFlowers(patches, plantings, config, access, farming, holdings, predictions));
 
+		// How each patch is looked after (elzerma, 2026-10-18): its type's choices first; when the gardener's payment or
+		// that compost can't be had, down Pay -> ultracompost -> supercompost -> compost to the best the player has. Only
+		// once the bank's contents are known, so nothing is given up on before it's been seen.
+		final Map<Integer, Integer> paymentsLeft = new HashMap<>();
+		final Map<Compost, Integer> compostLeft = compostAvailable(holdings);
+		final boolean bucketUnknown = holdings.count(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED) > 0
+			&& holdings.getBucketCompost() == null;
+		final Map<Patch, PatchCare> care = new LinkedHashMap<>();
+		final List<String> fellBack = new ArrayList<>();
 		for (Patch patch : patches)
 		{
 			final PatchType type = patch.getType();
@@ -152,21 +163,59 @@ public final class SupplyCalculator
 						needAxe = true;
 					}
 				}
+			}
 
-				final Crop crop = plantings.get(patch);
-				final boolean freeProtection = patch == Patch.FALADOR_TREE && faladorElite;
-				if (FlowerProtection.effective(patch, config, access, plantings, predictions) == Protection.PAY_GARDENER
-					&& !freeProtection && crop.hasPayment())
+			final Crop crop = plantings.get(patch);
+			final boolean pays = type.isProtectable() && crop != null && crop.hasPayment()
+				&& FlowerProtection.effective(patch, config, access, plantings, predictions) == Protection.PAY_GARDENER;
+			final boolean freeProtection = pays && patch == Patch.FALADOR_TREE && faladorElite;
+			boolean paid = false;
+			boolean lostPayment = false;
+			if (pays && !freeProtection)
+			{
+				final int id = crop.getPaymentItemId();
+				final int left = paymentsLeft.computeIfAbsent(id, holdings::count);
+				// With no compost to fall back on either, the supply list asks for the payment, as chosen
+				if (!holdings.isBankKnown() || left >= crop.getPaymentQuantity()
+					|| !bucketUnknown && compostLeft.values().stream().noneMatch(n -> n > 0))
 				{
-					payments.merge(crop.getPaymentItemId(), crop.getPaymentQuantity(), Integer::sum);
+					paymentsLeft.put(id, left - crop.getPaymentQuantity());
+					payments.merge(id, crop.getPaymentQuantity(), Integer::sum);
+					paid = true;
+				}
+				else
+				{
+					lostPayment = true;
 				}
 			}
 
-			final Compost c = config.getCompost().get(type);
-			if (c != null && c != Compost.NONE)
+			// Protected patches skip compost unless it raises the harvest; one whose payment can't be had gets the best
+			// compost the player has instead
+			Compost c = config.getCompost().getOrDefault(type, Compost.NONE);
+			if ((paid || freeProtection) && !type.isCompostRaisesYield())
+			{
+				c = Compost.NONE;
+			}
+			else if (lostPayment)
+			{
+				c = fallBack(compostLeft, Compost.ULTRACOMPOST, bucketUnknown);
+				fellBack.add(patch.getDisplayName() + " gets " + c.getDisplayName().toLowerCase(Locale.ROOT) + " (no "
+					+ crop.getPaymentQuantity() + " " + itemName.apply(crop.getPaymentItemId()) + " to pay the gardener)");
+			}
+			else if (c != Compost.NONE && holdings.isBankKnown())
+			{
+				c = fallBack(compostLeft, c, bucketUnknown);
+			}
+			if (c != Compost.NONE)
 			{
 				compost.merge(c, 1, Integer::sum);
+				compostLeft.computeIfPresent(c, (k, n) -> Math.max(0, n - 1));
 			}
+			care.put(patch, new PatchCare(paid, c));
+		}
+		if (!fellBack.isEmpty())
+		{
+			warnings.add("Protected with compost instead: " + String.join("; ", fellBack));
 		}
 
 		final Set<Crop> protectors = EnumSet.noneOf(Crop.class);
@@ -562,7 +611,53 @@ public final class SupplyCalculator
 
 		lines.sort((a, b) -> a.getGroup().compareTo(b.getGroup()));
 		return new SupplyPlan(Collections.unmodifiableList(lines), patchCounts, notDue, travelPlan, warnings, coins,
-			runes.summary, slots, Collections.unmodifiableMap(plantings), staffSwaps(swaps, holdings, itemName));
+			runes.summary, slots, Collections.unmodifiableMap(plantings), staffSwaps(swaps, holdings, itemName),
+			Collections.unmodifiableMap(care));
+	}
+
+	/** Buckets of each compost the player has anywhere, and the bottomless bucket's uses of the compost it holds. */
+	static Map<Compost, Integer> compostAvailable(Holdings holdings)
+	{
+		final Map<Compost, Integer> left = new EnumMap<>(Compost.class);
+		for (Compost c : Compost.values())
+		{
+			if (c != Compost.NONE)
+			{
+				left.put(c, holdings.count(c.getItemId()));
+			}
+		}
+		final Compost bucket = holdings.getBucketCompost();
+		if (bucket != null && holdings.count(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED) > 0)
+		{
+			// Uses not known yet (not checked): enough for any run
+			left.merge(bucket, holdings.getBucketUses() < 0 ? Integer.MAX_VALUE / 2 : holdings.getBucketUses(),
+				Integer::sum);
+		}
+		return left;
+	}
+
+	/**
+	 * The best compost from {@code from} down (ultracompost, supercompost, compost) that the player still has some of;
+	 * {@code from} itself if they have none (so the supply list asks for it), or if a bottomless bucket's compost isn't
+	 * known yet.
+	 */
+	static Compost fallBack(Map<Compost, Integer> left, Compost from, boolean bucketUnknown)
+	{
+		if (bucketUnknown)
+		{
+			return from;
+		}
+		final Compost[] tiers = {Compost.ULTRACOMPOST, Compost.SUPERCOMPOST, Compost.COMPOST};
+		boolean reached = false;
+		for (Compost c : tiers)
+		{
+			reached |= c == from;
+			if (reached && left.getOrDefault(c, 0) > 0)
+			{
+				return c;
+			}
+		}
+		return from;
 	}
 
 	/** Setting off for this stop needs the fairy ring staff wielded (the ring itself, not just a way to it). */
