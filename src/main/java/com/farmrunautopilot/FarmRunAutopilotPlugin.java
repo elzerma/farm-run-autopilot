@@ -200,7 +200,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		settings.load();
 		// Read the bundled walking grid now, not on the client thread when a route is first planned
 		WalkGrid.loaded();
-		// The travel atlas, for the dev client's log (sprint T2 of docs/plans/travel-rework.md)
+		// The travel atlas routes are planned on (docs/plans/travel-rework.md), read in the background
 		runService.startUp();
 		bottomlessBucket.reload();
 		itemCharges.reload();
@@ -234,6 +234,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	{
 		settings.removeListener(onSettingsReloaded);
 		settings.removeSaveListener(onSettingsSaved);
+		runService.shutDown();
 		farmBankTab.shutDown();
 		seedVaultSection.shutDown();
 		overlayManager.remove(guidanceOverlay);

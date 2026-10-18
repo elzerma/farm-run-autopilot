@@ -14,6 +14,11 @@ import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.data.travel.atlas.AtlasHouse;
+import com.farmrunautopilot.data.travel.atlas.AtlasLegs;
+import com.farmrunautopilot.data.travel.atlas.AtlasLinks;
+import com.farmrunautopilot.data.travel.atlas.AtlasOption;
+import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.TravelStyle;
@@ -21,18 +26,25 @@ import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.SupplyCalculator;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import net.runelite.api.Quest;
 import net.runelite.api.Skill;
+import net.runelite.api.coords.WorldPoint;
 
 /**
  * Orders the stops and picks how to reach each one (SPEC 12).
  *
- * <p>Every leg is in seconds: the estimate from {@link TravelTimes} (cast, walk, rides, overhead), replaced by
- * the player's own recorded times once there are enough. Preferences (prefer walking, the travel style) only
- * choose between ways of making a leg; they never change its seconds. A leg the player can't make yet carries a
+ * <p>Every leg is in seconds. With the travel atlas (docs/plans/travel-rework.md, sprint T3) every way the player can
+ * use is weighed: any teleport, hop or way out of their house, from where they are, timed by the atlas's walking tiles
+ * and transport ticks with the plugin's own timing for each kind of teleport (the quetzal whistle's wait). Without it
+ * (it didn't load), the plugin's own travel methods and tables (TravelTimes). The player's recorded times never choose
+ * (elzerma, 2026-10-17: times are for the estimate and personal bests). Preferences (prefer walking, the travel style)
+ * only choose between ways of making a leg; they never change its seconds. A leg the player can't make yet carries a
  * penalty for the ordering so it goes where it hurts least, but its seconds stay honest.
  */
 public final class RoutePlanner
@@ -59,12 +71,15 @@ public final class RoutePlanner
 	static final double SECONDS_PER_PATCH = 20;
 	/** Above this many stops, use a fast near-optimal search instead of an exact one. */
 	static final int EXACT_LIMIT = 14;
+	/** The first leg also starts from the atlas's places this close to where the player stands (straight-line tiles). */
+	static final int FIRST_LEG_TILES = 20;
 
 	private final RunConfig config;
 	private final AccessSnapshot access;
 	private final Holdings holdings;
 	private final PohSetup poh;
-	private final LearnedTimes learned;
+	/** The travel atlas for this player, or null to plan on the old tables. */
+	private final RouteAtlas atlas;
 	/** Work out Auto's own pick, ignoring any teleport the player chose (for showing "Auto (best)"). */
 	private boolean ignoreChoices;
 	/** Charges held before the run, for ruling out items with none to spare. */
@@ -78,15 +93,23 @@ public final class RoutePlanner
 	private int nearTiles;
 	/** Where the run sets off from for a reason (the Farming Guild, for its seed vault), or null. */
 	private Location startFrom;
+	/** The run's patches: a stop's legs go to and from its patches in the run (all its patches if it has none). */
+	private List<Patch> patches = Collections.emptyList();
+	/** The atlas's places near where the player stands, with the seconds to walk there, for the first leg. */
+	private Map<Integer, Double> nearby = Collections.emptyMap();
+	/** Each stop's atlas places, worked out once. */
+	private final Map<Location, List<Integer>> places = new EnumMap<>(Location.class);
+	/** Legs from the atlas for this player, rebuilt when an item or a daily teleport runs out partway. */
+	private AtlasLegs atlasLegs;
+	private int atlasLegsFor = -1;
 
-	private RoutePlanner(RunConfig config, AccessSnapshot access, Holdings holdings, PohSetup poh,
-		LearnedTimes learned)
+	private RoutePlanner(RunConfig config, AccessSnapshot access, Holdings holdings, PohSetup poh, RouteAtlas atlas)
 	{
 		this.config = config;
 		this.access = access;
 		this.holdings = holdings;
 		this.poh = poh;
-		this.learned = learned;
+		this.atlas = atlas != null && !atlas.getAtlas().isEmpty() ? atlas : null;
 		this.startCharges = new ChargeBudget(holdings, config.isKeepLastCharge());
 	}
 
@@ -95,12 +118,11 @@ public final class RoutePlanner
 	 * player chose for it. Shown on the location's row in the Travel tab.
 	 */
 	public static RouteStop autoPick(Location to, RunConfig config, AccessSnapshot access, Holdings holdings,
-		PohSetup poh, LearnedTimes learned)
+		PohSetup poh, RouteAtlas atlas)
 	{
-		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, learned);
+		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, atlas);
 		planner.ignoreChoices = true;
-		final Leg leg = planner.bestLeg(null, to);
-		return new RouteStop(to, leg.method, leg.departure, leg.seconds, leg.needsSupplies, leg.breakdown);
+		return planner.bestLeg(null, to).stop(to);
 	}
 
 	/**
@@ -108,49 +130,48 @@ public final class RoutePlanner
 	 * e.g. Tree Gnome Village from the Gnome Stronghold.
 	 */
 	static boolean chainsFrom(Location from, Location to, RunConfig config, AccessSnapshot access,
-		Holdings holdings, PohSetup poh, LearnedTimes learned)
+		Holdings holdings, PohSetup poh, RouteAtlas atlas)
 	{
-		return chainSaving(from, to, config, access, holdings, poh, learned) > 0;
+		return chainSaving(from, to, config, access, holdings, poh, atlas) > 0;
 	}
 
 	/** How much quicker a stop is to reach onward from another stop than from anywhere; 0 if it isn't. */
 	static double chainSaving(Location from, Location to, RunConfig config, AccessSnapshot access,
-		Holdings holdings, PohSetup poh, LearnedTimes learned)
+		Holdings holdings, PohSetup poh, RouteAtlas atlas)
 	{
-		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, learned);
+		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, atlas);
 		return Math.max(0, planner.bestLeg(null, to).seconds - planner.bestLeg(from, to).seconds);
 	}
 
 	/** The best way to a stop from anywhere, e.g. after a bank teleport. */
 	static RouteStop fromAnywhere(Location to, RunConfig config, AccessSnapshot access, Holdings holdings,
-		PohSetup poh, LearnedTimes learned)
+		PohSetup poh, RouteAtlas atlas)
 	{
-		return between(null, to, config, access, holdings, poh, learned);
+		return between(null, to, config, access, holdings, poh, atlas);
 	}
 
 	/** The best way from one place to another, e.g. from a stop to the Farming Guild's bank; from anywhere if null. */
 	static RouteStop between(Location from, Location to, RunConfig config, AccessSnapshot access, Holdings holdings,
-		PohSetup poh, LearnedTimes learned)
+		PohSetup poh, RouteAtlas atlas)
 	{
-		final Leg leg = new RoutePlanner(config, access, holdings, poh, learned).bestLeg(from, to);
-		return new RouteStop(to, leg.method, leg.departure, leg.seconds, leg.needsSupplies, leg.breakdown);
+		return new RoutePlanner(config, access, holdings, poh, atlas).bestLeg(from, to).stop(to);
 	}
 
 	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
 		PohSetup poh)
 	{
-		return plan(patches, config, access, holdings, poh, LearnedTimes.NONE, null);
+		return plan(patches, config, access, holdings, poh, null, null);
 	}
 
 	/**
 	 * @param patches the patches in this run
-	 * @param learned the player's recorded leg times
+	 * @param atlas the travel atlas for this player, or null to plan on the old tables
 	 * @param here the stop the player is standing at, or null: the run starts there with no travel (GitHub #1)
 	 */
 	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
-		PohSetup poh, LearnedTimes learned, Location here)
+		PohSetup poh, RouteAtlas atlas, Location here)
 	{
-		return plan(patches, config, access, holdings, poh, learned, here, null, 0);
+		return plan(patches, config, access, holdings, poh, atlas, here, null, 0);
 	}
 
 	/**
@@ -158,9 +179,9 @@ public final class RoutePlanner
 	 * @param nearTiles how far the player is from that stop's nearest patch
 	 */
 	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
-		PohSetup poh, LearnedTimes learned, Location here, Location near, int nearTiles)
+		PohSetup poh, RouteAtlas atlas, Location here, Location near, int nearTiles)
 	{
-		return plan(patches, config, access, holdings, poh, learned, here, near, nearTiles, null);
+		return plan(patches, config, access, holdings, poh, atlas, here, near, nearTiles, null);
 	}
 
 	/**
@@ -169,7 +190,17 @@ public final class RoutePlanner
 	 *     from there. Standing at a stop or a start picked in the Run options comes first.
 	 */
 	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
-		PohSetup poh, LearnedTimes learned, Location here, Location near, int nearTiles, Location startFrom)
+		PohSetup poh, RouteAtlas atlas, Location here, Location near, int nearTiles, Location startFrom)
+	{
+		return plan(patches, config, access, holdings, poh, atlas, here, near, nearTiles, startFrom, null);
+	}
+
+	/**
+	 * @param tile where the player stands, or null: with the atlas, the first leg can also start on foot from there
+	 *     (a walk, the spirit tree or fairy ring beside them) rather than by a teleport from anywhere
+	 */
+	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
+		PohSetup poh, RouteAtlas atlas, Location here, Location near, int nearTiles, Location startFrom, WorldPoint tile)
 	{
 		final List<Location> stops = new ArrayList<>();
 		for (Location location : Location.values())
@@ -187,10 +218,12 @@ public final class RoutePlanner
 		{
 			return new Route(new ArrayList<>(), config.getRouteMode(), 0, 0);
 		}
-		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, learned);
+		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, atlas);
 		planner.near = near;
 		planner.nearTiles = nearTiles;
 		planner.startFrom = startFrom;
+		planner.patches = patches;
+		planner.nearby = planner.nearbyPlaces(tile);
 		return planner.plan(stops, patches.size(), here);
 	}
 
@@ -239,7 +272,7 @@ public final class RoutePlanner
 		final double[] endCost = new double[n];
 		for (int j = 0; j < n; j++)
 		{
-			endCost[j] = config.isEndNearBank() ? bankTiles(stops.get(j)) * SECONDS_PER_TILE : 0;
+			endCost[j] = config.isEndNearBank() ? bankSeconds(stops.get(j)) : 0;
 		}
 		// Already standing at a stop: start there, with nothing to travel or bring for it
 		final int standingAt = here == null ? -1 : stops.indexOf(here);
@@ -266,10 +299,10 @@ public final class RoutePlanner
 			// the search, which would trade it for a second or two (e.g. ending the run at the Stronghold's bank);
 			// a player near a patch expects to do it first.
 			final int j = stops.indexOf(near);
-			final double walk = learned.adjust(null, near, null, Departure.WALK,
-				nearTiles * SECONDS_PER_TILE + TravelTimes.WALK_OVERHEAD);
+			final double walk = nearTiles * SECONDS_PER_TILE + TravelTimes.WALK_OVERHEAD;
 			// Teleports carry the walking preference, as everywhere else
-			if (walk < firstLeg[j].seconds + (firstLeg[j].method != null ? teleportPreference() : 0))
+			final boolean travels = firstLeg[j].departure != Departure.WALK && firstLeg[j].departure != Departure.NONE;
+			if (walk < firstLeg[j].seconds + (travels ? teleportPreference() : 0))
 			{
 				firstLeg[j] = new Leg(null, Departure.WALK, walk, false, nearTiles + " tiles from here");
 			}
@@ -294,15 +327,13 @@ public final class RoutePlanner
 				break;
 		}
 
-		final Leg[] chosen = spendCharges(stops, order, firstLeg[order[0]], legs);
+		final Leg[] chosen = spendCharges(stops, order, firstLeg[order[0]], legs, offStop ? startFrom : null);
 		final List<RouteStop> result = new ArrayList<>();
 		double travel = 0;
 		for (int k = 0; k < order.length; k++)
 		{
-			final Leg leg = chosen[k];
-			result.add(new RouteStop(stops.get(order[k]), leg.method, leg.departure, leg.seconds, leg.needsSupplies,
-				leg.breakdown));
-			travel += leg.seconds;
+			result.add(chosen[k].stop(stops.get(order[k])));
+			travel += chosen[k].seconds;
 		}
 		travel += endCost[order[order.length - 1]];
 		return new Route(result, config.getRouteMode(), travel, patchCount * SECONDS_PER_PATCH,
@@ -574,6 +605,35 @@ public final class RoutePlanner
 		return tiles != null ? tiles : TravelTimes.NO_BANK_TILES;
 	}
 
+	/**
+	 * Seconds from a stop to its nearest bank, for "finish near a bank": the atlas's way from the stop's patches in the
+	 * run to any bank it knows, or the old table's walk.
+	 */
+	private double bankSeconds(Location location)
+	{
+		final AtlasLegs legs = legs();
+		Double best = null;
+		if (legs != null)
+		{
+			for (int from : places(location))
+			{
+				for (TravelAtlas.Place bank : atlas.getAtlas().getPlaces())
+				{
+					if (bank.getKind() != TravelAtlas.Kind.BANK)
+					{
+						continue;
+					}
+					final AtlasOption walk = legs.walk(from, bank.getId());
+					if (walk != null && (best == null || walk.getSeconds() < best))
+					{
+						best = walk.getSeconds();
+					}
+				}
+			}
+		}
+		return best != null ? best : bankTiles(location) * SECONDS_PER_TILE;
+	}
+
 	// Legs
 
 	/** How one leg is travelled and what it costs. */
@@ -590,6 +650,8 @@ public final class RoutePlanner
 		final double cost;
 		/** How the seconds were worked out, for the log. */
 		final String breakdown;
+		/** The way, for a leg only the atlas knows ({@link Departure#ATLAS}); otherwise null. */
+		final AtlasLeg atlas;
 
 		Leg(TravelMethod method, Departure departure, double seconds, boolean needsSupplies, String breakdown)
 		{
@@ -599,6 +661,12 @@ public final class RoutePlanner
 		Leg(TravelMethod method, Departure departure, double seconds, boolean needsSupplies, double penalty,
 			String breakdown)
 		{
+			this(method, departure, seconds, needsSupplies, penalty, breakdown, null);
+		}
+
+		Leg(TravelMethod method, Departure departure, double seconds, boolean needsSupplies, double penalty,
+			String breakdown, AtlasLeg atlas)
+		{
 			this.method = method;
 			this.departure = departure;
 			this.seconds = seconds;
@@ -606,10 +674,16 @@ public final class RoutePlanner
 			this.penalty = penalty;
 			this.cost = seconds + penalty;
 			this.breakdown = breakdown;
+			this.atlas = atlas;
+		}
+
+		RouteStop stop(Location to)
+		{
+			return new RouteStop(to, method, departure, seconds, needsSupplies, breakdown, atlas);
 		}
 	}
 
-	/** A way of making a leg before overhead and learned times, with how its seconds add up. */
+	/** A way of making a leg before overhead, with how its seconds add up. */
 	private static final class Option
 	{
 		final TravelMethod method;
@@ -635,10 +709,291 @@ public final class RoutePlanner
 	/**
 	 * The quickest way from {@code from} (null at the start of the run) to {@code to}. The player's chosen
 	 * method is a preference: it's used whenever it can be (cast, or its item or tablet owned), otherwise every
-	 * unlocked method is considered, directly or through the house (GitHub #2: a Lunar spell chosen on the
+	 * way the player can use is considered, directly or through the house (GitHub #2: a Lunar spell chosen on the
 	 * standard book). Methods the player lacks the item or tablet for only win if nothing else is possible.
 	 */
 	Leg bestLeg(Location from, Location to)
+	{
+		final AtlasLegs legs = legs();
+		if (legs != null)
+		{
+			final List<Integer> toPlaces = places(to);
+			final Map<Integer, Double> fromPlaces = from == null ? nearby : at(from);
+			if (!toPlaces.isEmpty() && (from == null || !fromPlaces.isEmpty()))
+			{
+				final Leg leg = atlasLeg(legs, fromPlaces, toPlaces, to);
+				return leg != null ? leg : missingLeg(to, ignoreChoices ? null : config.getTravel().get(to), unlockedTo(to));
+			}
+		}
+		return tableLeg(from, to);
+	}
+
+	/**
+	 * The leg the player would pick among the atlas's options: the quickest, with the walking preference, the travel
+	 * style, the whistle's charge and Renu as tie-breaks; the player's chosen method whenever an option is it. Null if
+	 * the atlas has no way at all for this player.
+	 */
+	private Leg atlasLeg(AtlasLegs legs, Map<Integer, Double> from, List<Integer> to, Location location)
+	{
+		final TravelMethod chosen = ignoreChoices ? null : config.getTravel().get(location);
+		final boolean chosenUnlocked = chosen != null && access.missingFor(chosen).isEmpty();
+		final Departure chosenHow = chosenUnlocked ? config.getTravelHow().get(location) : null;
+		final TravelAtlas data = atlas.getAtlas();
+		AtlasOption best = null;
+		AtlasTravel.Match bestMatch = null;
+		double bestRank = Double.MAX_VALUE;
+		AtlasOption picked = null;
+		AtlasTravel.Match pickedMatch = null;
+		double pickedRank = Double.MAX_VALUE;
+		// The player's choice can be any way slower, so everything is looked at; otherwise only what could win
+		for (AtlasOption option : legs.options(from, to, chosenUnlocked ? Double.MAX_VALUE : OPTION_SLACK))
+		{
+			// Quickest first, and nothing takes more off than Renu's preference: the rest can't win
+			final double floor = option.getSeconds() + TravelTimes.WALK_OVERHEAD - RENU_PREFERENCE;
+			if (floor > bestRank && (!chosenUnlocked || floor > pickedRank))
+			{
+				break;
+			}
+			final AtlasTravel.Match match = AtlasTravel.match(data, option, location);
+			final double rank = rank(option, match, location);
+			if (rank < bestRank)
+			{
+				best = option;
+				bestMatch = match;
+				bestRank = rank;
+			}
+			if (chosenUnlocked && match.getMethod() == chosen && (chosenHow == null || chosenHow == match.getDeparture())
+				&& rank < pickedRank)
+			{
+				picked = option;
+				pickedMatch = match;
+				pickedRank = rank;
+			}
+		}
+		if (picked != null)
+		{
+			return atlasLeg(legs, picked, pickedMatch);
+		}
+		return best == null ? null : atlasLeg(legs, best, bestMatch);
+	}
+
+	/** What the player would weigh an option by: its seconds and overhead, with the preferences and style. */
+	private double rank(AtlasOption option, AtlasTravel.Match match, Location to)
+	{
+		final boolean walking = match.getDeparture() == Departure.WALK;
+		final double seconds = option.getSeconds() + (walking ? TravelTimes.WALK_OVERHEAD : TravelTimes.LEG_OVERHEAD);
+		if (walking)
+		{
+			return seconds;
+		}
+		final double style = config.getTravelStyle() == TravelStyle.FASTEST ? 0
+			: stylePenalty(config.getTravelStyle(), match.getMethod() != null
+			? cost(new Leg(match.getMethod(), match.getDeparture(), 0, false, ""), to) : atlasCost(option, to));
+		return seconds + preference(option, match) + teleportPreference() + style;
+	}
+
+	/**
+	 * A whistle flight spends a charge, Renu from a pad doesn't (elzerma: run back to the Kastori pad for Renu) and
+	 * needs no runes either, so it wins a tie (elzerma: the run back to Kastori's pad is short).
+	 */
+	private static double preference(AtlasOption option, AtlasTravel.Match match)
+	{
+		if (option.getTeleport() != null && option.getTeleport().getType().equals("QUETZAL_WHISTLE"))
+		{
+			return WHISTLE_CHARGE_PENALTY;
+		}
+		final boolean renu = match.getDeparture() == Departure.RENU
+			|| option.getKind() == AtlasOption.Kind.HOP && option.getHop().getType().equals("QUETZAL");
+		return renu ? -RENU_PREFERENCE : 0;
+	}
+
+	/** The planner's leg for an atlas option, with its overhead, and the way described if it's only the atlas's. */
+	private Leg atlasLeg(AtlasLegs legs, AtlasOption option, AtlasTravel.Match match)
+	{
+		final boolean walking = match.getDeparture() == Departure.WALK;
+		final double overhead = walking ? TravelTimes.WALK_OVERHEAD : TravelTimes.LEG_OVERHEAD;
+		final AtlasLeg described = match.getDeparture() == Departure.ATLAS
+			? AtlasTravel.leg(atlas.getAtlas(), option, holdings, this::owns) : null;
+		return new Leg(match.getMethod(), match.getDeparture(), option.getSeconds() + overhead, false,
+			walking ? 0 : preference(option, match), legs.breakdown(option) + " + overhead " + round(overhead), described);
+	}
+
+	/** What an option the plugin doesn't know as one of its methods costs besides time, for the travel styles. */
+	private Cost atlasCost(AtlasOption option, Location to)
+	{
+		switch (option.getKind())
+		{
+			case WALK:
+			case HOP:
+			case TREE_HOUSE:
+				return Cost.FREE;
+			case HOUSE:
+				return capeHome() ? Cost.FREE : Cost.HOUSE;
+			default:
+				final TravelAtlas data = atlas.getAtlas();
+				final TravelAtlas.Jump teleport = option.getTeleport();
+				final Spell spell = AtlasLinks.spell(data, teleport);
+				if (spell != null)
+				{
+					return SupplyCalculator.usesTablet(spell, to, config, access, holdings) ? Cost.TABLET : Cost.RUNES;
+				}
+				final TravelItem item = AtlasTravel.item(data, teleport, this::owns);
+				if (item != null)
+				{
+					return isLimited(item, AtlasTravel.daily(data, teleport)) ? Cost.CHARGES : Cost.FREE;
+				}
+				return teleport.isConsumable() ? Cost.TABLET : Cost.FREE;
+		}
+	}
+
+	/** The atlas's legs for this player now, or null without the atlas. */
+	private AtlasLegs legs()
+	{
+		if (atlas == null)
+		{
+			return null;
+		}
+		// Rebuilt once an item or a daily teleport is found to run out partway, so it's ruled out; until then the same
+		// as every other plan and question for this player, so shared
+		final int version = usedUp.size() * 1000 + usedUpToday.size();
+		if (atlasLegs == null || atlasLegsFor != version)
+		{
+			atlasLegs = version == 0
+				? atlas.freshLegs(new Object[]{config, access, holdings, poh}, this::newLegs) : newLegs();
+			atlasLegsFor = version;
+		}
+		return atlasLegs;
+	}
+
+	/** The atlas's legs for this player as they are in this plan (what's used up so far, the house). */
+	private AtlasLegs newLegs()
+	{
+		final boolean trees = access.isMet(Requirement.unlock(Unlock.SPIRIT_TREES));
+		final Double teleportIn = canTeleportHome() ? houseTeleportSeconds()
+			+ (poh.isTeleportOutside() ? TravelTimes.HOUSE_DOOR : 0) + TravelTimes.HOUSE_WALK : null;
+		final AtlasHouse house = AtlasHouse.of(atlas.getAtlas(), atlas.getAccount(), poh, teleportIn, trees);
+		return new AtlasLegs(atlas.getAtlas(), atlas.getAccount(), house, this::teleportExtra);
+	}
+
+	/**
+	 * The plugin's own rules for its items and spells, for the atlas's teleports: an item needs a charge to spare and
+	 * a use left today, and isn't used up earlier in this run; a spell needs casting (levels, quests, a spellbook it
+	 * can get to), and costs a spellbook swap off its book. Null if the player can't use it.
+	 */
+	private Double teleportExtra(TravelAtlas.Jump teleport)
+	{
+		final TravelAtlas data = atlas.getAtlas();
+		final Spell spell = AtlasLinks.spell(data, teleport);
+		if (spell != null && teleport.getType().equals("TELEPORTATION_SPELL"))
+		{
+			return access.canCast(spell) ? castSwap(spell) : null;
+		}
+		if (!AtlasLinks.items(data, teleport).isEmpty())
+		{
+			if (!owns(AtlasTravel.item(data, teleport, this::owns)))
+			{
+				return null;
+			}
+			final TravelMethod daily = AtlasTravel.daily(data, teleport);
+			if (daily != null && (!startCharges.hasUseToday(daily) || usedUpToday.contains(daily)))
+			{
+				return null;
+			}
+		}
+		return 0.0;
+	}
+
+	/** Switching spellbook to cast a spell: none on its book, one Spellbook Swap on Lunar, or two altar trips. */
+	private double castSwap(Spell spell)
+	{
+		if (access.isOnSpellbook(spell))
+		{
+			return 0;
+		}
+		return access.needsLunarSwap(spell) ? TravelTimes.TELEPORT : SPELLBOOK_SWAP;
+	}
+
+	/** A stop's patches in this run (all its patches if it has none in the run) as atlas places. */
+	private List<Integer> places(Location location)
+	{
+		return places.computeIfAbsent(location, l ->
+		{
+			final List<Integer> found = new ArrayList<>();
+			final boolean inRun = patches.stream().anyMatch(p -> p.getLocation() == l);
+			for (Patch patch : inRun ? patches : java.util.Arrays.asList(Patch.values()))
+			{
+				final TravelAtlas.Place place = patch.getLocation() == l ? atlas.getAtlas().patchPlace(patch.name()) : null;
+				if (place != null && !found.contains(place.getId()))
+				{
+					found.add(place.getId());
+				}
+			}
+			return found;
+		});
+	}
+
+	/** At a stop: its places, nothing to walk first (the player finishes at whichever patch suits the next leg). */
+	private Map<Integer, Double> at(Location location)
+	{
+		final Map<Integer, Double> from = new HashMap<>();
+		for (int place : places(location))
+		{
+			from.put(place, 0.0);
+		}
+		return from;
+	}
+
+	/** A bank the atlas knows is within {@link #FIRST_LEG_TILES} of where the player stands. */
+	static boolean bankNear(RouteAtlas atlas, WorldPoint tile)
+	{
+		for (TravelAtlas.Place place : atlas.getAtlas().getPlaces())
+		{
+			final WorldPoint p = place.getPoint();
+			if (place.getKind() == TravelAtlas.Kind.BANK && p.getPlane() == tile.getPlane()
+				&& Math.max(Math.abs(p.getX() - tile.getX()), Math.abs(p.getY() - tile.getY())) <= FIRST_LEG_TILES)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** The atlas's places near where the player stands, with the seconds to walk there (straight-line tiles). */
+	private Map<Integer, Double> nearbyPlaces(WorldPoint tile)
+	{
+		if (tile == null || atlas == null)
+		{
+			return Collections.emptyMap();
+		}
+		final Map<Integer, Double> found = new HashMap<>();
+		for (TravelAtlas.Place place : atlas.getAtlas().getPlaces())
+		{
+			final WorldPoint p = place.getPoint();
+			final int tiles = Math.max(Math.abs(p.getX() - tile.getX()), Math.abs(p.getY() - tile.getY()));
+			if (p.getPlane() == tile.getPlane() && tiles <= FIRST_LEG_TILES)
+			{
+				found.put(place.getId(), tiles * SECONDS_PER_TILE);
+			}
+		}
+		return found;
+	}
+
+	/** Every travel method to a stop whose requirements are met. */
+	private List<TravelMethod> unlockedTo(Location to)
+	{
+		final List<TravelMethod> candidates = new ArrayList<>();
+		for (TravelMethod method : TravelMethod.values())
+		{
+			if (method.getDestination() == to && access.missingFor(method).isEmpty())
+			{
+				candidates.add(method);
+			}
+		}
+		return candidates;
+	}
+
+	/** The old tables' best leg: the plugin's own travel methods, measured walks and journeys (TravelTimes). */
+	private Leg tableLeg(Location from, Location to)
 	{
 		final TravelMethod chosen = ignoreChoices ? null : config.getTravel().get(to);
 		final boolean chosenUnlocked = chosen != null && access.missingFor(chosen).isEmpty();
@@ -653,31 +1008,24 @@ public final class RoutePlanner
 			}
 		}
 
-		final List<TravelMethod> candidates = new ArrayList<>();
-		for (TravelMethod method : TravelMethod.values())
-		{
-			if (method.getDestination() == to && access.missingFor(method).isEmpty())
-			{
-				candidates.add(method);
-			}
-		}
+		final List<TravelMethod> candidates = unlockedTo(to);
 		Leg walk = null;
 		final Integer tiles = from == null ? null
 			: TravelTimes.walkTiles(from, to, access.isKnown() ? access.level(Skill.AGILITY) : 0);
 		if (tiles != null)
 		{
-			final double estimate = tiles * SECONDS_PER_TILE + TravelTimes.WALK_OVERHEAD;
-			final double seconds = learned.adjust(from, to, null, Departure.WALK, estimate);
-			walk = new Leg(null, Departure.WALK, seconds, false, "walk " + tiles + " tiles " + round(tiles
-				* SECONDS_PER_TILE) + " + overhead " + round(TravelTimes.WALK_OVERHEAD) + learnedNote(seconds, estimate));
+			walk = new Leg(null, Departure.WALK, tiles * SECONDS_PER_TILE + TravelTimes.WALK_OVERHEAD, false, "walk "
+				+ tiles + " tiles " + round(tiles * SECONDS_PER_TILE) + " + overhead " + round(TravelTimes.WALK_OVERHEAD));
 		}
 		final Leg best = quickest(candidates, from, to, walk, null);
-		if (best != null)
-		{
-			return best;
-		}
+		return best != null ? best : missingLeg(to, chosen, candidates);
+	}
 
-		// Nothing usable: take the chosen method, or the quickest unlocked one, and let the supply list ask for it
+	/**
+	 * Nothing usable: the chosen method, or the quickest unlocked one, for the supply list to ask for; or no way at all.
+	 */
+	private Leg missingLeg(Location to, TravelMethod chosen, List<TravelMethod> candidates)
+	{
 		Leg fallback = null;
 		for (TravelMethod method : candidates)
 		{
@@ -724,15 +1072,13 @@ public final class RoutePlanner
 				{
 					continue;
 				}
-				// The player's own times include the overhead, so the estimate they're blended with does too
-				final double estimate = option.seconds + TravelTimes.LEG_OVERHEAD;
-				final double seconds = learned.adjust(from, to, option.method, option.departure, estimate);
+				final double seconds = option.seconds + TravelTimes.LEG_OVERHEAD;
 				// A whistle flight spends a charge, Renu from a pad doesn't (elzerma: run back to the Kastori pad for Renu)
 				// and needs no runes either, so it wins a tie (elzerma: the run back to Kastori's pad is short)
 				final double charge = option.method.getKind() == TravelKind.QUETZAL && option.departure == Departure.DIRECT
 					? WHISTLE_CHARGE_PENALTY : option.departure == Departure.RENU ? -RENU_PREFERENCE : 0;
 				final Leg leg = new Leg(option.method, option.departure, seconds, false, charge, option.breakdown
-					+ " + overhead " + round(TravelTimes.LEG_OVERHEAD) + learnedNote(seconds, estimate));
+					+ " + overhead " + round(TravelTimes.LEG_OVERHEAD));
 				final double rank = seconds + charge + teleportPreference() + stylePenalty(leg, to);
 				if (rank < bestRank)
 				{
@@ -935,19 +1281,20 @@ public final class RoutePlanner
 		return String.valueOf(Math.round(seconds));
 	}
 
-	private static String learnedNote(double seconds, double estimate)
-	{
-		return Math.abs(seconds - estimate) < 0.5 ? "" : " (your times: " + round(seconds) + ")";
-	}
-
 	/** Teleport to House by a cape, a tablet, or the spell (switching spellbook first if it's another book). */
 	private double houseTeleportSeconds()
 	{
-		if (owns(TravelItem.CONSTRUCTION_CAPE) || owns(TravelItem.MAX_CAPE))
+		if (capeHome())
 		{
 			return TravelTimes.ITEM_TELEPORT;
 		}
 		return TravelTimes.TELEPORT + spellbookSwap(Spell.TELEPORT_TO_HOUSE);
+	}
+
+	/** A construction cape or max cape gets the player home without a tablet or runes. */
+	private boolean capeHome()
+	{
+		return owns(TravelItem.CONSTRUCTION_CAPE) || owns(TravelItem.MAX_CAPE);
 	}
 
 	/** Seconds to get to a fairy ring this way, or null if the player can't. */
@@ -995,12 +1342,7 @@ public final class RoutePlanner
 	private double spellbookSwap(Spell spell)
 	{
 		final boolean tablet = spell.hasTablet() && holdings.count(spell.getTabletItemId()) > 0;
-		if (tablet || access.isOnSpellbook(spell))
-		{
-			return 0;
-		}
-		// On Lunar, Spellbook Swap is one more cast; otherwise it's two trips to the house altar
-		return access.needsLunarSwap(spell) ? TravelTimes.TELEPORT : SPELLBOOK_SWAP;
+		return tablet ? 0 : castSwap(spell);
 	}
 
 	private boolean canTeleport(Spell spell)
@@ -1011,7 +1353,7 @@ public final class RoutePlanner
 	/** Teleport to House by spell, tablet, construction cape or max cape. */
 	boolean canTeleportHome()
 	{
-		return canTeleport(Spell.TELEPORT_TO_HOUSE) || owns(TravelItem.CONSTRUCTION_CAPE) || owns(TravelItem.MAX_CAPE);
+		return canTeleport(Spell.TELEPORT_TO_HOUSE) || capeHome();
 	}
 
 	private boolean hasFairyRingStaff()
@@ -1035,6 +1377,12 @@ public final class RoutePlanner
 
 	/** Seconds a style adds to ways it doesn't favour, so those win only when clearly quicker. */
 	static final double STYLE_PENALTY = 15;
+	/**
+	 * How much slower than the quickest an atlas option can be and still be picked: the difference in overhead between
+	 * a walk and the rest, and every preference (the style, prefer walking, the whistle, Renu) at once.
+	 */
+	static final double OPTION_SLACK = TravelTimes.LEG_OVERHEAD - TravelTimes.WALK_OVERHEAD + STYLE_PENALTY
+		+ PREFER_WALKING_SECONDS + WHISTLE_CHARGE_PENALTY + RENU_PREFERENCE + 1;
 
 	/** Extra cost of a leg under the chosen Auto (best) style; 0 for Fastest. */
 	private double stylePenalty(Leg leg, Location to)
@@ -1065,15 +1413,14 @@ public final class RoutePlanner
 
 	private Cost cost(Leg leg, Location to)
 	{
-		final boolean capeHome = owns(TravelItem.CONSTRUCTION_CAPE) || owns(TravelItem.MAX_CAPE);
-		// Into the house by a spirit tree costs nothing (issue #16)
-		if (leg.departure.isByTree())
+		// Into the house by a spirit tree costs nothing (issue #16), nor does Renu from a pad (no whistle charge)
+		if (leg.departure.isByTree() || leg.departure == Departure.RENU)
 		{
 			return Cost.FREE;
 		}
 		if (leg.departure.isViaHouse() || leg.method.getKind() == TravelKind.HOUSE_PORTAL)
 		{
-			return capeHome ? Cost.FREE : Cost.HOUSE;
+			return capeHome() ? Cost.FREE : Cost.HOUSE;
 		}
 		if (leg.departure.getFairyRingAccess() != null)
 		{
@@ -1093,18 +1440,23 @@ public final class RoutePlanner
 	private boolean isLimited(TravelItem item, TravelMethod method)
 	{
 		return ChargeBudget.held(item, holdings) != null || ChargeBudget.chargesUnknown(item, holdings)
-			|| ChargeBudget.leftToday(method, holdings) != null;
+			|| method != null && ChargeBudget.leftToday(method, holdings) != null;
 	}
 
 	/** Held, with a charge to spare, and not already used up earlier in this run. */
 	private boolean owns(TravelItem item)
 	{
-		return holdings.countAny(item.getItemIds()) > 0 && startCharges.hasCharge(item) && !usedUp.contains(item);
+		return item != null && holdings.countAny(item.getItemIds()) > 0 && startCharges.hasCharge(item)
+			&& !usedUp.contains(item);
 	}
 
 	/** The charged item a leg uses up a charge of, or null (spells, walking, the house, unlimited items). */
 	private TravelItem itemUsed(Leg leg)
 	{
+		if (leg.atlas != null)
+		{
+			return leg.atlas.getItem();
+		}
 		if (leg.method == null)
 		{
 			return null;
@@ -1127,23 +1479,35 @@ public final class RoutePlanner
 		return null;
 	}
 
+	/** The daily-limited teleport a leg uses one of today's uses of, or null. */
+	private static TravelMethod dailyUsed(Leg leg)
+	{
+		if (leg.atlas != null)
+		{
+			return leg.atlas.getDaily();
+		}
+		return leg.departure == Departure.DIRECT ? leg.method : null;
+	}
+
 	/**
 	 * Walk the planned order spending charges, pooled per item; a leg whose item has none left is planned again
 	 * without that item (e.g. a slayer ring with one charge covers one stop, not two).
+	 *
+	 * @param firstFrom where the first leg sets off from, or null for anywhere (or where the player stands)
 	 */
-	private Leg[] spendCharges(List<Location> stops, int[] order, Leg first, Leg[][] legs)
+	private Leg[] spendCharges(List<Location> stops, int[] order, Leg first, Leg[][] legs, Location firstFrom)
 	{
 		final ChargeBudget budget = new ChargeBudget(holdings, config.isKeepLastCharge());
 		final Leg[] chosen = new Leg[order.length];
 		for (int k = 0; k < order.length; k++)
 		{
-			final Location from = k == 0 ? null : stops.get(order[k - 1]);
+			final Location from = k == 0 ? firstFrom : stops.get(order[k - 1]);
 			final Location to = stops.get(order[k]);
 			Leg leg = k == 0 ? first : legs[order[k - 1]][order[k]];
 			while (true)
 			{
 				final TravelItem item = itemUsed(leg);
-				final TravelMethod daily = leg.departure == Departure.DIRECT ? leg.method : null;
+				final TravelMethod daily = dailyUsed(leg);
 				final boolean itemOut = item != null && !budget.hasCharge(item);
 				final boolean dailyOut = daily != null && !budget.hasUseToday(daily);
 				if (!itemOut && !dailyOut)
@@ -1164,7 +1528,7 @@ public final class RoutePlanner
 				{
 					// Nothing else gets there: keep it, as something to recharge or come back to tomorrow
 					leg = new Leg(leg.method, leg.departure, leg.seconds, true, MISSING_PENALTY,
-						leg.breakdown + ", no charges left");
+						leg.breakdown + ", no charges left", leg.atlas);
 					break;
 				}
 				leg = bestLeg(from, to);

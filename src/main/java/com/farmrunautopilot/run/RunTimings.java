@@ -2,7 +2,6 @@ package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.FarmRunAutopilotConfig;
 import com.farmrunautopilot.data.PatchType;
-import com.farmrunautopilot.route.LearnedTimes;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import java.util.ArrayList;
@@ -20,8 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.config.ConfigManager;
 
 /**
- * Saves how long each leg and run took, per account (SPEC 12.4). LearnedTimes uses these to replace the
- * starting time estimates with the player's own.
+ * Saves how long each leg and run took, per account (SPEC 12.4): for the run estimate at the player's own pace and their
+ * best times (docs/plans/travel-rework.md, section 5). They never choose the route (elzerma, 2026-10-17).
  */
 @Slf4j
 @Singleton
@@ -97,9 +96,8 @@ public class RunTimings
 
 	private final ConfigManager configManager;
 	private final Gson gson;
-	/** Saved runs and learned leg times for {@link #cachedProfile}, so they aren't re-read every tick. */
+	/** Saved runs for {@link #cachedProfile}, so they aren't re-read every tick. */
 	private List<Run> cachedRuns;
-	private LearnedTimes cachedLearned;
 	/** Each finished run's time per patch type, oldest first. */
 	private List<Map<PatchType, TypeTimes.Part>> cachedTypes;
 	private String cachedProfile;
@@ -121,7 +119,6 @@ public class RunTimings
 		savedRuns.add(run);
 		write(RUNS_KEY, trim(savedRuns, MAX_RUNS));
 		cachedRuns = null;
-		cachedLearned = null;
 		cachedTypes = null;
 	}
 
@@ -185,44 +182,13 @@ public class RunTimings
 		return best(cachedRuns, makeup, limit);
 	}
 
-	/** The player's recorded times for each way of reaching each stop. */
-	public LearnedTimes learned()
-	{
-		checkProfile();
-		if (cachedLearned == null)
-		{
-			cachedLearned = learned(read(LEGS_KEY, Leg[].class));
-		}
-		return cachedLearned;
-	}
-
-	public static LearnedTimes learned(List<Leg> legs)
-	{
-		final Map<String, List<Double>> samples = new HashMap<>();
-		for (Leg leg : legs)
-		{
-			// The trip to the first stop starts wherever the player banked, so it isn't a sample
-			if (leg.getDeparture() == null || leg.getLocation() == null || "START".equals(leg.getDeparture()))
-			{
-				continue;
-			}
-			final String key = LearnedTimes.key(leg.getFrom(), leg.getLocation(), leg.getMethod(), leg.getDeparture());
-			if (key != null)
-			{
-				samples.computeIfAbsent(key, k -> new ArrayList<>()).add(leg.getSeconds());
-			}
-		}
-		return new LearnedTimes(samples);
-	}
-
 	private void checkProfile()
 	{
 		final String profile = configManager.getRSProfileKey();
 		if (!Objects.equals(profile, cachedProfile))
 		{
 			cachedRuns = null;
-			cachedLearned = null;
-			cachedTypes = null;
+				cachedTypes = null;
 			cachedProfile = profile;
 		}
 	}
@@ -294,13 +260,12 @@ public class RunTimings
 		return String.join(", ", parts);
 	}
 
-	/** Forget every recorded leg and run (learned times and best times) for this account. */
+	/** Forget every recorded leg and run (best times and pace) for this account. */
 	public void clear()
 	{
 		configManager.unsetRSProfileConfiguration(FarmRunAutopilotConfig.GROUP, LEGS_KEY);
 		configManager.unsetRSProfileConfiguration(FarmRunAutopilotConfig.GROUP, RUNS_KEY);
 		cachedRuns = null;
-		cachedLearned = null;
 		cachedTypes = null;
 	}
 

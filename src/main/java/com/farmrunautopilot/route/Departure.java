@@ -38,6 +38,8 @@ public enum Departure
 	FAIRY_RING_QUEST_CAPE(false, FairyRingAccess.QUEST_CAPE),
 	/** Back to the quetzal landing pad by the stop just finished, then Renu (no whistle charge). */
 	RENU(false, null),
+	/** A way from the travel atlas that isn't one of the plugin's travel methods: see the stop's {@link AtlasLeg}. */
+	ATLAS(false, null),
 	/** Just walk from the previous stop. */
 	WALK(false, null),
 	/** No unlocked way to get there. */

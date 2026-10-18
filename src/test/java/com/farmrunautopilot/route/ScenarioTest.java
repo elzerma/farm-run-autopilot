@@ -25,7 +25,7 @@ public class ScenarioTest
 	private static List<RouteStop> plan(List<Patch> patches, Location near, int nearTiles)
 	{
 		return RoutePlanner.plan(patches, new RunConfig().sanitise(), ElzermaAccount.access(), ElzermaAccount.holdings(),
-			new PohSetup(), LearnedTimes.NONE, null, near, nearTiles).getStops();
+			new PohSetup(), null, null, near, nearTiles).getStops();
 	}
 
 	private static int indexOf(List<RouteStop> stops, Location location)
@@ -112,7 +112,7 @@ public class ScenarioTest
 		// which is faster: the charge penalty is only a tie-breaker
 		final List<Patch> herbs = Arrays.asList(Patch.CIVITAS_HERB, Patch.CATHERBY_HERB, Patch.ARDOUGNE_HERB);
 		final List<RouteStop> stops = RoutePlanner.plan(herbs, new RunConfig().sanitise(), ElzermaAccount.access(),
-			ElzermaAccount.holdings(), new PohSetup(), LearnedTimes.NONE, null, null, 0).getStops();
+			ElzermaAccount.holdings(), new PohSetup(), null, null, null, 0).getStops();
 		assertEquals(describe(stops), TravelMethod.QUETZAL_HUNTER_GUILD,
 			stops.get(indexOf(stops, Location.CIVITAS_ILLA_FORTIS)).getMethod());
 	}
@@ -126,7 +126,7 @@ public class ScenarioTest
 		final List<Patch> varlamore = Arrays.asList(Patch.KASTORI_FRUIT_TREE, Patch.NEMUS_RETREAT_TREE, Patch.CIVITAS_HERB);
 		final List<RouteStop> stops = RoutePlanner.plan(varlamore, new RunConfig().sanitise(),
 			ElzermaAccount.access(), ElzermaAccount.holdingsWithout(ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE),
-			new PohSetup(), LearnedTimes.NONE, null, null, 0).getStops();
+			new PohSetup(), null, null, null, 0).getStops();
 		int seen = 0;
 		for (RouteStop stop : stops)
 		{
@@ -177,7 +177,7 @@ public class ScenarioTest
 	public void treeGnomeVillageIsQuickerByTheStrongholdSpiritTreeThanByFairyRing()
 	{
 		assertTrue(RoutePlanner.chainsFrom(Location.GNOME_STRONGHOLD, Location.TREE_GNOME_VILLAGE,
-			new RunConfig().sanitise(), ElzermaAccount.access(), ElzermaAccount.holdings(), new PohSetup(), LearnedTimes.NONE));
+			new RunConfig().sanitise(), ElzermaAccount.access(), ElzermaAccount.holdings(), new PohSetup(), null));
 	}
 
 	// Banking partway
@@ -199,7 +199,7 @@ public class ScenarioTest
 	{
 		final RunConfig config = new RunConfig().sanitise();
 		final Route route = RoutePlanner.plan(ElzermaAccount.patches(ALL), config, ElzermaAccount.access(),
-			ElzermaAccount.holdings(), new PohSetup(), LearnedTimes.NONE, null, Location.FALADOR_PARK, 57);
+			ElzermaAccount.holdings(), new PohSetup(), null, null, Location.FALADOR_PARK, 57);
 		final List<RouteStop> stops = route.getStops();
 		final BankPlanner.Guild guild = vaultOnly == null ? null : new BankPlanner.Guild()
 		{
@@ -214,14 +214,14 @@ public class ScenarioTest
 			public RouteStop to(Location from)
 			{
 				return RoutePlanner.between(from, Location.FARMING_GUILD, config, ElzermaAccount.access(),
-					ElzermaAccount.holdings(), new PohSetup(), LearnedTimes.NONE);
+					ElzermaAccount.holdings(), new PohSetup(), null);
 			}
 
 			@Override
 			public RouteStop from(Location to)
 			{
 				return RoutePlanner.between(Location.FARMING_GUILD, to, config, ElzermaAccount.access(),
-					ElzermaAccount.holdings(), new PohSetup(), LearnedTimes.NONE);
+					ElzermaAccount.holdings(), new PohSetup(), null);
 			}
 		};
 		final BankPlanner.Slots slots = (a, b) ->
@@ -237,9 +237,9 @@ public class ScenarioTest
 		return BankPlanner.place(route, slots, 28,
 			com.farmrunautopilot.data.travel.BankTeleport.best(ElzermaAccount.access(), ElzermaAccount.holdings()),
 			(from, to) -> RoutePlanner.chainSaving(from, to, config, ElzermaAccount.access(), ElzermaAccount.holdings(),
-				new PohSetup(), LearnedTimes.NONE),
+				new PohSetup(), null),
 			to -> RoutePlanner.fromAnywhere(to, config, ElzermaAccount.access(), ElzermaAccount.holdings(), new PohSetup(),
-				LearnedTimes.NONE), guild);
+				null), guild);
 	}
 
 	private static String describe(BankPlanner.Result result)

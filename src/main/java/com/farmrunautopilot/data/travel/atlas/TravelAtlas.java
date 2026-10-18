@@ -124,7 +124,8 @@ public final class TravelAtlas
 		}
 	}
 
-	private static TravelAtlas loaded;
+	/** Set once, when read; volatile so the client thread can check it without waiting on the read. */
+	private static volatile TravelAtlas loaded;
 
 	@Getter
 	private final List<Place> places = new ArrayList<>();
@@ -149,7 +150,7 @@ public final class TravelAtlas
 	{
 	}
 
-	/** The atlas, read on first use (call from a plugin start-up, not the client thread); empty if it's missing. */
+	/** The atlas, read on first use (in the background, never on the client thread); empty if it's missing. */
 	public static synchronized TravelAtlas get()
 	{
 		if (loaded == null)
@@ -159,8 +160,8 @@ public final class TravelAtlas
 		return loaded;
 	}
 
-	/** The atlas if it has been read already, else null (so the client thread never reads it). */
-	public static synchronized TravelAtlas ifLoaded()
+	/** The atlas if it has been read already, else null; never waits, so the client thread never reads it. */
+	public static TravelAtlas ifLoaded()
 	{
 		return loaded;
 	}

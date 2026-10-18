@@ -18,8 +18,8 @@ public class TravelPick
 	public String describe()
 	{
 		final String travel = stop.describeTravel();
-		final Spell spell = stop.getMethod() != null ? stop.getMethod().getSpell() : null;
-		if (spell == null || stop.getDeparture() != Departure.DIRECT)
+		final Spell spell = stop.spell();
+		if (spell == null)
 		{
 			return travel;
 		}

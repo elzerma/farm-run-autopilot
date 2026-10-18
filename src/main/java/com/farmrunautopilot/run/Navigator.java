@@ -2,7 +2,6 @@ package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.travel.JourneyStep;
-import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.tracking.PatchTracker;
@@ -147,10 +146,10 @@ class Navigator
 		journeyStep = Math.max(0, step - 1);
 	}
 
-	/** How many journey steps follow the way there (a boat, Elkoy...); none for a walk. */
+	/** How many journey steps follow the way there (a boat, Elkoy, a hop after a teleport...); none for a walk. */
 	static int journeySteps(RouteStop stop)
 	{
-		return stop.getMethod() == null || stop.getDeparture() == Departure.WALK ? 0 : stop.getMethod().getRides().size();
+		return stop.rides().size();
 	}
 
 	/**
@@ -237,9 +236,9 @@ class Navigator
 	{
 		if (!teleported)
 		{
-			// A Renu leg starts with the walk back to the landing pad
+			// A Renu leg starts with the walk back to the landing pad; a way from the atlas may start at a hop or a tree
 			final NPC renu = renuFirst(stop) ? scene.transferNpc(RENU) : null;
-			return renu != null ? renu.getWorldLocation() : null;
+			return renu != null ? renu.getWorldLocation() : stop.getAtlas() != null ? stop.getAtlas().getStart() : null;
 		}
 		final JourneyStep step = journeyStep(stop);
 		final WorldPoint stepAt = step != null ? journeyTarget(step) : null;
@@ -347,23 +346,28 @@ class Navigator
 	/** The journey step to do now, after the teleport and before the walk to the patch, or null. */
 	private JourneyStep journeyStep(RouteStop stop)
 	{
-		final TravelMethod method = stop.getMethod();
-		return teleported && !arrived && method != null && journeyStep < method.getRides().size()
-			? method.getRides().get(journeyStep) : null;
+		final List<JourneyStep> rides = stop.rides();
+		return teleported && !arrived && journeyStep < rides.size() ? rides.get(journeyStep) : null;
 	}
 
 	/**
 	 * A teleport that landed by the journey's first step rather than near the patch, e.g. the Mining Guild,
-	 * which is underground with coordinates far from Falador Park.
+	 * which is underground with coordinates far from Falador Park; or, for a way from the travel atlas, where its
+	 * teleport, hop or house exit lands (the Ectophial, far from Harmony Island).
 	 */
 	private boolean jumpedToFirstStep(RouteStop stop, WorldPoint from, WorldPoint to)
 	{
-		final TravelMethod method = stop.getMethod();
-		if (method == null || method.getRides().isEmpty() || !jumped(from, to))
+		if (!jumped(from, to))
 		{
 			return false;
 		}
-		final WorldPoint at = method.getRides().get(0).getAt();
+		final WorldPoint landing = stop.getAtlas() != null ? stop.getAtlas().getLanding() : null;
+		if (landing != null && landing.getPlane() == to.getPlane() && landing.distanceTo2D(to) <= FIRST_STEP_LANDING_TILES)
+		{
+			return true;
+		}
+		final List<JourneyStep> rides = stop.rides();
+		final WorldPoint at = rides.isEmpty() ? null : rides.get(0).getAt();
 		return at != null && at.getPlane() == to.getPlane() && at.distanceTo2D(to) <= FIRST_STEP_LANDING_TILES;
 	}
 

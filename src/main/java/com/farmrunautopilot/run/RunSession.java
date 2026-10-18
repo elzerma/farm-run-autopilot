@@ -12,6 +12,7 @@ import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.bank.FarmBankTab;
 import com.farmrunautopilot.bank.SeedVaultSection;
+import com.farmrunautopilot.route.AtlasLeg;
 import com.farmrunautopilot.route.BankStop;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.RouteStop;
@@ -1209,8 +1210,7 @@ public class RunSession
 	{
 		legRecorded = true;
 		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
-		// The trip to the first stop starts from wherever the player banked, so it isn't a sample for
-		// learning our methods' times.
+		// The trip to the first stop starts from wherever the player banked
 		final boolean first = stopIndex == 0;
 		// After a bank visit the leg starts at the bank, not the stop before
 		final String from = first ? null : plan.bankAfter(stopIndex - 1) != null ? "BANK"
@@ -1222,7 +1222,7 @@ public class RunSession
 		// One per stop, for comparing estimates with real times
 		log.debug("Leg timed: {} from {} by {}: {} s (estimate {} s{})", stop.getLocation().getDisplayName(),
 			first ? "the start" : from, stop.describeTravel(), Math.round(seconds), Math.round(stop.getLegSeconds()),
-			first ? ", first leg, not learned" : "");
+			first ? ", first leg" : "");
 	}
 
 	/**
@@ -1693,7 +1693,7 @@ public class RunSession
 				status = RunView.StopStatus.PENDING;
 			}
 			final String text = i == 0 ? stop.describeWay()
-				: capitalised(stop.getMethod().getRides().get(i - 1).getBrief());
+				: capitalised(stop.rides().get(i - 1).getBrief());
 			steps.add(new RunView.Step(text, status, i > 0, status == RunView.StopStatus.DONE && manualSteps.contains(i)));
 		}
 		// Each patch's plan, in the same order the objectives were made
@@ -1760,6 +1760,32 @@ public class RunSession
 		{
 			travelItems(stop.getMethod(), items);
 		}
+		final AtlasLeg atlas = stop.getAtlas();
+		if (atlas != null)
+		{
+			// A way from the travel atlas: its teleport item, the plugin's or one it doesn't track (a tablet...)
+			if (atlas.getItem() != null)
+			{
+				for (int id : atlas.getItem().getItemIds())
+				{
+					items.add(id);
+				}
+			}
+			for (AtlasLeg.ItemNeed need : atlas.getItems())
+			{
+				if (need.isTeleport())
+				{
+					for (int id : need.getIds())
+					{
+						items.add(id);
+					}
+				}
+			}
+			if (atlas.getSpell() != null && atlas.getSpell().hasTablet())
+			{
+				items.add(atlas.getSpell().getTabletItemId());
+			}
+		}
 		// The item that gets the player to the fairy ring
 		final FairyRingAccess way = stop.getDeparture().getFairyRingAccess();
 		if (way != null)
@@ -1778,7 +1804,11 @@ public class RunSession
 		{
 			spell = stop.getMethod().getSpell();
 		}
-		else if (stop.getDeparture().isViaHouse())
+		else if (atlas != null && atlas.getSpell() != null)
+		{
+			spell = atlas.getSpell();
+		}
+		else if (stop.getDeparture().isViaHouse() || atlas != null && atlas.isViaHouse())
 		{
 			spell = Spell.TELEPORT_TO_HOUSE;
 			// Whatever gets the player home: construction cape, max cape or a house tablet

@@ -2,7 +2,11 @@ package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.travel.JourneyStep;
+import com.farmrunautopilot.data.travel.Spell;
+import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import java.util.Collections;
+import java.util.List;
 import lombok.Value;
 
 /**
@@ -12,7 +16,7 @@ import lombok.Value;
 public class RouteStop
 {
 	Location location;
-	/** Null when walking from the previous stop, or when no method is unlocked. */
+	/** Null when walking from the previous stop, for a way only the travel atlas knows, or when nothing is unlocked. */
 	TravelMethod method;
 	Departure departure;
 	/** Estimated seconds for this leg. */
@@ -21,6 +25,8 @@ public class RouteStop
 	boolean needsSupplies;
 	/** How {@link #legSeconds} was worked out, for the log, e.g. "cast 3 + 56 tiles 17 + overhead 8". */
 	String breakdown;
+	/** The way, for {@link Departure#ATLAS}; otherwise null. */
+	AtlasLeg atlas;
 
 	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
 		boolean needsSupplies)
@@ -31,12 +37,19 @@ public class RouteStop
 	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
 		boolean needsSupplies, String breakdown)
 	{
+		this(location, method, departure, legSeconds, needsSupplies, breakdown, null);
+	}
+
+	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
+		boolean needsSupplies, String breakdown, AtlasLeg atlas)
+	{
 		this.location = location;
 		this.method = method;
 		this.departure = departure;
 		this.legSeconds = legSeconds;
 		this.needsSupplies = needsSupplies;
 		this.breakdown = breakdown;
+		this.atlas = atlas;
 	}
 
 	/**
@@ -46,12 +59,14 @@ public class RouteStop
 	public String describeTravel()
 	{
 		final String travel = describeDeparture();
-		if (method == null || method.getThen().isEmpty() || departure == Departure.WALK)
+		final List<JourneyStep> then = departure == Departure.WALK ? Collections.emptyList()
+			: atlas != null ? atlas.getRides() : method != null ? method.getThen() : Collections.emptyList();
+		if (then.isEmpty())
 		{
 			return travel;
 		}
 		final StringBuilder whole = new StringBuilder(travel);
-		for (JourneyStep step : method.getThen())
+		for (JourneyStep step : then)
 		{
 			whole.append(", then ").append(step.getBrief());
 		}
@@ -62,6 +77,28 @@ public class RouteStop
 	public String describeWay()
 	{
 		return describeDeparture();
+	}
+
+	/** The steps after the way there that move the player (a boat, Elkoy, a ladder out, a hop): each a tick box. */
+	public List<JourneyStep> rides()
+	{
+		if (departure == Departure.WALK)
+		{
+			return Collections.emptyList();
+		}
+		return atlas != null ? atlas.getRides() : method != null ? method.getRides() : Collections.emptyList();
+	}
+
+	/** The teleport item this leg uses (the method's, or the atlas leg's), or null. */
+	public TravelItem travelItem()
+	{
+		return atlas != null ? atlas.getItem() : method != null ? method.getItem() : null;
+	}
+
+	/** The spell this leg casts directly (or its tablet), or null; Teleport to House for the house isn't counted. */
+	public Spell spell()
+	{
+		return atlas != null ? atlas.getSpell() : method != null && departure == Departure.DIRECT ? method.getSpell() : null;
 	}
 
 	private String describeDeparture()
@@ -75,6 +112,8 @@ public class RouteStop
 				return "Back to the landing pad, then Renu";
 			case NONE:
 				return "No unlocked way here";
+			case ATLAS:
+				return atlas.getWay();
 			case POH_NEXUS:
 				return "House portal nexus: " + method.getDisplayName();
 			case POH_JEWELLERY_BOX:

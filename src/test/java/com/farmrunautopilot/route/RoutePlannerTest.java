@@ -197,7 +197,7 @@ public class RoutePlannerTest
 	private static Route fromGuild(List<Patch> patches, RunConfig config)
 	{
 		return RoutePlanner.plan(patches, config, AccessSnapshot.UNKNOWN, Holdings.EMPTY, new PohSetup(),
-			LearnedTimes.NONE, null, null, 0, Location.FARMING_GUILD);
+			null, null, null, 0, Location.FARMING_GUILD);
 	}
 
 	@Test

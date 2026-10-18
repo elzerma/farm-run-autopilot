@@ -17,6 +17,7 @@ import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.route.AtlasLeg;
 import com.farmrunautopilot.route.ChargeBudget;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.Route;
@@ -205,6 +206,9 @@ public final class SupplyCalculator
 		boolean fairyRing = false;
 		// Hot air balloon flights: one normal log each
 		int balloonFlights = 0;
+		// What the travel atlas's ways need that the plugin doesn't plan itself, by the first of their item ids
+		final Map<Integer, AtlasLeg.ItemNeed> wayItems = new LinkedHashMap<>();
+		final Map<Integer, Integer> wayCounts = new LinkedHashMap<>();
 		// What each leg casts and whether it needs the fairy ring staff, for swapping staves (issue #7)
 		final List<StaffPlanner.Leg> legs = new ArrayList<>();
 		for (RouteStop stop : route.getStops())
@@ -229,7 +233,8 @@ public final class SupplyCalculator
 			}
 
 			String extra = "";
-			if (departure.isViaHouse())
+			final AtlasLeg atlas = stop.getAtlas();
+			if (departure.isViaHouse() || atlas != null && atlas.isViaHouse())
 			{
 				// Teleport to House by cape if the player has one, otherwise tablet or runes
 				if (holdings.countAny(TravelItem.CONSTRUCTION_CAPE.getItemIds()) > 0)
@@ -287,6 +292,36 @@ public final class SupplyCalculator
 				}
 				fairyRing = true;
 			}
+			if (atlas != null)
+			{
+				// A way from the travel atlas: its spell or teleport item, and whatever else the way needs
+				if (atlas.getSpell() != null)
+				{
+					extra = addSpell(atlas.getSpell(), location, config, access, holdings, tablets, runeNeed, warnings);
+				}
+				if (atlas.getItem() != null)
+				{
+					travelItems.merge(atlas.getItem(), 1, Integer::sum);
+					if (ChargeBudget.chargesUnknown(atlas.getItem(), holdings))
+					{
+						warnings.add("Check your " + atlas.getItem().getDisplayName().toLowerCase()
+							+ " so its charges are known");
+					}
+				}
+				for (AtlasLeg.ItemNeed need : atlas.getItems())
+				{
+					if (need.getIds().length == 1 && need.getIds()[0] == ItemID.COINS)
+					{
+						coins += need.getQuantity();
+						continue;
+					}
+					final int key = need.getIds()[0];
+					wayItems.putIfAbsent(key, need);
+					// Used up each time (a tablet), or one carried for every leg that needs it
+					wayCounts.merge(key, need.getQuantity(), need.isUsedUp() ? Integer::sum : Math::max);
+				}
+				balloonFlights += atlas.getBalloons();
+			}
 			final boolean legFairy = usesFairyRing(stop);
 			// Into the house by a spirit tree, then its fairy ring, needs the staff too
 			fairyRing |= legFairy;
@@ -300,7 +335,7 @@ public final class SupplyCalculator
 				}
 			});
 			legs.add(new StaffPlanner.Leg(location, legRunes, new EnumMap<>(Rune.class), legFairy));
-			final boolean auto = method != null && config.getTravel().get(location) != method;
+			final boolean auto = (method != null || atlas != null) && config.getTravel().get(location) != method;
 			travelPlan.add(location.getDisplayName() + ": " + stop.describeTravel() + extra + (auto ? " (auto)" : ""));
 		}
 		tablets.forEach((id, n) -> lines.add(line(SupplyLine.Group.TRAVEL, itemName.apply(id), n, holdings, carried,
@@ -372,6 +407,12 @@ public final class SupplyCalculator
 			final SupplyLine line = line(SupplyLine.Group.TRAVEL, item.getDisplayName(), 1, holdings, carried,
 				worn ? used + ". Wear it: no inventory slot" : used, worn ? 0 : 1, item.getItemIds());
 			lines.add(worn ? line.worn() : line);
+		});
+		wayItems.forEach((key, need) ->
+		{
+			final SupplyLine line = line(SupplyLine.Group.TRAVEL, itemName.apply(key), wayCounts.get(key), holdings, carried,
+				need.isTeleport() ? "The teleport on the way" : "Needed on the way", 1, need.getIds());
+			lines.add(need.isUsedUp() ? line.usedUp() : line);
 		});
 		if (balloonFlights > 0)
 		{
@@ -530,7 +571,8 @@ public final class SupplyCalculator
 		final Departure departure = stop.getDeparture();
 		return departure == Departure.POH_FAIRY_RING || departure == Departure.TREE_HOUSE_FAIRY_RING
 			|| departure.getFairyRingAccess() != null
-			|| departure == Departure.DIRECT && stop.getMethod() != null && stop.getMethod().getKind() == TravelKind.FAIRY_RING;
+			|| departure == Departure.DIRECT && stop.getMethod() != null && stop.getMethod().getKind() == TravelKind.FAIRY_RING
+			|| stop.getAtlas() != null && stop.getAtlas().isFairyRing();
 	}
 
 	/**

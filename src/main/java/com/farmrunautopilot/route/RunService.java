@@ -8,13 +8,12 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.travel.BankTeleport;
 import com.farmrunautopilot.data.travel.Spell;
+import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.data.travel.WalkGrid;
 import com.farmrunautopilot.data.travel.atlas.AtlasAccount;
-import com.farmrunautopilot.data.travel.atlas.AtlasHouse;
 import com.farmrunautopilot.data.travel.atlas.AtlasNeed;
 import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
-import com.farmrunautopilot.run.RunTimings;
 import com.farmrunautopilot.run.StepAdvisor;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
@@ -35,6 +34,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.inject.Inject;
@@ -68,7 +69,10 @@ public class RunService
 	private final PatchTracker patchTracker;
 	private final HoldingsTracker holdingsTracker;
 	private final RunOverrides overrides;
-	private final RunTimings timings;
+	/** RuneLite's shared background executor, for reading the travel atlas. */
+	private final ScheduledExecutorService executor;
+	/** Reading the travel atlas, until it's done. */
+	private Future<?> atlasLoad;
 	/** Item names are fixed, so look each up once. */
 	private final Map<Integer, String> names = new HashMap<>();
 
@@ -87,9 +91,10 @@ public class RunService
 
 	@Inject
 	RunService(Client client, ItemManager itemManager, SettingsStore settings, AccessChecker accessChecker,
-		PatchTracker patchTracker, HoldingsTracker holdingsTracker, RunOverrides overrides, RunTimings timings)
+		PatchTracker patchTracker, HoldingsTracker holdingsTracker, RunOverrides overrides,
+		ScheduledExecutorService executor)
 	{
-		this.timings = timings;
+		this.executor = executor;
 		this.client = client;
 		this.itemManager = itemManager;
 		this.settings = settings;
@@ -198,21 +203,24 @@ public class RunService
 		final Holdings holdings = holdingsTracker.getHoldings();
 		final RunSelection selection = RunSelector.select(config, access, patchTracker::predict,
 			Instant.now().getEpochSecond(), config.isSupplyFullRun(), overrides.get());
+		final RouteAtlas atlas = routeAtlas(access, holdings);
+		final Player player = client.getLocalPlayer();
+		final WorldPoint tile = player != null ? player.getWorldLocation() : null;
 		// In the Farming Guild, where it isn't a stop: the run sets off from there (issue #8)
 		Route route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
-			settings.getAccount().getPoh(), timings.learned(), here, near, nearTiles,
-			guild ? Location.FARMING_GUILD : null);
+			settings.getAccount().getPoh(), atlas, here, near, nearTiles, guild ? Location.FARMING_GUILD : null, tile);
 		SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 			patchTracker::predict, this::itemName, itemManager::getItemPrice);
 		// Starting at the stop the player stands at or near only makes sense if they can start from there: carrying
 		// everything already, or with a bank close by. Otherwise (Kastori, still needing supplies) they'll bank
-		// somewhere first, so plan from anywhere (elzerma)
+		// somewhere first, so plan from anywhere (elzerma). The same for setting off on foot from where they stand.
 		final Location startStop = here != null ? here : near;
-		if (startStop != null && TravelTimes.bankTiles(startStop) == null
-			&& supplies.missingCount(startStop == Location.FARMING_GUILD) > 0)
+		final boolean missing = supplies.missingCount(startStop == Location.FARMING_GUILD) > 0;
+		if (missing && (startStop != null ? TravelTimes.bankTiles(startStop) == null
+			: atlas != null && tile != null && !RoutePlanner.bankNear(atlas, tile)))
 		{
 			route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
-				settings.getAccount().getPoh(), timings.learned(), null, null, 0);
+				settings.getAccount().getPoh(), atlas, null, null, 0);
 			supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 				patchTracker::predict, this::itemName, itemManager::getItemPrice);
 		}
@@ -223,7 +231,7 @@ public class RunService
 		if (!guildBanks && plansFromGuild(config, route, supplies))
 		{
 			route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
-				settings.getAccount().getPoh(), timings.learned(), null, null, 0, Location.FARMING_GUILD);
+				settings.getAccount().getPoh(), atlas, null, null, 0, Location.FARMING_GUILD);
 			supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 				patchTracker::predict, this::itemName, itemManager::getItemPrice);
 		}
@@ -231,15 +239,15 @@ public class RunService
 		final List<BankStop> bankStops = new ArrayList<>();
 		if (supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
 		{
-			Banked banked = bankStops(config, access, holdings, selection, route);
+			Banked banked = bankStops(atlas, config, access, holdings, selection, route);
 			if (banked != null && guildBanks && plansFromGuild(config, banked.route, banked.first))
 			{
 				route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
-					settings.getAccount().getPoh(), timings.learned(), null, null, 0, Location.FARMING_GUILD);
+					settings.getAccount().getPoh(), atlas, null, null, 0, Location.FARMING_GUILD);
 				supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
 					patchTracker::predict, this::itemName, itemManager::getItemPrice);
 				banked = supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS
-					? bankStops(config, access, holdings, selection, route) : null;
+					? bankStops(atlas, config, access, holdings, selection, route) : null;
 			}
 			if (banked != null)
 			{
@@ -261,9 +269,9 @@ public class RunService
 		for (Location location : Location.values())
 		{
 			final RouteStop pick = RoutePlanner.autoPick(location, config, access, holdings,
-				settings.getAccount().getPoh(), timings.learned());
-			final boolean tablet = pick.getMethod() != null && pick.getMethod().getSpell() != null
-				&& SupplyCalculator.usesTablet(pick.getMethod().getSpell(), location, config, access, holdings);
+				settings.getAccount().getPoh(), atlas);
+			final boolean tablet = pick.spell() != null
+				&& SupplyCalculator.usesTablet(pick.spell(), location, config, access, holdings);
 			picks.put(location, new TravelPick(pick, tablet));
 		}
 		final boolean picksChanged = !picks.equals(autoPicks);
@@ -279,31 +287,54 @@ public class RunService
 			|| !next.getBankStops().equals(plan.getBankStops())) && log.isDebugEnabled())
 		{
 			log.debug("Route planned:\n{}", explain(next));
-			// Sprint T2 of docs/plans/travel-rework.md: the atlas's legs beside the planner's, in the dev client only
-			final TravelAtlas atlas = TravelAtlas.ifLoaded();
-			if (atlas != null && !atlas.isEmpty())
+			if (atlas != null)
 			{
-				final AtlasAccount account = atlasAccount(atlas, access, holdings);
-				log.debug("Atlas shadow:\n{}", AtlasShadow.compare(atlas, account,
-					AtlasHouse.of(atlas, account, settings.getAccount().getPoh()), next.getRoute(), selection.getPatches()));
+				// Sprint T3 of docs/plans/travel-rework.md: the same run on the old tables, for comparing in the dev client
+				final Route old = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
+					settings.getAccount().getPoh(), null, here, near, nearTiles, guild ? Location.FARMING_GUILD : null);
+				log.debug("The old tables' route (not used): {}", summary(old));
 			}
 		}
 		plan = next;
 		return true;
 	}
 
-	/** Read the travel atlas now (plugin start-up), not on the client thread; only the dev client's log uses it yet. */
+	/**
+	 * Read the travel atlas in the background (about half a second), never on the client thread; routes are planned on
+	 * the old tables until it's read, then again on the atlas.
+	 */
 	public void startUp()
 	{
-		if (log.isDebugEnabled())
+		atlasLoad = executor.submit(() ->
 		{
-			TravelAtlas.get();
+			final long start = System.nanoTime();
+			final TravelAtlas atlas = TravelAtlas.get();
+			log.debug("Travel atlas read in {} ms ({} places)", (System.nanoTime() - start) / 1_000_000,
+				atlas.getPlaces().size());
+			markDirty();
+		});
+	}
+
+	public void shutDown()
+	{
+		if (atlasLoad != null)
+		{
+			atlasLoad.cancel(false);
+			atlasLoad = null;
 		}
 	}
 
-	/** The player as the atlas needs them: with the varbits and varplayers it names read now. Client thread. */
-	private AtlasAccount atlasAccount(TravelAtlas atlas, AccessSnapshot access, Holdings holdings)
+	/**
+	 * The travel atlas with the player as it needs them (the varbits and varplayers it names, read now), or null if
+	 * it didn't load: routes are then planned on the old tables. Client thread.
+	 */
+	private RouteAtlas routeAtlas(AccessSnapshot access, Holdings holdings)
 	{
+		final TravelAtlas atlas = TravelAtlas.ifLoaded();
+		if (atlas == null || atlas.isEmpty())
+		{
+			return null;
+		}
 		final Map<Integer, Integer> varbits = new HashMap<>();
 		final Map<Integer, Integer> varps = new HashMap<>();
 		for (AtlasNeed need : atlas.getNeeds())
@@ -317,7 +348,19 @@ public class RunService
 				varps.computeIfAbsent(need.getVar(), client::getVarpValue);
 			}
 		}
-		return new AtlasAccount(access, holdings, varbits, varps);
+		return new RouteAtlas(atlas, new AtlasAccount(access, holdings, varbits, varps));
+	}
+
+	/** e.g. "Catherby (Camelot Teleport, 31 s), Ardougne farm (Ardougne cloak (farm), 18 s); travel 49 s". */
+	private static String summary(Route route)
+	{
+		final List<String> stops = new ArrayList<>();
+		for (RouteStop stop : route.getStops())
+		{
+			stops.add(stop.getLocation().getDisplayName() + " (" + stop.describeWay() + ", "
+				+ Math.round(stop.getLegSeconds()) + " s)");
+		}
+		return String.join(", ", stops) + "; travel " + Math.round(route.getTravelSeconds()) + " s";
 	}
 
 	/**
@@ -391,8 +434,8 @@ public class RunService
 	 * Bank visits for a run too big for one inventory (see {@link BankPlanner}), with each part's supplies.
 	 * Null if a part can't fit even on its own; the plan then warns about slots as before.
 	 */
-	private Banked bankStops(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
-		Route route)
+	private Banked bankStops(RouteAtlas atlas, RunConfig config, AccessSnapshot access, Holdings holdings,
+		RunSelection selection, Route route)
 	{
 		final PohSetup poh = settings.getAccount().getPoh();
 		final List<RouteStop> stops = route.getStops();
@@ -401,11 +444,11 @@ public class RunService
 			k -> part(config, access, holdings, selection, stops.subList(a, b), route).getSlots());
 		final BankTeleport teleport = BankTeleport.best(access, holdings);
 		final BiFunction<Location, Location, Double> chainSaving = (from, to) -> RoutePlanner.chainSaving(from, to,
-			config, access, holdings, poh, timings.learned());
+			config, access, holdings, poh, atlas);
 		final Function<Location, RouteStop> fromAnywhere = to -> RoutePlanner.fromAnywhere(to, config, access,
-			holdings, poh, timings.learned());
+			holdings, poh, atlas);
 		BankPlanner.Result result = BankPlanner.place(route, slotsOf, SupplyCalculator.INVENTORY_SLOTS, teleport,
-			chainSaving, fromAnywhere, guildBanking(config) ? guild(config, access, holdings, selection, route, poh) : null);
+			chainSaving, fromAnywhere, guildBanking(config) ? guild(atlas, config, access, holdings, selection, route, poh) : null);
 		if (result == null && guildBanking(config))
 		{
 			// No way to bank at the guild before every part that needs its vault (an item that doesn't fit): bank
@@ -472,8 +515,8 @@ public class RunService
 	 * "Bank at the Farming Guild" for the bank planner (issue #8): which parts of the route need the seed vault, and
 	 * the ways to and from the guild.
 	 */
-	private BankPlanner.Guild guild(RunConfig config, AccessSnapshot access, Holdings holdings, RunSelection selection,
-		Route route, PohSetup poh)
+	private BankPlanner.Guild guild(RouteAtlas atlas, RunConfig config, AccessSnapshot access, Holdings holdings,
+		RunSelection selection, Route route, PohSetup poh)
 	{
 		final List<RouteStop> stops = route.getStops();
 		final Map<Long, Boolean> needs = new HashMap<>();
@@ -497,7 +540,7 @@ public class RunService
 			@Override
 			public RouteStop to(Location from)
 			{
-				return RoutePlanner.between(from, Location.FARMING_GUILD, config, access, holdings, poh, timings.learned());
+				return RoutePlanner.between(from, Location.FARMING_GUILD, config, access, holdings, poh, atlas);
 			}
 
 			@Override
@@ -510,7 +553,7 @@ public class RunService
 					return new RouteStop(to, null, Departure.WALK, tiles * TravelTimes.SECONDS_PER_TILE, false,
 						"from the bank " + tiles + " tiles");
 				}
-				return RoutePlanner.between(Location.FARMING_GUILD, to, config, access, holdings, poh, timings.learned());
+				return RoutePlanner.between(Location.FARMING_GUILD, to, config, access, holdings, poh, atlas);
 			}
 		};
 	}
@@ -521,13 +564,14 @@ public class RunService
 	 */
 	private static SupplyPlan withTrip(SupplyPlan before, RouteStop trip, Holdings holdings)
 	{
-		if (trip.getMethod() == null || trip.getMethod().getItem() == null)
+		final TravelItem item = trip.travelItem();
+		if (item == null)
 		{
 			return before;
 		}
-		final int[] ids = trip.getMethod().getItem().getItemIds();
+		final int[] ids = item.getItemIds();
 		final List<SupplyLine> lines = new ArrayList<>(before.getLines());
-		lines.add(new SupplyLine(SupplyLine.Group.TRAVEL, trip.getMethod().getItem().getDisplayName()
+		lines.add(new SupplyLine(SupplyLine.Group.TRAVEL, item.getDisplayName()
 			+ " (bank at the Farming Guild)", 1, holdings.countAny(ids), holdings.carriedOnly().countAny(ids),
 			holdings.where(ids), "To bank partway at the Farming Guild, by its seed vault", 1, false, null, ids));
 		return new SupplyPlan(lines, before.getPatchCounts(), before.getNotDue(), before.getTravelPlan(),

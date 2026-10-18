@@ -258,7 +258,7 @@ final class BankPlanner
 		final RouteStop trip = guild.to(here);
 		// Only a way the player can make now; an item to get there takes a slot until it's used, like a bank teleport
 		if (trip.isNeedsSupplies() || trip.getDeparture() == Departure.NONE
-			|| trip.getMethod() != null && trip.getMethod().getItem() != null && used + 1 > slotLimit)
+			|| trip.travelItem() != null && used + 1 > slotLimit)
 		{
 			return null;
 		}

@@ -57,7 +57,7 @@ public class AtlasRefereeTest
 			}
 		}
 
-		final AtlasLegs legs = new AtlasLegs(ATLAS, likeElzerma());
+		final AtlasLegs legs = new AtlasLegs(ATLAS, likeElzerma(), null, null, true);
 		int compared = 0;
 		int agree = 0;
 		int missing = 0;

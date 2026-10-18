@@ -83,6 +83,81 @@ public class AtlasLinksTest
 		assertTrue("Landing elsewhere than any atlas teleport of the same item or spell: " + off, off.isEmpty());
 	}
 
+	@Test
+	public void everyTravelMethodHasItsLandingAndAnAtlasWayThere() throws IOException
+	{
+		// The landings in the code are tools/walk/methods.tsv's (the balloon's from the atlas)
+		final Map<String, String> measured = new HashMap<>();
+		for (String line : Files.readAllLines(Paths.get("tools/walk/methods.tsv")))
+		{
+			final String[] r = line.split("\t", -1);
+			measured.put(r[0], r[5]);
+		}
+		final List<String> wrong = new ArrayList<>();
+		for (TravelMethod method : TravelMethod.values())
+		{
+			final WorldPoint landing = AtlasLinks.landing(method);
+			if (landing == null)
+			{
+				wrong.add(method + " (no landing)");
+				continue;
+			}
+			final String tsv = measured.get(method.name());
+			if (tsv != null && !tsv.equals(landing.getX() + " " + landing.getY() + " " + landing.getPlane()))
+			{
+				wrong.add(method + " (" + landing + ", methods.tsv " + tsv + ")");
+			}
+			// So the planner can tell an atlas way is this method: a teleport or hop of its kind lands there
+			if (!recognisable(method, landing))
+			{
+				wrong.add(method + " (no atlas teleport or hop of its kind lands at " + landing + ")");
+			}
+		}
+		assertTrue("Travel methods the planner can't tell from the atlas: " + wrong, wrong.isEmpty());
+	}
+
+	/** An atlas teleport of the method's item or spell, or a hop of its kind, lands at the method's landing. */
+	private static boolean recognisable(TravelMethod method, WorldPoint landing)
+	{
+		final String hopType;
+		switch (method.getKind())
+		{
+			case FAIRY_RING:
+				hopType = "FAIRY_RING";
+				break;
+			case SPIRIT_TREE:
+				hopType = "SPIRIT_TREE";
+				break;
+			case BALLOON:
+				hopType = "HOT_AIR_BALLOON";
+				break;
+			default:
+				hopType = null;
+				break;
+		}
+		if (hopType != null)
+		{
+			return ATLAS.getHops().stream().anyMatch(h -> h.getType().equals(hopType)
+				&& AtlasLinks.sameLanding(ATLAS.place(h.getTo()).getPoint(), landing));
+		}
+		final List<TravelAtlas.Jump> teleports = method.getKind() == com.farmrunautopilot.data.travel.TravelKind.QUETZAL
+			? quetzalWhistle() : teleports(method.getItem(), method.getSpell());
+		return teleports.stream().anyMatch(t -> AtlasLinks.sameLanding(ATLAS.place(t.getTo()).getPoint(), landing));
+	}
+
+	private static List<TravelAtlas.Jump> quetzalWhistle()
+	{
+		final List<TravelAtlas.Jump> found = new ArrayList<>();
+		for (TravelAtlas.Jump t : ATLAS.getTeleports())
+		{
+			if (t.getType().equals("QUETZAL_WHISTLE"))
+			{
+				found.add(t);
+			}
+		}
+		return found;
+	}
+
 	/** Atlas teleports of this item, or of this spell (either may be null). */
 	private static List<TravelAtlas.Jump> teleports(TravelItem item, Spell spell)
 	{

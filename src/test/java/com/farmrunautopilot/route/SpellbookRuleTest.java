@@ -93,7 +93,7 @@ public class SpellbookRuleTest
 		config.setStartLocation(Location.FARMING_GUILD);
 		final AccessSnapshot access = onBook(Spellbook.STANDARD, Collections.emptySet());
 		final Route route = RoutePlanner.plan(java.util.Arrays.asList(Patch.CATHERBY_HERB, Patch.FARMING_GUILD_HERB,
-			Patch.ARDOUGNE_HERB), config, access, Holdings.EMPTY, new PohSetup(), LearnedTimes.NONE, Location.CATHERBY);
+			Patch.ARDOUGNE_HERB), config, access, Holdings.EMPTY, new PohSetup(), null, Location.CATHERBY);
 		final RouteStop first = route.getStops().get(0);
 		assertEquals(Location.CATHERBY, first.getLocation());
 		assertEquals(Departure.WALK, first.getDeparture());
@@ -170,7 +170,7 @@ public class SpellbookRuleTest
 
 		// Auto (best) shown for the row ignores the choice: the nexus is quicker than Camelot's walk
 		final RouteStop auto = RoutePlanner.autoPick(Location.CATHERBY, config, standard, Holdings.EMPTY, poh,
-			LearnedTimes.NONE);
+			null);
 		assertEquals(TravelMethod.CATHERBY_TELEPORT, auto.getMethod());
 		assertEquals(Departure.POH_NEXUS, auto.getDeparture());
 	}

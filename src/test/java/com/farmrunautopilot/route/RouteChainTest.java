@@ -87,7 +87,7 @@ public class RouteChainTest
 	{
 		// By the Grand Tree, about 50 tiles from the Stronghold patches, with Start at: Anywhere
 		final List<RouteStop> stops = RoutePlanner.plan(Arrays.asList(Patch.values()), new RunConfig().sanitise(),
-			access(), holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF), new PohSetup(), LearnedTimes.NONE, null,
+			access(), holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF), new PohSetup(), null, null,
 			Location.GNOME_STRONGHOLD, 50).getStops();
 		assertEquals(describe(stops), Location.GNOME_STRONGHOLD, stops.get(0).getLocation());
 		assertEquals(describe(stops), Departure.WALK, stops.get(0).getDeparture());
@@ -96,13 +96,13 @@ public class RouteChainTest
 		// Even when ending the run at the Stronghold's bank would otherwise win by a second or two
 		final List<RouteStop> few = RoutePlanner.plan(Arrays.asList(Patch.GNOME_STRONGHOLD_TREE, Patch.FALADOR_TREE,
 			Patch.LUMBRIDGE_TREE, Patch.VARROCK_TREE), new RunConfig().sanitise(), access(),
-			holdings(ItemID.SLAYER_RING_8), new PohSetup(), LearnedTimes.NONE, null, Location.GNOME_STRONGHOLD, 36)
+			holdings(ItemID.SLAYER_RING_8), new PohSetup(), null, null, Location.GNOME_STRONGHOLD, 36)
 			.getStops();
 		assertEquals(describe(few), Location.GNOME_STRONGHOLD, few.get(0).getLocation());
 
 		// Near Falador Park (57 tiles), where the ring of wealth is quicker than the walk: still the first stop
 		final List<RouteStop> park = RoutePlanner.plan(Arrays.asList(Patch.values()), new RunConfig().sanitise(),
-			access(), holdings(ItemID.SLAYER_RING_8, ItemID.RING_OF_WEALTH_5), new PohSetup(), LearnedTimes.NONE,
+			access(), holdings(ItemID.SLAYER_RING_8, ItemID.RING_OF_WEALTH_5), new PohSetup(), null,
 			null, Location.FALADOR_PARK, 57).getStops();
 		assertEquals(describe(park), Location.FALADOR_PARK, park.get(0).getLocation());
 	}
@@ -129,7 +129,7 @@ public class RouteChainTest
 		final RunConfig config = new RunConfig().sanitise();
 		config.setEndNearBank(false);
 		final List<RouteStop> stops = RoutePlanner.plan(Arrays.asList(Patch.FARMING_GUILD_HERB, Patch.HOSIDIUS_HERB),
-			config, access, holdings(), poh, LearnedTimes.NONE, null, Location.FARMING_GUILD, 0).getStops();
+			config, access, holdings(), poh, null, null, Location.FARMING_GUILD, 0).getStops();
 		assertEquals(describe(stops), Location.HOSIDIUS, stops.get(1).getLocation());
 		assertEquals(describe(stops), Departure.TREE_HOUSE_PORTAL, stops.get(1).getDeparture());
 		assertEquals(describe(stops), TravelMethod.HOUSE_PORTAL_HOSIDIUS, stops.get(1).getMethod());
@@ -141,7 +141,7 @@ public class RouteChainTest
 		// The CIQ fairy ring walk is long; the Stronghold's spirit tree is the way in
 		assertEquals(true, RoutePlanner.chainsFrom(Location.GNOME_STRONGHOLD, Location.TREE_GNOME_VILLAGE,
 			new RunConfig().sanitise(), access(), holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF), new PohSetup(),
-			LearnedTimes.NONE));
+			null));
 	}
 
 	@Test

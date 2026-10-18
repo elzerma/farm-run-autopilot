@@ -499,6 +499,54 @@ settings and real account, and logs `Shortest Path (live):` beside the plugin's 
 It only asks while none of our walking lines is drawn (they switch Shortest Path to walking only, and a drawn path
 cancels questions), so during a run it waits until the line is cleared.
 
+### T3 status (2026-10-18): the planner on the atlas, first part
+
+elzerma: "plan routes from the atlas with every teleport my account can use, keeping charges, daily uses and the
+whistle's real wait, and the first leg from where I stand." Built; the hand checks (three runs) are next.
+
+- **Every way the account can use** (`AtlasLegs`): every atlas teleport whose needs are met (items, spells, tablets,
+  capes, diary items, the whistle), the house (Teleport to House in, or "Your house" on a spirit tree once one grows in
+  it, then the nexus, jewellery box, fairy ring, spirit tree or front door), and hops taken on foot or after a teleport
+  (fairy rings, spirit trees, Renu, balloons, gliders, charter ships, canoes, minecarts, carpets, mushtrees). Nothing into
+  the Wilderness (Shortest Path's own area), no teleports with a cooldown.
+- **The plugin's own rules decide its own items and spells** (`RoutePlanner.teleportExtra`): an item needs a charge to
+  spare and a use left today, and nothing used up earlier in the run (pooled per item; the run is planned again without
+  it when it runs out, as before); a spell needs casting (levels, quests, a spellbook it can get to) and costs a
+  spellbook swap off its book; the supply list brings the runes. Daily uses are matched by where the teleport lands.
+- **Times from the plugin, not Shortest Path's animations:** the whistle 13 s (its measured wait, not 4 ticks), Renu
+  6 s, fairy rings 4 s, spirit trees and balloons 4.5 s, other hops their ticks (at least 3 s), spells 3 s, items 3.6 s,
+  out of the house's door when Teleport to House lands inside; walking tiles x 0.3 s and transport ticks x 0.6 s; the
+  same set-off overhead as before. The referee keeps Shortest Path's ticks (577 of 600 still agree).
+- **Recognised as the plugin's own methods** (`route/AtlasTravel`): where a teleport, hop or house exit lands where one
+  of the plugin's travel methods does, the same way (item, spell, ring, tree...), the leg is that method, so its journey
+  steps, highlights, supplies and charges carry on. `AtlasLinks` now holds every method's landing (from
+  `tools/walk/methods.tsv`, checked by a test). Otherwise the leg is new (`Departure.ATLAS`, `route/AtlasLeg`): the
+  teleport or hop's name, the boats and NPCs on the way as journey steps (each with its walking line), the item or
+  spell to outline, and on the supply list its teleport item, runes or tablet, Teleport to House, fares, logs and any
+  item the way needs that the plugin doesn't track.
+- **The first leg from where the player stands:** the atlas's places within 20 tiles of the player (a bank, a landing,
+  a spirit tree, a fairy ring), walked to in a straight line, as well as every teleport; so a walk or the tree beside
+  them can start the run. Planned from anywhere instead when supplies are missing and no bank is near.
+- **Learned times are out of choosing:** `LearnedTimes` is gone; recorded legs only feed the estimate and best times.
+- **"Finish near a bank"** uses the atlas's walk from the stop's patches to its nearest bank.
+- **Renu from a pad costs nothing** for the travel styles (it was counted as a whistle charge, on the old tables too).
+- **Speed:** the atlas is read in the background at start-up (about 0.6 s; until then routes use the old tables). After
+  warm-up a full 18-stop plan takes about 50 ms on the client thread, a second plan in the same refresh about 25 ms, the
+  Travel tab's picks about 6 ms; the first plan after start-up a few hundred ms.
+- **Fallback:** without the atlas the planner uses the old tables as before (minus learned times); the existing
+  scenario suites still test that path. The atlas has its own suite, `AtlasRouteTest` (the section 7 scenarios that
+  belong to T3, charges, daily uses, the whistle's wait, the first leg).
+- **Evidence** (`AtlasRouteTest`, an account like elzerma's with coins in the bank): their full run is 482 s of travel on
+  the atlas against 542 s on the old tables. Changes: Troll Stronghold 45 s (rocks at 41, 43 and 73 Agility) against
+  73 s; Kastori and Nemus Retreat by Civitas illa Fortis Teleport, then Renu (24 s and 37 s, Nemus with the Mountain
+  Guide) against the whistle (31 s) and AIS (40 s); the Farming Guild by Kharedst's memoirs and the Lovakengj minecart;
+  Brimhaven by Ardougne Teleport and the boat, 34 s against the old 42 s; Yanille's hops by the Watchtower Teleport.
+- **Dev client:** after each `Route planned:`, `The old tables' route (not used):` with the same run on the old tables.
+- **Not yet:** deleting the old tables (after the hand checks); the patch order inside a stop; journeys written from
+  the atlas's steps beyond boats and NPCs (T5); spells the plugin doesn't know (Watchtower, Kourend Castle...) are
+  planned only with their runes owned and on the spellbook in use, and their runes go on the supply list as items;
+  planning off the client thread (T4's search will need it); the Travel tab (T7).
+
 ## 10. Risks
 
 - **Shortest Path changes its internals:** pinned commit; a small harness; fallback E.
