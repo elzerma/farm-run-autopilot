@@ -5,6 +5,12 @@ using Shortest Path's data and pathfinding to find the fastest way to every patc
 `d98d478` (2026-10-17, `master`); the plugin's earlier research is in `shortest-path-research.md`,
 `travel-research.md` and `sourced-data.md`.
 
+**Decided by elzerma (2026-10-17):** the atlas built with Shortest Path in a bubble, "walk through all relevant teleport
+methods to determine a true fastest, then develop our own algo for selecting methods for saving inv slots (potentially
+reducing expected amounts of bank trips)" (section 4, last part); **this comes first**: crop types wait and will run on
+it, planned for the day the plugin handles **all** crop types (section 3, step 2); "Share your run times" is removed;
+Auto uses every way except Wilderness and cooldown teleports by default. Questions 5-7 (section 11) are still open.
+
 ## 0. In short
 
 - **Your idea works, but not inside the game.** The plugin can't move or teleport you, and a script that clicks through
@@ -19,6 +25,9 @@ using Shortest Path's data and pathfinding to find the fastest way to every patc
   Each answer says what it needs, so in game the plugin picks the fastest way **your** account can use. Methods
   nobody on the team owns are still covered.
 - **Debug mode:** Shortest Path has none for this, and we don't need one: the bubble asks it directly.
+- **Then our own part:** with the true fastest way for every leg known, the plugin chooses ways for the whole run,
+  trading a few seconds for inventory slots when that saves a bank trip (one skills necklace for three legs instead
+  of three different items, a staff instead of runes).
 - **Timing (your rule, 2026-10-17):** no crowdsourcing. Routes come from the map data only. Your own times are only
   used for how long the plugin says a run will take, and for a personal best to beat (with splits per stop).
 
@@ -104,7 +113,7 @@ Why this one:
 | Alternative | Why not |
 |---|---|
 | A. An in-game script that times every teleport | Not allowed (input automation, account bans) and impossible without owning everything. |
-| B. Plan live through Shortest Path's `query` API | Players would need it installed; a route needs thousands of legs and options; answers are slow, cancellable and use the player's Shortest Path settings; walking cost is doubled; it can't answer "what if I fetch X from the bank". Kept only as a dev-client second opinion (sprint T7). |
+| B. Plan live through Shortest Path's `query` API | Players would need it installed; a route needs thousands of legs and options; answers are slow, cancellable and use the player's Shortest Path settings; walking cost is doubled; it can't answer "what if I fetch X from the bank". Kept only as a dev-client second opinion (sprint T8). |
 | C. Copy Shortest Path's pathfinder into the plugin | Ships their code, which elzerma doesn't want; holds the 1.6 MB map in memory; heavy work while planning; breaks whenever they change it. |
 | D. Keep the hand tables and fix case by case | What we have done since 2026-10-10 (sections 1.1-1.8); it can't find ways nobody typed in. |
 | E. Our own pathfinder over Shortest Path's data | Works, and is the fallback if the bubble harness turns out fragile (decided in T0), but we'd have to copy their rules for doors, transports and requirements and keep them in step. |
@@ -116,8 +125,14 @@ main sources unchanged from a pinned local clone (next to the repo, as `tools/wa
 `runelite-client` and Mockito for the pretend client.
 
 1. **Pin.** The Shortest Path commit the Plugin Hub ships, recorded in the output and in `THIRD_PARTY_NOTICES`.
-2. **Our inputs.** `patches.tsv`: every patch tile of every type and stop (generated from `data/Patch` and
-   `PatchPoints`, so it can't drift), plus the 1b/1c patches when their sprint starts. `extras.tsv`: steps Shortest
+2. **Our inputs.** `patches.tsv`: **every farming patch in the game**, whether or not the plugin runs that type yet:
+   the types it runs (from `data/Patch` and `PatchPoints`, so they can't drift), the 1b and 1c types
+   (`crop-types.md` sections 3-4: bushes, cactus, mushroom, belladonna, seaweed, hardwoods, calquat, celastrus,
+   redwood, spirit trees) and the ones that plan leaves out (anima, Hespori, crystal tree, grapes, coral, the
+   Keldagrim hops and Anglers' Retreat flax patches), from RuneLite's `FarmingWorld` where it tracks them and the
+   wiki's map points otherwise. Rows for types the plugin doesn't run are marked "atlas only", so a crop-type sprint
+   only switches its patches on and never touches travel. Compost bins and the tool leprechauns by them are added as
+   places too. `extras.tsv`: steps Shortest
    Path can't model (following Elkoy through the maze, the Troll Stronghold inside, the Grand Tree door), each with a
    source note.
 3. **Places to search from.** The landing of every teleport usable from anywhere (spells, items, tablets, minigame and
@@ -170,6 +185,32 @@ the README credit. The harness is ours; the way it fakes a client follows their 
 - **Choosing stays as it is** (seconds plus the travel style's tie-breaks and charge costs), minus learned times.
 - **Deleted:** `TILES`, `EXTRA_SECONDS`, `WALKS`, `SPIRIT_TREE_WALK`, `RENU_PAD_WALK`, `BALLOON_WALK`, `BANK_TILES`,
   `BANK_POINTS` and most hand `JourneyStep`s; `LearnedTimes.adjust` in `RoutePlanner.quickest` and the outlier rules.
+
+### Choosing ways with the inventory in mind (our own algorithm)
+
+The atlas tells us the true fastest way for every leg. The fastest way per leg isn't always the fastest run: each way
+needs things carried, and when they and the farming supplies don't fit, the run needs a bank trip. Today that trade is
+spread over several rules (worn items take no slot, a staff is worth the slots its rune types take (issue #7), the
+rune pouch, pooled charges, the "Fewest items" style). This sprint joins them into one choice for the whole run.
+
+- **Each candidate way has a footprint:** what it needs carried. A teleport item takes a slot unless it is worn in a
+  free slot; a spell takes a slot per rune type unless a wielded staff or the rune pouch covers it; tablets take a slot
+  per kind; coins one slot shared by every fee; a balloon log; the dramen staff. Footprints combine as a **set**: one
+  skills necklace serves the Farming Guild, Hosidius (Woodcutting Guild) and Ardougne (Fishing Guild) legs for one slot,
+  and every spell needing law runes shares that rune's slot.
+- **The goal is the run's total time**, legs plus bank trips. A bank trip costs its real detour from the atlas (to the
+  bank, the banking itself, and on to the next stop), so a slot that saves a bank trip is worth that many seconds.
+- **The search, given the stop order:**
+  1. Start from each leg's fastest way and let `BankPlanner` place the bank trips the supplies and footprint need.
+  2. Try moves: switch one leg to another way; "use this item wherever it's nearly as quick" (fills the shared slot);
+     wield a staff instead of carrying its runes; drop an item no leg needs any more. Each move is scored by the whole
+     run's time with bank trips placed again.
+  3. Keep the best move, repeat until nothing improves (bounded), then check the order once more with the chosen ways.
+  4. Ties fall to the travel style (save charges, prefer free), as now.
+- **Explained:** the Run tab's hover and the dev log say why a slower way was chosen, e.g. "skills necklace to Hosidius,
+  4 s slower, frees a slot: no bank trip (saves 45 s)".
+- **Reused:** `ChargeBudget`, the staff and rune pouch slot rules, `BankPlanner`'s bank-trip search, worn items taking
+  no slot. "Fewest items" becomes a style that values a slot above its time (question 7).
 
 ## 5. Timing: an estimate and a personal best
 
@@ -248,6 +289,9 @@ Travel
 | Catherby herb and fruit tree, then bank | any | Patch order by the atlas; bank walk from the last patch |
 | Every enabled stop | fresh account | A way there, or listed as unreachable with what's missing |
 | A recorded slow leg | elzerma's | The same route as without it (times don't choose) |
+| A big run (herbs, trees, fruit trees, allotments) whose fastest ways leave the supplies 2 slots short | maxed | Ways sharing an item (one skills necklace for three legs, a staff for the runes) and no bank trip, when that's quicker overall |
+| The same run when a bank stop is on the way anyway | maxed | The fastest way per leg; no slot-saving swaps |
+| A run where saving slots can't avoid the bank trip | elzerma's | The fastest way per leg |
 
 - The existing scenario suites (elzerma's expected chains) keep passing or are updated with the reason.
 - **Route snapshots:** the full planned route for the three accounts, saved and diffed whenever the atlas is rebuilt.
@@ -279,14 +323,18 @@ three.
 | T1 | Atlas builder: places, peeling, re-timing, data files, report, referee | large | The report |
 | T2 | Atlas in the plugin, shadow mode: load, requirement mapping, teleports from data; the old planner still chooses; the dev log shows old against new per leg | medium | elzerma plays one run in the dev client, sends the log |
 | T3 | Planner on the atlas: legs composed as in section 4, special cases and hand tables removed, learned times out of choosing, scenario tests and snapshots | large | Hand checks: three runs |
-| T4 | Journeys from atlas steps: generated step text, NPC and object outlines, walking lines to each step | medium | Hand checks: a boat or NPC journey |
-| T5 | Estimate and personal best: time constants, pace, best times and splits; remove "Share your run times" | medium | Hand checks: a run, then a faster one |
-| T6 | Travel tab: ways to travel, Wilderness, locations with alternatives | medium | Hand checks on the tab |
-| T7 | Optional dev-client second opinion: at each leg, ask Shortest Path's `query` from the player's tile and log when its way is quicker | small | Log |
-| T8 | Help list, README, notices, release notes | small | None |
+| T4 | Choosing ways with the inventory in mind (section 4, last part): footprints, run-level moves, bank trips costed from the atlas, explanations | large | Hand checks: a big run |
+| T5 | Journeys from atlas steps: generated step text, NPC and object outlines, walking lines to each step | medium | Hand checks: a boat or NPC journey |
+| T6 | Estimate and personal best: time constants, pace, best times and splits; remove "Share your run times" | medium | Hand checks: a run, then a faster one |
+| T7 | Travel tab: ways to travel, Wilderness, locations with alternatives | medium | Hand checks on the tab |
+| T8 | Optional dev-client second opinion: at each leg, ask Shortest Path's `query` from the player's tile and log when its way is quicker | small | Log |
+| T9 | Help list, README, notices, release notes | small | None |
 
-**When:** after crop types 1a's hand checks and before 1b (recommended), so 1b and 1c only list their patch tiles and
-rebuild the atlas instead of researching travel per stop. Other sessions shouldn't edit travel files while T1-T3 run.
+**When (elzerma, 2026-10-17): first.** Everything else that changes the planner waits: crop types 1b and 1c, the
+types that plan leaves out, and farming contracts. Crop types 1a is built and only waits for hand checks, which can
+happen at any time; its hops travel is replaced by the atlas in T3. Because the atlas already covers every patch in
+the game (section 3, step 2), each later crop-type sprint switches its patches on and rebuilds nothing in travel.
+Other sessions don't edit travel files (`data/travel/`, the leg code in `route/`) until T7 is done.
 
 ## 10. Risks
 
@@ -298,14 +346,18 @@ rebuild the atlas instead of researching travel per stop. Other sessions shouldn
 - **Wrong requirement mapping:** shadow mode, unit tests and guided tests for new varbits.
 - **Routes change for current players:** release notes, and the shadow-mode evidence before the switch.
 - **Data size:** pruning by a time budget; target under 1 MB.
+- **Patches reached by Sailing** (Anglers' Retreat, the Great Conch): Shortest Path searches sailing separately. T0
+  checks whether the bubble can use it; if not, those patches get hand journeys in `extras.tsv` until it can.
+- **The inventory search is a heuristic:** the best combination of ways for a whole run can't be checked exhaustively;
+  bounded moves with scenario tests keep it predictable, and the dev log explains each choice.
 
 ## 11. Open questions for elzerma
 
-1. Approach: the atlas built with Shortest Path in a bubble (recommended), our own pathfinder over its data, or keep
-   fixing the tables?
-2. When: before crop types 1b (recommended) or after 1c?
-3. "Share your run times": remove it (recommended, per your no-crowdsourcing rule) or keep it?
-4. Which ways Auto uses by default: everything except the Wilderness and cooldown (minigame) teleports, each a tick box
-   (recommended); everything; or only ways that cost nothing?
+1. ~~Approach~~ Decided: the atlas from the bubble, then our own inventory-aware choice.
+2. ~~When~~ Decided: first; crop types wait and run on it; plan for all crop types.
+3. ~~"Share your run times"~~ Decided: remove it.
+4. ~~Default ways~~ Decided: everything except Wilderness and cooldown (minigame) teleports, each a tick box.
 5. Personal best compared per same set of stops (recommended) or per run type (herb run, tree run)?
 6. Splits at each stop while running (recommended), or only the total at the end?
+7. "Fewest items": keep it as a style that values an inventory slot above its time (recommended), or drop it now that
+   Fastest already saves slots when that saves a bank trip?

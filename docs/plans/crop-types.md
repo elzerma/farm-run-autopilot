@@ -1,7 +1,9 @@
 # Plan: the crop types the plugin doesn't support yet (three sprints)
 
 Written 2026-10-17, planning only (nothing built). **Status:** Sprint 1a (allotments, flowers, hops) built 2026-10-17, waiting
-for elzerma's in-game checks; Entrana hops left out (question 6). The plugin today runs herbs, trees and fruit trees as one
+for elzerma's in-game checks; Entrana hops left out (question 6). **1b and 1c wait for the travel rework**
+(`travel-rework.md`, elzerma 2026-10-17): its atlas will already hold travel to every patch, so those sprints switch their
+patches on instead of researching travel per stop. The plugin today runs herbs, trees and fruit trees as one
 combined route with bank stops (live on the Plugin Hub at `62f3070`). SPEC section 2 "Later (not v1)" lists the
 rest; elzerma asked for them to be planned as three sprints:
 
