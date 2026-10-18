@@ -30,7 +30,8 @@ The plugin never clicks, types or acts for you. It only shows information.
   A vine grows round the button while it waits for you.
 - Equipment is chosen slot by slot: a staff that covers the run's runes is wielded ahead of magic secateurs.
 - Barbarian seed planting is read from the game; once you've learned it, herb runs don't ask for a seed dibber.
-- At a bank stop partway through a big run, it shows what to deposit first, then what to take for the rest.
+- At a bank stop partway through a big run, it shows what to deposit first (with any seeds and saplings beyond
+  what the next part plants), then what to take for it. Each part carries only its own seeds and saplings.
 
 **Seed vault**
 - In the Farming Guild's seed vault, a button by the close button shows a "Farm Run Autopilot" section at the

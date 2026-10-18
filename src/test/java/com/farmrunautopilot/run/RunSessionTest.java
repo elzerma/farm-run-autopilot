@@ -23,10 +23,8 @@ import com.farmrunautopilot.supply.SupplyPlan;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import net.runelite.api.coords.WorldPoint;
 import org.junit.Test;
 
@@ -129,23 +127,21 @@ public class RunSessionTest
 	public void theSeedsForLaterGoInTheBankBeforeTheRunStarts()
 	{
 		final RunPlan run = banked(part(seeds(RANARR, 6, 0, 0)), part(seeds(RANARR, 6, 0, 0)));
-		final Set<Integer> forLater = new HashSet<>(Collections.singletonList(RANARR));
-		// All 12 taken from the vault: the 6 for later go in the bank
-		assertEquals(Collections.singletonMap(RANARR, 6), RunSession.toBankForLater(run, carrying(RANARR, 12), forLater));
+		// All 12 carried (from the vault or not, elzerma 2026-10-18): the 6 for later go in the bank
+		assertEquals(Collections.singletonMap(RANARR, 6), RunSession.toBankForLater(run, carrying(RANARR, 12)));
 		// Put away: the first part's 6 are kept
-		assertTrue(RunSession.toBankForLater(run, carrying(RANARR, 6), forLater).isEmpty());
-		// Never more than the later parts plant
-		assertEquals(Collections.singletonMap(RANARR, 6), RunSession.toBankForLater(run, carrying(RANARR, 20), forLater));
-		// Only seeds seen in the vault for later: what the player always carries is left alone
-		assertTrue(RunSession.toBankForLater(run, carrying(RANARR, 12), new HashSet<>()).isEmpty());
+		assertTrue(RunSession.toBankForLater(run, carrying(RANARR, 6)).isEmpty());
+		// Everything beyond the first part's, in one go
+		assertEquals(Collections.singletonMap(RANARR, 14), RunSession.toBankForLater(run, carrying(RANARR, 20)));
 	}
 
 	@Test
 	public void aSeedOnlyTheLaterPartsPlantGoesInTheBankWhole()
 	{
 		final RunPlan run = banked(part(seeds(RANARR, 6, 6, 0)), part(seeds(SNAPDRAGON, 3, 0, 0)));
-		assertEquals(Collections.singletonMap(SNAPDRAGON, 3), RunSession.toBankForLater(run, carrying(SNAPDRAGON, 3),
-			new HashSet<>(Collections.singletonList(SNAPDRAGON))));
+		assertEquals(Collections.singletonMap(SNAPDRAGON, 3), RunSession.toBankForLater(run, carrying(SNAPDRAGON, 3)));
+		// A seed no later part plants is left alone at the start
+		assertTrue(RunSession.toBankForLater(run, carrying(RANARR, 20)).isEmpty());
 	}
 
 	@Test

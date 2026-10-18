@@ -123,11 +123,6 @@ public class RunSession
 	private static final int AT_BANK_TILES = 20;
 	/** At the Farming Guild, everything needed from the seed vault has been taken (or skipped). */
 	private boolean vaultChecked;
-	/**
-	 * Seeds the run's later parts need that were seen only in the seed vault while gathering, with "Take all seeds at
-	 * the start" (issue #8): once taken, the ones for later go in the bank before the run starts.
-	 */
-	private final Set<Integer> forLater = new LinkedHashSet<>();
 	/** The current stop's patches in the order its checklist last showed them, so a tick goes to the patch shown. */
 	private List<Patch> shownPatches = Collections.emptyList();
 	/** The stop those were shown for, or -1. */
@@ -184,7 +179,6 @@ public class RunSession
 		}
 		stage = RunView.State.BUILDING;
 		lastRun = null;
-		forLater.clear();
 		log.debug("Building a run");
 		evaluate();
 	}
@@ -1024,9 +1018,8 @@ public class RunSession
 			// With "Take all seeds at the start", the seed vault's seeds for later are taken and put in the bank first
 			final Map<Integer, Integer> later = takesAllAtStart(current, settings.getRunConfig())
 				? laterFromVault(current) : Collections.emptyMap();
-			forLater.addAll(later.keySet());
 			final Map<Integer, Integer> toBank = later.isEmpty()
-				? toBankForLater(current, holdingsTracker.getHoldings(), forLater) : Collections.emptyMap();
+				? toBankForLater(current, holdingsTracker.getHoldings()) : Collections.emptyMap();
 			if (!isReady(current) || !later.isEmpty() || !toBank.isEmpty())
 			{
 				view = buildingView(current, later, toBank);
@@ -1466,9 +1459,13 @@ public class RunSession
 	{
 		final List<String> names = new ArrayList<>();
 		final SupplyPlan part = extraBank != null ? extraBank.getSupplies() : partFor(plan, stopIndex, true);
-		for (int id : BankGuide.toDeposit(part, holdingsTracker.getHoldings(), id -> id))
+		final Holdings holdings = holdingsTracker.getHoldings();
+		final Map<Integer, Integer> extras = BankGuide.extras(part, holdings);
+		for (int id : BankGuide.toDeposit(part, holdings, id -> id))
 		{
-			names.add(runService.itemName(id));
+			// Seeds and saplings beyond what the next part plants: how many, and how many to keep
+			names.add(extras.containsKey(id) ? keeping(Collections.singletonMap(id, extras.get(id)), holdings)
+				: runService.itemName(id));
 		}
 		return names;
 	}
@@ -1634,13 +1631,13 @@ public class RunSession
 
 	/**
 	 * Gathering supplies, one step at a time: open a bank, open the Farm run tab, take what it shows; then what only
-	 * the seed vault has; then, with "Take all seeds at the start", put the seeds for later in the bank.
+	 * the seed vault has; then, on a run that banks partway, put the seeds and saplings for later in the bank.
 	 *
 	 * @param missing lines still to get from the bank (or that the player has nowhere)
 	 * @param vault what only the seed vault can make up, by item, with how many to take from it
 	 * @param startsThere the run sets off from the Farming Guild
 	 * @param forLaterToo some of it is for the run's later parts, to put in the bank
-	 * @param toBank seeds for the later parts that are carried, by item, with how many to put in the bank
+	 * @param toBank seeds and saplings for the later parts that are carried, by item, with how many to put in the bank
 	 */
 	private String gatheringStep(int missing, Map<Integer, Integer> vault, boolean startsThere, boolean forLaterToo,
 		Map<Integer, Integer> toBank)
@@ -1660,7 +1657,7 @@ public class RunSession
 		}
 		if (missing <= 0 && !toBank.isEmpty())
 		{
-			return "Farm run: put " + amounts(toBank) + " in your bank for later in the run";
+			return "Farm run: put " + keeping(toBank, holdingsTracker.getHoldings()) + " in your bank for later in the run";
 		}
 		if (!bankTab.isBankOpen())
 		{
@@ -2102,6 +2099,19 @@ public class RunSession
 		return String.join(", ", parts);
 	}
 
+	/** Some of what's carried to put in the bank, with what stays, e.g. "3 x Magic sapling (keep 2)". */
+	private String keeping(Map<Integer, Integer> deposit, Holdings holdings)
+	{
+		final List<String> parts = new ArrayList<>();
+		final Holdings carried = holdings.carriedOnly();
+		deposit.forEach((id, count) ->
+		{
+			final int keep = carried.count(id) - count;
+			parts.add(count + " x " + runService.itemName(id) + (keep > 0 ? " (keep " + keep + ")" : ""));
+		});
+		return String.join(", ", parts);
+	}
+
 	/** How many to take of each line, by the line's item, adding up lines for the same item. */
 	static Map<Integer, Integer> byItem(Map<SupplyLine, Integer> take)
 	{
@@ -2132,21 +2142,31 @@ public class RunSession
 	}
 
 	/**
-	 * Of these seeds, how many are carried beyond what the first part of the run plants, up to what the later parts
-	 * plant: the ones for later, to put in the bank before the run starts.
+	 * Of the seeds and saplings the run's later parts plant, how many are carried beyond what the first part plants:
+	 * the ones for later, to put in the bank before the run starts (elzerma, 2026-10-18: take only what each part
+	 * needs, whether they came from the seed vault or were carried already).
 	 */
-	static Map<Integer, Integer> toBankForLater(RunPlan plan, Holdings holdings, Set<Integer> seeds)
+	static Map<Integer, Integer> toBankForLater(RunPlan plan, Holdings holdings)
 	{
+		final Set<Integer> later = new LinkedHashSet<>();
+		for (BankStop bank : plan.getBankStops())
+		{
+			for (SupplyLine line : bank.getSupplies().getLines())
+			{
+				if (line.getGroup() == SupplyLine.Group.SEEDS)
+				{
+					for (int id : line.getItemIds())
+					{
+						later.add(id);
+					}
+				}
+			}
+		}
 		final Map<Integer, Integer> deposit = new LinkedHashMap<>();
 		final Holdings carried = holdings.carriedOnly();
-		for (int id : seeds)
+		for (int id : later)
 		{
-			int later = 0;
-			for (BankStop bank : plan.getBankStops())
-			{
-				later += planted(bank.getSupplies(), id);
-			}
-			final int extra = Math.min(carried.count(id) - planted(plan.getSupplies(), id), later);
+			final int extra = carried.count(id) - planted(plan.getSupplies(), id);
 			if (extra > 0)
 			{
 				deposit.put(id, extra);

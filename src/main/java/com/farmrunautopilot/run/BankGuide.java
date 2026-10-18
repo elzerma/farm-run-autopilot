@@ -7,6 +7,7 @@ import com.farmrunautopilot.supply.SupplyPlan;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,9 +38,9 @@ final class BankGuide
 	}
 
 	/**
-	 * Inventory items this part of the run doesn't need (produce, empty buckets, the last part's leftovers), to
-	 * deposit. The holdings count noted items as unnoted, so each is also given noted, to outline whichever the
-	 * player has.
+	 * Inventory items this part of the run doesn't need (produce, empty buckets, the last part's leftovers), and the
+	 * seeds and saplings beyond what it plants, to deposit. The holdings count noted items as unnoted, so each is also
+	 * given noted, to outline whichever the player has.
 	 *
 	 * @param noted the noted version of an item (or the same item if it has none)
 	 */
@@ -53,17 +54,48 @@ final class BankGuide
 				needed.add(id);
 			}
 		}
+		final Map<Integer, Integer> extras = extras(part, holdings);
 		final Set<Integer> deposit = new LinkedHashSet<>();
 		for (Map.Entry<Integer, Integer> e : holdings.in(Holdings.Source.INVENTORY).entrySet())
 		{
 			final int id = e.getKey();
-			if (e.getValue() > 0 && !needed.contains(id))
+			if (e.getValue() > 0 && (!needed.contains(id) || extras.containsKey(id)))
 			{
 				deposit.add(id);
 				deposit.add(noted.applyAsInt(id));
 			}
 		}
 		return deposit;
+	}
+
+	/**
+	 * Seeds and saplings in the inventory beyond what this part of the run plants, by item, with how many to put in
+	 * the bank (elzerma, 2026-10-18: take only what each part needs).
+	 */
+	static Map<Integer, Integer> extras(SupplyPlan part, Holdings holdings)
+	{
+		final Map<Integer, Integer> planted = new LinkedHashMap<>();
+		for (SupplyLine line : part.getLines())
+		{
+			if (line.getGroup() == SupplyLine.Group.SEEDS)
+			{
+				for (int id : line.getItemIds())
+				{
+					planted.merge(id, line.getNeed(), Integer::sum);
+				}
+			}
+		}
+		final Map<Integer, Integer> inventory = holdings.in(Holdings.Source.INVENTORY);
+		final Map<Integer, Integer> extras = new LinkedHashMap<>();
+		planted.forEach((id, need) ->
+		{
+			final int over = inventory.getOrDefault(id, 0) - need;
+			if (over > 0)
+			{
+				extras.put(id, over);
+			}
+		});
+		return extras;
 	}
 
 	/**

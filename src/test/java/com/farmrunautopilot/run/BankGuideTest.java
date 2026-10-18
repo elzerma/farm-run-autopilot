@@ -66,6 +66,21 @@ public class BankGuideTest
 	}
 
 	@Test
+	public void depositsSeedsAndSaplingsBeyondWhatTheNextPartPlants()
+	{
+		final SupplyPlan next = part(new SupplyLine(SupplyLine.Group.SEEDS, "Magic sapling", 3, 0, 0,
+			Collections.emptyMap(), null, 3, false, null, new int[]{ItemID.PLANTPOT_MAGIC_TREE_SAPLING}, true),
+			new SupplyLine(SupplyLine.Group.SEEDS, "Ranarr seed", 4, 0, 0,
+			Collections.emptyMap(), null, 1, false, null, new int[]{ItemID.RANARR_SEED}, true));
+		final Holdings now = holdings(items(ItemID.PLANTPOT_MAGIC_TREE_SAPLING, 5, ItemID.RANARR_SEED, 4), items());
+		// 2 saplings too many; the seeds are just right
+		assertEquals(Collections.singletonMap(ItemID.PLANTPOT_MAGIC_TREE_SAPLING, 2), BankGuide.extras(next, now));
+		final java.util.Set<Integer> deposit = BankGuide.toDeposit(next, now, id -> id);
+		assertTrue(deposit.contains(ItemID.PLANTPOT_MAGIC_TREE_SAPLING));
+		assertFalse(deposit.contains(ItemID.RANARR_SEED));
+	}
+
+	@Test
 	public void wearsTeleportItemsAndTheOutfitOnlyOnceCarried()
 	{
 		final SupplyPlan part = part(travel("Ring of wealth", true, ItemID.RING_OF_WEALTH_5),
