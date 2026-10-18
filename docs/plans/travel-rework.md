@@ -358,6 +358,56 @@ happen at any time; its hops travel is replaced by the atlas in T3. Because the 
 the game (section 3, step 2), each later crop-type sprint switches its patches on and rebuilds nothing in travel.
 Other sessions don't edit travel files (`data/travel/`, the leg code in `route/`) until T7 is done.
 
+### T0 results (2026-10-17)
+
+**The bubble works.** `tools/atlas` compiled Shortest Path `37abff3` (the Plugin Hub's version 1.21.3) unchanged and
+ran its real pathfinder on a computer with pretend accounts: 25 legs and their next-best ways in about 45 s, the same
+answers every run. No game, no Shortest Path install, nothing shipped. Fallback E isn't needed; T1 builds on this.
+Full table: `tools/atlas/t0-results.md`. Times below are the walk and ride part only (tiles x 0.3 s + transport ticks
+x 0.6 s), before the plugin's set-off overhead, compared with what `TravelTimes` says today.
+
+**The plugin thinks it's slower than it is** (so it can pass over a good way):
+
+| Leg | Plugin | Map | Why |
+|---|---|---|---|
+| Fairy ring CIQ to Tree Gnome Village | 70.1 s | 23.1 s | 77 tiles; the plugin adds 47 s from one recorded 118 s leg |
+| Trollheim Teleport to Troll Stronghold | 62.2 s | 28.8 s | Rocks at 41, 43 and 73 Agility cut the walk from 174 to 96 tiles |
+| Ardougne Teleport and boat to Brimhaven | 30.6 s | 23.1 s | The boat is 6 ticks on the map, 12 s in the plugin (the fare dialogue is worth checking) |
+| Stony basalt to Troll Stronghold, 73 Agility | 10.5 s | 3.3 s | Climb the rocks, 11 tiles; the plugin's 35 tiles was an estimate |
+| Falador Teleport to Taverley, 66 Agility | 26.7 s | 20.1 s | The plugin uses the long way round for everyone |
+
+**The plugin thinks it's quicker than it is** (so it can pick a slow way):
+
+| Leg | Plugin | Map | Why |
+|---|---|---|---|
+| Rada's blessing to the Farming Guild | 30.0 s | 46.8 s (68.7 s below 62 Agility) | The plugin's 100 tiles was an estimate; the way down needs two 8-tick rock climbs |
+| Stony basalt to Troll Stronghold, below 73 Agility | 10.5 s | 25.2 s | In through the stronghold and up the ladder, 80 tiles |
+| Skills necklace to Hosidius, below 45 Agility | 24.9 s | 36.6 s | 122 tiles without the stepping stone; the plugin counts it for everyone |
+| Fairy ring AIS to Nemus Retreat | 19.5 s | 26.1 s | The stepping stones take 7 ticks |
+| Quetzal to Auburnvale for Nemus, below 33 Agility, no Twilight's Promise | 21.3 s | 30.9 s | 103 tiles without the tunnel |
+
+**Ways the plugin doesn't know:**
+- **Harmony Island without its teleport:** Ectophial, the energy barrier, Bill Teach's boat to Mos Le'Harmless, then
+  Brother Tranquility: 37.5 s from the Ectophial (needs Cabin Fever). Today the plugin has no way.
+- **Nemus Retreat from Auburnvale with no Agility:** Renu to Quetzacalli Gorge, then follow the Mountain Guide: 19.2 s
+  (needs Twilight's Promise). Worth seeing in game once.
+- **Tree Gnome Village without Elkoy:** the spirit tree to the Battlefield of Khazard, then a walk: 27.6 s.
+
+**Matching within a second or two:** Hosidius by Book of the Dead and Xeric's talisman, Catherby by Camelot, Tree
+Gnome Village by spirit tree and Elkoy, Farming Guild by CIR, Port Phasmatys by Ectophial, Kastori by quetzal, the
+royal seed pod, Nemus by pendant (2 s quicker on the map), Falador Park to Falador farm (3 s slower).
+
+**For T1 to handle:**
+- Some transports have 0 ticks in Shortest Path's data (Troll Stronghold and Trollheim rock climbs): give each kind a
+  minimum, from the wiki or elzerma's dev logs, so they aren't free.
+- Peeling without teleports can wander far (Brimhaven without coins goes by fairy ring and travel cart, 79 s): cap
+  each answer at a time budget, since another teleport will beat it in game.
+- Vars show as numbers (var 111 is Tree Gnome Village's progress, needed to follow Elkoy): name them from RuneLite's
+  gameval `VarbitID`, and map them to `Unlock`.
+- Player-planted spirit trees count as not planted in the bubble; give the maxed account grown trees.
+- Speed for the full atlas: reuse one Shortest Path config per pretend account (each refresh rereads every
+  transport), ask with a set of target tiles per stop, and use several threads; about 0.4 s a question today.
+
 ## 10. Risks
 
 - **Shortest Path changes its internals:** pinned commit; a small harness; fallback E.

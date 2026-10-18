@@ -1,0 +1,2 @@
+// Its own build, never part of the plugin's (see README.md)
+rootProject.name = 'atlas'

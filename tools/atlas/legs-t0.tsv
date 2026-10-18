@@ -1,0 +1,28 @@
+# Sprint T0 legs: raw landing tiles (tools/walk/methods.tsv, Shortest Path), the stop or patch from tools/walk/patches.tsv,
+# the pretend account ("maxed" plus changes), and the plugin's TravelTimes numbers today (tiles, extra seconds).
+id	from	to	account	today_tiles	today_extra_s	note
+HOSIDIUS_SKILLS_NECKLACE	1662 3505 0	HOSIDIUS	maxed	79	1.2	Skills necklace, Woodcutting Guild. The plugin counts the 45 Agility stepping stone for everyone (236f96a).
+HOSIDIUS_SKILLS_NECKLACE_44	1662 3505 0	HOSIDIUS	agility=44	79	1.2	The same below 45 Agility: the plugin still counts the stepping stone.
+HOSIDIUS_BOOK_OF_THE_DEAD	1714 3611 0	HOSIDIUS	maxed	72		Kharedst's memoirs / Book of the Dead, Lunch by the Lancalliums.
+HOSIDIUS_XERICS	1752 3566 0	HOSIDIUS	maxed	21		Xeric's talisman, Xeric's Glade.
+TAVERLEY_FALADOR_TELEPORT	2964 3378 0	TAVERLEY	maxed	89		Falador Teleport. TravelTimes says 89; its comment says 70 over the 66 Agility rocks, about 100 round by the gate.
+TAVERLEY_FALADOR_TELEPORT_65	2964 3378 0	TAVERLEY	agility=65	89		The same below 66 Agility.
+CATHERBY_CAMELOT	2757 3479 0	CATHERBY	maxed	57		Camelot Teleport to the nearest Catherby patch.
+TREE_GNOME_VILLAGE_SPIRIT_TREE	2542 3170 0	TREE_GNOME_VILLAGE	maxed	15	12	Spirit tree in the maze. The plugin: Elkoy leads you out (12 s), then 15 tiles.
+TREE_GNOME_VILLAGE_CIQ	2528 3127 0	TREE_GNOME_VILLAGE	maxed	77	47	Fairy ring CIQ. The plugin adds 47 s from one recorded 118 s leg ("SO slow").
+NEMUS_QUETZAL_AUBURNVALE	1411 3361 0	NEMUS_RETREAT	maxed	71		Quetzal to Auburnvale. The plugin assumes the 33 Agility tunnel.
+NEMUS_QUETZAL_AUBURNVALE_32	1411 3361 0	NEMUS_RETREAT	agility=32	71		The same below 33 Agility.
+NEMUS_FAIRY_RING_AIS	1429 3324 0	NEMUS_RETREAT	maxed	65		Fairy ring AIS (stepping stones 36 Agility, broken wall 24).
+NEMUS_PENDANT_OF_ATES	1364 3277 0	NEMUS_RETREAT	maxed	54		Pendant of Ates, Nemus Retreat.
+TROLL_STRONGHOLD_BASALT_ENTRANCE	2845 3694 0	TROLL_STRONGHOLD	maxed	35		Stony basalt to the entrance. The plugin's 35 is an estimate.
+TROLL_STRONGHOLD_BASALT_ENTRANCE_72	2845 3694 0	TROLL_STRONGHOLD	agility=72	35		The same below 73 Agility (no climb up the rocks).
+TROLL_STRONGHOLD_TROLLHEIM	2890 3679 0	TROLL_STRONGHOLD	maxed	174	10	Trollheim Teleport, down the mountain.
+GNOME_STRONGHOLD_ROYAL_SEED_POD	2465 3495 0	GNOME_STRONGHOLD	maxed	50		Royal seed pod. The plugin's 50 is an estimate.
+FARMING_GUILD_RADAS_BLESSING	1310 3796 0	FARMING_GUILD	maxed	100		Rada's blessing, Mount Karuulm. The plugin's 100 is an estimate.
+FARMING_GUILD_FAIRY_RING_CIR	1302 3762 0	FARMING_GUILD	maxed	82		Fairy ring CIR.
+BRIMHAVEN_ARDOUGNE_BOAT	2662 3305 0	BRIMHAVEN	maxed	62	12	Ardougne Teleport, then Captain Barnaby's boat. The plugin: 62 tiles + 12 s for the boat.
+PORT_PHASMATYS_ECTOPHIAL	3660 3522 0	PORT_PHASMATYS	maxed	57		Ectophial.
+KASTORI_QUETZAL	1344 3022 0	KASTORI	maxed	32		Quetzal to Kastori.
+FALADOR_PARK_TO_FALADOR_FARM	3008 3370 0	FALADOR_FARM	maxed	108		Walk between stops (one of only three the plugin knows).
+HARMONY_FROM_ECTOPHIAL	3660 3522 0	HARMONY_ISLAND	maxed			Harmony Island without the Harmony teleport, tablet or nexus, after an Ectophial. The plugin has no way.
+HARMONY_FROM_CATHERBY	2813 3463 0	HARMONY_ISLAND	maxed			Harmony Island from the Catherby herb patch, no teleports. The plugin has no way.

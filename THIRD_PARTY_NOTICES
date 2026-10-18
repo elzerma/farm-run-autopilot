@@ -120,6 +120,10 @@ and walking distances measured on its collision map (collision-map.zip) with a o
 plugin. Nothing from Shortest Path is downloaded or loaded at runtime. Its licence names no copyright holder,
 so it is credited to Skretzo and the Shortest Path contributors.
 
+tools/atlas (dev only, not part of the plugin) compiles Shortest Path's own code, unchanged, from a local clone
+(commit 37abff3a3345185fc11fccecae04d8170de25a11) to run its pathfinder with pretend accounts. That code is not in
+this repository, and the plugin ships none of it.
+
 Copyright (c) Skretzo and Shortest Path contributors
 All rights reserved.
 

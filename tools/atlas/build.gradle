@@ -1,0 +1,48 @@
+plugins {
+	id 'java'
+	id 'application'
+}
+
+repositories {
+	maven {
+		url = 'https://repo.runelite.net'
+		content {
+			includeGroupByRegex("net\\.runelite.*")
+		}
+	}
+	mavenCentral()
+}
+
+// A local clone of Shortest Path at the commit the Plugin Hub ships (README.md). Its main sources and resources are
+// compiled in unchanged; nothing from it reaches the plugin.
+def shortestPath = file(findProperty('shortestPath') ?: '../../../shortest-path')
+def runeLiteVersion = 'latest.release'
+
+dependencies {
+	implementation "net.runelite:client:$runeLiteVersion"
+	compileOnly 'org.projectlombok:lombok:1.18.30'
+	annotationProcessor 'org.projectlombok:lombok:1.18.30'
+}
+
+sourceSets {
+	main {
+		java.srcDirs += "$shortestPath/src/main/java"
+		resources.srcDirs += "$shortestPath/src/main/resources"
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+	// 17 for InvocationHandler.invokeDefault, used by the pretend config
+	options.release.set(17)
+	options.compilerArgs << '-nowarn'
+}
+
+application {
+	mainClass = 'com.farmrunautopilot.atlas.Bubble'
+}
+
+tasks.named('run', JavaExec) {
+	workingDir = projectDir
+	jvmArgs '-Xmx4g', '-Djava.awt.headless=true'
+}
