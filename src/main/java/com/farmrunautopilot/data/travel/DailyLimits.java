@@ -22,21 +22,47 @@ public final class DailyLimits
 	 * log says when the two differ.
 	 */
 	private static final Map<TravelMethod, Integer> USED_TODAY = new EnumMap<>(TravelMethod.class);
+	/**
+	 * The varbit holding the rest of a count split in two: the Ardougne cloak's is ARDOUGNE_CLOAK_LOWBITS plus high
+	 * bits in varbit 6070, the unnamed one beside it (the game's other split counts are named in pairs, e.g.
+	 * BOOKOFSCROLLS_WATSON_LOWBITS and _HIGHBITS). Read alone, the low bits made all 3 of a cloak 2's uses look like
+	 * 1, so a used-up cloak was planned (elzerma, 2026-10-18). UNVERIFIED until the dev log shows the two adding up.
+	 */
+	private static final Map<TravelMethod, Integer> HIGH_BITS = new EnumMap<>(TravelMethod.class);
+	/** Varbit 6070, which RuneLite's game values don't name. */
+	public static final int ARDOUGNE_CLOAK_HIGHBITS = 6070;
 
 	static
 	{
 		USED_TODAY.put(TravelMethod.ARDOUGNE_CLOAK_FARM, VarbitID.ARDOUGNE_CLOAK_LOWBITS);
 		USED_TODAY.put(TravelMethod.EXPLORERS_RING_CABBAGE_PATCH, VarbitID.LUMBRIDGE_CABBAGE_TELEPORT);
+		HIGH_BITS.put(TravelMethod.ARDOUGNE_CLOAK_FARM, ARDOUGNE_CLOAK_HIGHBITS);
 	}
 
 	private DailyLimits()
 	{
 	}
 
-	/** Teleports limited per day, with the game value that counts today's uses. */
+	/** Teleports limited per day, with the game value that counts today's uses (its low bits, when split). */
 	public static Map<TravelMethod, Integer> usedTodayVarbits()
 	{
 		return Collections.unmodifiableMap(USED_TODAY);
+	}
+
+	/** The varbit with the high bits of a count split in two, for the teleports whose count is. */
+	public static Map<TravelMethod, Integer> usedTodayHighBits()
+	{
+		return Collections.unmodifiableMap(HIGH_BITS);
+	}
+
+	/**
+	 * A count split in two, put back together.
+	 *
+	 * @param lowWidth how many bits the low part has
+	 */
+	public static int combine(int low, int high, int lowWidth)
+	{
+		return low | high << lowWidth;
 	}
 
 	/**

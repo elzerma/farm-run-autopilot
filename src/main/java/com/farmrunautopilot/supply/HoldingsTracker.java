@@ -26,6 +26,7 @@ import net.runelite.api.EnumComposition;
 import net.runelite.api.EnumID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
+import net.runelite.api.VarbitComposition;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
@@ -82,6 +83,7 @@ public class HoldingsTracker
 		WATCHED_VARBITS.add(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE);
 		WATCHED_VARBITS.add(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_QUANTITY);
 		WATCHED_VARBITS.addAll(DailyLimits.usedTodayVarbits().values());
+		WATCHED_VARBITS.addAll(DailyLimits.usedTodayHighBits().values());
 	}
 
 	private final Client client;
@@ -94,6 +96,8 @@ public class HoldingsTracker
 	private final DailyUseTracker dailyUses;
 	/** The last difference between a daily teleport's game value and chat count that was logged. */
 	private String loggedDaily;
+	/** The last split daily count that was logged, with where its parts sit. */
+	private String loggedLayout;
 
 	private Map<Integer, Integer> bank;
 	private Map<Integer, Integer> groupStorage;
@@ -328,7 +332,7 @@ public class HoldingsTracker
 		final Map<TravelMethod, Integer> used = new EnumMap<>(TravelMethod.class);
 		DailyLimits.usedTodayVarbits().forEach((method, varbit) ->
 		{
-			final int value = client.getVarbitValue(varbit);
+			final int value = usedTodayValue(method, varbit);
 			final Integer chat = said.get(method);
 			final String differs = method + " used today: game value " + value + ", chat " + chat;
 			if (chat != null && chat != value && chat != DailyUseTracker.ALL && !differs.equals(loggedDaily))
@@ -342,6 +346,39 @@ public class HoldingsTracker
 		return Collections.unmodifiableMap(used);
 	}
 
+	/**
+	 * Today's uses of one teleport from the game, its two varbits put together when the count is split (the Ardougne
+	 * cloak's): the low part's width comes from the game's own layout of it. The dev log shows both parts and where
+	 * they sit, once per change, until they're confirmed.
+	 */
+	private int usedTodayValue(TravelMethod method, int lowVarbit)
+	{
+		final int low = client.getVarbitValue(lowVarbit);
+		final Integer highVarbit = DailyLimits.usedTodayHighBits().get(method);
+		if (highVarbit == null)
+		{
+			return low;
+		}
+		final VarbitComposition lowBits = client.getVarbit(lowVarbit);
+		final VarbitComposition highBits = client.getVarbit(highVarbit);
+		if (lowBits == null || highBits == null)
+		{
+			return low;
+		}
+		final int high = client.getVarbitValue(highVarbit);
+		final int width = lowBits.getMostSignificantBit() - lowBits.getLeastSignificantBit() + 1;
+		final int value = DailyLimits.combine(low, high, width);
+		final String layout = method + " used today: " + value + " (low " + low + ", varp " + lowBits.getIndex()
+			+ " bits " + lowBits.getLeastSignificantBit() + "-" + lowBits.getMostSignificantBit() + "; high " + high
+			+ ", varp " + highBits.getIndex() + " bits " + highBits.getLeastSignificantBit() + "-"
+			+ highBits.getMostSignificantBit() + ")";
+		if (!layout.equals(loggedLayout))
+		{
+			loggedLayout = layout;
+			log.debug(layout);
+		}
+		return value;
+	}
 
 	private Map<Integer, Integer> writeCache(String key, ItemContainer container)
 	{
