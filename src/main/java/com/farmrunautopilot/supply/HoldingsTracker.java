@@ -363,6 +363,13 @@ public class HoldingsTracker
 		final VarbitComposition highBits = client.getVarbit(highVarbit);
 		if (lowBits == null || highBits == null)
 		{
+			final String missing = method + " used today: " + low + " (low bits only: no layout for varbit "
+				+ (lowBits == null ? lowVarbit : highVarbit) + ")";
+			if (!missing.equals(loggedLayout))
+			{
+				loggedLayout = missing;
+				log.debug(missing);
+			}
 			return low;
 		}
 		final int high = client.getVarbitValue(highVarbit);
