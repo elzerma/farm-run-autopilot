@@ -4,7 +4,9 @@ import java.util.Map;
 import java.util.Set;
 import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
+import shortestpath.Destination;
 import shortestpath.DestinationRequirements;
+import shortestpath.transport.TransportLoader;
 import shortestpath.pathfinder.PathfinderConfig;
 import shortestpath.pathfinder.SplitFlagMap;
 import shortestpath.transport.Transport;
@@ -34,21 +36,26 @@ final class BubbleConfig extends PathfinderConfig
 	@Override
 	public boolean varbitChecks(Transport transport, long evaluationTimeMinutes)
 	{
-		return locked(transport.getVarbits());
+		return locked(transport.getVarbits(), evaluationTimeMinutes);
 	}
 
 	@Override
 	public boolean varPlayerChecks(Transport transport, long evaluationTimeMinutes)
 	{
-		return locked(transport.getVarPlayers());
+		return locked(transport.getVarPlayers(), evaluationTimeMinutes);
 	}
 
-	/** True when the transport needs a var this account has locked; every other var check passes. */
-	private boolean locked(Set<VarRequirement> requirements)
+	/**
+	 * True when the transport needs a var this account has locked, or one it gives a value for that doesn't pass.
+	 * Every other var check passes.
+	 */
+	private boolean locked(Set<VarRequirement> requirements, long evaluationTimeMinutes)
 	{
 		for (VarRequirement requirement : requirements)
 		{
-			if (account.lockedVars.contains(requirement.getId()))
+			final Integer value = account.varValues.get(requirement.getId());
+			if (account.lockAllVars || account.lockedVars.contains(requirement.getId())
+				|| value != null && !requirement.checkValue(value, evaluationTimeMinutes))
 			{
 				return true;
 			}
@@ -71,6 +78,13 @@ final class BubbleConfig extends PathfinderConfig
 			this.transports = transports;
 			this.destinations = destinations;
 			this.bankRequirements = bankRequirements;
+		}
+
+		/** Shortest Path's collision map, transports, destinations and bank gates from its resources. */
+		static World load()
+		{
+			return new World(SplitFlagMap.fromResources(), TransportLoader.loadAllFromResources(),
+				Destination.loadAllFromResources(), Destination.loadBankRequirementsFromResources());
 		}
 	}
 }

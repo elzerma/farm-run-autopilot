@@ -112,9 +112,9 @@ Plugin today: 16.5 s (15 tiles + 12.0 s). Start 2542 3170 0, 20 target tiles at 
 
 | Account asked | Time | Walk tiles | Transport ticks | Way | Needs |
 |---|---|---|---|---|---|
-| maxed | 16.8 s | 46 | 5 | walk 46 tiles; Follow Elkoy (5t) | var 111 |
-| maxed, no var 111 | 27.6 s | 86 | 3 | walk 86 tiles; 3: Battlefield of Khazard (3t) | Tree Gnome Village, any spirit tree |
-| maxed, no var 111, no Tree Gnome Village | 73.8 s | 246 | 0 | walk 246 | nothing |
+| maxed | 16.8 s | 46 | 5 | walk 46 tiles; Follow Elkoy (5t) | TREEQUEST > 0 |
+| maxed, no TREEQUEST > 0 | 27.6 s | 86 | 3 | walk 86 tiles; 3: Battlefield of Khazard (3t) | Tree Gnome Village, any spirit tree |
+| maxed, no TREEQUEST > 0, no Tree Gnome Village | 73.8 s | 246 | 0 | walk 246 | nothing |
 
 ### TREE_GNOME_VILLAGE_CIQ
 
@@ -247,12 +247,12 @@ Plugin today: 30.6 s (62 tiles + 12.0 s). Start 2662 3305 0, 21 target tiles at 
 
 | Account asked | Time | Walk tiles | Transport ticks | Way | Needs |
 |---|---|---|---|---|---|
-| maxed | 23.1 s | 65 | 6 | walk 65 tiles; Brimhaven (6t) | item 995, any ship |
-| maxed, no item 995 | 78.9 s | 229 | 17 | walk 229 tiles; C K R (5t) > Climb Rocks (5t) > Cross Stepping stone (2t) > Board Travel cart (5t) | any fairy ring, 79 Agility, 32 Agility, var 4566 |
-| maxed, no item 995, 78 Agility | 81.6 s | 258 | 7 | walk 258 tiles; B L P (5t) > Enter Cave exit (0t) > Climb Climbing rope (2t) | any fairy ring |
-| maxed, no item 995, no any fairy ring | 113.4 s | 336 | 21 | walk 336 tiles; 2: Gnome Stronghold (3t) > Open Tree Door (1t) > Climb-up Ladder (2t) > Climb-up Ladder (2t) > Climb-up Ladder (2t) > Gandius (4t) > Climb over Broken cart (2t) > Board Travel cart (5t) | Tree Gnome Village, any spirit tree, The Grand Tree, any gnome glider, var 116, var 4566 |
-| maxed, no item 995, no any fairy ring, no var 116 | 137.4 s | 396 | 31 | walk 396 tiles; 2: Gnome Stronghold (3t) > Open Tree Door (1t) > Climb-up Ladder (2t) > Climb-up Ladder (2t) > Climb-up Ladder (2t) > Gandius (4t) > Cross A wooden log (5t) > Climb Rocks (5t) > Cross Stepping stone (2t) > Board Travel cart (5t) | Tree Gnome Village, any spirit tree, The Grand Tree, any gnome glider, 79 Agility, 32 Agility, var 4566 |
-| maxed, no item 995, no any fairy ring, no Tree Gnome Village | 147.9 s | 471 | 11 | walk 471 tiles; Gandius (4t) > Climb over Broken cart (2t) > Board Travel cart (5t) | The Grand Tree, any gnome glider, var 116, var 4566 |
+| maxed | 23.1 s | 65 | 6 | walk 65 tiles; Brimhaven (6t) | COINS x30, any ship |
+| maxed, no COINS x30 | 78.9 s | 229 | 17 | walk 229 tiles; C K R (5t) > Climb Rocks (5t) > Cross Stepping stone (2t) > Board Travel cart (5t) | any fairy ring, 79 Agility, 32 Agility, LEAGUE_COMBAT_MASTERY_PATHS = 1 |
+| maxed, no COINS x30, 78 Agility | 81.6 s | 258 | 7 | walk 258 tiles; B L P (5t) > Enter Cave exit (0t) > Climb Climbing rope (2t) | any fairy ring |
+| maxed, no COINS x30, no any fairy ring | 113.4 s | 336 | 21 | walk 336 tiles; 2: Gnome Stronghold (3t) > Open Tree Door (1t) > Climb-up Ladder (2t) > Climb-up Ladder (2t) > Climb-up Ladder (2t) > Gandius (4t) > Climb over Broken cart (2t) > Board Travel cart (5t) | Tree Gnome Village, any spirit tree, The Grand Tree, any gnome glider, ZOMBIEQUEEN > 14, LEAGUE_COMBAT_MASTERY_PATHS = 1 |
+| maxed, no COINS x30, no any fairy ring, no ZOMBIEQUEEN > 14 | 137.4 s | 396 | 31 | walk 396 tiles; 2: Gnome Stronghold (3t) > Open Tree Door (1t) > Climb-up Ladder (2t) > Climb-up Ladder (2t) > Climb-up Ladder (2t) > Gandius (4t) > Cross A wooden log (5t) > Climb Rocks (5t) > Cross Stepping stone (2t) > Board Travel cart (5t) | Tree Gnome Village, any spirit tree, The Grand Tree, any gnome glider, 79 Agility, 32 Agility, LEAGUE_COMBAT_MASTERY_PATHS = 1 |
+| maxed, no COINS x30, no any fairy ring, no Tree Gnome Village | 147.9 s | 471 | 11 | walk 471 tiles; Gandius (4t) > Climb over Broken cart (2t) > Board Travel cart (5t) | The Grand Tree, any gnome glider, ZOMBIEQUEEN > 14, LEAGUE_COMBAT_MASTERY_PATHS = 1 |
 
 ### PORT_PHASMATYS_ECTOPHIAL
 
@@ -305,6 +305,6 @@ Plugin today: no way. Start 2812 3462 0, 21 target tiles at HARMONY_ISLAND.
 | maxed | 96.6 s | 292 | 15 | walk 292 tiles; A L Q (5t) > Pay-toll(2-Ecto) Energy Barrier (2t) > Travel Bill Teach (6t) > Transport Brother Tranquility (2t) | any fairy ring, Cabin Fever, any ship |
 | maxed, no any fairy ring | 189.6 s | 604 | 14 | walk 604 tiles; Lemanto Andra (4t) > Climb Rocks (0t) > Pay-toll(2-Ecto) Energy Barrier (2t) > Travel Bill Teach (6t) > Transport Brother Tranquility (2t) | The Grand Tree, any gnome glider, 65 Agility, Cabin Fever, any ship |
 | maxed, no any fairy ring, 64 Agility | 207.9 s | 663 | 15 | walk 663 tiles; Lemanto Andra (4t) > Climb-down Trapdoor (1t) > Pass-through Holy barrier (0t) > Pay-toll(2-Ecto) Energy Barrier (2t) > Travel Bill Teach (6t) > Transport Brother Tranquility (2t) | The Grand Tree, any gnome glider, Cabin Fever, any ship |
-| maxed, no any fairy ring, no The Grand Tree | 253.8 s | 784 | 31 | walk 784 tiles; Climb-down Stairs (0t) > Ride Train cart (0t) > Ride Train cart (21t) > Climb Rocks (0t) > Pay-toll(2-Ecto) Energy Barrier (2t) > Travel Bill Teach (6t) > Transport Brother Tranquility (2t) | var 11, Fishing Contest, var 571, item 995, any minecart, 65 Agility, Cabin Fever, any ship |
-| maxed, no any fairy ring, no The Grand Tree, 64 Agility | 272.1 s | 843 | 32 | walk 843 tiles; Climb-down Stairs (0t) > Ride Train cart (0t) > Ride Train cart (21t) > Climb-down Trapdoor (1t) > Pass-through Holy barrier (0t) > Pay-toll(2-Ecto) Energy Barrier (2t) > Travel Bill Teach (6t) > Transport Brother Tranquility (2t) | var 11, Fishing Contest, var 571, item 995, any minecart, Cabin Fever, any ship |
-| maxed, no any fairy ring, no The Grand Tree, no var 11 | 306.3 s | 971 | 25 | walk 971 tiles; Climb-over Stile (6t) > Climb-over Stile (6t) > Walk-across Log balance (0t) > 4: Grand Exchange (3t) > Climb Rocks (0t) > Pay-toll(2-Ecto) Energy Barrier (2t) > Travel Bill Teach (6t) > Transport Brother Tranquility (2t) | 33 Agility, Tree Gnome Village, any spirit tree, 65 Agility, Cabin Fever, any ship |
+| maxed, no any fairy ring, no The Grand Tree | 253.8 s | 784 | 31 | walk 784 tiles; Climb-down Stairs (0t) > Ride Train cart (0t) > Ride Train cart (21t) > Climb Rocks (0t) > Pay-toll(2-Ecto) Energy Barrier (2t) > Travel Bill Teach (6t) > Transport Brother Tranquility (2t) | FISHINGCOMPO = 5, Fishing Contest, GIANTDWARF_QUEST > 4, COINS x100, any minecart, 65 Agility, Cabin Fever, any ship |
+| maxed, no any fairy ring, no The Grand Tree, 64 Agility | 272.1 s | 843 | 32 | walk 843 tiles; Climb-down Stairs (0t) > Ride Train cart (0t) > Ride Train cart (21t) > Climb-down Trapdoor (1t) > Pass-through Holy barrier (0t) > Pay-toll(2-Ecto) Energy Barrier (2t) > Travel Bill Teach (6t) > Transport Brother Tranquility (2t) | FISHINGCOMPO = 5, Fishing Contest, GIANTDWARF_QUEST > 4, COINS x100, any minecart, Cabin Fever, any ship |
+| maxed, no any fairy ring, no The Grand Tree, no FISHINGCOMPO = 5 | 306.3 s | 971 | 25 | walk 971 tiles; Climb-over Stile (6t) > Climb-over Stile (6t) > Walk-across Log balance (0t) > 4: Grand Exchange (3t) > Climb Rocks (0t) > Pay-toll(2-Ecto) Energy Barrier (2t) > Travel Bill Teach (6t) > Transport Brother Tranquility (2t) | 33 Agility, Tree Gnome Village, any spirit tree, 65 Agility, Cabin Fever, any ship |

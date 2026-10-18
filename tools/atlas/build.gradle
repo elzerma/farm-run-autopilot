@@ -46,3 +46,29 @@ tasks.named('run', JavaExec) {
 	workingDir = projectDir
 	jvmArgs '-Xmx4g', '-Djava.awt.headless=true'
 }
+
+// The Shortest Path commit the clone is at, written into the atlas files
+def shortestPathCommit = {
+	def head = new File(shortestPath, '.git/HEAD')
+	head.exists() ? head.text.trim().replaceFirst('^ref: .*', 'unknown') : 'unknown'
+}
+
+tasks.register('atlas', JavaExec) {
+	group = 'application'
+	description = 'Builds the travel atlas (docs/plans/travel-rework.md, sprint T1)'
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass = 'com.farmrunautopilot.atlas.Atlas'
+	workingDir = projectDir
+	jvmArgs '-Xmx16g', '-Djava.awt.headless=true'
+	args 'patches.tsv', '../../src/main/resources/com/farmrunautopilot/atlas', 'report.md', shortestPathCommit()
+}
+
+tasks.register('referee', JavaExec) {
+	group = 'application'
+	description = 'Shortest Path\'s own answers with teleports for three pretend players (sprint T1 step 10)'
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass = 'com.farmrunautopilot.atlas.Referee'
+	workingDir = projectDir
+	jvmArgs '-Xmx16g', '-Djava.awt.headless=true'
+	args 'patches.tsv', 'referee.tsv', shortestPathCommit()
+}

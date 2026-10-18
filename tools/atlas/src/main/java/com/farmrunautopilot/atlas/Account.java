@@ -21,10 +21,14 @@ import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
 import net.runelite.api.WorldType;
 import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
+import shortestpath.ItemVariations;
 import shortestpath.ShortestPathConfig;
 import shortestpath.TeleportationItem;
+import shortestpath.transport.Transport;
 import shortestpath.transport.TransportType;
+import shortestpath.transport.requirement.TransportItems;
 
 /**
  * A pretend account for the bubble: its levels, quests and items, and the requirements taken away from it. It answers
@@ -38,18 +42,24 @@ final class Account
 	final String name;
 	final Map<Skill, Integer> levels;
 	final Set<Quest> questsNotDone;
-	/** Varbits and varplayers whose transports count as locked (Shortest Path's other var checks all pass). */
+	/** Varbits and varplayers whose transports count as locked. */
 	final Set<Integer> lockedVars;
+	/** Every transport that needs any var counts as locked (the "needs nothing" account). */
+	final boolean lockAllVars;
+	/** Vars checked against these values; any other var check passes unless locked. */
+	final Map<Integer, Integer> varValues;
 	final Map<Integer, Integer> items;
 	final Set<TransportType> typesOff;
 
 	private Account(String name, Map<Skill, Integer> levels, Set<Quest> questsNotDone, Set<Integer> lockedVars,
-		Map<Integer, Integer> items, Set<TransportType> typesOff)
+		boolean lockAllVars, Map<Integer, Integer> varValues, Map<Integer, Integer> items, Set<TransportType> typesOff)
 	{
 		this.name = name;
 		this.levels = levels;
 		this.questsNotDone = questsNotDone;
 		this.lockedVars = lockedVars;
+		this.lockAllVars = lockAllVars;
+		this.varValues = varValues;
 		this.items = items;
 		this.typesOff = typesOff;
 	}
@@ -62,8 +72,68 @@ final class Account
 		{
 			levels.put(skill, MAXED);
 		}
-		return new Account("maxed", levels, EnumSet.noneOf(Quest.class), new LinkedHashSet<>(), items,
+		return new Account("maxed", levels, EnumSet.noneOf(Quest.class), new LinkedHashSet<>(), false, Map.of(), items,
 			EnumSet.noneOf(TransportType.class));
+	}
+
+	/** Every item any transport asks for, plenty of each, plus a dramen staff for the fairy rings. */
+	static Map<Integer, Integer> everyItem(BubbleConfig.World world)
+	{
+		final Map<Integer, Integer> items = new HashMap<>();
+		for (Set<Transport> set : world.transports.values())
+		{
+			for (Transport t : set)
+			{
+				final TransportItems required = t.getItemRequirements();
+				if (required != null)
+				{
+					for (int id : Requirement.allItems(required))
+					{
+						items.put(id, 1_000_000);
+					}
+				}
+			}
+		}
+		for (int id : ItemVariations.DRAMEN_STAFF.getIds())
+		{
+			items.put(id, 1);
+		}
+		items.put(ItemID.COINS, 1_000_000_000);
+		return items;
+	}
+
+	/** This account with the hop networks off ({@link Places#HUB_TYPES}): the atlas's ways leave hops to the plugin. */
+	Account withoutHops()
+	{
+		final Set<TransportType> types = EnumSet.noneOf(TransportType.class);
+		types.addAll(typesOff);
+		types.addAll(Places.HUB_TYPES);
+		return new Account(name, levels, questsNotDone, lockedVars, lockAllVars, varValues, items, types);
+	}
+
+	/**
+	 * Needs nothing: level 1 everywhere, no quests, no items, every var-gated transport locked, and only walking,
+	 * doors, stairs and the like (agility shortcuts stay, gated by the level-1 skills).
+	 */
+	static Account bare()
+	{
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		for (Skill skill : Skill.values())
+		{
+			levels.put(skill, 1);
+		}
+		final Set<TransportType> off = EnumSet.allOf(TransportType.class);
+		off.remove(TransportType.TRANSPORT);
+		off.remove(TransportType.AGILITY_SHORTCUT);
+		return new Account("needs nothing", levels, EnumSet.allOf(Quest.class), new LinkedHashSet<>(), true, Map.of(),
+			Map.of(), off);
+	}
+
+	/** This account with these levels, var values and items instead (for the referee's pretend players). */
+	Account as(String newName, Map<Skill, Integer> newLevels, Set<Quest> notDone, Map<Integer, Integer> vars,
+		Map<Integer, Integer> newItems)
+	{
+		return new Account(newName, newLevels, notDone, lockedVars, false, vars, newItems, typesOff);
 	}
 
 	/**
@@ -104,8 +174,8 @@ final class Account
 	{
 		final Map<Skill, Integer> changed = new EnumMap<>(levels);
 		changed.put(skill, level);
-		return new Account(name + ", " + level + " " + skill.getName(), changed, questsNotDone, lockedVars, items,
-			typesOff);
+		return new Account(name + ", " + level + " " + skill.getName(), changed, questsNotDone, lockedVars, lockAllVars,
+			varValues, items, typesOff);
 	}
 
 	/** This account without what the requirement asks for: one level short, the quest not done, and so on. */
@@ -120,23 +190,27 @@ final class Account
 				final Set<Quest> quests = EnumSet.noneOf(Quest.class);
 				quests.addAll(questsNotDone);
 				quests.add(requirement.quest);
-				return new Account(changedName, levels, quests, lockedVars, items, typesOff);
-			case VAR:
+				return new Account(changedName, levels, quests, lockedVars, lockAllVars, varValues, items, typesOff);
+			case VARBIT:
+			case VARP:
 				final Set<Integer> vars = new LinkedHashSet<>(lockedVars);
 				vars.add(requirement.var);
-				return new Account(changedName, levels, questsNotDone, vars, items, typesOff);
+				return new Account(changedName, levels, questsNotDone, vars, lockAllVars, varValues, items, typesOff);
+			case PLANTED:
+				// Only on hops, which the bubble never asks about
+				return this;
 			case ITEMS:
 				final Map<Integer, Integer> fewer = new HashMap<>(items);
 				for (int id : requirement.items)
 				{
 					fewer.remove(id);
 				}
-				return new Account(changedName, levels, questsNotDone, lockedVars, fewer, typesOff);
+				return new Account(changedName, levels, questsNotDone, lockedVars, lockAllVars, varValues, fewer, typesOff);
 			default:
 				final Set<TransportType> types = EnumSet.noneOf(TransportType.class);
 				types.addAll(typesOff);
 				types.add(requirement.type);
-				return new Account(changedName, levels, questsNotDone, lockedVars, items, types);
+				return new Account(changedName, levels, questsNotDone, lockedVars, lockAllVars, varValues, items, types);
 		}
 	}
 
@@ -166,10 +240,11 @@ final class Account
 					case "getTotalLevel":
 						return total;
 					case "getVarpValue":
-						return (int) args[0] == VarPlayer.QUEST_POINTS ? 300 : 0;
+						return (int) args[0] == VarPlayer.QUEST_POINTS ? 300 : varValues.getOrDefault((int) args[0], 0);
 					case "getVarbitValue":
 						// Fairy rings need Fairytale II far enough along; turned off by type when peeled
-						return (int) args[0] == VarbitID.FAIRY2_QUEENCURE_QUEST ? 100 : 0;
+						return (int) args[0] == VarbitID.FAIRY2_QUEENCURE_QUEST && !typesOff.contains(TransportType.FAIRY_RING)
+							? 100 : varValues.getOrDefault((int) args[0], 0);
 					case "getClientThread":
 						return clientThread;
 					case "isClientThread":

@@ -8,36 +8,20 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import net.runelite.api.gameval.ItemID;
-import shortestpath.Destination;
-import shortestpath.ItemVariations;
-import shortestpath.WorldPointUtil;
 import shortestpath.pathfinder.CollisionMap;
-import shortestpath.pathfinder.PathStep;
-import shortestpath.pathfinder.Pathfinder;
-import shortestpath.pathfinder.PathfinderResult;
-import shortestpath.pathfinder.SplitFlagMap;
-import shortestpath.transport.Transport;
-import shortestpath.transport.TransportLoader;
-import shortestpath.transport.requirement.TransportItems;
 
 /**
  * Sprint T0 of docs/plans/travel-rework.md: runs Shortest Path's own pathfinder outside the game ("in a bubble") for a
  * list of legs, peels requirements for the next-best ways, and writes a table against the plugin's numbers today.
- * Usage (from tools/atlas): ../../gradlew run --args="legs-t0.tsv ../walk/patches.tsv t0-results.md"
+ * Usage (from tools/atlas): ../../gradlew -p . run --args="legs-t0.tsv ../walk/patches.tsv t0-results.md"
  */
 public final class Bubble
 {
-	/** Running, two tiles a tick, as the plugin's TravelTimes. */
-	private static final double SECONDS_PER_TILE = 0.3;
-	private static final double SECONDS_PER_TICK = 0.6;
 	/** Ways kept per leg, and questions asked at most while peeling. */
 	private static final int MAX_WAYS = 6;
 	private static final int MAX_QUESTIONS = 24;
@@ -53,27 +37,26 @@ public final class Bubble
 		final Path outFile = Paths.get(args.length > 2 ? args[2] : "t0-results.md");
 
 		final long loadStart = System.nanoTime();
-		final BubbleConfig.World world = new BubbleConfig.World(SplitFlagMap.fromResources(),
-			TransportLoader.loadAllFromResources(), Destination.loadAllFromResources(),
-			Destination.loadBankRequirementsFromResources());
+		final BubbleConfig.World world = BubbleConfig.World.load();
 		final CollisionMap map = new CollisionMap(world.map);
-		final Account maxed = Account.maxed(everyItem(world));
-		final Map<String, List<int[]>> patches = patches(patchesFile);
+		final Account maxed = Account.maxed(Account.everyItem(world));
+		final Asker asker = new Asker(world, false, 0);
+		final Map<String, List<int[]>> patches = Places.patchTilesByStopAndName(Tsv.read(patchesFile));
 		System.out.printf(Locale.ROOT, "Loaded Shortest Path's map and %d transport origins in %.1f s%n",
 			world.transports.size(), (System.nanoTime() - loadStart) / 1e9);
 
 		final StringBuilder summary = new StringBuilder();
 		final StringBuilder detail = new StringBuilder();
 		summary.append("| Leg | Account | Plugin today | Bubble | Difference | Way |\n|---|---|---|---|---|---|\n");
-		for (String[] leg : rows(legsFile))
+		for (String[] leg : Tsv.rows(legsFile))
 		{
 			final String id = leg[0];
-			final int start = walkableNear(map, point(leg[1]));
-			final Set<Integer> targets = targets(map, patches, leg[2]);
+			final int start = Places.walkableNear(map, Tsv.point(leg[1]));
+			final Set<Integer> targets = Places.standingTiles(map, patches.getOrDefault(leg[2], List.of()));
 			final Account account = maxed.with(leg[3]);
 			final boolean teleports = leg.length > 7 && leg[7].equals("teleports");
 			final String today = today(leg);
-			final List<Way> ways = peel(world, account, start, targets, teleports);
+			final List<Way> ways = peel(asker, account, start, targets, teleports);
 			System.out.println(id + ": " + (ways.isEmpty() ? "no way" : ways.get(0).describe()));
 
 			final Way best = ways.isEmpty() ? null : ways.get(0);
@@ -83,14 +66,14 @@ public final class Bubble
 				.append(" | ").append(best == null ? "" : best.way()).append(" |\n");
 
 			detail.append("\n### ").append(id).append("\n\n").append(leg.length > 6 ? leg[6] : "").append("\n\n")
-				.append("Plugin today: ").append(today).append(". Start ").append(text(start)).append(", ")
+				.append("Plugin today: ").append(today).append(". Start ").append(Tsv.text(start)).append(", ")
 				.append(targets.size()).append(" target tiles at ").append(leg[2]).append(".\n\n")
 				.append("| Account asked | Time | Walk tiles | Transport ticks | Way | Needs |\n|---|---|---|---|---|---|\n");
 			for (Way way : ways)
 			{
 				detail.append("| ").append(way.account).append(" | ").append(way.time()).append(" | ")
 					.append(way.walkTiles).append(" | ").append(way.ticks).append(" | ").append(way.way())
-					.append(" | ").append(way.needs()).append(" |\n");
+					.append(" | ").append(way.needsText()).append(" |\n");
 			}
 		}
 
@@ -101,8 +84,7 @@ public final class Bubble
 	}
 
 	/** Asks for the fastest way, then for each thing it needed, asks again without it, keeping the different ways. */
-	private static List<Way> peel(BubbleConfig.World world, Account first, int start, Set<Integer> targets,
-		boolean teleports)
+	private static List<Way> peel(Asker asker, Account first, int start, Set<Integer> targets, boolean teleports)
 	{
 		final List<Way> ways = new ArrayList<>();
 		final Set<String> seenWays = new HashSet<>();
@@ -118,7 +100,7 @@ public final class Bubble
 				continue;
 			}
 			questions++;
-			final Way way = ask(world, account, start, targets, teleports);
+			final Way way = asker.ask(account, start, targets, teleports);
 			if (way == null)
 			{
 				continue;
@@ -136,157 +118,6 @@ public final class Bubble
 		return ways;
 	}
 
-	/** One question to Shortest Path's pathfinder; null if it found no way. */
-	private static Way ask(BubbleConfig.World world, Account account, int start, Set<Integer> targets,
-		boolean teleports)
-	{
-		final BubbleConfig config = new BubbleConfig(account, teleports, world);
-		config.refresh();
-		final Pathfinder pathfinder = new Pathfinder(config, start, targets);
-		pathfinder.run();
-		final PathfinderResult result = pathfinder.getResult();
-		if (result == null || !result.isReached())
-		{
-			return null;
-		}
-		final List<PathStep> path = pathfinder.getPath();
-		int walkTiles = 0;
-		int ticks = 0;
-		final List<Transport> transports = new ArrayList<>();
-		for (int i = 1; i < path.size(); i++)
-		{
-			final Transport transport = path.get(i).getTransport();
-			if (transport != null)
-			{
-				ticks += transport.getDuration();
-				transports.add(transport);
-			}
-			else
-			{
-				walkTiles += WorldPointUtil.distanceBetween(path.get(i - 1).getPackedPosition(),
-					path.get(i).getPackedPosition());
-			}
-		}
-		return new Way(account.name, walkTiles, ticks, transports, Requirement.of(transports));
-	}
-
-	/** Every item any transport asks for, plenty of each, plus a dramen staff for the fairy rings. */
-	private static Map<Integer, Integer> everyItem(BubbleConfig.World world)
-	{
-		final Map<Integer, Integer> items = new HashMap<>();
-		for (Set<Transport> set : world.transports.values())
-		{
-			for (Transport t : set)
-			{
-				final TransportItems required = t.getItemRequirements();
-				if (required != null)
-				{
-					for (int[] group : Requirement.groups(required))
-					{
-						for (int id : group)
-						{
-							items.put(id, 1_000_000);
-						}
-					}
-				}
-			}
-		}
-		for (int id : ItemVariations.DRAMEN_STAFF.getIds())
-		{
-			items.put(id, 1);
-		}
-		items.put(ItemID.COINS, 1_000_000_000);
-		return items;
-	}
-
-	/** The tiles a player can stand on to use the patches of a stop (or one patch): around each patch object. */
-	private static Set<Integer> targets(CollisionMap map, Map<String, List<int[]>> patches, String to)
-	{
-		final Set<Integer> targets = new LinkedHashSet<>();
-		for (int[] p : patches.getOrDefault(to, List.of()))
-		{
-			for (int dx = -1; dx <= 3; dx++)
-			{
-				for (int dy = -1; dy <= 3; dy++)
-				{
-					if (!map.isBlocked(p[0] + dx, p[1] + dy, p[2]))
-					{
-						targets.add(WorldPointUtil.packWorldPoint(p[0] + dx, p[1] + dy, p[2]));
-					}
-				}
-			}
-		}
-		if (targets.isEmpty())
-		{
-			throw new IllegalArgumentException("No patch tiles for " + to);
-		}
-		return targets;
-	}
-
-	/** The nearest tile a player can stand on, for starts given as an object's tile. */
-	private static int walkableNear(CollisionMap map, int[] p)
-	{
-		for (int r = 0; r <= 4; r++)
-		{
-			for (int dx = -r; dx <= r; dx++)
-			{
-				for (int dy = -r; dy <= r; dy++)
-				{
-					if (Math.max(Math.abs(dx), Math.abs(dy)) == r && !map.isBlocked(p[0] + dx, p[1] + dy, p[2]))
-					{
-						return WorldPointUtil.packWorldPoint(p[0] + dx, p[1] + dy, p[2]);
-					}
-				}
-			}
-		}
-		throw new IllegalArgumentException("Nothing walkable near " + p[0] + " " + p[1] + " " + p[2]);
-	}
-
-	/** Patch object tiles by stop and by patch name, from tools/walk/patches.tsv. */
-	private static Map<String, List<int[]>> patches(Path file) throws IOException
-	{
-		final Map<String, List<int[]>> patches = new HashMap<>();
-		for (String[] r : rows(file))
-		{
-			final int[] p = {Integer.parseInt(r[2]), Integer.parseInt(r[3]), Integer.parseInt(r[4])};
-			patches.computeIfAbsent(r[1], k -> new ArrayList<>()).add(p);
-			patches.computeIfAbsent(r[0], k -> new ArrayList<>()).add(p);
-		}
-		return patches;
-	}
-
-	private static List<String[]> rows(Path file) throws IOException
-	{
-		final List<String[]> rows = new ArrayList<>();
-		boolean header = true;
-		for (String line : Files.readAllLines(file))
-		{
-			if (line.startsWith("#") || line.isBlank())
-			{
-				continue;
-			}
-			if (header)
-			{
-				header = false;
-				continue;
-			}
-			rows.add(line.split("\t", -1));
-		}
-		return rows;
-	}
-
-	private static int[] point(String text)
-	{
-		final String[] xyz = text.trim().split("\\s+");
-		return new int[]{Integer.parseInt(xyz[0]), Integer.parseInt(xyz[1]), Integer.parseInt(xyz[2])};
-	}
-
-	private static String text(int packed)
-	{
-		return WorldPointUtil.unpackWorldX(packed) + " " + WorldPointUtil.unpackWorldY(packed) + " "
-			+ WorldPointUtil.unpackWorldPlane(packed);
-	}
-
 	/** The plugin's number today: tiles x 0.3 s plus its extra seconds, or why there's none. */
 	private static String today(String[] leg)
 	{
@@ -296,7 +127,7 @@ public final class Bubble
 		}
 		final int tiles = Integer.parseInt(leg[4]);
 		final double extra = leg[5].isBlank() ? 0 : Double.parseDouble(leg[5]);
-		return String.format(Locale.ROOT, "%.1f s (%d tiles%s)", tiles * SECONDS_PER_TILE + extra, tiles,
+		return String.format(Locale.ROOT, "%.1f s (%d tiles%s)", tiles * Way.SECONDS_PER_TILE + extra, tiles,
 			extra > 0 ? String.format(Locale.ROOT, " + %.1f s", extra) : "");
 	}
 
@@ -306,87 +137,8 @@ public final class Bubble
 		{
 			return "new way";
 		}
-		final double today = Integer.parseInt(leg[4]) * SECONDS_PER_TILE
+		final double today = Integer.parseInt(leg[4]) * Way.SECONDS_PER_TILE
 			+ (leg[5].isBlank() ? 0 : Double.parseDouble(leg[5]));
-		final double diff = best.seconds() - today;
-		return String.format(Locale.ROOT, "%+.1f s", diff);
-	}
-
-	/** One way the bubble found. */
-	private static final class Way
-	{
-		final String account;
-		final int walkTiles;
-		final int ticks;
-		final List<Transport> transports;
-		final List<Requirement> needs;
-
-		Way(String account, int walkTiles, int ticks, List<Transport> transports, List<Requirement> needs)
-		{
-			this.account = account;
-			this.walkTiles = walkTiles;
-			this.ticks = ticks;
-			this.transports = transports;
-			this.needs = needs;
-		}
-
-		double seconds()
-		{
-			return walkTiles * SECONDS_PER_TILE + ticks * SECONDS_PER_TICK;
-		}
-
-		String time()
-		{
-			return String.format(Locale.ROOT, "%.1f s", seconds());
-		}
-
-		/** The transports used, in order, e.g. "walk 67 > Cross Stepping stone (2t) > walk 12". */
-		String way()
-		{
-			if (transports.isEmpty())
-			{
-				return "walk " + walkTiles;
-			}
-			final List<String> parts = new ArrayList<>();
-			for (Transport t : transports)
-			{
-				parts.add(name(t) + " (" + t.getDuration() + "t)");
-			}
-			return "walk " + walkTiles + " tiles; " + String.join(" > ", parts);
-		}
-
-		String needs()
-		{
-			final List<String> labels = new ArrayList<>();
-			for (Requirement r : needs)
-			{
-				labels.add(r.label);
-			}
-			return labels.isEmpty() ? "nothing" : String.join(", ", labels);
-		}
-
-		String signature()
-		{
-			return walkTiles + "|" + way();
-		}
-
-		String describe()
-		{
-			return time() + ", " + way() + " [" + account + "]";
-		}
-
-		private static String name(Transport t)
-		{
-			if (t.getDisplayInfo() != null && !t.getDisplayInfo().isBlank())
-			{
-				return t.getDisplayInfo();
-			}
-			if (t.getObjectInfo() != null && !t.getObjectInfo().isBlank())
-			{
-				// "Cross Stepping stone 12345": drop the id
-				return t.getObjectInfo().replaceAll("\\s+-?\\d+$", "");
-			}
-			return t.getType().name().toLowerCase().replace('_', ' ');
-		}
+		return String.format(Locale.ROOT, "%+.1f s", best.seconds() - today);
 	}
 }
