@@ -572,6 +572,15 @@ whistle's real wait, and the first leg from where I stand." Built; the hand chec
   Retreat and the Farming Guild include pauses (3 minutes before the teleport, a right-click menu, the open door at
   Quetzacalli Gorge, fetching a skills necklace). The bank visit that came up the moment Start now was pressed, for the
   items it started without, is why Start now now counts them as skipped.
+- **Hand check, run 3 (elzerma, 2026-10-18, on 3fea2fc):** 14 stops in 34:57 (trees and herbs) from the Farming
+  Guild. Nothing was asked missing at the start (the vault step took the part's seeds); the bank visit after Nemus
+  Retreat listed "4 x Guam seed (keep 1)" to deposit; at Varrock the Run tab asked about a mystic air staff and earth
+  runes and Bank for them added the visit (an 881 s leg with the detour). Only the Troll Stronghold and Catherby were
+  seen planted; every other stop was ticked off by hand seconds after arriving. Legs that ran straight: Civitas illa
+  Fortis 35 s against 36, Port Phasmatys 24 against 29, Catherby 29 against 28. Over: the Troll Stronghold 82 against 66
+  (the way up inside, as in run 1); the Ardougne cloak 30 against 13 and the slayer ring 26 against 13, both over in
+  run 2 as well, mostly before the teleport (worth timing apart); Falador Park after the bank 48 against 23 (T4's bank
+  costs); Nemus Retreat 169 s, 2 minutes of it at Civitas illa Fortis before Renu.
 - **elzerma's notes from run 1, each worked through (2026-10-18):**
   - Written directions that Shortest Path's line already shows (down into the Troll Stronghold, up to the roof) are
     "Follow the line to the ... patch" while the line is drawn (2cf561a).
