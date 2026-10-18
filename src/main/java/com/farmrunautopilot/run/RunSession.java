@@ -39,6 +39,7 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.NPC;
 import net.runelite.api.Player;
@@ -134,6 +135,14 @@ public class RunSession
 	private final List<RunTimings.Leg> legs = new ArrayList<>();
 	private long finishedAt;
 	private String lastRun;
+	/** The last run's time per patch type, one line each, for hovering its line; null if it couldn't be split. */
+	private String lastRunTypes;
+	/** When the current stop's last patch was done (before any bank visit there), 0 until then. */
+	private long patchesDoneAt;
+	/** Seconds spent on bank visits so far this run: not counted in any patch type's time. */
+	private double bankSeconds;
+	/** How far ahead of or behind the best pace the run is after the last stop, or null without one. */
+	private String split;
 	private volatile RunView view = RunView.OFF_VIEW;
 	/** A staff to wield before setting off, outlined to put on; empty when there is none (issue #7). */
 	private Set<Integer> wieldIds = Collections.emptySet();
@@ -228,6 +237,10 @@ public class RunSession
 		patches.reset(plan);
 		legs.clear();
 		lastRun = null;
+		lastRunTypes = null;
+		patchesDoneAt = 0;
+		bankSeconds = 0;
+		split = null;
 		banking = false;
 		banksDone.clear();
 		manualBanks.clear();
@@ -324,19 +337,129 @@ public class RunSession
 		final double seconds = (now - startedAt) / 1000.0;
 		final Map<PatchType, Integer> counts = patchCounts(plan);
 		final String makeup = RunTimings.makeup(counts);
-		timings.save(new ArrayList<>(legs), new RunTimings.Run(startedAt, seconds, stopIndex, finished, makeup));
+		final RunTimings.Run run = new RunTimings.Run(startedAt, seconds, stopIndex, finished, makeup);
+		run.setBankSeconds(bankSeconds);
+		run.setEstimate(plan.getRoute().getTravelSeconds() + plan.getRoute().getPatchSeconds());
+		timings.save(new ArrayList<>(legs), run);
 		finishedAt = now;
 		lastRun = (finished ? "Run finished in " : "Run stopped after ") + GuidanceOverlay.clock((long) seconds);
+		lastRunTypes = null;
 		if (finished)
 		{
-			lastRun += rank(timings.best(makeup, BEST_TIMES), seconds, RunTimings.makeupName(counts));
+			// Like with like per patch type (elzerma, 2026-10-17); the whole run's best when it can't be split
+			final String[] types = typeResults(run);
+			lastRun += types[0] != null ? types[0]
+				: rank(timings.best(makeup, BEST_TIMES), seconds, RunTimings.makeupName(counts));
+			lastRunTypes = types[1];
+			if (types[0] != null && types[0].contains("new best"))
+			{
+				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Farm Run Autopilot: " + lastRun, null);
+			}
 		}
-		log.debug("Run ended: {}", lastRun);
+		log.debug("Run ended: {}{}", lastRun, lastRunTypes != null ? "\n" + lastRunTypes : "");
 		plan = null;
 		patches.reset(null);
 		// Replan with the newly learned leg times
 		runService.markDirty();
 		evaluate();
+	}
+
+	/** The current stop's leg gets its time there and its patches by type, for the times per patch type. */
+	private void timeStop(RouteStop stop, long now)
+	{
+		if (legs.isEmpty())
+		{
+			return;
+		}
+		final RunTimings.Leg leg = legs.get(legs.size() - 1);
+		if (leg.getLocation().equals(stop.getLocation().name()) && leg.getCounts() == null)
+		{
+			leg.setStopSeconds((now - leg.getFinishedAt()) / 1000.0);
+			leg.setCounts(RunTimings.makeup(countsAt(plan, stop.getLocation())));
+		}
+	}
+
+	/**
+	 * After stop {@code done}: the time so far (bank visits left out) against the best pace, the quickest time per patch
+	 * of each type in the player's runs, e.g. "-0:12 against your best pace"; null until each type done has one.
+	 */
+	private String split(long now, int done)
+	{
+		final List<Map<PatchType, TypeTimes.Part>> history = timings.typeHistory();
+		if (history.isEmpty())
+		{
+			return null;
+		}
+		final Map<PatchType, Integer> counts = new EnumMap<>(PatchType.class);
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		for (int i = 0; i <= done && i < stops.size(); i++)
+		{
+			countsAt(plan, stops.get(i).getLocation()).forEach((type, n) -> counts.merge(type, n, Integer::sum));
+		}
+		double pace = 0;
+		for (Map.Entry<PatchType, Integer> e : counts.entrySet())
+		{
+			final Double best = TypeTimes.bestPerPatch(history, e.getKey());
+			if (best == null)
+			{
+				return null;
+			}
+			pace += best * e.getValue();
+		}
+		final long gap = Math.round((now - startedAt) / 1000.0 - bankSeconds - pace);
+		return (gap <= 0 ? "-" : "+") + GuidanceOverlay.clock(Math.abs(gap)) + " against your best pace";
+	}
+
+	/** The run's patches at one stop, by type. */
+	private static Map<PatchType, Integer> countsAt(RunPlan plan, Location location)
+	{
+		final Map<PatchType, Integer> counts = new EnumMap<>(PatchType.class);
+		for (Patch patch : patchesAt(plan, location))
+		{
+			counts.merge(patch.getType(), 1, Integer::sum);
+		}
+		return counts;
+	}
+
+	/**
+	 * A finished run's time per patch type: " - new best for 9 herbs!" (or "first time for ...") for the line, and one
+	 * line per type with its best and median, plus the banking, for hovering it. Null parts when it couldn't be split
+	 * (a stop skipped without reaching it).
+	 */
+	private String[] typeResults(RunTimings.Run run)
+	{
+		final Map<PatchType, TypeTimes.Part> parts = TypeTimes.of(run, legs);
+		if (parts.isEmpty())
+		{
+			return new String[]{null, null};
+		}
+		final List<Map<PatchType, TypeTimes.Part>> history = timings.typeHistory();
+		// This run is the newest in the history: the bests before it are what it beat
+		final List<Map<PatchType, TypeTimes.Part>> before = history.isEmpty() ? history
+			: history.subList(0, history.size() - 1);
+		final List<String> news = new ArrayList<>();
+		final List<String> lines = new ArrayList<>();
+		for (Map.Entry<PatchType, TypeTimes.Part> e : parts.entrySet())
+		{
+			final TypeTimes.Part part = e.getValue();
+			final Double previous = TypeTimes.best(before, e.getKey(), part.getPatches());
+			final String name = RunTimings.makeupName(Map.of(e.getKey(), part.getPatches()));
+			if (previous == null)
+			{
+				news.add("first time for " + name);
+			}
+			else if (part.getSeconds() < previous)
+			{
+				news.add("new best for " + name + "!");
+			}
+			lines.add(TypeTimes.line(e.getKey(), part, TypeTimes.best(history, e.getKey(), part.getPatches()),
+				TypeTimes.medianPerPatch(history, e.getKey())));
+		}
+		if (run.getBankSeconds() >= 1)
+		{
+			lines.add("Banking: " + GuidanceOverlay.clock(Math.round(run.getBankSeconds())));
+		}
+		return new String[]{news.isEmpty() ? "" : " - " + String.join(", ", news), String.join("\n", lines)};
 	}
 
 	/** e.g. " - new best for 6 herbs!" or " - 2nd best for 6 herbs"; empty outside the top times. */
@@ -361,12 +484,42 @@ public class RunSession
 	/** e.g. "Best for 6 herbs: 8:12, 8:40, 9:03", or null with none yet. */
 	private String bestTimes(RunPlan current)
 	{
+		// Just after a run: its time per type (for hovering the "Run finished" line)
+		if (lastRun != null && lastRunTypes != null)
+		{
+			return lastRunTypes;
+		}
 		final Map<PatchType, Integer> counts = patchCounts(current);
 		final String makeup = RunTimings.makeup(counts);
 		if (makeup.isEmpty())
 		{
 			return null;
 		}
+		// Per type, like with like: the best for this many patches of each type, and its median per patch
+		final List<Map<PatchType, TypeTimes.Part>> history = timings.typeHistory();
+		final List<String> bests = new ArrayList<>();
+		final List<String> lines = new ArrayList<>();
+		for (Map.Entry<PatchType, Integer> e : counts.entrySet())
+		{
+			final String name = RunTimings.makeupName(Map.of(e.getKey(), e.getValue()));
+			final Double best = TypeTimes.best(history, e.getKey(), e.getValue());
+			final Double median = TypeTimes.medianPerPatch(history, e.getKey());
+			if (best != null)
+			{
+				bests.add(name + " " + GuidanceOverlay.clock(Math.round(best)));
+			}
+			if (best != null || median != null)
+			{
+				lines.add(name + ": " + (best != null ? "best " + GuidanceOverlay.clock(Math.round(best)) : "no best yet")
+					+ (median != null ? "; median " + Math.round(median) + " s each" : ""));
+			}
+		}
+		if (!lines.isEmpty())
+		{
+			return "Best: " + (bests.isEmpty() ? "none for these numbers of patches yet" : String.join(", ", bests)) + "\n"
+				+ String.join("\n", lines);
+		}
+		// Runs from before times per type were kept: the whole run's best
 		final List<Double> best = timings.best(makeup, BEST_TIMES);
 		if (best.isEmpty())
 		{
@@ -810,6 +963,7 @@ public class RunSession
 	private void backTo(int index)
 	{
 		stopIndex = index;
+		patchesDoneAt = 0;
 		banking = false;
 		clearExtraBank();
 		manualSteps.clear();
@@ -942,6 +1096,12 @@ public class RunSession
 				legRecorded = true;
 				log.debug("Leg not timed: {} skipped without reaching it", stop.getLocation().getDisplayName());
 			}
+			// The time here ends now, before any bank visit (times per patch type, docs/plans/travel-rework.md)
+			if (timing && patchesDoneAt == 0)
+			{
+				patchesDoneAt = now;
+				timeStop(stop, now);
+			}
 			// A bank visit after this stop: the rest of the run didn't fit in one inventory, or an item went missing
 			final BankStop bank = bankAfterStop();
 			// A planned visit already done (or ticked) stays done, e.g. when the guide goes back past it
@@ -971,6 +1131,13 @@ public class RunSession
 				legStartedAt = now;
 			}
 			log.debug("Stop done: {}", stop.getLocation().getDisplayName());
+			if (patchesDoneAt > 0)
+			{
+				// Any bank visit after this stop: banking counts in no patch type's time
+				bankSeconds += (now - patchesDoneAt) / 1000.0;
+				patchesDoneAt = 0;
+			}
+			split = split(now, stopIndex);
 			stopIndex++;
 			navigator.nextStop();
 			manualSteps.clear();
@@ -1250,7 +1417,7 @@ public class RunSession
 			: BankGuide.Wear.NONE;
 		final Highlights highlights = highlights(wear);
 		return new RunView(stage, startedAt, stopViews, instruction, false, null, null,
-			reminders(highlights), wear.getText(), highlights);
+			reminders(highlights), wear.getText(), highlights, split);
 	}
 
 	/** A bank visit's row: planned, or unplanned because an item went missing. */
@@ -1805,7 +1972,7 @@ public class RunSession
 		final String notice = lastRun != null && System.currentTimeMillis() - finishedAt < FINISHED_NOTICE_MILLIS
 			? lastRun : null;
 		return new RunView(RunView.State.OFF, 0, new ArrayList<>(), notice, false, lastRun, bestTimes(current),
-			null, null, Highlights.NONE);
+			null, null, Highlights.NONE, null);
 	}
 
 	/**
@@ -1845,7 +2012,7 @@ public class RunSession
 			settings.getRunConfig().getOutfit());
 		return new RunView(RunView.State.BUILDING, 0, new ArrayList<>(), notice, atFirstStop, null,
 			bestTimes(current), null, wear.getText(), new Highlights(null, false, null, outlined, null,
-			wear.getItemIds()));
+			wear.getItemIds()), null);
 	}
 
 	/**

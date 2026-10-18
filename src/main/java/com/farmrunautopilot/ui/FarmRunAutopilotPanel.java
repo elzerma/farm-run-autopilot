@@ -136,6 +136,12 @@ public class FarmRunAutopilotPanel extends PluginPanel
 				}
 
 				@Override
+				public Double pace()
+				{
+					return timings.pace();
+				}
+
+				@Override
 				public TestView testView()
 				{
 					return testRunner.getView();

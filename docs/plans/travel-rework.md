@@ -469,6 +469,18 @@ for switching the planner in T3.
 highlights. `AtlasLinksTest`: every `TravelMethod`'s item or spell has an atlas teleport, and each lands within 3
 tiles of where one of them does.
 
+**T6 built (2026-10-18):** "Share your run times" is gone. Each stop's leg now saves its time at the stop and its
+patches by type, and each run its bank time and the plan's estimate (`RunTimings`; old saves keep working).
+`run/TypeTimes` shares each stop's time between its types by patch count, and compares like with like: the best for
+this many patches of a type, the median time per patch over the last 10 runs, and the best pace (quickest per patch).
+On the Run tab: "Run finished in 9:50 - new best for 9 herbs!" with each type's time, best and median on hover (and in
+the game chat on a new best); before a run, "Best: 9 herbs 6:05, 4 trees 2:41" with the medians on hover; while
+running, a line under the clock after each stop, e.g. "-0:12 against your best pace" (bank visits left out); the
+estimate "About 9 min" at the player's own pace after three finished runs, with the plan's own estimate on hover.
+Runs from before this have no per-type times, so the whole run's best shows until new runs are done. Not done: a
+separate "Reset personal bests" (Settings > Reset > Everything already clears them). Learned times still steer the
+route until T3.
+
 **T8 built early (2026-10-18), as it feeds that check:** in the dev client, each newly planned route also asks the
 Shortest Path plugin (when installed) for its own fastest way for every leg, with the player's own Shortest Path
 settings and real account, and logs `Shortest Path (live):` beside the plugin's estimate (`run/ShortestPathSecondOpinion`).

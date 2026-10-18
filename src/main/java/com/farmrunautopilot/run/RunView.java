@@ -60,7 +60,7 @@ public class RunView
 	}
 
 	public static final RunView OFF_VIEW = new RunView(State.OFF, 0, Collections.emptyList(), null, false, null,
-		null, null, null, Highlights.NONE);
+		null, null, null, Highlights.NONE, null);
 
 	State state;
 	/** When the run timer started (epoch millis), 0 until it has. */
@@ -70,13 +70,18 @@ public class RunView
 	String instruction;
 	/** The player is already at the first stop, so there's no travelling to it. */
 	boolean atFirstStop;
-	/** e.g. "Run finished in 12:30", or null. */
+	/** e.g. "Run finished in 12:30 - new best for 9 herbs!", or null. */
 	String lastRun;
-	/** e.g. "Best for 6 herbs: 8:12, 8:40, 9:03", or null when there are none yet. */
+	/**
+	 * Best times, one line per patch type after a first summary line ("Best: 9 herbs 6:05"); just after a run, that
+	 * run's time per type instead. Null when there are none yet.
+	 */
 	String bestTimes;
 	/** Reminders under the instruction, one per line (e.g. "Drop 4 weeds"), or null. */
 	String reminder;
 	/** What to put on, e.g. "Wear: Graceful outfit, Ring of wealth", in its own colour; or null. */
 	String wear;
 	Highlights highlights;
+	/** While running: after each stop, e.g. "-0:12 against your best pace"; null without a best pace yet. */
+	String split;
 }

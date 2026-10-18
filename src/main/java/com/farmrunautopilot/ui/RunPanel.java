@@ -38,6 +38,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -126,6 +127,9 @@ class RunPanel extends JPanel
 
 		/** The seed vault has been opened on this account, so its contents are counted. */
 		boolean seedVaultSeen();
+
+		/** The player's recent runs against their estimates (1.1 is 10% slower), or null with too few runs. */
+		Double pace();
 
 		/** The guided test in progress, or {@link TestView#NONE}. */
 		TestView testView();
@@ -412,8 +416,20 @@ class RunPanel extends JPanel
 		final Route route = plan.getRoute();
 		if (!route.getStops().isEmpty())
 		{
-			add(note("About " + PatchStatusText.duration((long) (route.getTravelSeconds() + route.getPatchSeconds()))
-				+ " (" + PatchStatusText.duration((long) route.getTravelSeconds()) + " travelling)"));
+			// At the player's own pace once they've done a few runs; only what's shown, never the route (elzerma)
+			final Double pace = controls.pace();
+			final double scale = pace != null ? pace : 1;
+			final double estimate = route.getTravelSeconds() + route.getPatchSeconds();
+			final JLabel time = note("About " + PatchStatusText.duration((long) (estimate * scale))
+				+ " (" + PatchStatusText.duration((long) (route.getTravelSeconds() * scale)) + " travelling)");
+			if (pace != null)
+			{
+				final long percent = Math.round(Math.abs(pace - 1) * 100);
+				tipped(time, "The plan's estimate is " + PatchStatusText.duration((long) estimate) + "; your last runs took "
+					+ (percent == 0 ? "about as long as their estimates" : percent + "% " + (pace < 1 ? "less" : "more")
+					+ " than their estimates"));
+			}
+			add(time);
 		}
 	}
 
@@ -482,15 +498,19 @@ class RunPanel extends JPanel
 		build.setAlignmentX(LEFT_ALIGNMENT);
 		build.setMaximumSize(new Dimension(Integer.MAX_VALUE, build.getPreferredSize().height));
 		add(build);
-		// How the last run went, one quiet line under the button; the best times are its tooltip (elzerma)
+		// How the last run went, one quiet line under the button; its time per patch type, or the best times per type,
+		// on hover (elzerma)
 		final String times = view.getLastRun() != null ? view.getLastRun() : view.getBestTimes();
 		if (times != null)
 		{
-			final JLabel line = note(times);
+			final List<String> lines = Arrays.asList(times.split("\n"));
+			final JLabel line = note(lines.get(0));
 			line.setBorder(new EmptyBorder(4, 0, 0, 0));
-			if (view.getLastRun() != null && view.getBestTimes() != null)
+			final List<String> more = view.getLastRun() != null && view.getBestTimes() != null
+				? Arrays.asList(view.getBestTimes().split("\n")) : lines.subList(1, lines.size());
+			if (!more.isEmpty())
 			{
-				tipped(line, view.getBestTimes());
+				line.setToolTipText(UiText.tooltip(more, 250));
 			}
 			add(line);
 		}
@@ -734,6 +754,12 @@ class RunPanel extends JPanel
 			bar.add(Style.danger(stop));
 			bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, bar.getPreferredSize().height));
 			add(left(bar));
+			// After each stop, against the best pace (elzerma: splits at each stop)
+			if (view.getSplit() != null)
+			{
+				add(tipped(note(view.getSplit()), "Your time so far, bank visits left out, against your quickest time per "
+					+ "patch for each type done so far"));
+			}
 		}
 
 		add(tipped(heading("Complete route"), "Ticks itself as you go. If it misses something, tick it yourself; "
