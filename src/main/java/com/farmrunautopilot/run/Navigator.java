@@ -41,6 +41,7 @@ class Navigator
 	private final Client client;
 	private final PatchTracker patchTracker;
 	private final SceneTracker scene;
+	private final ShortestPathBridge shortestPath;
 
 	private boolean arrived;
 	/** When the player reached the current stop (epoch seconds); patches must be seen after this to count. */
@@ -53,11 +54,12 @@ class Navigator
 	private WorldPoint lastPosition;
 
 	@Inject
-	Navigator(Client client, PatchTracker patchTracker, SceneTracker scene)
+	Navigator(Client client, PatchTracker patchTracker, SceneTracker scene, ShortestPathBridge shortestPath)
 	{
 		this.client = client;
 		this.patchTracker = patchTracker;
 		this.scene = scene;
+		this.shortestPath = shortestPath;
 	}
 
 	/** A new run: nothing travelled yet. */
@@ -198,7 +200,7 @@ class Navigator
 		final JourneyStep step = journeyStep(stop);
 		return !teleported ? stop.describeWay() + " to " + stop.getLocation().getDisplayName()
 			: step != null ? step.textFor(client.getBoostedSkillLevel(Skill.AGILITY))
-			: withDirections(stop, walkInstruction(here.get(0)));
+			: walkTo(stop, here.get(0), "Walk", null);
 	}
 
 	/**
@@ -226,6 +228,24 @@ class Navigator
 		final String directions = directions(stop);
 		return directions == null ? step
 			: directions + ", then " + Character.toLowerCase(step.charAt(0)) + step.substring(1);
+	}
+
+	/**
+	 * The walk to a patch, e.g. "Walk to the Troll Stronghold herb patch" or "Run to the ... patch, then rake it". With
+	 * Shortest Path drawing our line it shows the way, so it's "Follow the line to the ... patch" and the stop's written
+	 * directions go (elzerma, 2026-10-18); without it, the directions (rocks, gates, stairs) come first.
+	 *
+	 * @param verb "Walk" or "Run"
+	 * @param then what to do there, or null
+	 */
+	String walkTo(RouteStop stop, Patch patch, String verb, String then)
+	{
+		final String after = then == null ? "" : ", then " + Character.toLowerCase(then.charAt(0)) + then.substring(1);
+		if (shortestPath.linesShown())
+		{
+			return "Follow the line to the " + patch.getDisplayName() + " patch" + after;
+		}
+		return withDirections(stop, verb + " to the " + patch.getDisplayName() + " patch" + after);
 	}
 
 	/**
@@ -391,11 +411,5 @@ class Navigator
 	{
 		final NPC npc = step.getNpc() != null ? scene.transferNpc(step.getNpc()) : null;
 		return npc != null ? npc.getWorldLocation() : step.getAt();
-	}
-
-	/** After teleporting: the way on from the landing spot, e.g. "Walk to the Troll Stronghold herb patch". */
-	private static String walkInstruction(Patch patch)
-	{
-		return "Walk to the " + patch.getDisplayName() + " patch";
 	}
 }

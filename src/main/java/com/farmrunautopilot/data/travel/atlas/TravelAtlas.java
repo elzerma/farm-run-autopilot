@@ -6,10 +6,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -145,6 +148,8 @@ public final class TravelAtlas
 	private final Map<Integer, List<Jump>> hopsInto = new HashMap<>();
 	/** Patch places by patch name. */
 	private final Map<String, Place> patchPlaces = new HashMap<>();
+	/** Who hops and transports are used on, worked out once. */
+	private Set<String> targets;
 
 	private TravelAtlas()
 	{
@@ -209,6 +214,47 @@ public final class TravelAtlas
 	public List<Jump> hopsInto(int landing)
 	{
 		return hopsInto.getOrDefault(landing, Collections.emptyList());
+	}
+
+	/**
+	 * Who or what a transport's menu option is used on, e.g. "Renu" from "Travel Renu 13350" or "Trader Crewmember" from
+	 * "Charter Trader Crewmember 1330" (Shortest Path's menu text: the option, the target, its id); null if it has none.
+	 */
+	public static String target(String menu)
+	{
+		final String[] words = menu == null ? new String[0] : menu.trim().split(" ");
+		if (words.length < 3)
+		{
+			return null;
+		}
+		return String.join(" ", Arrays.asList(words).subList(1, words.length - 1));
+	}
+
+	/** Everyone a hop or a transport on a way is used on (Renu, a ship's crew, a guide), for spotting them nearby. */
+	public synchronized Set<String> targets()
+	{
+		if (targets == null)
+		{
+			final Set<String> found = new HashSet<>();
+			for (Jump hop : hops)
+			{
+				final String target = target(hop.getMenu());
+				if (target != null)
+				{
+					found.add(target);
+				}
+			}
+			for (Step step : steps)
+			{
+				final String target = target(step.getMenu());
+				if (target != null)
+				{
+					found.add(target);
+				}
+			}
+			targets = Collections.unmodifiableSet(found);
+		}
+		return targets;
 	}
 
 	private static TravelAtlas load()

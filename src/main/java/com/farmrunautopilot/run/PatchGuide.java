@@ -67,6 +67,8 @@ class PatchGuide
 	/** What to do at {@link #currentPatch}, or null while travelling. */
 	private StepAdvisor.Action currentAction;
 	private final Map<Patch, Progress> progress = new EnumMap<>(Patch.class);
+	/** Patches finished this run, in the order they were finished, for the checklist's order. */
+	private final Set<Patch> finishedOrder = new LinkedHashSet<>();
 
 	/** What has happened at a patch during this run. */
 	private static final class Progress
@@ -100,6 +102,7 @@ class PatchGuide
 	{
 		this.plan = plan;
 		progress.clear();
+		finishedOrder.clear();
 		clearCurrent();
 	}
 
@@ -232,8 +235,8 @@ class PatchGuide
 			{
 				currentPatch = patch;
 				currentAction = StepAdvisor.Action.INSPECT;
-				final String walk = "Walk to the " + patch.getDisplayName() + " patch";
-				return navigator.farFrom(patch) ? navigator.withDirections(stop, walk) : walk;
+				return navigator.farFrom(patch) ? navigator.walkTo(stop, patch, "Walk", null)
+					: "Walk to the " + patch.getDisplayName() + " patch";
 			}
 			if (live.getState() != PatchState.GROWING && patchTracker.getPatchesInRange().contains(patch))
 			{
@@ -263,9 +266,7 @@ class PatchGuide
 				// The area loads well before the patch is reached, and some places have several patches
 				if (advice.getAction() != StepAdvisor.Action.INSPECT && navigator.farFrom(patch))
 				{
-					final String text = advice.getText();
-					return navigator.withDirections(stop, "Run to the " + patch.getDisplayName() + " patch, then "
-						+ Character.toLowerCase(text.charAt(0)) + text.substring(1));
+					return navigator.walkTo(stop, patch, "Run", advice.getText());
 				}
 				return advice.getText();
 			}
@@ -293,6 +294,38 @@ class PatchGuide
 		{
 			p.paid = true;
 		}
+	}
+
+	/**
+	 * A stop's patches in the order the guide takes them, for the stop's checklist (elzerma, 2026-10-18: the sidebar
+	 * listed them in its own order while the guide went nearest first): the finished ones in the order they were
+	 * finished, then the one in hand, then the rest as the guide would go to them from here.
+	 */
+	List<Patch> order(List<Patch> here)
+	{
+		finishedOrder.removeIf(patch -> !isDone(patch));
+		final List<Patch> rest = new ArrayList<>();
+		for (Patch patch : here)
+		{
+			if (isDone(patch))
+			{
+				finishedOrder.add(patch);
+			}
+			else
+			{
+				rest.add(patch);
+			}
+		}
+		final List<Patch> ordered = new ArrayList<>();
+		for (Patch patch : finishedOrder)
+		{
+			if (here.contains(patch))
+			{
+				ordered.add(patch);
+			}
+		}
+		ordered.addAll(protectingFlowersFirst(navigator.nearestFirst(rest, currentPatch)));
+		return ordered;
 	}
 
 	/**

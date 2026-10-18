@@ -11,7 +11,9 @@ reducing expected amounts of bank trips)" (section 4, last part); **this comes f
 it, planned for the day the plugin handles **all** crop types (section 3, step 2); "Share your run times" is removed;
 Auto uses every way except Wilderness and cooldown teleports by default; times are compared per patch type, with a
 split at each stop (section 5); a bank stop's time is balanced against the fastest ways (section 4). Only whether the
-"Fewest items" style goes is left, for the start of T4.
+"Fewest items" style goes is left, for the start of T4. 2026-10-18: the Travel tab's per-location list of the plugin's
+own methods goes; every run is planned from every way the atlas knows, from the bank the player gears up at, and
+optimised (section 6, T4, T7).
 
 ## 0. In short
 
@@ -294,7 +296,13 @@ Travel
 
 - The counts and times above are examples, not measured.
 - Opening a family lists each way with its state on the right: "ready", "needs 45 Agility", "no charges", "off".
-- Turning a family off is a preference the route follows (as Shortest Path's toggles do); per-location overrides stay.
+- Turning a family off is a preference the route follows (as Shortest Path's toggles do).
+- **Per-location overrides go** (elzerma, 2026-10-18: "I don't want to stick to our list of travel methods in the tab,
+  I think we should ditch that and then essentially use shortest path's algo/methods for each run, but it would need to
+  simulate at the bank and optimize"). The Locations list shows the way each run would take, read-only, with the other
+  ways on hover; no pick from the plugin's own list, and the planner stops honouring old picks. Every run is planned from
+  every way the atlas knows (as T3 does), from the bank the player gears up at, with its ways and bank trips chosen
+  together (T4).
 - The fairy ring way drop-down goes (those ways are ordinary teleports now).
 - A location's hover may say what would help most ("with 45 Agility: 13 s quicker"); said there only.
 - The Run tab keeps leg times on hover (say it once) and adds the best time and splits from section 5.
@@ -357,10 +365,10 @@ three.
 | T1 | Atlas builder: places, peeling, re-timing, data files, report, referee | large | The report |
 | T2 | Atlas in the plugin, shadow mode: load, requirement mapping, teleports from data; the old planner still chooses; the dev log shows old against new per leg | medium | elzerma plays one run in the dev client, sends the log |
 | T3 | Planner on the atlas: legs composed as in section 4, special cases and hand tables removed, learned times out of choosing, scenario tests and snapshots | large | Hand checks: three runs |
-| T4 | Choosing ways with the inventory in mind (section 4, last part): footprints, run-level moves, bank trips costed from the atlas, explanations | large | Hand checks: a big run |
+| T4 | Choosing ways with the inventory in mind (section 4, last part): the run planned from the bank the player gears up at, footprints, run-level moves, bank trips costed from the atlas, explanations | large | Hand checks: a big run |
 | T5 | Journeys from atlas steps: generated step text, NPC and object outlines, walking lines to each step | medium | Hand checks: a boat or NPC journey |
 | T6 | Estimate and personal best: time constants, pace, best times and splits; remove "Share your run times" | medium | Hand checks: a run, then a faster one |
-| T7 | Travel tab: ways to travel, Wilderness, locations with alternatives | medium | Hand checks on the tab |
+| T7 | Travel tab: ways to travel, Wilderness, locations showing the way each run takes (no per-location picks from the plugin's own list) | medium | Hand checks on the tab |
 | T8 | Optional dev-client second opinion: at each leg, ask Shortest Path's `query` from the player's tile and log when its way is quicker | small | Log |
 | T9 | Help list, README, notices, release notes | small | None |
 

@@ -79,7 +79,8 @@ public class TravelMenuOverlay extends Overlay
 		}
 		if (config.vineHighlights())
 		{
-			vine.draw(graphics, bounds);
+			// Thicker than round a button: the maps are big (elzerma, 2026-10-18)
+			vine.draw(graphics, bounds, 2);
 			return null;
 		}
 		graphics.setColor(config.itemColour());

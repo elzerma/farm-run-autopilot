@@ -424,16 +424,16 @@ final class AtlasTravel
 			{
 				final String what = step.getType().equals("TELEPORTATION_PORTAL") ? "portal"
 					: step.getType().equals("TELEPORTATION_LEVER") ? "lever" : "boat";
-				rides.add(JourneyStep.ride(null, "Take the " + what + ": " + step.getName(), what + ": " + step.getName(),
-					step.getOrigin()));
+				rides.add(JourneyStep.ride(TravelAtlas.target(step.getMenu()), "Take the " + what + ": " + step.getName(),
+					what + ": " + step.getName(), step.getOrigin()));
 			}
 			else if (step.getType().equals("TRANSPORT") && step.getOrigin().getPlane() == step.getDestination().getPlane()
 				&& step.getOrigin().distanceTo2D(step.getDestination()) > CARRIED_TILES)
 			{
 				// e.g. "Follow Elkoy", "Transport Brother Tranquility": the menu option and who to use it on
 				final String name = step.getName();
-				rides.add(JourneyStep.ride(null, name, Character.toLowerCase(name.charAt(0)) + name.substring(1),
-					step.getOrigin()));
+				rides.add(JourneyStep.ride(TravelAtlas.target(step.getMenu()), name,
+					Character.toLowerCase(name.charAt(0)) + name.substring(1), step.getOrigin()));
 			}
 		}
 		return rides;
@@ -460,7 +460,8 @@ final class AtlasTravel
 				text = "Take the " + brief;
 				break;
 		}
-		return JourneyStep.ride(null, text, brief, point(atlas, hop.getFrom()));
+		// Who to use it on, outlined when they're near (Renu, a ship's crew); a ring or a tree isn't found among NPCs
+		return JourneyStep.ride(TravelAtlas.target(hop.getMenu()), text, brief, point(atlas, hop.getFrom()));
 	}
 
 	/** e.g. "spirit tree", "gnome glider", "charter ship". */

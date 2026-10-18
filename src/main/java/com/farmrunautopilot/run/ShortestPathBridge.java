@@ -10,6 +10,8 @@ import javax.inject.Singleton;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.events.PluginMessage;
+import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginManager;
 
 /**
  * Asks the Shortest Path plugin (Plugin Hub) to draw the walk for our "run to ..." steps. Uses its public plugin
@@ -23,6 +25,8 @@ import net.runelite.client.events.PluginMessage;
 public class ShortestPathBridge
 {
 	private static final String NAMESPACE = "shortestpath";
+	/** Its name in the plugin list. */
+	private static final String PLUGIN_NAME = "Shortest Path";
 	/** Walking only: agility shortcuts and doors are left as the player has them. */
 	static final Map<String, Object> WALK_ONLY;
 
@@ -50,13 +54,35 @@ public class ShortestPathBridge
 
 	private final EventBus eventBus;
 	private final FarmRunAutopilotConfig config;
+	private final PluginManager pluginManager;
 	private WorldPoint target;
 
 	@Inject
-	ShortestPathBridge(EventBus eventBus, FarmRunAutopilotConfig config)
+	ShortestPathBridge(EventBus eventBus, FarmRunAutopilotConfig config, PluginManager pluginManager)
 	{
 		this.eventBus = eventBus;
 		this.config = config;
+		this.pluginManager = pluginManager;
+	}
+
+	/**
+	 * Our walking lines are on and Shortest Path is there to draw them, so its line shows the way and our steps needn't
+	 * spell it out (elzerma, 2026-10-18: "Follow line to patch").
+	 */
+	public boolean linesShown()
+	{
+		if (!config.shortestPathLines())
+		{
+			return false;
+		}
+		for (Plugin plugin : pluginManager.getPlugins())
+		{
+			if (PLUGIN_NAME.equals(plugin.getName()) && pluginManager.isPluginEnabled(plugin))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** Draw the walk to {@code point}, or clear it for null. Only sends a message when the target changes. */

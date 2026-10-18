@@ -4,6 +4,7 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -48,6 +49,8 @@ public class SceneTracker
 	/** NPCs in journey steps after a teleport (Renu, Captain Barnaby, Elkoy), by name. */
 	private static final Set<String> TRANSFER_NPC_NAMES = transferNpcNames();
 	private final Map<String, NPC> transfers = new HashMap<>();
+	/** Everyone the travel atlas's journeys are used on (Renu, a ship's crew, a guide), once it's read. */
+	private Set<String> atlasRideNames;
 
 	@Inject
 	SceneTracker(Client client)
@@ -85,7 +88,7 @@ public class SceneTracker
 	 */
 	public void onNpcSpawned(NPC npc)
 	{
-		if (npc.getName() != null && TRANSFER_NPC_NAMES.contains(npc.getName()))
+		if (npc.getName() != null && isRideNpc(npc.getName()))
 		{
 			log.debug("Ride NPC {} #{} at {}", npc.getName(), npc.getId(), npc.getWorldLocation());
 			transfers.put(npc.getName(), npc);
@@ -158,6 +161,25 @@ public class SceneTracker
 	public NPC transferNpc(String name)
 	{
 		return transfers.get(name);
+	}
+
+	/** An NPC a journey step rides with: one of the plugin's own, or one the travel atlas uses. */
+	private boolean isRideNpc(String name)
+	{
+		if (TRANSFER_NPC_NAMES.contains(name))
+		{
+			return true;
+		}
+		if (atlasRideNames == null)
+		{
+			final TravelAtlas atlas = TravelAtlas.ifLoaded();
+			if (atlas == null)
+			{
+				return false;
+			}
+			atlasRideNames = atlas.targets();
+		}
+		return atlasRideNames.contains(name);
 	}
 
 	private static Set<String> transferNpcNames()

@@ -128,6 +128,10 @@ public class RunSession
 	 * the start" (issue #8): once taken, the ones for later go in the bank before the run starts.
 	 */
 	private final Set<Integer> forLater = new LinkedHashSet<>();
+	/** The current stop's patches in the order its checklist last showed them, so a tick goes to the patch shown. */
+	private List<Patch> shownPatches = Collections.emptyList();
+	/** The stop those were shown for, or -1. */
+	private int shownPatchesStop = -1;
 	/** The bank visit's step is the seed vault's, so the bank's Farm run tab has nothing left to flash for. */
 	private boolean vaultStep;
 	/** The time for the leg to the current stop has been saved. */
@@ -594,7 +598,8 @@ public class RunSession
 		}
 		else
 		{
-			final List<Patch> here = patchesAt(plan, stop.getLocation());
+			// The patches in the order the sidebar showed them
+			final List<Patch> here = shownPatchesStop == stopIndex ? shownPatches : patchesAt(plan, stop.getLocation());
 			final int index = step - travelSteps(stop);
 			if (index >= here.size())
 			{
@@ -1696,12 +1701,15 @@ public class RunSession
 				: capitalised(stop.rides().get(i - 1).getBrief());
 			steps.add(new RunView.Step(text, status, i > 0, status == RunView.StopStatus.DONE && manualSteps.contains(i)));
 		}
-		// Each patch's plan, in the same order the objectives were made
-		final List<Patch> here = patchesAt(plan, stop.getLocation());
+		// Each patch's plan, in the order the guide takes them; the objectives were made in the plan's order
+		final List<Patch> inPlan = patchesAt(plan, stop.getLocation());
 		final List<String> objectives = plan.getObjectives().getOrDefault(stop.getLocation(), Collections.emptyList());
-		for (int i = 0; i < here.size(); i++)
+		final List<Patch> here = patches.order(inPlan);
+		shownPatches = here;
+		shownPatchesStop = stopIndex;
+		for (Patch patch : here)
 		{
-			final Patch patch = here.get(i);
+			final int i = inPlan.indexOf(patch);
 			final RunView.StopStatus status = patches.isDone(patch) ? RunView.StopStatus.DONE
 				: arrived && patch == patches.getCurrentPatch() ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
 			steps.add(new RunView.Step(i < objectives.size() ? objectives.get(i) : patch.getDisplayName(), status, false,
@@ -1738,7 +1746,7 @@ public class RunSession
 			// On the way to the Farming Guild's bank: what gets the player there, as for a stop (issue #8)
 			if (bank != null && bank.getTrip() != null && !bankProgress[0])
 			{
-				return travelHighlights(bank.getTrip(), wear, null);
+				return travelHighlights(bank.getTrip(), wear, null, false);
 			}
 			return new Highlights(null, false, null, BankGuide.toDeposit(bankSupplies(), holdingsTracker.getHoldings(),
 				runService::notedId), null, wear.getItemIds());
@@ -1749,12 +1757,19 @@ public class RunSession
 			return atPatch;
 		}
 		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
-		return travelHighlights(stop, wear, navigator.travelNpc(stop));
+		return travelHighlights(stop, wear, navigator.travelNpc(stop), navigator.isTeleported());
 	}
 
-	/** Travelling: the item, spell and NPC that get the player there. Main item first: reminders name it. */
-	private Highlights travelHighlights(RouteStop stop, BankGuide.Wear wear, String npc)
+	/**
+	 * Travelling: the item, spell and NPC that get the player there. Main item first: reminders name it. Once landed,
+	 * the teleport's item and spell are done with (elzerma, 2026-10-18): only the NPC and a travel map's place to pick.
+	 */
+	private Highlights travelHighlights(RouteStop stop, BankGuide.Wear wear, String npc, boolean landed)
 	{
+		if (landed)
+		{
+			return new Highlights(null, false, npc, Collections.emptySet(), null, wear.getItemIds(), stop.menuPicks());
+		}
 		final Set<Integer> items = new LinkedHashSet<>();
 		if (stop.getDeparture() == Departure.DIRECT && stop.getMethod() != null)
 		{
