@@ -98,9 +98,8 @@ The plugin never clicks, types or acts for you. It only shows information.
 **Settings tab**
 - Presets (e.g. "Quick herbs"), display options, and what the plugin has detected: quests, diaries, levels,
   spellbook, charges and unlocks.
-- **Help improve this plugin:** share your run times to improve everyone's estimates, or try a guided test of a
-  feature the author couldn't test. A test walks you through it on the Run tab and puts your settings back
-  afterwards. The small "Help improve this plugin" line at the bottom of each tab opens this section.
+- **Help improve this plugin:** try a guided test of a feature the author couldn't test. A test walks you through it
+  on the Run tab and puts your settings back afterwards. The small "Help improve this plugin" line at the bottom of each tab opens this section.
   "Report a problem" there opens GitHub's bug form with the plugin version and your current plan filled in.
 
 ## How to use
@@ -119,10 +118,10 @@ any.
 
 ## Privacy
 
-Everything is stored in your RuneLite profile. The plugin makes no network requests. "Share your run times",
-a guided test's report and "Report a problem" only open a GitHub issue in your browser when you press their
-button; nothing is sent unless you submit it there, and they never include your character name or where
-you've been.
+Everything is stored in your RuneLite profile, run times included (they stay yours: for the estimate and your best
+times). The plugin makes no network requests. A guided test's report and "Report a problem" only open a GitHub issue
+in your browser when you press their button; nothing is sent unless you submit it there, and they never include your
+character name or where you've been.
 
 ## Credits
 

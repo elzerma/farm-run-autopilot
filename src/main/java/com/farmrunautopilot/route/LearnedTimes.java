@@ -48,28 +48,6 @@ public final class LearnedTimes
 	}
 
 	/**
-	 * One line per learned leg for "Share your run times" (Sprint 9): its key, the median seconds and how many
-	 * samples, e.g. "CATHERBY|CAMELOT_TELEPORT|DIRECT: 34.1 s (3)". Nothing else about the player.
-	 */
-	public List<String> summary()
-	{
-		final List<String> lines = new java.util.ArrayList<>();
-		for (Map.Entry<String, List<Double>> e : new java.util.TreeMap<>(samples).entrySet())
-		{
-			final List<Double> sorted = new java.util.ArrayList<>(e.getValue());
-			if (sorted.isEmpty())
-			{
-				continue;
-			}
-			Collections.sort(sorted);
-			final int n = sorted.size();
-			final double median = n % 2 == 1 ? sorted.get(n / 2) : (sorted.get(n / 2 - 1) + sorted.get(n / 2)) / 2;
-			lines.add(e.getKey() + ": " + Math.round(median * 10) / 10.0 + " s (" + n + ")");
-		}
-		return lines;
-	}
-
-	/**
 	 * e.g. "CATHERBY|CAMELOT_TELEPORT|DIRECT", or "GNOME_STRONGHOLD>TREE_GNOME_VILLAGE|SPIRIT_TREE_..|DIRECT"
 	 * for a leg that depends on where it starts. Null if it depends on that and the start isn't known (old
 	 * samples, the first leg of a run, the leg after a bank).
