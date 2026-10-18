@@ -201,8 +201,8 @@ public enum TravelMethod
 	FAIRY_RING_AKR(fairyRing(Location.HOSIDIUS, "AKR")),
 	SKILLS_NECKLACE_WOODCUTTING_GUILD(item(Location.HOSIDIUS, "Skills necklace (Woodcutting Guild)",
 		TravelKind.JEWELLERY, TravelItem.SKILLS_NECKLACE).jewelleryBox(JewelleryBoxTier.FANCY)
-		.requires(Requirement.skill(Skill.AGILITY, 45)).note("The river jump needs 45 Agility")
-		.then(JourneyStep.way("Head east and jump the river west of the house portal (45 Agility)", "river jump"))),
+		.requires(Requirement.skill(Skill.AGILITY, 45)).note("The stepping stone needs 45 Agility")
+		.then(JourneyStep.way("Head east and cross the stepping stone just west of the farm (45 Agility)", "stepping stone"))),
 
 	// Troll Stronghold (herb)
 	STONY_BASALT_ROOF(item(Location.TROLL_STRONGHOLD, "Stony basalt (roof)",

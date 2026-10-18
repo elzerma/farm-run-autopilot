@@ -114,7 +114,10 @@ public final class TravelTimes
 		tiles(TravelMethod.CONSTRUCTION_CAPE_HOSIDIUS, 31);
 		tiles(TravelMethod.KHAREDSTS_MEMOIRS_LANCALLIUMS, 72);
 		tiles(TravelMethod.FAIRY_RING_AKR, 87);
-		tiles(TravelMethod.SKILLS_NECKLACE_WOODCUTTING_GUILD, 76); // estimate: with the 45 Agility river jump
+		// 67 tiles to the 45 Agility stepping stone just west of the farm (1720, 3551 in Shortest Path's shortcuts), 2 ticks
+		// across, then 12 to the patch; 121 without it. Was an estimate of 76 until measured (elzerma, 2026-10-17)
+		tiles(TravelMethod.SKILLS_NECKLACE_WOODCUTTING_GUILD, 79);
+		extra(TravelMethod.SKILLS_NECKLACE_WOODCUTTING_GUILD, 1.2);
 		// Troll Stronghold: the roof is a few steps from the patch; Trollheim is the long walk down the mountain
 		tiles(TravelMethod.STONY_BASALT_ROOF, 7);
 		tiles(TravelMethod.STONY_BASALT_ENTRANCE, 35); // estimate: in and up through the stronghold
