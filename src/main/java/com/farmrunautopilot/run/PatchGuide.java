@@ -438,8 +438,10 @@ class PatchGuide
 		{
 			return null;
 		}
-		// Main item first: reminders name it
+		// Main item first: reminders name it. Only what gets clicked is outlined (elzerma, 2026-10-19: the rake and
+		// spades were outlined, though raking and clearing click the patch); the rest is still checked as carried.
 		final Set<Integer> items = new LinkedHashSet<>();
+		final Set<Integer> needed = new LinkedHashSet<>();
 		boolean gardener = false;
 		Spell spell = null;
 		final Crop crop = plan.getSupplies().getPlantings().get(currentPatch);
@@ -460,16 +462,16 @@ class PatchGuide
 				items.add(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED);
 				break;
 			case RAKE:
-				items.add(ItemID.RAKE);
+				needed.add(ItemID.RAKE);
 				break;
 			case CLEAR_DEAD:
 			case DIG_STUMP:
-				items.add(ItemID.SPADE);
+				needed.add(ItemID.SPADE);
 				break;
 			case CHOP:
 				for (int axe : SupplyItems.AXES)
 				{
-					items.add(axe);
+					needed.add(axe);
 				}
 				break;
 			case CURE:
@@ -479,25 +481,27 @@ class PatchGuide
 			case PRUNE:
 				for (int secateurs : SupplyItems.SECATEURS)
 				{
-					items.add(secateurs);
+					needed.add(secateurs);
 				}
 				break;
 			case PAY:
+				// Paid through the gardener's Pay option
 				gardener = true;
 				if (crop != null && crop.hasPayment())
 				{
-					items.add(crop.getPaymentItemId());
-					items.add(runService.notedId(crop.getPaymentItemId()));
+					needed.add(crop.getPaymentItemId());
+					needed.add(runService.notedId(crop.getPaymentItemId()));
 				}
 				break;
 			case PAY_TO_CLEAR:
 				gardener = true;
-				items.add(ItemID.COINS);
+				needed.add(ItemID.COINS);
 				break;
 			default:
 				break;
 		}
-		return new Highlights(currentPatch, gardener && currentPatch.hasGardener(), null, items, spell);
+		return new Highlights(currentPatch, gardener && currentPatch.hasGardener(), null, items, spell,
+			Collections.emptySet(), Collections.emptyList(), null, needed);
 	}
 
 	/** The spell if it can be cast from the spellbook the player is on right now, otherwise null. */
@@ -533,7 +537,7 @@ class PatchGuide
 		{
 			return null;
 		}
-		final Set<Integer> needed = highlights.getItemIds();
+		final Set<Integer> needed = highlights.getStepItemIds();
 		if (needed.isEmpty())
 		{
 			return null;

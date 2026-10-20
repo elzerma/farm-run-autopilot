@@ -97,6 +97,15 @@ public class BankGuideTest
 	}
 
 	@Test
+	public void theBankTeleportToWearGoesByItsOwnName()
+	{
+		// elzerma, 2026-10-19: the ring of dueling for the Castle Wars bank, with the ring slot empty
+		final SupplyPlan part = part(travel("Ring of dueling (bank partway)", true, ItemID.RING_OF_DUELING_8));
+		assertEquals("Wear: Ring of dueling", BankGuide.wear(part, holdings(items(ItemID.RING_OF_DUELING_8, 1), items()),
+			Outfit.NONE).getText());
+	}
+
+	@Test
 	public void compostMessageNamesThePatch()
 	{
 		final List<Patch> catherby = Location.CATHERBY.getPatches();

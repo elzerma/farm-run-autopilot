@@ -15,6 +15,7 @@ import com.farmrunautopilot.data.travel.atlas.AtlasAccount;
 import com.farmrunautopilot.data.travel.atlas.AtlasNeed;
 import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.run.StepAdvisor;
+import com.farmrunautopilot.settings.Outfit;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
@@ -28,6 +29,7 @@ import com.farmrunautopilot.supply.SupplyPlan;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -476,7 +478,7 @@ public class RunService
 			SupplyPlan part = part(config, access, left, selection, banked.subList(start, end), result.getRoute());
 			if (i < visits.size() && visits.get(i).getTeleport() != null)
 			{
-				part = withTeleport(part, visits.get(i).getTeleport(), left);
+				part = withTeleport(part, visits.get(i).getTeleport(), left, config.getOutfit());
 			}
 			if (i < visits.size() && visits.get(i).getTrip() != null)
 			{
@@ -584,17 +586,53 @@ public class RunService
 			before.getPlantings(), before.getStaffSwaps(), before.getCare());
 	}
 
-	/** A part's supplies with the bank teleport to bring, used at the bank that ends it. */
-	private static SupplyPlan withTeleport(SupplyPlan before, BankTeleport teleport, Holdings holdings)
+	/**
+	 * A part's supplies with the bank teleport to bring, used at the bank that ends it: worn when its slot is free
+	 * (elzerma, 2026-10-19: the ring slot was empty, yet the ring of dueling for the Castle Wars bank wasn't asked to be
+	 * worn).
+	 */
+	private SupplyPlan withTeleport(SupplyPlan before, BankTeleport teleport, Holdings holdings, Outfit outfit)
 	{
 		final int[] ids = teleport.getItemIds();
+		final boolean worn = slotFree(wearSlot(ids[0]), before, ids, holdings, outfit);
 		final List<SupplyLine> lines = new ArrayList<>(before.getLines());
-		lines.add(new SupplyLine(SupplyLine.Group.TRAVEL, teleport.getItemName() + " (bank partway)", 1,
+		final SupplyLine line = new SupplyLine(SupplyLine.Group.TRAVEL, teleport.getItemName() + " (bank partway)", 1,
 			holdings.countAny(ids), holdings.carriedOnly().countAny(ids), holdings.where(ids),
-			"To bank partway through the run: teleport to " + teleport.getBankName(), 1, false, null, ids));
+			"To bank partway through the run: teleport to " + teleport.getBankName()
+				+ (worn ? ". Wear it: no inventory slot" : ""), worn ? 0 : 1, false, null, ids);
+		lines.add(worn ? line.worn() : line);
 		return new SupplyPlan(lines, before.getPatchCounts(), before.getNotDue(), before.getTravelPlan(),
-			before.getWarnings(), before.getCoins(), before.getRuneSummary(), before.getSlots() + 1,
+			before.getWarnings(), before.getCoins(), before.getRuneSummary(), before.getSlots() + (worn ? 0 : 1),
 			before.getPlantings(), before.getStaffSwaps(), before.getCare());
+	}
+
+	/**
+	 * Whether something can be worn in this slot for the part: nothing the part wears goes there (Graceful's cape and
+	 * gloves included), and nothing but one of {@code ids} is worn in it now.
+	 */
+	private boolean slotFree(TravelItem.WearSlot slot, SupplyPlan part, int[] ids, Holdings holdings, Outfit outfit)
+	{
+		if (slot == null || slot == TravelItem.WearSlot.WEAPON || outfit == Outfit.GRACEFUL
+			&& (slot == TravelItem.WearSlot.CAPE || slot == TravelItem.WearSlot.HANDS))
+		{
+			return false;
+		}
+		for (SupplyLine line : part.getLines())
+		{
+			if (line.isWear() && line.getItemIds() != null && line.getItemIds().length > 0
+				&& wearSlot(line.getItemIds()[0]) == slot)
+			{
+				return false;
+			}
+		}
+		for (int id : holdings.in(Holdings.Source.WORN).keySet())
+		{
+			if (Arrays.stream(ids).noneMatch(i -> i == id) && wearSlot(id) == slot)
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static List<Patch> patchesAt(RunSelection selection, List<RouteStop> stops)

@@ -1128,7 +1128,7 @@ public class RunSession
 		// Needed now: the step in hand can't be done; a moment's grace, as the inventory changes mid-step
 		if (patches.currentItemMissing(view.getHighlights()))
 		{
-			if (view.getHighlights().getItemIds().stream().anyMatch(skippedItems::contains))
+			if (view.getHighlights().getStepItemIds().stream().anyMatch(skippedItems::contains))
 			{
 				log.debug("Step skipped: its item was skipped");
 				patches.skipCurrentStep();
@@ -2177,7 +2177,9 @@ public class RunSession
 		final Highlights atPatch = patches.highlights();
 		if (atPatch != null)
 		{
-			return atPatch;
+			// Armed at the first stop's patch, what to put on is still marked (elzerma, 2026-10-19: the Wear labels went
+			// once the run armed itself there)
+			return wear.getItemIds().isEmpty() ? atPatch : atPatch.withWear(wear.getItemIds());
 		}
 		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
 		return travelHighlights(stop, wear, navigator.travelNpc(stop), navigator.isTeleported());

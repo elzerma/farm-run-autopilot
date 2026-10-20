@@ -4,6 +4,7 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.route.MenuPick;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.Value;
@@ -36,6 +37,11 @@ public class Highlights
 	 * "Crafting Guild"; null if none.
 	 */
 	String teleportOption;
+	/**
+	 * Items the step needs that aren't clicked, such as the rake for raking or the payment for the gardener: not
+	 * outlined (elzerma, 2026-10-19: tools only when they need clicking), but still checked as carried.
+	 */
+	Set<Integer> neededIds;
 
 	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell)
 	{
@@ -51,6 +57,13 @@ public class Highlights
 	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell,
 		Set<Integer> wearItemIds, List<MenuPick> menuPicks, String teleportOption)
 	{
+		this(patch, gardener, travelNpc, itemIds, spell, wearItemIds, menuPicks, teleportOption,
+			Collections.emptySet());
+	}
+
+	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell,
+		Set<Integer> wearItemIds, List<MenuPick> menuPicks, String teleportOption, Set<Integer> neededIds)
+	{
 		this.patch = patch;
 		this.gardener = gardener;
 		this.travelNpc = travelNpc;
@@ -59,5 +72,24 @@ public class Highlights
 		this.wearItemIds = wearItemIds;
 		this.menuPicks = menuPicks;
 		this.teleportOption = teleportOption;
+		this.neededIds = neededIds;
+	}
+
+	/** The same, with these items to put on. */
+	public Highlights withWear(Set<Integer> wear)
+	{
+		return new Highlights(patch, gardener, travelNpc, itemIds, spell, wear, menuPicks, teleportOption, neededIds);
+	}
+
+	/** Everything the step needs, outlined or not, the main item first. */
+	public Set<Integer> getStepItemIds()
+	{
+		if (neededIds.isEmpty())
+		{
+			return itemIds;
+		}
+		final Set<Integer> all = new LinkedHashSet<>(itemIds);
+		all.addAll(neededIds);
+		return all;
 	}
 }

@@ -124,7 +124,8 @@ final class BankGuide
 			}
 			if (any(line.getItemIds(), inventory))
 			{
-				names.add(line.getName());
+				// The item's own name: "Ring of dueling", not "Ring of dueling (bank partway)"
+				names.add(line.getName().replaceFirst(" \\(.*\\)$", ""));
 				for (int id : line.getItemIds())
 				{
 					if (inventory.getOrDefault(id, 0) > 0)
