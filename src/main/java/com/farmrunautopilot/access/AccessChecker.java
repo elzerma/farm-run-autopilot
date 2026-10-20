@@ -6,9 +6,7 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.poh.PohAltar;
-import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.Spellbook;
-import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.RunConfig;
@@ -44,39 +42,14 @@ public class AccessChecker
 	/** Quests and diaries change rarely; re-read them about every 30 seconds. */
 	private static final int REFRESH_TICKS = 50;
 
-	private static final Set<Quest> QUESTS = EnumSet.of(Quest.FAIRYTALE_II__CURE_A_QUEEN, Quest.TREE_GNOME_VILLAGE,
-		// Renu, the quetzal that flies between landing pads
-		Quest.TWILIGHTS_PROMISE);
+	/**
+	 * Every quest, as the travel atlas's ways can need any of them, not only those the plugin's own data names
+	 * (elzerma, 2026-10-19: Cabin Fever read as not done, so Bill Teach's boat to Harmony Island didn't count and a
+	 * teleport they can't cast was planned). About 200 quick script runs every 30 seconds.
+	 */
+	private static final Set<Quest> QUESTS = EnumSet.allOf(Quest.class);
 	/** Every skill, since the max cape needs 99 in all of them. */
 	private static final Set<Skill> SKILLS = AccessSnapshot.REAL_SKILLS;
-
-	static
-	{
-		final List<Requirement> all = new ArrayList<>();
-		for (Patch patch : Patch.values())
-		{
-			all.addAll(patch.getRequirements());
-		}
-		for (Spell spell : Spell.values())
-		{
-			all.addAll(spell.getRequirements());
-		}
-		for (TravelMethod method : TravelMethod.values())
-		{
-			all.addAll(method.getRequirements());
-		}
-		for (TravelItem item : TravelItem.values())
-		{
-			all.addAll(item.getRequirements());
-		}
-		for (Requirement requirement : all)
-		{
-			if (requirement.getQuest() != null)
-			{
-				QUESTS.add(requirement.getQuest());
-			}
-		}
-	}
 
 	private final Client client;
 	private final SettingsStore settings;
