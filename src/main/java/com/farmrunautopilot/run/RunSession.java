@@ -40,6 +40,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -152,11 +153,16 @@ public class RunSession
 	/** The items the seed vault's step in hand has asked for, so taking too many is still seen once none are left to take. */
 	private final Set<Integer> vaultItems = new LinkedHashSet<>();
 	/** What the open seed vault's step still wants, for the inventory beside it; empty while it's closed. Client thread. */
-	private List<VaultCount> vaultCounts = Collections.emptyList();
+	private List<InventoryCount> vaultCounts = Collections.emptyList();
+	/** The same for the open bank's step: seeds and saplings still to take, or to put back. Client thread. */
+	private List<InventoryCount> bankCounts = Collections.emptyList();
 
-	/** A line for the inventory beside the open seed vault: how many more to take from it, or how many to put back. */
+	/**
+	 * A line for the inventory beside the open seed vault or bank: how many more to take from it, or how many to put
+	 * back.
+	 */
 	@lombok.Value
-	public static class VaultCount
+	public static class InventoryCount
 	{
 		String text;
 		/** Too many carried: some go back. */
@@ -168,6 +174,13 @@ public class RunSession
 	 */
 	private String gatherVault;
 	private String gatherToBank;
+	/**
+	 * While gathering, once the seed vault's done: everything has been deposited at the bank (the inventory seen empty
+	 * with the bank open), so what the Farm run tab marks is taken from there (elzerma, 2026-10-19).
+	 */
+	private boolean depositedAll;
+	/** The step in hand is to press the bank's Deposit inventory button, which is outlined. Client thread. */
+	private boolean depositAllStep;
 	/** The current stop's patches in the order its checklist last showed them, so a tick goes to the patch shown. */
 	private List<Patch> shownPatches = Collections.emptyList();
 	/** The stop those were shown for, or -1. */
@@ -226,6 +239,7 @@ public class RunSession
 		lastRun = null;
 		gatherVault = null;
 		gatherToBank = null;
+		depositedAll = false;
 		vaultItems.clear();
 		log.debug("Building a run");
 		evaluate();
@@ -1251,6 +1265,8 @@ public class RunSession
 	private void evaluate()
 	{
 		vaultCounts = Collections.emptyList();
+		bankCounts = Collections.emptyList();
+		depositAllStep = false;
 		if (stage == RunView.State.OFF)
 		{
 			view = offView();
@@ -1259,14 +1275,17 @@ public class RunSession
 		if (stage == RunView.State.BUILDING)
 		{
 			final RunPlan current = runService.getPlan();
-			// With "Take all seeds at the start", the seed vault's seeds for later are taken and put in the bank first
-			final Map<Integer, Integer> later = takesAllAtStart(current, settings.getRunConfig())
-				? laterFromVault(current) : Collections.emptyMap();
-			final Map<Integer, Integer> toBank = later.isEmpty()
-				? toBankForLater(current, holdingsTracker.getHoldings()) : Collections.emptyMap();
-			if (!isReady(current) || !later.isEmpty() || !toBank.isEmpty())
+			final Holdings holdings = holdingsTracker.getHoldings();
+			// The seed vault first, for what the bank is short of (elzerma, 2026-10-19); with "Take all seeds at the
+			// start", the later parts' too
+			final Map<Integer, Integer> targets = vaultTargets(current, holdings,
+				takesAllAtStart(current, settings.getRunConfig()));
+			final Map<Integer, Integer> fromVault = vaultMore(targets, holdings);
+			final Map<Integer, Integer> toBank = fromVault.isEmpty()
+				? toBankForLater(current, holdings) : Collections.emptyMap();
+			if (!isReady(current) || !fromVault.isEmpty() || !toBank.isEmpty())
 			{
-				view = buildingView(current, later, toBank);
+				view = buildingView(current, targets, fromVault, toBank);
 				return;
 			}
 			arm(current);
@@ -1425,6 +1444,9 @@ public class RunSession
 		shortestPath.setTarget(timing ? walkTarget(stops.get(stopIndex)) : null);
 		bankTab.setAttention(banking && !vaultStep && !bankTab.isTabOpen());
 		vaultCounts = seedVault.isOpen() ? openVaultCounts() : Collections.emptyList();
+		// At a bank visit with the bank open: the seeds and saplings the next part plants, still to take or to put back
+		bankCounts = banking && !vaultStep && bankTab.isBankOpen()
+			? bankCounts(bankSupplies(), holdingsTracker.getHoldings(), runService::itemName) : Collections.emptyList();
 		view = runningView(instruction);
 	}
 
@@ -1432,7 +1454,7 @@ public class RunSession
 	 * The counts for the inventory beside the open seed vault during the run: at the Farming Guild's stop, what the rest
 	 * of this part plants; at a bank visit there, what the part being banked for plants.
 	 */
-	private List<VaultCount> openVaultCounts()
+	private List<InventoryCount> openVaultCounts()
 	{
 		final BankStop bank = activeBank();
 		final Map<Integer, Integer> take;
@@ -1481,15 +1503,15 @@ public class RunSession
 	 * @param take how many more to take, by item
 	 * @param wanted how many of each item the step means to carry
 	 */
-	private List<VaultCount> vaultCounts(Map<Integer, Integer> take, Map<Integer, Integer> wanted)
+	private List<InventoryCount> vaultCounts(Map<Integer, Integer> take, Map<Integer, Integer> wanted)
 	{
 		final Holdings carried = holdingsTracker.getHoldings().carriedOnly();
-		final List<VaultCount> lines = new ArrayList<>();
+		final List<InventoryCount> lines = new ArrayList<>();
 		take.forEach((id, n) ->
 		{
 			if (n > 0)
 			{
-				lines.add(new VaultCount("Take " + n + (carried.count(id) > 0 ? " more" : "") + " x "
+				lines.add(new InventoryCount("Take " + n + (carried.count(id) > 0 ? " more" : "") + " x "
 					+ runService.itemName(id), false));
 			}
 		});
@@ -1498,16 +1520,28 @@ public class RunSession
 			final int over = carried.count(id) - n;
 			if (over > 0)
 			{
-				lines.add(new VaultCount("Deposit " + over + " x " + runService.itemName(id), true));
+				lines.add(new InventoryCount("Deposit " + over + " x " + runService.itemName(id), true));
 			}
 		});
 		return lines;
 	}
 
 	/** What the open seed vault's step still wants, for the inventory beside it; empty while it's closed. Client thread. */
-	public List<VaultCount> getVaultCounts()
+	public List<InventoryCount> getVaultCounts()
 	{
 		return vaultCounts;
+	}
+
+	/** What the open bank's step still wants of each seed and sapling, for the inventory beside it. Client thread. */
+	public List<InventoryCount> getBankCounts()
+	{
+		return bankCounts;
+	}
+
+	/** The step in hand is to press the bank's Deposit inventory button. Client thread. */
+	public boolean isDepositAllStep()
+	{
+		return depositAllStep;
 	}
 
 	/**
@@ -1582,7 +1616,8 @@ public class RunSession
 	 * whole time, not only at the guild's own step): each seed and sapling the rest of the run plants, how many, and
 	 * whether they're carried yet, in the bank tab's order. The whole run even when it banks partway, as "Take all
 	 * seeds at the start" takes them all from the vault; with "Bank at the Farming Guild", only the part being
-	 * gathered or banked for, as the rest comes from the vault at the guild's bank. Empty with no run.
+	 * gathered or banked for, as the rest comes from the vault at the guild's bank. While gathering, only what's to
+	 * come out of the vault, with how many to have on leaving it ({@link #vaultTargets}). Empty with no run.
 	 */
 	public List<SeedVaultSection.Seed> seedVaultSeeds()
 	{
@@ -1590,6 +1625,18 @@ public class RunSession
 		if (stage == RunView.State.OFF || shown == null)
 		{
 			return Collections.emptyList();
+		}
+		if (stage == RunView.State.BUILDING)
+		{
+			final Holdings holdings = holdingsTracker.getHoldings();
+			final Holdings carried = holdings.carriedOnly();
+			final Map<Integer, Integer> vault = holdings.in(Holdings.Source.SEED_VAULT);
+			final List<SeedVaultSection.Seed> seeds = new ArrayList<>();
+			vaultTargets(shown, holdings, takesAllAtStart(shown, settings.getRunConfig())).forEach((id, n) ->
+				seeds.add(new SeedVaultSection.Seed(id, n, carried.count(id) >= n ? SupplyLine.Status.CARRIED
+					: carried.count(id) + vault.getOrDefault(id, 0) >= n ? SupplyLine.Status.IN_STORAGE
+					: SupplyLine.Status.MISSING)));
+			return seeds;
 		}
 		final boolean running = stage == RunView.State.RUNNING;
 		final boolean partOnly = !shown.getBankStops().isEmpty() && RunService.guildBanking(settings.getRunConfig());
@@ -1636,7 +1683,7 @@ public class RunSession
 			if (crop != null && inPart.contains(patch.getLocation())
 				&& (stage == RunView.State.BUILDING || !patches.isDone(patch)))
 			{
-				need.merge(crop.getPlantItemId(), 1, Integer::sum);
+				need.merge(crop.getPlantItemId(), crop.getSeedsPerPatch(), Integer::sum);
 			}
 		}
 		final Holdings holdings = holdingsTracker.getHoldings();
@@ -1991,49 +2038,55 @@ public class RunSession
 	}
 
 	/**
-	 * Gathering supplies, one step at a time: open a bank, open the Farm run tab, take what it shows; then what only
-	 * the seed vault has; then, on a run that banks partway, put the seeds and saplings for later in the bank.
+	 * Gathering supplies, one step at a time, in the same order every time (elzerma, 2026-10-19: "rigid process"):
+	 * what the bank is short of from the seed vault; then at the bank everything deposited, the Farm run tab opened and
+	 * what it marks taken; then any seeds and saplings for the run's later parts taken too many put back.
 	 *
-	 * @param missing lines still to get from the bank (or other storage) while it has some
-	 * @param vault what only the seed vault can make up, by item, with how many to take from it
-	 * @param startsThere the run sets off from the Farming Guild
-	 * @param forLaterToo some of it is for the run's later parts, to put in the bank
+	 * @param fromBank lines still to get from the bank (or other storage) while it has some
+	 * @param fromVault how many more of each seed and sapling to take from the seed vault
 	 * @param toBank seeds and saplings for the later parts that are carried, by item, with how many to put in the bank
 	 * @param nowhere what's still short with none left anywhere the player keeps things, e.g. "6 x White lily seed"
 	 */
-	private String gatheringStep(int missing, Map<Integer, Integer> vault, boolean startsThere, boolean forLaterToo,
-		Map<Integer, Integer> toBank, List<String> nowhere)
+	private String gatheringStep(int fromBank, Map<Integer, Integer> fromVault, Map<Integer, Integer> toBank,
+		List<String> nowhere)
 	{
-		final String items = missing + (missing == 1 ? " item" : " items");
 		// At the seed vault with its Farm Run Autopilot view off, while it holds something the run needs
 		if (seedVault.isCalling())
 		{
 			return "Farm run: click the flashing button at the top of the seed vault";
 		}
-		if (missing <= 0 && !vault.isEmpty())
+		if (!fromVault.isEmpty())
 		{
-			// Where they are, since the bank can't help, and that the run is planned from there (issue #8)
-			return "Farm run: take " + amounts(vault) + " from the seed vault in the Farming Guild"
-				+ (startsThere ? ", where the run starts" : "")
-				+ (forLaterToo ? ", and put the ones for later in your bank" : "");
+			return "Farm run: first take " + amounts(fromVault) + " from the seed vault in the Farming Guild, beside its "
+				+ "bank";
 		}
-		if (missing <= 0 && !toBank.isEmpty())
+		if (bankToDo(fromBank, toBank))
 		{
-			return "Farm run: put " + keeping(toBank, holdingsTracker.getHoldings()) + " in your bank for later in the run";
+			if (!depositedAll)
+			{
+				return bankTab.isBankOpen() ? "Farm run: deposit everything with the outlined Deposit inventory button"
+					: "Farm run: open a bank";
+			}
+			if (fromBank > 0)
+			{
+				final String items = fromBank + (fromBank == 1 ? " item" : " items");
+				if (!bankTab.isBankOpen())
+				{
+					return "Farm run: open a bank to get " + items;
+				}
+				return bankTab.isTabOpen() ? "Farm run: take the " + items + " marked in red or yellow"
+					: "Farm run: click the flashing Farm run tab at the top of the bank";
+			}
+			return "Farm run: deposit " + keeping(toBank, holdingsTracker.getHoldings()) + ", for later in the run";
 		}
-		if (missing <= 0 && !nowhere.isEmpty())
-		{
-			return "Farm run: you don't have " + String.join(", ", nowhere) + ": get them, or press Start now to go without";
-		}
-		if (!bankTab.isBankOpen())
-		{
-			return "Farm run: open a bank to get " + items;
-		}
-		if (!bankTab.isTabOpen())
-		{
-			return "Farm run: click the flashing Farm run tab at the top of the bank";
-		}
-		return "Farm run: take the " + items + " marked in red or yellow";
+		return nowhere.isEmpty() ? null
+			: "Farm run: you don't have " + String.join(", ", nowhere) + ": get them, or press Start now to go without";
+	}
+
+	/** Something's still to do at the bank: items to take from it, or seeds and saplings for later to put back. */
+	private static boolean bankToDo(int fromBank, Map<Integer, Integer> toBank)
+	{
+		return fromBank > 0 || !toBank.isEmpty();
 	}
 
 	/**
@@ -2407,34 +2460,39 @@ public class RunSession
 	}
 
 	/**
-	 * Gathering supplies: how many items are still to get, and what to put on once it's in the inventory.
+	 * Gathering supplies: what's still to get and where, in order (elzerma, 2026-10-19: the seed vault, then the bank),
+	 * and what to put on once it's in the inventory.
 	 *
-	 * @param later what the run's later parts take from the seed vault at the start, by item
+	 * @param targets how many of each seed and sapling to have on leaving the seed vault
+	 * @param fromVault how many more of each to take from it
 	 * @param toBank seeds for the later parts to put in the bank before the run starts, by item
 	 */
-	private RunView buildingView(RunPlan current, Map<Integer, Integer> later, Map<Integer, Integer> toBank)
+	private RunView buildingView(RunPlan current, Map<Integer, Integer> targets, Map<Integer, Integer> fromVault,
+		Map<Integer, Integer> toBank)
 	{
 		String notice = null;
 		Set<Integer> outlined = Collections.emptySet();
 		List<RunView.Stop> ready = Collections.emptyList();
 		if (!current.getRoute().getStops().isEmpty())
 		{
-			// Seeds only the seed vault has: unless the run starts at the guild, they're taken from it before it starts.
-			// With seeds for later to take as well, the first part's come out in the same trip.
-			final boolean onArrival = startsAtGuild(current) && later.isEmpty();
-			final Map<SupplyLine, Integer> vault = onArrival ? Collections.emptyMap()
-				: current.getSupplies().onlyInVault();
-			// Still to get: from the bank (or other storage) while it has some, else nowhere the player keeps them, which
-			// is named rather than waited for (elzerma: stuck on "Take the 1 item it marks" for a seed they don't have)
+			final Holdings holdings = holdingsTracker.getHoldings();
+			// Deposit inventory pressed once the seed vault's done: the inventory seen empty with the bank open
+			if (!fromVault.isEmpty())
+			{
+				depositedAll = false;
+			}
+			else if (bankTab.isBankOpen() && holdings.in(Holdings.Source.INVENTORY).values().stream().noneMatch(n -> n > 0))
+			{
+				depositedAll = true;
+			}
+			// Still to get: from the bank (or other storage) while it has some, or from the seed vault first; else
+			// nowhere the player keeps them, which is named rather than waited for (elzerma: stuck on "Take the 1 item it
+			// marks" for a seed they don't have)
 			int fromBank = 0;
 			final List<String> nowhere = new ArrayList<>();
-			for (Map.Entry<SupplyLine, Integer> e : current.getSupplies().missingLines(onArrival).entrySet())
+			for (Map.Entry<SupplyLine, Integer> e : current.getSupplies().missingLines(false).entrySet())
 			{
 				final SupplyLine line = e.getKey();
-				if (vault.containsKey(line))
-				{
-					continue;
-				}
 				final Map<Holdings.Source, Integer> where = line.getWhere();
 				final int stored = line.getHave() - line.getCarried() - where.getOrDefault(Holdings.Source.LEPRECHAUN, 0)
 					- where.getOrDefault(Holdings.Source.SEED_VAULT, 0);
@@ -2442,42 +2500,29 @@ public class RunSession
 				{
 					fromBank++;
 				}
-				else
+				else if (line.getItemIds() == null
+					|| java.util.Arrays.stream(line.getItemIds()).noneMatch(fromVault::containsKey))
 				{
 					nowhere.add(e.getValue() + " x " + line.getName());
 				}
 			}
-			final Map<Integer, Integer> take = byItem(vault);
-			later.forEach((id, n) -> take.merge(id, n, Integer::sum));
-			notice = gatheringStep(fromBank, take, current.getRoute().setsOffFrom(Location.FARMING_GUILD),
-				!later.isEmpty(), toBank, nowhere);
+			notice = gatheringStep(fromBank, fromVault, toBank, nowhere);
 			if (seedVault.isOpen())
 			{
-				// The first part's seeds, and with "Take all seeds at the start" the later parts' too
-				vaultItems.addAll(take.keySet());
-				final boolean all = takesAllAtStart(current, settings.getRunConfig());
-				final Map<Integer, Integer> wanted = new LinkedHashMap<>();
-				for (int id : vaultItems)
-				{
-					int n = planted(current.getSupplies(), id);
-					for (BankStop bank : all ? current.getBankStops() : Collections.<BankStop>emptyList())
-					{
-						n += planted(bank.getSupplies(), id);
-					}
-					wanted.put(id, n);
-				}
-				vaultCounts = vaultCounts(take, wanted);
+				vaultCounts = vaultCounts(fromVault, targets);
 			}
-			final List<RunView.Step> steps = gatheringSteps(fromBank, take, !later.isEmpty(), toBank, nowhere);
-			if (!steps.isEmpty())
+			final boolean deposited = fromVault.isEmpty() && depositedAll;
+			if (deposited && bankTab.isBankOpen())
 			{
-				ready = Collections.singletonList(new RunView.Stop("Getting ready", null, RunView.StopStatus.CURRENT,
-					null, Collections.emptyList(), steps, false, false));
+				bankCounts = bankCounts(current.getSupplies(), holdings, runService::itemName);
 			}
-			// Flash the Farm run tab until it's open, while there's something to take from the bank
-			bankTab.setAttention(fromBank > 0 && !bankTab.isTabOpen());
-			// The seeds to put in the bank are outlined while it's open, as at a bank visit
-			if (fromBank <= 0 && take.isEmpty() && bankTab.isBankOpen())
+			depositAllStep = fromVault.isEmpty() && !depositedAll && bankToDo(fromBank, toBank) && bankTab.isBankOpen();
+			ready = Collections.singletonList(new RunView.Stop("Getting ready", null, RunView.StopStatus.CURRENT,
+				null, Collections.emptyList(), gatheringSteps(fromBank, fromVault, toBank, nowhere), false, false));
+			// Flash the Farm run tab once everything's deposited, until it's open, while there's something to take
+			bankTab.setAttention(deposited && fromBank > 0 && !bankTab.isTabOpen());
+			// The seeds to put back are outlined while the bank's open, as at a bank visit
+			if (deposited && fromBank <= 0 && bankTab.isBankOpen())
 			{
 				outlined = new LinkedHashSet<>(toBank.keySet());
 			}
@@ -2492,62 +2537,61 @@ public class RunSession
 	}
 
 	/**
-	 * Getting ready as a checklist for the Run tab, when it's more than the bank (elzerma, 2026-10-18: make clear at
-	 * the start what the guide takes the player through): the bank, then the seed vault, then the seeds for later back
-	 * in the bank, ticked as the plugin sees them done. What to do now is under the player, as for a stop. Empty for a
-	 * run that only needs the bank.
+	 * Getting ready as a checklist for the Run tab (elzerma, 2026-10-18: make clear at the start what the guide takes
+	 * the player through), in the same order every time (2026-10-19): the seed vault for what the bank is short of; the
+	 * bank, everything deposited and what the Farm run tab marks taken; any seeds for later taken too many put back;
+	 * then what's to get elsewhere. Ticked as the plugin sees them done; what to do now is under the player, as for a
+	 * stop.
 	 *
 	 * @param fromBank lines still to get from the bank
-	 * @param vault what to take from the seed vault, by item
-	 * @param forLaterToo some of that is for the run's later parts, to put in the bank
+	 * @param fromVault how many more of each seed and sapling to take from the seed vault
 	 * @param toBank seeds and saplings for the later parts that are carried, by item, with how many to put in the bank
 	 * @param nowhere what's still short with none left anywhere the player keeps things: last, to get or go without
 	 */
-	private List<RunView.Step> gatheringSteps(int fromBank, Map<Integer, Integer> vault, boolean forLaterToo,
+	private List<RunView.Step> gatheringSteps(int fromBank, Map<Integer, Integer> fromVault,
 		Map<Integer, Integer> toBank, List<String> nowhere)
 	{
-		if (!vault.isEmpty())
+		if (!fromVault.isEmpty() && gatherVault == null)
 		{
-			gatherVault = "Take " + amounts(vault) + " from the seed vault";
+			gatherVault = "Take " + amounts(fromVault) + " from the seed vault";
 		}
-		if (!toBank.isEmpty())
+		// After everything's been deposited, carrying seeds for later means too many were taken
+		if (!toBank.isEmpty() && depositedAll)
 		{
-			gatherToBank = "Put " + keeping(toBank, holdingsTracker.getHoldings()) + " in your bank for later in the run";
-		}
-		else if (forLaterToo && gatherToBank == null)
-		{
-			gatherToBank = "Put the seeds for later in your bank";
-		}
-		if (gatherVault == null && gatherToBank == null)
-		{
-			return Collections.emptyList();
+			gatherToBank = "Deposit " + keeping(toBank, holdingsTracker.getHoldings()) + ", for later in the run";
 		}
 
-		final boolean banked = fromBank <= 0;
+		final boolean vaultDone = fromVault.isEmpty();
 		final boolean open = bankTab.isBankOpen();
+		final boolean taken = vaultDone && fromBank <= 0 && (depositedAll || toBank.isEmpty());
 		final List<String> texts = new ArrayList<>();
 		final List<Boolean> done = new ArrayList<>();
-		texts.add("Open a bank");
-		done.add(banked || open);
-		texts.add("Open the Farm run tab at the top of the bank");
-		done.add(banked || open && bankTab.isTabOpen());
-		texts.add(banked ? "Take the items it marks" : "Take the " + fromBank + (fromBank == 1 ? " item" : " items")
-			+ " it marks in red or yellow");
-		done.add(banked);
 		if (gatherVault != null)
 		{
-			final boolean taken = vault.isEmpty();
 			texts.add("Go to the seed vault in the Farming Guild, beside its bank");
-			done.add(taken || seedVault.isOpen());
+			done.add(vaultDone || seedVault.isOpen());
 			texts.add("Click the flashing button at the top of the seed vault");
-			done.add(taken || seedVault.isOpen() && !seedVault.isCalling());
+			done.add(vaultDone || seedVault.isOpen() && !seedVault.isCalling());
 			texts.add(gatherVault);
-			done.add(taken);
+			done.add(vaultDone);
 		}
-		if (gatherToBank != null)
+		// The bank, unless there's nothing to do there
+		if (!vaultDone || depositedAll || bankToDo(fromBank, toBank))
 		{
-			texts.add(gatherToBank);
-			done.add(toBank.isEmpty() && !forLaterToo);
+			texts.add("Open a bank");
+			done.add(vaultDone && (open || depositedAll));
+			texts.add("Deposit everything with the Deposit inventory button");
+			done.add(vaultDone && depositedAll);
+			texts.add("Open the Farm run tab at the top of the bank");
+			done.add(taken || vaultDone && depositedAll && open && bankTab.isTabOpen());
+			texts.add(taken || fromBank <= 0 ? "Take the items it marks" : "Take the " + fromBank
+				+ (fromBank == 1 ? " item" : " items") + " it marks in red or yellow");
+			done.add(taken);
+			if (gatherToBank != null)
+			{
+				texts.add(gatherToBank);
+				done.add(taken && toBank.isEmpty());
+			}
 		}
 		if (!nowhere.isEmpty())
 		{
@@ -2576,18 +2620,13 @@ public class RunSession
 		return !plan.getRoute().getStops().isEmpty() && missingCount(plan) == 0;
 	}
 
-	/** Required lines that are neither carried nor stored at the tool leprechaun. */
+	/**
+	 * Required lines that are neither carried nor stored at the tool leprechaun. What's in the seed vault is taken
+	 * before the run, even one starting at the Farming Guild (elzerma, 2026-10-19: the vault first, then the bank).
+	 */
 	static int missingCount(RunPlan plan)
 	{
-		// The seed vault is in the Farming Guild: a run starting there can take what's in it on arrival
-		return missingCount(plan.getSupplies(), startsAtGuild(plan));
-	}
-
-	/** The run's first stop is the Farming Guild, so the seed vault is on hand as it starts. */
-	static boolean startsAtGuild(RunPlan plan)
-	{
-		final List<RouteStop> stops = plan.getRoute().getStops();
-		return !stops.isEmpty() && stops.get(0).getLocation() == Location.FARMING_GUILD;
+		return missingCount(plan.getSupplies(), false);
 	}
 
 	/** e.g. "6 x Ranarr seed, 1 x Maple sapling", by the items' own names. */
@@ -2672,6 +2711,98 @@ public class RunSession
 			}
 		}
 		return deposit;
+	}
+
+	/**
+	 * Seeds and saplings to bring out of the seed vault before the run (elzerma, 2026-10-19: the vault first, then the
+	 * bank, so the bank holds what the run needs): of each one the run plants from the start, and with {@code all} its
+	 * later parts' too, what the bank doesn't hold, when the vault holds some. Counting what's carried, it's how many to
+	 * have on leaving the vault, as its section shows (it said 7 maple saplings when the bank had 1 of them).
+	 */
+	static Map<Integer, Integer> vaultTargets(RunPlan plan, Holdings holdings, boolean all)
+	{
+		final Map<Integer, Integer> plant = new LinkedHashMap<>();
+		addPlanted(plan.getSupplies(), plant);
+		if (all)
+		{
+			for (BankStop bank : plan.getBankStops())
+			{
+				addPlanted(bank.getSupplies(), plant);
+			}
+		}
+		final Map<Integer, Integer> bank = holdings.in(Holdings.Source.BANK);
+		final Map<Integer, Integer> vault = holdings.in(Holdings.Source.SEED_VAULT);
+		final Map<Integer, Integer> targets = new LinkedHashMap<>();
+		plant.forEach((id, n) ->
+		{
+			final int target = n - bank.getOrDefault(id, 0);
+			if (target > 0 && vault.getOrDefault(id, 0) > 0)
+			{
+				targets.put(id, target);
+			}
+		});
+		return targets;
+	}
+
+	/** Of those, how many more of each to take from the vault: what isn't carried yet, as far as the vault holds. */
+	static Map<Integer, Integer> vaultMore(Map<Integer, Integer> targets, Holdings holdings)
+	{
+		final Holdings carried = holdings.carriedOnly();
+		final Map<Integer, Integer> vault = holdings.in(Holdings.Source.SEED_VAULT);
+		final Map<Integer, Integer> more = new LinkedHashMap<>();
+		targets.forEach((id, target) ->
+		{
+			final int n = Math.min(target - carried.count(id), vault.getOrDefault(id, 0));
+			if (n > 0)
+			{
+				more.put(id, n);
+			}
+		});
+		return more;
+	}
+
+	/**
+	 * Lines for the inventory beside the open bank (elzerma, 2026-10-19: the seed vault said how many, the bank
+	 * didn't): of each seed and sapling this part of the run plants, how many more to take, as far as the bank holds
+	 * them, then how many to put back when more are carried.
+	 */
+	static List<InventoryCount> bankCounts(SupplyPlan part, Holdings holdings, IntFunction<String> itemName)
+	{
+		final Map<Integer, Integer> plant = new LinkedHashMap<>();
+		addPlanted(part, plant);
+		final Holdings carried = holdings.carriedOnly();
+		final Map<Integer, Integer> bank = holdings.in(Holdings.Source.BANK);
+		final List<InventoryCount> lines = new ArrayList<>();
+		plant.forEach((id, n) ->
+		{
+			final int more = Math.min(n - carried.count(id), bank.getOrDefault(id, 0));
+			if (more > 0)
+			{
+				lines.add(new InventoryCount("Take " + more + (carried.count(id) > 0 ? " more" : "") + " x "
+					+ itemName.apply(id), false));
+			}
+		});
+		plant.forEach((id, n) ->
+		{
+			final int over = carried.count(id) - n;
+			if (over > 0)
+			{
+				lines.add(new InventoryCount("Deposit " + over + " x " + itemName.apply(id), true));
+			}
+		});
+		return lines;
+	}
+
+	/** Each seed and sapling a part of the run plants, with how many, added to {@code plant}. */
+	private static void addPlanted(SupplyPlan part, Map<Integer, Integer> plant)
+	{
+		for (SupplyLine line : part.getLines())
+		{
+			if (line.getGroup() == SupplyLine.Group.SEEDS && line.getItemIds() != null && line.getItemIds().length > 0)
+			{
+				plant.merge(line.getItemIds()[0], line.getNeed(), Integer::sum);
+			}
+		}
 	}
 
 	/** How many of this seed or sapling a part of the run plants. */

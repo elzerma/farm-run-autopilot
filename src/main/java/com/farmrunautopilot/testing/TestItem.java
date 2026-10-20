@@ -17,16 +17,17 @@ public enum TestItem
 			+ "tab should warn that you need Spellbook Swap, its runes should be on the bank's Farm run tab, and the "
 			+ "spell should be outlined in your spellbook on that step."),
 	SEED_VAULT_SECTION(Tab.RUN, "Farm run section in the seed vault",
-		"Build a run and open the Farming Guild's seed vault: the button by its close button should flash, with the "
-			+ "same outline round it as the bank's Farm run button. Clicking it shows a \"Farm Run Autopilot\" section at "
-			+ "the top, with a \"/ N\" count under each seed, and a \"Farm Run Autopilot\" entry at the top of the list on "
-			+ "the left that goes back to it. Clicking the button again hides both.", 4),
+		"Build a run needing seeds your bank doesn't have but the Farming Guild's seed vault does, and open the vault: "
+			+ "the button by its close button should flash, with the same outline round it as the bank's Farm run "
+			+ "button. Clicking it shows a \"Farm Run Autopilot\" section at the top, with a \"/ N\" count under each "
+			+ "seed, and a \"Farm Run Autopilot\" entry at the top of the list on the left that goes back to it. "
+			+ "Clicking the button again hides both.", 4),
 	VAULT_SEEDS_FOR_LATER(Tab.RUN, "Seed vault seeds for later in the run",
 		"Pick \"Take all seeds at the start\" under Account > Storage sources, with a run too big for one inventory "
-			+ "and seeds for after its bank visit only in the Farming Guild's seed vault. After Build run, the step "
-			+ "should say to take them from the seed vault \"and put the ones for later in your bank\", then \"put ... "
-			+ "in your bank for later in the run\", and only then is the run ready. At the bank visit they come out of "
-			+ "your bank."),
+			+ "and seeds for after its bank visit only in the Farming Guild's seed vault. After Build run, Getting "
+			+ "ready should start at the seed vault: take what it says, then at the bank press Deposit inventory (it's "
+			+ "outlined) and take what the Farm run tab marks. Only then is the run ready, and at the bank visit the "
+			+ "seeds for later come out of your bank.", 2),
 	VAULT_BANK_AT_GUILD(Tab.RUN, "Banking at the Farming Guild",
 		"Pick \"Bank at the Farming Guild\" under Account > Storage sources, with a run too big for one inventory and "
 			+ "seeds for after its bank visit only in the seed vault. The run should bank at the Farming Guild: after "

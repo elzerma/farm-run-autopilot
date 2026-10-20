@@ -605,6 +605,14 @@ whistle's real wait, and the first leg from where I stand." Built; the hand chec
   - "Ditch the Travel tab's list and use Shortest Path's ways for every run, simulating at the bank": the planner has
     planned from the atlas since 92d4624; the list goes in T7 (section 6), planning from the bank with the inventory in
     T4.
+- **elzerma's notes from the checks on 2026-10-19:**
+  - "Protected with compost instead" was unnecessary: gone, as the guide asks for the compost at the patch (6c9f9ad).
+  - Getting ready goes in one order every time: the seed vault for what the bank is short of, then the bank, where
+    everything is deposited (the Deposit inventory button is outlined) and the Farm run tab's items are taken. A run
+    starting at the Farming Guild takes its vault seeds before it starts too. The vault's section counts what to bring
+    out of it (it said 7 maple saplings when the bank had 1 and 6 were to take), and the bank's inventory counts the
+    seeds and saplings to take or put back, as the vault's does.
+  - Teleport jewellery from the atlas (the ring of dueling to the Fortis Colosseum) is worn when its slot is free.
 - **Not yet:** deleting the old tables (after the hand checks); the patch order inside a stop; journeys written from
   the atlas's steps beyond boats and NPCs (T5); spells the plugin doesn't know (Watchtower, Kourend Castle...) are
   planned only with their runes owned and on the spellbook in use, and their runes go on the supply list as items;

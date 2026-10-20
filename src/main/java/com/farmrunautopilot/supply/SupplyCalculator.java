@@ -81,6 +81,19 @@ public final class SupplyCalculator
 		RunSelection selection, Route route, Function<Patch, PatchPrediction> predictions,
 		IntFunction<String> itemName, IntToLongFunction price)
 	{
+		return calculate(config, access, holdings, selection, route, predictions, itemName, price, id -> null);
+	}
+
+	/**
+	 * As above, with each item's equipment slot, so the travel atlas's teleport jewellery the plugin doesn't track (a
+	 * ring of dueling...) can be worn too.
+	 *
+	 * @param wearSlot the slot an item ID is worn in, or null if none the plan uses
+	 */
+	public static SupplyPlan calculate(RunConfig config, AccessSnapshot access, Holdings holdings,
+		RunSelection selection, Route route, Function<Patch, PatchPrediction> predictions,
+		IntFunction<String> itemName, IntToLongFunction price, IntFunction<TravelItem.WearSlot> wearSlot)
+	{
 		final List<SupplyLine> lines = new ArrayList<>();
 		final List<String> notDue = new ArrayList<>(selection.getNotDue());
 		final List<String> travelPlan = new ArrayList<>();
@@ -420,6 +433,7 @@ public final class SupplyCalculator
 			extras.add(new Wearable(Wearable.MAGIC_SECATEURS, TravelItem.WearSlot.WEAPON, 1, 1,
 				wornAny(holdings, SupplyItems.MAGIC_SECATEURS)));
 		}
+		extras.addAll(wayWearables(wayItems, wayCounts, holdings, wearSlot));
 		final Map<TravelItem.WearSlot, Object> wear = toWear(travelItems.keySet(), extras, config.getOutfit(), holdings);
 		// More than one staff, swapped on the way, when that frees an inventory slot (issue #7)
 		final Map<TravelItem.WearSlot, Object> noStaff = new EnumMap<>(wear);
@@ -452,9 +466,12 @@ public final class SupplyCalculator
 		});
 		wayItems.forEach((key, need) ->
 		{
+			final boolean worn = wear.containsValue(need);
 			final SupplyLine line = line(SupplyLine.Group.TRAVEL, itemName.apply(key), wayCounts.get(key), holdings, carried,
-				need.isTeleport() ? "The teleport on the way" : "Needed on the way", 1, need.getIds());
-			lines.add(need.isUsedUp() ? line.usedUp() : line);
+				(need.isTeleport() ? "The teleport on the way" : "Needed on the way")
+					+ (worn ? ". Wear it: no inventory slot" : ""), worn ? 0 : 1, need.getIds());
+			final SupplyLine used = need.isUsedUp() ? line.usedUp() : line;
+			lines.add(worn ? used.worn() : used);
 		});
 		if (balloonFlights > 0)
 		{
@@ -791,7 +808,10 @@ public final class SupplyCalculator
 		 */
 		static final int SLOT = 12;
 
-		/** A {@link TravelItem}, a rune item ID from {@link SupplyItems#INFINITE_RUNE_ITEMS}, or a marker above. */
+		/**
+		 * A {@link TravelItem}, a rune item ID from {@link SupplyItems#INFINITE_RUNE_ITEMS}, the travel atlas's
+		 * {@link AtlasLeg.ItemNeed} for a teleport item, or a marker above.
+		 */
 		final Object item;
 		final TravelItem.WearSlot slot;
 		/** What wearing it saves, in twelfths of a slot ({@link #SLOT}), or {@link #NEEDED}. Higher wins. */
@@ -834,6 +854,49 @@ public final class SupplyCalculator
 			}
 			return worn && !other.worn;
 		}
+	}
+
+	/**
+	 * The travel atlas's teleport items the plugin doesn't track, as things to wear (a ring of dueling...): one carried
+	 * for all its legs, going in a slot nothing else is worn in (elzerma, 2026-10-19: the ring slot was empty, yet the
+	 * ring of dueling wasn't asked to be worn). Not the weapon slot, which is for staves and magic secateurs.
+	 *
+	 * @param wearSlot the slot an item ID is worn in, or null
+	 */
+	static List<Wearable> wayWearables(Map<Integer, AtlasLeg.ItemNeed> wayItems, Map<Integer, Integer> wayCounts,
+		Holdings holdings, IntFunction<TravelItem.WearSlot> wearSlot)
+	{
+		final List<Wearable> wearables = new ArrayList<>();
+		wayItems.forEach((key, need) ->
+		{
+			final TravelItem.WearSlot slot = need.isTeleport() && wayCounts.getOrDefault(key, 0) == 1
+				? wearSlot.apply(key) : null;
+			if (slot == null || slot == TravelItem.WearSlot.WEAPON)
+			{
+				return;
+			}
+			for (int worn : holdings.in(Holdings.Source.WORN).keySet())
+			{
+				if (!contains(need.getIds(), worn) && wearSlot.apply(worn) == slot)
+				{
+					return;
+				}
+			}
+			wearables.add(new Wearable(need, slot, Wearable.SLOT, 0, wornAny(holdings, need.getIds())));
+		});
+		return wearables;
+	}
+
+	private static boolean contains(int[] ids, int id)
+	{
+		for (int i : ids)
+		{
+			if (i == id)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** The teleport items to wear rather than carry, with nothing else competing for their slots. */

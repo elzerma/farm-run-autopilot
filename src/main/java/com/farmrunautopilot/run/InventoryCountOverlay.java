@@ -1,5 +1,6 @@
 package com.farmrunautopilot.run;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
@@ -17,23 +18,25 @@ import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
- * While the seed vault is open for a step of the run: how many more of each seed or sapling to take, or how many to
- * put back, along the bottom of the inventory beside it (elzerma, 2026-10-18: "less to guess about how many more to
- * click"). The vault covers the instruction under the player, so this is where the count can be seen. Worked out by
+ * While the seed vault or the bank is open for a step of the run: how many more of each seed or sapling to take, or
+ * how many to put back, along the bottom of the inventory beside it (elzerma, 2026-10-18: "less to guess about how many
+ * more to click"; 2026-10-19: the bank too). They cover the instruction under the player, so this is where the count
+ * can be seen. While the step is to deposit everything, the bank's Deposit inventory button is outlined. Worked out by
  * {@link RunSession} each tick; only drawn here.
  */
 @Slf4j
-public class SeedVaultCountOverlay extends Overlay
+public class InventoryCountOverlay extends Overlay
 {
 	private static final Color BACKGROUND = new Color(0, 0, 0, 170);
+	private static final BasicStroke OUTLINE = new BasicStroke(2);
 
 	private final Client client;
 	private final RunSession session;
-	/** The vault's inventory was missing while there were counts to show: logged once. */
+	/** The vault's or bank's inventory was missing while there were counts to show: logged once. */
 	private boolean loggedMissing;
 
 	@Inject
-	SeedVaultCountOverlay(Client client, RunSession session)
+	InventoryCountOverlay(Client client, RunSession session)
 	{
 		this.client = client;
 		this.session = session;
@@ -44,20 +47,37 @@ public class SeedVaultCountOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		final List<RunSession.VaultCount> counts = session.getVaultCounts();
+		draw(graphics, session.getVaultCounts(), InterfaceID.SeedVaultDeposit.INV, "Seed vault");
+		draw(graphics, session.getBankCounts(), InterfaceID.Bankside.ITEMS, "Bank");
+		if (session.isDepositAllStep())
+		{
+			final Widget button = client.getWidget(InterfaceID.Bankmain.DEPOSITINV);
+			if (button != null && !button.isHidden())
+			{
+				final Rectangle bounds = button.getBounds();
+				graphics.setColor(GuidanceOverlay.INSTRUCTION);
+				graphics.setStroke(OUTLINE);
+				graphics.drawRect(bounds.x - 1, bounds.y - 1, bounds.width + 1, bounds.height + 1);
+			}
+		}
+		return null;
+	}
+
+	private void draw(Graphics2D graphics, List<RunSession.InventoryCount> counts, int inventoryId, String where)
+	{
 		if (counts.isEmpty())
 		{
-			return null;
+			return;
 		}
-		final Widget inventory = client.getWidget(InterfaceID.SeedVaultDeposit.INV);
+		final Widget inventory = client.getWidget(inventoryId);
 		if (inventory == null || inventory.isHidden())
 		{
 			if (!loggedMissing)
 			{
 				loggedMissing = true;
-				log.debug("Seed vault open but its inventory isn't there to show: {}", counts);
+				log.debug("{} open but its inventory isn't there to show: {}", where, counts);
 			}
-			return null;
+			return;
 		}
 		final Rectangle bounds = inventory.getBounds();
 		graphics.setFont(FontManager.getRunescapeSmallFont());
@@ -65,7 +85,7 @@ public class SeedVaultCountOverlay extends Overlay
 		final int lineHeight = metrics.getHeight();
 		// Along the bottom, where an inventory is emptiest, the last line on its bottom edge
 		int y = bounds.y + bounds.height - metrics.getDescent() - 2 - (counts.size() - 1) * lineHeight;
-		for (RunSession.VaultCount count : counts)
+		for (RunSession.InventoryCount count : counts)
 		{
 			final String text = count.getText();
 			final int width = metrics.stringWidth(text);
@@ -78,6 +98,5 @@ public class SeedVaultCountOverlay extends Overlay
 			graphics.drawString(text, x, y);
 			y += lineHeight;
 		}
-		return null;
 	}
 }

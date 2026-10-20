@@ -577,13 +577,14 @@ final class GuidedTests
 				doThis("On the Run tab, press Build run", ctx -> ctx.runView().getState() != RunView.State.OFF),
 				// Without them in the vault the button has nothing to call for and the section nothing to show
 				ask("Are some of the seeds or saplings the bank's Farm run tab lists in the Farming Guild's seed vault, "
-					+ "and not in your inventory?")
+					+ "and not in your bank or inventory?")
 					.onAnswer((ctx, yes) ->
 					{
 						ctx.capture("Supply list", supplyNames(ctx));
 						if (!yes)
 						{
-							ctx.cannotTest("some of the seeds or saplings for the Farming Guild's patches in its seed vault");
+							ctx.cannotTest("some of the seeds or saplings for the Farming Guild's patches in its seed vault, not "
+								+ "your bank");
 						}
 					}),
 				doThis("Go to the Farming Guild and open its seed vault", ctx -> ctx.seedVault().isLaidOut())
@@ -734,24 +735,26 @@ final class GuidedTests
 						ctx.problem("The plugin didn't see seeds for after the bank visit only in the seed vault");
 					}
 				}),
-				doThis("Get what the bank's Farm run tab lists, until the step names the seed vault",
-					ctx -> instruction(ctx).contains("and put the ones for later in your bank"))
+				doThis("Read the step under your character: it should start at the seed vault",
+					ctx -> instruction(ctx).contains("from the seed vault"))
 					.onDone(ctx -> ctx.capture("Vault step", instruction(ctx)))
-					.orAskAfter(DO_TICKS, "The step hasn't said to put seeds for later in your bank. Carry on?")
+					.orAskAfter(DO_TICKS, "The step hasn't said to take seeds from the seed vault first. Carry on?")
 					.onAnswer((ctx, yes) ->
 					{
 						ctx.capture("Step when asked", instruction(ctx));
-						ctx.problem("The step never said to take the seeds for later from the vault");
+						ctx.problem("The step never said to take the seeds for later from the vault first");
 					}),
-				doThis("Take them from the seed vault", ctx -> instruction(ctx).contains("in your bank for later in the run"))
+				doThis("Take them from the seed vault, then open the bank beside it",
+					ctx -> instruction(ctx).contains("Deposit inventory"))
 					.onDone(ctx -> ctx.capture("Bank step", instruction(ctx)))
-					.orAskAfter(DO_TICKS, "The step hasn't said to put them in your bank. Carry on?")
+					.orAskAfter(DO_TICKS, "The step hasn't said to deposit everything with Deposit inventory. Carry on?")
 					.onAnswer((ctx, yes) ->
 					{
 						ctx.capture("Step when asked", instruction(ctx));
-						ctx.problem("The step never said to put the seeds for later in the bank");
+						ctx.problem("The step never said to deposit everything at the bank");
 					}),
-				doThis("Put them in your bank", ctx -> ctx.runView().getState() == RunView.State.ARMED
+				doThis("Press Deposit inventory, then take what the Farm run tab marks",
+					ctx -> ctx.runView().getState() == RunView.State.ARMED
 					|| ctx.runView().getState() == RunView.State.RUNNING)
 					.onDone(ctx -> ctx.capture("Seed vault section", ctx.seedVault().describe()))
 					.orAskAfter(DO_TICKS, "The run isn't ready yet. Are the seeds for later in your bank?")

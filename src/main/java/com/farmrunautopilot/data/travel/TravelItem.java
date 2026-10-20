@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import lombok.Getter;
+import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.Quest;
 import net.runelite.api.Skill;
 import net.runelite.api.gameval.ItemID;
@@ -117,7 +118,33 @@ public enum TravelItem
 		CAPE,
 		HANDS,
 		SHIELD,
-		WEAPON
+		WEAPON;
+
+		/** The slot for the game's equipment slot index ({@link EquipmentInventorySlot}), or null for one not planned. */
+		public static WearSlot of(int slotIdx)
+		{
+			if (slotIdx == EquipmentInventorySlot.RING.getSlotIdx())
+			{
+				return RING;
+			}
+			if (slotIdx == EquipmentInventorySlot.AMULET.getSlotIdx())
+			{
+				return NECK;
+			}
+			if (slotIdx == EquipmentInventorySlot.CAPE.getSlotIdx())
+			{
+				return CAPE;
+			}
+			if (slotIdx == EquipmentInventorySlot.GLOVES.getSlotIdx())
+			{
+				return HANDS;
+			}
+			if (slotIdx == EquipmentInventorySlot.SHIELD.getSlotIdx())
+			{
+				return SHIELD;
+			}
+			return slotIdx == EquipmentInventorySlot.WEAPON.getSlotIdx() ? WEAPON : null;
+		}
 	}
 
 	/** The equipment slot it's worn in, or null if it can't be worn. */

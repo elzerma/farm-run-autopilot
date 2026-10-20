@@ -28,19 +28,21 @@ The plugin never clicks, types or acts for you. It only shows information.
   how many of each: seeds and saplings, gardener payments (noted is fine), compost, tools, coins, runes or
   tablets and travel items. Green is carried, yellow is in your bank or at the tool leprechaun, red is missing.
   A vine grows round the button while it waits for you.
-- Equipment is chosen slot by slot: a staff that covers the run's runes is wielded ahead of magic secateurs.
+- Equipment is chosen slot by slot: a staff that covers the run's runes is wielded ahead of magic secateurs, and
+  teleport jewellery (a ring of dueling, say) is worn when its slot is free, saving an inventory slot.
 - Barbarian seed planting is read from the game; once you've learned it, herb runs don't ask for a seed dibber.
 - At a bank stop partway through a big run, it shows what to deposit first (with any seeds and saplings beyond
   what the next part plants), then what to take for it. Each part carries only its own seeds and saplings.
 
 **Seed vault**
 - In the Farming Guild's seed vault, a button by the close button shows a "Farm Run Autopilot" section at the
-  top with the run's seeds and how many you have and need. Withdraw from it as usual.
+  top with the seeds to take and how many. Withdraw from it as usual.
 - While you take seeds from it for a step, the inventory beside it counts down how many more to take, and says how
-  many to put back if you took too many.
-- Seeds only the vault has are named with where to take them. For a run that banks partway, choose on the
-  Account tab whether to take every seed at the start and keep the later ones in your bank, or to bank at the
-  Farming Guild.
+  many to put back if you took too many. The bank does the same for seeds and saplings.
+- Getting ready goes in the same order every time: the seed vault first for whatever your bank is short of, then
+  the bank, where you deposit everything (the Deposit inventory button is outlined) and take what the Farm run
+  tab marks. For a run that banks partway, choose on the Account tab whether to take every seed at the start and
+  keep the later ones in your bank, or to bank at the Farming Guild.
 
 <p>
   <img src="docs/bank-tab.jpg" alt="The Farm run bank tab" width="500">
@@ -116,9 +118,10 @@ The plugin never clicks, types or acts for you. It only shows information.
 2. Set things up once: patches, crops, protection and compost on the Farm tab; teleports and the route on
    the Travel tab; your house, unlocks and storage on the Account tab.
 3. On the Run tab, tick the run types and press **Build run**.
-4. Open your bank and click the flashing "Farm run" button to take what you need (seeds you keep in the
-   seed vault show in its Farm Run Autopilot section). The run starts itself once you have everything; the
-   timer starts when you teleport or click your first patch (or press **Start now**).
+4. Follow Getting ready on the Run tab: any seeds your bank is short of from the seed vault first, then at your
+   bank deposit everything and click the flashing "Farm run" button to take what you need. The run starts itself
+   once you have everything; the timer starts when you teleport or click your first patch (or press
+   **Start now**).
 5. Follow the steps under your character.
 
 Patches are tracked as you visit them. Until then, the plugin uses RuneLite's Time Tracking data if it has

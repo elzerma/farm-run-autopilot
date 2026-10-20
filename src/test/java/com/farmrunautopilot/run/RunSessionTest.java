@@ -23,6 +23,7 @@ import com.farmrunautopilot.supply.SupplyPlan;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.runelite.api.coords.WorldPoint;
@@ -142,6 +143,70 @@ public class RunSessionTest
 		assertEquals(Collections.singletonMap(SNAPDRAGON, 3), RunSession.toBankForLater(run, carrying(SNAPDRAGON, 3)));
 		// A seed no later part plants is left alone at the start
 		assertTrue(RunSession.toBankForLater(run, carrying(RANARR, 20)).isEmpty());
+	}
+
+	/** Holdings from rows of {item, in the bank, in the seed vault, carried}. */
+	private static Holdings stored(int[]... rows)
+	{
+		final Map<Holdings.Source, Map<Integer, Integer>> items = new EnumMap<>(Holdings.Source.class);
+		final Holdings.Source[] sources = {Holdings.Source.BANK, Holdings.Source.SEED_VAULT, Holdings.Source.INVENTORY};
+		for (Holdings.Source source : sources)
+		{
+			items.put(source, new HashMap<>());
+		}
+		for (int[] row : rows)
+		{
+			for (int i = 0; i < sources.length; i++)
+			{
+				if (row[i + 1] > 0)
+				{
+					items.get(sources[i]).put(row[0], row[i + 1]);
+				}
+			}
+		}
+		return new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false);
+	}
+
+	@Test
+	public void theSeedVaultMakesUpWhatTheBankIsShortOf()
+	{
+		// elzerma, 2026-10-19: the vault said 7 maple saplings when the bank had 1 of them and 6 were to take
+		final RunPlan run = banked(part(seeds(RANARR, 1, 0, 0)), part(seeds(RANARR, 6, 0, 0)));
+		final Holdings before = stored(new int[]{RANARR, 1, 100, 0});
+		final Map<Integer, Integer> targets = RunSession.vaultTargets(run, before, true);
+		assertEquals(Collections.singletonMap(RANARR, 6), targets);
+		assertEquals(Collections.singletonMap(RANARR, 6), RunSession.vaultMore(targets, before));
+		// Counting down as they're taken
+		final Holdings some = stored(new int[]{RANARR, 1, 96, 4});
+		assertEquals(Collections.singletonMap(RANARR, 2), RunSession.vaultMore(RunSession.vaultTargets(run, some, true),
+			some));
+		// Only the first part's when the later parts' come from the vault later: the bank has it
+		assertTrue(RunSession.vaultTargets(run, before, false).isEmpty());
+		// Once they're deposited, nothing's left to take
+		assertTrue(RunSession.vaultTargets(run, stored(new int[]{RANARR, 7, 94, 0}), true).isEmpty());
+	}
+
+	@Test
+	public void theSeedVaultGivesWhatItHas()
+	{
+		final RunPlan run = plan(Collections.singletonList(seeds(SNAPDRAGON, 8, 0, 0)));
+		final Holdings few = stored(new int[]{SNAPDRAGON, 0, 7, 0});
+		assertEquals(Collections.singletonMap(SNAPDRAGON, 7), RunSession.vaultMore(RunSession.vaultTargets(run, few,
+			false), few));
+		// None there: nothing to go to the vault for
+		assertTrue(RunSession.vaultTargets(run, stored(new int[]{SNAPDRAGON, 0, 0, 0}), false).isEmpty());
+	}
+
+	@Test
+	public void theBankSaysHowManyMoreToTakeAndHowManyToPutBack()
+	{
+		// elzerma, 2026-10-19: the seed vault said how many, the bank didn't
+		final SupplyPlan first = part(seeds(RANARR, 1, 0, 0), seeds(SNAPDRAGON, 3, 0, 0));
+		final List<RunSession.InventoryCount> counts = RunSession.bankCounts(first,
+			stored(new int[]{RANARR, 6, 0, 7}, new int[]{SNAPDRAGON, 5, 0, 1}),
+			id -> id == RANARR ? "Ranarr seed" : "Snapdragon seed");
+		assertEquals(Arrays.asList(new RunSession.InventoryCount("Take 2 more x Snapdragon seed", false),
+			new RunSession.InventoryCount("Deposit 6 x Ranarr seed", true)), counts);
 	}
 
 	@Test

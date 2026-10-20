@@ -47,6 +47,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.game.ItemStats;
 
 /**
  * Works out the next run on the client thread, at most once per game tick, when something it depends on
@@ -211,7 +212,7 @@ public class RunService
 		Route route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
 			settings.getAccount().getPoh(), atlas, here, near, nearTiles, guild ? Location.FARMING_GUILD : null, tile);
 		SupplyPlan supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
-			patchTracker::predict, this::itemName, itemManager::getItemPrice);
+			patchTracker::predict, this::itemName, itemManager::getItemPrice, this::wearSlot);
 		// Starting at the stop the player stands at or near only makes sense if they can start from there: carrying
 		// everything already, or with a bank close by. Otherwise (Kastori, still needing supplies) they'll bank
 		// somewhere first, so plan from anywhere (elzerma). The same for setting off on foot from where they stand.
@@ -223,7 +224,7 @@ public class RunService
 			route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
 				settings.getAccount().getPoh(), atlas, null, null, 0);
 			supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
-				patchTracker::predict, this::itemName, itemManager::getItemPrice);
+				patchTracker::predict, this::itemName, itemManager::getItemPrice, this::wearSlot);
 		}
 		// Seeds the run plants that only the seed vault has: the player fetches them from the Farming Guild, so the run
 		// sets off from there (issue #8). With "Bank at the Farming Guild" on a run that banks partway, only the first
@@ -234,7 +235,7 @@ public class RunService
 			route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
 				settings.getAccount().getPoh(), atlas, null, null, 0, Location.FARMING_GUILD);
 			supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
-				patchTracker::predict, this::itemName, itemManager::getItemPrice);
+				patchTracker::predict, this::itemName, itemManager::getItemPrice, this::wearSlot);
 		}
 		// Too much for one inventory: bank partway, as often as needed, where it costs least
 		final List<BankStop> bankStops = new ArrayList<>();
@@ -246,7 +247,7 @@ public class RunService
 				route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
 					settings.getAccount().getPoh(), atlas, null, null, 0, Location.FARMING_GUILD);
 				supplies = SupplyCalculator.calculate(config, access, holdings, selection, route,
-					patchTracker::predict, this::itemName, itemManager::getItemPrice);
+					patchTracker::predict, this::itemName, itemManager::getItemPrice, this::wearSlot);
 				banked = supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS
 					? bankStops(atlas, config, access, holdings, selection, route) : null;
 			}
@@ -621,7 +622,7 @@ public class RunService
 		final RunSelection part = new RunSelection(patches, selection.getIncludedTypes(),
 			selection.getSkippedTypes(), Collections.emptyList(), selection.getDueCounts());
 		return SupplyCalculator.calculate(config, access, holdings, part, route, patchTracker::predict,
-			this::itemName, itemManager::getItemPrice);
+			this::itemName, itemManager::getItemPrice, this::wearSlot);
 	}
 
 	/**
@@ -745,5 +746,13 @@ public class RunService
 	public String itemName(int itemId)
 	{
 		return names.computeIfAbsent(itemId, id -> itemManager.getItemComposition(id).getName());
+	}
+
+	/** The equipment slot an item is worn in, from RuneLite's item stats; null if none the supply list plans. */
+	TravelItem.WearSlot wearSlot(int itemId)
+	{
+		final ItemStats stats = itemManager.getItemStats(itemId);
+		return stats == null || !stats.isEquipable() || stats.getEquipment() == null ? null
+			: TravelItem.WearSlot.of(stats.getEquipment().getSlot());
 	}
 }
