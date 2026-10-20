@@ -120,8 +120,11 @@ public enum Patch
 			return true;
 		}
 	},
+	// The island itself needs The Great Brain Robbery started (wiki: Harmony Island; elzerma's account has the elite
+	// diary, but not the island, 2026-10-19)
 	HARMONY_ISLAND_HERB(Location.HARMONY_ISLAND, PatchType.HERB, 15148, regions(), VarbitID.FARMING_TRANSMIT_B,
-		Requirement.diary(AchievementDiary.MORYTANIA, AchievementDiary.Tier.ELITE))
+		Requirement.diary(AchievementDiary.MORYTANIA, AchievementDiary.Tier.ELITE),
+		Requirement.questStarted(Quest.THE_GREAT_BRAIN_ROBBERY))
 	{
 		@Override
 		public boolean isAlwaysDiseaseFree()
