@@ -56,7 +56,7 @@ public class SettingsStore
 	public SettingsStore(ConfigManager configManager, Gson gson)
 	{
 		this.configManager = configManager;
-		this.gson = gson;
+		this.gson = NewerSaves.tolerant(gson);
 	}
 
 	/** The run settings as last saved, to read from any thread. Don't change it: use {@link #editRunConfig()}. */
