@@ -1013,9 +1013,12 @@ public final class RoutePlanner
 		Leg fallback = null;
 		for (TravelMethod method : candidates)
 		{
-			// Only suggest something the player could actually get: a spell they can't cast needs a tablet to buy
+			// Only suggest something the player could actually get: a spell they can't cast needs a tablet to buy, and
+			// an ironman can't buy one (elzerma: Harmony Island planned by a tablet they can't get). A tablet already
+			// held, group storage included, was planned as owned before this
 			final Spell spell = method.getSpell();
-			if (method.getKind() == TravelKind.SPELL && !access.canCast(spell) && !spell.hasTablet())
+			if (method.getKind() == TravelKind.SPELL && !access.canCast(spell)
+				&& (!spell.hasTablet() || access.isIronman()))
 			{
 				continue;
 			}

@@ -10,6 +10,7 @@ import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.MetaOrder;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
+import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.data.travel.TravelTimes;
@@ -25,6 +26,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.runelite.api.Quest;
+import net.runelite.api.QuestState;
 import net.runelite.api.Skill;
 import net.runelite.api.gameval.ItemID;
 import org.junit.Test;
@@ -342,5 +345,49 @@ public class RoutePlannerTest
 		final RouteStop stop = RoutePlanner.plan(Collections.singletonList(Patch.FALADOR_TREE), config, access,
 			necklace, new PohSetup()).getStops().get(0);
 		assertTrue(stop.getMethod() + "", stop.getMethod() == null || stop.getMethod().getItem() != TravelItem.SKILLS_NECKLACE);
+	}
+
+	/** Harmony Island from the standard book with no altar: its Arceuus teleport, the only way there, can't be cast. */
+	private static RouteStop harmonyIsland(AccessSnapshot access, Holdings holdings)
+	{
+		return RoutePlanner.plan(Collections.singletonList(Patch.HARMONY_ISLAND_HERB), new RunConfig().sanitise(),
+			access, holdings, new PohSetup()).getStops().get(0);
+	}
+
+	private static AccessSnapshot standardBook(boolean ironman)
+	{
+		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
+		quests.put(Quest.THE_GREAT_BRAIN_ROBBERY, QuestState.FINISHED);
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		levels.put(Skill.MAGIC, 99);
+		levels.put(Skill.FARMING, 99);
+		return new AccessSnapshot(true, quests, levels, Collections.emptySet(), Collections.emptySet(), null,
+			Spellbook.STANDARD, Collections.emptySet(), 0, 0, ironman);
+	}
+
+	@Test
+	public void ironmenAreNotSentForATabletTheyCantBuy()
+	{
+		// Until the account is read it counts as a normal one
+		assertFalse(AccessSnapshot.UNKNOWN.isIronman());
+
+		// A normal account is told to get the tablet
+		final RouteStop normal = harmonyIsland(standardBook(false), Holdings.EMPTY);
+		assertEquals(TravelMethod.HARMONY_ISLAND_TELEPORT, normal.getMethod());
+		assertTrue(normal.isNeedsSupplies());
+
+		// elzerma's group ironman can't buy one: no way there, rather than a tablet they can't get
+		final RouteStop ironman = harmonyIsland(standardBook(true), Holdings.EMPTY);
+		assertEquals(Departure.NONE, ironman.getDeparture());
+		assertNull(ironman.getMethod());
+		assertFalse(ironman.isNeedsSupplies());
+
+		// A tablet the ironman already holds, here in group storage, is still used
+		final Map<Holdings.Source, Map<Integer, Integer>> items = new EnumMap<>(Holdings.Source.class);
+		items.put(Holdings.Source.GROUP_STORAGE, Collections.singletonMap(ItemID.TELETAB_HARMONY, 1));
+		final RouteStop held = harmonyIsland(standardBook(true),
+			new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false));
+		assertEquals(TravelMethod.HARMONY_ISLAND_TELEPORT, held.getMethod());
+		assertFalse(held.isNeedsSupplies());
 	}
 }

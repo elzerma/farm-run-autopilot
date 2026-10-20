@@ -53,10 +53,12 @@ public class AccessSnapshot
 	int questPoints;
 	/** Quest points available in the game right now; 0 if unknown. */
 	int maxQuestPoints;
+	/** Any ironman type, group ironmen included: no Grand Exchange, so a tablet they don't have can't be bought. */
+	boolean ironman;
 
 	public AccessSnapshot(boolean known, Map<Quest, QuestState> quests, Map<Skill, Integer> realLevels,
 		Set<String> completedDiaries, Set<Unlock> unlocks, HousePortal housePortal, Spellbook spellbook,
-		Set<Spellbook> altarSpellbooks, int questPoints, int maxQuestPoints)
+		Set<Spellbook> altarSpellbooks, int questPoints, int maxQuestPoints, boolean ironman)
 	{
 		this.known = known;
 		this.quests = quests;
@@ -68,6 +70,16 @@ public class AccessSnapshot
 		this.altarSpellbooks = altarSpellbooks;
 		this.questPoints = questPoints;
 		this.maxQuestPoints = maxQuestPoints;
+		this.ironman = ironman;
+	}
+
+	/** Without the account type: a normal account, not an ironman. */
+	public AccessSnapshot(boolean known, Map<Quest, QuestState> quests, Map<Skill, Integer> realLevels,
+		Set<String> completedDiaries, Set<Unlock> unlocks, HousePortal housePortal, Spellbook spellbook,
+		Set<Spellbook> altarSpellbooks, int questPoints, int maxQuestPoints)
+	{
+		this(known, quests, realLevels, completedDiaries, unlocks, housePortal, spellbook, altarSpellbooks, questPoints,
+			maxQuestPoints, false);
 	}
 
 	/** Without quest point information: the quest point cape counts as unusable. */

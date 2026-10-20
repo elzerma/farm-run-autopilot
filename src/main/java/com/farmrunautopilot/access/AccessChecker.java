@@ -181,7 +181,9 @@ public class AccessChecker
 			spellbook(client.getVarbitValue(VarbitID.SPELLBOOK)),
 			altar != null ? altar.getSpellbooks() : Collections.emptySet(),
 			// QP_MAX is the quest points available in the game (checked in-game)
-			client.getVarpValue(VarPlayerID.QP), client.getVarbitValue(VarbitID.QP_MAX));
+			client.getVarpValue(VarPlayerID.QP), client.getVarbitValue(VarbitID.QP_MAX),
+			// 0 is a normal account; every other value is an ironman type, group ones included (see PohDetector)
+			client.getVarbitValue(VarbitID.IRONMAN) != 0);
 	}
 
 	/** The SPELLBOOK varbit: 0 standard, 1 ancient, 2 lunar, 3 arceuus; null for anything else. */
