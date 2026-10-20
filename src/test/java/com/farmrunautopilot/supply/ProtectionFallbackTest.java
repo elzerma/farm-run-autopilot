@@ -43,8 +43,6 @@ public class ProtectionFallbackTest
 			// No ultracompost held: the next one down
 			assertEquals(Compost.SUPERCOMPOST, care.getCompost());
 		}
-		assertTrue(plan.getWarnings().toString(), plan.getWarnings().stream()
-			.anyMatch(w -> w.startsWith("Protected with compost instead")));
 	}
 
 	@Test
@@ -83,8 +81,6 @@ public class ProtectionFallbackTest
 			assertEquals(Compost.NONE, care.getCompost());
 		}
 		assertTrue(plan.getLines().stream().anyMatch(l -> l.getGroup() == SupplyLine.Group.PAYMENTS));
-		assertFalse(plan.getWarnings().toString(), plan.getWarnings().stream()
-			.anyMatch(w -> w.startsWith("Protected with compost instead")));
 	}
 
 	@Test

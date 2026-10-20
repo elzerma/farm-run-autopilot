@@ -35,7 +35,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -141,7 +140,6 @@ public final class SupplyCalculator
 		final boolean bucketUnknown = holdings.count(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED) > 0
 			&& holdings.getBucketCompost() == null;
 		final Map<Patch, PatchCare> care = new LinkedHashMap<>();
-		final List<String> fellBack = new ArrayList<>();
 		for (Patch patch : patches)
 		{
 			final PatchType type = patch.getType();
@@ -190,7 +188,8 @@ public final class SupplyCalculator
 			}
 
 			// Protected patches skip compost unless it raises the harvest; one whose payment can't be had gets the best
-			// compost the player has instead
+			// compost the player has instead, without a warning: the guide asks for it at the patch (elzerma: a warning
+			// was unnecessary)
 			Compost c = config.getCompost().getOrDefault(type, Compost.NONE);
 			if ((paid || freeProtection) && !type.isCompostRaisesYield())
 			{
@@ -199,8 +198,6 @@ public final class SupplyCalculator
 			else if (lostPayment)
 			{
 				c = fallBack(compostLeft, Compost.ULTRACOMPOST, bucketUnknown);
-				fellBack.add(patch.getDisplayName() + " gets " + c.getDisplayName().toLowerCase(Locale.ROOT) + " (no "
-					+ crop.getPaymentQuantity() + " " + itemName.apply(crop.getPaymentItemId()) + " to pay the gardener)");
 			}
 			else if (c != Compost.NONE && holdings.isBankKnown())
 			{
@@ -212,10 +209,6 @@ public final class SupplyCalculator
 				compostLeft.computeIfPresent(c, (k, n) -> Math.max(0, n - 1));
 			}
 			care.put(patch, new PatchCare(paid, c));
-		}
-		if (!fellBack.isEmpty())
-		{
-			warnings.add("Protected with compost instead: " + String.join("; ", fellBack));
 		}
 
 		final Set<Crop> protectors = EnumSet.noneOf(Crop.class);
