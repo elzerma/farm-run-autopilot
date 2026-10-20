@@ -59,12 +59,11 @@ public final class SupplyCalculator
 	// Where each kind of line is changed, shown in its tooltip
 	private static final String CROPS = "Farm > Crops";
 	private static final String RUN_OPTIONS = "Farm > Extras to bring";
-	private static final String TRAVEL_DEFAULTS = "Travel > Defaults for every stop";
 	private static final String PROTECTION = "Farm > Protection";
 	private static final String CURES = "Farm > Compost and cures";
 	/** Compost lines: the setting is the compost type, not anything about a bucket. */
 	private static final String COMPOST_TYPE = "Farm > Compost and cures (compost type)";
-	private static final String TRAVEL = "Travel > Locations";
+	private static final String TRAVEL = "Travel > Ways to travel";
 
 	private SupplyCalculator()
 	{
@@ -277,16 +276,6 @@ public final class SupplyCalculator
 				continue;
 			}
 			final Map<Rune, Integer> runesBefore = new EnumMap<>(runeNeed);
-			// A teleport the player picked that can't be used right now: say what's used instead
-			final TravelMethod picked = config.getTravel().get(location);
-			final Departure pickedHow = config.getTravelHow().get(location);
-			if (picked != null && departure != Departure.WALK
-				&& (method != picked || (pickedHow != null && departure != pickedHow)))
-			{
-				warnings.add("Your choice for " + location.getDisplayName() + " can't be used right now, so this run "
-					+ "uses " + stop.describeTravel());
-			}
-
 			String extra = "";
 			final AtlasLeg atlas = stop.getAtlas();
 			if (departure.isViaHouse() || atlas != null && atlas.isViaHouse())
@@ -390,8 +379,7 @@ public final class SupplyCalculator
 				}
 			});
 			legs.add(new StaffPlanner.Leg(location, legRunes, new EnumMap<>(Rune.class), legFairy));
-			final boolean auto = (method != null || atlas != null) && config.getTravel().get(location) != method;
-			travelPlan.add(location.getDisplayName() + ": " + stop.describeTravel() + extra + (auto ? " (auto)" : ""));
+			travelPlan.add(location.getDisplayName() + ": " + stop.describeTravel() + extra);
 		}
 		tablets.forEach((id, n) -> lines.add(line(SupplyLine.Group.TRAVEL, itemName.apply(id), n, holdings, carried,
 			null, 1, id).usedUp()));
@@ -600,7 +588,7 @@ public final class SupplyCalculator
 			final int[] staminaIds = SupplyItems.STAMINA_DOSES.keySet().stream().mapToInt(Integer::intValue).toArray();
 			lines.add(new SupplyLine(SupplyLine.Group.OPTIONAL, "Stamina doses", config.getStaminaDoses(), doses,
 				carriedDoses, holdings.where(staminaIds), null,
-				(config.getStaminaDoses() + STAMINA_DOSES_PER_POTION - 1) / STAMINA_DOSES_PER_POTION, false, TRAVEL_DEFAULTS,
+				(config.getStaminaDoses() + STAMINA_DOSES_PER_POTION - 1) / STAMINA_DOSES_PER_POTION, false, TRAVEL,
 				staminaIds, true));
 		}
 
@@ -1182,21 +1170,23 @@ public final class SupplyCalculator
 	}
 
 	/**
-	 * Adds a spell's tablet (preferred, if owned or the spell can't be cast) or runes.
+	 * Tablet first: a spell is taken from its tablet when the player has one (unless they cast from runes, Travel >
+	 * Ways to travel), and always when it can't be cast.
 	 *
-	 * @return how it will be done, e.g. " (tablet)"
-	 */
-	/**
-	 * Tablet first: a spell is taken from its tablet when the player has one (unless this stop is set to use
-	 * runes), and always when it can't be cast.
+	 * @param location the stop it's cast for; the same rule applies at every stop
 	 */
 	public static boolean usesTablet(Spell spell, Location location, RunConfig config, AccessSnapshot access,
 		Holdings holdings)
 	{
 		return spell.hasTablet() && (!access.canCast(spell)
-			|| (!config.useRunesAt(location) && holdings.count(spell.getTabletItemId()) > 0));
+			|| (!config.isUseRunesNotTabs() && holdings.count(spell.getTabletItemId()) > 0));
 	}
 
+	/**
+	 * Adds a spell's tablet (preferred, if owned or the spell can't be cast) or runes.
+	 *
+	 * @return how it will be done, e.g. " (tablet)"
+	 */
 	private static String addSpell(Spell spell, Location location, RunConfig config, AccessSnapshot access,
 		Holdings holdings, Map<Integer, Integer> tablets, Map<Rune, Integer> runeNeed, List<String> warnings)
 	{
@@ -1311,7 +1301,7 @@ public final class SupplyCalculator
 			}
 			result.lines.add(new SupplyLine(SupplyLine.Group.RUNES, name, n, all.have.get(rune), onYou.have.get(rune),
 				holdings.where(rune.getItemId()), note, slots, false,
-				TRAVEL + " (teleport, or runes instead of a tablet)", new int[]{rune.getItemId()}, true));
+				TRAVEL + " (cast from runes, not tablets)", new int[]{rune.getItemId()}, true));
 		});
 		all.comboUsed.forEach((id, n) -> free.add(n + " " + itemName.apply(id).toLowerCase()));
 		result.summary = String.join(", ", bring) + (free.isEmpty() ? "" : " (" + String.join("; ", free) + ")");

@@ -52,8 +52,8 @@ A farming-run planner and guide for tree, fruit tree and herb runs that:
 | Clearing | Option to **pay gardener 200 coins** to remove a grown tree/fruit tree (verified on the wiki). Adds 200 coins per relevant patch. |
 | Herb extras | **Compost per herb patch** (with bottomless bucket charge counting), **equipment boosts** as optional "recommended" items (magic secateurs, farming cape/outfit), **plant cure / Cure Plant / Resurrect Crops** as optional backups. |
 | Auto-weed | If Tithe Farm **Auto-weed** is owned and switched on, empty patches stay weed-free once raked → **don't require a rake**. If off/unowned, require a rake. |
-| Teleports | **Dropdown per location + "Auto (best)"** option that picks the fastest owned and unlocked method. |
-| Runes | Support rune pouch / divine rune pouch, elemental + combination runes, elemental/combination staves, tabs and jewellery. **Prefer tabs** (save slots), with a **manual "use runes instead of tabs" override** (global + per location). |
+| Teleports | **Dropdown per location + "Auto (best)"** option that picks the fastest owned and unlocked method. (Changed by elzerma, 2026-10-20: no dropdowns; every stop's way is planned from the travel atlas, docs/plans/travel-rework.md section 6.) |
+| Runes | Support rune pouch / divine rune pouch, elemental + combination runes, elemental/combination staves, tabs and jewellery. **Prefer tabs** (save slots), with a **manual "use runes instead of tabs" override** (global + per location). (Changed by elzerma, 2026-10-20: one choice for every stop, "Cast from runes, not tablets".) |
 | POH | **Auto-detect on visit + manual edit** in a "My POH" section (nexus destinations, jewellery box tier, pool tier, fairy ring, spirit tree, house portal location). |
 | Storage sources | Default: **bank + inventory + equipment + tool leprechaun**. Settings toggles (default **off**) for **GIM group storage** and **seed vault**. |
 | Borrowed features (v1) | Quest Helper **bank tab + item checklist**, Quest Helper **step guidance** (highlights + arrows), **Time Tracking awareness** (patch states), **Presets**. |

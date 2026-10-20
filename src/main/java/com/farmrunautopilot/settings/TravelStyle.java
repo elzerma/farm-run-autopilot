@@ -3,7 +3,7 @@ package com.farmrunautopilot.settings;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-/** How Auto (best) picks each stop's teleport. */
+/** How each stop's way is chosen when ways are close (Travel > Ways to travel > Travel style). */
 @Getter
 @RequiredArgsConstructor
 public enum TravelStyle

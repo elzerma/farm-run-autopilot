@@ -12,10 +12,10 @@ import lombok.Getter;
 public enum TestItem
 {
 	SPELLBOOK_SWAP(Tab.RUN, "Spellbook Swap",
-		"On the Lunar spellbook (96 Magic, Dream Mentor done) with no house altar for the other spellbook, "
-			+ "plan a stop whose teleport is from another spellbook and that you have no tablet for. The Run "
-			+ "tab should warn that you need Spellbook Swap, its runes should be on the bank's Farm run tab, and the "
-			+ "spell should be outlined in your spellbook on that step."),
+		"On the Lunar spellbook (96 Magic, Dream Mentor done) with no house altar for the standard spellbook, start "
+			+ "this test: it plans Catherby by Camelot Teleport, cast from runes. The Run tab should warn that you need "
+			+ "Spellbook Swap, its runes should be on the bank's Farm run tab, and the spell should be outlined in your "
+			+ "spellbook on that step."),
 	SEED_VAULT_SECTION(Tab.RUN, "Farm run section in the seed vault",
 		"Build a run needing seeds your bank doesn't have but the Farming Guild's seed vault does, and open the vault: "
 			+ "the button by its close button should flash, with the same outline round it as the bank's Farm run "

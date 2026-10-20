@@ -17,7 +17,6 @@ import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.route.BankStop;
-import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.settings.AccountSettings;
@@ -106,12 +105,14 @@ final class GuidedTests
 		config.setSupplyFullRun(true);
 	}
 
-	/** Travel to this location this way, cast from runes so a tablet doesn't stand in for the spell. */
+	/**
+	 * Travel to this location this way (pinned for the test only: a player can't pick a stop's way), cast from runes
+	 * so a tablet doesn't stand in for the spell.
+	 */
 	private static void travelBy(RunConfig config, TravelMethod method)
 	{
-		config.getTravel().put(method.getDestination(), method);
-		config.getTravelHow().put(method.getDestination(), Departure.DIRECT);
-		config.getRunesNotTabsAt().add(method.getDestination());
+		config.getTestTravel().put(method.getDestination(), method);
+		config.setUseRunesNotTabs(true);
 	}
 
 	/** Why a location's patches can't be used, or nothing. */
@@ -256,7 +257,7 @@ final class GuidedTests
 		public void setUp(RunConfig config, AccountSettings account)
 		{
 			// Teleports from runes, so the staves have runes to save
-			config.getRunesNotTabsAt().addAll(EnumSet.allOf(Location.class));
+			config.setUseRunesNotTabs(true);
 		}
 
 		@Override

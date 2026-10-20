@@ -15,6 +15,7 @@ import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.SupplyCalculator;
 import com.farmrunautopilot.supply.SupplyPlan;
+import com.google.gson.Gson;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
@@ -61,7 +62,8 @@ public class SpellbookRuleTest
 	@Test
 	public void unreachableSpellIsATabletNotAnAltarSwitch()
 	{
-		// GitHub #2: standard book, no altar, runes preferred, and Port Phasmatys set to an Arceuus spell
+		// GitHub #2: standard book, no altar, runes preferred, and Port Phasmatys pinned to an Arceuus spell (as a
+		// guided test can)
 		final RunConfig config = new RunConfig().sanitise();
 		config.setEnabledTypes(java.util.EnumSet.of(com.farmrunautopilot.data.PatchType.HERB));
 		for (Patch patch : Patch.values())
@@ -71,7 +73,7 @@ public class SpellbookRuleTest
 				config.getDisabledPatches().add(patch);
 			}
 		}
-		config.getTravel().put(Location.PORT_PHASMATYS, TravelMethod.FENKENSTRAINS_CASTLE_TELEPORT);
+		config.getTestTravel().put(Location.PORT_PHASMATYS, TravelMethod.FENKENSTRAINS_CASTLE_TELEPORT);
 		config.setUseRunesNotTabs(true);
 		final AccessSnapshot access = onBook(Spellbook.STANDARD, Collections.emptySet());
 
@@ -123,20 +125,20 @@ public class SpellbookRuleTest
 			Collections.emptySet(), null, Spellbook.STANDARD, Collections.emptySet());
 		final RunConfig config = new RunConfig().sanitise();
 		config.setStartLocation(Location.CATHERBY);
-		config.getTravel().put(Location.CATHERBY, TravelMethod.CATHERBY_TELEPORT);
+		config.getTestTravel().put(Location.CATHERBY, TravelMethod.CATHERBY_TELEPORT);
 		return RoutePlanner.plan(Collections.singletonList(Patch.CATHERBY_HERB), config, standard, holdings,
 			new PohSetup()).getStops().get(0);
 	}
 
 	@Test
-	public void chosenSpellOffTheBookFallsBackToOneThatCanBeCast()
+	public void pinnedSpellOffTheBookFallsBackToOneThatCanBeCast()
 	{
-		// GitHub #2: Catherby set to Catherby Teleport (Lunar) on the standard book, no altar, no tablet
+		// GitHub #2: Catherby pinned to Catherby Teleport (Lunar) on the standard book, no altar, no tablet
 		final RouteStop noTablet = catherby(Holdings.EMPTY);
 		assertEquals(TravelMethod.CAMELOT_TELEPORT, noTablet.getMethod());
 		assertFalse(noTablet.isNeedsSupplies());
 
-		// With the tablet the chosen teleport still works
+		// With the tablet the pinned teleport still works
 		final Map<Holdings.Source, Map<Integer, Integer>> items = new EnumMap<>(Holdings.Source.class);
 		items.put(Holdings.Source.INVENTORY, Collections.singletonMap(Spell.CATHERBY_TELEPORT.getTabletItemId(), 1));
 		final RouteStop tablet = catherby(new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true,
@@ -146,9 +148,9 @@ public class SpellbookRuleTest
 	}
 
 	@Test
-	public void chosenHowIsFollowedAndAutoIgnoresTheChoice()
+	public void oldPicksAreIgnored()
 	{
-		// Standard book, no tablet, Catherby on the nexus; the player picks Camelot Teleport cast directly
+		// Standard book, no tablet, Catherby on the nexus; saved before 2026-10-20 with Camelot Teleport picked for it
 		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
 		quests.put(Quest.LUNAR_DIPLOMACY, QuestState.FINISHED);
 		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
@@ -156,23 +158,17 @@ public class SpellbookRuleTest
 		levels.put(Skill.FARMING, 99);
 		final AccessSnapshot standard = new AccessSnapshot(true, quests, levels, Collections.emptySet(),
 			Collections.emptySet(), null, Spellbook.STANDARD, Collections.emptySet());
-		final RunConfig config = new RunConfig().sanitise();
+		final RunConfig config = new Gson().fromJson("{\"travel\":{\"CATHERBY\":\"CAMELOT_TELEPORT\"},"
+			+ "\"travelHow\":{\"CATHERBY\":\"DIRECT\"}}", RunConfig.class).sanitise();
 		config.setStartLocation(Location.FARMING_GUILD);
-		config.getTravel().put(Location.CATHERBY, TravelMethod.CAMELOT_TELEPORT);
-		config.getTravelHow().put(Location.CATHERBY, Departure.DIRECT);
 		final PohSetup poh = new PohSetup();
 		poh.getNexusDestinations().add(com.farmrunautopilot.data.poh.PortalNexus.Destination.CATHERBY);
 
+		// The nexus is quicker than Camelot's walk, so the route takes it
 		final RouteStop stop = RoutePlanner.plan(Collections.singletonList(Patch.CATHERBY_HERB), config, standard,
 			Holdings.EMPTY, poh).getStops().get(0);
-		assertEquals(TravelMethod.CAMELOT_TELEPORT, stop.getMethod());
-		assertEquals(Departure.DIRECT, stop.getDeparture());
-
-		// Auto (best) shown for the row ignores the choice: the nexus is quicker than Camelot's walk
-		final RouteStop auto = RoutePlanner.autoPick(Location.CATHERBY, config, standard, Holdings.EMPTY, poh,
-			null);
-		assertEquals(TravelMethod.CATHERBY_TELEPORT, auto.getMethod());
-		assertEquals(Departure.POH_NEXUS, auto.getDeparture());
+		assertEquals(TravelMethod.CATHERBY_TELEPORT, stop.getMethod());
+		assertEquals(Departure.POH_NEXUS, stop.getDeparture());
 	}
 
 	private static AccessSnapshot lunarCaster(Spellbook book, int magic)
@@ -221,8 +217,8 @@ public class SpellbookRuleTest
 			}
 		}
 		config.setStartLocation(Location.FARMING_GUILD);
-		config.getTravel().put(Location.CATHERBY, TravelMethod.CAMELOT_TELEPORT);
-		config.getTravelHow().put(Location.CATHERBY, Departure.DIRECT);
+		// Pinned, as the Spellbook Swap guided test does: Catherby Teleport is on Lunar and would win
+		config.getTestTravel().put(Location.CATHERBY, TravelMethod.CAMELOT_TELEPORT);
 		final AccessSnapshot lunar = lunarCaster(Spellbook.LUNAR, 99);
 		final RunSelection selection = RunSelector.select(config, lunar, p -> null, 0, true, Collections.emptyMap());
 		final Route route = RoutePlanner.plan(selection.getPatches(), config, lunar, Holdings.EMPTY, new PohSetup());

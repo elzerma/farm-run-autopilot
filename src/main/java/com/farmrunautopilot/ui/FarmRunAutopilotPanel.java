@@ -222,8 +222,6 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		settingsPanel.showHelpList(testRunner, () -> tabs.select("Run"));
 		settingsPanel.showProblemReport(runService::problemSummary);
 		settingsPanel.showHoldings(holdingsTracker::getHoldings);
-		travelPanel.showHoldings(holdingsTracker::getHoldings);
-		travelPanel.showAutoPicks(runService);
 
 		tabs = new TabBar(display);
 		tabs.setBorder(new EmptyBorder(0, 0, 6, 0));
@@ -260,7 +258,6 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		runPanel.update(plan, loggedIn);
 		// The supply plan is redone when holdings change, so the Detected lines may have too
 		settingsPanel.refreshDetected();
-		travelPanel.refreshAutoPicks();
 	}
 
 	/** Rebuilds the settings tabs from saved settings and account access. Call on the Swing thread. */

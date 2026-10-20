@@ -83,22 +83,17 @@ The plugin never clicks, types or acts for you. It only shows information.
 <img src="docs/farm-tab.png" alt="Farm tab: patches, crops, disease-free herbs, protection and compost" width="300">
 
 **Travel tab**
-- Every stop shows what **Auto (best)** picked, such as "Camelot Teleport (tablet)", and lets you choose the
-  teleport and how to use it yourself: directly, through your house's portal nexus or jewellery box, or by
-  fairy ring.
-- Pick how Auto chooses: Fastest, Prefer free, Save charges, or Fewest items to bring.
-- Tablets come first; tick "Use runes instead" for any stop. Spells from another spellbook are only planned
-  when your house altar or Lunar's Spellbook Swap can reach them.
+- Every stop's way is planned for you from a travel map worked out with Shortest Path's data: every teleport,
+  item, fairy ring, spirit tree, boat and shortcut your account can use, through your house too. There's nothing
+  to pick per stop.
+- Choose a travel style: Fastest, Prefer free, Save charges, or Fewest items to bring.
+- Tablets come first; tick "Cast from runes, not tablets" to keep yours. Spells from another spellbook are only
+  planned when your house altar or Lunar's Spellbook Swap can reach them.
 - Charges are tracked across the whole run: jewellery charges, daily-limited teleports (Ardougne cloak,
   Explorer's ring) and items charged by hand (quetzal whistle, Xeric's talisman, pendant of Ates, counted from
-  your teleports). When one runs out partway, Auto picks the next best way.
+  your teleports). When one runs out partway, the next best way is used.
 - A spirit tree near your last stop can be the way into your house, then out through its portal, nexus,
   jewellery box or fairy ring.
-
-<p>
-  <img src="docs/travel-tab.png" alt="Travel tab: how Auto (best) picks, and defaults for every stop" width="300">
-  <img src="docs/travel-locations.png" alt="Travel tab: a stop opened to choose its teleport" width="300">
-</p>
 
 **Account tab**
 - Your house (portal, nexus, jewellery box, pool, altar, spirit tree, fairy ring), with an optional scan that
@@ -116,7 +111,7 @@ The plugin never clicks, types or acts for you. It only shows information.
 ## How to use
 
 1. Open the Farm Run Autopilot sidebar (the leprechaun icon).
-2. Set things up once: patches, crops, protection and compost on the Farm tab; teleports and the route on
+2. Set things up once: patches, crops, protection and compost on the Farm tab; the travel style and the route on
    the Travel tab; your house, unlocks and storage on the Account tab.
 3. On the Run tab, tick the run types and press **Build run**.
 4. Follow Getting ready on the Run tab: any seeds your bank is short of from the seed vault first, then at your

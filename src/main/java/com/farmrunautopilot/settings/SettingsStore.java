@@ -36,7 +36,7 @@ public class SettingsStore
 	private static final String TEST_BACKUP_RUN = "test.backup.runConfig";
 	private static final String TEST_BACKUP_ACCOUNT = "test.backup.account";
 	/** Open the first time: the ones changed most often. */
-	private static final List<String> DEFAULT_OPEN_SECTIONS = Arrays.asList("Crops", "Defaults for every stop", "Detected");
+	private static final List<String> DEFAULT_OPEN_SECTIONS = Arrays.asList("Crops", "Ways to travel", "Detected");
 
 	private final ConfigManager configManager;
 	private final Gson gson;
@@ -389,7 +389,8 @@ public class SettingsStore
 
 	/**
 	 * A preset as it applies now: its Farm and Travel choices, with the current account and debug switches that
-	 * also live in RunConfig (storage sources, drop reminders, full run), which presets don't cover.
+	 * also live in RunConfig (storage sources, drop reminders, full run, a guided test's teleports), which presets
+	 * don't cover.
 	 */
 	private RunConfig farmAndTravel(RunConfig preset)
 	{
@@ -399,6 +400,8 @@ public class SettingsStore
 		result.setVaultBanking(runConfig.getVaultBanking());
 		result.setRemindToDrop(runConfig.isRemindToDrop());
 		result.setSupplyFullRun(runConfig.isSupplyFullRun());
+		result.getTestTravel().clear();
+		result.getTestTravel().putAll(runConfig.getTestTravel());
 		return result;
 	}
 

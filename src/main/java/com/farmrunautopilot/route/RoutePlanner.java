@@ -80,8 +80,6 @@ public final class RoutePlanner
 	private final PohSetup poh;
 	/** The travel atlas for this player, or null to plan on the old tables. */
 	private final RouteAtlas atlas;
-	/** Work out Auto's own pick, ignoring any teleport the player chose (for showing "Auto (best)"). */
-	private boolean ignoreChoices;
 	/** Charges held before the run, for ruling out items with none to spare. */
 	private final ChargeBudget startCharges;
 	/** Items whose charges ran out earlier in the run being planned. */
@@ -111,18 +109,6 @@ public final class RoutePlanner
 		this.poh = poh;
 		this.atlas = atlas != null && !atlas.getAtlas().isEmpty() ? atlas : null;
 		this.startCharges = new ChargeBudget(holdings, config.isKeepLastCharge());
-	}
-
-	/**
-	 * How Auto (best) would reach a location from anywhere (e.g. straight from the bank), ignoring what the
-	 * player chose for it. Shown on the location's row in the Travel tab.
-	 */
-	public static RouteStop autoPick(Location to, RunConfig config, AccessSnapshot access, Holdings holdings,
-		PohSetup poh, RouteAtlas atlas)
-	{
-		final RoutePlanner planner = new RoutePlanner(config, access, holdings, poh, atlas);
-		planner.ignoreChoices = true;
-		return planner.bestLeg(null, to).stop(to);
 	}
 
 	/**
@@ -707,9 +693,9 @@ public final class RoutePlanner
 	}
 
 	/**
-	 * The quickest way from {@code from} (null at the start of the run) to {@code to}. The player's chosen
-	 * method is a preference: it's used whenever it can be (cast, or its item or tablet owned), otherwise every
-	 * way the player can use is considered, directly or through the house (GitHub #2: a Lunar spell chosen on the
+	 * The quickest way from {@code from} (null at the start of the run) to {@code to}: every way the player can use,
+	 * directly or through the house. A teleport a guided test pins ({@link RunConfig#getTestTravel()}) is used
+	 * whenever it can be (cast, or its item or tablet owned), otherwise the rest are (GitHub #2: a Lunar spell on the
 	 * standard book). Methods the player lacks the item or tablet for only win if nothing else is possible.
 	 */
 	Leg bestLeg(Location from, Location to)
@@ -722,7 +708,7 @@ public final class RoutePlanner
 			if (!toPlaces.isEmpty() && (from == null || !fromPlaces.isEmpty()))
 			{
 				final Leg leg = atlasLeg(legs, fromPlaces, toPlaces, to);
-				return leg != null ? leg : missingLeg(to, ignoreChoices ? null : config.getTravel().get(to), unlockedTo(to));
+				return leg != null ? leg : missingLeg(to, config.getTestTravel().get(to), unlockedTo(to));
 			}
 		}
 		return tableLeg(from, to);
@@ -730,14 +716,13 @@ public final class RoutePlanner
 
 	/**
 	 * The leg the player would pick among the atlas's options: the quickest, with the walking preference, the travel
-	 * style, the whistle's charge and Renu as tie-breaks; the player's chosen method whenever an option is it. Null if
-	 * the atlas has no way at all for this player.
+	 * style, the whistle's charge and Renu as tie-breaks; a guided test's pinned teleport, used directly, whenever an
+	 * option is it. Null if the atlas has no way at all for this player.
 	 */
 	private Leg atlasLeg(AtlasLegs legs, Map<Integer, Double> from, List<Integer> to, Location location)
 	{
-		final TravelMethod chosen = ignoreChoices ? null : config.getTravel().get(location);
+		final TravelMethod chosen = config.getTestTravel().get(location);
 		final boolean chosenUnlocked = chosen != null && access.missingFor(chosen).isEmpty();
-		final Departure chosenHow = chosenUnlocked ? config.getTravelHow().get(location) : null;
 		final TravelAtlas data = atlas.getAtlas();
 		AtlasOption best = null;
 		AtlasTravel.Match bestMatch = null;
@@ -745,7 +730,7 @@ public final class RoutePlanner
 		AtlasOption picked = null;
 		AtlasTravel.Match pickedMatch = null;
 		double pickedRank = Double.MAX_VALUE;
-		// The player's choice can be any way slower, so everything is looked at; otherwise only what could win
+		// A pinned teleport can be any way slower, so everything is looked at; otherwise only what could win
 		for (AtlasOption option : legs.options(from, to, chosenUnlocked ? Double.MAX_VALUE : OPTION_SLACK))
 		{
 			// Quickest first, and nothing takes more off than Renu's preference: the rest can't win
@@ -762,7 +747,7 @@ public final class RoutePlanner
 				bestMatch = match;
 				bestRank = rank;
 			}
-			if (chosenUnlocked && match.getMethod() == chosen && (chosenHow == null || chosenHow == match.getDeparture())
+			if (chosenUnlocked && match.getMethod() == chosen && match.getDeparture() == Departure.DIRECT
 				&& rank < pickedRank)
 			{
 				picked = option;
@@ -995,13 +980,12 @@ public final class RoutePlanner
 	/** The old tables' best leg: the plugin's own travel methods, measured walks and journeys (TravelTimes). */
 	private Leg tableLeg(Location from, Location to)
 	{
-		final TravelMethod chosen = ignoreChoices ? null : config.getTravel().get(to);
+		final TravelMethod chosen = config.getTestTravel().get(to);
 		final boolean chosenUnlocked = chosen != null && access.missingFor(chosen).isEmpty();
 		if (chosenUnlocked)
 		{
-			// The player may also have picked how (e.g. through the house portal nexus)
-			final Leg leg = quickest(Collections.singletonList(chosen), from, to, null,
-				config.getTravelHow().get(to));
+			// A guided test's teleport is cast or used directly, not through the house
+			final Leg leg = quickest(Collections.singletonList(chosen), from, to, null, Departure.DIRECT);
 			if (leg != null)
 			{
 				return leg;
@@ -1150,15 +1134,11 @@ public final class RoutePlanner
 							treeInside + TravelTimes.FAIRY_RING + walk,
 							treeInsideText + " + ring " + round(TravelTimes.FAIRY_RING) + " + " + landing));
 					}
-					// No unnamed "some ring nearby": only rings the player has a known way to reach. The chosen way
-					// is a preference: if it can't be used, Auto picks from the rest. The ring by the last stop is
-					// always considered, since it needs nothing.
-					final FairyRingAccess chosen = config.getFairyRingWay();
-					final boolean chosenUsable = chosen != null && reachRing(chosen, from) != null;
+					// No unnamed "some ring nearby": only rings the player has a known way to reach, the quickest
+					// winning. The ring by the last stop is always considered, since it needs nothing.
 					for (FairyRingAccess way : FairyRingAccess.values())
 					{
-						final boolean allowed = way == FairyRingAccess.NEARBY || !chosenUsable || way == chosen;
-						final Double reach = allowed ? reachRing(way, from) : null;
+						final Double reach = reachRing(way, from);
 						if (reach != null)
 						{
 							options.add(new Option(method, Departure.of(way), reach + TravelTimes.FAIRY_RING + walk,
@@ -1363,7 +1343,7 @@ public final class RoutePlanner
 			|| holdings.countAny(SupplyItems.FAIRY_RING_STAFFS) > 0;
 	}
 
-	/** What a leg costs besides time, for the Auto (best) styles. */
+	/** What a leg costs besides time, for the travel styles. */
 	enum Cost
 	{
 		FREE,
@@ -1384,7 +1364,7 @@ public final class RoutePlanner
 	static final double OPTION_SLACK = TravelTimes.LEG_OVERHEAD - TravelTimes.WALK_OVERHEAD + STYLE_PENALTY
 		+ PREFER_WALKING_SECONDS + WHISTLE_CHARGE_PENALTY + RENU_PREFERENCE + 1;
 
-	/** Extra cost of a leg under the chosen Auto (best) style; 0 for Fastest. */
+	/** Extra cost of a leg under the chosen travel style; 0 for Fastest. */
 	private double stylePenalty(Leg leg, Location to)
 	{
 		if (leg.method == null || config.getTravelStyle() == TravelStyle.FASTEST)

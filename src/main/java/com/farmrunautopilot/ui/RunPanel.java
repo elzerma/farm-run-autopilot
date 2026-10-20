@@ -1067,7 +1067,7 @@ class RunPanel extends JPanel
 					settings.editRunConfig().getEnabledTypes().remove(type);
 				}
 				settings.saveRunConfig();
-				// The Travel tab's locations and the preset picker depend on the run types
+				// The preset picker depends on the run types
 				settingsChanged.run();
 			});
 			types.add(box);

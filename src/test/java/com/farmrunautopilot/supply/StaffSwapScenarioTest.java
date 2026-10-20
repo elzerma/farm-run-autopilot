@@ -85,7 +85,7 @@ public class StaffSwapScenarioTest
 		final RunConfig config = new RunConfig();
 		config.setEnabledTypes(EnumSet.of(PatchType.HERB, PatchType.TREE));
 		config.sanitise();
-		config.getRunesNotTabsAt().addAll(EnumSet.allOf(Location.class));
+		config.setUseRunesNotTabs(true);
 		config.setUseCurePlant(false);
 		final Route route = new Route(Arrays.asList(
 			new RouteStop(Location.FALADOR_PARK, TravelMethod.FALADOR_TELEPORT_TO_PARK, Departure.DIRECT, 10, false),

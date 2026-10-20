@@ -4,9 +4,7 @@ import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
-import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.TravelMethod;
-import com.farmrunautopilot.route.Departure;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -69,21 +67,24 @@ public class RunConfig
 	/** Suggest magic secateurs (+10% herb yield) as an optional item. */
 	private boolean recommendEquipmentBoosts = true;
 
-	// Travel
-	/** Chosen method per location; a missing entry means "Auto (best)". */
-	private Map<Location, TravelMethod> travel = new EnumMap<>(Location.class);
-	/** How the chosen method is used (e.g. through the house portal nexus); missing means any way. */
-	private Map<Location, Departure> travelHow = new EnumMap<>(Location.class);
-	/** Old "runes everywhere" setting; now moved into {@link #runesNotTabsAt} for every location on load. */
+	// Travel. Every stop's way is planned from the travel atlas; nothing the player picks overrules it (elzerma,
+	// 2026-10-20: the Travel tab's per-location list went, and old saves' picks with it)
+	/** Cast teleports from runes at every stop, even when a tablet is held (tablets are used first otherwise). */
 	private boolean useRunesNotTabs = false;
-	/** Stops that cast from runes even when a tablet is held (tablets are used first otherwise). */
-	private Set<Location> runesNotTabsAt = EnumSet.noneOf(Location.class);
+	/**
+	 * Saves from before 2026-10-20 chose runes per stop: any stop turns {@link #useRunesNotTabs} on. Read only, then
+	 * cleared on load.
+	 */
+	private Set<Location> runesNotTabsAt;
 	/** Hold back the last charge of rechargeable jewellery (skills necklace, glory, ring of wealth, ...). */
 	private boolean keepLastCharge = false;
-	/** How Auto (best) picks each stop's teleport. */
+	/** How each stop's way is chosen when ways are close (Travel style). */
 	private TravelStyle travelStyle = TravelStyle.FASTEST;
-	/** Preferred way to get to a fairy ring; null means Auto (the fastest one the player has). */
-	private FairyRingAccess fairyRingWay;
+	/**
+	 * The teleport a guided test needs at a stop (testing/GuidedTests), cast or used directly whenever it can be. Never
+	 * shown or set by the player: the settings put back after the test have none.
+	 */
+	private Map<Location, TravelMethod> testTravel = new EnumMap<>(Location.class);
 
 	// Route
 	private RouteMode routeMode = RouteMode.AUTOPILOT;
@@ -126,7 +127,12 @@ public class RunConfig
 		enabledTypes = cleanSet(enabledTypes, PatchType.class, originalTypes());
 		disabledPatches = cleanSet(disabledPatches, Patch.class, EnumSet.noneOf(Patch.class));
 		payToClear = cleanSet(payToClear, PatchType.class, EnumSet.noneOf(PatchType.class));
-		runesNotTabsAt = cleanSet(runesNotTabsAt, Location.class, EnumSet.noneOf(Location.class));
+		if (runesNotTabsAt != null)
+		{
+			// Runes per stop went with the Locations list: runes at any stop means runes at every stop
+			useRunesNotTabs |= !cleanSet(runesNotTabsAt, Location.class, EnumSet.noneOf(Location.class)).isEmpty();
+			runesNotTabsAt = null;
+		}
 		if (storageOnByDefault == null)
 		{
 			// They used to default off and most players never found the setting
@@ -142,17 +148,6 @@ public class RunConfig
 		{
 			vaultBanking = VaultBanking.TAKE_ALL_AT_START;
 		}
-		if (useRunesNotTabs)
-		{
-			// "Runes everywhere" became a per-stop choice: keep it on for every stop
-			runesNotTabsAt.addAll(EnumSet.allOf(Location.class));
-			useRunesNotTabs = false;
-		}
-		if (fairyRingWay == FairyRingAccess.NEARBY)
-		{
-			// The nearby ring has its own switch
-			fairyRingWay = null;
-		}
 
 		crops = cleanMap(crops, PatchType.class);
 		crops.entrySet().removeIf(e -> e.getValue().getType() != e.getKey());
@@ -161,10 +156,8 @@ public class RunConfig
 		diseaseFreeHerbs = cleanSet(diseaseFreeHerbs, Crop.class, EnumSet.noneOf(Crop.class));
 		diseaseFreeHerbs.removeIf(c -> c.getType() != PatchType.HERB);
 		protectionOverrides = cleanMap(protectionOverrides, Patch.class);
-		travel = cleanMap(travel, Location.class);
-		travel.entrySet().removeIf(e -> e.getValue().getDestination() != e.getKey());
-		travelHow = cleanMap(travelHow, Location.class);
-		travelHow.keySet().removeIf(l -> !travel.containsKey(l));
+		testTravel = cleanMap(testTravel, Location.class);
+		testTravel.entrySet().removeIf(e -> e.getValue().getDestination() != e.getKey());
 
 		final Map<PatchType, Protection> protectionDefaults = defaultProtection();
 		protection = cleanMap(protection, PatchType.class);
@@ -264,11 +257,6 @@ public class RunConfig
 			}
 		}
 		return choices;
-	}
-
-	public boolean useRunesAt(Location location)
-	{
-		return useRunesNotTabs || runesNotTabsAt.contains(location);
 	}
 
 	private static Map<PatchType, Protection> defaultProtection()

@@ -72,7 +72,7 @@ public class RunConfigTest
 		config.getCrops().put(PatchType.HERB, Crop.RANARR);
 		config.getProtectionOverrides().put(Patch.FALADOR_TREE, Protection.COMPOST_ONLY);
 		config.setUseProtectionOverrides(true);
-		config.getTravel().put(Location.CATHERBY, TravelMethod.CATHERBY_TELEPORT);
+		config.setUseRunesNotTabs(true);
 		config.setRouteMode(RouteMode.META);
 		config.setStaminaDoses(4);
 
@@ -101,19 +101,20 @@ public class RunConfigTest
 	@Test
 	public void sanitiseRepairsBadSaves()
 	{
-		// Unknown enum names, wrong crop for a type, a method for another location, nulls, a setting that no longer
-		// exists (energyThreshold).
+		// Unknown enum names, wrong crop for a type, a method for another location, nulls, settings that no longer
+		// exist (energyThreshold, the Travel tab's per-location picks).
 		final String json = "{\"enabledTypes\":[\"TREE\",\"NOT_A_TYPE\"],"
 			+ "\"crops\":{\"HERB\":\"MAGIC\",\"TREE\":\"YEW\"},"
 			+ "\"travel\":{\"CATHERBY\":\"FARMING_CAPE\",\"LLETYA\":\"TELEPORT_CRYSTAL_LLETYA\"},"
+			+ "\"testTravel\":{\"CATHERBY\":\"FARMING_CAPE\",\"LLETYA\":\"TELEPORT_CRYSTAL_LLETYA\"},"
 			+ "\"protection\":null,\"routeMode\":\"GONE\",\"energyThreshold\":500,\"customOrder\":null}";
 		final RunConfig config = gson.fromJson(json, RunConfig.class).sanitise();
 
 		assertEquals(1, config.getEnabledTypes().size());
 		assertEquals(Crop.YEW, config.getCrops().get(PatchType.TREE));
 		assertFalse(config.getCrops().containsKey(PatchType.HERB));
-		assertFalse(config.getTravel().containsKey(Location.CATHERBY));
-		assertEquals(TravelMethod.TELEPORT_CRYSTAL_LLETYA, config.getTravel().get(Location.LLETYA));
+		assertFalse(config.getTestTravel().containsKey(Location.CATHERBY));
+		assertEquals(TravelMethod.TELEPORT_CRYSTAL_LLETYA, config.getTestTravel().get(Location.LLETYA));
 		assertEquals(Protection.PAY_GARDENER, config.getProtection().get(PatchType.TREE));
 		assertEquals(RouteMode.AUTOPILOT, config.getRouteMode());
 		assertNotNull(config.getCustomOrder());
@@ -148,15 +149,19 @@ public class RunConfigTest
 	}
 
 	@Test
-	public void runesNotTabs()
+	public void runesInsteadOfTabletsIsOneChoice()
 	{
-		final RunConfig config = new RunConfig();
-		assertFalse(config.useRunesAt(Location.CATHERBY));
-		config.getRunesNotTabsAt().add(Location.CATHERBY);
-		assertTrue(config.useRunesAt(Location.CATHERBY));
-		assertFalse(config.useRunesAt(Location.LUMBRIDGE));
-		config.setUseRunesNotTabs(true);
-		assertTrue(config.useRunesAt(Location.LUMBRIDGE));
+		// Saved when it was chosen per stop: runes at any stop means runes at every stop
+		final RunConfig perStop = new Gson().fromJson("{\"runesNotTabsAt\":[\"CATHERBY\"]}", RunConfig.class)
+			.sanitise();
+		assertTrue(perStop.isUseRunesNotTabs());
+		assertNull(perStop.getRunesNotTabsAt());
+		assertFalse(new Gson().fromJson("{\"runesNotTabsAt\":[]}", RunConfig.class).sanitise().isUseRunesNotTabs());
+		assertFalse(new RunConfig().sanitise().isUseRunesNotTabs());
+		// The released version moves the one choice into every stop and back: still on
+		final RunConfig released = new Gson().fromJson("{\"useRunesNotTabs\":false,"
+			+ "\"runesNotTabsAt\":[\"CATHERBY\",\"LUMBRIDGE\",\"NOT_A_PLACE\"]}", RunConfig.class).sanitise();
+		assertTrue(released.isUseRunesNotTabs());
 	}
 
 	@Test
@@ -177,21 +182,22 @@ public class RunConfigTest
 	}
 
 	@Test
-	public void runesEverywhereBecomesRunesAtEveryStop()
+	public void runesEverywhereStaysOn()
 	{
 		final RunConfig config = new Gson().fromJson("{\"useRunesNotTabs\":true}", RunConfig.class).sanitise();
-		assertFalse(config.isUseRunesNotTabs());
-		assertTrue(config.useRunesAt(Location.CATHERBY));
-		assertTrue(config.useRunesAt(Location.FARMING_GUILD));
+		assertTrue(config.isUseRunesNotTabs());
 	}
 
 	@Test
-	public void howIsDroppedWithoutAChosenTeleport()
+	public void oldTravelPicksAreDropped()
 	{
-		final RunConfig config = new Gson().fromJson(
-			"{\"travelHow\":{\"CATHERBY\":\"POH_NEXUS\",\"ARDOUGNE_FARM\":\"POH_NEXUS\"},"
-				+ "\"travel\":{\"CATHERBY\":\"CATHERBY_TELEPORT\"}}", RunConfig.class).sanitise();
-		assertEquals(com.farmrunautopilot.route.Departure.POH_NEXUS, config.getTravelHow().get(Location.CATHERBY));
-		assertFalse(config.getTravelHow().containsKey(Location.ARDOUGNE_FARM));
+		// Picked per stop on the Travel tab before 2026-10-20: the save still loads, and the picks aren't saved again
+		final RunConfig config = gson.fromJson("{\"travel\":{\"CATHERBY\":\"CATHERBY_TELEPORT\"},"
+			+ "\"travelHow\":{\"CATHERBY\":\"POH_NEXUS\"},\"fairyRingWay\":\"ARDOUGNE_CLOAK\",\"routeMode\":\"META\"}",
+			RunConfig.class).sanitise();
+		assertEquals(RouteMode.META, config.getRouteMode());
+		assertTrue(config.getTestTravel().isEmpty());
+		final String saved = gson.toJson(config);
+		assertFalse(saved, saved.contains("\"travel\"") || saved.contains("travelHow") || saved.contains("fairyRingWay"));
 	}
 }

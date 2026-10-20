@@ -13,7 +13,8 @@ Auto uses every way except Wilderness and cooldown teleports by default; times a
 split at each stop (section 5); a bank stop's time is balanced against the fastest ways (section 4). Only whether the
 "Fewest items" style goes is left, for the start of T4. 2026-10-18: the Travel tab's per-location list of the plugin's
 own methods goes; every run is planned from every way the atlas knows, from the bank the player gears up at, and
-optimised (section 6, T4, T7).
+optimised (section 6, T4, T7). 2026-10-20: the list goes entirely, not as a read-only list, and with no override left
+in an advanced section; the way to steer travel is T7's "don't use this way", built next (section 6).
 
 ## 0. In short
 
@@ -288,24 +289,34 @@ Travel
     [x] Agility shortcuts           by your level  >
     [x] Avoid the Wilderness
     Travel style                        Fastest  v
-  Locations
-    Hosidius        Book of the Dead, 34 s     >
-      (hover: every step; open: other ways with their times and what they need,
-       e.g. "Skills necklace, 41 s"; "Xeric's talisman, needs the talisman"; pick one to override)
 ```
 
 - The counts and times above are examples, not measured.
 - Opening a family lists each way with its state on the right: "ready", "needs 45 Agility", "no charges", "off".
-- Turning a family off is a preference the route follows (as Shortest Path's toggles do).
+- Turning a family or a single way off is a preference the route follows (as Shortest Path's toggles do), and the
+  way to steer travel (elzerma, 2026-10-20): "don't use this way" for a way the route keeps using that the player
+  can't or won't use; the route is planned again without it and still finds the fastest run.
 - **Per-location overrides go** (elzerma, 2026-10-18: "I don't want to stick to our list of travel methods in the tab,
   I think we should ditch that and then essentially use shortest path's algo/methods for each run, but it would need to
-  simulate at the bank and optimize"). The Locations list shows the way each run would take, read-only, with the other
-  ways on hover; no pick from the plugin's own list, and the planner stops honouring old picks. Every run is planned from
-  every way the atlas knows (as T3 does), from the bank the player gears up at, with its ways and bank trips chosen
-  together (T4).
+  simulate at the bank and optimize"). Every run is planned from every way the atlas knows (as T3 does), from the bank
+  the player gears up at, with its ways and bank trips chosen together (T4).
+- **The Locations list goes entirely** (elzerma, 2026-10-20, rather than the read-only list first planned here): the
+  Run tab's route already shows each stop's way and its time on hover (say it once), and no override stays behind, not
+  even in an advanced section. A pick could only name the plugin's own 89 ways and forced one way to a stop whatever
+  came before it.
 - The fairy ring way drop-down goes (those ways are ordinary teleports now).
-- A location's hover may say what would help most ("with 45 Agility: 13 s quicker"); said there only.
+- What would help most ("with 45 Agility: 13 s quicker") can go on the Run tab's hover for the stop; said there only.
 - The Run tab keeps leg times on hover (say it once) and adds the best time and splits from section 5.
+
+**Built (2026-10-20, branch `claude/remove-location-picks-9c3c6d`):** the Locations list, every per-location pick
+(teleport and how) and the warning "Your choice for X can't be used right now" are gone, and the planner follows no
+saved pick. Old saves and presets still load and their picks go at the next save. "Use runes instead of a tablet" is
+one tick box for every stop, "Cast from runes, not tablets" (on for anyone who had it at any stop). The fairy ring way
+drop-down is gone. "Defaults for every stop" is now "Ways to travel", with "Travel style" in place of "Auto (best)
+picks". A guided test can still fix one stop's teleport for itself (`RunConfig.testTravel`, never shown; the Spellbook
+Swap test needs Catherby by Camelot Teleport). Planning no longer works out a way to every location on each refresh for
+the list (about 6 ms on the client thread). Still to come in T7: the families and "don't use this way"; then the old
+tables go in their own session (T3's last step).
 
 ## 7. Tests
 
@@ -368,7 +379,7 @@ three.
 | T4 | Choosing ways with the inventory in mind (section 4, last part): the run planned from the bank the player gears up at, footprints, run-level moves, bank trips costed from the atlas, explanations | large | Hand checks: a big run |
 | T5 | Journeys from atlas steps: generated step text, NPC and object outlines, walking lines to each step | medium | Hand checks: a boat or NPC journey |
 | T6 | Estimate and personal best: time constants, pace, best times and splits; remove "Share your run times" | medium | Hand checks: a run, then a faster one |
-| T7 | Travel tab: ways to travel, Wilderness, locations showing the way each run takes (no per-location picks from the plugin's own list) | medium | Hand checks on the tab |
+| T7 | Travel tab: ways to travel by family, each way with on/off ("don't use this way"), Wilderness. The per-location list went on 2026-10-20 (section 6) | medium | Hand checks on the tab |
 | T8 | Optional dev-client second opinion: at each leg, ask Shortest Path's `query` from the player's tile and log when its way is quicker | small | Log |
 | T9 | Help list, README, notices, release notes | small | None |
 
