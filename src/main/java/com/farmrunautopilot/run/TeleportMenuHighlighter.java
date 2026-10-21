@@ -7,6 +7,7 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Menu;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.events.MenuOpened;
 import net.runelite.client.game.ItemManager;
@@ -17,7 +18,8 @@ import net.runelite.client.util.Text;
  * Colours the option a leg needs in its teleport item's right-click menu (elzerma, 2026-10-18: "Jewelery and item
  * right click menus should also highlight option that is needed"), e.g. "Crafting Guild" on a worn skills necklace.
  * When the item's places are behind "Rub" (or "Teleport", "Reminisce"...), that option instead; TravelMenuOverlay then
- * rings the place in the list. Only colours options the menu has: adds none, removes none. Client thread.
+ * rings the place in the list. MenuOptionOverlay frames the same option while the menu is open. Only colours options
+ * the menu has: adds none, removes none. Client thread.
  */
 @Slf4j
 @Singleton
@@ -29,6 +31,29 @@ public class TeleportMenuHighlighter
 	private final RunSession session;
 	private final FarmRunAutopilotConfig config;
 	private final ItemManager itemManager;
+	/** The teleport items' names, for the items they were worked out for, as the overlay asks every frame. */
+	private Set<Integer> namedIds;
+	private Set<String> names;
+
+	/** Where the option a leg needs is in a menu: its entry, and the entry opening the sub-menu it's in (or -1). */
+	static final class Found
+	{
+		static final Found NONE = new Found(-1, -1);
+
+		final int index;
+		final int parent;
+
+		Found(int index, int parent)
+		{
+			this.index = index;
+			this.parent = parent;
+		}
+
+		boolean isFound()
+		{
+			return index >= 0;
+		}
+	}
 
 	@Inject
 	TeleportMenuHighlighter(RunSession session, FarmRunAutopilotConfig config, ItemManager itemManager)
@@ -40,57 +65,140 @@ public class TeleportMenuHighlighter
 
 	public void onMenuOpened(MenuOpened event)
 	{
-		final Highlights highlights = session.getView().getHighlights();
-		final String option = highlights.getTeleportOption();
+		final String option = session.getView().getHighlights().getTeleportOption();
 		if (option == null || !config.highlightItems())
 		{
 			return;
 		}
 		final MenuEntry[] entries = event.getMenuEntries();
+		final Found found = find(entries);
+		if (!found.isFound())
+		{
+			if (teleportItem(entries))
+			{
+				log.debug("Menu option for '{}' not found in: {}", option, optionList(entries));
+			}
+			return;
+		}
+		if (found.parent >= 0)
+		{
+			// In a sub-menu: the entry opening it as well, as that's the one to hover first
+			colour(entries[found.parent]);
+			colour(entries[found.parent].getSubMenu().getMenuEntries()[found.index]);
+			return;
+		}
+		colour(entries[found.index]);
+	}
+
+	private void colour(MenuEntry entry)
+	{
+		final String text = Text.removeTags(entry.getOption());
+		entry.setOption(ColorUtil.wrapWithColorTag(text, config.itemColour()));
+		log.debug("Menu option coloured: {}", text);
+	}
+
+	/**
+	 * The option the leg needs in these menu entries (a menu's top level), looking in their sub-menus too: an option
+	 * naming the place anywhere, or else the one opening the item's list of places. NONE when the step has no teleport
+	 * option or the menu isn't the teleport item's.
+	 */
+	Found find(MenuEntry[] entries)
+	{
+		final Highlights highlights = session.getView().getHighlights();
+		final String option = highlights.getTeleportOption();
+		if (option == null || entries == null)
+		{
+			return Found.NONE;
+		}
+		final int top = pick(entries, highlights.getItemIds(), option);
+		if (top >= 0 && names(entries[top].getOption(), option))
+		{
+			return new Found(top, -1);
+		}
+		// UNVERIFIED: whether any teleport item puts its places in a sub-menu, and whether its entries are there yet
+		for (int i = 0; i < entries.length; i++)
+		{
+			final Menu sub = entries[i].getSubMenu();
+			final MenuEntry[] subEntries = sub != null ? sub.getMenuEntries() : null;
+			if (subEntries == null || subEntries.length == 0)
+			{
+				continue;
+			}
+			final int pick = pick(subEntries, highlights.getItemIds(), option);
+			if (pick >= 0 && names(subEntries[pick].getOption(), option))
+			{
+				return new Found(pick, i);
+			}
+		}
+		return top >= 0 ? new Found(top, -1) : Found.NONE;
+	}
+
+	/** {@link #pick(String[], int[], Set, String)} on menu entries, knowing a worn item by its name. */
+	private int pick(MenuEntry[] entries, Set<Integer> itemIds, String option)
+	{
 		final String[] options = new String[entries.length];
 		final int[] items = new int[entries.length];
-		Set<String> names = null;
-		boolean teleportItem = false;
 		for (int i = 0; i < entries.length; i++)
 		{
 			options[i] = entries[i].getOption();
 			items[i] = entries[i].getItemId();
-			if (!highlights.getItemIds().contains(items[i]) && entries[i].getTarget() != null)
+			if (!itemIds.contains(items[i]) && entries[i].getTarget() != null && !itemIds.isEmpty())
 			{
 				// A worn item's options may not carry its item id; its name, in the target, does
-				if (names == null)
-				{
-					names = names(highlights.getItemIds());
-				}
 				final String target = Text.removeTags(entries[i].getTarget()).toLowerCase(Locale.ROOT);
-				if (names.contains(target))
+				if (names(itemIds).contains(target))
 				{
-					items[i] = highlights.getItemIds().iterator().next();
+					items[i] = itemIds.iterator().next();
 				}
 			}
-			teleportItem |= highlights.getItemIds().contains(items[i]);
 		}
-		final int pick = pick(options, items, highlights.getItemIds(), option);
-		if (pick >= 0)
-		{
-			entries[pick].setOption(ColorUtil.wrapWithColorTag(Text.removeTags(options[pick]), config.itemColour()));
-			log.debug("Menu option coloured for '{}': {}", option, Text.removeTags(options[pick]));
-		}
-		else if (teleportItem)
-		{
-			log.debug("Menu option for '{}' not found in: {}", option, String.join(", ", options));
-		}
+		return pick(options, items, itemIds, option);
 	}
 
-	/** The items' names, lower case, as a menu's target shows them. */
+	private boolean teleportItem(MenuEntry[] entries)
+	{
+		final Set<Integer> itemIds = session.getView().getHighlights().getItemIds();
+		for (MenuEntry entry : entries)
+		{
+			if (itemIds.contains(entry.getItemId()))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static String optionList(MenuEntry[] entries)
+	{
+		final StringBuilder s = new StringBuilder();
+		for (MenuEntry entry : entries)
+		{
+			s.append(s.length() > 0 ? ", " : "").append(Text.removeTags(entry.getOption()));
+		}
+		return s.toString();
+	}
+
+	/** The items' names, lower case, as a menu's target shows them; kept while the items stay the same. */
 	private Set<String> names(Set<Integer> itemIds)
 	{
-		final Set<String> names = new HashSet<>();
-		for (int id : itemIds)
+		if (itemIds != namedIds)
 		{
-			names.add(itemManager.getItemComposition(id).getName().toLowerCase(Locale.ROOT));
+			final Set<String> found = new HashSet<>();
+			for (int id : itemIds)
+			{
+				found.add(itemManager.getItemComposition(id).getName().toLowerCase(Locale.ROOT));
+			}
+			names = found;
+			namedIds = itemIds;
 		}
 		return names;
+	}
+
+	/** Whether a menu option names the place, e.g. "Ardougne Farm" for "farm". */
+	static boolean names(String menuOption, String place)
+	{
+		return menuOption != null
+			&& Text.removeTags(menuOption).toLowerCase(Locale.ROOT).contains(place.toLowerCase(Locale.ROOT));
 	}
 
 	/**
@@ -121,5 +229,58 @@ public class TeleportMenuHighlighter
 			}
 		}
 		return opener;
+	}
+
+	/**
+	 * Whether the leg's option needs a right-click in these menu entries, those of the item under the mouse: true when
+	 * it isn't their left click (the top one, after any other plugin's swaps), false when it is, null when they don't
+	 * have it.
+	 */
+	Boolean needsRightClick(MenuEntry[] entries)
+	{
+		final Found found = find(entries);
+		if (!found.isFound())
+		{
+			return null;
+		}
+		return found.parent >= 0 || found.index != entries.length - 1;
+	}
+
+	/**
+	 * Whether the item's option the leg needs isn't its left-click one, going by the item's own options (not another
+	 * plugin's swaps): always on a worn item, whose left click is Remove; in the inventory when the option, or the one
+	 * opening the list of places, comes after the first the item has. False when the item has neither.
+	 *
+	 * @param inventoryActions the item's options in the inventory, as {@code ItemComposition} gives them
+	 */
+	static boolean needsRightClick(String[] inventoryActions, boolean worn, String option)
+	{
+		if (worn)
+		{
+			return true;
+		}
+		if (inventoryActions == null)
+		{
+			return false;
+		}
+		final int[] items = new int[inventoryActions.length];
+		final int pick = pick(inventoryActions, items, Set.of(0), option);
+		if (pick < 0)
+		{
+			return false;
+		}
+		// The left click is the item's first of its first three options, else "Use", which comes before the other two
+		if (pick >= 3)
+		{
+			return true;
+		}
+		for (int i = 0; i < pick; i++)
+		{
+			if (inventoryActions[i] != null)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 }

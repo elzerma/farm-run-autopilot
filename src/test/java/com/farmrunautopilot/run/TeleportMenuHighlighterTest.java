@@ -1,12 +1,17 @@
 package com.farmrunautopilot.run;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.RouteStop;
+import java.awt.Rectangle;
 import java.util.Set;
+import net.runelite.api.Menu;
+import net.runelite.api.MenuEntry;
 import net.runelite.api.gameval.ItemID;
 import org.junit.Test;
 
@@ -37,6 +42,100 @@ public class TeleportMenuHighlighterTest
 	{
 		assertEquals(-1, TeleportMenuHighlighter.pick(new String[]{"Rub"}, new int[]{ItemID.AMULET_OF_GLORY_4},
 			Set.of(NECKLACE), "Farming Guild"));
+	}
+
+	@Test
+	public void rightClickWhenTheOptionIsntTheLeftClick()
+	{
+		// A ring of dueling in the inventory: Wear is its left click, Rub needs a right-click
+		final String[] ring = {null, "Wear", "Rub", null, "Drop"};
+		assertTrue(TeleportMenuHighlighter.needsRightClick(ring, false, "Castle Wars"));
+		// A worn item's left click is Remove
+		assertTrue(TeleportMenuHighlighter.needsRightClick(ring, true, "Castle Wars"));
+		// An item whose first option is the teleport
+		assertFalse(TeleportMenuHighlighter.needsRightClick(new String[]{"Rub", "Wear", null, null, "Drop"}, false,
+			"Castle Wars"));
+		// After "Use", even with nothing before it
+		assertTrue(TeleportMenuHighlighter.needsRightClick(new String[]{null, null, null, "Farm Teleport", "Drop"},
+			false, "farm"));
+		// Nothing on the item for this leg
+		assertFalse(TeleportMenuHighlighter.needsRightClick(new String[]{null, "Wear", null, null, "Drop"}, false,
+			"Castle Wars"));
+	}
+
+	@Test
+	public void theOptionsRowInTheOpenMenu()
+	{
+		final Menu menu = new FakeMenu(100, 50, 120, MenuOptionOverlay.HEADER + 3 * MenuOptionOverlay.ROW + 3);
+		// The last entry is the top row, under the header
+		assertEquals(new Rectangle(101, 50 + MenuOptionOverlay.HEADER, 118, MenuOptionOverlay.ROW),
+			MenuOptionOverlay.row(menu, MenuOptionOverlay.HEADER, 3, 2, 0));
+		assertEquals(new Rectangle(101, 50 + MenuOptionOverlay.HEADER + 2 * MenuOptionOverlay.ROW, 118,
+			MenuOptionOverlay.ROW), MenuOptionOverlay.row(menu, MenuOptionOverlay.HEADER, 3, 0, 0));
+		// Scrolled out of sight
+		assertNull(MenuOptionOverlay.row(menu, MenuOptionOverlay.HEADER, 3, 2, 1));
+	}
+
+	private static final class FakeMenu implements Menu
+	{
+		private final int x;
+		private final int y;
+		private final int width;
+		private final int height;
+
+		FakeMenu(int x, int y, int width, int height)
+		{
+			this.x = x;
+			this.y = y;
+			this.width = width;
+			this.height = height;
+		}
+
+		@Override
+		public MenuEntry createMenuEntry(int index)
+		{
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public MenuEntry[] getMenuEntries()
+		{
+			return new MenuEntry[0];
+		}
+
+		@Override
+		public void setMenuEntries(MenuEntry[] entries)
+		{
+		}
+
+		@Override
+		public void removeMenuEntry(MenuEntry entry)
+		{
+		}
+
+		@Override
+		public int getMenuX()
+		{
+			return x;
+		}
+
+		@Override
+		public int getMenuY()
+		{
+			return y;
+		}
+
+		@Override
+		public int getMenuWidth()
+		{
+			return width;
+		}
+
+		@Override
+		public int getMenuHeight()
+		{
+			return height;
+		}
 	}
 
 	@Test
