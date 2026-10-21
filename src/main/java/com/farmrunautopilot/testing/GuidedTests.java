@@ -14,8 +14,10 @@ import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.Rune;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.Spellbook;
+import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.route.BankStop;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
@@ -71,6 +73,7 @@ final class GuidedTests
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
 		TESTS.put(TestItem.BUCKET_COMPOST, new BucketCompost());
 		TESTS.put(TestItem.HOUSE_BY_TREE, new HouseByTree());
+		TESTS.put(TestItem.HOUSE_TURNED_OFF, new HouseTurnedOff());
 		TESTS.put(TestItem.HOUSE_SCAN, new HouseScan());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
 	}
@@ -107,12 +110,18 @@ final class GuidedTests
 
 	/**
 	 * Travel to this location this way (pinned for the test only: a player can't pick a stop's way), cast from runes
-	 * so a tablet doesn't stand in for the spell.
+	 * so a tablet doesn't stand in for the spell, even if the player turned spells or this one off on the Travel tab
+	 * (their settings come back after the test).
 	 */
 	private static void travelBy(RunConfig config, TravelMethod method)
 	{
 		config.getTestTravel().put(method.getDestination(), method);
 		config.setUseRunesNotTabs(true);
+		if (method.getSpell() != null)
+		{
+			config.setOn(TravelFamily.SPELLS, true);
+			config.getWaysOff().remove("TELEPORTATION_SPELL|" + method.getSpell().getDisplayName());
+		}
 	}
 
 	/** Why a location's patches can't be used, or nothing. */
@@ -1016,6 +1025,75 @@ final class GuidedTests
 				ask("Start the run and follow it. Did the guide move on once you were in your house, and again once you'd "
 					+ "left it?"),
 				ask("Was that way quicker than how you'd normally get there?").optional());
+		}
+	}
+
+	/**
+	 * House turned off on the Travel tab (sprint T7): the route plans every stop another way, and the house's ways come
+	 * back once it's ticked again. elzerma has no house to try it with.
+	 */
+	private static final class HouseTurnedOff extends GuidedTest
+	{
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			return account.getPoh().getPortal() != null ? Collections.emptyList()
+				: Collections.singletonList("Set up your house in Account > My house");
+		}
+
+		@Override
+		public void setUp(RunConfig config, AccountSettings account)
+		{
+			config.setOn(TravelFamily.HOUSE, true);
+		}
+
+		/** Stops on the planned route that go through the player's house. */
+		private static long throughHouse(TestContext ctx)
+		{
+			return ctx.plan().getRoute().getStops().stream()
+				.filter(s -> s.getWays().contains(AtlasWays.familyKey(TravelFamily.HOUSE))).count();
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				doThis("Build a run whose route goes through your house: a stop says \"House ...\" or \"Spirit tree to "
+					+ "your house\" (e.g. one by your house portal)", ctx -> throughHouse(ctx) > 0)
+					.orAskAfter(DO_TICKS, "No stop goes through your house yet. Does your house have a way out (its "
+						+ "portal, the nexus, the jewellery box, its fairy ring) that's quickest to one of the run's stops?")
+					.onAnswer((ctx, yes) ->
+					{
+						// Without such a run, unticking House shows nothing
+						if (!yes)
+						{
+							ctx.cannotTest("a run whose route goes through your house");
+							return;
+						}
+						ctx.capture("House", ctx.houseSummary());
+						ctx.problem("No stop went through the house");
+					})
+					.onDone(ctx -> ctx.capture("Stops through your house", throughHouse(ctx))),
+				doThis("Untick House under Travel > Ways to travel", ctx -> throughHouse(ctx) == 0)
+					.orAskAfter(DO_TICKS, "Is House unticked on the Travel tab?")
+					.onAnswer((ctx, yes) ->
+					{
+						if (yes)
+						{
+							ctx.capture("Still through your house", throughHouse(ctx));
+							ctx.problem("A stop still went through the house with House off");
+						}
+					}),
+				ask("Does every stop still have a way, none of them through your house?"),
+				doThis("Tick House again", ctx -> throughHouse(ctx) > 0)
+					.orAskAfter(DO_TICKS, "Is House ticked again on the Travel tab?")
+					.onAnswer((ctx, yes) ->
+					{
+						if (yes)
+						{
+							ctx.problem("The stops through the house didn't come back");
+						}
+					}));
 		}
 	}
 

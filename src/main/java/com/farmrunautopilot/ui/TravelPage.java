@@ -3,25 +3,83 @@ package com.farmrunautopilot.ui;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Location;
+import com.farmrunautopilot.data.travel.TravelFamily;
+import com.farmrunautopilot.route.TravelWays;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.RouteMode;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.settings.TravelStyle;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
+import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.FontManager;
 
 /**
  * The Travel tab: how the route travels and the route itself. Every stop's way is planned for the player from the
- * travel atlas, so there's nothing to pick per stop (elzerma, 2026-10-20).
+ * travel atlas, so there's nothing to pick per stop (elzerma, 2026-10-20). Ways to travel says what the route may use
+ * (sprint T7): each family on or off, and opened, each of its ways with how it stands for the player and its own on and
+ * off ("don't use this way"), kept for the account whatever the preset.
  */
 class TravelPage extends SetupPanel
 {
+	/** Room for a family's or a way's line inside the section. */
+	private static final int ROW_WIDTH = CONTROL_WIDTH - 4;
+	/** A blank as wide as a row's chevron, so a family with nothing to open lines up with those that have. */
+	private static final Icon NO_CHEVRON = new Icon()
+	{
+		@Override
+		public void paintIcon(Component c, Graphics g, int x, int y)
+		{
+		}
+
+		@Override
+		public int getIconWidth()
+		{
+			return 10;
+		}
+
+		@Override
+		public int getIconHeight()
+		{
+			return 10;
+		}
+	};
+
+	/** The families opened, kept while the client runs; their ways are only drawn while open. */
+	private final Set<TravelFamily> open = EnumSet.noneOf(TravelFamily.class);
+	/** The families and ways as last worked out with a plan (RunService). */
+	private TravelWays ways = TravelWays.EMPTY;
+
 	TravelPage(SettingsStore settings, AccessChecker accessChecker, Runnable changed)
 	{
 		super(settings, accessChecker, changed);
 		rebuild();
+	}
+
+	/** The families and ways worked out with the latest plan; redrawn only when something in them changed. */
+	void showWays(TravelWays latest)
+	{
+		if (!latest.equals(ways))
+		{
+			ways = latest;
+			rebuild();
+		}
 	}
 
 	@Override
@@ -31,10 +89,20 @@ class TravelPage extends SetupPanel
 		add(routeSection(config));
 	}
 
-	/** What every stop's way is chosen by: the travel style and the player's preferences. */
+	/** What the route may use, family by family, and how it chooses between ways. */
 	private JComponent waysToTravelSection(RunConfig config)
 	{
-		final CollapsibleSection s = section("Ways to travel");
+		final CollapsibleSection s = section("Ways to travel").help("Every stop's way is the quickest the route can "
+			+ "use. Untick a family, or open one and untick a way you can't or won't use: the route is planned again "
+			+ "without it. Kept for your account, whichever preset is in use.");
+		for (TravelFamily family : TravelFamily.values())
+		{
+			s.addContent(familyRow(config, family));
+		}
+		s.addContent(checkBox("Avoid the Wilderness", config.isAvoidWilderness(), true,
+			"On: no teleport, hop or walk into the Wilderness. Off: the route may go through it, where other players "
+				+ "can attack you",
+			on -> saveRun(() -> config.setAvoidWilderness(on))));
 		final List<Choice<TravelStyle>> styles = new ArrayList<>();
 		for (TravelStyle style : TravelStyle.values())
 		{
@@ -42,19 +110,141 @@ class TravelPage extends SetupPanel
 		}
 		s.addContent(label("Travel style"));
 		s.addContent(combo(styles, config.getTravelStyle(), st -> saveRun(() -> config.setTravelStyle(st))));
-		s.addContent(checkBox("Keep the last charge of my rechargeable jewellery", config.isKeepLastCharge(), true,
-			"Off: every charge is used. On: the last charge of your last skills necklace, glory, ring of wealth, combat "
-				+ "bracelet or teleport crystal is kept back, and another way is used instead",
-			on -> saveRun(() -> config.setKeepLastCharge(on))));
 		s.addContent(checkBox("Walk when it's nearly as quick as teleporting", config.isPreferWalking(), true,
 			"A walk up to about 20 seconds slower is used instead of a teleport, saving charges and clicks "
 				+ "(e.g. one Falador Teleport for Falador Park and Taverley)",
 			on -> saveRun(() -> config.setPreferWalking(on))));
-		s.addContent(checkBox("Cast from runes, not tablets", config.isUseRunesNotTabs(), true,
-			"Off: a teleport's tablet is used when you have one. On: teleports you can cast are cast from runes, and a "
-				+ "tablet is only used for one you can't",
-			on -> saveRun(() -> config.setUseRunesNotTabs(on))));
 		return s;
+	}
+
+	/** A family's line: its tick box, its name and how many of its ways are ready; opened, each of its ways. */
+	private JComponent familyRow(RunConfig config, TravelFamily family)
+	{
+		final JCheckBox tick = leadBox(config.isOn(family), family.getDescription(),
+			on -> saveRun(() -> config.setOn(family, on)));
+		if (!family.isListed())
+		{
+			// Nothing to open: the house is set up on the Account tab, shortcuts go by Agility level
+			return plainRow(tick, family.getDisplayName(), family == TravelFamily.HOUSE ? "set in Account > My house"
+				: "by your level", family.getDescription());
+		}
+		final TravelWays.Family listed = ways.get(family);
+		final ExpandableRow row = new ExpandableRow(tick, family.getDisplayName(),
+			listed != null ? listed.summary() : "", family.getDescription(), false, ROW_WIDTH, open.contains(family),
+			opened ->
+			{
+				if (opened)
+				{
+					open.add(family);
+				}
+				else
+				{
+					open.remove(family);
+				}
+				SwingUtilities.invokeLater(this::rebuild);
+			});
+		if (!open.contains(family))
+		{
+			return row;
+		}
+		if (family == TravelFamily.TELEPORT_ITEMS)
+		{
+			row.addContent(checkBox("Keep the last charge of my jewellery", config.isKeepLastCharge(), true,
+				"Off: every charge is used. On: the last charge of your last skills necklace, glory, ring of wealth, "
+					+ "combat bracelet or teleport crystal is kept back, and another way is used instead",
+				on -> saveRun(() -> config.setKeepLastCharge(on))));
+		}
+		if (family == TravelFamily.TABLETS)
+		{
+			row.addContent(checkBox("Cast from runes, not tablets", config.isUseRunesNotTabs(), true,
+				"Off: a teleport's tablet is used when you have one. On: teleports you can cast are cast from runes, "
+					+ "and a tablet is only used for one you can't",
+				on -> saveRun(() -> config.setUseRunesNotTabs(on))));
+		}
+		if (listed == null)
+		{
+			row.addContent(note("Your ways show once you're logged in."));
+			return row;
+		}
+		if (listed.getWays().isEmpty())
+		{
+			row.addContent(note(family == TravelFamily.TABLETS ? "You don't own a teleport tablet or scroll."
+				: "You don't own a teleport item."));
+		}
+		for (TravelWays.Way way : listed.getWays())
+		{
+			row.addContent(wayRow(config, way));
+		}
+		return row;
+	}
+
+	/** One way: its tick box ("don't use this way" when unticked), its name, and how it stands on the right. */
+	private JComponent wayRow(RunConfig config, TravelWays.Way way)
+	{
+		final boolean off = config.getWaysOff().contains(way.getKey());
+		final String state = way.stateText(off);
+		final JLabel measure = new JLabel(state);
+		measure.setFont(FontManager.getRunescapeSmallFont());
+		final int stateWidth = Math.min(measure.getPreferredSize().width, ROW_WIDTH / 2);
+		final String tooltip = UiText.tooltip(way.getDetail(), 250);
+		final JCheckBox box = checkBox(way.getName(), !off, true, tooltip, on -> saveRun(() ->
+		{
+			if (on)
+			{
+				config.getWaysOff().remove(way.getKey());
+			}
+			else
+			{
+				config.getWaysOff().add(way.getKey());
+			}
+		}));
+		box.setText(wrap(way.getName(), ROW_WIDTH - stateWidth - 30));
+		final JLabel stateLabel = new JLabel(measure.getPreferredSize().width <= ROW_WIDTH / 2 ? state
+			: wrap(state, ROW_WIDTH / 2));
+		stateLabel.setFont(FontManager.getRunescapeSmallFont());
+		stateLabel.setForeground(Color.WHITE);
+		stateLabel.setToolTipText(tooltip);
+		final JPanel row = new JPanel(new BorderLayout(4, 0));
+		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		row.add(box, BorderLayout.CENTER);
+		row.add(stateLabel, BorderLayout.EAST);
+		row.setToolTipText(tooltip);
+		row.setMaximumSize(new Dimension(CONTROL_WIDTH, row.getPreferredSize().height));
+		return row;
+	}
+
+	/** A family with nothing to open: its tick box, name and a short value on one line, like the others. */
+	private static JComponent plainRow(JCheckBox tick, String name, String value, String tooltip)
+	{
+		final Card card = new Card(new BorderLayout(8, 0));
+		tick.setOpaque(false);
+		card.add(tick, BorderLayout.WEST);
+		final JLabel label = new JLabel(name, NO_CHEVRON, JLabel.LEFT);
+		label.setIconTextGap(6);
+		label.setFont(FontManager.getRunescapeSmallFont());
+		label.setForeground(Color.WHITE);
+		card.add(label, BorderLayout.CENTER);
+		final JLabel right = new JLabel(value);
+		right.setFont(FontManager.getRunescapeSmallFont());
+		right.setForeground(Color.WHITE);
+		card.add(right, BorderLayout.EAST);
+		card.setToolTipText(UiText.tooltip(tooltip, 250));
+		final JPanel wrapper = new JPanel(new BorderLayout());
+		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		wrapper.setBorder(new EmptyBorder(0, 0, 3, 0));
+		wrapper.add(card, BorderLayout.CENTER);
+		wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, wrapper.getPreferredSize().height));
+		return wrapper;
+	}
+
+	/** A tick box without text, leading a family's line. */
+	private static JCheckBox leadBox(boolean selected, String tooltip, Consumer<Boolean> onChange)
+	{
+		final JCheckBox box = new JCheckBox((String) null, selected);
+		box.setToolTipText(UiText.tooltip(tooltip, 250));
+		box.setOpaque(false);
+		box.addActionListener(e -> onChange.accept(box.isSelected()));
+		return Style.checkBox(box);
 	}
 
 	private JComponent routeSection(RunConfig config)

@@ -14,7 +14,7 @@ split at each stop (section 5); a bank stop's time is balanced against the faste
 "Fewest items" style goes is left, for the start of T4. 2026-10-18: the Travel tab's per-location list of the plugin's
 own methods goes; every run is planned from every way the atlas knows, from the bank the player gears up at, and
 optimised (section 6, T4, T7). 2026-10-20: the list goes entirely, not as a read-only list, and with no override left
-in an advanced section; the way to steer travel is T7's "don't use this way", built next (section 6).
+in an advanced section; the way to steer travel is T7's "don't use this way", built the same day (section 6).
 
 ## 0. In short
 
@@ -276,23 +276,39 @@ orange accent, explanations on hover, one line where possible).
 ```
 Travel
   Ways to travel
-    [x] Spells                          9 usable   >
-    [x] Teleport items                 14 usable   >
-    [x] Tablets                         6 usable   >
-    [x] House                    set in Account > My house
-    [x] Fairy rings                    11 usable   >
-    [x] Spirit trees                    5 usable   >
-    [x] Quetzals                        4 usable   >
-    [x] Boats and ships                 7 usable   >   (some cost coins)
-    [x] Gliders, balloons, carts        3 usable   >
-    [ ] Minigame teleports (cooldown)   2 usable   >
-    [x] Agility shortcuts           by your level  >
+    [x] > Spells                       38 usable
+    [x] > Teleport items               61 usable
+    [x] > Tablets and scrolls           9 usable
+    [x]   House              set in Account > My house
+    [x] > Fairy rings                  52 usable
+    [x] > Spirit trees                  8 usable
+    [x] > Quetzals                     14 usable
+    [x] > Boats and ships              30 usable
+    [x] > Gliders, balloons, carts     20 usable
+    [ ] > Home and minigame teleports   5 usable
+    [x]   Agility shortcuts        by your level
     [x] Avoid the Wilderness
     Travel style                        Fastest  v
+    [x] Walk when it's nearly as quick as teleporting
+    Stamina doses to bring                     [0]
 ```
 
-- The counts and times above are examples, not measured.
-- Opening a family lists each way with its state on the right: "ready", "needs 45 Agility", "no charges", "off".
+- The counts above are examples, not measured.
+- **Agreed with elzerma (2026-10-20, picker):** these eleven families. Home and minigame teleports are off by default
+  (the rule of 2026-10-17); turned on, the route uses at most one of each per run, once its cooldown is over (the game
+  keeps the minute each was last used: varplayers 888 and 892, as RuneLite's timers read them). House is Teleport to
+  House by spell, tablet or cape, then the house's portals, jewellery box, fairy ring and spirit tree, set in Account >
+  My house, with no list. The quetzal whistle is a teleport item; Quetzals is Renu. Boats and ships are charter ships
+  and canoes (listed), and the boats and ships on the way, which go with the family. Agility shortcuts have no list,
+  as Shortest Path names them only "Climb Rocks" and the like. "Keep the last charge of my jewellery" sits inside
+  Teleport items, "Cast from runes, not tablets" inside Tablets and scrolls.
+- Opening a family lists each way with its state on the right: "ready", "needs 45 Agility", "no charges", "last charge
+  kept", "none left today", "cooling down", "in the Wilderness", "off". Every spell, ring, tree, pad, ship and cart is
+  listed; teleport items and tablets only if the player owns them (the atlas knows over 300). A way's hover says what it
+  needs and its charges or uses left (elzerma: no "13 s quicker" in T7).
+- Single ways turn off in their family's list and from the Run tab: right-click a stop for "Don't use ..." on its
+  teleport or hop, the house, or boats on the way. The choices are kept for the account: a preset never brings back a
+  way that's off (they live in RunConfig, which applying a preset keeps, like the storage sources).
 - Turning a family or a single way off is a preference the route follows (as Shortest Path's toggles do), and the
   way to steer travel (elzerma, 2026-10-20): "don't use this way" for a way the route keeps using that the player
   can't or won't use; the route is planned again without it and still finds the fastest run.
@@ -315,8 +331,23 @@ one tick box for every stop, "Cast from runes, not tablets" (on for anyone who h
 drop-down is gone. "Defaults for every stop" is now "Ways to travel", with "Travel style" in place of "Auto (best)
 picks". A guided test can still fix one stop's teleport for itself (`RunConfig.testTravel`, never shown; the Spellbook
 Swap test needs Catherby by Camelot Teleport). Planning no longer works out a way to every location on each refresh for
-the list (about 6 ms on the client thread). Still to come in T7: the families and "don't use this way"; then the old
-tables go in their own session (T3's last step).
+the list (about 6 ms on the client thread). Then the old tables go in their own session (T3's last step).
+
+**T7 built (2026-10-20, branch `claude/interesting-dhawan-3d02c4`):** the families and single ways above.
+`data/travel/TravelFamily` names the families; `data/travel/atlas/AtlasWays` holds the player's choices and puts each
+atlas teleport, hop and transport in its family, with a key that survives atlas rebuilds ("TELEPORTATION_ITEM|Ectophial",
+"FAIRY_RING|CKR"). `AtlasLegs` never plans a teleport, hop or way whose family or key is off; boats and Agility
+shortcuts on the way are left out by their steps, and the atlas's peeled ways give the way round. The Wilderness is kept
+out unless "Avoid the Wilderness" is unticked. Cooldown teleports are timed as the home teleport (10.5 s), spent once
+per run in `RoutePlanner.spendCharges` like a charge, and the planner's suggestions for a stop with no way skip families
+that are off. Bank teleports (`BankTeleport`) and the supply list's tablet or runes (`SupplyCalculator.usesTablet`)
+follow the families too: with tablets off a spell is cast from runes, with spells off only its tablet is used, and
+Teleport to House goes with House. `route/TravelWays` works out every way's state with each plan, from the planner's own
+rules, for the Travel tab. Saved in RunConfig (`travelFamilies`, `waysOff`, `avoidWilderness`), loaded from old saves
+with the defaults, and kept when a preset is applied. Tests: `TravelChoicesTest`, `TravelWaysTest`, `AtlasWaysTest`,
+`TabletChoiceTest`, and saves in `RunConfigTest` and `NewerSavesTest`. While a stop's leg is planned again after a
+charge or cooldown ran out, a leg worked out before it ran out is now planned again once rather than kept as "no
+charges left".
 
 ## 7. Tests
 
@@ -379,7 +410,7 @@ three.
 | T4 | Choosing ways with the inventory in mind (section 4, last part): the run planned from the bank the player gears up at, footprints, run-level moves, bank trips costed from the atlas, explanations | large | Hand checks: a big run |
 | T5 | Journeys from atlas steps: generated step text, NPC and object outlines, walking lines to each step | medium | Hand checks: a boat or NPC journey |
 | T6 | Estimate and personal best: time constants, pace, best times and splits; remove "Share your run times" | medium | Hand checks: a run, then a faster one |
-| T7 | Travel tab: ways to travel by family, each way with on/off ("don't use this way"), Wilderness. The per-location list went on 2026-10-20 (section 6) | medium | Hand checks on the tab |
+| T7 | Travel tab: ways to travel by family, each way with on/off ("don't use this way", also from the Run tab), Wilderness. The per-location list went on 2026-10-20. Built 2026-10-20 (section 6) | medium | Hand checks on the tab |
 | T8 | Optional dev-client second opinion: at each leg, ask Shortest Path's `query` from the player's tile and log when its way is quicker | small | Log |
 | T9 | Help list, README, notices, release notes | small | None |
 
@@ -627,7 +658,7 @@ whistle's real wait, and the first leg from where I stand." Built; the hand chec
 - **Not yet:** deleting the old tables (after the hand checks); the patch order inside a stop; journeys written from
   the atlas's steps beyond boats and NPCs (T5); spells the plugin doesn't know (Watchtower, Kourend Castle...) are
   planned only with their runes owned and on the spellbook in use, and their runes go on the supply list as items;
-  planning off the client thread (T4's search will need it); the Travel tab (T7).
+  planning off the client thread (T4's search will need it). The Travel tab (T7) was built on 2026-10-20 (section 6).
 
 ## 10. Risks
 

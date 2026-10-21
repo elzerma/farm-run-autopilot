@@ -14,6 +14,7 @@ import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.Rune;
 import com.farmrunautopilot.data.travel.RuneAmount;
 import com.farmrunautopilot.data.travel.Spell;
+import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelMethod;
@@ -1155,15 +1156,30 @@ public final class SupplyCalculator
 
 	/**
 	 * Tablet first: a spell is taken from its tablet when the player has one (unless they cast from runes, Travel >
-	 * Ways to travel), and always when it can't be cast.
+	 * Ways to travel > Tablets and scrolls), and always when it can't be cast or spells are turned off; never when
+	 * tablets are turned off. Teleport to House goes with House, which takes the spell or its tablet alike.
 	 *
 	 * @param location the stop it's cast for; the same rule applies at every stop
 	 */
 	public static boolean usesTablet(Spell spell, Location location, RunConfig config, AccessSnapshot access,
 		Holdings holdings)
 	{
-		return spell.hasTablet() && (!access.canCast(spell)
-			|| (!config.isUseRunesNotTabs() && holdings.count(spell.getTabletItemId()) > 0));
+		if (!spell.hasTablet())
+		{
+			return false;
+		}
+		if (spell != Spell.TELEPORT_TO_HOUSE)
+		{
+			if (!config.isOn(TravelFamily.TABLETS))
+			{
+				return false;
+			}
+			if (!config.isOn(TravelFamily.SPELLS))
+			{
+				return true;
+			}
+		}
+		return !access.canCast(spell) || (!config.isUseRunesNotTabs() && holdings.count(spell.getTabletItemId()) > 0);
 	}
 
 	/**

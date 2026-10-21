@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.PatchType;
+import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -40,6 +41,16 @@ public class NewerSavesTest
 		final AccountSettings account = gson.fromJson("{\"itemCharges\":{\"NEWER_ITEM\":1,\"SKILLS_NECKLACE\":4,"
 			+ "\"ANOTHER_NEWER_ITEM\":2}}", AccountSettings.class).sanitise();
 		assertEquals(Collections.singletonMap(TravelItem.SKILLS_NECKLACE, 4), account.getItemCharges());
+	}
+
+	@Test
+	public void travelFamiliesFromANewerVersionKeepWhatThisOneKnows()
+	{
+		// A newer version with families this one hasn't heard of (sprint T7)
+		final RunConfig config = gson.fromJson("{\"travelFamilies\":{\"NEWER_FAMILY\":false,\"FAIRY_RINGS\":false,"
+			+ "\"ANOTHER_NEWER_FAMILY\":true}}", RunConfig.class).sanitise();
+		assertEquals(Collections.singletonMap(TravelFamily.FAIRY_RINGS, false), config.getTravelFamilies());
+		assertFalse(config.isOn(TravelFamily.FAIRY_RINGS));
 	}
 
 	@Test

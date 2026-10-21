@@ -10,6 +10,7 @@ import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.Spell;
+import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelTimes;
@@ -18,6 +19,7 @@ import com.farmrunautopilot.data.travel.atlas.AtlasHouse;
 import com.farmrunautopilot.data.travel.atlas.AtlasLegs;
 import com.farmrunautopilot.data.travel.atlas.AtlasLinks;
 import com.farmrunautopilot.data.travel.atlas.AtlasOption;
+import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
@@ -29,6 +31,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -86,6 +89,8 @@ public final class RoutePlanner
 	private final Set<TravelItem> usedUp = EnumSet.noneOf(TravelItem.class);
 	/** Daily-limited teleports with no uses left today, found while planning. */
 	private final Set<TravelMethod> usedUpToday = EnumSet.noneOf(TravelMethod.class);
+	/** Kinds of cooldown teleport (home, minigame) already used once in the run being planned. */
+	private final Set<String> cooldownsUsed = new HashSet<>();
 	/** A stop the player is close to but not at, so the run can start by walking there; null if none. */
 	private Location near;
 	private int nearTiles;
@@ -220,7 +225,7 @@ public final class RoutePlanner
 	private Route plan(List<Location> stops, int patchCount, Location here)
 	{
 		final Route first = order(stops, patchCount, here);
-		if (usedUp.isEmpty() && usedUpToday.isEmpty())
+		if (usedUp.isEmpty() && usedUpToday.isEmpty() && cooldownsUsed.isEmpty())
 		{
 			return first;
 		}
@@ -638,6 +643,10 @@ public final class RoutePlanner
 		final String breakdown;
 		/** The way, for a leg only the atlas knows ({@link Departure#ATLAS}); otherwise null. */
 		final AtlasLeg atlas;
+		/** What the leg uses that the player can turn off on the Travel tab (AtlasWays keys), from the atlas. */
+		final List<String> ways;
+		/** The kind of cooldown teleport it uses (a home or minigame teleport, one of each per run), or null. */
+		final String cooldown;
 
 		Leg(TravelMethod method, Departure departure, double seconds, boolean needsSupplies, String breakdown)
 		{
@@ -653,6 +662,12 @@ public final class RoutePlanner
 		Leg(TravelMethod method, Departure departure, double seconds, boolean needsSupplies, double penalty,
 			String breakdown, AtlasLeg atlas)
 		{
+			this(method, departure, seconds, needsSupplies, penalty, breakdown, atlas, Collections.emptyList(), null);
+		}
+
+		Leg(TravelMethod method, Departure departure, double seconds, boolean needsSupplies, double penalty,
+			String breakdown, AtlasLeg atlas, List<String> ways, String cooldown)
+		{
 			this.method = method;
 			this.departure = departure;
 			this.seconds = seconds;
@@ -661,11 +676,13 @@ public final class RoutePlanner
 			this.cost = seconds + penalty;
 			this.breakdown = breakdown;
 			this.atlas = atlas;
+			this.ways = ways;
+			this.cooldown = cooldown;
 		}
 
 		RouteStop stop(Location to)
 		{
-			return new RouteStop(to, method, departure, seconds, needsSupplies, breakdown, atlas);
+			return new RouteStop(to, method, departure, seconds, needsSupplies, breakdown, atlas, ways);
 		}
 	}
 
@@ -792,15 +809,22 @@ public final class RoutePlanner
 		return renu ? -RENU_PREFERENCE : 0;
 	}
 
-	/** The planner's leg for an atlas option, with its overhead, and the way described if it's only the atlas's. */
+	/**
+	 * The planner's leg for an atlas option, with its overhead, the way described if it's only the atlas's, and what it
+	 * uses that the player can turn off (the Run tab's "Don't use ...").
+	 */
 	private Leg atlasLeg(AtlasLegs legs, AtlasOption option, AtlasTravel.Match match)
 	{
 		final boolean walking = match.getDeparture() == Departure.WALK;
 		final double overhead = walking ? TravelTimes.WALK_OVERHEAD : TravelTimes.LEG_OVERHEAD;
 		final AtlasLeg described = match.getDeparture() == Departure.ATLAS
 			? AtlasTravel.leg(atlas.getAtlas(), option, holdings, this::owns) : null;
+		final TravelAtlas.Jump teleport = option.getTeleport();
+		final String cooldown = teleport != null && AtlasWays.family(teleport) == TravelFamily.COOLDOWN
+			? teleport.getType() : null;
 		return new Leg(match.getMethod(), match.getDeparture(), option.getSeconds() + overhead, false,
-			walking ? 0 : preference(option, match), legs.breakdown(option) + " + overhead " + round(overhead), described);
+			walking ? 0 : preference(option, match), legs.breakdown(option) + " + overhead " + round(overhead), described,
+			AtlasWays.keys(atlas.getAtlas(), option), cooldown);
 	}
 
 	/** What an option the plugin doesn't know as one of its methods costs besides time, for the travel styles. */
@@ -838,9 +862,9 @@ public final class RoutePlanner
 		{
 			return null;
 		}
-		// Rebuilt once an item or a daily teleport is found to run out partway, so it's ruled out; until then the same
-		// as every other plan and question for this player, so shared
-		final int version = usedUp.size() * 1000 + usedUpToday.size();
+		// Rebuilt once an item, a daily teleport or a cooldown teleport is found to run out partway, so it's ruled out;
+		// until then the same as every other plan and question for this player, so shared
+		final int version = (usedUp.size() * 100 + usedUpToday.size()) * 10 + cooldownsUsed.size();
 		if (atlasLegs == null || atlasLegsFor != version)
 		{
 			atlasLegs = version == 0
@@ -867,6 +891,10 @@ public final class RoutePlanner
 	 */
 	private Double teleportExtra(TravelAtlas.Jump teleport)
 	{
+		if (cooldownsUsed.contains(teleport.getType()))
+		{
+			return null;
+		}
 		final TravelAtlas data = atlas.getAtlas();
 		final Spell spell = AtlasLinks.spell(data, teleport);
 		if (spell != null && teleport.getType().equals("TELEPORTATION_SPELL"))
@@ -1022,8 +1050,9 @@ public final class RoutePlanner
 			{
 				continue;
 			}
-			// Spirit trees and fairy rings aren't something to bring
-			if (method.getKind() == TravelKind.SPIRIT_TREE || method.getKind() == TravelKind.FAIRY_RING)
+			// Spirit trees and fairy rings aren't something to bring; nor is anything the player turned off
+			if (method.getKind() == TravelKind.SPIRIT_TREE || method.getKind() == TravelKind.FAIRY_RING
+				|| !config.isOn(family(method)))
 			{
 				continue;
 			}
@@ -1040,6 +1069,40 @@ public final class RoutePlanner
 			}
 		}
 		return fallback != null ? fallback : new Leg(null, Departure.NONE, 0, false, NO_WAY_PENALTY, "no way there");
+	}
+
+	/** The Travel tab family one of the plugin's own methods would be suggested under, when nothing else gets there. */
+	private TravelFamily family(TravelMethod method)
+	{
+		switch (method.getKind())
+		{
+			case SPELL:
+				if (method.getSpell() == Spell.LUMBRIDGE_HOME_TELEPORT)
+				{
+					return TravelFamily.COOLDOWN;
+				}
+				// A spell the player can't cast is suggested as its tablet
+				return access.canCast(method.getSpell()) ? TravelFamily.SPELLS : TravelFamily.TABLETS;
+			case TABLET:
+				return TravelFamily.TABLETS;
+			case HOUSE_PORTAL:
+				return TravelFamily.HOUSE;
+			case BALLOON:
+				return TravelFamily.GLIDERS;
+			default:
+				// Jewellery, capes, diary items, the quetzal whistle and other teleport items
+				return TravelFamily.TELEPORT_ITEMS;
+		}
+	}
+
+	/**
+	 * The plugin's own rules for its items and spells before anything is used, as the planner applies them: for the
+	 * Travel tab, which says which ways are ready (TravelWays).
+	 */
+	static AtlasLegs.TeleportCheck startRules(RunConfig config, AccessSnapshot access, Holdings holdings, PohSetup poh,
+		RouteAtlas atlas)
+	{
+		return new RoutePlanner(config, access, holdings, poh, atlas)::teleportExtra;
 	}
 
 	/**
@@ -1474,26 +1537,31 @@ public final class RoutePlanner
 
 	/**
 	 * Walk the planned order spending charges, pooled per item; a leg whose item has none left is planned again
-	 * without that item (e.g. a slayer ring with one charge covers one stop, not two).
+	 * without that item (e.g. a slayer ring with one charge covers one stop, not two). A home or minigame teleport is
+	 * used once per run at most, as its cooldown (30 or 20 minutes) outlasts most runs.
 	 *
 	 * @param firstFrom where the first leg sets off from, or null for anywhere (or where the player stands)
 	 */
 	private Leg[] spendCharges(List<Location> stops, int[] order, Leg first, Leg[][] legs, Location firstFrom)
 	{
 		final ChargeBudget budget = new ChargeBudget(holdings, config.isKeepLastCharge());
+		final Set<String> cooldownsSpent = new HashSet<>();
 		final Leg[] chosen = new Leg[order.length];
 		for (int k = 0; k < order.length; k++)
 		{
 			final Location from = k == 0 ? firstFrom : stops.get(order[k - 1]);
 			final Location to = stops.get(order[k]);
 			Leg leg = k == 0 ? first : legs[order[k - 1]][order[k]];
+			// The leg was worked out before anything ran out: planned again once if it uses what ran out earlier
+			boolean replanned = false;
 			while (true)
 			{
 				final TravelItem item = itemUsed(leg);
 				final TravelMethod daily = dailyUsed(leg);
 				final boolean itemOut = item != null && !budget.hasCharge(item);
 				final boolean dailyOut = daily != null && !budget.hasUseToday(daily);
-				if (!itemOut && !dailyOut)
+				final boolean cooldownOut = leg.cooldown != null && cooldownsSpent.contains(leg.cooldown);
+				if (!itemOut && !dailyOut && !cooldownOut)
 				{
 					if (item != null)
 					{
@@ -1503,18 +1571,25 @@ public final class RoutePlanner
 					{
 						budget.spendUseToday(daily);
 					}
+					if (leg.cooldown != null)
+					{
+						cooldownsSpent.add(leg.cooldown);
+					}
 					break;
 				}
 				// Rule out what ran out and plan this stop again; each pass rules out something new, so this ends
-				final boolean ruledOut = (itemOut && usedUp.add(item)) | (dailyOut && usedUpToday.add(daily));
-				if (!ruledOut)
+				final boolean ruledOut = (itemOut && usedUp.add(item)) | (dailyOut && usedUpToday.add(daily))
+					| (cooldownOut && cooldownsUsed.add(leg.cooldown));
+				if (!ruledOut && replanned)
 				{
-					// Nothing else gets there: keep it, as something to recharge or come back to tomorrow
-					leg = new Leg(leg.method, leg.departure, leg.seconds, true, MISSING_PENALTY,
-						leg.breakdown + ", no charges left", leg.atlas);
+					// Nothing else gets there: keep it, as something to recharge, come back to tomorrow or wait for
+					leg = new Leg(leg.method, leg.departure, leg.seconds, true, MISSING_PENALTY, leg.breakdown
+						+ (cooldownOut ? ", used once already this run (cooldown)" : ", no charges left"), leg.atlas,
+						leg.ways, leg.cooldown);
 					break;
 				}
 				leg = bestLeg(from, to);
+				replanned = true;
 			}
 			chosen[k] = leg;
 		}

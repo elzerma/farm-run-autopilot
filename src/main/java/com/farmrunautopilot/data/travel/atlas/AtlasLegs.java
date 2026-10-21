@@ -1,5 +1,6 @@
 package com.farmrunautopilot.data.travel.atlas;
 
+import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelTimes;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,17 +20,16 @@ import net.runelite.api.gameval.VarbitID;
  * Legs from the atlas for one player (docs/plans/travel-rework.md, section 4): the atlas's way from where they are, a
  * teleport and the way from where it lands, the house (teleport in, or a spirit tree in), or a hop (a fairy ring, spirit
  * tree, quetzal...) taken on foot or after a teleport, then the way from where it lands. Only ways, teleports and hops
- * whose needs the player meets, none of them into the Wilderness, and no teleports with a cooldown (elzerma,
- * 2026-10-17). Seconds use the plugin's own timings for each kind of teleport and hop (the quetzal whistle's real wait,
- * not Shortest Path's animation ticks), plus walking tiles and transport ticks; the leg's set-off overhead is added by
- * the planner. Built for one plan: what it works out (needs met, teleports usable, reaching each hub) is kept.
+ * whose needs the player meets and that the Travel tab lets the route use (AtlasWays, sprint T7): by default none into
+ * the Wilderness and no home or minigame teleports, which have a cooldown (elzerma, 2026-10-17). Seconds use the
+ * plugin's own timings for each kind of teleport and hop (the quetzal whistle's real wait, not Shortest Path's animation
+ * ticks), plus walking tiles and transport ticks; the leg's set-off overhead is added by the planner. Built for one
+ * plan: what it works out (needs met, teleports usable, reaching each hub) is kept.
  */
 public final class AtlasLegs
 {
 	private static final double SECONDS_PER_TILE = 0.3;
 	private static final double SECONDS_PER_TICK = 0.6;
-	/** Teleports with a cooldown (minigame and home teleports) aren't planned (elzerma, 2026-10-17). */
-	private static final Set<String> COOLDOWN = Set.of("TELEPORTATION_MINIGAME", "TELEPORTATION_SPELL_HOME");
 	/** The house's exits: planned with the player's own house set-up (AtlasHouse), not from the atlas alone. */
 	private static final Set<String> HOUSE = Set.of("TELEPORTATION_PORTAL_POH", "TELEPORTATION_BOX");
 	/** Teleporting inside the house (Teleport to House with the house's teleport setting "inside"): out of the door. */
@@ -37,7 +37,9 @@ public final class AtlasLegs
 
 	private final TravelAtlas atlas;
 	private final AtlasAccount account;
-	/** The player's house as a way out, or null. */
+	/** What the player lets the route use (the Travel tab). */
+	private final AtlasWays choices;
+	/** The player's house as a way out, or null (none set up, or House turned off). */
 	private final AtlasHouse house;
 	/** The plugin's say on its own items and spells, or null to go by the atlas's needs alone. */
 	private final TeleportCheck teleportCheck;
@@ -52,6 +54,8 @@ public final class AtlasLegs
 	private final Boolean[] wild;
 	/** Ways through the Wilderness (a transport on the way starts or ends there). */
 	private final Map<TravelAtlas.Way, Boolean> wildWays = new IdentityHashMap<>();
+	/** Ways with a transport the player turned off (a boat, an Agility shortcut). */
+	private final Map<TravelAtlas.Way, Boolean> offWays = new IdentityHashMap<>();
 	/** The quickest way to each hub from anywhere (a teleport and a walk), worked out once. */
 	private final Map<Integer, Reach> hubFromAnywhere = new HashMap<>();
 	/** Each place's options that don't depend on where the player is, quickest first, worked out once. */
@@ -120,14 +124,16 @@ public final class AtlasLegs
 	{
 		this.atlas = atlas;
 		this.account = account;
-		this.house = house;
+		this.choices = account.getWays();
+		this.house = choices.isOn(TravelFamily.HOUSE) ? house : null;
 		this.teleportCheck = teleportCheck;
 		this.shortestPathTiming = shortestPathTiming;
 		this.met = new Boolean[atlas.getNeeds().size()];
 		this.wild = new Boolean[atlas.getPlaces().size()];
 		for (TravelAtlas.Jump t : atlas.getTeleports())
 		{
-			if (COOLDOWN.contains(t.getType()) || HOUSE.contains(t.getType()) || wild(t.getTo()))
+			// Home and minigame teleports only with their family on (their cooldown is one of their needs)
+			if (HOUSE.contains(t.getType()) || !choices.allows(t) || avoided(t.getTo()))
 			{
 				continue;
 			}
@@ -144,6 +150,12 @@ public final class AtlasLegs
 	public int usableTeleports()
 	{
 		return teleports.size();
+	}
+
+	/** Whether this player can use this teleport, as planned (for the Travel tab's tests). */
+	public boolean usable(TravelAtlas.Jump teleport)
+	{
+		return teleportTime.containsKey(teleport.getId());
 	}
 
 	/** Seconds to use this teleport (its kind's timing and anything the plugin adds), or null if it can't be used. */
@@ -197,6 +209,8 @@ public final class AtlasLegs
 			case "TELEPORTATION_SPELL":
 				return TravelTimes.TELEPORT;
 			case "TELEPORTATION_SPELL_HOME":
+			case "TELEPORTATION_MINIGAME":
+				// The grouping tab's teleports have the home teleport's long cast (19-21 ticks in Shortest Path's data)
 				return TravelTimes.HOME_TELEPORT;
 			case "QUETZAL_WHISTLE":
 				return TravelTimes.QUETZAL_WHISTLE;
@@ -401,7 +415,7 @@ public final class AtlasLegs
 				}
 				for (TravelAtlas.Jump hop : atlas.hopsInto(landing))
 				{
-					if (!wild(hop.getFrom()) && !wild(hop.getTo()) && meetsAll(hop.getNeeds()))
+					if (!avoided(hop.getFrom()) && !avoided(hop.getTo()) && choices.allows(hop) && meetsAll(hop.getNeeds()))
 					{
 						found.add(new HopIn(hop, last, hopSeconds(hop) + seconds(last)));
 					}
@@ -554,8 +568,9 @@ public final class AtlasLegs
 			spiritTrees = new ArrayList<>();
 			for (TravelAtlas.Jump hop : atlas.getHops())
 			{
-				if (hop.getType().equals("SPIRIT_TREE") && !spiritTrees.contains(hop.getFrom()) && !wild(hop.getFrom())
-					&& meetsAll(hop.getNeeds()))
+				// Any tree goes to the house ("Your house"), so only the family matters, not where this hop goes
+				if (hop.getType().equals("SPIRIT_TREE") && choices.isOn(TravelFamily.SPIRIT_TREES)
+					&& !spiritTrees.contains(hop.getFrom()) && !avoided(hop.getFrom()) && meetsAll(hop.getNeeds()))
 				{
 					spiritTrees.add(hop.getFrom());
 				}
@@ -574,19 +589,41 @@ public final class AtlasLegs
 	}
 
 	/**
-	 * The ways are quickest first, and each slower one needs less: the first the player can use (and that keeps out of
-	 * the Wilderness) is the best.
+	 * The ways are quickest first, and each slower one needs less: the first the player can use (keeping out of the
+	 * Wilderness unless they let it, and with no boat or shortcut they turned off) is the best.
 	 */
 	private TravelAtlas.Way usable(List<TravelAtlas.Way> ways)
 	{
 		for (TravelAtlas.Way way : ways)
 		{
-			if (meetsAll(way.getNeeds()) && !wild(way))
+			if (meetsAll(way.getNeeds()) && !(choices.avoidsWilderness() && wild(way)) && !off(way))
 			{
 				return way;
 			}
 		}
 		return null;
+	}
+
+	/** A way uses a transport whose family the player turned off: a boat or ship, or an Agility shortcut. */
+	private boolean off(TravelAtlas.Way way)
+	{
+		return offWays.computeIfAbsent(way, w ->
+		{
+			for (int step : w.getSteps())
+			{
+				if (!choices.allows(atlas.step(step)))
+				{
+					return true;
+				}
+			}
+			return false;
+		});
+	}
+
+	/** A place in the Wilderness while the player keeps out of it (Avoid the Wilderness, on unless they turn it off). */
+	private boolean avoided(int place)
+	{
+		return choices.avoidsWilderness() && wild(place);
 	}
 
 	private boolean meetsAll(int[] needs)
@@ -640,7 +677,7 @@ public final class AtlasLegs
 	}
 
 	/** Shortest Path's Wilderness areas (BSD-2, WildernessChecker at 37abff3): above ground and underground. */
-	static boolean inWilderness(WorldPoint p)
+	public static boolean inWilderness(WorldPoint p)
 	{
 		final int x = p.getX();
 		final int y = p.getY();

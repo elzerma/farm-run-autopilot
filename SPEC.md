@@ -408,7 +408,7 @@ Collapsible sections:
 2. **Patches** — per type, list with checkbox, lock icon + requirement tooltip.
 3. **Crops** — one seed/sapling per run type, or 1st/2nd/3rd choices; herb multi-select for disease-free patches (see section 2).
 4. **Protection** — per type: Pay / Compost only; per-patch override; pay with notes; pay to clear; compost type; plant cure / Cure Plant / Resurrect Crops toggles; equipment boosts toggle.
-5. **Travel** — per location dropdown (Auto + owned/unlocked methods, locked ones greyed); "use runes instead of tabs" global + per location.
+5. **Travel** — per location dropdown (Auto + owned/unlocked methods, locked ones greyed); "use runes instead of tabs" global + per location. (Changed by elzerma, 2026-10-20: no dropdowns; Ways to travel turns families of ways and single ways on and off, docs/plans/travel-rework.md section 6.)
 6. **My POH** — portal location, nexus destinations, jewellery box tier, pool tier, fairy ring, spirit tree; "last detected on <date>" + Edit.
 7. **Route** — mode (Autopilot / Meta / Off), start location, end near bank, energy threshold and tile distance.
 8. **Storage sources** — group storage (off), seed vault (off).

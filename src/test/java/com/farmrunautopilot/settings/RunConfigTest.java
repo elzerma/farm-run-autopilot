@@ -12,8 +12,11 @@ import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.poh.PortalNexus;
+import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.google.gson.Gson;
+import java.util.Collections;
+import java.util.EnumSet;
 import org.junit.Test;
 
 public class RunConfigTest
@@ -198,5 +201,46 @@ public class RunConfigTest
 		assertTrue(config.getTestTravel().isEmpty());
 		final String saved = gson.toJson(config);
 		assertFalse(saved, saved.contains("\"travel\"") || saved.contains("travelHow") || saved.contains("fairyRingWay"));
+	}
+
+	@Test
+	public void waysToTravelStartWithEverythingButCooldownTeleports()
+	{
+		// Saves from before the Travel tab's families (sprint T7) load with the defaults (elzerma, 2026-10-17)
+		final RunConfig old = gson.fromJson("{\"routeMode\":\"META\"}", RunConfig.class).sanitise();
+		for (TravelFamily family : TravelFamily.values())
+		{
+			assertEquals(family.name(), family != TravelFamily.COOLDOWN, old.isOn(family));
+		}
+		assertTrue(old.isAvoidWilderness());
+		assertTrue(old.getWaysOff().isEmpty());
+		assertEquals(EnumSet.of(TravelFamily.COOLDOWN), old.familiesOff());
+	}
+
+	@Test
+	public void waysToTravelSurviveASave()
+	{
+		final RunConfig config = new RunConfig().sanitise();
+		config.setOn(TravelFamily.FAIRY_RINGS, false);
+		config.setOn(TravelFamily.COOLDOWN, true);
+		config.getWaysOff().add("TELEPORTATION_ITEM|Ectophial");
+		config.getWaysOff().add("SPIRIT_TREE|Gnome Stronghold");
+		config.setAvoidWilderness(false);
+		final RunConfig loaded = gson.fromJson(gson.toJson(config), RunConfig.class).sanitise();
+		assertEquals(config, loaded);
+		assertFalse(loaded.isOn(TravelFamily.FAIRY_RINGS));
+		assertTrue(loaded.isOn(TravelFamily.COOLDOWN));
+		assertEquals(EnumSet.of(TravelFamily.FAIRY_RINGS), loaded.familiesOff());
+		assertTrue(loaded.getWaysOff().contains("SPIRIT_TREE|Gnome Stronghold"));
+		assertFalse(loaded.isAvoidWilderness());
+	}
+
+	@Test
+	public void brokenWaysToTravelAreRepaired()
+	{
+		final RunConfig config = gson.fromJson("{\"travelFamilies\":null,\"waysOff\":[\"\",null,"
+			+ "\"FAIRY_RING|CKR\"]}", RunConfig.class).sanitise();
+		assertEquals(EnumSet.of(TravelFamily.COOLDOWN), config.familiesOff());
+		assertEquals(Collections.singleton("FAIRY_RING|CKR"), config.getWaysOff());
 	}
 }

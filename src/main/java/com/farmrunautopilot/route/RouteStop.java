@@ -27,6 +27,11 @@ public class RouteStop
 	String breakdown;
 	/** The way, for {@link Departure#ATLAS}; otherwise null. */
 	AtlasLeg atlas;
+	/**
+	 * What the leg uses that the player can turn off on the Travel tab, by AtlasWays key (its teleport, its hop, the
+	 * house, boats on the way), for the Run tab's "Don't use ..."; empty if nothing or not planned on the atlas.
+	 */
+	List<String> ways;
 
 	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
 		boolean needsSupplies)
@@ -43,6 +48,12 @@ public class RouteStop
 	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
 		boolean needsSupplies, String breakdown, AtlasLeg atlas)
 	{
+		this(location, method, departure, legSeconds, needsSupplies, breakdown, atlas, Collections.emptyList());
+	}
+
+	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
+		boolean needsSupplies, String breakdown, AtlasLeg atlas, List<String> ways)
+	{
 		this.location = location;
 		this.method = method;
 		this.departure = departure;
@@ -50,6 +61,7 @@ public class RouteStop
 		this.needsSupplies = needsSupplies;
 		this.breakdown = breakdown;
 		this.atlas = atlas;
+		this.ways = ways;
 	}
 
 	/**

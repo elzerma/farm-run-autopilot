@@ -129,7 +129,16 @@ public final class AtlasNeed
 		return new AtlasNeed(Kind.UNKNOWN, name, null, null, 0, 0, null, 0, Collections.emptyList(), null);
 	}
 
-	/** Whether a var's value passes this check. A cooldown ("@") counts as passed: cooldown teleports aren't planned. */
+	/**
+	 * A home or minigame teleport's cooldown: the var holds the minute it was last used (since 1970, as RuneLite's
+	 * timers read it), and {@link #getValue()} minutes must have passed.
+	 */
+	public boolean isCooldown()
+	{
+		return "@".equals(check);
+	}
+
+	/** Whether a var's value passes this check. A cooldown ("@") passes here; AtlasAccount checks it with the time. */
 	public boolean passes(int current)
 	{
 		switch (check)

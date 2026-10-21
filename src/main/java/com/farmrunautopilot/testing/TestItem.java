@@ -63,6 +63,11 @@ public enum TestItem
 			+ "nearby (e.g. the Farming Guild, then Hosidius with your house portal there). The stop should say "
 			+ "\"Spirit tree to your house, then...\", and the guide should move on once you're in the house and again "
 			+ "once you've left it."),
+	HOUSE_TURNED_OFF(Tab.TRAVEL, "Turning your house off",
+		"With your house set up in Account > My house, build a run whose route goes through it (a stop says "
+			+ "\"House ...\" or \"Spirit tree to your house\"). Untick House under Travel > Ways to travel: every stop "
+			+ "should get another way, none of them through your house. Tick it again and the stops through your house "
+			+ "should come back."),
 	BUCKET_COMPOST(Tab.FARM, "Bottomless bucket at the tool leprechaun",
 		"With a bottomless compost bucket that has compost in it, store it with any tool leprechaun. Settings > "
 			+ "Debug > Detected should then show the bucket with the right compost and uses."),

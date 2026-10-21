@@ -16,7 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
 import net.runelite.api.Skill;
@@ -151,7 +150,7 @@ public class AtlasRefereeTest
 		}
 		varbits.put(VarbitID.SPELLBOOK, 0);
 		varbits.put(VarbitID.POH_HOUSE_LOCATION, 0);
-		return new AtlasAccount(access, holdings, varbits, varps, Set.of());
+		return new AtlasAccount(access, holdings, varbits, varps);
 	}
 
 	/** A value for this var that passes this check and the ones before it where it can (bits add up). */

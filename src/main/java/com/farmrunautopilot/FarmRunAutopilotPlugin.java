@@ -21,6 +21,7 @@ import com.farmrunautopilot.supply.SupplyPlan;
 import com.farmrunautopilot.route.RunOverrides;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
+import com.farmrunautopilot.route.TravelWays;
 import com.farmrunautopilot.run.GuidanceOverlay;
 import com.farmrunautopilot.run.HighlightOverlay;
 import com.farmrunautopilot.run.HintArrowController;
@@ -186,6 +187,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private RunView shownRunView;
 	/** The holdings the Detected list last showed (a new object each time they change). */
 	private Holdings shownHoldings;
+	/** The Travel tab's ways as last shown (a new object each time something in them changes). */
+	private TravelWays shownWays;
 	/** The guided test as the Run tab last showed it. */
 	private TestView shownTestView = TestView.NONE;
 
@@ -334,6 +337,17 @@ public class FarmRunAutopilotPlugin extends Plugin
 			if (p != null)
 			{
 				SwingUtilities.invokeLater(p::refreshDetected);
+			}
+		}
+		// The Travel tab's ways, each with how it stands, worked out with the plan (a charge used, a level gained)
+		final TravelWays ways = runService.getTravelWays();
+		if (ways != shownWays)
+		{
+			shownWays = ways;
+			final FarmRunAutopilotPanel p = panel;
+			if (p != null)
+			{
+				SwingUtilities.invokeLater(() -> p.updateWays(ways));
 			}
 		}
 

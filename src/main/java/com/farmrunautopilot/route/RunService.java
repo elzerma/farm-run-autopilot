@@ -7,11 +7,13 @@ import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.travel.BankTeleport;
+import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.data.travel.WalkGrid;
 import com.farmrunautopilot.data.travel.atlas.AtlasAccount;
 import com.farmrunautopilot.data.travel.atlas.AtlasNeed;
+import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.run.StepAdvisor;
 import com.farmrunautopilot.settings.Outfit;
@@ -82,6 +84,8 @@ public class RunService
 	private volatile boolean dirty = true;
 	/** Null until the first plan after login, so that one is always published. */
 	private volatile RunPlan plan;
+	/** The Travel tab's families and ways as of the last plan; replaced only when something in them changes. */
+	private volatile TravelWays ways = TravelWays.EMPTY;
 	private int ticksSinceRefresh;
 	/** The stop the player was standing at on the last tick, or null. */
 	private Location here;
@@ -115,6 +119,12 @@ public class RunService
 	public SupplyPlan getSupplies()
 	{
 		return getPlan().getSupplies();
+	}
+
+	/** The Travel tab's families and ways, each with how it stands for the player. Any thread. */
+	public TravelWays getTravelWays()
+	{
+		return ways;
 	}
 
 	/**
@@ -163,6 +173,7 @@ public class RunService
 	public void reset()
 	{
 		plan = null;
+		ways = TravelWays.EMPTY;
 		dirty = true;
 	}
 
@@ -205,7 +216,13 @@ public class RunService
 		final Holdings holdings = holdingsTracker.getHoldings();
 		final RunSelection selection = RunSelector.select(config, access, patchTracker::predict,
 			Instant.now().getEpochSecond(), config.isSupplyFullRun(), overrides.get());
-		final RouteAtlas atlas = routeAtlas(access, holdings);
+		final RouteAtlas atlas = routeAtlas(config, access, holdings);
+		final TravelWays nowWays = TravelWays.of(atlas, config, access, holdings, settings.getAccount().getPoh(),
+			this::itemName);
+		if (!nowWays.equals(ways))
+		{
+			ways = nowWays;
+		}
 		final Player player = client.getLocalPlayer();
 		final WorldPoint tile = player != null ? player.getWorldLocation() : null;
 		// In the Farming Guild, where it isn't a stop: the run sets off from there (issue #8)
@@ -313,11 +330,24 @@ public class RunService
 		}
 	}
 
+	/** What the player lets the route use: the Travel tab's families, single ways and the Wilderness (sprint T7). */
+	static AtlasWays ways(RunConfig config)
+	{
+		return new AtlasWays(config.familiesOff(), config.getWaysOff(), config.isAvoidWilderness());
+	}
+
+	/** A bank teleport the player lets the route use: teleport items on, and this one not turned off. */
+	static boolean allowed(RunConfig config, BankTeleport teleport)
+	{
+		return config.isOn(TravelFamily.TELEPORT_ITEMS) && !config.getWaysOff().contains(teleport.getWayKey());
+	}
+
 	/**
-	 * The travel atlas with the player as it needs them (the varbits and varplayers it names, read now), or null if
-	 * it didn't load: routes are then planned on the old tables. Client thread.
+	 * The travel atlas with the player as it needs them (the varbits and varplayers it names, read now, and what the
+	 * Travel tab lets the route use), or null if it didn't load: routes are then planned on the old tables. Client
+	 * thread.
 	 */
-	private RouteAtlas routeAtlas(AccessSnapshot access, Holdings holdings)
+	private RouteAtlas routeAtlas(RunConfig config, AccessSnapshot access, Holdings holdings)
 	{
 		final TravelAtlas atlas = TravelAtlas.ifLoaded();
 		if (atlas == null || atlas.isEmpty())
@@ -337,7 +367,9 @@ public class RunService
 				varps.computeIfAbsent(need.getVar(), client::getVarpValue);
 			}
 		}
-		return new RouteAtlas(atlas, new AtlasAccount(access, holdings, varbits, varps));
+		// Minutes since 1970, as the game keeps when a home or minigame teleport was last used
+		return new RouteAtlas(atlas, new AtlasAccount(access, holdings, varbits, varps, ways(config),
+			Instant.now().getEpochSecond() / 60));
 	}
 
 	/** e.g. "Catherby (Camelot Teleport, 31 s), Ardougne farm (Ardougne cloak (farm), 18 s); travel 49 s". */
@@ -431,7 +463,7 @@ public class RunService
 		final Map<Long, Integer> slots = new HashMap<>();
 		final BankPlanner.Slots slotsOf = (a, b) -> slots.computeIfAbsent((long) a * 1000 + b,
 			k -> part(config, access, holdings, selection, stops.subList(a, b), route).getSlots());
-		final BankTeleport teleport = BankTeleport.best(access, holdings);
+		final BankTeleport teleport = BankTeleport.best(access, holdings, t -> allowed(config, t));
 		final BiFunction<Location, Location, Double> chainSaving = (from, to) -> RoutePlanner.chainSaving(from, to,
 			config, access, holdings, poh, atlas);
 		final Function<Location, RouteStop> fromAnywhere = to -> RoutePlanner.fromAnywhere(to, config, access,
@@ -656,10 +688,11 @@ public class RunService
 	 */
 	public RouteStop leg(Location from, Location to)
 	{
+		final RunConfig config = settings.getRunConfig();
 		final AccessSnapshot access = accessChecker.getSnapshot();
 		final Holdings holdings = holdingsTracker.getHoldings();
-		return RoutePlanner.between(from, to, settings.getRunConfig(), access, holdings, settings.getAccount().getPoh(),
-			routeAtlas(access, holdings));
+		return RoutePlanner.between(from, to, config, access, holdings, settings.getAccount().getPoh(),
+			routeAtlas(config, access, holdings));
 	}
 
 	/**
@@ -672,10 +705,12 @@ public class RunService
 			plan.getSelection(), stops, plan.getRoute());
 	}
 
-	/** The quickest bank teleport the player is carrying now, or null. Client thread. */
+	/** The quickest bank teleport the player is carrying now and lets the route use, or null. Client thread. */
 	public BankTeleport carriedBankTeleport()
 	{
-		return BankTeleport.best(accessChecker.getSnapshot(), holdingsTracker.getHoldings().carriedOnly());
+		final RunConfig config = settings.getRunConfig();
+		return BankTeleport.best(accessChecker.getSnapshot(), holdingsTracker.getHoldings().carriedOnly(),
+			t -> allowed(config, t));
 	}
 
 	/** The stop the player is standing at (near one of its patches), or null. Client thread. */

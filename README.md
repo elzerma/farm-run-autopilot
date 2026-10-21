@@ -86,9 +86,17 @@ The plugin never clicks, types or acts for you. It only shows information.
 - Every stop's way is planned for you from a travel map worked out with Shortest Path's data: every teleport,
   item, fairy ring, spirit tree, boat and shortcut your account can use, through your house too. There's nothing
   to pick per stop.
+- Ways to travel lists the families of ways: spells, teleport items, tablets and scrolls, your house, fairy rings,
+  spirit trees, quetzals, boats and ships, gliders, balloons and carts, home and minigame teleports, and Agility
+  shortcuts, each with how many you can use. Untick a family and the route doesn't use it. Open one to see each of
+  its ways and how it stands ("ready", "needs 45 Agility", "no charges", "none left today"), and untick one you can't
+  or won't use. On the Run tab, right-click a stop for "Don't use ..." on its way. The route is planned again without
+  it, and your choices stay whichever preset you use.
+- Home and minigame teleports are off to start with. Turned on, the route uses at most one of each per run, once its
+  cooldown is over. "Avoid the Wilderness" is on to start with.
 - Choose a travel style: Fastest, Prefer free, Save charges, or Fewest items to bring.
-- Tablets come first; tick "Cast from runes, not tablets" to keep yours. Spells from another spellbook are only
-  planned when your house altar or Lunar's Spellbook Swap can reach them.
+- Tablets come first; tick "Cast from runes, not tablets" (under Tablets and scrolls) to keep yours. Spells from
+  another spellbook are only planned when your house altar or Lunar's Spellbook Swap can reach them.
 - Charges are tracked across the whole run: jewellery charges, daily-limited teleports (Ardougne cloak,
   Explorer's ring) and items charged by hand (quetzal whistle, Xeric's talisman, pendant of Ates, counted from
   your teleports). When one runs out partway, the next best way is used.

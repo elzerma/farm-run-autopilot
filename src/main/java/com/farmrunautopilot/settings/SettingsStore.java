@@ -390,7 +390,8 @@ public class SettingsStore
 	/**
 	 * A preset as it applies now: its Farm and Travel choices, with the current account and debug switches that
 	 * also live in RunConfig (storage sources, drop reminders, full run, a guided test's teleports), which presets
-	 * don't cover.
+	 * don't cover, and the ways to travel turned off, kept for the account (elzerma, 2026-10-20: a preset never brings
+	 * back a way they turned off).
 	 */
 	private RunConfig farmAndTravel(RunConfig preset)
 	{
@@ -402,6 +403,11 @@ public class SettingsStore
 		result.setSupplyFullRun(runConfig.isSupplyFullRun());
 		result.getTestTravel().clear();
 		result.getTestTravel().putAll(runConfig.getTestTravel());
+		result.getTravelFamilies().clear();
+		result.getTravelFamilies().putAll(runConfig.getTravelFamilies());
+		result.getWaysOff().clear();
+		result.getWaysOff().addAll(runConfig.getWaysOff());
+		result.setAvoidWilderness(runConfig.isAvoidWilderness());
 		return result;
 	}
 

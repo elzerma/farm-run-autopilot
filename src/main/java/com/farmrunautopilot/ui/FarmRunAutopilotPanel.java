@@ -6,6 +6,7 @@ import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.route.RunOverrides;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
+import com.farmrunautopilot.route.TravelWays;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunTimings;
 import com.farmrunautopilot.run.RunView;
@@ -258,6 +259,12 @@ public class FarmRunAutopilotPanel extends PluginPanel
 		runPanel.update(plan, loggedIn);
 		// The supply plan is redone when holdings change, so the Detected lines may have too
 		settingsPanel.refreshDetected();
+	}
+
+	/** Shows the Travel tab's families and ways as the latest plan worked them out. Call on the Swing thread. */
+	public void updateWays(TravelWays ways)
+	{
+		travelPanel.showWays(ways);
 	}
 
 	/** Rebuilds the settings tabs from saved settings and account access. Call on the Swing thread. */

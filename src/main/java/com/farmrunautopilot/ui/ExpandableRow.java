@@ -17,7 +17,7 @@ import net.runelite.client.ui.FontManager;
 /**
  * One line, e.g. "Taverley" and "Falador Teleport", that opens to show its controls when clicked (elzerma: one line
  * per location, the full way on hover and when opened). A yellow bar down its edge marks a row changed from the
- * default.
+ * default. It can lead with a tick box, e.g. a Travel tab family's on and off.
  */
 class ExpandableRow extends JPanel
 {
@@ -39,6 +39,17 @@ class ExpandableRow extends JPanel
 	ExpandableRow(String name, String shortSummary, String fullSummary, boolean overridden, int width,
 		boolean expanded, Consumer<Boolean> onToggle)
 	{
+		this(null, name, shortSummary, name + ": " + fullSummary + (overridden ? " (changed from Auto)" : ""),
+			overridden, width, expanded, onToggle);
+	}
+
+	/**
+	 * @param lead a control before the name (a tick box), which takes its own clicks; or null
+	 * @param tooltip the whole hover text
+	 */
+	ExpandableRow(JComponent lead, String name, String shortSummary, String tooltip, boolean overridden, int width,
+		boolean expanded, Consumer<Boolean> onToggle)
+	{
 		setLayout(new BorderLayout());
 		setAlignmentX(LEFT_ALIGNMENT);
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -49,7 +60,8 @@ class ExpandableRow extends JPanel
 		final JLabel measure = new JLabel(shortSummary);
 		measure.setFont(FontManager.getRunescapeSmallFont());
 		final int valueWidth = Math.min(measure.getPreferredSize().width, width / 2);
-		this.name.setText(UiText.wrap(name, width - valueWidth - 40));
+		final int leadWidth = lead == null ? 0 : lead.getPreferredSize().width + 8;
+		this.name.setText(UiText.wrap(name, width - valueWidth - leadWidth - 40));
 		this.name.setIconTextGap(6);
 		this.name.setFont(FontManager.getRunescapeSmallFont());
 		this.name.setForeground(Color.WHITE);
@@ -58,10 +70,14 @@ class ExpandableRow extends JPanel
 			? shortSummary : UiText.wrap(shortSummary, width / 2));
 		summary.setFont(FontManager.getRunescapeSmallFont());
 		summary.setForeground(Color.WHITE);
+		if (lead != null)
+		{
+			lead.setOpaque(false);
+			headCard.add(lead, BorderLayout.WEST);
+		}
 		headCard.add(this.name, BorderLayout.CENTER);
 		headCard.add(summary, BorderLayout.EAST);
-		headCard.setToolTipText(UiText.tooltip(name + ": " + fullSummary
-			+ (overridden ? " (changed from Auto)" : ""), 250));
+		headCard.setToolTipText(UiText.tooltip(tooltip, 250));
 		headCard.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		headCard.addMouseListener(new MouseAdapter()
 		{

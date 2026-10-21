@@ -7,6 +7,8 @@ import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Unlock;
+import com.farmrunautopilot.data.travel.TravelFamily;
+import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.route.BankStop;
 import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RouteStop;
@@ -39,6 +41,7 @@ import java.awt.event.MouseEvent;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -54,7 +57,9 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.Timer;
@@ -1208,6 +1213,7 @@ class RunPanel extends JPanel
 		list.setCellRenderer(new StopRenderer());
 		// Reorder only on a deliberate drag (elzerma: clicks were reordering the route by accident)
 		new Reorder(list, model).install();
+		list.addMouseListener(new DontUse(list, model));
 		// A JList is only as wide as its longest row unless told otherwise: stretch it to the panel (elzerma: width
 		// wacky). Its height is asked for each layout, as rows wrap differently once it has its real width (elzerma: the
 		// line under it overlapped the last stop)
@@ -1310,9 +1316,85 @@ class RunPanel extends JPanel
 			cell.add(name, BorderLayout.NORTH);
 			cell.add(travel, BorderLayout.CENTER);
 			// JList shows the renderer's tooltip for the hovered row
-			wrapper.setToolTipText(objectivesTooltip(here ? null : "About " + legTime(stop.getLegSeconds()),
-				plan.getObjectives().get(stop.getLocation())));
+			final List<String> lines = new ArrayList<>(plan.getObjectives().getOrDefault(stop.getLocation(),
+				Collections.emptyList()));
+			if (!here && !stop.getWays().isEmpty())
+			{
+				lines.add("Right-click: don't use its way");
+			}
+			wrapper.setToolTipText(objectivesTooltip(here ? null : "About " + legTime(stop.getLegSeconds()), lines));
 			return wrapper;
+		}
+	}
+
+	/**
+	 * Right-clicking a stop offers "Don't use ..." for each way its leg uses that can be turned off (its teleport or hop,
+	 * the house, boats on the way; elzerma, 2026-10-20): picked, it's unticked on the Travel tab, and the route is planned
+	 * again without it.
+	 */
+	private final class DontUse extends MouseAdapter
+	{
+		private final JList<Object> list;
+		private final DefaultListModel<Object> model;
+
+		DontUse(JList<Object> list, DefaultListModel<Object> model)
+		{
+			this.list = list;
+			this.model = model;
+		}
+
+		@Override
+		public void mousePressed(MouseEvent e)
+		{
+			show(e);
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e)
+		{
+			// The menu opens on release on Windows, on press elsewhere
+			show(e);
+		}
+
+		private void show(MouseEvent e)
+		{
+			final int index = list.locationToIndex(e.getPoint());
+			if (!e.isPopupTrigger() || index < 0 || !(model.get(index) instanceof RouteStop))
+			{
+				return;
+			}
+			final RouteStop stop = (RouteStop) model.get(index);
+			if (stop.getWays().isEmpty() || index == 0 && controls.view().isAtFirstStop())
+			{
+				return;
+			}
+			final JPopupMenu menu = new JPopupMenu();
+			for (String key : stop.getWays())
+			{
+				final JMenuItem item = new JMenuItem("Don't use " + AtlasWays.label(key));
+				item.setFont(FontManager.getRunescapeSmallFont());
+				item.addActionListener(a -> turnOff(key));
+				menu.add(item);
+			}
+			menu.show(list, e.getX(), e.getY());
+		}
+
+		/** Unticks the way (or its family) on the Travel tab; saving plans the route again without it. */
+		private void turnOff(String key)
+		{
+			final RunConfig config = settings.editRunConfig();
+			final TravelFamily family = AtlasWays.keyFamily(key);
+			if (family != null)
+			{
+				config.setOn(family, false);
+			}
+			else
+			{
+				config.getWaysOff().add(key);
+			}
+			log.debug("Turned off from the Run tab: {}", key);
+			settings.saveRunConfig();
+			settingsChanged.run();
 		}
 	}
 

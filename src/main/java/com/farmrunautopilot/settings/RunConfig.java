@@ -4,6 +4,7 @@ import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
+import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,6 +13,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import lombok.Data;
 
 /**
@@ -85,6 +87,15 @@ public class RunConfig
 	 * shown or set by the player: the settings put back after the test have none.
 	 */
 	private Map<Location, TravelMethod> testTravel = new EnumMap<>(Location.class);
+	/**
+	 * The Travel tab's families the player turned on or off (sprint T7); one not here has its default. Like the single
+	 * ways and the Wilderness, kept for the account when a preset is applied (elzerma, 2026-10-20).
+	 */
+	private Map<TravelFamily, Boolean> travelFamilies = new EnumMap<>(TravelFamily.class);
+	/** Single ways the player turned off ("don't use this way"), by the atlas's key, e.g. "TELEPORTATION_ITEM|Ectophial". */
+	private Set<String> waysOff = new TreeSet<>();
+	/** Keep the route out of the Wilderness. */
+	private boolean avoidWilderness = true;
 
 	// Route
 	private RouteMode routeMode = RouteMode.AUTOPILOT;
@@ -157,6 +168,19 @@ public class RunConfig
 		protectionOverrides = cleanMap(protectionOverrides, Patch.class);
 		testTravel = cleanMap(testTravel, Location.class);
 		testTravel.entrySet().removeIf(e -> e.getValue().getDestination() != e.getKey());
+		travelFamilies = cleanMap(travelFamilies, TravelFamily.class);
+		final Set<String> off = new TreeSet<>();
+		if (waysOff != null)
+		{
+			for (String key : waysOff)
+			{
+				if (key != null && !key.trim().isEmpty())
+				{
+					off.add(key);
+				}
+			}
+		}
+		waysOff = off;
 
 		final Map<PatchType, Protection> protectionDefaults = defaultProtection();
 		protection = cleanMap(protection, PatchType.class);
@@ -196,6 +220,31 @@ public class RunConfig
 	public boolean isPatchSelected(Patch patch)
 	{
 		return enabledTypes.contains(patch.getType()) && !disabledPatches.contains(patch);
+	}
+
+	/** A Travel tab family is on: as the player set it, or its default. */
+	public boolean isOn(TravelFamily family)
+	{
+		return travelFamilies.getOrDefault(family, family.isOnByDefault());
+	}
+
+	public void setOn(TravelFamily family, boolean on)
+	{
+		travelFamilies.put(family, on);
+	}
+
+	/** The families that are off, for the planner (AtlasWays). */
+	public Set<TravelFamily> familiesOff()
+	{
+		final Set<TravelFamily> off = EnumSet.noneOf(TravelFamily.class);
+		for (TravelFamily family : TravelFamily.values())
+		{
+			if (!isOn(family))
+			{
+				off.add(family);
+			}
+		}
+		return off;
 	}
 
 	/** Per-patch protection is switched on. */

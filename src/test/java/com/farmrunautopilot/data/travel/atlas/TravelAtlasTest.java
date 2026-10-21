@@ -18,7 +18,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
 import net.runelite.api.Skill;
@@ -114,7 +113,7 @@ public class TravelAtlasTest
 		// A Rimmington house teleported into by tablet (its location and "inside" setting as the game has them)
 		final Map<Integer, Integer> held = items(ItemID.POH_TABLET_TELEPORTTOHOUSE, 10);
 		final AtlasAccount account = new AtlasAccount(access(99), holdings(held),
-			Map.of(VarbitID.POH_HOUSE_LOCATION, 1, VarbitID.POH_TELE_TOGGLE, 1), Map.of(), Set.of());
+			Map.of(VarbitID.POH_HOUSE_LOCATION, 1, VarbitID.POH_TELE_TOGGLE, 1), Map.of());
 		final PohSetup poh = new PohSetup();
 		poh.setPortal(HousePortal.RIMMINGTON);
 		poh.setNexusDestinations(EnumSet.of(PortalNexus.Destination.CATHERBY));
@@ -144,7 +143,7 @@ public class TravelAtlasTest
 	/** Every quest done, every skill at {@code level}, no diaries or unlocks, holding these items in the bank. */
 	private static AtlasAccount account(int level, Map<Integer, Integer> bank)
 	{
-		return new AtlasAccount(access(level), holdings(bank), Map.of(), Map.of(), Set.of());
+		return new AtlasAccount(access(level), holdings(bank), Map.of(), Map.of());
 	}
 
 	private static AccessSnapshot access(int level)

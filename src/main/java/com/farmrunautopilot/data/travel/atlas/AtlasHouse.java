@@ -167,13 +167,15 @@ public final class AtlasHouse
 				}
 			}
 		}
-		// The house's ring or tree goes where any ring or tree does: one exit per place it lands
+		// The house's ring or tree goes where any ring or tree does: one exit per place it lands, but not to a ring or
+		// tree the player turned off (the Travel tab)
 		final Set<Integer> hopLandings = new HashSet<>();
 		for (TravelAtlas.Jump hop : atlas.getHops())
 		{
 			final boolean ring = hop.getType().equals("FAIRY_RING") && poh.isFairyRing();
 			final boolean tree = hop.getType().equals("SPIRIT_TREE") && poh.isSpiritTree();
-			if ((ring || tree) && account.meetsAll(atlas, hop.getNeeds()) && hopLandings.add(hop.getTo()))
+			if ((ring || tree) && account.getWays().allows(hop) && account.meetsAll(atlas, hop.getNeeds())
+				&& hopLandings.add(hop.getTo()))
 			{
 				exits.add(ring ? new Exit(ExitKind.FAIRY_RING, hop.getTo(), TravelTimes.FAIRY_RING,
 					"house fairy ring: " + hop.getName())
