@@ -288,9 +288,9 @@ Travel
     [ ] > Home and minigame teleports   5 usable
     [x]   Agility shortcuts        by your level
     [x] Avoid the Wilderness
+    [ ] Switch spellbook to cast
     Travel style                        Fastest  v
     [x] Walk when it's nearly as quick as teleporting
-    Stamina doses to bring                     [0]
 ```
 
 - The counts above are examples, not measured.
@@ -317,8 +317,8 @@ Travel
   to cast" (off by default, elzerma's second hand check; kept for the account) sits below Avoid the Wilderness: off,
   only spells on the spellbook in use are cast, and the others are greyed out with "the Lunar spellbook (Switch
   spellbook to cast is off)"; the Spellbook Swap guided test turns it on for itself. Presets leave the families, ways,
-  Avoid the Wilderness and Switch spellbook alone, and still carry Travel style, Keep the last charge, Cast from runes,
-  walking and stamina doses (elzerma, picker, 2026-10-20: "as it is now"). The Ferox
+  Avoid the Wilderness and Switch spellbook alone, and still carry Travel style, Keep the last charge, Cast from runes
+  and walking (elzerma, picker, 2026-10-20: "as it is now"; stamina doses went in a1c9ecf). The Ferox
   Enclave is a safe zone, so a teleport there isn't into the Wilderness (inside its pass-through barriers, x 3123-3154,
   y up to 3639; leaving it on foot still is). The preset picker shows the preset last picked or saved when several
   match (two presets differing only in ways turned off kept showing the first). An unreachable stop still says "No
