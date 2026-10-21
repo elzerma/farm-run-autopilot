@@ -22,7 +22,8 @@ import net.runelite.client.ui.overlay.WidgetItemOverlay;
  * Outlines the item to use next in the inventory and equipment: seed, compost, tool, payment or teleport
  * (SPEC 13.4). Items to put on get their own colour and a "Wear" label, so an item to wear is never mistaken for
  * the next teleport. A teleport whose option isn't the item's left click is labelled "Right-click" in the item colour
- * (elzerma, 2026-10-20: obvious when a right-click is needed); its menu then frames the option (MenuOptionOverlay).
+ * (elzerma, 2026-10-20: obvious when a right-click is needed); its menu then colours the option
+ * (TeleportMenuHighlighter).
  */
 public class ItemHighlightOverlay extends WidgetItemOverlay
 {

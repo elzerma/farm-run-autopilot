@@ -27,7 +27,6 @@ import com.farmrunautopilot.run.HighlightOverlay;
 import com.farmrunautopilot.run.HintArrowController;
 import com.farmrunautopilot.run.InventoryCountOverlay;
 import com.farmrunautopilot.run.ItemHighlightOverlay;
-import com.farmrunautopilot.run.MenuOptionOverlay;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.run.SceneTracker;
@@ -173,9 +172,6 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private InventoryCountOverlay inventoryCountOverlay;
 
 	@Inject
-	private MenuOptionOverlay menuOptionOverlay;
-
-	@Inject
 	private TeleportMenuHighlighter teleportMenuHighlighter;
 
 	@Inject
@@ -243,7 +239,6 @@ public class FarmRunAutopilotPlugin extends Plugin
 		overlayManager.add(itemHighlightOverlay);
 		overlayManager.add(spellHighlightOverlay);
 		overlayManager.add(travelMenuOverlay);
-		overlayManager.add(menuOptionOverlay);
 		overlayManager.add(inventoryCountOverlay);
 		overlayManager.add(vineOverlay);
 
@@ -272,7 +267,6 @@ public class FarmRunAutopilotPlugin extends Plugin
 		overlayManager.remove(itemHighlightOverlay);
 		overlayManager.remove(spellHighlightOverlay);
 		overlayManager.remove(travelMenuOverlay);
-		overlayManager.remove(menuOptionOverlay);
 		overlayManager.remove(inventoryCountOverlay);
 		overlayManager.remove(vineOverlay);
 		itemHighlightOverlay.clearCache();

@@ -18,8 +18,8 @@ import net.runelite.client.util.Text;
  * Colours the option a leg needs in its teleport item's right-click menu (elzerma, 2026-10-18: "Jewelery and item
  * right click menus should also highlight option that is needed"), e.g. "Crafting Guild" on a worn skills necklace.
  * When the item's places are behind "Rub" (or "Teleport", "Reminisce"...), that option instead; TravelMenuOverlay then
- * rings the place in the list. MenuOptionOverlay frames the same option while the menu is open. Only colours options
- * the menu has: adds none, removes none. Client thread.
+ * rings the place in the list. Colour only, no frame round the option (elzerma, 2026-10-20: "just change the text
+ * color"). Only colours options the menu has: adds none, removes none. Client thread.
  */
 @Slf4j
 @Singleton
@@ -31,7 +31,10 @@ public class TeleportMenuHighlighter
 	private final RunSession session;
 	private final FarmRunAutopilotConfig config;
 	private final ItemManager itemManager;
-	/** The teleport items' names, for the items they were worked out for, as the overlay asks every frame. */
+	/**
+	 * The teleport items' names, for the items they were worked out for, as the item highlight asks every frame while
+	 * the mouse is over the teleport.
+	 */
 	private Set<Integer> namedIds;
 	private Set<String> names;
 

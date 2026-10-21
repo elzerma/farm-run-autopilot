@@ -24,7 +24,7 @@ public final class VineFrame
 	private static final long WILT_MILLIS = 700;
 	private static final long CYCLE_MILLIS = GROW_MILLIS + BLOOM_MILLIS + HOLD_MILLIS + WILT_MILLIS;
 	/** Room between the button and the vine, in cells. */
-	static final int GAP = 3;
+	private static final int GAP = 3;
 	/** Along the vine, in cells. */
 	private static final int LEAF_SPACING = 5;
 	private static final int TENDRIL_SPACING = 11;
