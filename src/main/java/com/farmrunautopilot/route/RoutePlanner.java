@@ -15,6 +15,7 @@ import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.data.travel.atlas.AtlasBanks;
 import com.farmrunautopilot.data.travel.atlas.AtlasHouse;
 import com.farmrunautopilot.data.travel.atlas.AtlasLegs;
 import com.farmrunautopilot.data.travel.atlas.AtlasLinks;
@@ -76,6 +77,8 @@ public final class RoutePlanner
 	static final int EXACT_LIMIT = 14;
 	/** The first leg also starts from the atlas's places this close to where the player stands (straight-line tiles). */
 	static final int FIRST_LEG_TILES = 20;
+	/** For "finish near a bank": a stop with no bank by it counts as this far from one (70 tiles' walk). */
+	static final double NO_BANK_SECONDS = 70 * TravelTimes.SECONDS_PER_TILE;
 
 	private final RunConfig config;
 	private final AccessSnapshot access;
@@ -590,15 +593,9 @@ public final class RoutePlanner
 		return order;
 	}
 
-	static int bankTiles(Location location)
-	{
-		final Integer tiles = TravelTimes.bankTiles(location);
-		return tiles != null ? tiles : TravelTimes.NO_BANK_TILES;
-	}
-
 	/**
 	 * Seconds from a stop to its nearest bank, for "finish near a bank": the atlas's way from the stop's patches in the
-	 * run to any bank it knows, or the old table's walk.
+	 * run to any bank it knows; else the bank by the stop the atlas can't reach (AtlasBanks), else 70 tiles' worth.
 	 */
 	private double bankSeconds(Location location)
 	{
@@ -622,7 +619,12 @@ public final class RoutePlanner
 				}
 			}
 		}
-		return best != null ? best : bankTiles(location) * SECONDS_PER_TILE;
+		if (best != null)
+		{
+			return best;
+		}
+		final AtlasBanks.Bank bank = AtlasBanks.near(location);
+		return bank != null ? bank.getSeconds() : NO_BANK_SECONDS;
 	}
 
 	// Legs

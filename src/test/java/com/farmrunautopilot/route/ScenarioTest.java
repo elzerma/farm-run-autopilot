@@ -323,7 +323,7 @@ public class ScenarioTest
 		for (BankPlanner.Visit v : result.getVisits())
 		{
 			assertTrue(describe(result), v.getTeleport() != null
-				|| com.farmrunautopilot.data.travel.TravelTimes.bankTiles(v.getLocation()) != null);
+				|| com.farmrunautopilot.data.travel.atlas.AtlasBanks.near(v.getLocation()) != null);
 		}
 	}
 

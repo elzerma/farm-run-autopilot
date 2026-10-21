@@ -2,7 +2,7 @@ package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.travel.BankTeleport;
-import com.farmrunautopilot.data.travel.TravelTimes;
+import com.farmrunautopilot.data.travel.atlas.AtlasBanks;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,14 +15,16 @@ import lombok.Value;
  * as many as needed, so that every stretch between them fits in the inventory. A visit goes between two stops
  * and is either:
  * <ul>
- * <li>the bank near the stop just finished: walk there, and walk back only if the next leg sets off from that
- * stop (a walk, its spirit tree, Renu) and that's quicker than a teleport from the bank; or</li>
+ * <li>the bank by the stop just finished, from the travel atlas (AtlasBanks): walk there, and walk back only if the
+ * next leg sets off from that stop (a walk, its spirit tree, Renu) and that's quicker than a teleport from the bank;
+ * or</li>
  * <li>a bank teleport the player carries (crafting cape, ring of dueling...), then the next stop from there; or</li>
  * <li>with "Bank at the Farming Guild" (issue #8), a trip to the guild's bank and seed vault, then the next stop
  * from the guild. The visit before a part that plants seeds only the vault has is always at the guild: after the
  * guild's own stop, or by that trip.</li>
  * </ul>
- * Pure: the slot counts, chain savings and onward legs are passed in, so this can be tested without a client.
+ * Pure: the slot counts, chain savings and onward legs are passed in, and the banks come from the atlas's data, so this
+ * can be tested without a client.
  */
 final class BankPlanner
 {
@@ -232,13 +234,12 @@ final class BankPlanner
 	private static Visit nearVisit(List<RouteStop> stops, int after, BiFunction<Location, Location, Double> chainSaving)
 	{
 		final Location here = stops.get(after).getLocation();
-		final Integer tiles = TravelTimes.bankTiles(here);
-		if (tiles == null)
+		if (AtlasBanks.near(here) == null)
 		{
 			return null;
 		}
 		final double chain = chainSaving.apply(here, stops.get(after + 1).getLocation());
-		final double walk = tiles * TravelTimes.SECONDS_PER_TILE;
+		final double walk = bankWalk(here);
 		// Walk back to keep the chain, or set off from the bank and lose it, whichever is quicker
 		return new Visit(after, here, null, walk + Math.min(walk, chain) + BANK_SECONDS, null);
 	}
@@ -270,7 +271,14 @@ final class BankPlanner
 	/** From the guild's patches, where the ways there arrive, to its bank. */
 	private static double guildBankWalk()
 	{
-		return TravelTimes.bankTiles(Location.FARMING_GUILD) * TravelTimes.SECONDS_PER_TILE;
+		return bankWalk(Location.FARMING_GUILD);
+	}
+
+	/** From a stop's patches to the bank by it (AtlasBanks); 0 if it has none. */
+	private static double bankWalk(Location location)
+	{
+		final AtlasBanks.Bank bank = AtlasBanks.near(location);
+		return bank == null ? 0 : bank.getSeconds();
 	}
 
 	/** Whether the player walks back from the bank to the stop to keep the next leg's chain. */
@@ -280,7 +288,7 @@ final class BankPlanner
 		{
 			return false;
 		}
-		final double walk = TravelTimes.bankTiles(v.location) * TravelTimes.SECONDS_PER_TILE;
+		final double walk = bankWalk(v.location);
 		final double chain = chainSaving.apply(v.location, stops.get(v.afterStop + 1).getLocation());
 		return chain > walk;
 	}
@@ -296,7 +304,7 @@ final class BankPlanner
 		{
 			return v.trip.getLegSeconds() + guildBankWalk() + BANK_SECONDS;
 		}
-		final double walk = TravelTimes.bankTiles(v.location) * TravelTimes.SECONDS_PER_TILE;
+		final double walk = bankWalk(v.location);
 		return walk + (walksBack(v, stops, chainSaving) ? walk : 0) + BANK_SECONDS;
 	}
 }

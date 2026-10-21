@@ -9,9 +9,9 @@ import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.travel.BankTeleport;
 import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
-import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.data.travel.WalkGrid;
 import com.farmrunautopilot.data.travel.atlas.AtlasAccount;
+import com.farmrunautopilot.data.travel.atlas.AtlasBanks;
 import com.farmrunautopilot.data.travel.atlas.AtlasNeed;
 import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
@@ -235,7 +235,7 @@ public class RunService
 		// somewhere first, so plan from anywhere (elzerma). The same for setting off on foot from where they stand.
 		final Location startStop = here != null ? here : near;
 		final boolean missing = supplies.missingCount(startStop == Location.FARMING_GUILD) > 0;
-		if (missing && (startStop != null ? TravelTimes.bankTiles(startStop) == null
+		if (missing && (startStop != null ? AtlasBanks.near(startStop) == null
 			: atlas != null && tile != null && !RoutePlanner.bankNear(atlas, tile)))
 		{
 			route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
@@ -573,9 +573,9 @@ public class RunService
 				if (to == Location.FARMING_GUILD)
 				{
 					// From the guild's bank out to its patches
-					final int tiles = TravelTimes.bankTiles(Location.FARMING_GUILD);
-					return new RouteStop(to, null, Departure.WALK, tiles * TravelTimes.SECONDS_PER_TILE, false,
-						"from the bank " + tiles + " tiles");
+					final AtlasBanks.Bank bank = AtlasBanks.near(Location.FARMING_GUILD);
+					return new RouteStop(to, null, Departure.WALK, bank == null ? 0 : bank.getSeconds(), false,
+						"from the bank " + (bank == null ? 0 : bank.getTiles()) + " tiles");
 				}
 				return RoutePlanner.between(Location.FARMING_GUILD, to, config, access, holdings, poh, atlas);
 			}

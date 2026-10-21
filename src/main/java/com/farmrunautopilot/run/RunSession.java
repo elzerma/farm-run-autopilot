@@ -9,7 +9,7 @@ import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
-import com.farmrunautopilot.data.travel.TravelTimes;
+import com.farmrunautopilot.data.travel.atlas.AtlasBanks;
 import com.farmrunautopilot.bank.FarmBankTab;
 import com.farmrunautopilot.bank.SeedVaultSection;
 import com.farmrunautopilot.route.AtlasLeg;
@@ -1199,7 +1199,7 @@ public class RunSession
 	{
 		final Location here = plan.getRoute().getStops().get(stopIndex).getLocation();
 		// Banking near the stop if there's a bank, else by a bank teleport carried, else any bank
-		final BankTeleport teleport = TravelTimes.bankTiles(here) != null ? null : runService.carriedBankTeleport();
+		final BankTeleport teleport = AtlasBanks.near(here) != null ? null : runService.carriedBankTeleport();
 		extraBank = new BankStop(stopIndex, here, needed, teleport);
 		extraNow = now;
 		log.debug("Item missing, unplanned bank visit {} {}: {}", now ? "now, at" : "after", here.getDisplayName(),
@@ -1558,7 +1558,7 @@ public class RunSession
 			{
 				return null;
 			}
-			return TravelTimes.bankPoint(bank.getBankLocation());
+			return bankPoint(bank.getBankLocation());
 		}
 		if (!navigator.isArrived())
 		{
@@ -1963,10 +1963,17 @@ public class RunSession
 	private boolean atBank(BankStop bank)
 	{
 		final WorldPoint point = bank.getTeleport() != null ? bank.getTeleport().getBankPoint()
-			: TravelTimes.bankPoint(bank.getBankLocation());
+			: bankPoint(bank.getBankLocation());
 		final Player player = client.getLocalPlayer();
 		return point != null && player != null && player.getWorldLocation().getPlane() == point.getPlane()
 			&& player.getWorldLocation().distanceTo2D(point) <= AT_BANK_TILES;
+	}
+
+	/** The bank booth or chest by a stop (the travel atlas's), or null if it has none. */
+	private static WorldPoint bankPoint(Location location)
+	{
+		final AtlasBanks.Bank bank = AtlasBanks.near(location);
+		return bank == null ? null : bank.getPoint();
 	}
 
 	/**

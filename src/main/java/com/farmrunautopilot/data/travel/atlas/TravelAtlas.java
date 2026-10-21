@@ -27,6 +27,10 @@ import net.runelite.api.coords.WorldPoint;
 public final class TravelAtlas
 {
 	private static final String DIR = "/com/farmrunautopilot/atlas/";
+	/** Transports that move the player somewhere else (a boat, a portal) rather than through a door or up a ladder. */
+	public static final Set<String> RIDES = Set.of("SHIP", "BOAT", "TELEPORTATION_PORTAL", "TELEPORTATION_LEVER");
+	/** A transport that moves the player further than this carries them (the guide's "moved" is over 10 tiles a tick). */
+	public static final int CARRIED_TILES = 10;
 
 	/** Where a way starts or ends. */
 	public enum Kind
@@ -228,6 +232,18 @@ public final class TravelAtlas
 			return null;
 		}
 		return String.join(" ", Arrays.asList(words).subList(1, words.length - 1));
+	}
+
+	/**
+	 * A step on a way that carries the player off rather than being walked through: a ship, a boat, a portal or a lever,
+	 * or a transport that moves them more than {@link #CARRIED_TILES} tiles (an NPC who leads the way, a cart). Doors,
+	 * stairs and shortcuts aren't.
+	 */
+	public static boolean carries(Step step)
+	{
+		return RIDES.contains(step.getType()) || step.getType().equals("TRANSPORT")
+			&& step.getOrigin().getPlane() == step.getDestination().getPlane()
+			&& step.getOrigin().distanceTo2D(step.getDestination()) > CARRIED_TILES;
 	}
 
 	/** Everyone a hop or a transport on a way is used on (Renu, a ship's crew, a guide), for spotting them nearby. */

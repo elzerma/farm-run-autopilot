@@ -5,14 +5,13 @@ import com.farmrunautopilot.data.Unlock;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
-import net.runelite.api.coords.WorldPoint;
 
 /**
  * Measured journeys for each travel method, from wiki research (docs/plans/travel-research.md, checked
  * 2026-10-10): the real walking path in tiles from where it lands to the nearest of the stop's patches, and
  * extra seconds for anything that isn't walking (a boat, a quetzal, Elkoy, a ladder). Every method is measured (a
  * test checks). Below them, every other distance the route uses: walks between stops, spirit trees, Renu,
- * fairy rings and banks near a stop, and the seconds each kind of travel takes.
+ * fairy rings near a stop (banks: the travel atlas, AtlasBanks), and the seconds each kind of travel takes.
  */
 public final class TravelTimes
 {
@@ -212,12 +211,6 @@ public final class TravelTimes
 	private static final Map<Location, Integer> RENU_PAD_WALK = new EnumMap<>(Location.class);
 	/** Tiles from a stop's nearest patch to a hot air balloon basket (Enlightened Journey). */
 	private static final Map<Location, Integer> BALLOON_WALK = new EnumMap<>(Location.class);
-	/** Tiles from a stop's patch to its nearest bank; stops without a practical bank are missing. */
-	private static final Map<Location, Integer> BANK_TILES = new EnumMap<>(Location.class);
-	/** Where each stop's nearest bank is, for the walking line to it (Shortest Path's bank tiles). */
-	private static final Map<Location, WorldPoint> BANK_POINTS = new EnumMap<>(Location.class);
-	/** For "finish near a bank": a stop without a bank nearby counts as this far from one. */
-	public static final int NO_BANK_TILES = 70;
 
 	static
 	{
@@ -247,43 +240,6 @@ public final class TravelTimes
 		RENU_PAD_WALK.put(Location.KASTORI, 31);
 		RENU_PAD_WALK.put(Location.NEMUS_RETREAT, 71);
 		RENU_PAD_WALK.put(Location.ALDARIN_HOPS, 42);
-
-		// From the stop's patch furthest from the bank (the one most likely done last, elzerma) to the nearest bank,
-		// measured on Shortest Path's map with its bank tiles. Catherby: herb 38, fruit tree 54. Farming Guild:
-		// fruit tree 2, herb 32, tree 38.
-		BANK_TILES.put(Location.VARROCK, 49);
-		BANK_TILES.put(Location.FALADOR_PARK, 34);
-		// The Tree Gnome Stronghold bank by the tree patch, upstairs (estimate: the ladder isn't on the map)
-		BANK_TILES.put(Location.GNOME_STRONGHOLD, 10);
-		// Bank chest by the fruit tree
-		BANK_TILES.put(Location.FARMING_GUILD, 38);
-		// The bank buffalo on the east side of the camp
-		BANK_TILES.put(Location.NEMUS_RETREAT, 25);
-		BANK_TILES.put(Location.CATHERBY, 54);
-		BANK_TILES.put(Location.LLETYA, 33);
-		// Across town from the patch, through the gate (estimate; elzerma: banking there is slow)
-		BANK_TILES.put(Location.PORT_PHASMATYS, 95);
-		// The Hunter Guild bank (open to anyone)
-		BANK_TILES.put(Location.CIVITAS_ILLA_FORTIS, 89);
-		BANK_TILES.put(Location.SEERS_VILLAGE_HOPS, 66);
-		BANK_TILES.put(Location.YANILLE_HOPS, 33);
-		BANK_TILES.put(Location.ALDARIN_HOPS, 32);
-		BANK_TILES.put(Location.PRIFDDINAS, 42);
-
-		// Bank booths and chests, from Shortest Path's bank list
-		BANK_POINTS.put(Location.CATHERBY, new WorldPoint(2807, 3441, 0));
-		BANK_POINTS.put(Location.GNOME_STRONGHOLD, new WorldPoint(2445, 3424, 1));
-		BANK_POINTS.put(Location.FALADOR_PARK, new WorldPoint(3010, 3355, 0));
-		BANK_POINTS.put(Location.VARROCK, new WorldPoint(3251, 3420, 0));
-		BANK_POINTS.put(Location.LLETYA, new WorldPoint(2352, 3162, 0));
-		BANK_POINTS.put(Location.PORT_PHASMATYS, new WorldPoint(3687, 3466, 0));
-		BANK_POINTS.put(Location.FARMING_GUILD, new WorldPoint(1248, 3758, 0));
-		BANK_POINTS.put(Location.NEMUS_RETREAT, new WorldPoint(1387, 3309, 0));
-		BANK_POINTS.put(Location.CIVITAS_ILLA_FORTIS, new WorldPoint(1542, 3040, 0));
-		BANK_POINTS.put(Location.SEERS_VILLAGE_HOPS, new WorldPoint(2724, 3493, 0));
-		BANK_POINTS.put(Location.YANILLE_HOPS, new WorldPoint(2613, 3092, 0));
-		BANK_POINTS.put(Location.ALDARIN_HOPS, new WorldPoint(1399, 2927, 0));
-		BANK_POINTS.put(Location.PRIFDDINAS, new WorldPoint(3256, 6106, 0));
 	}
 
 	private TravelTimes()
@@ -341,18 +297,6 @@ public final class TravelTimes
 			}
 		}
 		return tiles;
-	}
-
-	/** Where a stop's nearest bank is, or null if not known. */
-	public static WorldPoint bankPoint(Location location)
-	{
-		return BANK_POINTS.get(location);
-	}
-
-	/** Tiles from a stop's patch to its nearest bank, or null if there's no practical bank nearby. */
-	public static Integer bankTiles(Location location)
-	{
-		return BANK_TILES.get(location);
 	}
 
 	private static void tiles(TravelMethod method, int tiles)

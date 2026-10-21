@@ -2,7 +2,7 @@ package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.travel.BankTeleport;
-import com.farmrunautopilot.data.travel.TravelTimes;
+import com.farmrunautopilot.data.travel.atlas.AtlasBanks;
 import com.farmrunautopilot.supply.SupplyPlan;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -56,7 +56,7 @@ public class BankStop
 		}
 		// An unplanned visit (an item gone missing) can come where there's no bank close by
 		return teleport != null ? "Bank at " + teleport.getBankName()
-			: TravelTimes.bankTiles(location) == null ? "Go to a bank" : "Bank near " + location.getDisplayName();
+			: AtlasBanks.near(location) == null ? "Go to a bank" : "Bank near " + location.getDisplayName();
 	}
 
 	/** e.g. "Ring of dueling to the Castle Wars bank chest" or "Bank near Gnome Stronghold". */
