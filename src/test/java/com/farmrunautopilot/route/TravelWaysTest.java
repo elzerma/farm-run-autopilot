@@ -131,12 +131,12 @@ public class TravelWaysTest
 		final AccessSnapshot lunar = access(99, Spellbook.LUNAR);
 		final Map<Integer, Integer> onLunar = Map.of(VarbitID.SPELLBOOK, 2);
 		final RunConfig switching = config();
+		switching.setSwitchSpellbooks(true);
 		final TravelWays on = TravelWays.of(AtlasPlayers.with(lunar, bank(), onLunar, RunService.ways(switching), Map.of(),
 			0), switching, lunar, bank(), new PohSetup(), id -> "item " + id);
 		assertEquals(TravelWays.State.READY, way(on, TravelFamily.SPELLS, "Varrock Teleport").getState());
 
 		final RunConfig noSwitching = config();
-		noSwitching.setSwitchSpellbooks(false);
 		final TravelWays off = TravelWays.of(AtlasPlayers.with(lunar, bank(), onLunar, RunService.ways(noSwitching),
 			Map.of(), 0), noSwitching, lunar, bank(), new PohSetup(), id -> "item " + id);
 		final TravelWays.Way varrock = way(off, TravelFamily.SPELLS, "Varrock Teleport");

@@ -314,8 +314,11 @@ Travel
 - **From elzerma's hand checks (2026-10-20):** a family's tick box works like a list's: ticked with every usable way on,
   a dash (`Style.partial`) with some off, empty when the family is off; ticking it (empty or dash) turns the family and
   all its ways on, and ticking a way in a family that's off turns the family on for that way alone. "Switch spellbook
-  to cast" (on by default, kept for the account) sits below Avoid the Wilderness: off, only spells on the spellbook in
-  use are cast, and the others are greyed out with "the Lunar spellbook (Switch spellbook to cast is off)". The Ferox
+  to cast" (off by default, elzerma's second hand check; kept for the account) sits below Avoid the Wilderness: off,
+  only spells on the spellbook in use are cast, and the others are greyed out with "the Lunar spellbook (Switch
+  spellbook to cast is off)"; the Spellbook Swap guided test turns it on for itself. Presets leave the families, ways,
+  Avoid the Wilderness and Switch spellbook alone, and still carry Travel style, Keep the last charge, Cast from runes,
+  walking and stamina doses (elzerma, picker, 2026-10-20: "as it is now"). The Ferox
   Enclave is a safe zone, so a teleport there isn't into the Wilderness (inside its pass-through barriers, x 3123-3154,
   y up to 3639; leaving it on foot still is). The preset picker shows the preset last picked or saved when several
   match (two presets differing only in ways turned off kept showing the first). An unreachable stop still says "No

@@ -213,7 +213,8 @@ public class RunConfigTest
 			assertEquals(family.name(), family != TravelFamily.COOLDOWN, old.isOn(family));
 		}
 		assertTrue(old.isAvoidWilderness());
-		assertTrue(old.isSwitchSpellbooks());
+		// Off to start with (elzerma, 2026-10-20)
+		assertFalse(old.isSwitchSpellbooks());
 		assertTrue(old.getWaysOff().isEmpty());
 		assertEquals(EnumSet.of(TravelFamily.COOLDOWN), old.familiesOff());
 	}
@@ -227,10 +228,10 @@ public class RunConfigTest
 		config.getWaysOff().add("TELEPORTATION_ITEM|Ectophial");
 		config.getWaysOff().add("SPIRIT_TREE|Gnome Stronghold");
 		config.setAvoidWilderness(false);
-		config.setSwitchSpellbooks(false);
+		config.setSwitchSpellbooks(true);
 		final RunConfig loaded = gson.fromJson(gson.toJson(config), RunConfig.class).sanitise();
 		assertEquals(config, loaded);
-		assertFalse(loaded.isSwitchSpellbooks());
+		assertTrue(loaded.isSwitchSpellbooks());
 		assertFalse(loaded.isOn(TravelFamily.FAIRY_RINGS));
 		assertTrue(loaded.isOn(TravelFamily.COOLDOWN));
 		assertEquals(EnumSet.of(TravelFamily.FAIRY_RINGS), loaded.familiesOff());

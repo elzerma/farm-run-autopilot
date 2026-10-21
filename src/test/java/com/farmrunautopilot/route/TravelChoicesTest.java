@@ -207,12 +207,15 @@ public class TravelChoicesTest
 	@Test
 	public void spellsFromAnotherBookOnlyWithSwitchingOn()
 	{
-		// On Lunar with Spellbook Swap: Varrock Teleport is a standard spell, cast after a swap
+		// On Lunar with Spellbook Swap: Varrock Teleport is a standard spell, cast after a swap once switching is on
 		final AccessSnapshot lunar = onLunar();
 		final TravelAtlas.Jump varrock = teleport("Varrock Teleport");
-		assertTrue(usableWith(lunar, config(), varrock));
+		final RunConfig switching = config();
+		switching.setSwitchSpellbooks(true);
+		assertTrue(usableWith(lunar, switching, varrock));
+		// Off to start with (elzerma)
 		final RunConfig noSwitching = config();
-		noSwitching.setSwitchSpellbooks(false);
+		assertFalse(noSwitching.isSwitchSpellbooks());
 		assertFalse(usableWith(lunar, noSwitching, varrock));
 		// A Lunar spell, on the book already, either way
 		final TravelAtlas.Jump catherby = teleport("Catherby Teleport");

@@ -98,9 +98,9 @@ public class RunConfig
 	private boolean avoidWilderness = true;
 	/**
 	 * Cast a spell from another spellbook after Spellbook Swap or a trip to the house altar, when that's quicker
-	 * (elzerma, 2026-10-20: a tick box beside Avoid the Wilderness). Kept for the account like the ways.
+	 * (elzerma, 2026-10-20: a tick box beside Avoid the Wilderness, off to start with). Kept for the account like the ways.
 	 */
-	private boolean switchSpellbooks = true;
+	private boolean switchSpellbooks = false;
 
 	// Route
 	private RouteMode routeMode = RouteMode.AUTOPILOT;

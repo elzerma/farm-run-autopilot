@@ -217,8 +217,10 @@ public class SpellbookRuleTest
 			}
 		}
 		config.setStartLocation(Location.FARMING_GUILD);
-		// Pinned, as the Spellbook Swap guided test does: Catherby Teleport is on Lunar and would win
+		// Pinned, as the Spellbook Swap guided test does: Catherby Teleport is on Lunar and would win. Switching
+		// spellbook is off to start with (Travel tab), so on, as the guided test turns it on
 		config.getTestTravel().put(Location.CATHERBY, TravelMethod.CAMELOT_TELEPORT);
+		config.setSwitchSpellbooks(true);
 		final AccessSnapshot lunar = lunarCaster(Spellbook.LUNAR, 99);
 		final RunSelection selection = RunSelector.select(config, lunar, p -> null, 0, true, Collections.emptyMap());
 		final Route route = RoutePlanner.plan(selection.getPatches(), config, lunar, Holdings.EMPTY, new PohSetup());

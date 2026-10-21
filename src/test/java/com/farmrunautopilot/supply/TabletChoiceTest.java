@@ -70,6 +70,7 @@ public class TabletChoiceTest
 		final AccessSnapshot lunar = caster(Spellbook.LUNAR);
 		final RunConfig config = config();
 		config.setUseRunesNotTabs(true);
+		config.setSwitchSpellbooks(true);
 		assertFalse(SupplyCalculator.usesTablet(Spell.CAMELOT_TELEPORT, Location.CATHERBY, config, lunar, TABLETS));
 		config.setSwitchSpellbooks(false);
 		assertTrue(SupplyCalculator.usesTablet(Spell.CAMELOT_TELEPORT, Location.CATHERBY, config, lunar, TABLETS));
