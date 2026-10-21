@@ -60,7 +60,7 @@ A farming-run planner and guide for tree, fruit tree and herb runs that:
 | Route optimisation modes | **On – Autopilot** (our time-based algorithm), **On – Meta** (wiki order), **Off** (player's own order). **Drag to reorder** in the sidebar in every mode (a manual reorder switches the run to "Off/custom" for that run). |
 | Route rules | Default start **Farming Guild**; end at the location **nearest a bank**. Make sure there are enough **free inventory slots before fruit tree stops**; if not, insert a **bank stop** or recommend a **bank teleport** (ring of dueling, crafting cape, max cape, etc.) or noting produce at the tool leprechaun. |
 | Due detection | **Auto-skip run types that aren't ready** (e.g. fruit trees on their 16h cycle when only trees/herbs are due). |
-| Run energy | **Live threshold**: if energy is **below 30%** before a walk of **15+ tiles**, the next step becomes "drink a stamina dose" if you have one, otherwise a restore stop (POH pool or Ferox — whichever is quicker from there). Optional stamina doses in the supply list. |
+| Run energy | **Live threshold**: if energy is **below 30%** before a walk of **15+ tiles**, the next step becomes "drink a stamina dose" if you have one, otherwise a restore stop (POH pool or Ferox — whichever is quicker from there). |
 | Leg timings | **Ship estimates, then self-learn** from the player's actual leg times. |
 | Sidebar | **Run, Farm, Travel and Account tabs** (elzerma, 2026-10-10; Settings tab added in Sprint 7; look in docs/BRANDING.md). Run: run types, stages, route, checklist, presets. Farm: what to grow, when, and how to protect it. Travel: defaults for every stop, route, per-location overrides. Account: what the plugin detected, house, unlocks, storage, display. Checklist colours: green carried, yellow in storage, red missing. |
 | Notifications | **None.** |
@@ -112,7 +112,7 @@ PohSetup         { portalLocation, nexusDestinations[], jewelleryBoxTier, poolTi
                    hasSpiritTree, mountedXerics, mountedDigsite, lastDetected }
 RunConfig        { enabledTypes[], seedPerType{}, protectionPerType{}, protectionOverrides{patchId},
                    payToClear{type}, compostPerType{}, teleportChoice{locationId -> methodId|AUTO},
-                   useRunesNotTabs (global + per location), staminaDoses, energyThreshold=30, energyMinTiles=15,
+                   useRunesNotTabs (global + per location), energyThreshold=30, energyMinTiles=15,
                    routeMode (AUTOPILOT|META|OFF), customOrder[], startLocation=FARMING_GUILD, endNearBank=true,
                    storageSources {groupStorage=false, seedVault=false} }
 Preset           { name, RunConfig }
@@ -354,7 +354,6 @@ For each leg that uses a spell:
 - **Secateurs / magic secateurs** — optional "recommended" (herb yield); magic secateurs can be wielded.
 - **Compost** — per patch per the type's compost choice; bottomless bucket: check its charges (from the "Check" chat message — core has no tracker) and type; ultracompost buckets = 1 slot each.
 - **Plant cure** — optional N doses (leprechaun-stored counts via `FARMING_TOOLS_PLANTCURE`).
-- **Stamina potions** — optional N doses.
 - **Travel items** — jewellery, capes, talisman, basalts, teleport crystal, etc., for the chosen methods; check charges where readable.
 - Tools and compost stored at the **tool leprechaun** count as "have", with the note "withdraw from the leprechaun at your first stop" (tools must be in the inventory to use; confirm the first stop has a leprechaun via `Location.hasToolLeprechaun`).
 - Leprechaun counts use `FARMING_TOOLS_*` varbits; large counts split into base + `EXTRA*` varbits — **combination formula UNVERIFIED**, confirm with the varbit inspector.
@@ -411,7 +410,7 @@ Collapsible sections:
 4. **Protection** — per type: Pay / Compost only; per-patch override; pay with notes; pay to clear; compost type; plant cure / Cure Plant / Resurrect Crops toggles; equipment boosts toggle.
 5. **Travel** — per location dropdown (Auto + owned/unlocked methods, locked ones greyed); "use runes instead of tabs" global + per location.
 6. **My POH** — portal location, nexus destinations, jewellery box tier, pool tier, fairy ring, spirit tree; "last detected on <date>" + Edit.
-7. **Route** — mode (Autopilot / Meta / Off), start location, end near bank, energy threshold and tile distance, stamina doses.
+7. **Route** — mode (Autopilot / Meta / Off), start location, end near bank, energy threshold and tile distance.
 8. **Storage sources** — group storage (off), seed vault (off).
 
 ### 13.3 Generated bank tab (Quest Helper pattern)

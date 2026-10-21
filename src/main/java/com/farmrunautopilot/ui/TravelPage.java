@@ -54,8 +54,6 @@ class TravelPage extends SetupPanel
 			"Off: a teleport's tablet is used when you have one. On: teleports you can cast are cast from runes, and a "
 				+ "tablet is only used for one you can't",
 			on -> saveRun(() -> config.setUseRunesNotTabs(on))));
-		s.addContent(spinnerRow("Stamina doses to bring", spinner(config.getStaminaDoses(), 0, 40, 1,
-			v -> saveRunQuietly(() -> config.setStaminaDoses(v)))));
 		return s;
 	}
 

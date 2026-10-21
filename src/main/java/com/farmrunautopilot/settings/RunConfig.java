@@ -94,7 +94,6 @@ public class RunConfig
 	/** Null in saves from before "Anywhere" was the default: the old default (Farming Guild) becomes Anywhere. */
 	private Boolean startAnywhereByDefault;
 	private boolean endNearBank = true;
-	private int staminaDoses = 0;
 	private Outfit outfit = Outfit.NONE;
 	/** During a run, remind the player to drop weeds and empty plant pots. */
 	private boolean remindToDrop = true;
@@ -190,7 +189,6 @@ public class RunConfig
 		}
 
 		dueThresholdPercent = clamp(dueThresholdPercent, 1, 100);
-		staminaDoses = clamp(staminaDoses, 0, 40);
 		plantCureDoses = clamp(plantCureDoses, 0, 40);
 		return this;
 	}

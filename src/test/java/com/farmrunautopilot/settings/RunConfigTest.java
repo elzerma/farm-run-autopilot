@@ -33,7 +33,7 @@ public class RunConfigTest
 		final Preset[] saved = gson.fromJson(gson.toJson(new Preset[]{preset}), Preset[].class);
 		assertEquals(config, saved[0].getConfig().sanitise());
 
-		config.setStaminaDoses(4);
+		config.setPlantCureDoses(config.getPlantCureDoses() + 1);
 		assertFalse(config.equals(saved[0].getConfig()));
 	}
 
@@ -74,7 +74,6 @@ public class RunConfigTest
 		config.setUseProtectionOverrides(true);
 		config.setUseRunesNotTabs(true);
 		config.setRouteMode(RouteMode.META);
-		config.setStaminaDoses(4);
 
 		final RunConfig loaded = gson.fromJson(gson.toJson(config), RunConfig.class).sanitise();
 		assertEquals(config, loaded);

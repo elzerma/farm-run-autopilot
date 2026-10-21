@@ -53,7 +53,6 @@ public final class SupplyCalculator
 	/** A typical herb harvest with compost (3 to 18 is possible). */
 	public static final int HERBS_PER_PATCH = 8;
 	public static final int FRUIT_PER_TREE = 6;
-	private static final int STAMINA_DOSES_PER_POTION = 4;
 	private static final String[] ORDINALS = {"1st", "2nd", "3rd"};
 
 	// Where each kind of line is changed, shown in its tooltip
@@ -575,21 +574,6 @@ public final class SupplyCalculator
 		{
 			lines.add(changeIn(line(SupplyLine.Group.OPTIONAL, "Plant cure", config.getPlantCureDoses(), holdings, carried,
 				"Backup for diseased patches", config.getPlantCureDoses(), ItemID.PLANT_CURE).usedUp(), CURES));
-		}
-		if (config.getStaminaDoses() > 0)
-		{
-			int doses = 0;
-			int carriedDoses = 0;
-			for (Map.Entry<Integer, Integer> e : SupplyItems.STAMINA_DOSES.entrySet())
-			{
-				doses += holdings.count(e.getKey()) * e.getValue();
-				carriedDoses += carried.count(e.getKey()) * e.getValue();
-			}
-			final int[] staminaIds = SupplyItems.STAMINA_DOSES.keySet().stream().mapToInt(Integer::intValue).toArray();
-			lines.add(new SupplyLine(SupplyLine.Group.OPTIONAL, "Stamina doses", config.getStaminaDoses(), doses,
-				carriedDoses, holdings.where(staminaIds), null,
-				(config.getStaminaDoses() + STAMINA_DOSES_PER_POTION - 1) / STAMINA_DOSES_PER_POTION, false, TRAVEL,
-				staminaIds, true));
 		}
 
 		int slots = 0;

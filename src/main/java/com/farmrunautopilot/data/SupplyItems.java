@@ -80,9 +80,6 @@ public final class SupplyItems
 		{ItemID.TITHE_REWARD_FEET_MALE, ItemID.TITHE_REWARD_FEET_FEMALE}
 	};
 
-	/** Stamina potion item to the doses it holds. */
-	public static final Map<Integer, Integer> STAMINA_DOSES;
-
 	/** Equipped items that supply unlimited runes of these types (staves, battlestaves, tomes). */
 	public static final Map<Integer, Set<Rune>> INFINITE_RUNE_ITEMS;
 	/** The rune items above worn in the shield slot; the rest are wielded. */
@@ -97,13 +94,6 @@ public final class SupplyItems
 
 	static
 	{
-		final Map<Integer, Integer> stamina = new HashMap<>();
-		stamina.put(ItemID._1DOSESTAMINA, 1);
-		stamina.put(ItemID._2DOSESTAMINA, 2);
-		stamina.put(ItemID._3DOSESTAMINA, 3);
-		stamina.put(ItemID._4DOSESTAMINA, 4);
-		STAMINA_DOSES = Collections.unmodifiableMap(stamina);
-
 		final Map<Integer, Set<Rune>> staves = new HashMap<>();
 		staves.put(ItemID.STAFF_OF_AIR, EnumSet.of(AIR));
 		staves.put(ItemID.AIR_BATTLESTAFF, EnumSet.of(AIR));
