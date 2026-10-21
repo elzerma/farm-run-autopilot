@@ -1,12 +1,10 @@
 package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.access.AccessSnapshot;
-import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.MetaOrder;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.Requirement;
-import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.Spell;
@@ -36,18 +34,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import net.runelite.api.Quest;
-import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
 
 /**
  * Orders the stops and picks how to reach each one (SPEC 12).
  *
- * <p>Every leg is in seconds. With the travel atlas (docs/plans/travel-rework.md, sprint T3) every way the player can
- * use is weighed: any teleport, hop or way out of their house, from where they are, timed by the atlas's walking tiles
- * and transport ticks with the plugin's own timing for each kind of teleport (the quetzal whistle's wait). Without it
- * (it didn't load), the plugin's own travel methods and tables (TravelTimes). The player's recorded times never choose
- * (elzerma, 2026-10-17: times are for the estimate and personal bests). Preferences (prefer walking, the travel style)
+ * <p>Every leg is in seconds. On the travel atlas (docs/plans/travel-rework.md, sprint T3) every way the player can use
+ * is weighed: any teleport, hop or way out of their house, from where they are, timed by the atlas's walking tiles and
+ * transport ticks with the plugin's own timing for each kind of teleport (the quetzal whistle's wait). Without the atlas
+ * (not read yet, or it couldn't be) no stop has a way. The player's recorded times never choose (elzerma, 2026-10-17:
+ * times are for the estimate and personal bests). Preferences (prefer walking, the travel style)
  * only choose between ways of making a leg; they never change its seconds. A leg the player can't make yet carries a
  * penalty for the ordering so it goes where it hurts least, but its seconds stay honest.
  */
@@ -84,7 +80,7 @@ public final class RoutePlanner
 	private final AccessSnapshot access;
 	private final Holdings holdings;
 	private final PohSetup poh;
-	/** The travel atlas for this player, or null to plan on the old tables. */
+	/** The travel atlas for this player, or null if it hasn't been read (no stop has a way then). */
 	private final RouteAtlas atlas;
 	/** Charges held before the run, for ruling out items with none to spare. */
 	private final ChargeBudget startCharges;
@@ -151,15 +147,9 @@ public final class RoutePlanner
 		return new RoutePlanner(config, access, holdings, poh, atlas).bestLeg(from, to).stop(to);
 	}
 
-	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
-		PohSetup poh)
-	{
-		return plan(patches, config, access, holdings, poh, null, null);
-	}
-
 	/**
 	 * @param patches the patches in this run
-	 * @param atlas the travel atlas for this player, or null to plan on the old tables
+	 * @param atlas the travel atlas for this player; without it no stop has a way
 	 * @param here the stop the player is standing at, or null: the run starts there with no travel (GitHub #1)
 	 */
 	public static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
@@ -688,23 +678,6 @@ public final class RoutePlanner
 		}
 	}
 
-	/** A way of making a leg before overhead, with how its seconds add up. */
-	private static final class Option
-	{
-		final TravelMethod method;
-		final Departure departure;
-		final double seconds;
-		final String breakdown;
-
-		Option(TravelMethod method, Departure departure, double seconds, String breakdown)
-		{
-			this.method = method;
-			this.departure = departure;
-			this.seconds = seconds;
-			this.breakdown = breakdown;
-		}
-	}
-
 	/** Preference against teleporting when the player prefers walking: saves charges and clicks for little time. */
 	private double teleportPreference()
 	{
@@ -715,22 +688,24 @@ public final class RoutePlanner
 	 * The quickest way from {@code from} (null at the start of the run) to {@code to}: every way the player can use,
 	 * directly or through the house. A teleport a guided test pins ({@link RunConfig#getTestTravel()}) is used
 	 * whenever it can be (cast, or its item or tablet owned), otherwise the rest are (GitHub #2: a Lunar spell on the
-	 * standard book). Methods the player lacks the item or tablet for only win if nothing else is possible.
+	 * standard book). Methods the player lacks the item or tablet for only win if nothing else is possible. No way at all
+	 * without the atlas.
 	 */
 	Leg bestLeg(Location from, Location to)
 	{
 		final AtlasLegs legs = legs();
-		if (legs != null)
+		if (legs == null)
 		{
-			final List<Integer> toPlaces = places(to);
-			final Map<Integer, Double> fromPlaces = from == null ? nearby : at(from);
-			if (!toPlaces.isEmpty() && (from == null || !fromPlaces.isEmpty()))
-			{
-				final Leg leg = atlasLeg(legs, fromPlaces, toPlaces, to);
-				return leg != null ? leg : missingLeg(to, config.getTestTravel().get(to), unlockedTo(to));
-			}
+			return noWay();
 		}
-		return tableLeg(from, to);
+		final List<Integer> toPlaces = places(to);
+		final Map<Integer, Double> fromPlaces = from == null ? nearby : at(from);
+		if (toPlaces.isEmpty() || from != null && fromPlaces.isEmpty())
+		{
+			return noWay();
+		}
+		final Leg leg = atlasLeg(legs, fromPlaces, toPlaces, to);
+		return leg != null ? leg : missingLeg(legs, to, config.getTestTravel().get(to), unlockedTo(to));
 	}
 
 	/**
@@ -1009,38 +984,11 @@ public final class RoutePlanner
 		return candidates;
 	}
 
-	/** The old tables' best leg: the plugin's own travel methods, measured walks and journeys (TravelTimes). */
-	private Leg tableLeg(Location from, Location to)
-	{
-		final TravelMethod chosen = config.getTestTravel().get(to);
-		final boolean chosenUnlocked = chosen != null && access.missingFor(chosen).isEmpty();
-		if (chosenUnlocked)
-		{
-			// A guided test's teleport is cast or used directly, not through the house
-			final Leg leg = quickest(Collections.singletonList(chosen), from, to, null, Departure.DIRECT);
-			if (leg != null)
-			{
-				return leg;
-			}
-		}
-
-		final List<TravelMethod> candidates = unlockedTo(to);
-		Leg walk = null;
-		final Integer tiles = from == null ? null
-			: TravelTimes.walkTiles(from, to, access.isKnown() ? access.level(Skill.AGILITY) : 0);
-		if (tiles != null)
-		{
-			walk = new Leg(null, Departure.WALK, tiles * SECONDS_PER_TILE + TravelTimes.WALK_OVERHEAD, false, "walk "
-				+ tiles + " tiles " + round(tiles * SECONDS_PER_TILE) + " + overhead " + round(TravelTimes.WALK_OVERHEAD));
-		}
-		final Leg best = quickest(candidates, from, to, walk, null);
-		return best != null ? best : missingLeg(to, chosen, candidates);
-	}
-
 	/**
-	 * Nothing usable: the chosen method, or the quickest unlocked one, for the supply list to ask for; or no way at all.
+	 * Nothing usable: the pinned method, or the quickest unlocked one, for the supply list to ask for, timed on the atlas
+	 * from where it lands; or no way at all.
 	 */
-	private Leg missingLeg(Location to, TravelMethod chosen, List<TravelMethod> candidates)
+	private Leg missingLeg(AtlasLegs legs, Location to, TravelMethod chosen, List<TravelMethod> candidates)
 	{
 		Leg fallback = null;
 		for (TravelMethod method : candidates)
@@ -1060,9 +1008,15 @@ public final class RoutePlanner
 			{
 				continue;
 			}
-			final double seconds = baseSeconds(method) + walkSeconds(method) + TravelTimes.LEG_OVERHEAD;
-			final Leg leg = new Leg(method, Departure.DIRECT, seconds, true, MISSING_PENALTY,
-				"not owned yet: " + describe(method) + " + overhead " + round(TravelTimes.LEG_OVERHEAD));
+			final AtlasOption walk = landingWalk(legs, method, to);
+			if (walk == null)
+			{
+				continue;
+			}
+			final double seconds = baseSeconds(method) + walk.getSeconds() + TravelTimes.LEG_OVERHEAD;
+			final Leg leg = new Leg(method, Departure.DIRECT, seconds, true, MISSING_PENALTY, "not owned yet: "
+				+ method.getDisplayName() + " " + round(baseSeconds(method)) + " + " + legs.breakdown(walk) + " + overhead "
+				+ round(TravelTimes.LEG_OVERHEAD));
 			if (method == chosen)
 			{
 				return leg;
@@ -1072,7 +1026,36 @@ public final class RoutePlanner
 				fallback = leg;
 			}
 		}
-		return fallback != null ? fallback : new Leg(null, Departure.NONE, 0, false, NO_WAY_PENALTY, "no way there");
+		return fallback != null ? fallback : noWay();
+	}
+
+	/** No way there: last in the ordering, if it can be. */
+	private static Leg noWay()
+	{
+		return new Leg(null, Departure.NONE, 0, false, NO_WAY_PENALTY, "no way there");
+	}
+
+	/** The atlas's way from where one of the plugin's own methods lands to the stop's patches; null if there's none. */
+	private AtlasOption landingWalk(AtlasLegs legs, TravelMethod method, Location to)
+	{
+		final WorldPoint landing = AtlasLinks.landing(method);
+		AtlasOption best = null;
+		for (TravelAtlas.Place place : atlas.getAtlas().getPlaces())
+		{
+			if (!AtlasLinks.sameLanding(place.getPoint(), landing))
+			{
+				continue;
+			}
+			for (int target : places(to))
+			{
+				final AtlasOption walk = legs.walk(place.getId(), target);
+				if (walk != null && (best == null || walk.getSeconds() < best.getSeconds()))
+				{
+					best = walk;
+				}
+			}
+		}
+		return best;
 	}
 
 	/** The Travel tab family one of the plugin's own methods would be suggested under, when nothing else gets there. */
@@ -1110,186 +1093,8 @@ public final class RoutePlanner
 		return new RoutePlanner(config, access, holdings, poh, atlas)::teleportExtra;
 	}
 
-	/**
-	 * The leg using these methods (or {@code best}, e.g. a walk) that the player would pick: the quickest, with
-	 * the walking preference and the travel style as tie-breaks. Null if there's none.
-	 *
-	 * @param how only legs that start this way (e.g. through the nexus), or null for any
-	 */
-	private Leg quickest(List<TravelMethod> methods, Location from, Location to, Leg best, Departure how)
-	{
-		double bestRank = best == null ? Double.MAX_VALUE : best.seconds;
-		for (TravelMethod method : methods)
-		{
-			for (Option option : options(method, from))
-			{
-				if (how != null && option.departure != how)
-				{
-					continue;
-				}
-				final double seconds = option.seconds + TravelTimes.LEG_OVERHEAD;
-				// A whistle flight spends a charge, Renu from a pad doesn't (elzerma: run back to the Kastori pad for Renu)
-				// and needs no runes either, so it wins a tie (elzerma: the run back to Kastori's pad is short)
-				final double charge = option.method.getKind() == TravelKind.QUETZAL && option.departure == Departure.DIRECT
-					? WHISTLE_CHARGE_PENALTY : option.departure == Departure.RENU ? -RENU_PREFERENCE : 0;
-				final Leg leg = new Leg(option.method, option.departure, seconds, false, charge, option.breakdown
-					+ " + overhead " + round(TravelTimes.LEG_OVERHEAD));
-				final double rank = seconds + charge + teleportPreference() + stylePenalty(leg, to);
-				if (rank < bestRank)
-				{
-					best = leg;
-					bestRank = rank;
-				}
-			}
-		}
-		return best;
-	}
-
-	/** Every usable way of travelling with this method from here, before overhead. */
-	private List<Option> options(TravelMethod method, Location from)
-	{
-		final List<Option> options = new ArrayList<>();
-		final double walk = walkSeconds(method);
-		final String landing = describe(method);
-		final boolean house = canTeleportHome();
-		final double toHouse = houseTeleportSeconds();
-		final double viaHouse = toHouse + (poh.isTeleportOutside() ? TravelTimes.HOUSE_DOOR : 0)
-			+ TravelTimes.HOUSE_WALK;
-		final String viaHouseText = "house " + round(viaHouse);
-		// Into the house by the spirit tree by the last stop (issue #16): every spirit tree offers "Your house" once
-		// one grows in the house. It lands by the house's tree in the garden, beside the portal (estimate)
-		final Integer treeWalk = from == null || !poh.isSpiritTree()
-			|| !access.isMet(Requirement.unlock(Unlock.SPIRIT_TREES)) ? null : spiritTreeWalk(from);
-		final double byTree = treeWalk == null ? 0 : treeWalk * SECONDS_PER_TILE + TravelTimes.SPIRIT_TREE;
-		final String byTreeText = treeWalk == null ? "" : "to the tree " + treeWalk + " tiles "
-			+ round(treeWalk * SECONDS_PER_TILE) + " + tree to the house " + round(TravelTimes.SPIRIT_TREE);
-		// From the garden into the house, as when Teleport to House lands outside
-		final double treeInside = byTree + TravelTimes.HOUSE_DOOR + TravelTimes.HOUSE_WALK;
-		final String treeInsideText = byTreeText + " + indoors " + round(TravelTimes.HOUSE_DOOR + TravelTimes.HOUSE_WALK);
-
-		switch (method.getKind())
-		{
-			case SPELL:
-				if (canTeleport(method.getSpell()))
-				{
-					final double swap = spellbookSwap(method.getSpell());
-					options.add(new Option(method, Departure.DIRECT, baseSeconds(method) + walk + swap,
-						"cast " + round(baseSeconds(method)) + (swap > 0 ? " + spellbook swap " + round(swap) : "")
-							+ " + " + landing));
-				}
-				break;
-			case HOUSE_PORTAL:
-				if (house)
-				{
-					final double door = poh.isTeleportOutside() ? 0 : TravelTimes.HOUSE_DOOR;
-					options.add(new Option(method, Departure.DIRECT, toHouse + door + walk,
-						"house " + round(toHouse + door) + " + " + landing));
-				}
-				if (treeWalk != null)
-				{
-					options.add(new Option(method, Departure.TREE_HOUSE_PORTAL, byTree + TravelTimes.HOUSE_WALK + walk,
-						byTreeText + " + to the portal " + round(TravelTimes.HOUSE_WALK) + " + " + landing));
-				}
-				break;
-			case FAIRY_RING:
-				if (hasFairyRingStaff())
-				{
-					if (poh.isFairyRing() && house)
-					{
-						options.add(new Option(method, Departure.POH_FAIRY_RING, viaHouse + TravelTimes.FAIRY_RING + walk,
-							viaHouseText + " + ring " + round(TravelTimes.FAIRY_RING) + " + " + landing));
-					}
-					if (poh.isFairyRing() && treeWalk != null)
-					{
-						options.add(new Option(method, Departure.TREE_HOUSE_FAIRY_RING,
-							treeInside + TravelTimes.FAIRY_RING + walk,
-							treeInsideText + " + ring " + round(TravelTimes.FAIRY_RING) + " + " + landing));
-					}
-					// No unnamed "some ring nearby": only rings the player has a known way to reach, the quickest
-					// winning. The ring by the last stop is always considered, since it needs nothing.
-					for (FairyRingAccess way : FairyRingAccess.values())
-					{
-						final Double reach = reachRing(way, from);
-						if (reach != null)
-						{
-							options.add(new Option(method, Departure.of(way), reach + TravelTimes.FAIRY_RING + walk,
-								"to the ring " + round(reach) + " + ring " + round(TravelTimes.FAIRY_RING) + " + " + landing));
-						}
-					}
-				}
-				break;
-			case SPIRIT_TREE:
-				final Integer nearTree = from == null ? null : spiritTreeWalk(from);
-				if (nearTree != null)
-				{
-					options.add(new Option(method, Departure.DIRECT,
-						nearTree * SECONDS_PER_TILE + TravelTimes.SPIRIT_TREE + walk, "to the tree " + nearTree
-						+ " tiles " + round(nearTree * SECONDS_PER_TILE) + " + tree " + round(TravelTimes.SPIRIT_TREE)
-						+ " + " + landing));
-				}
-				if (poh.isSpiritTree() && house)
-				{
-					options.add(new Option(method, Departure.POH_SPIRIT_TREE, viaHouse + TravelTimes.SPIRIT_TREE + walk,
-						viaHouseText + " + tree " + round(TravelTimes.SPIRIT_TREE) + " + " + landing));
-				}
-				break;
-			case BALLOON:
-				// Only from a stop with a basket by it (the Grand Tree after Gnome Stronghold); one normal log a flight
-				final Integer basketWalk = from == null ? null : TravelTimes.balloonTiles(from);
-				if (basketWalk != null)
-				{
-					options.add(new Option(method, Departure.DIRECT,
-						basketWalk * SECONDS_PER_TILE + TravelTimes.BALLOON + walk, "to the basket " + basketWalk
-						+ " tiles " + round(basketWalk * SECONDS_PER_TILE) + " + balloon " + round(TravelTimes.BALLOON)
-						+ " + " + landing));
-				}
-				break;
-			default:
-				if (method.getItem() != null && owns(method.getItem()) && startCharges.hasUseToday(method)
-					&& !usedUpToday.contains(method))
-				{
-					options.add(new Option(method, Departure.DIRECT, baseSeconds(method) + walk,
-						"teleport " + round(baseSeconds(method)) + " + " + landing));
-				}
-				break;
-		}
-
-		// From one Varlamore stop to another: back to that stop's landing pad, then Renu (no whistle charge)
-		final Integer padWalk = from == null || from == method.getDestination() ? null : TravelTimes.renuPadTiles(from);
-		if (method.getKind() == TravelKind.QUETZAL && padWalk != null && renuReady(from))
-		{
-			options.add(new Option(method, Departure.RENU, padWalk * SECONDS_PER_TILE + TravelTimes.QUETZAL + walk,
-				"back to the pad " + padWalk + " tiles " + round(padWalk * SECONDS_PER_TILE) + " + Renu "
-					+ round(TravelTimes.QUETZAL) + " + " + landing));
-		}
-
-		final boolean nexus = method.getNexus() != null && poh.getNexusDestinations().contains(method.getNexus());
-		if (house && nexus)
-		{
-			options.add(new Option(method, Departure.POH_NEXUS, viaHouse + TravelTimes.TELEPORT + walk,
-				viaHouseText + " + nexus " + round(TravelTimes.TELEPORT) + " + " + landing));
-		}
-		if (treeWalk != null && nexus)
-		{
-			options.add(new Option(method, Departure.TREE_HOUSE_NEXUS, treeInside + TravelTimes.TELEPORT + walk,
-				treeInsideText + " + nexus " + round(TravelTimes.TELEPORT) + " + " + landing));
-		}
-		final boolean box = method.getJewelleryBox() != null && poh.getJewelleryBox() != null
-			&& poh.getJewelleryBox().includes(method.getJewelleryBox());
-		if (house && box)
-		{
-			options.add(new Option(method, Departure.POH_JEWELLERY_BOX, viaHouse + TravelTimes.TELEPORT + walk,
-				viaHouseText + " + jewellery box " + round(TravelTimes.TELEPORT) + " + " + landing));
-		}
-		if (treeWalk != null && box)
-		{
-			options.add(new Option(method, Departure.TREE_HOUSE_JEWELLERY_BOX, treeInside + TravelTimes.TELEPORT + walk,
-				treeInsideText + " + jewellery box " + round(TravelTimes.TELEPORT) + " + " + landing));
-		}
-		return options;
-	}
-
-	static double baseSeconds(TravelMethod method)
+	/** The plugin's timing for using one of its own methods, before the walk from where it lands. */
+	private static double baseSeconds(TravelMethod method)
 	{
 		switch (method.getKind())
 		{
@@ -1300,7 +1105,7 @@ public final class RoutePlanner
 			case HOUSE_PORTAL:
 				return TravelTimes.TELEPORT;
 			case QUETZAL:
-				// Arriving by quetzal directly means the whistle; Renu from a pad is its own option below
+				// Arriving by quetzal directly means the whistle
 				return TravelTimes.QUETZAL_WHISTLE;
 			case FAIRY_RING:
 				return TravelTimes.FAIRY_RING;
@@ -1311,20 +1116,6 @@ public final class RoutePlanner
 			default:
 				return TravelTimes.ITEM_TELEPORT;
 		}
-	}
-
-	/** From where the method lands to the patch: the measured walk plus any ride or ladder. */
-	private static double walkSeconds(TravelMethod method)
-	{
-		return TravelTimes.tiles(method) * SECONDS_PER_TILE + TravelTimes.extraSeconds(method);
-	}
-
-	/** e.g. "56 tiles 17" or "100 tiles 30 + 40 more": the part of a leg after landing. */
-	private static String describe(TravelMethod method)
-	{
-		final int tiles = TravelTimes.tiles(method);
-		final double extra = TravelTimes.extraSeconds(method);
-		return tiles + " tiles " + round(tiles * SECONDS_PER_TILE) + (extra > 0 ? " + " + round(extra) + " more" : "");
 	}
 
 	private static String round(double seconds)
@@ -1346,44 +1137,6 @@ public final class RoutePlanner
 	private boolean capeHome()
 	{
 		return owns(TravelItem.CONSTRUCTION_CAPE) || owns(TravelItem.MAX_CAPE);
-	}
-
-	/** Seconds to get to a fairy ring this way, or null if the player can't. */
-	private Double reachRing(FairyRingAccess way, Location from)
-	{
-		final double walk = way.getTiles() * SECONDS_PER_TILE;
-		if (way == FairyRingAccess.NEARBY)
-		{
-			final Integer tiles = from == null ? null : TravelTimes.fairyRingTiles(from);
-			return tiles == null ? null : tiles * SECONDS_PER_TILE;
-		}
-		for (TravelItem item : way.getItems())
-		{
-			// Owning isn't always enough: the quest point cape also needs every quest done
-			if (owns(item) && access.missing(item.getRequirements()).isEmpty())
-			{
-				return TravelTimes.ITEM_TELEPORT + walk;
-			}
-		}
-		return null;
-	}
-
-	/** Renu (Twilight's Promise) can fly from the pad by this stop; Kastori's pad has to be built first. */
-	private boolean renuReady(Location from)
-	{
-		return access.isMet(Requirement.quest(Quest.TWILIGHTS_PROMISE))
-			&& (from != Location.KASTORI || access.isMet(Requirement.unlock(Unlock.QUETZAL_KASTORI)));
-	}
-
-	private Integer spiritTreeWalk(Location from)
-	{
-		final Integer tiles = TravelTimes.spiritTreeTiles(from);
-		final Unlock planted = TravelTimes.plantedSpiritTree(from);
-		if (tiles == null || (planted != null && !access.isMet(Requirement.unlock(planted))))
-		{
-			return null;
-		}
-		return tiles;
 	}
 
 	/**
@@ -1408,13 +1161,6 @@ public final class RoutePlanner
 		return canTeleport(Spell.TELEPORT_TO_HOUSE) || capeHome();
 	}
 
-	private boolean hasFairyRingStaff()
-	{
-		return (access.isKnown()
-			&& access.isMet(Requirement.diary(AchievementDiary.LUMBRIDGE_DRAYNOR, AchievementDiary.Tier.ELITE)))
-			|| holdings.countAny(SupplyItems.FAIRY_RING_STAFFS) > 0;
-	}
-
 	/** What a leg costs besides time, for the travel styles. */
 	enum Cost
 	{
@@ -1435,16 +1181,6 @@ public final class RoutePlanner
 	 */
 	static final double OPTION_SLACK = TravelTimes.LEG_OVERHEAD - TravelTimes.WALK_OVERHEAD + STYLE_PENALTY
 		+ PREFER_WALKING_SECONDS + WHISTLE_CHARGE_PENALTY + RENU_PREFERENCE + 1;
-
-	/** Extra cost of a leg under the chosen travel style; 0 for Fastest. */
-	private double stylePenalty(Leg leg, Location to)
-	{
-		if (leg.method == null || config.getTravelStyle() == TravelStyle.FASTEST)
-		{
-			return 0;
-		}
-		return stylePenalty(config.getTravelStyle(), cost(leg, to));
-	}
 
 	static double stylePenalty(TravelStyle style, Cost cost)
 	{

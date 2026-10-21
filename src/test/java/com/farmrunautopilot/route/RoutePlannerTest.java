@@ -13,7 +13,6 @@ import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
-import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RouteMode;
 import com.farmrunautopilot.settings.RunConfig;
@@ -144,14 +143,6 @@ public class RoutePlannerTest
 		final RouteStop village = gnomes.getStops().get(1);
 		assertEquals(Location.TREE_GNOME_VILLAGE, village.getLocation());
 		assertEquals(TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, village.getMethod());
-	}
-
-	@Test
-	public void ringByAStopIsAsFarAsArrivingThereByRing()
-	{
-		// The walk from CIR as measured on Shortest Path's map, not the old 28-tile size (docs/REBUILD.md)
-		assertEquals(Integer.valueOf(82), TravelTimes.fairyRingTiles(Location.FARMING_GUILD));
-		assertEquals(null, TravelTimes.fairyRingTiles(Location.TAVERLEY));
 	}
 
 	@Test
@@ -354,6 +345,19 @@ public class RoutePlannerTest
 		assertTrue(stop.getMethod() + "", stop.getMethod() == null || stop.getMethod().getItem() != TravelItem.SKILLS_NECKLACE);
 	}
 
+	@Test
+	public void withoutTheAtlasNoStopHasAWay()
+	{
+		// It couldn't be read: no way to any stop, rather than a route without travel (the Run tab says why)
+		final Route route = RoutePlanner.plan(Arrays.asList(Patch.FALADOR_TREE, Patch.CATHERBY_HERB),
+			new RunConfig().sanitise(), AccessSnapshot.UNKNOWN, Holdings.EMPTY, new PohSetup(), null, null);
+		assertEquals(2, route.getStops().size());
+		for (RouteStop stop : route.getStops())
+		{
+			assertEquals(Departure.NONE, stop.getDeparture());
+		}
+	}
+
 	/** Harmony Island from the standard book with no altar: its Arceuus teleport, the only way there, can't be cast. */
 	private static RouteStop harmonyIsland(AccessSnapshot access, Holdings holdings)
 	{
@@ -378,10 +382,12 @@ public class RoutePlannerTest
 		// Until the account is read it counts as a normal one
 		assertFalse(AccessSnapshot.UNKNOWN.isIronman());
 
-		// A normal account is told to get the tablet
+		// A normal account is told to get the tablet, timed on the atlas from where it lands
 		final RouteStop normal = harmonyIsland(standardBook(false), Holdings.EMPTY);
 		assertEquals(TravelMethod.HARMONY_ISLAND_TELEPORT, normal.getMethod());
 		assertTrue(normal.isNeedsSupplies());
+		assertTrue(normal.getBreakdown(), normal.getBreakdown().startsWith("not owned yet: Harmony Island Teleport 3 + walk")
+			&& normal.getLegSeconds() > 15);
 
 		// elzerma's group ironman can't buy one: no way there, rather than a tablet they can't get
 		final RouteStop ironman = harmonyIsland(standardBook(true), Holdings.EMPTY);

@@ -3,7 +3,6 @@ package com.farmrunautopilot.atlas;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,16 +11,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import shortestpath.WorldPointUtil;
 import shortestpath.transport.Transport;
 
-/** tools/atlas/report.md: what was built, the checks, today's travel methods against the atlas, and what changed. */
+/** tools/atlas/report.md: what was built, the checks, and what changed. */
 final class Report
 {
-	private static final Path METHODS = Paths.get("../walk/methods.tsv");
-	private static final Path TRAVEL_TIMES = Paths.get("../../src/main/java/com/farmrunautopilot/data/travel/TravelTimes.java");
 	private static final String[] FILES = {"places.tsv", "teleports.tsv", "hops.tsv", "transports.tsv", "requirements.tsv",
 		"ways.tsv"};
 
@@ -107,123 +101,9 @@ final class Report
 			: "- Only reachable with a requirement (no \"needs nothing\" way within the budget): "
 				+ String.join(", ", needsSomething) + "\n");
 
-		methods(s, places, answers);
 		guessed(s, writer);
 		changes(s, places, answers);
 		Files.writeString(file, s);
-	}
-
-	/** Each TravelMethod's landing (tools/walk/methods.tsv) to its stop, against TravelTimes. */
-	private void methods(StringBuilder s, Places places, List<Atlas.Answer> answers) throws IOException
-	{
-		if (!Files.exists(METHODS) || !Files.exists(TRAVEL_TIMES))
-		{
-			return;
-		}
-		final Map<String, Integer> tiles = new HashMap<>();
-		final Map<String, Double> extra = new HashMap<>();
-		final String source = Files.readString(TRAVEL_TIMES);
-		final Matcher t = Pattern.compile("tiles\\(TravelMethod\\.(\\w+), (\\d+)\\)").matcher(source);
-		while (t.find())
-		{
-			tiles.put(t.group(1), Integer.parseInt(t.group(2)));
-		}
-		final Matcher x = Pattern.compile("extra\\(TravelMethod\\.(\\w+), ([\\d.]+)\\)").matcher(source);
-		while (x.find())
-		{
-			extra.put(x.group(1), Double.parseDouble(x.group(2)));
-		}
-		final Map<Integer, Places.Place> landingByTile = new HashMap<>();
-		for (Places.Place p : places.all)
-		{
-			if (p.kind == Places.Kind.LANDING)
-			{
-				landingByTile.put(p.tile, p);
-			}
-		}
-
-		s.append("\n## Today's travel methods against the atlas\n\nEach `TravelMethod` from its landing (`tools/walk/methods.tsv`) ")
-			.append("to the nearest patch the plugin runs at its stop. Plugin = `TravelTimes` tiles x 0.3 s + its extra seconds. ")
-			.append("Flagged when 3 s or more apart.\n\n| Method | Plugin | Atlas fastest | Needs | Atlas, needs nothing | Gap |\n")
-			.append("|---|---|---|---|---|---|\n");
-		final Tsv methods = Tsv.read(METHODS);
-		final int method = methods.col("method");
-		final int location = methods.col("location");
-		final int raw = methods.col("raw_landing");
-		for (String[] r : methods.rows)
-		{
-			final Integer methodTiles = tiles.get(r[method]);
-			final double plugin = methodTiles == null ? Double.NaN
-				: methodTiles * Way.SECONDS_PER_TILE + extra.getOrDefault(r[method], 0.0);
-			final Places.Place landing = landing(landingByTile, Tsv.point(r[raw]));
-			Way fastest = null;
-			Way free = null;
-			if (landing != null)
-			{
-				for (Atlas.Answer a : answers)
-				{
-					if (a.from != landing || !servesStop(places, a.to, r[location]))
-					{
-						continue;
-					}
-					for (Way w : a.ways)
-					{
-						fastest = fastest == null || w.seconds() < fastest.seconds() ? w : fastest;
-						if (w.needs.isEmpty())
-						{
-							free = free == null || w.seconds() < free.seconds() ? w : free;
-						}
-					}
-				}
-			}
-			final String gap = fastest == null || Double.isNaN(plugin) ? ""
-				: String.format(Locale.ROOT, "%+.1f s%s", fastest.seconds() - plugin,
-					Math.abs(fastest.seconds() - plugin) >= 3 ? " **" : "");
-			s.append("| ").append(r[method]).append(" | ")
-				.append(Double.isNaN(plugin) ? "" : String.format(Locale.ROOT, "%.1f s", plugin)).append(" | ")
-				.append(landing == null ? "not a landing in the atlas" : fastest == null ? "no way" : fastest.time() + " (" + fastest.way() + ")")
-				.append(" | ").append(fastest == null ? "" : fastest.needsText()).append(" | ")
-				.append(free == null ? "" : free.time()).append(" | ").append(gap).append(" |\n");
-		}
-	}
-
-	private static boolean servesStop(Places places, Places.Place to, String stop)
-	{
-		if (to.kind != Places.Kind.PATCH)
-		{
-			return false;
-		}
-		for (String name : to.names)
-		{
-			for (Places.Patch p : places.patches)
-			{
-				if (p.id.equals(name) && p.plugin && p.stop.equals(stop))
-				{
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	/** The landing at this tile, or the nearest within 2 tiles. */
-	private static Places.Place landing(Map<Integer, Places.Place> byTile, int[] p)
-	{
-		for (int r = 0; r <= 2; r++)
-		{
-			for (int dx = -r; dx <= r; dx++)
-			{
-				for (int dy = -r; dy <= r; dy++)
-				{
-					final Places.Place found = byTile.get(WorldPointUtil.packWorldPoint(p[0] + dx, p[1] + dy, p[2]));
-					if (found != null)
-					{
-						return found;
-					}
-				}
-			}
-		}
-		return null;
 	}
 
 	private static void guessed(StringBuilder s, Atlas.Writer writer)

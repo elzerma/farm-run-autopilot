@@ -308,7 +308,7 @@ public final class TravelAtlas
 		}
 		catch (IOException | RuntimeException e)
 		{
-			log.warn("The travel atlas couldn't be read; travel falls back to the built-in tables", e);
+			log.warn("The travel atlas couldn't be read; no route can be planned without it", e);
 			return new TravelAtlas();
 		}
 		for (Place p : atlas.places)
