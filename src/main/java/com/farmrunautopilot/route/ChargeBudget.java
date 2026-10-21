@@ -45,7 +45,7 @@ public final class ChargeBudget
 	}
 
 	/** The perfected quetzal whistle (i) never runs out. */
-	private static boolean holdsInfinite(TravelItem item, Holdings holdings)
+	static boolean holdsInfinite(TravelItem item, Holdings holdings)
 	{
 		return item == TravelItem.QUETZAL_WHISTLE && holdings.count(ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE) > 0;
 	}

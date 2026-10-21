@@ -37,7 +37,7 @@ import org.junit.Test;
 /**
  * Routes planned on the travel atlas (docs/plans/travel-rework.md, sprint T3): the plan's scenarios (section 7), the
  * charges, daily uses and the whistle's wait kept, the first leg from where the player stands, and elzerma's full run
- * beside the old tables' for the log.
+ * for the log.
  */
 public class AtlasRouteTest
 {
@@ -158,16 +158,18 @@ public class AtlasRouteTest
 	@Test
 	public void aDailyTeleportWithNoUsesLeftIsntPlanned()
 	{
-		// Ardougne cloak 2: 3 farm teleports a day, all used
+		// Ardougne cloak 2 (the medium diary): 3 farm teleports a day, all used
 		final Map<TravelMethod, Integer> used = new EnumMap<>(TravelMethod.class);
 		used.put(TravelMethod.ARDOUGNE_CLOAK_FARM, 3);
 		final Holdings holdings = new Holdings(items(ItemID.ARDY_CAPE_MEDIUM, 1), Collections.emptyMap(),
 			Collections.emptySet(), true, false, -1, null, used);
-		final RouteStop stop = between(null, Location.ARDOUGNE_FARM, access(99), holdings);
+		final AccessSnapshot access = access(99, Collections.singleton(
+			AccessSnapshot.diaryKey(AchievementDiary.ARDOUGNE, AchievementDiary.Tier.MEDIUM)));
+		final RouteStop stop = between(null, Location.ARDOUGNE_FARM, access, holdings);
 		assertNotEquals(stop.getBreakdown(), TravelMethod.ARDOUGNE_CLOAK_FARM, stop.getMethod());
 		assertTrue(stop.getBreakdown(), stop.getAtlas() == null || stop.getAtlas().getDaily() == null);
 
-		final RouteStop fresh = between(null, Location.ARDOUGNE_FARM, access(99), bank(ItemID.ARDY_CAPE_MEDIUM, 1));
+		final RouteStop fresh = between(null, Location.ARDOUGNE_FARM, access, bank(ItemID.ARDY_CAPE_MEDIUM, 1));
 		assertEquals(fresh.getBreakdown(), TravelMethod.ARDOUGNE_CLOAK_FARM, fresh.getMethod());
 	}
 
@@ -219,7 +221,7 @@ public class AtlasRouteTest
 	}
 
 	@Test
-	public void elzermasFullRunOnTheAtlasAndTheOldTables()
+	public void elzermasFullRunOnTheAtlas()
 	{
 		final List<Patch> patches = new ArrayList<>();
 		for (Patch patch : Patch.values())
@@ -233,9 +235,7 @@ public class AtlasRouteTest
 		final Holdings holdings = withCoins(ElzermaAccount.holdings());
 		final RouteAtlas atlas = AtlasPlayers.with(access, holdings);
 		final Route onAtlas = RoutePlanner.plan(patches, CONFIG, access, holdings, new PohSetup(), atlas, null);
-		final Route tables = RoutePlanner.plan(patches, CONFIG, access, holdings, new PohSetup());
 		System.out.printf(Locale.ROOT, "Atlas route, travel %.0f s:%n%s", onAtlas.getTravelSeconds(), describe(onAtlas));
-		System.out.printf(Locale.ROOT, "Old tables' route, travel %.0f s:%n%s", tables.getTravelSeconds(), describe(tables));
 		assertEquals(ElzermaAccount.STOPS.size(), onAtlas.getStops().size());
 		for (RouteStop stop : onAtlas.getStops())
 		{

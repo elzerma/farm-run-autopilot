@@ -9,6 +9,7 @@ import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.supply.Holdings;
 import java.util.List;
+import net.runelite.api.gameval.ItemID;
 import org.junit.Test;
 
 /** The place to pick on Renu's, the whistle's or a balloon's map on the way to a stop (elzerma, 2026-10-18). */
@@ -32,9 +33,10 @@ public class MenuPickTest
 	@Test
 	public void aWayFromTheAtlas()
 	{
-		// Kastori by the Civitas illa Fortis Teleport, then Renu from the city's pad
+		// Kastori by the Civitas illa Fortis Teleport, then Renu from the city's pad (with the perfected whistle, its
+		// flight is a second quicker and costs nothing)
 		final AccessSnapshot access = ElzermaAccount.access();
-		final Holdings holdings = ElzermaAccount.holdings();
+		final Holdings holdings = ElzermaAccount.holdingsWithout(ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE);
 		final RouteStop stop = RoutePlanner.between(null, Location.KASTORI, new RunConfig().sanitise(), access, holdings,
 			new PohSetup(), AtlasPlayers.with(access, holdings));
 		assertEquals(stop.getBreakdown(), Departure.ATLAS, stop.getDeparture());

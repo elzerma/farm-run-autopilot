@@ -66,7 +66,13 @@ final class ElzermaAccount
 		return holdingsWithout();
 	}
 
-	/** His holdings minus some items, e.g. without the quetzal whistle so Varlamore is chained by Renu. */
+	/** The travel atlas for this account: its diaries and unlocks, and its items, coins for fares included. */
+	static RouteAtlas atlas()
+	{
+		return AtlasPlayers.with(access(), holdings());
+	}
+
+	/** Their holdings minus some items, e.g. without the quetzal whistle so Varlamore is chained by Renu. */
 	static Holdings holdingsWithout(int... missing)
 	{
 		final Map<Integer, Integer> bank = new HashMap<>();
@@ -80,6 +86,8 @@ final class ElzermaAccount
 		{
 			bank.put(rune.getItemId(), 1000);
 		}
+		// Fares for boats and charter ships, as any real player has
+		bank.put(ItemID.COINS, 1_000_000);
 		for (int id : missing)
 		{
 			bank.remove(id);
@@ -89,7 +97,7 @@ final class ElzermaAccount
 		return new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false);
 	}
 
-	/** His patches of these types. */
+	/** Their patches of these types. */
 	static List<Patch> patches(PatchType... types)
 	{
 		final Set<PatchType> wanted = EnumSet.copyOf(Arrays.asList(types));

@@ -10,6 +10,7 @@ import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
+import com.farmrunautopilot.route.AtlasPlayers;
 import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RoutePlanner;
 import com.farmrunautopilot.route.RunSelection;
@@ -57,7 +58,8 @@ public class AllotmentSuppliesTest
 		boolean fullRun)
 	{
 		final RunSelection selection = select(config, predictions, fullRun);
-		final Route route = RoutePlanner.plan(selection.getPatches(), config, AccessSnapshot.UNKNOWN, holdings, new PohSetup());
+		final Route route = RoutePlanner.plan(selection.getPatches(), config, AccessSnapshot.UNKNOWN, holdings,
+			new PohSetup(), AtlasPlayers.with(AccessSnapshot.UNKNOWN, holdings), null);
 		return SupplyCalculator.calculate(config, AccessSnapshot.UNKNOWN, holdings, selection, route, predictions,
 			id -> "item " + id, id -> 0);
 	}

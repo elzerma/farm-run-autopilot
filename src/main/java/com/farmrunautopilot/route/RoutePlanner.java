@@ -797,14 +797,16 @@ public final class RoutePlanner
 	}
 
 	/**
-	 * A whistle flight spends a charge, Renu from a pad doesn't (elzerma: run back to the Kastori pad for Renu) and
-	 * needs no runes either, so it wins a tie (elzerma: the run back to Kastori's pad is short).
+	 * A whistle flight spends a charge (none with the perfected whistle's unlimited charges: elzerma's, under a second
+	 * quicker to the Hunter Guild than the Civitas illa Fortis Teleport and Renu, lost by the charge), Renu from a pad
+	 * doesn't (elzerma: run back to the Kastori pad for Renu) and needs no runes either, so it wins a tie (elzerma: the
+	 * run back to Kastori's pad is short).
 	 */
-	private static double preference(AtlasOption option, AtlasTravel.Match match)
+	private double preference(AtlasOption option, AtlasTravel.Match match)
 	{
 		if (option.getTeleport() != null && option.getTeleport().getType().equals("QUETZAL_WHISTLE"))
 		{
-			return WHISTLE_CHARGE_PENALTY;
+			return ChargeBudget.holdsInfinite(TravelItem.QUETZAL_WHISTLE, holdings) ? 0 : WHISTLE_CHARGE_PENALTY;
 		}
 		final boolean renu = match.getDeparture() == Departure.RENU
 			|| option.getKind() == AtlasOption.Kind.HOP && option.getHop().getType().equals("QUETZAL");

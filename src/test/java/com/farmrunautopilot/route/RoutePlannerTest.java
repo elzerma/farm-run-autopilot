@@ -133,14 +133,14 @@ public class RoutePlannerTest
 		final AccessSnapshot noTeleports = new AccessSnapshot(true, Collections.emptyMap(), levels,
 			Collections.emptySet(), Collections.emptySet(), null);
 		final List<Patch> patches = Arrays.asList(Patch.FALADOR_TREE, Patch.FALADOR_HERB);
-		final Route route = RoutePlanner.plan(patches, config, noTeleports, Holdings.EMPTY, new PohSetup());
+		final Route route = plan(patches, config, noTeleports, Holdings.EMPTY);
 		assertEquals(Location.FALADOR_PARK, route.getStops().get(0).getLocation());
 		assertEquals(Departure.WALK, route.getStops().get(1).getDeparture());
 
 		config.setStartLocation(Location.GNOME_STRONGHOLD);
-		final Route gnomes = RoutePlanner.plan(
+		final Route gnomes = plan(
 			Arrays.asList(Patch.GNOME_STRONGHOLD_FRUIT_TREE, Patch.TREE_GNOME_VILLAGE_FRUIT_TREE), config,
-			AccessSnapshot.UNKNOWN, Holdings.EMPTY, new PohSetup());
+			AccessSnapshot.UNKNOWN, Holdings.EMPTY);
 		final RouteStop village = gnomes.getStops().get(1);
 		assertEquals(Location.TREE_GNOME_VILLAGE, village.getLocation());
 		assertEquals(TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, village.getMethod());
@@ -175,12 +175,12 @@ public class RoutePlannerTest
 		// 66 Agility: over the rocks north-west of Falador
 		final AccessSnapshot agile = new AccessSnapshot(true, Collections.emptyMap(),
 			Collections.singletonMap(Skill.AGILITY, 66), Collections.emptySet(), Collections.emptySet(), null);
-		final Route walking = RoutePlanner.plan(patches, config, agile, Holdings.EMPTY, new PohSetup());
+		final Route walking = plan(patches, config, agile, Holdings.EMPTY);
 		// One teleport into the pair, then a walk between them
 		assertEquals(Departure.WALK, walking.getStops().get(2).getDeparture());
 
 		config.setPreferWalking(false);
-		final Route fastest = RoutePlanner.plan(patches, config, AccessSnapshot.UNKNOWN, Holdings.EMPTY, new PohSetup());
+		final Route fastest = plan(patches, config, AccessSnapshot.UNKNOWN, Holdings.EMPTY);
 		assertEquals(Departure.DIRECT, fastest.getStops().get(2).getDeparture());
 	}
 
@@ -191,7 +191,7 @@ public class RoutePlannerTest
 		config.setRouteMode(RouteMode.META);
 		config.setStartLocation(Location.FARMING_GUILD);
 		final List<Patch> patches = Arrays.asList(Patch.TAVERLEY_TREE, Patch.LUMBRIDGE_TREE, Patch.FARMING_GUILD_TREE);
-		final Route route = RoutePlanner.plan(patches, config, AccessSnapshot.UNKNOWN, Holdings.EMPTY, new PohSetup());
+		final Route route = plan(patches, config, AccessSnapshot.UNKNOWN, Holdings.EMPTY);
 		assertEquals(Location.FARMING_GUILD, route.getStops().get(0).getLocation());
 		assertEquals(Location.LUMBRIDGE, route.getStops().get(1).getLocation());
 		assertEquals(Location.TAVERLEY, route.getStops().get(2).getLocation());
@@ -200,7 +200,14 @@ public class RoutePlannerTest
 	private static Route fromGuild(List<Patch> patches, RunConfig config)
 	{
 		return RoutePlanner.plan(patches, config, AccessSnapshot.UNKNOWN, Holdings.EMPTY, new PohSetup(),
-			null, null, null, 0, Location.FARMING_GUILD);
+			AtlasPlayers.with(AccessSnapshot.UNKNOWN, Holdings.EMPTY), null, null, 0, Location.FARMING_GUILD);
+	}
+
+	/** The route on the travel atlas for this player, without a house. */
+	private static Route plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings)
+	{
+		return RoutePlanner.plan(patches, config, access, holdings, new PohSetup(), AtlasPlayers.with(access, holdings),
+			null);
 	}
 
 	@Test
@@ -229,8 +236,8 @@ public class RoutePlannerTest
 		assertEquals(Location.FARMING_GUILD, route.getStartsFrom());
 		assertTrue(route.setsOffFrom(Location.FARMING_GUILD));
 		assertEquals(TravelMethod.SPIRIT_TREE_GNOME_STRONGHOLD, route.getStops().get(0).getMethod());
-		assertNull(RoutePlanner.plan(Collections.singletonList(Patch.GNOME_STRONGHOLD_FRUIT_TREE), config,
-			AccessSnapshot.UNKNOWN, Holdings.EMPTY, new PohSetup()).getStartsFrom());
+		assertNull(plan(Collections.singletonList(Patch.GNOME_STRONGHOLD_FRUIT_TREE), config,
+			AccessSnapshot.UNKNOWN, Holdings.EMPTY).getStartsFrom());
 	}
 
 	@Test
@@ -240,7 +247,7 @@ public class RoutePlannerTest
 		config.setRouteMode(RouteMode.OFF);
 		config.setCustomOrder(Arrays.asList(Location.TAVERLEY, Location.LUMBRIDGE));
 		final List<Patch> patches = Arrays.asList(Patch.TAVERLEY_TREE, Patch.LUMBRIDGE_TREE, Patch.FARMING_GUILD_TREE);
-		final Route route = RoutePlanner.plan(patches, config, AccessSnapshot.UNKNOWN, Holdings.EMPTY, new PohSetup());
+		final Route route = plan(patches, config, AccessSnapshot.UNKNOWN, Holdings.EMPTY);
 		assertEquals(Location.TAVERLEY, route.getStops().get(0).getLocation());
 		assertEquals(Location.LUMBRIDGE, route.getStops().get(1).getLocation());
 		assertEquals(Location.FARMING_GUILD, route.getStops().get(2).getLocation());
@@ -257,8 +264,8 @@ public class RoutePlannerTest
 		levels.put(Skill.FARMING, 99);
 		final AccessSnapshot access = new AccessSnapshot(true, Collections.emptyMap(), levels,
 			Collections.emptySet(), Collections.emptySet(), null);
-		final Route route = RoutePlanner.plan(Arrays.asList(Patch.FARMING_GUILD_TREE, Patch.FALADOR_TREE,
-			Patch.VARROCK_TREE), config, access, holdings, new PohSetup());
+		final Route route = plan(Arrays.asList(Patch.FARMING_GUILD_TREE, Patch.FALADOR_TREE,
+			Patch.VARROCK_TREE), config, access, holdings);
 		return route.getStops().stream()
 			.filter(s -> s.getMethod() != null && s.getMethod().getItem() == TravelItem.SKILLS_NECKLACE
 				&& s.getDeparture() == Departure.DIRECT && !s.isNeedsSupplies())
@@ -342,16 +349,16 @@ public class RoutePlannerTest
 			Collections.emptySet(), Collections.emptySet(), null);
 		final Holdings necklace = bank(ItemID.JEWL_NECKLACE_OF_SKILLS_6, 1);
 		config.setTravelStyle(TravelStyle.SAVE_CHARGES);
-		final RouteStop stop = RoutePlanner.plan(Collections.singletonList(Patch.FALADOR_TREE), config, access,
-			necklace, new PohSetup()).getStops().get(0);
+		final RouteStop stop = plan(Collections.singletonList(Patch.FALADOR_TREE), config, access,
+			necklace).getStops().get(0);
 		assertTrue(stop.getMethod() + "", stop.getMethod() == null || stop.getMethod().getItem() != TravelItem.SKILLS_NECKLACE);
 	}
 
 	/** Harmony Island from the standard book with no altar: its Arceuus teleport, the only way there, can't be cast. */
 	private static RouteStop harmonyIsland(AccessSnapshot access, Holdings holdings)
 	{
-		return RoutePlanner.plan(Collections.singletonList(Patch.HARMONY_ISLAND_HERB), new RunConfig().sanitise(),
-			access, holdings, new PohSetup()).getStops().get(0);
+		return plan(Collections.singletonList(Patch.HARMONY_ISLAND_HERB), new RunConfig().sanitise(),
+			access, holdings).getStops().get(0);
 	}
 
 	private static AccessSnapshot standardBook(boolean ironman)
