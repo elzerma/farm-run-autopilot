@@ -40,8 +40,10 @@ public class TravelWaysTest
 		assertEquals(TravelWays.State.READY, way(ways, TravelFamily.SPELLS, "Camelot Teleport").getState());
 		final TravelWays.Way trollheim = way(ways, TravelFamily.SPELLS, "Trollheim Teleport");
 		assertEquals(TravelWays.State.NEEDS, trollheim.getState());
-		assertEquals("needs Eadgar's Ruse", trollheim.stateText());
+		assertEquals("Eadgar's Ruse", trollheim.getNeeds());
+		// Greyed out on the tab: the hover says why
 		assertTrue(trollheim.getDetail(), trollheim.getDetail().startsWith("Trollheim Teleport."));
+		assertTrue(trollheim.getDetail(), trollheim.getDetail().contains("Missing: Eadgar's Ruse."));
 	}
 
 	@Test
@@ -68,10 +70,12 @@ public class TravelWaysTest
 		final Holdings holdings = new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false, -1,
 			null, used);
 		final TravelWays ways = ways(keep, access(99), holdings);
-		assertEquals("last charge kept", way(ways, TravelFamily.TELEPORT_ITEMS, "Skills necklace: Farming Guild")
-			.stateText());
-		assertEquals("none left today", way(ways, TravelFamily.TELEPORT_ITEMS, "Ardougne cloak: Ardougne Farm")
-			.stateText());
+		final TravelWays.Way necklace = way(ways, TravelFamily.TELEPORT_ITEMS, "Skills necklace: Farming Guild");
+		assertEquals(TravelWays.State.LAST_CHARGE_KEPT, necklace.getState());
+		assertTrue(necklace.getDetail(), necklace.getDetail().contains("last charge is kept back"));
+		final TravelWays.Way cloak = way(ways, TravelFamily.TELEPORT_ITEMS, "Ardougne cloak: Ardougne Farm");
+		assertEquals(TravelWays.State.NONE_TODAY, cloak.getState());
+		assertTrue(cloak.getDetail(), cloak.getDetail().contains("No uses left today."));
 	}
 
 	@Test
@@ -83,7 +87,8 @@ public class TravelWaysTest
 		final TravelWays after = ways(config, access(99), bank());
 		final TravelWays.Way camelot = way(after, TravelFamily.SPELLS, "Camelot Teleport");
 		assertTrue(camelot.isOff());
-		assertEquals("off", camelot.stateText());
+		assertEquals(TravelWays.State.READY, camelot.getState());
+		assertTrue(camelot.getDetail(), camelot.getDetail().contains("Turned off"));
 		assertEquals(before.get(TravelFamily.SPELLS).getUsable() - 1, after.get(TravelFamily.SPELLS).getUsable());
 	}
 
@@ -107,10 +112,12 @@ public class TravelWaysTest
 			AtlasWays.DEFAULT, Map.of(LAST_MINIGAME_TELEPORT, (int) now - 1), now);
 		final TravelWays ways = TravelWays.of(atlas, config(), access(99), bank(ItemID.RING_OF_DUELING_8, 1),
 			new PohSetup(), id -> "item " + id);
-		assertEquals("cooling down", way(ways, TravelFamily.COOLDOWN, "Tithe Farm Minigame Teleport").stateText());
-		assertEquals("in the Wilderness", way(ways, TravelFamily.TELEPORT_ITEMS, "Ring of dueling: Ferox Enclave")
-			.stateText());
-		assertEquals("ready", way(ways, TravelFamily.TELEPORT_ITEMS, "Ring of dueling: Castle Wars").stateText());
+		assertEquals(TravelWays.State.COOLING_DOWN, way(ways, TravelFamily.COOLDOWN, "Tithe Farm Minigame Teleport")
+			.getState());
+		assertEquals(TravelWays.State.WILDERNESS, way(ways, TravelFamily.TELEPORT_ITEMS,
+			"Ring of dueling: Ferox Enclave").getState());
+		assertEquals(TravelWays.State.READY, way(ways, TravelFamily.TELEPORT_ITEMS, "Ring of dueling: Castle Wars")
+			.getState());
 	}
 
 	@Test

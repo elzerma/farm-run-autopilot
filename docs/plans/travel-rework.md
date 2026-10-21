@@ -302,10 +302,12 @@ Travel
   and canoes (listed), and the boats and ships on the way, which go with the family. Agility shortcuts have no list,
   as Shortest Path names them only "Climb Rocks" and the like. "Keep the last charge of my jewellery" sits inside
   Teleport items, "Cast from runes, not tablets" inside Tablets and scrolls.
-- Opening a family lists each way with its state on the right: "ready", "needs 45 Agility", "no charges", "last charge
-  kept", "none left today", "cooling down", "in the Wilderness", "off". Every spell, ring, tree, pad, ship and cart is
+- Opening a family lists each way. It's ticked while the route can use it, and unticked once the player turns it off.
+  A way that can't be used is greyed out and can't be ticked (it needs 45 Agility, has no charges or no uses left
+  today, is cooling down or in the Wilderness), and it ticks itself once it can be used (elzerma, 2026-10-20, from the
+  first hand check: no "ready" or "needs ..." words on the right). Every spell, ring, tree, pad, ship and cart is
   listed; teleport items and tablets only if the player owns them (the atlas knows over 300). A way's hover says what it
-  needs and its charges or uses left (elzerma: no "13 s quicker" in T7).
+  needs, what's missing and its charges or uses left (elzerma: no "13 s quicker" in T7).
 - Single ways turn off in their family's list and from the Run tab: right-click a stop for "Don't use ..." on its
   teleport or hop, the house, or boats on the way. The choices are kept for the account: a preset never brings back a
   way that's off (they live in RunConfig, which applying a preset keeps, like the storage sources).

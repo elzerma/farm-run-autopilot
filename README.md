@@ -89,9 +89,9 @@ The plugin never clicks, types or acts for you. It only shows information.
 - Ways to travel lists the families of ways: spells, teleport items, tablets and scrolls, your house, fairy rings,
   spirit trees, quetzals, boats and ships, gliders, balloons and carts, home and minigame teleports, and Agility
   shortcuts, each with how many you can use. Untick a family and the route doesn't use it. Open one to see each of
-  its ways and how it stands ("ready", "needs 45 Agility", "no charges", "none left today"), and untick one you can't
-  or won't use. On the Run tab, right-click a stop for "Don't use ..." on its way. The route is planned again without
-  it, and your choices stay whichever preset you use.
+  its ways: ticked when the route can use it, greyed out until it can (hover to see what it needs, or that it has no
+  charges or uses left today). Untick one you won't use. On the Run tab, right-click a stop for "Don't use ..." on its
+  way. The route is planned again without it, and your choices stay whichever preset you use.
 - Home and minigame teleports are off to start with. Turned on, the route uses at most one of each per run, once its
   cooldown is over. "Avoid the Wilderness" is on to start with.
 - Choose a travel style: Fastest, Prefer free, Save charges, or Fewest items to bring.

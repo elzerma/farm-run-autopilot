@@ -178,16 +178,16 @@ class TravelPage extends SetupPanel
 		return row;
 	}
 
-	/** One way: its tick box ("don't use this way" when unticked), its name, and how it stands on the right. */
+	/**
+	 * One way: ticked while the route may use it, unticked once the player turns it off ("don't use this way"); greyed
+	 * out and not tickable while it can't be used, ticking itself once it can (elzerma, 2026-10-20). Why it can't is on
+	 * hover.
+	 */
 	private JComponent wayRow(RunConfig config, TravelWays.Way way)
 	{
+		final boolean usable = way.getState() == TravelWays.State.READY;
 		final boolean off = config.getWaysOff().contains(way.getKey());
-		final String state = way.stateText(off);
-		final JLabel measure = new JLabel(state);
-		measure.setFont(FontManager.getRunescapeSmallFont());
-		final int stateWidth = Math.min(measure.getPreferredSize().width, ROW_WIDTH / 2);
-		final String tooltip = UiText.tooltip(way.getDetail(), 250);
-		final JCheckBox box = checkBox(way.getName(), !off, true, tooltip, on -> saveRun(() ->
+		return checkBox(way.getName(), usable && !off, usable, UiText.tooltip(way.getDetail(), 250), on -> saveRun(() ->
 		{
 			if (on)
 			{
@@ -198,19 +198,6 @@ class TravelPage extends SetupPanel
 				config.getWaysOff().add(way.getKey());
 			}
 		}));
-		box.setText(wrap(way.getName(), ROW_WIDTH - stateWidth - 30));
-		final JLabel stateLabel = new JLabel(measure.getPreferredSize().width <= ROW_WIDTH / 2 ? state
-			: wrap(state, ROW_WIDTH / 2));
-		stateLabel.setFont(FontManager.getRunescapeSmallFont());
-		stateLabel.setForeground(Color.WHITE);
-		stateLabel.setToolTipText(tooltip);
-		final JPanel row = new JPanel(new BorderLayout(4, 0));
-		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		row.add(box, BorderLayout.CENTER);
-		row.add(stateLabel, BorderLayout.EAST);
-		row.setToolTipText(tooltip);
-		row.setMaximumSize(new Dimension(CONTROL_WIDTH, row.getPreferredSize().height));
-		return row;
 	}
 
 	/** A family with nothing to open: its tick box, name and a short value on one line, like the others. */

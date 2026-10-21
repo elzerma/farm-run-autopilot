@@ -26,8 +26,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.IntFunction;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import net.runelite.api.Skill;
 import net.runelite.api.gameval.ItemID;
@@ -35,10 +33,11 @@ import net.runelite.api.gameval.VarbitID;
 
 /**
  * What the Travel tab shows of each family of ways to travel (docs/plans/travel-rework.md, sprint T7, agreed with
- * elzerma on 2026-10-20): each way the player has or could get, with how it stands for them ("ready", "needs 45
- * Agility", "no charges", "none left today", "off"), and how many are ready. Every spell, ring, tree, pad, ship and cart
- * is listed; teleport items and tablets only if the player owns them, as the atlas knows over 300. Worked out on the
- * client thread with each plan, from the atlas, rules and choices the planner uses; immutable, read on the Swing thread.
+ * elzerma on 2026-10-20): each way the player has or could get, whether they can use it now (ticked) or not (greyed
+ * out, with why on hover: "needs 45 Agility", no charges, none left today...), and how many are ready. Every spell,
+ * ring, tree, pad, ship and cart is listed; teleport items and tablets only if the player owns them, as the atlas knows
+ * over 300. Worked out on the client thread with each plan, from the atlas, rules and choices the planner uses;
+ * immutable, read on the Swing thread.
  */
 @Value
 public class TravelWays
@@ -46,20 +45,16 @@ public class TravelWays
 	/** Before the travel atlas is read. */
 	public static final TravelWays EMPTY = new TravelWays(Collections.emptyList());
 
-	/** How a way stands for the player, closest to usable first; as the tab words it on the right. */
-	@Getter
-	@RequiredArgsConstructor
+	/** How a way stands for the player, closest to usable first. */
 	public enum State
 	{
-		READY("ready"),
-		COOLING_DOWN("cooling down"),
-		NONE_TODAY("none left today"),
-		LAST_CHARGE_KEPT("last charge kept"),
-		NO_CHARGES("no charges"),
-		NEEDS("needs"),
-		WILDERNESS("in the Wilderness");
-
-		private final String text;
+		READY,
+		COOLING_DOWN,
+		NONE_TODAY,
+		LAST_CHARGE_KEPT,
+		NO_CHARGES,
+		NEEDS,
+		WILDERNESS
 	}
 
 	/** One way in a family's list. */
@@ -78,18 +73,6 @@ public class TravelWays
 		boolean off;
 		/** For the hover: what it needs, its charges or uses left, and why it can't be used. */
 		String detail;
-
-		/** The words on the right: "ready", "needs 45 Agility", "off"... */
-		public String stateText()
-		{
-			return stateText(off);
-		}
-
-		/** The words on the right, with the player's latest choice (before the next plan has caught up). */
-		public String stateText(boolean turnedOff)
-		{
-			return turnedOff ? "off" : state == State.NEEDS ? "needs " + needs : state.getText();
-		}
 	}
 
 	/** One family: its ways and how many are ready. */
@@ -420,10 +403,8 @@ public class TravelWays
 					s.append(left(first));
 					break;
 				case NEEDS:
-					if (!needs.contains(stand.needs))
-					{
-						s.append(" Missing: ").append(stand.needs).append('.');
-					}
+					// Said even when it's among the needs above: it's what greys the way out
+					s.append(" Missing: ").append(stand.needs).append('.');
 					break;
 				case COOLING_DOWN:
 					s.append(" Used in the last ").append(first.getType().equals("TELEPORTATION_MINIGAME") ? 20 : 30)
