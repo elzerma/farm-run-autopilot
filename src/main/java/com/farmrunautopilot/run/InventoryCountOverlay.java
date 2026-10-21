@@ -1,5 +1,6 @@
 package com.farmrunautopilot.run;
 
+import com.farmrunautopilot.FarmRunAutopilotConfig;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -21,7 +22,8 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  * While the seed vault or the bank is open for a step of the run: how many more of each seed or sapling to take, or
  * how many to put back, along the bottom of the inventory beside it (elzerma, 2026-10-18: "less to guess about how many
  * more to click"; 2026-10-19: the bank too). They cover the instruction under the player, so this is where the count
- * can be seen. While the step is to deposit everything, the bank's Deposit inventory button is outlined. Worked out by
+ * can be seen. While the step is to deposit everything, the bank's Deposit inventory button is outlined: the growing
+ * vine, or a plain outline with vines off (elzerma, 2026-10-20: the plain one was easy to miss). Worked out by
  * {@link RunSession} each tick; only drawn here.
  */
 @Slf4j
@@ -32,14 +34,17 @@ public class InventoryCountOverlay extends Overlay
 
 	private final Client client;
 	private final RunSession session;
+	private final FarmRunAutopilotConfig config;
+	private final VineFrame vine = new VineFrame();
 	/** The vault's or bank's inventory was missing while there were counts to show: logged once. */
 	private boolean loggedMissing;
 
 	@Inject
-	InventoryCountOverlay(Client client, RunSession session)
+	InventoryCountOverlay(Client client, RunSession session, FarmRunAutopilotConfig config)
 	{
 		this.client = client;
 		this.session = session;
+		this.config = config;
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_WIDGETS);
 	}
@@ -49,18 +54,28 @@ public class InventoryCountOverlay extends Overlay
 	{
 		draw(graphics, session.getVaultCounts(), InterfaceID.SeedVaultDeposit.INV, "Seed vault");
 		draw(graphics, session.getBankCounts(), InterfaceID.Bankside.ITEMS, "Bank");
-		if (session.isDepositAllStep())
-		{
-			final Widget button = client.getWidget(InterfaceID.Bankmain.DEPOSITINV);
-			if (button != null && !button.isHidden())
-			{
-				final Rectangle bounds = button.getBounds();
-				graphics.setColor(GuidanceOverlay.INSTRUCTION);
-				graphics.setStroke(OUTLINE);
-				graphics.drawRect(bounds.x - 1, bounds.y - 1, bounds.width + 1, bounds.height + 1);
-			}
-		}
+		drawDepositButton(graphics);
 		return null;
+	}
+
+	private void drawDepositButton(Graphics2D graphics)
+	{
+		final Widget button = session.isDepositAllStep() ? client.getWidget(InterfaceID.Bankmain.DEPOSITINV) : null;
+		if (button == null || button.isHidden())
+		{
+			vine.clear();
+			return;
+		}
+		final Rectangle bounds = button.getBounds();
+		if (config.vineHighlights())
+		{
+			vine.draw(graphics, bounds);
+			return;
+		}
+		vine.clear();
+		graphics.setColor(GuidanceOverlay.INSTRUCTION);
+		graphics.setStroke(OUTLINE);
+		graphics.drawRect(bounds.x - 1, bounds.y - 1, bounds.width + 1, bounds.height + 1);
 	}
 
 	private void draw(Graphics2D graphics, List<RunSession.InventoryCount> counts, int inventoryId, String where)

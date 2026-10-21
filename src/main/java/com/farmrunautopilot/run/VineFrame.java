@@ -10,8 +10,9 @@ import java.util.Random;
 
 /**
  * A growing vine round something the player should click (elzerma, issue #5): the bank's Farm run button, the seed
- * vault's button, the spell to cast and the place to pick on a travel map. A thick stem with leaves and curling tendrils
- * sprouts from the middle of the bottom edge, grows both ways and up the sides to meet at the top, opens into flowers,
+ * vault's button, the bank's Deposit inventory button, the spell to cast and the place to pick on a travel map. A thick
+ * stem with leaves and curling tendrils sprouts from the middle of the bottom edge, grows both ways and up the sides to
+ * meet at the top, opens into flowers,
  * then wilts (browning, drooping, dropping its petals) and grows again. Lit from the top left, with a soft shadow under
  * it, so it stands off the button (elzerma, 2026-10-18: "more depth, should appear more 3d"); it can be drawn thicker
  * (a travel map's places). Each highlight keeps its own, since the falling petals are state. Drawing only; client thread.
