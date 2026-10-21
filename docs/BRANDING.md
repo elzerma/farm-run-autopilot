@@ -119,6 +119,7 @@ Keep to these numbers; if something looks cramped, change it here and in the cod
   | Can be ticked | darker grey, grey outline |
   | Hover | orange outline |
   | Ticked by you (can untick) | orange fill, dark tick |
+  | Some of a group on, some off (a Travel tab family; `Style.partial`) | orange fill, dark dash |
   | Locked: seen done or read from the game | green fill, dark tick |
   | Not possible yet | dark grey, faint outline |
 

@@ -4,6 +4,7 @@ import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.travel.TravelFamily;
+import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.route.TravelWays;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.RouteMode;
@@ -100,9 +101,13 @@ class TravelPage extends SetupPanel
 			s.addContent(familyRow(config, family));
 		}
 		s.addContent(checkBox("Avoid the Wilderness", config.isAvoidWilderness(), true,
-			"On: no teleport, hop or walk into the Wilderness. Off: the route may go through it, where other players "
-				+ "can attack you",
+			"On: no teleport, hop or walk into the Wilderness (the Ferox Enclave is safe). Off: the route may go through "
+				+ "it, where other players can attack you",
 			on -> saveRun(() -> config.setAvoidWilderness(on))));
+		s.addContent(checkBox("Switch spellbook to cast", config.isSwitchSpellbooks(), true,
+			"On: a spell from another spellbook can be cast after Spellbook Swap (on Lunar) or a trip to your house "
+				+ "altar, when that's quicker. Off: only spells on the spellbook you're on are cast",
+			on -> saveRun(() -> config.setSwitchSpellbooks(on))));
 		final List<Choice<TravelStyle>> styles = new ArrayList<>();
 		for (TravelStyle style : TravelStyle.values())
 		{
@@ -120,15 +125,16 @@ class TravelPage extends SetupPanel
 	/** A family's line: its tick box, its name and how many of its ways are ready; opened, each of its ways. */
 	private JComponent familyRow(RunConfig config, TravelFamily family)
 	{
-		final JCheckBox tick = leadBox(config.isOn(family), family.getDescription(),
-			on -> saveRun(() -> config.setOn(family, on)));
 		if (!family.isListed())
 		{
 			// Nothing to open: the house is set up on the Account tab, shortcuts go by Agility level
+			final JCheckBox tick = leadBox(config.isOn(family), family.getDescription(),
+				on -> saveRun(() -> config.setOn(family, on)));
 			return plainRow(tick, family.getDisplayName(), family == TravelFamily.HOUSE ? "set in Account > My house"
 				: "by your level", family.getDescription());
 		}
 		final TravelWays.Family listed = ways.get(family);
+		final JCheckBox tick = familyBox(config, family, listed);
 		final ExpandableRow row = new ExpandableRow(tick, family.getDisplayName(),
 			listed != null ? listed.summary() : "", family.getDescription(), false, ROW_WIDTH, open.contains(family),
 			opened ->
@@ -173,30 +179,87 @@ class TravelPage extends SetupPanel
 		}
 		for (TravelWays.Way way : listed.getWays())
 		{
-			row.addContent(wayRow(config, way));
+			row.addContent(wayRow(config, family, listed, way));
 		}
 		return row;
 	}
 
+	/** How much of a family is on, as its tick box shows it. */
+	private enum FamilyTick
+	{
+		/** Turned off: none of its ways are used. */
+		OFF,
+		/** On, with some of the ways the player can use turned off. */
+		PARTLY,
+		/** On, with every way the player can use on. */
+		ON
+	}
+
+	private static FamilyTick familyTick(RunConfig config, TravelFamily family, TravelWays.Family listed)
+	{
+		if (!config.isOn(family))
+		{
+			return FamilyTick.OFF;
+		}
+		if (listed != null)
+		{
+			for (TravelWays.Way way : listed.getWays())
+			{
+				if (way.getState() == TravelWays.State.READY && config.getWaysOff().contains(way.getKey()))
+				{
+					return FamilyTick.PARTLY;
+				}
+			}
+		}
+		return FamilyTick.ON;
+	}
+
 	/**
-	 * One way: ticked while the route may use it, unticked once the player turns it off ("don't use this way"); greyed
-	 * out and not tickable while it can't be used, ticking itself once it can (elzerma, 2026-10-20). Why it can't is on
-	 * hover.
+	 * A family's tick box, as a list's tick boxes work (elzerma): ticked with every usable way on, a dash with some off,
+	 * empty when the family is off. Clicked when ticked, the family goes off; otherwise it goes on with every way on.
 	 */
-	private JComponent wayRow(RunConfig config, TravelWays.Way way)
+	private JCheckBox familyBox(RunConfig config, TravelFamily family, TravelWays.Family listed)
+	{
+		final FamilyTick now = familyTick(config, family, listed);
+		final JCheckBox box = leadBox(now != FamilyTick.OFF, family.getDescription(), clicked -> saveRun(() ->
+		{
+			if (now == FamilyTick.ON)
+			{
+				config.setOn(family, false);
+				return;
+			}
+			config.setOn(family, true);
+			config.getWaysOff().removeIf(key -> AtlasWays.familyOf(key) == family);
+		}));
+		return now == FamilyTick.PARTLY ? Style.partial(box) : box;
+	}
+
+	/**
+	 * One way: ticked while the route may use it, unticked once the player turns it off ("don't use this way") or its
+	 * family is off; greyed out and not tickable while it can't be used, ticking itself once it can (elzerma,
+	 * 2026-10-20). Why it can't is on hover. Ticking one in a family that's off turns the family on for that way alone.
+	 */
+	private JComponent wayRow(RunConfig config, TravelFamily family, TravelWays.Family listed, TravelWays.Way way)
 	{
 		final boolean usable = way.getState() == TravelWays.State.READY;
-		final boolean off = config.getWaysOff().contains(way.getKey());
-		return checkBox(way.getName(), usable && !off, usable, UiText.tooltip(way.getDetail(), 250), on -> saveRun(() ->
+		final boolean familyOn = config.isOn(family);
+		final boolean on = familyOn && !config.getWaysOff().contains(way.getKey());
+		return checkBox(way.getName(), usable && on, usable, UiText.tooltip(way.getDetail(), 250), ticked -> saveRun(() ->
 		{
-			if (on)
-			{
-				config.getWaysOff().remove(way.getKey());
-			}
-			else
+			if (!ticked)
 			{
 				config.getWaysOff().add(way.getKey());
+				return;
 			}
+			if (!familyOn)
+			{
+				config.setOn(family, true);
+				for (TravelWays.Way other : listed.getWays())
+				{
+					config.getWaysOff().add(other.getKey());
+				}
+			}
+			config.getWaysOff().remove(way.getKey());
 		}));
 	}
 

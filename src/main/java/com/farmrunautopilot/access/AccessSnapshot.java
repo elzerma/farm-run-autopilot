@@ -218,6 +218,15 @@ public class AccessSnapshot
 	}
 
 	/**
+	 * As {@link #canCast(Spell)}, with switching spellbook (Spellbook Swap, the house altar) allowed only if
+	 * {@code switching} (Travel > Ways to travel > Switch spellbook to cast).
+	 */
+	public boolean canCast(Spell spell, boolean switching)
+	{
+		return canCast(spell) && (switching || isOnSpellbook(spell));
+	}
+
+	/**
 	 * The spell is on another book that the house altar can't switch to, but the player is on Lunar and can cast
 	 * Spellbook Swap for it (one cast). Never true off Lunar.
 	 */

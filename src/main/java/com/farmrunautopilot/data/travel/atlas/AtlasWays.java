@@ -256,6 +256,20 @@ public final class AtlasWays
 		}
 	}
 
+	/** The family of a single way's key ("FAIRY_RING|CKR" is Fairy rings), or null for a family's own key. */
+	public static TravelFamily familyOf(String key)
+	{
+		final int bar = key.indexOf('|');
+		if (bar < 0 || keyFamily(key) != null)
+		{
+			return null;
+		}
+		final String type = key.substring(0, bar);
+		final TravelFamily hop = hopFamily(type);
+		return hop != null ? hop : type.startsWith("TELEPORTATION_") || type.equals("QUETZAL_WHISTLE")
+			? teleportFamily(type, key.substring(bar + 1)) : null;
+	}
+
 	/**
 	 * A way's full name, from its key, as the Run tab names it: "Civitas illa Fortis Teleport", "Fairy ring CKR", "Spirit
 	 * tree (Gnome Stronghold)", "your house".

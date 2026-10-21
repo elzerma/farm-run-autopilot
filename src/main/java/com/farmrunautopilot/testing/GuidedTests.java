@@ -121,6 +121,8 @@ final class GuidedTests
 		{
 			config.setOn(TravelFamily.SPELLS, true);
 			config.getWaysOff().remove("TELEPORTATION_SPELL|" + method.getSpell().getDisplayName());
+			// The Spellbook Swap test casts from another book
+			config.setSwitchSpellbooks(true);
 		}
 	}
 

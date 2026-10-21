@@ -51,6 +51,8 @@ public class SettingsStore
 	private volatile AccountSettings accountView = new AccountSettings().sanitise();
 	/** Replaced, never changed in place. */
 	private volatile List<Preset> presets = new ArrayList<>();
+	/** The preset last picked or saved, shown when several match the settings; null if none. Swing thread. */
+	private String lastPreset;
 
 	@Inject
 	public SettingsStore(ConfigManager configManager, Gson gson)
@@ -306,9 +308,18 @@ public class SettingsStore
 		return names;
 	}
 
-	/** The preset the current settings match exactly, or null if they've been changed since. */
+	/**
+	 * The preset the current settings match exactly, or null if they've been changed since. When several match (they
+	 * differ only in what presets don't cover, such as the ways to travel turned off), the one last picked or saved.
+	 */
 	public String activePreset()
 	{
+		// elzerma: two presets differing only in ways turned off kept jumping back to the first
+		final int last = lastPreset == null ? -1 : indexOf(lastPreset);
+		if (last >= 0 && farmAndTravel(presets.get(last).getConfig()).equals(runConfig))
+		{
+			return lastPreset;
+		}
 		for (Preset preset : presets)
 		{
 			if (farmAndTravel(preset.getConfig()).equals(runConfig))
@@ -333,6 +344,7 @@ public class SettingsStore
 		{
 			updated.add(preset);
 		}
+		lastPreset = name;
 		writePresets(updated);
 	}
 
@@ -344,6 +356,7 @@ public class SettingsStore
 		{
 			return;
 		}
+		lastPreset = name;
 		runConfig = farmAndTravel(presets.get(index).getConfig());
 		saveRunConfig();
 		notifyListeners();
@@ -358,6 +371,10 @@ public class SettingsStore
 		}
 		final List<Preset> updated = new ArrayList<>(presets);
 		updated.set(index, new Preset(to, presets.get(index).getConfig()));
+		if (from.equals(lastPreset))
+		{
+			lastPreset = to;
+		}
 		writePresets(updated);
 	}
 
@@ -365,6 +382,10 @@ public class SettingsStore
 	{
 		final List<Preset> updated = new ArrayList<>(presets);
 		updated.removeIf(p -> p.getName().equals(name));
+		if (name.equals(lastPreset))
+		{
+			lastPreset = null;
+		}
 		writePresets(updated);
 	}
 
@@ -408,6 +429,7 @@ public class SettingsStore
 		result.getWaysOff().clear();
 		result.getWaysOff().addAll(runConfig.getWaysOff());
 		result.setAvoidWilderness(runConfig.isAvoidWilderness());
+		result.setSwitchSpellbooks(runConfig.isSwitchSpellbooks());
 		return result;
 	}
 

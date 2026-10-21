@@ -63,6 +63,18 @@ public class TabletChoiceTest
 		assertTrue(SupplyCalculator.usesTablet(Spell.TELEPORT_TO_HOUSE, Location.CATHERBY, config, CASTER, TABLETS));
 	}
 
+	@Test
+	public void switchingOffTakesTheTabletOfASpellOnAnotherBook()
+	{
+		// On Lunar, Spellbook Swap reaches Camelot Teleport: cast from runes, as chosen
+		final AccessSnapshot lunar = caster(Spellbook.LUNAR);
+		final RunConfig config = config();
+		config.setUseRunesNotTabs(true);
+		assertFalse(SupplyCalculator.usesTablet(Spell.CAMELOT_TELEPORT, Location.CATHERBY, config, lunar, TABLETS));
+		config.setSwitchSpellbooks(false);
+		assertTrue(SupplyCalculator.usesTablet(Spell.CAMELOT_TELEPORT, Location.CATHERBY, config, lunar, TABLETS));
+	}
+
 	private static RunConfig config()
 	{
 		return new RunConfig().sanitise();
@@ -70,6 +82,12 @@ public class TabletChoiceTest
 
 	/** 99 everywhere, every quest done, on the standard spellbook. */
 	private static AccessSnapshot caster()
+	{
+		return caster(Spellbook.STANDARD);
+	}
+
+	/** 99 everywhere, every quest done, on this spellbook with no house altar. */
+	private static AccessSnapshot caster(Spellbook spellbook)
 	{
 		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
 		for (Quest quest : Quest.values())
@@ -82,7 +100,7 @@ public class TabletChoiceTest
 			levels.put(skill, 99);
 		}
 		return new AccessSnapshot(true, quests, levels, Collections.emptySet(), EnumSet.noneOf(Unlock.class), null,
-			Spellbook.STANDARD, Collections.emptySet());
+			spellbook, Collections.emptySet());
 	}
 
 	/** One of each of these in the bank. */

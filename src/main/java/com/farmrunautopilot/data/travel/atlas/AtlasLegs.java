@@ -676,11 +676,19 @@ public final class AtlasLegs
 		});
 	}
 
-	/** Shortest Path's Wilderness areas (BSD-2, WildernessChecker at 37abff3): above ground and underground. */
+	/**
+	 * Shortest Path's Wilderness areas (BSD-2, WildernessChecker at 37abff3): above ground and underground; but not the
+	 * Ferox Enclave, a safe zone (elzerma: teleporting there isn't going into the Wilderness), inside its pass-through
+	 * barriers. Leaving it on foot crosses a barrier into the Wilderness, so still counts.
+	 */
 	public static boolean inWilderness(WorldPoint p)
 	{
 		final int x = p.getX();
 		final int y = p.getY();
+		if (p.getPlane() == 0 && x >= 3123 && x <= 3154 && y >= 3616 && y <= 3639)
+		{
+			return false;
+		}
 		return x >= 2944 && x < 2944 + 448 && y >= 3525 && y < 3525 + 448
 			|| x >= 2944 && x < 2944 + 518 && y >= 9918 && y < 9918 + 458;
 	}

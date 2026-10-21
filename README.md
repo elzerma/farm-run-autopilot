@@ -90,13 +90,15 @@ The plugin never clicks, types or acts for you. It only shows information.
   spirit trees, quetzals, boats and ships, gliders, balloons and carts, home and minigame teleports, and Agility
   shortcuts, each with how many you can use. Untick a family and the route doesn't use it. Open one to see each of
   its ways: ticked when the route can use it, greyed out until it can (hover to see what it needs, or that it has no
-  charges or uses left today). Untick one you won't use. On the Run tab, right-click a stop for "Don't use ..." on its
-  way. The route is planned again without it, and your choices stay whichever preset you use.
+  charges or uses left today). Untick one you won't use: the family's tick box then shows a dash, and ticking it again
+  turns every way back on. On the Run tab, right-click a stop for "Don't use ..." on its way. The route is planned
+  again without it, and your choices stay whichever preset you use.
 - Home and minigame teleports are off to start with. Turned on, the route uses at most one of each per run, once its
-  cooldown is over. "Avoid the Wilderness" is on to start with.
+  cooldown is over. "Avoid the Wilderness" is on to start with (the Ferox Enclave counts as safe). "Switch spellbook to
+  cast" lets the route cast a spell from another spellbook after Spellbook Swap or at your house altar; untick it to
+  keep to the spellbook you're on.
 - Choose a travel style: Fastest, Prefer free, Save charges, or Fewest items to bring.
-- Tablets come first; tick "Cast from runes, not tablets" (under Tablets and scrolls) to keep yours. Spells from
-  another spellbook are only planned when your house altar or Lunar's Spellbook Swap can reach them.
+- Tablets come first; tick "Cast from runes, not tablets" (under Tablets and scrolls) to keep yours.
 - Charges are tracked across the whole run: jewellery charges, daily-limited teleports (Ardougne cloak,
   Explorer's ring) and items charged by hand (quetzal whistle, Xeric's talisman, pendant of Ates, counted from
   your teleports). When one runs out partway, the next best way is used.

@@ -26,6 +26,7 @@ import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
 import net.runelite.api.Skill;
 import net.runelite.api.gameval.ItemID;
+import net.runelite.api.gameval.VarbitID;
 import org.junit.Test;
 
 /** The Travel tab's families and ways, each with how it stands for the player (sprint T7). */
@@ -108,16 +109,40 @@ public class TravelWaysTest
 	public void cooldownsAndTheWildernessShow()
 	{
 		final long now = 29_000_000;
-		final RouteAtlas atlas = AtlasPlayers.with(access(99), bank(ItemID.RING_OF_DUELING_8, 1), Map.of(),
-			AtlasWays.DEFAULT, Map.of(LAST_MINIGAME_TELEPORT, (int) now - 1), now);
-		final TravelWays ways = TravelWays.of(atlas, config(), access(99), bank(ItemID.RING_OF_DUELING_8, 1),
-			new PohSetup(), id -> "item " + id);
+		final Holdings holdings = bank(ItemID.RING_OF_DUELING_8, 1, ItemID.BURNING_AMULET_5, 1);
+		final RouteAtlas atlas = AtlasPlayers.with(access(99), holdings, Map.of(), AtlasWays.DEFAULT,
+			Map.of(LAST_MINIGAME_TELEPORT, (int) now - 1), now);
+		final TravelWays ways = TravelWays.of(atlas, config(), access(99), holdings, new PohSetup(), id -> "item " + id);
 		assertEquals(TravelWays.State.COOLING_DOWN, way(ways, TravelFamily.COOLDOWN, "Tithe Farm Minigame Teleport")
 			.getState());
-		assertEquals(TravelWays.State.WILDERNESS, way(ways, TravelFamily.TELEPORT_ITEMS,
-			"Ring of dueling: Ferox Enclave").getState());
+		assertEquals(TravelWays.State.WILDERNESS, way(ways, TravelFamily.TELEPORT_ITEMS, "Burning amulet: Lava Maze")
+			.getState());
+		// The Ferox Enclave is a safe zone (elzerma), though inside the Wilderness's bounds
+		assertEquals(TravelWays.State.READY, way(ways, TravelFamily.TELEPORT_ITEMS, "Ring of dueling: Ferox Enclave")
+			.getState());
 		assertEquals(TravelWays.State.READY, way(ways, TravelFamily.TELEPORT_ITEMS, "Ring of dueling: Castle Wars")
 			.getState());
+	}
+
+	@Test
+	public void spellsFromAnotherBookAreGreyedOutWithSwitchingOff()
+	{
+		// On Lunar, where Spellbook Swap reaches the standard spellbook's Varrock Teleport
+		final AccessSnapshot lunar = access(99, Spellbook.LUNAR);
+		final Map<Integer, Integer> onLunar = Map.of(VarbitID.SPELLBOOK, 2);
+		final RunConfig switching = config();
+		final TravelWays on = TravelWays.of(AtlasPlayers.with(lunar, bank(), onLunar, RunService.ways(switching), Map.of(),
+			0), switching, lunar, bank(), new PohSetup(), id -> "item " + id);
+		assertEquals(TravelWays.State.READY, way(on, TravelFamily.SPELLS, "Varrock Teleport").getState());
+
+		final RunConfig noSwitching = config();
+		noSwitching.setSwitchSpellbooks(false);
+		final TravelWays off = TravelWays.of(AtlasPlayers.with(lunar, bank(), onLunar, RunService.ways(noSwitching),
+			Map.of(), 0), noSwitching, lunar, bank(), new PohSetup(), id -> "item " + id);
+		final TravelWays.Way varrock = way(off, TravelFamily.SPELLS, "Varrock Teleport");
+		assertEquals(TravelWays.State.NEEDS, varrock.getState());
+		assertEquals("the standard spellbook (Switch spellbook to cast is off)", varrock.getNeeds());
+		assertEquals(TravelWays.State.READY, way(off, TravelFamily.SPELLS, "Catherby Teleport").getState());
 	}
 
 	@Test
@@ -214,6 +239,20 @@ public class TravelWaysTest
 	private static RunConfig config()
 	{
 		return new RunConfig().sanitise();
+	}
+
+	/** Every quest done, every skill at {@code level}, on this spellbook (no house altar). */
+	private static AccessSnapshot access(int level, Spellbook spellbook)
+	{
+		final AccessSnapshot standard = access(level);
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		for (Skill skill : AccessSnapshot.REAL_SKILLS)
+		{
+			levels.put(skill, level);
+		}
+		return new AccessSnapshot(true, standard.getQuests(), levels, Collections.emptySet(),
+			EnumSet.of(Unlock.FAIRY_RINGS, Unlock.SPIRIT_TREES, Unlock.QUETZAL_KASTORI), null, spellbook,
+			Collections.emptySet());
 	}
 
 	/** Every quest done but these, every skill at {@code level}, no diaries; fairy rings and spirit trees open. */

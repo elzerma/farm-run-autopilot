@@ -899,7 +899,7 @@ public final class RoutePlanner
 		final Spell spell = AtlasLinks.spell(data, teleport);
 		if (spell != null && teleport.getType().equals("TELEPORTATION_SPELL"))
 		{
-			return access.canCast(spell) ? castSwap(spell) : null;
+			return access.canCast(spell, config.isSwitchSpellbooks()) ? castSwap(spell) : null;
 		}
 		if (!AtlasLinks.items(data, teleport).isEmpty())
 		{
@@ -1045,7 +1045,7 @@ public final class RoutePlanner
 			// an ironman can't buy one (elzerma: Harmony Island planned by a tablet they can't get). A tablet already
 			// held, group storage included, was planned as owned before this
 			final Spell spell = method.getSpell();
-			if (method.getKind() == TravelKind.SPELL && !access.canCast(spell)
+			if (method.getKind() == TravelKind.SPELL && !access.canCast(spell, config.isSwitchSpellbooks())
 				&& (!spell.hasTablet() || access.isIronman()))
 			{
 				continue;
@@ -1082,7 +1082,8 @@ public final class RoutePlanner
 					return TravelFamily.COOLDOWN;
 				}
 				// A spell the player can't cast is suggested as its tablet
-				return access.canCast(method.getSpell()) ? TravelFamily.SPELLS : TravelFamily.TABLETS;
+				return access.canCast(method.getSpell(), config.isSwitchSpellbooks()) ? TravelFamily.SPELLS
+					: TravelFamily.TABLETS;
 			case TABLET:
 				return TravelFamily.TABLETS;
 			case HOUSE_PORTAL:
@@ -1393,7 +1394,8 @@ public final class RoutePlanner
 
 	private boolean canTeleport(Spell spell)
 	{
-		return access.canCast(spell) || (spell.hasTablet() && holdings.count(spell.getTabletItemId()) > 0);
+		return access.canCast(spell, config.isSwitchSpellbooks())
+			|| (spell.hasTablet() && holdings.count(spell.getTabletItemId()) > 0);
 	}
 
 	/** Teleport to House by spell, tablet, construction cape or max cape. */

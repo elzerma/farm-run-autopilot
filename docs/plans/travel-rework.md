@@ -311,6 +311,15 @@ Travel
 - Single ways turn off in their family's list and from the Run tab: right-click a stop for "Don't use ..." on its
   teleport or hop, the house, or boats on the way. The choices are kept for the account: a preset never brings back a
   way that's off (they live in RunConfig, which applying a preset keeps, like the storage sources).
+- **From elzerma's hand checks (2026-10-20):** a family's tick box works like a list's: ticked with every usable way on,
+  a dash (`Style.partial`) with some off, empty when the family is off; ticking it (empty or dash) turns the family and
+  all its ways on, and ticking a way in a family that's off turns the family on for that way alone. "Switch spellbook
+  to cast" (on by default, kept for the account) sits below Avoid the Wilderness: off, only spells on the spellbook in
+  use are cast, and the others are greyed out with "the Lunar spellbook (Switch spellbook to cast is off)". The Ferox
+  Enclave is a safe zone, so a teleport there isn't into the Wilderness (inside its pass-through barriers, x 3123-3154,
+  y up to 3639; leaving it on foot still is). The preset picker shows the preset last picked or saved when several
+  match (two presets differing only in ways turned off kept showing the first). An unreachable stop still says "No
+  unlocked way" when the ways turned off are why (elzerma's choice).
 - Turning a family or a single way off is a preference the route follows (as Shortest Path's toggles do), and the
   way to steer travel (elzerma, 2026-10-20): "don't use this way" for a way the route keeps using that the player
   can't or won't use; the route is planned again without it and still finds the fastest run.

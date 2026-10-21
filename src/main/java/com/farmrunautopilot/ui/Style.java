@@ -127,6 +127,50 @@ final class Style
 		return box;
 	}
 
+	/**
+	 * A tick box for a group with some of its items on and some off, as a list's tick boxes have it (elzerma: off,
+	 * partly on, all on): orange fill with a dark dash. The box shows as ticked.
+	 */
+	static JCheckBox partial(JCheckBox box)
+	{
+		box.setSelected(true);
+		box.setSelectedIcon(dash(ColorScheme.BRAND_ORANGE));
+		box.setRolloverSelectedIcon(dash(ColorScheme.BRAND_ORANGE.brighter()));
+		return box;
+	}
+
+	/** A small square tick box filled with this colour, with a dark dash across it. */
+	private static Icon dash(Color fill)
+	{
+		return new Icon()
+		{
+			@Override
+			public void paintIcon(Component c, Graphics g, int x, int y)
+			{
+				final Graphics2D g2 = (Graphics2D) g.create();
+				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+				g2.setColor(fill);
+				g2.fillRect(x, y, TICK_SIZE, TICK_SIZE);
+				g2.setColor(ColorScheme.DARKER_GRAY_COLOR);
+				g2.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				g2.drawLine(x + 3, y + TICK_SIZE / 2, x + TICK_SIZE - 4, y + TICK_SIZE / 2);
+				g2.dispose();
+			}
+
+			@Override
+			public int getIconWidth()
+			{
+				return TICK_SIZE;
+			}
+
+			@Override
+			public int getIconHeight()
+			{
+				return TICK_SIZE;
+			}
+		};
+	}
+
 	/** A small square tick box: a fill, an outline (or none), and a tick (or none). */
 	private static Icon tick(Color fill, Color outline, Color check)
 	{

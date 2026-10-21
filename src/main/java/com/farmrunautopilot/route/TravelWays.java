@@ -290,10 +290,12 @@ public class TravelWays
 						return new Stand(State.NEEDS, requirement.describe().replaceFirst("^Needs ", ""), t);
 					}
 				}
-				// A spellbook it can't get to (no altar for it, no Spellbook Swap)
+				// A spellbook it can't get to (no altar for it, no Spellbook Swap), or switching is turned off
 				final String book = spell.getSpellbook().name().toLowerCase(Locale.ROOT);
-				return new Stand(State.NEEDS, "the " + (spell.getSpellbook() == Spellbook.STANDARD ? book
-					: Character.toUpperCase(book.charAt(0)) + book.substring(1)) + " spellbook", t);
+				final String needs = "the " + (spell.getSpellbook() == Spellbook.STANDARD ? book
+					: Character.toUpperCase(book.charAt(0)) + book.substring(1)) + " spellbook";
+				return new Stand(State.NEEDS, access.canCast(spell) && !config.isSwitchSpellbooks()
+					? needs + " (Switch spellbook to cast is off)" : needs, t);
 			}
 			for (TravelItem item : AtlasLinks.items(atlas, t))
 			{

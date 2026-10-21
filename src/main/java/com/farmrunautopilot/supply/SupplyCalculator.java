@@ -1179,7 +1179,8 @@ public final class SupplyCalculator
 				return true;
 			}
 		}
-		return !access.canCast(spell) || (!config.isUseRunesNotTabs() && holdings.count(spell.getTabletItemId()) > 0);
+		return !access.canCast(spell, config.isSwitchSpellbooks())
+			|| (!config.isUseRunesNotTabs() && holdings.count(spell.getTabletItemId()) > 0);
 	}
 
 	/**
@@ -1192,7 +1193,7 @@ public final class SupplyCalculator
 	{
 		// A spell the player can't cast (wrong spellbook with no altar, Magic level, quest) needs its tablet, even
 		// when runes are preferred (GitHub #2)
-		final boolean castable = access.canCast(spell);
+		final boolean castable = access.canCast(spell, config.isSwitchSpellbooks());
 		if (usesTablet(spell, location, config, access, holdings))
 		{
 			tablets.merge(spell.getTabletItemId(), 1, Integer::sum);

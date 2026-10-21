@@ -15,6 +15,7 @@ import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.atlas.AtlasLegs;
 import com.farmrunautopilot.data.travel.atlas.AtlasWays;
+import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.supply.Holdings;
@@ -147,9 +148,9 @@ public class TravelChoicesTest
 	@Test
 	public void theWildernessOnlyWhenThePlayerLetsIt()
 	{
-		// The ring of dueling's Ferox Enclave teleport lands in the Wilderness
+		// The burning amulet's teleports land in the Wilderness
 		final AccessSnapshot access = access(99, Collections.emptySet());
-		final Holdings holdings = bank(ItemID.RING_OF_DUELING_8, 1);
+		final Holdings holdings = bank(ItemID.BURNING_AMULET_5, 1);
 		final int avoiding = usable(access, holdings, AtlasWays.DEFAULT);
 		final int through = usable(access, holdings, new AtlasWays(EnumSet.of(TravelFamily.COOLDOWN),
 			Collections.emptySet(), false));
@@ -204,6 +205,21 @@ public class TravelChoicesTest
 	}
 
 	@Test
+	public void spellsFromAnotherBookOnlyWithSwitchingOn()
+	{
+		// On Lunar with Spellbook Swap: Varrock Teleport is a standard spell, cast after a swap
+		final AccessSnapshot lunar = onLunar();
+		final TravelAtlas.Jump varrock = teleport("Varrock Teleport");
+		assertTrue(usableWith(lunar, config(), varrock));
+		final RunConfig noSwitching = config();
+		noSwitching.setSwitchSpellbooks(false);
+		assertFalse(usableWith(lunar, noSwitching, varrock));
+		// A Lunar spell, on the book already, either way
+		final TravelAtlas.Jump catherby = teleport("Catherby Teleport");
+		assertTrue(usableWith(lunar, noSwitching, catherby));
+	}
+
+	@Test
 	public void aBankTeleportTurnedOffIsntCarried()
 	{
 		final AccessSnapshot access = ElzermaAccount.access();
@@ -244,6 +260,47 @@ public class TravelChoicesTest
 			}
 		}
 		throw new AssertionError("No way " + key + " (" + name + ")");
+	}
+
+	/** The planner can use this teleport, by its own rules (casting, spellbooks), for a player with nothing in the bank. */
+	private static boolean usableWith(AccessSnapshot access, RunConfig config, TravelAtlas.Jump teleport)
+	{
+		final Holdings holdings = bank();
+		final RouteAtlas atlas = AtlasPlayers.with(access, holdings, Map.of(VarbitID.SPELLBOOK, 2), RunService.ways(config),
+			Map.of(), 0);
+		return new AtlasLegs(atlas.getAtlas(), atlas.getAccount(), null,
+			RoutePlanner.startRules(config, access, holdings, new PohSetup(), atlas)).usable(teleport);
+	}
+
+	/** The atlas's teleport of this name. */
+	private static TravelAtlas.Jump teleport(String name)
+	{
+		for (TravelAtlas.Jump t : AtlasPlayers.ATLAS.getTeleports())
+		{
+			if (t.getName().equals(name))
+			{
+				return t;
+			}
+		}
+		throw new AssertionError("No teleport " + name);
+	}
+
+	/** 99 everywhere, every quest done, on the Lunar spellbook (so Spellbook Swap can be cast), no house altar. */
+	private static AccessSnapshot onLunar()
+	{
+		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
+		for (Quest quest : Quest.values())
+		{
+			quests.put(quest, QuestState.FINISHED);
+		}
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		for (Skill skill : AccessSnapshot.REAL_SKILLS)
+		{
+			levels.put(skill, 99);
+		}
+		return new AccessSnapshot(true, quests, levels, Collections.emptySet(),
+			EnumSet.of(Unlock.FAIRY_RINGS, Unlock.SPIRIT_TREES, Unlock.QUETZAL_KASTORI), null, Spellbook.LUNAR,
+			Collections.emptySet());
 	}
 
 	private static int usable(AccessSnapshot access, Holdings holdings, AtlasWays ways)
