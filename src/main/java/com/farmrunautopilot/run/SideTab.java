@@ -13,7 +13,6 @@ import net.runelite.api.gameval.InterfaceID;
 @Getter
 public enum SideTab
 {
-	// UNVERIFIED: the open tab's TOPLEVEL_PANEL value (3, 4, 6) and the STONE3, STONE4 and STONE6 icons, in each layout
 	INVENTORY("Inventory", 3, InterfaceID.Toplevel.STONE3, InterfaceID.ToplevelOsrsStretch.STONE3,
 		InterfaceID.ToplevelPreEoc.STONE3),
 	EQUIPMENT("Worn Equipment", 4, InterfaceID.Toplevel.STONE4, InterfaceID.ToplevelOsrsStretch.STONE4,

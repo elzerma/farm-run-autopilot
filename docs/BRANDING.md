@@ -51,6 +51,11 @@ Orange is an accent, not a text colour: one orange thing per area at most. Never
 
 Wear blue is only for "put this on", so it's never confused with an item to use.
 
+Something to click (the spell, the item to use, a side-panel tab's icon, a button, a place on a travel map) gets the
+growing vine (`run/VineFrame`) while "Growing vine highlights" is on, and a plain outline when it's off. Round an item
+the vine sits just outside its slot, and only round the first slot holding it, so several buckets of compost aren't a
+tangle. Items to wear keep their blue outline and "Wear" label.
+
 ### Bank tab
 
 | Role | Hex |

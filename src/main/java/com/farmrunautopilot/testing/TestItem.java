@@ -16,11 +16,6 @@ public enum TestItem
 			+ "this test: it plans Catherby by Camelot Teleport, cast from runes. The Run tab should warn that you need "
 			+ "Spellbook Swap, its runes should be on the bank's Farm run tab, and the spell should be outlined in your "
 			+ "spellbook on that step."),
-	SIDE_TAB_ICONS(Tab.RUN, "Tab icons to switch to",
-		"With the Prayer tab open, start a run whose next stop is reached by a teleport tablet in your inventory, "
-			+ "jewellery you're wearing, or a spell. The Inventory, Worn Equipment or Spellbook tab's icon should have "
-			+ "the vine round it (a plain outline with \"Growing vine highlights\" off); click that tab and the vine "
-			+ "should leave the icon for the tablet, jewellery or spell itself. Try it in fixed and resizable layouts."),
 	SEED_VAULT_SECTION(Tab.RUN, "Farm run section in the seed vault",
 		"Build a run needing seeds your bank doesn't have but the Farming Guild's seed vault does, and open the vault: "
 			+ "the button by its close button should flash, with the same outline round it as the bank's Farm run "

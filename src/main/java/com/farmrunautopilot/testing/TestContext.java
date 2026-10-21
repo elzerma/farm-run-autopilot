@@ -11,13 +11,10 @@ import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.run.SceneTracker;
-import com.farmrunautopilot.run.SideTab;
-import com.farmrunautopilot.run.TabIconOverlay;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.supply.ItemChargeTracker;
-import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,8 +31,6 @@ import net.runelite.api.Player;
 import net.runelite.api.Scene;
 import net.runelite.api.Tile;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.api.gameval.VarClientID;
-import net.runelite.api.widgets.Widget;
 
 /**
  * What a guided test can see while it runs, and what it has found for the report. Client thread while the
@@ -55,7 +50,6 @@ public class TestContext
 	private final PohDetector pohDetector;
 	private final SettingsStore settings;
 	private final SeedVaultSection seedVault;
-	private final TabIconOverlay tabIcons;
 
 	/** Game messages since the last check. */
 	private final List<String> chat = new ArrayList<>();
@@ -71,7 +65,7 @@ public class TestContext
 
 	TestContext(Client client, AccessChecker accessChecker, HoldingsTracker holdingsTracker,
 		ItemChargeTracker itemCharges, RunSession runSession, RunService runService, SceneTracker scene,
-		PohDetector pohDetector, SettingsStore settings, SeedVaultSection seedVault, TabIconOverlay tabIcons)
+		PohDetector pohDetector, SettingsStore settings, SeedVaultSection seedVault)
 	{
 		this.client = client;
 		this.accessChecker = accessChecker;
@@ -83,7 +77,6 @@ public class TestContext
 		this.pohDetector = pohDetector;
 		this.settings = settings;
 		this.seedVault = seedVault;
-		this.tabIcons = tabIcons;
 	}
 
 	void addChat(String message)
@@ -181,35 +174,6 @@ public class TestContext
 	public SeedVaultSection seedVault()
 	{
 		return seedVault;
-	}
-
-	/** Point the vine at this side-panel tab's icon whatever the step (null to stop); cleared when the test ends. */
-	public void previewTab(SideTab tab)
-	{
-		tabIcons.setPreview(tab);
-	}
-
-	/** The side-panel tab open, as {@code VarClientID.TOPLEVEL_PANEL} has it (-1 when the panel is closed). */
-	public int openPanel()
-	{
-		return client.getVarcIntValue(VarClientID.TOPLEVEL_PANEL);
-	}
-
-	/** Where a side-panel tab's icon is, e.g. "fixed at 627,168 33x36", or "none shown". */
-	public String tabIcon(SideTab tab)
-	{
-		final String[] layouts = {"fixed", "resizable classic", "resizable modern"};
-		final int[] icons = tab.getIcons();
-		for (int i = 0; i < icons.length; i++)
-		{
-			final Widget icon = client.getWidget(icons[i]);
-			if (icon != null && !icon.isHidden())
-			{
-				final Rectangle bounds = icon.getBounds();
-				return layouts[i] + " at " + bounds.x + "," + bounds.y + " " + bounds.width + "x" + bounds.height;
-			}
-		}
-		return "none shown";
 	}
 
 	/** Ticked or detected in the plugin's settings right now. */

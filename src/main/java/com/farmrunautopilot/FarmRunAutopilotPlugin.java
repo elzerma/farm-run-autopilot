@@ -272,7 +272,6 @@ public class FarmRunAutopilotPlugin extends Plugin
 		overlayManager.remove(itemHighlightOverlay);
 		overlayManager.remove(spellHighlightOverlay);
 		overlayManager.remove(tabIconOverlay);
-		tabIconOverlay.setPreview(null);
 		overlayManager.remove(travelMenuOverlay);
 		overlayManager.remove(inventoryCountOverlay);
 		overlayManager.remove(vineOverlay);

@@ -7,7 +7,6 @@ import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.run.SceneTracker;
-import com.farmrunautopilot.run.TabIconOverlay;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
@@ -56,7 +55,6 @@ public class TestRunner
 	private final SceneTracker scene;
 	private final PohDetector pohDetector;
 	private final SeedVaultSection seedVault;
-	private final TabIconOverlay tabIcons;
 	/** The dev client: the whole report also goes to the log, to be read back without submitting it. */
 	private final boolean developerMode;
 
@@ -78,7 +76,7 @@ public class TestRunner
 	@Inject
 	TestRunner(Client client, ClientThread clientThread, SettingsStore settings, AccessChecker accessChecker,
 		HoldingsTracker holdingsTracker, ItemChargeTracker itemCharges, RunSession runSession, RunService runService,
-		SceneTracker scene, PohDetector pohDetector, SeedVaultSection seedVault, TabIconOverlay tabIcons,
+		SceneTracker scene, PohDetector pohDetector, SeedVaultSection seedVault,
 		@Named("developerMode") boolean developerMode)
 	{
 		this.client = client;
@@ -92,7 +90,6 @@ public class TestRunner
 		this.scene = scene;
 		this.pohDetector = pohDetector;
 		this.seedVault = seedVault;
-		this.tabIcons = tabIcons;
 		this.developerMode = developerMode;
 	}
 
@@ -189,7 +186,7 @@ public class TestRunner
 		this.steps = test.steps();
 		this.stepIndex = -1;
 		this.context = new TestContext(client, accessChecker, holdingsTracker, itemCharges, runSession, runService,
-			scene, pohDetector, settings, seedVault, tabIcons);
+			scene, pohDetector, settings, seedVault);
 		results.clear();
 		nextStep();
 	}
@@ -367,7 +364,6 @@ public class TestRunner
 		test = null;
 		this.steps = null;
 		context = null;
-		tabIcons.setPreview(null);
 		view = TestView.NONE;
 		final String summary = "Guided test not possible: " + done.name() + " (needs " + needs + ")";
 		log.info(summary);
@@ -407,7 +403,6 @@ public class TestRunner
 		test = null;
 		this.steps = null;
 		context = null;
-		tabIcons.setPreview(null);
 		view = TestView.NONE;
 		final String summary = TestReport.summary(done, passed, problems);
 		if (report)

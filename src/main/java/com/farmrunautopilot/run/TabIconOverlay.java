@@ -6,9 +6,6 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import javax.inject.Inject;
-import javax.inject.Singleton;
-import lombok.Getter;
-import lombok.Setter;
 import net.runelite.api.Client;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.gameval.InterfaceID;
@@ -25,17 +22,12 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  * for a spell. Gone once the tab is open, where {@link ItemHighlightOverlay} and {@link SpellHighlightOverlay} take
  * over. Drawing only: the tab is clicked as normal.
  */
-@Singleton
 public class TabIconOverlay extends Overlay
 {
 	private final Client client;
 	private final RunSession session;
 	private final FarmRunAutopilotConfig config;
 	private final VineFrame vine = new VineFrame();
-	/** A tab to point at whatever the step, for the guided test; null normally. */
-	@Getter
-	@Setter
-	private volatile SideTab preview;
 
 	@Inject
 	TabIconOverlay(Client client, RunSession session, FarmRunAutopilotConfig config)
@@ -71,20 +63,15 @@ public class TabIconOverlay extends Overlay
 	/** The icon of the tab the step needs, while it isn't open and nothing covers the tabs; else null. */
 	private Widget iconToHighlight()
 	{
-		SideTab tab = preview;
-		if (tab == null)
+		final Highlights highlights = session.getView().getHighlights();
+		if (highlights.getSpell() == null && highlights.getItemIds().isEmpty() && highlights.getWearItemIds().isEmpty())
 		{
-			final Highlights highlights = session.getView().getHighlights();
-			if (highlights.getSpell() == null && highlights.getItemIds().isEmpty()
-				&& highlights.getWearItemIds().isEmpty())
-			{
-				return null;
-			}
-			final ItemContainer inventory = client.getItemContainer(InventoryID.INV);
-			final ItemContainer worn = client.getItemContainer(InventoryID.WORN);
-			tab = SideTab.needed(highlights, id -> inventory != null && inventory.contains(id),
-				id -> worn != null && worn.contains(id), config.highlightItems(), config.highlightSpell());
+			return null;
 		}
+		final ItemContainer inventory = client.getItemContainer(InventoryID.INV);
+		final ItemContainer worn = client.getItemContainer(InventoryID.WORN);
+		final SideTab tab = SideTab.needed(highlights, id -> inventory != null && inventory.contains(id),
+			id -> worn != null && worn.contains(id), config.highlightItems(), config.highlightSpell());
 		// In the bank and the seed vault the inventory is beside them, and the bank's own highlights lead
 		if (tab == null || tab.isOpen(client.getVarcIntValue(VarClientID.TOPLEVEL_PANEL)) || isVisible(
 			InterfaceID.Bankmain.UNIVERSE) || isVisible(InterfaceID.SeedVault.UNIVERSE))
@@ -95,7 +82,7 @@ public class TabIconOverlay extends Overlay
 	}
 
 	/** The tab's icon in the layout in use, or null if none is shown. */
-	public Widget iconOf(SideTab tab)
+	private Widget iconOf(SideTab tab)
 	{
 		for (int id : tab.getIcons())
 		{

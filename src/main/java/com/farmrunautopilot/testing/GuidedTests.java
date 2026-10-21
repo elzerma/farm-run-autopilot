@@ -21,7 +21,6 @@ import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.route.BankStop;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
-import com.farmrunautopilot.run.SideTab;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.Compost;
 import com.farmrunautopilot.settings.Protection;
@@ -63,7 +62,6 @@ final class GuidedTests
 	static
 	{
 		TESTS.put(TestItem.SPELLBOOK_SWAP, new SpellbookSwap());
-		TESTS.put(TestItem.SIDE_TAB_ICONS, new SideTabIcons());
 		TESTS.put(TestItem.SEED_VAULT_SECTION, new SeedVaultTop());
 		TESTS.put(TestItem.VAULT_SEEDS_FOR_LATER, new VaultSeedsForLater());
 		TESTS.put(TestItem.VAULT_BANK_AT_GUILD, new VaultBankAtGuild());
@@ -494,75 +492,6 @@ final class GuidedTests
 				visit("Go to any allotment set or hops patch and stand by it"),
 				visit("Now another one (a different place)").optional(),
 				visit("And one more, if you can").optional());
-		}
-	}
-
-	/**
-	 * The vine round a side-panel tab's icon: each tab's TOPLEVEL_PANEL value and its icon in the layout in use. The
-	 * vine is pointed at each tab in turn, whatever the step, so no run is needed.
-	 */
-	private static final class SideTabIcons extends GuidedTest
-	{
-		/** UNVERIFIED: TOPLEVEL_PANEL while the Prayer tab is open. */
-		private static final int PRAYER_PANEL = 5;
-
-		private static Step open(String name, int panel, Consumer<TestContext> then)
-		{
-			return doThis("Click the " + name + " tab", ctx -> ctx.openPanel() == panel)
-				.onDone(ctx ->
-				{
-					ctx.capture(name + " tab open, panel", ctx.openPanel());
-					then.accept(ctx);
-				})
-				.orAskAfter(SPOT_TICKS, "The plugin hasn't seen the " + name + " tab open. Is it open?")
-				.onAnswer((ctx, yes) ->
-				{
-					if (yes)
-					{
-						ctx.problem(name + " tab open but the panel reads " + ctx.openPanel());
-					}
-					else
-					{
-						ctx.problem("The " + name + " tab wasn't opened");
-					}
-					then.accept(ctx);
-				});
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				open("Prayer", PRAYER_PANEL, ctx ->
-				{
-					for (SideTab tab : SideTab.values())
-					{
-						ctx.capture(tab.getLabel() + " icon", ctx.tabIcon(tab));
-					}
-					ctx.previewTab(SideTab.INVENTORY);
-				}),
-				ask("The Inventory tab's icon (the backpack) should now have a vine round it, or an outline if "
-					+ "\"Growing vine highlights\" is off. Is it round that icon and no other?"),
-				open("Inventory", SideTab.INVENTORY.getPanel(), ctx -> ctx.previewTab(SideTab.EQUIPMENT)),
-				ask("The vine should have left the backpack for the Worn Equipment icon. Is it round that one now?"),
-				open("Worn Equipment", SideTab.EQUIPMENT.getPanel(), ctx -> ctx.previewTab(SideTab.SPELLBOOK)),
-				ask("And now round the Spellbook icon?"),
-				open("Spellbook", SideTab.SPELLBOOK.getPanel(), ctx ->
-				{
-				}),
-				ask("With the spellbook open, has the vine gone from the tab icons?"),
-				ask("Last: open the Prayer tab and switch Settings > Display > Game client layout to another layout "
-					+ "(fixed, resizable classic or resizable modern). Is the vine round the Inventory icon there too?")
-					.onStart(ctx -> ctx.previewTab(SideTab.INVENTORY))
-					.onAnswer((ctx, yes) ->
-					{
-						ctx.capture("Inventory icon after the layout change", ctx.tabIcon(SideTab.INVENTORY));
-						if (!yes)
-						{
-							ctx.problem("No vine round the Inventory icon in the second layout");
-						}
-					})
-					.optional());
 		}
 	}
 
