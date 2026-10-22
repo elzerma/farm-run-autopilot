@@ -1169,9 +1169,10 @@ final class GuidedTests
 	}
 
 	/**
-	 * Where the house is and how Teleport to House lands, read from the game (POH_HOUSE_LOCATION and POH_TELE_TOGGLE,
-	 * with Shortest Path's values): UNVERIFIED, as elzerma has no house. Landing inside or by the portal, then coming out
-	 * of the portal, shows which.
+	 * Where the house is and how Teleport to House lands, read from the game (POH_HOUSE_LOCATION and POH_TELE_TOGGLE):
+	 * a house in Hosidius and landing inside were seen in game (elzerma, 2026-10-22); the other places and landing
+	 * outside are UNVERIFIED. Teleporting in, coming out of the portal, then teleporting in again with the house's
+	 * setting switched shows which.
 	 */
 	private static final class HouseLocation extends GuidedTest
 	{
@@ -1199,6 +1200,49 @@ final class GuidedTests
 			return portal != null && here != null && here.distanceTo(portal) <= BY_PORTAL_TILES ? "outside" : null;
 		}
 
+		/** At the house (in it, or by its portal where the plugin read it) after being away since the step started. */
+		private static boolean arrived(TestContext ctx)
+		{
+			if (where(ctx) == null)
+			{
+				ctx.remember("away", true);
+				return false;
+			}
+			return Boolean.TRUE.equals(ctx.recall("away"));
+		}
+
+		/** Where Teleport to House landed, against the house's teleport setting as the plugin read it. */
+		private static void landed(TestContext ctx, String label)
+		{
+			final boolean outside = "outside".equals(where(ctx));
+			ctx.capture(label, (outside ? "outside, at " + ctx.location() : "inside") + ", teleport setting "
+				+ ctx.varbit(VarbitID.POH_TELE_TOGGLE));
+			if (outside != ctx.access().isHouseTeleportOutside())
+			{
+				ctx.problem(label + " " + (outside ? "outside" : "inside") + ", but the plugin read "
+					+ (outside ? "inside" : "outside"));
+			}
+		}
+
+		/** Teleporting home, seen on arriving; without a way home, where it lands can't be seen. */
+		private static Step teleportHome(String text, String label)
+		{
+			return doThis(text, HouseLocation::arrived)
+				.onStart(ctx -> ctx.remember("away", where(ctx) == null))
+				.onDone(ctx -> landed(ctx, label))
+				.orAskAfter(DO_TICKS, "Have you teleported to your house?")
+				.onAnswer((ctx, yes) ->
+				{
+					if (!yes)
+					{
+						ctx.cannotTest("a way to teleport to your house");
+						return;
+					}
+					ctx.capture("Standing at", ctx.location());
+					ctx.problem("Not in your house, or by its portal where the plugin read it (" + portal(ctx) + ")");
+				});
+		}
+
 		@Override
 		public List<Step> steps()
 		{
@@ -1221,31 +1265,8 @@ final class GuidedTests
 						ctx.problem("House location " + ctx.access().getHouseLocation() + " isn't a place the plugin knows");
 					}
 				}),
-				doThis("Away from your house, teleport to it: the spell, a tablet, or a construction or max cape",
-					ctx -> where(ctx) != null && !where(ctx).equals(ctx.recall("where")))
-					.onStart(ctx -> ctx.remember("where", String.valueOf(where(ctx))))
-					.onDone(ctx ->
-					{
-						final boolean outside = "outside".equals(where(ctx));
-						ctx.capture("Teleport to House landed", outside ? "outside, at " + ctx.location() : "inside");
-						if (outside != ctx.access().isHouseTeleportOutside())
-						{
-							ctx.problem("Teleport to House landed " + (outside ? "outside" : "inside") + ", but the plugin read "
-								+ (outside ? "inside" : "outside"));
-						}
-					})
-					.orAskAfter(DO_TICKS, "Have you teleported to your house?")
-					.onAnswer((ctx, yes) ->
-					{
-						// Without a way home, where Teleport to House lands can't be seen
-						if (!yes)
-						{
-							ctx.cannotTest("a way to teleport to your house");
-							return;
-						}
-						ctx.capture("Standing at", ctx.location());
-						ctx.problem("Not in your house, or by its portal where the plugin read it (" + portal(ctx) + ")");
-					}),
+				teleportHome("Away from your house, teleport to it: the spell, a tablet, or a construction or max cape",
+					"Teleport to House landed"),
 				doThis("Leave your house through its portal", ctx -> "outside".equals(where(ctx)))
 					.onDone(ctx -> ctx.capture("Came out at", ctx.location()))
 					.orAskAfter(DO_TICKS, "Are you outside your house, by its portal?")
@@ -1257,7 +1278,23 @@ final class GuidedTests
 							ctx.problem("Not by the portal where the plugin read the house (" + portal(ctx) + ")");
 						}
 					}),
-				ask("Does Account > My house show where your house is, and how Teleport to House lands, as in the game?"));
+				// The setting the other way round, so both of its values are seen
+				doThis("Switch your house's teleport setting: Teleport inside, under House Options in the Settings tab",
+					ctx -> !Integer.valueOf(ctx.varbit(VarbitID.POH_TELE_TOGGLE)).equals(ctx.recall("setting")))
+					.onStart(ctx -> ctx.remember("setting", ctx.varbit(VarbitID.POH_TELE_TOGGLE)))
+					.orAskAfter(DO_TICKS, "Have you switched your house's teleport setting?")
+					.onAnswer((ctx, yes) ->
+					{
+						if (!yes)
+						{
+							ctx.cannotTest("switching your house's teleport setting");
+							return;
+						}
+						ctx.problem("The teleport setting stayed at " + ctx.recall("setting") + " after switching it");
+					}),
+				teleportHome("Walk away from your house, then teleport to it again", "Switched, Teleport to House landed"),
+				ask("Does Settings > Debug > Detected show where your house is, and how Teleport to House lands now, as in "
+					+ "the game? (You can switch the setting back afterwards.)"));
 		}
 	}
 

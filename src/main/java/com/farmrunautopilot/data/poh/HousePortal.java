@@ -4,9 +4,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Where the house portal can be (SPEC 8.3), with the game's POH_HOUSE_LOCATION value for a house there. UNVERIFIED:
- * the values are Shortest Path's (its Teleport to House rows in the travel atlas), not yet seen in game; the help
- * list's "Where your house is" checks them.
+ * Where the house portal can be (SPEC 8.3), with the game's POH_HOUSE_LOCATION value for a house there, as Shortest
+ * Path's Teleport to House rows in the travel atlas have them. Hosidius's 8 was seen in game (elzerma's guided test,
+ * 2026-10-22); the others are UNVERIFIED (help list: Where your house is).
  */
 @Getter
 @RequiredArgsConstructor

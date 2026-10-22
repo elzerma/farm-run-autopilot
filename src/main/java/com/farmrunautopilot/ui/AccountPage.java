@@ -4,7 +4,6 @@ import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.data.Unlock;
-import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.poh.JewelleryBoxTier;
 import com.farmrunautopilot.data.poh.PohAltar;
 import com.farmrunautopilot.data.poh.PoolTier;
@@ -46,7 +45,7 @@ class AccountPage extends SetupPanel
 	@Override
 	void addSections(RunConfig config, AccountSettings account, AccessSnapshot access)
 	{
-		add(pohSection(account, access));
+		add(pohSection(account));
 		unlocksSectionShown = unlocksSection(account);
 		add(unlocksSectionShown);
 		add(storageSection(config));
@@ -67,7 +66,7 @@ class AccountPage extends SetupPanel
 		});
 	}
 
-	private JComponent pohSection(AccountSettings account, AccessSnapshot access)
+	private JComponent pohSection(AccountSettings account)
 	{
 		final PohSetup poh = account.getPoh();
 		final CollapsibleSection s = section("My house");
@@ -98,8 +97,8 @@ class AccountPage extends SetupPanel
 			});
 			s.addContent(rescan);
 		}
-		s.help("Where your house is comes from the game. Set the nexus destinations by hand.");
-		addHouse(s, access);
+		s.help("Where your house is comes from the game (Settings > Debug > Detected). Set the nexus destinations by "
+			+ "hand.");
 
 		final List<Choice<JewelleryBoxTier>> boxes = new ArrayList<>();
 		boxes.add(Choice.of(null, "None"));
@@ -149,28 +148,6 @@ class AccountPage extends SetupPanel
 				}, false)));
 		}
 		return s;
-	}
-
-	/** Where the house is and how Teleport to House lands, read from the game (elzerma, 2026-10-21: not picked by hand). */
-	private static void addHouse(CollapsibleSection s, AccessSnapshot access)
-	{
-		if (!access.isKnown())
-		{
-			s.addContent(detectedRow("House", "Not read yet", "Read from the game once you're logged in"));
-			return;
-		}
-		if (!access.hasHouse())
-		{
-			s.addContent(detectedRow("House", "None", "Read from the game: you have no house, so the route won't use one"));
-			return;
-		}
-		final HousePortal portal = access.getHousePortal();
-		s.addContent(detectedRow("House", portal != null ? portal.getDisplayName() : "Unknown place", portal != null
-			? "Read from the game: where your house portal is"
-			: "Read from the game, but the plugin doesn't know this place yet, so the route won't leave your house by its "
-				+ "door. Use Report a problem in Settings so it can be added."));
-		s.addContent(detectedRow("Teleport to House", access.isHouseTeleportOutside() ? "Lands outside" : "Lands inside",
-			"Read from the game: your house's teleport setting"));
 	}
 
 	private JComponent unlocksSection(AccountSettings account)

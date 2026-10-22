@@ -54,7 +54,7 @@ A farming-run planner and guide for tree, fruit tree and herb runs that:
 | Auto-weed | If Tithe Farm **Auto-weed** is owned and switched on, empty patches stay weed-free once raked → **don't require a rake**. If off/unowned, require a rake. |
 | Teleports | **Dropdown per location + "Auto (best)"** option that picks the fastest owned and unlocked method. (Changed by elzerma, 2026-10-20: no dropdowns; every stop's way is planned from the travel atlas, docs/plans/travel-rework.md section 6.) |
 | Runes | Support rune pouch / divine rune pouch, elemental + combination runes, elemental/combination staves, tabs and jewellery. **Prefer tabs** (save slots), with a **manual "use runes instead of tabs" override** (global + per location). (Changed by elzerma, 2026-10-20: one choice for every stop, "Cast from runes, not tablets".) |
-| POH | **Auto-detect on visit + manual edit** in a "My POH" section (nexus destinations, jewellery box tier, pool tier, fairy ring, spirit tree, house portal location). (Changed by elzerma, 2026-10-21: the house portal location and whether Teleport to House lands outside are read from the game and shown, not edited.) |
+| POH | **Auto-detect on visit + manual edit** in a "My POH" section (nexus destinations, jewellery box tier, pool tier, fairy ring, spirit tree, house portal location). (Changed by elzerma, 2026-10-21: the house portal location and whether Teleport to House lands outside are read from the game, not edited; 2026-10-22: shown in Settings > Debug > Detected.) |
 | Storage sources | Default: **bank + inventory + equipment + tool leprechaun**. Settings toggles (default **off**) for **GIM group storage** and **seed vault**. |
 | Borrowed features (v1) | Quest Helper **bank tab + item checklist**, Quest Helper **step guidance** (highlights + arrows), **Time Tracking awareness** (patch states), **Presets**. |
 | Route optimisation modes | **On – Autopilot** (our time-based algorithm), **On – Meta** (wiki order), **Off** (player's own order). **Drag to reorder** in the sidebar in every mode (a manual reorder switches the run to "Off/custom" for that run). |
@@ -409,7 +409,7 @@ Collapsible sections:
 3. **Crops** — one seed/sapling per run type, or 1st/2nd/3rd choices; herb multi-select for disease-free patches (see section 2).
 4. **Protection** — per type: Pay / Compost only; per-patch override; pay with notes; pay to clear; compost type; plant cure / Cure Plant / Resurrect Crops toggles; equipment boosts toggle.
 5. **Travel** — per location dropdown (Auto + owned/unlocked methods, locked ones greyed); "use runes instead of tabs" global + per location. (Changed by elzerma, 2026-10-20: no dropdowns; Ways to travel turns families of ways and single ways on and off, docs/plans/travel-rework.md section 6.)
-6. **My POH** — portal location, nexus destinations, jewellery box tier, pool tier, fairy ring, spirit tree; "last detected on <date>" + Edit. (Changed by elzerma, 2026-10-21: the portal location and Teleport to House's inside or outside are shown as read from the game.)
+6. **My POH** — portal location, nexus destinations, jewellery box tier, pool tier, fairy ring, spirit tree; "last detected on <date>" + Edit. (Changed by elzerma, 2026-10-21: the portal location and Teleport to House's inside or outside are read from the game; 2026-10-22: shown in Settings > Debug > Detected, not here.)
 7. **Route** — mode (Autopilot / Meta / Off), start location, end near bank, energy threshold and tile distance.
 8. **Storage sources** — group storage (off), seed vault (off).
 

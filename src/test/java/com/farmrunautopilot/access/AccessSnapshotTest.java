@@ -129,6 +129,9 @@ public class AccessSnapshotTest
 		assertTrue(elsewhere.hasHouse());
 		assertNull(elsewhere.getHousePortal());
 		assertFalse(elsewhere.missingFor(TravelMethod.HOUSE_PORTAL_TAVERLEY).isEmpty());
+		// The house's teleport setting: 0 landed inside in game (elzerma's guided test, 2026-10-22)
+		assertFalse(AccessChecker.teleportsOutside(0));
+		assertTrue(AccessChecker.teleportsOutside(1));
 	}
 
 	/** Known, with the game's house location value and Teleport to House landing outside or not. */

@@ -75,9 +75,10 @@ public enum TestItem
 		"Untick your planted spirit tree in Account > Unlocks, then go to it (Port Sarim, Brimhaven or the "
 			+ "Farming Guild). It should tick itself once the grown tree is in view."),
 	HOUSE_LOCATION(Tab.ACCOUNT, "Where your house is",
-		"With a house of your own, look at Account > My house: it should show where your house is and whether "
-			+ "Teleport to House lands you inside or outside, as your house is set. Teleport to your house, then leave "
-			+ "through its portal: you should come out in the place it shows."),
+		"With a house of your own, look at Settings > Debug > Detected: it should show where your house is and whether "
+			+ "Teleport to House lands you inside or outside, as your house is set. Teleport to your house and leave "
+			+ "through its portal, then switch its teleport setting (House Options in the Settings tab) and teleport "
+			+ "again: you should land, and come out, where it says.", 2),
 	HOUSE_SCAN(Tab.ACCOUNT, "House scanning (beta)",
 		"Tick \"Detect furniture when I enter my house\" in Account > My house, then enter your house: your "
 			+ "jewellery box, pool, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned). "

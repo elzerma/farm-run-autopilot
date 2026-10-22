@@ -711,7 +711,11 @@ route snapshots, and banks come from the atlas.
   Since fixed (2026-10-21, elzerma: "Game only, no drop-down"): where the house is and how Teleport to House lands are
   read from the game (POH_HOUSE_LOCATION, POH_TELE_TOGGLE) instead of picked in Account > My house; with no house the
   route uses none, and a house in a place the plugin doesn't know yet has every way out but the front door
-  (`AtlasHouse`). The values are Shortest Path's, unchecked in game: help list "Where your house is".
+  (`AtlasHouse`). The values are Shortest Path's. elzerma's guided test (2026-10-22, a house in Hosidius) showed
+  Hosidius is 8, and that the teleport setting reads 0 when Teleport to House lands inside: the other way round from
+  Shortest Path's rows (harmless there, as both rows land on the same tile). The other places and the outside value
+  are still unchecked (help list "Where your house is", which now switches the setting and teleports again). Both
+  values are shown in Settings > Debug > Detected rather than My house (elzerma).
 - **Route changes** (each explained in its test): without a whistle, Varlamore's legs each start with the Civitas illa
   Fortis Teleport and Renu from the city's pad (6 s quicker than walking back to a pad); with 68 Agility, Taverley is
   walked to over the rocks from whichever of Catherby and Falador Park is next to it; the perfected whistle's unlimited

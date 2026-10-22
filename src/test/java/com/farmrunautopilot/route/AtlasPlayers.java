@@ -87,7 +87,9 @@ public final class AtlasPlayers
 		}
 		varbits.put(VarbitID.SPELLBOOK, 0);
 		varbits.put(VarbitID.POH_HOUSE_LOCATION, access.getHouseLocation());
-		varbits.put(VarbitID.POH_TELE_TOGGLE, access.isHouseTeleportOutside() ? 0 : 1);
+		// The game's values (0 lands inside); Shortest Path's rows read them the other way round, which only picks
+		// which of two rows landing on the same tile counts
+		varbits.put(VarbitID.POH_TELE_TOGGLE, access.isHouseTeleportOutside() ? 1 : 0);
 		varbits.putAll(varbitsSet);
 		varps.putAll(varpsSet);
 		return new RouteAtlas(ATLAS, new AtlasAccount(access, holdings, varbits, varps, ways, minutes));
