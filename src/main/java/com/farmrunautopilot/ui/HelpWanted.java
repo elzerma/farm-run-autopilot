@@ -181,9 +181,13 @@ final class HelpWanted
 		row.addContent(text(item.getHowToTry(), Color.WHITE, 4));
 		if (!missing.isEmpty())
 		{
-			// Instead of a greyed-out button, say what's missing
-			row.addContent(text("You need to: " + lowerFirst(String.join("; ", missing)) + ".",
-				Color.WHITE, 4));
+			// Instead of a greyed-out button, say what's missing, each need in the sentence's lower case
+			final List<String> needs = new ArrayList<>();
+			for (String need : missing)
+			{
+				needs.add(lowerFirst(need));
+			}
+			row.addContent(text("You need to: " + String.join("; ", needs) + ".", Color.WHITE, 4));
 			return row;
 		}
 		final JButton start = Style.primary(new JButton(startLabel));
