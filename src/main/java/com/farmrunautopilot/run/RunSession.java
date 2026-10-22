@@ -2155,7 +2155,8 @@ public class RunSession
 		}
 		if (banking)
 		{
-			// Teleporting to the bank: the bank teleport is the item to use, as for any other teleport (elzerma)
+			// Teleporting to the bank: the bank teleport is the item to use, as for any other teleport (elzerma), with
+			// its option to pick, e.g. the ring of dueling's Castle Wars (elzerma, 2026-10-21: it wasn't coloured)
 			final BankStop bank = activeBank();
 			if (bank != null && bank.getTeleport() != null && !bankProgress[0])
 			{
@@ -2164,7 +2165,8 @@ public class RunSession
 				{
 					teleport.add(id);
 				}
-				return new Highlights(null, false, null, teleport, null, wear.getItemIds());
+				return new Highlights(null, false, null, teleport, null, wear.getItemIds(), Collections.emptyList(),
+					bank.getTeleport().getOption());
 			}
 			// On the way to the Farming Guild's bank: what gets the player there, as for a stop (issue #8)
 			if (bank != null && bank.getTrip() != null && !bankProgress[0])

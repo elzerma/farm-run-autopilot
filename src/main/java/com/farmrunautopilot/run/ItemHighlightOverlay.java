@@ -22,16 +22,17 @@ import net.runelite.client.ui.overlay.WidgetItemOverlay;
  * Outlines the item to use next in the inventory and equipment: seed, compost, tool, payment or teleport
  * (SPEC 13.4). Items to put on get their own colour and a "Wear" label, so an item to wear is never mistaken for
  * the next teleport. A teleport whose option isn't the item's left click is labelled "Right-click" in the item colour
- * (elzerma, 2026-10-20: obvious when a right-click is needed); its menu then colours the option
- * (TeleportMenuHighlighter).
+ * (elzerma, 2026-10-20: obvious when a right-click is needed), on two lines in an equipment slot, which is too narrow
+ * for one (elzerma, 2026-10-21); its menu then colours the option (TeleportMenuHighlighter).
  */
 public class ItemHighlightOverlay extends WidgetItemOverlay
 {
 	private static final int MAX_CACHED_OUTLINES = 100;
 	/** Items to put on: a colour no other highlight uses. */
 	static final Color WEAR_COLOUR = new Color(0x40, 0xC8, 0xFF);
-	private static final String WEAR_LABEL = "Wear";
-	private static final String RIGHT_CLICK_LABEL = "Right-click";
+	private static final String[] WEAR_LABEL = {"Wear"};
+	private static final String[] RIGHT_CLICK_LABEL = {"Right-click"};
+	private static final String[] RIGHT_CLICK_WORN_LABEL = {"Right", "click"};
 	private static final Color LABEL_BACKGROUND = new Color(0, 0, 0, 170);
 
 	private final RunSession session;
@@ -94,8 +95,15 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 		}
 		else if (needsRightClick(itemId, widgetItem, highlights.getTeleportOption()))
 		{
-			drawLabel(graphics, bounds, RIGHT_CLICK_LABEL, colour);
+			drawLabel(graphics, bounds, worn(widgetItem) ? RIGHT_CLICK_WORN_LABEL : RIGHT_CLICK_LABEL, colour);
 		}
+	}
+
+	/** Whether the item is in the Worn Equipment tab rather than the inventory. */
+	private static boolean worn(WidgetItem widgetItem)
+	{
+		return widgetItem.getWidget() != null
+			&& WidgetUtil.componentToInterface(widgetItem.getWidget().getId()) == InterfaceID.WORNITEMS;
 	}
 
 	/** Whether the teleport option the leg needs on this item isn't its left click. */
@@ -105,8 +113,7 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 		{
 			return false;
 		}
-		final boolean worn = widgetItem.getWidget() != null
-			&& WidgetUtil.componentToInterface(widgetItem.getWidget().getId()) == InterfaceID.WORNITEMS;
+		final boolean worn = worn(widgetItem);
 		final String key = option + ":" + itemId + ":" + worn;
 		if (rightClickCache.size() > MAX_CACHED_OUTLINES && !rightClickCache.containsKey(key))
 		{
@@ -127,29 +134,50 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 			itemManager.getItemComposition(itemId).getInventoryActions(), worn, option));
 	}
 
-	/** A label on a dark strip along the bottom of the slot, outlined all round, so it reads on pale items too. */
-	private static void drawLabel(Graphics2D graphics, Rectangle bounds, String label, Color colour)
+	/**
+	 * A label on a dark strip along the bottom of the slot, its last line at the bottom, outlined all round so it reads
+	 * on pale items too. Kept inside what RuneLite lets the slot draw on (an equipment slot clips to itself), so a wide
+	 * one isn't cut off at the edge of the inventory.
+	 */
+	private static void drawLabel(Graphics2D graphics, Rectangle bounds, String[] lines, Color colour)
 	{
 		graphics.setFont(FontManager.getRunescapeSmallFont());
 		final FontMetrics metrics = graphics.getFontMetrics();
-		final int width = metrics.stringWidth(label);
-		final int x = (int) bounds.getCenterX() - width / 2;
-		final int y = (int) bounds.getMaxY() - 1;
+		final Rectangle clip = graphics.getClipBounds();
+		final int[] xs = new int[lines.length];
+		final int[] ys = new int[lines.length];
 		graphics.setColor(LABEL_BACKGROUND);
-		graphics.fillRect(x - 2, y - metrics.getAscent(), width + 4, metrics.getAscent() + 2);
-		graphics.setColor(Color.BLACK);
-		for (int dx = -1; dx <= 1; dx++)
+		for (int i = 0; i < lines.length; i++)
 		{
-			for (int dy = -1; dy <= 1; dy++)
+			final int up = lines.length - 1 - i;
+			final int width = metrics.stringWidth(lines[i]);
+			int x = (int) bounds.getCenterX() - width / 2;
+			if (clip != null)
 			{
-				if (dx != 0 || dy != 0)
+				x = Math.max(clip.x + 2, Math.min(x, clip.x + clip.width - width - 2));
+			}
+			xs[i] = x;
+			ys[i] = (int) bounds.getMaxY() - 1 - up * metrics.getHeight();
+			// Each line's strip meets the one below without overlapping, so the dark doesn't double up between them
+			graphics.fillRect(x - 2, ys[i] - metrics.getAscent(), width + 4,
+				up == 0 ? metrics.getAscent() + 2 : metrics.getHeight());
+		}
+		for (int i = 0; i < lines.length; i++)
+		{
+			graphics.setColor(Color.BLACK);
+			for (int dx = -1; dx <= 1; dx++)
+			{
+				for (int dy = -1; dy <= 1; dy++)
 				{
-					graphics.drawString(label, x + dx, y + dy);
+					if (dx != 0 || dy != 0)
+					{
+						graphics.drawString(lines[i], xs[i] + dx, ys[i] + dy);
+					}
 				}
 			}
+			graphics.setColor(colour);
+			graphics.drawString(lines[i], xs[i], ys[i]);
 		}
-		graphics.setColor(colour);
-		graphics.drawString(label, x, y);
 	}
 
 	/** Forget cached outlines (colour changed, plugin stopped). */

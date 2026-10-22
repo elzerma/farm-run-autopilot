@@ -38,6 +38,11 @@ public enum BankTeleport
 	private final Requirement requirement;
 	/** The travel atlas's key for this teleport (AtlasWays), so it isn't used once the player turns it off. */
 	private final String wayKey;
+	/**
+	 * The item's option or list entry to pick, e.g. "Castle Wars": the atlas name after its colon, as a leg's
+	 * (AtlasTravel).
+	 */
+	private final String option;
 	private final int[] itemIds;
 
 	BankTeleport(String itemName, String bankName, WorldPoint bankPoint, double seconds, Requirement requirement,
@@ -49,6 +54,7 @@ public enum BankTeleport
 		this.seconds = seconds;
 		this.requirement = requirement;
 		this.wayKey = "TELEPORTATION_ITEM|" + atlasName;
+		this.option = atlasName.substring(atlasName.indexOf(": ") + 2);
 		this.itemIds = itemIds;
 	}
 
