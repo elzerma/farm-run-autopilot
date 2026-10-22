@@ -34,8 +34,10 @@ public enum SideTab
 	}
 
 	/**
-	 * The tab the step needs open, or null: the spellbook for a spell to cast, else the inventory if an item to use or
-	 * put on is in it, else worn equipment if an item to use is worn.
+	 * The tab the step needs open, or null: the spellbook for a spell to cast, else wherever the item to use is (the
+	 * inventory, else worn equipment), and only with nothing to use the inventory for an item to put on. The vine marks
+	 * the one thing to click next, so a "Wear" reminder never takes the player away from the teleport (elzerma,
+	 * 2026-10-21: with the Ardougne cloak worn and the Graceful outfit to wear, the inventory's icon had the vine).
 	 *
 	 * @param items whether items are highlighted at all ("Highlight items to use")
 	 * @param spells whether spells are highlighted at all
@@ -51,11 +53,15 @@ public enum SideTab
 		{
 			return null;
 		}
-		if (anyIn(highlights.getItemIds(), inventory) || anyIn(highlights.getWearItemIds(), inventory))
+		if (anyIn(highlights.getItemIds(), inventory))
 		{
 			return INVENTORY;
 		}
-		return anyIn(highlights.getItemIds(), worn) ? EQUIPMENT : null;
+		if (anyIn(highlights.getItemIds(), worn))
+		{
+			return EQUIPMENT;
+		}
+		return anyIn(highlights.getWearItemIds(), inventory) ? INVENTORY : null;
 	}
 
 	/** Whether this tab is the one open, given {@code VarClientID.TOPLEVEL_PANEL} (-1 when the panel is closed). */

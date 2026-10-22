@@ -80,6 +80,31 @@ public class SideTabTest
 	}
 
 	@Test
+	public void aWornItemToUseComesBeforeOneToPutOn()
+	{
+		// The Ardougne cloak worn for the teleport, the Graceful cape in the inventory to wear
+		final Highlights both = items(ItemID.ARDY_CAPE_EASY).withWear(Collections.singleton(ItemID.GRACEFUL_CAPE));
+		assertEquals(SideTab.EQUIPMENT, SideTab.needed(both, holding(ItemID.GRACEFUL_CAPE),
+			holding(ItemID.ARDY_CAPE_EASY), true, true));
+	}
+
+	@Test
+	public void anItemToUseInTheInventoryStillNeedsTheInventoryWithOneToPutOn()
+	{
+		final Highlights both = items(ItemID.POH_TABLET_FALADORTELEPORT).withWear(
+			Collections.singleton(ItemID.GRACEFUL_CAPE));
+		assertEquals(SideTab.INVENTORY, SideTab.needed(both,
+			holding(ItemID.POH_TABLET_FALADORTELEPORT, ItemID.GRACEFUL_CAPE), NOTHING, true, true));
+	}
+
+	@Test
+	public void anItemToPutOnNeedsTheInventoryWhenTheItemToUseIsNotCarried()
+	{
+		final Highlights both = items(ItemID.ARDY_CAPE_EASY).withWear(Collections.singleton(ItemID.GRACEFUL_CAPE));
+		assertEquals(SideTab.INVENTORY, SideTab.needed(both, holding(ItemID.GRACEFUL_CAPE), NOTHING, true, true));
+	}
+
+	@Test
 	public void noTabForAnItemNotCarriedOrWhenItemsAreNotHighlighted()
 	{
 		assertNull(SideTab.needed(items(ItemID.RING_OF_DUELING_8), NOTHING, NOTHING, true, true));

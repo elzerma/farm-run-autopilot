@@ -26,10 +26,10 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 {
 	private static final int MAX_CACHED_OUTLINES = 100;
 	/**
-	 * How far inside the slot the vine is given its bounds: it leaves 3 px round a button, but round an item it sits
-	 * 1 px outside the slot, so its leaves don't reach into the next slots.
+	 * How long the vine waits on a slot whose item is used up before going to the next slot holding it: two game ticks,
+	 * by when the step has moved on (elzerma, 2026-10-21: using one bucket of compost, it jumped to the next for a moment).
 	 */
-	private static final int VINE_INSET = 2;
+	static final long MOVE_AFTER_MILLIS = 1200;
 	/** Items to put on: a colour no other highlight uses. */
 	static final Color WEAR_COLOUR = new Color(0x40, 0xC8, 0xFF);
 	private static final String WEAR_LABEL = "Wear";
@@ -39,7 +39,7 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 	private final FarmRunAutopilotConfig config;
 	private final ItemManager itemManager;
 	/** Each item's vine in each interface. */
-	private final Map<String, VineFrame> vines = new HashMap<>();
+	private final Map<String, ItemVine> vines = new HashMap<>();
 	/** Items given their vine in the interface being drawn. */
 	private final Set<Integer> vined = new HashSet<>();
 	/**
@@ -58,9 +58,17 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 		showOnEquipment();
 	}
 
+	/** An item's vine in one interface: the slot it's on and when it was last drawn there. */
+	private static final class ItemVine
+	{
+		final VineFrame frame = new VineFrame();
+		int slot = -1;
+		long seen;
+	}
+
 	/**
-	 * Drawn once for each interface showing items (the inventory, worn equipment, the bank's inventory), so the vine
-	 * goes round the first slot in each holding an item to use (elzerma, 2026-10-20: the item with a vine, as the spell).
+	 * Drawn once for each interface showing items (the inventory, worn equipment, the bank's inventory), so each item to
+	 * use gets one vine in each (elzerma, 2026-10-20: the item with a vine, as the spell).
 	 */
 	@Override
 	public Dimension render(Graphics2D graphics)
@@ -69,15 +77,37 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 		return super.render(graphics);
 	}
 
-	/** The vine round this item in this interface, kept from frame to frame for its falling petals. */
-	private VineFrame vineFor(int itemId, WidgetItem widgetItem)
+	/**
+	 * The vine inside one slot holding this item: the first, so a few buckets of compost aren't a tangle, and then the
+	 * same slot while it holds the item.
+	 */
+	private void drawVine(Graphics2D graphics, int itemId, WidgetItem widgetItem)
 	{
 		final String key = (widgetItem.getWidget() != null ? widgetItem.getWidget().getId() : -1) + ":" + itemId;
 		if (vines.size() > MAX_CACHED_OUTLINES && !vines.containsKey(key))
 		{
 			vines.clear();
 		}
-		return vines.computeIfAbsent(key, k -> new VineFrame());
+		final ItemVine vine = vines.computeIfAbsent(key, k -> new ItemVine());
+		final int slot = widgetItem.getWidget() != null ? widgetItem.getWidget().getIndex() : -1;
+		final long now = System.currentTimeMillis();
+		if (vined.contains(itemId) || !goesOn(slot, vine.slot, vine.seen, now))
+		{
+			return;
+		}
+		vined.add(itemId);
+		vine.slot = slot;
+		vine.seen = now;
+		vine.frame.drawInside(graphics, widgetItem.getCanvasBounds());
+	}
+
+	/**
+	 * Whether the vine, last drawn on slot {@code current} at {@code seen}, goes on {@code slot} now: always on its own
+	 * slot, and on another only once its own has gone {@link #MOVE_AFTER_MILLIS} without the item.
+	 */
+	static boolean goesOn(int slot, int current, long seen, long now)
+	{
+		return slot == current || now - seen >= MOVE_AFTER_MILLIS;
 	}
 
 	@Override
@@ -97,12 +127,7 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 		final Rectangle bounds = widgetItem.getCanvasBounds();
 		if (!wear && config.vineHighlights())
 		{
-			// Only round the first slot holding it, so a few buckets of compost aren't a tangle of vines
-			if (vined.add(itemId))
-			{
-				vineFor(itemId, widgetItem).draw(graphics, new Rectangle(bounds.x + VINE_INSET, bounds.y + VINE_INSET,
-					bounds.width - 2 * VINE_INSET, bounds.height - 2 * VINE_INSET));
-			}
+			drawVine(graphics, itemId, widgetItem);
 		}
 		else
 		{
