@@ -719,7 +719,10 @@ route snapshots, and banks come from the atlas.
   and the dev log has no old-tables line. Kastori was still by the Civitas illa Fortis Teleport and Renu (24 s) over
   elzerma's whistle (23 s), lost by the 1 s charge tie-break, until they turned the teleport off: fixed as above. A bank
   visit for missing items at Civitas illa Fortis says "Bank near" the stop. With 68 Agility, Catherby is walked to from
-  Taverley over the rocks (planned, 28 s). Still to try: a bank line followed to its bank, and that walk.
+  Taverley over the rocks (planned, 28 s). Re-checked on the fix the same day, all passed: with the teleport back on,
+  Kastori, Civitas illa Fortis and Nemus Retreat by the whistle; the Gnome Stronghold's bank line walked to the upstairs
+  bank, its first step ticking on arrival; Taverley to Catherby walked in 27 s (28 s planned), an odd-looking path but
+  the atlas's. elzerma keeps "Start now" without items as skipped, not asked about (their second run, 2026-10-18).
 - **Route snapshots** (56ae37f, `RouteSnapshotTest`): the whole route for three test accounts (like elzerma's,
   mid-level with no quests, maxed) is saved in `src/test/resources`; a change that moves one fails the test, with the
   new routes in `build/route-snapshots.txt`. Worth a look there: the mid-level Yanille leg by the ring of wealth and
