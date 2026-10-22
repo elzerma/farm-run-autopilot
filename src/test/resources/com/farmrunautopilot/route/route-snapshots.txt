@@ -22,21 +22,21 @@
 18. Farming Guild: Kharedst's memoirs: Jewelry of Jubilation, then minecart to Farming Guild, 47 s
 
 ## Mid-level: 50 in every skill, no quests, a skills necklace, a ring of wealth and a games necklace
-31 patches, 15 stops, travel 537 s
- 1. Yanille: Ring of wealth: Grand Exchange, then join Castle Wars Zamorakian recruiter, 65 s
- 2. Tree Gnome Village: Walk, 47 s
- 3. Lumbridge: Lumbridge Teleport, 25 s
- 4. Lumbridge (north farm): Walk, 37 s
- 5. Seers' Village: Camelot Teleport, 39 s
- 6. Taverley: Falador Teleport, then rocks or gate into Taverley, 38 s
- 7. Hosidius: Skills necklace (Woodcutting Guild), then stepping stone, 37 s
+31 patches, 15 stops, travel 543 s
+ 1. Seers' Village: Camelot Teleport, 39 s
+ 2. Taverley: Falador Teleport, then rocks or gate into Taverley, 38 s
+ 3. Varrock: Varrock Teleport, 22 s
+ 4. Falador Park: Ring of wealth (Falador Park), 14 s
+ 5. Falador farm (south): Walk, 37 s
+ 6. Lumbridge: Lumbridge Teleport, 25 s
+ 7. Lumbridge (north farm): Walk, 37 s
  8. Ardougne farm (north): Skills necklace (Fishing Guild), 29 s
- 9. Catherby: Camelot Teleport, 28 s
-10. Brimhaven: Charter ship (Brimhaven), 46 s
-11. Varrock: Varrock Teleport, 22 s
-12. Farming Guild: Skills necklace (Farming Guild), 17 s
-13. Falador Park: Ring of wealth (Falador Park), 14 s
-14. Falador farm (south): Walk, 37 s
+ 9. Hosidius: Skills necklace (Woodcutting Guild), then stepping stone, 37 s
+10. Catherby: Camelot Teleport, 28 s
+11. Brimhaven: Charter ship (Brimhaven), 46 s
+12. Yanille: Charter ship (Port Khazard), 71 s
+13. Tree Gnome Village: Walk, 47 s
+14. Farming Guild: Skills necklace (Farming Guild), 17 s
 15. Gnome Stronghold: Games necklace: Barbarian Outpost, 55 s
 
 ## Maxed: 99 in every skill, every quest, diary and unlock, every teleport item, no house

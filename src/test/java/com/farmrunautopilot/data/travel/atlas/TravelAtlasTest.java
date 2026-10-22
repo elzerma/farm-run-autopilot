@@ -149,6 +149,26 @@ public class TravelAtlasTest
 		assertTrue(weiss.getHow(), weiss.getHow().startsWith("Icy basalt"));
 	}
 
+	@Test
+	public void noWayGoesThroughTheCastleWarsRecruiters()
+	{
+		// They only take a player with no cape and nothing but combat items, into a team's waiting room
+		for (TravelAtlas.Place from : ATLAS.getPlaces())
+		{
+			for (TravelAtlas.Place to : ATLAS.getPlaces())
+			{
+				for (TravelAtlas.Way way : ATLAS.ways(from.getId(), to.getId()))
+				{
+					for (int step : way.getSteps())
+					{
+						final String menu = ATLAS.step(step).getMenu();
+						assertFalse(menu, menu.startsWith("Join Castle Wars "));
+					}
+				}
+			}
+		}
+	}
+
 	private static List<Integer> places(String patch)
 	{
 		return List.of(ATLAS.patchPlace(patch).getId());
