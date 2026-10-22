@@ -18,8 +18,9 @@ import lombok.Value;
 /**
  * The player's house as a way out (docs/plans/travel-rework.md, section 4): in by Teleport to House, or by "Your house"
  * on any spirit tree once one grows in the house (issue #16), then a nexus portal, the jewellery box, the house's fairy
- * ring or spirit tree, or (in by a tree) out through the front door; each lands at an atlas place. Built from the house
- * the player set up (PohSetup); the atlas's house rows don't know which portals a house has.
+ * ring or spirit tree, or (in by a tree, with the house's location set) out through the front door; each lands at an
+ * atlas place. Built from the house the player set up (PohSetup); the atlas's house rows don't know which portals a
+ * house has.
  */
 public final class AtlasHouse
 {
@@ -116,7 +117,8 @@ public final class AtlasHouse
 	}
 
 	/**
-	 * The house's ways out for this player, or null without a known house or any way in.
+	 * The house's ways out for this player, or null without a known house or any way in. Only the front door needs
+	 * the house's location (Account > My house): without it the house has every other way out.
 	 *
 	 * @param teleportIn seconds to teleport in and walk to the exits (the planner's own rules: a cape, the spell or a
 	 *     tablet), or null if the player can't teleport in
@@ -124,7 +126,7 @@ public final class AtlasHouse
 	 */
 	public static AtlasHouse of(TravelAtlas atlas, AtlasAccount account, PohSetup poh, Double teleportIn, boolean treeIn)
 	{
-		if (poh == null || poh.getPortal() == null || (teleportIn == null && !treeIn))
+		if (poh == null || (teleportIn == null && !treeIn))
 		{
 			return null;
 		}
@@ -137,7 +139,8 @@ public final class AtlasHouse
 		// The jewellery box's rows land where the item's own teleport does: that item says which tier they need
 		final Map<Integer, JewelleryBoxTier> boxTierAt = new HashMap<>();
 		Exit portal = null;
-		final String portalName = "Construction cape: " + poh.getPortal().getDisplayName();
+		final String portalName = poh.getPortal() == null ? null
+			: "Construction cape: " + poh.getPortal().getDisplayName();
 		for (TravelAtlas.Jump t : atlas.getTeleports())
 		{
 			final TravelItem item = t.getType().equals("TELEPORTATION_ITEM") ? AtlasLinks.item(atlas, t) : null;

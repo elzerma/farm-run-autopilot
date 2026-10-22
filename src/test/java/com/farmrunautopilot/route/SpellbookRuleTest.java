@@ -165,8 +165,6 @@ public class SpellbookRuleTest
 		config.setStartLocation(Location.FARMING_GUILD);
 		final PohSetup poh = new PohSetup();
 		poh.getNexusDestinations().add(com.farmrunautopilot.data.poh.PortalNexus.Destination.CATHERBY);
-		// Where the house is (Account > My house): the travel atlas plans the house's ways only once it's set
-		poh.setPortal(com.farmrunautopilot.data.poh.HousePortal.TAVERLEY);
 
 		// The nexus is quicker than Camelot's walk, so the route takes it
 		final RouteStop stop = RoutePlanner.plan(Collections.singletonList(Patch.CATHERBY_HERB), config, standard,

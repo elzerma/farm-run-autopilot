@@ -6,6 +6,7 @@ import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.poh.HousePortal;
+import com.farmrunautopilot.data.poh.PortalNexus;
 import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
@@ -145,6 +146,41 @@ public class RouteChainTest
 		assertEquals(describe(stops), Location.HOSIDIUS, stops.get(1).getLocation());
 		assertEquals(describe(stops), Departure.TREE_HOUSE_PORTAL, stops.get(1).getDeparture());
 		assertEquals(describe(stops), TravelMethod.HOUSE_PORTAL_HOSIDIUS, stops.get(1).getMethod());
+	}
+
+	@Test
+	public void theNexusWithoutTheHousesLocation()
+	{
+		// Account > My house with the nexus's Catherby portal and a spirit tree set up, but not where the house is: only
+		// out of the front door needs that, so the nexus is still a way out
+		final PohSetup poh = new PohSetup();
+		poh.setNexusDestinations(EnumSet.of(PortalNexus.Destination.CATHERBY));
+		poh.setSpiritTree(true);
+		final RunConfig config = new RunConfig().sanitise();
+		config.setEndNearBank(false);
+
+		// In by Teleport to House (99 Magic on the standard spellbook), quicker than Camelot Teleport and the walk
+		final List<RouteStop> teleport = plan(Collections.singletonList(Patch.CATHERBY_HERB), config, access(),
+			holdings(), poh, null, 0);
+		assertEquals(describe(teleport), Departure.POH_NEXUS, teleport.get(0).getDeparture());
+		assertEquals(describe(teleport), TravelMethod.CATHERBY_TELEPORT, teleport.get(0).getMethod());
+
+		// In by the Farming Guild's spirit tree, without the Magic for Teleport to House
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		for (Skill skill : AccessSnapshot.REAL_SKILLS)
+		{
+			levels.put(skill, 99);
+		}
+		levels.put(Skill.MAGIC, 1);
+		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
+		quests.put(Quest.TREE_GNOME_VILLAGE, QuestState.FINISHED);
+		final AccessSnapshot noMagic = new AccessSnapshot(true, quests, levels, Collections.emptySet(),
+			EnumSet.of(Unlock.SPIRIT_TREES, Unlock.SPIRIT_TREE_FARMING_GUILD), null, Spellbook.STANDARD,
+			Collections.emptySet());
+		final List<RouteStop> tree = plan(Arrays.asList(Patch.FARMING_GUILD_HERB, Patch.CATHERBY_HERB), config, noMagic,
+			holdings(), poh, Location.FARMING_GUILD, 0);
+		assertEquals(describe(tree), Location.CATHERBY, tree.get(1).getLocation());
+		assertEquals(describe(tree), Departure.TREE_HOUSE_NEXUS, tree.get(1).getDeparture());
 	}
 
 	@Test

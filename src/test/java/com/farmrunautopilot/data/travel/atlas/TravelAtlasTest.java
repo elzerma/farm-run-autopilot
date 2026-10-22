@@ -3,6 +3,7 @@ package com.farmrunautopilot.data.travel.atlas;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Patch;
@@ -120,12 +121,20 @@ public class TravelAtlasTest
 		final AtlasHouse house = AtlasHouse.of(ATLAS, account, poh);
 		assertNotNull(house);
 		assertTrue(house.getExits().stream().anyMatch(e -> e.getName().equals("nexus: Catherby Portal")));
+		assertNotNull(house.getPortal());
 
 		final AtlasLegs.Leg with = new AtlasLegs(ATLAS, account, house).quickest(-1, places("CATHERBY_HERB"));
 		final AtlasLegs.Leg without = new AtlasLegs(ATLAS, account).quickest(-1, places("CATHERBY_HERB"));
 		assertNotNull(with);
 		assertTrue(with.getHow(), with.getHow().startsWith("House > nexus: Catherby Portal"));
 		assertTrue(without == null || without.getSeconds() > with.getSeconds());
+
+		// Without its location picked (Account > My house) the house has every way out but the front door
+		poh.setPortal(null);
+		final AtlasHouse unplaced = AtlasHouse.of(ATLAS, account, poh);
+		assertNotNull(unplaced);
+		assertTrue(unplaced.getExits().stream().anyMatch(e -> e.getName().equals("nexus: Catherby Portal")));
+		assertNull(unplaced.getPortal());
 	}
 
 	private static List<Integer> places(String patch)

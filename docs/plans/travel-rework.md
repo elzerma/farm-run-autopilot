@@ -707,7 +707,8 @@ route snapshots, and banks come from the atlas.
 - **Suites on the atlas** (4f04db9): test players' diaries and the unlocks read from varbits match their accounts,
   and the account like elzerma's has coins for fares. That showed set-up slips the old tables never checked: the
   Stronghold's spirit tree needs The Grand Tree, the unlimited cabbage teleport needs the hard Lumbridge diary, Ardougne
-  cloak 2's farm teleport needs the medium Ardougne diary, and the atlas plans a house only once its location is set.
+  cloak 2's farm teleport needs the medium Ardougne diary, and the atlas planned a house only once its location was set
+  (since fixed: without the location the house has every way out but the front door, `AtlasHouse`).
 - **Route changes** (each explained in its test): without a whistle, Varlamore's legs each start with the Civitas illa
   Fortis Teleport and Renu from the city's pad (6 s quicker than walking back to a pad); with 68 Agility, Taverley is
   walked to over the rocks from whichever of Catherby and Falador Park is next to it; the perfected whistle's unlimited
@@ -717,8 +718,7 @@ route snapshots, and banks come from the atlas.
   mid-level with no quests, maxed) is saved in `src/test/resources`; a change that moves one fails the test, with the
   new routes in `build/route-snapshots.txt`. Worth a look there: the mid-level Yanille leg by the ring of wealth and
   a Castle Wars recruiter, and the maxed Weiss leg by fairy ring and boat rather than the icy basalt.
-- **Follow-ups:** a house set up without its location (Account > My house) has no ways on the atlas, though only the
-  front door needs it; the Stronghold bank's ladder as an atlas extra (section 3, step 2).
+- **Follow-ups:** the Stronghold bank's ladder as an atlas extra (section 3, step 2).
 
 ## 10. Risks
 
