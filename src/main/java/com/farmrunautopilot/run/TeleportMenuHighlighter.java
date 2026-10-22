@@ -118,7 +118,7 @@ public class TeleportMenuHighlighter
 		{
 			return new Found(top, -1);
 		}
-		// UNVERIFIED: whether any teleport item puts its places in a sub-menu, and whether its entries are there yet
+		// A sub-menu's places: an inventory ring of dueling's are under Rub, there as the menu opens (elzerma, 2026-10-21)
 		for (int i = 0; i < entries.length; i++)
 		{
 			final Menu sub = entries[i].getSubMenu();
