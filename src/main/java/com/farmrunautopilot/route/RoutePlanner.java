@@ -53,13 +53,11 @@ public final class RoutePlanner
 	/** With "prefer walking" on, a walk up to this much slower than a teleport is chosen instead. */
 	static final double PREFER_WALKING_SECONDS = 8.0;
 	/**
-	 * What spending a quetzal whistle charge is worth in the route's ordering (not its times): charges are few and
-	 * recharged by hand (elzerma, 2026-10-13: a charge to reach the Hunter Guild is fine, a long run back to its pad
-	 * from Ortus isn't). Only a tie-breaker: at 4 it lost a faster whistle flight to the Civitas illa Fortis Teleport, which
-	 * costs runes (elzerma, 2026-10-15). Renu's preference still keeps the Kastori pad ahead of the whistle.
+	 * Renu from a nearby pad (free: no runes, no whistle charge) wins a near tie with a teleport into Varlamore (elzerma:
+	 * run back to the Kastori pad for Renu). A whistle charge is no tie-break of its own: a charge to reach the Hunter
+	 * Guild is fine (elzerma, 2026-10-13), and at 4 s, then 1 s, it lost their quicker whistle flights to the Civitas illa
+	 * Fortis Teleport, which costs runes (2026-10-15, 2026-10-22).
 	 */
-	static final double WHISTLE_CHARGE_PENALTY = 1.0;
-	/** Renu from a nearby pad (free, no runes) wins a near tie with a teleport into Varlamore. */
 	static final double RENU_PREFERENCE = 2.0;
 	/** Switching spellbook at a house altar and back again later (two trips to the altar). */
 	static final double SPELLBOOK_SWAP = 2 * (TravelTimes.TELEPORT + TravelTimes.HOUSE_WALK + 3.0);
@@ -710,8 +708,8 @@ public final class RoutePlanner
 
 	/**
 	 * The leg the player would pick among the atlas's options: the quickest, with the walking preference, the travel
-	 * style, the whistle's charge and Renu as tie-breaks; a guided test's pinned teleport, used directly, whenever an
-	 * option is it. Null if the atlas has no way at all for this player.
+	 * style and Renu as tie-breaks; a guided test's pinned teleport, used directly, whenever an option is it. Null if
+	 * the atlas has no way at all for this player.
 	 */
 	private Leg atlasLeg(AtlasLegs legs, Map<Integer, Double> from, List<Integer> to, Location location)
 	{
@@ -772,16 +770,14 @@ public final class RoutePlanner
 	}
 
 	/**
-	 * A whistle flight spends a charge (none with the perfected whistle's unlimited charges: elzerma's, under a second
-	 * quicker to the Hunter Guild than the Civitas illa Fortis Teleport and Renu, lost by the charge), Renu from a pad
-	 * doesn't (elzerma: run back to the Kastori pad for Renu) and needs no runes either, so it wins a tie (elzerma: the
-	 * run back to Kastori's pad is short).
+	 * Renu from a pad needs no runes and no whistle charge, so it wins a near tie (elzerma: the run back to Kastori's pad
+	 * is short); a whistle flight is weighed by its time alone (see {@link #RENU_PREFERENCE}).
 	 */
-	private double preference(AtlasOption option, AtlasTravel.Match match)
+	private static double preference(AtlasOption option, AtlasTravel.Match match)
 	{
 		if (option.getTeleport() != null && option.getTeleport().getType().equals("QUETZAL_WHISTLE"))
 		{
-			return ChargeBudget.holdsInfinite(TravelItem.QUETZAL_WHISTLE, holdings) ? 0 : WHISTLE_CHARGE_PENALTY;
+			return 0;
 		}
 		final boolean renu = match.getDeparture() == Departure.RENU
 			|| option.getKind() == AtlasOption.Kind.HOP && option.getHop().getType().equals("QUETZAL");
@@ -1177,10 +1173,10 @@ public final class RoutePlanner
 	static final double STYLE_PENALTY = 15;
 	/**
 	 * How much slower than the quickest an atlas option can be and still be picked: the difference in overhead between
-	 * a walk and the rest, and every preference (the style, prefer walking, the whistle, Renu) at once.
+	 * a walk and the rest, and every preference (the style, prefer walking, Renu) at once.
 	 */
 	static final double OPTION_SLACK = TravelTimes.LEG_OVERHEAD - TravelTimes.WALK_OVERHEAD + STYLE_PENALTY
-		+ PREFER_WALKING_SECONDS + WHISTLE_CHARGE_PENALTY + RENU_PREFERENCE + 1;
+		+ PREFER_WALKING_SECONDS + RENU_PREFERENCE + 1;
 
 	static double stylePenalty(TravelStyle style, Cost cost)
 	{

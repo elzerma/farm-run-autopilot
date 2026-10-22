@@ -94,13 +94,18 @@ public class AtlasRouteTest
 	}
 
 	@Test
-	public void civitasToKastoriTakesRenuNotAWhistleCharge()
+	public void civitasToKastoriTakesTheWhistleWhenItsQuicker()
 	{
-		// Quickest: the Civitas illa Fortis Teleport lands by the city's pad, then Renu; never the whistle
+		// Quickest: the whistle, under a second quicker than the Civitas illa Fortis Teleport and Renu from the city's
+		// pad; a charge is no tie-break against a teleport that costs runes (elzerma, 2026-10-22)
 		final Holdings whistle = bank(ItemID.HG_QUETZALWHISTLE_BASIC, 1);
 		final RouteStop fastest = between(Location.CIVITAS_ILLA_FORTIS, Location.KASTORI, access(99), whistle);
-		assertNotEquals(fastest.getBreakdown(), TravelItem.QUETZAL_WHISTLE, fastest.travelItem());
-		assertTrue(fastest.getBreakdown(), fastest.describeTravel().contains("Renu"));
+		assertEquals(fastest.getBreakdown(), TravelItem.QUETZAL_WHISTLE, fastest.travelItem());
+
+		// Without one: the teleport lands by the city's pad, then Renu
+		final RouteStop teleport = between(Location.CIVITAS_ILLA_FORTIS, Location.KASTORI, access(99), bank());
+		assertNotEquals(teleport.getBreakdown(), TravelItem.QUETZAL_WHISTLE, teleport.travelItem());
+		assertTrue(teleport.getBreakdown(), teleport.describeTravel().contains("Renu"));
 
 		// Preferring free ways: back to the Hunter Guild's pad on foot, then Renu (no runes, no charge)
 		final RunConfig free = new RunConfig().sanitise();

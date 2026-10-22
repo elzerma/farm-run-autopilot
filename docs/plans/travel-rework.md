@@ -384,7 +384,7 @@ charges left".
 | Hosidius, Book of the Dead and skills necklace, 50 Agility | no Xeric's | Book of the Dead unless the necklace plus stepping stone is quicker on the atlas; with 30 Agility the necklace's walk is the long way round |
 | Falador Park to Taverley | 66 / 60 Agility | Over the rocks / round by the gate |
 | Gnome Stronghold to Tree Gnome Village | spirit trees | Spirit tree, then Elkoy |
-| Civitas illa Fortis to Kastori | Twilight's Promise | Renu from the pad, no whistle charge |
+| Civitas illa Fortis to Kastori | Twilight's Promise | The whistle when it's quicker (elzerma, 2026-10-22), else the Civitas illa Fortis Teleport and Renu; preferring free ways, Renu from the pad |
 | Troll Stronghold | 73 Agility and the diary / neither | Basalt to the roof / entrance and the way up inside |
 | Catherby herb and fruit tree, then bank | any | Patch order by the atlas; bank walk from the last patch |
 | Every enabled stop | fresh account | A way there, or listed as unreachable with what's missing |
@@ -710,9 +710,16 @@ route snapshots, and banks come from the atlas.
   cloak 2's farm teleport needs the medium Ardougne diary, and the atlas plans a house only once its location is set.
 - **Route changes** (each explained in its test): without a whistle, Varlamore's legs each start with the Civitas illa
   Fortis Teleport and Renu from the city's pad (6 s quicker than walking back to a pad); with 68 Agility, Taverley is
-  walked to over the rocks from whichever of Catherby and Falador Park is next to it; the perfected whistle's unlimited
-  charges no longer count against it, so elzerma's Civitas illa Fortis, Kastori and Nemus Retreat legs go back to the
-  whistle, under a second quicker than the teleport and Renu (as asked on 2026-10-15).
+  walked to over the rocks from whichever of Catherby and Falador Park is next to it; a whistle charge no longer counts
+  against a flight, so elzerma's Civitas illa Fortis, Kastori and Nemus Retreat legs go back to the whistle, under a
+  second quicker than the teleport and Renu (as asked on 2026-10-15). The suites first gave elzerma's account the
+  perfected whistle's unlimited charges and dropped the tie-break only for that; their hand checks showed theirs is the
+  enhanced whistle (9 charges), so on 2026-10-22 it went for every whistle. Renu from a pad keeps its 2 s preference.
+- **Hand checks (2026-10-22, the dev client on this branch):** the route plans at log-in (the atlas read in 100 ms)
+  and the dev log has no old-tables line. Kastori was still by the Civitas illa Fortis Teleport and Renu (24 s) over
+  elzerma's whistle (23 s), lost by the 1 s charge tie-break, until they turned the teleport off: fixed as above. A bank
+  visit for missing items at Civitas illa Fortis says "Bank near" the stop. With 68 Agility, Catherby is walked to from
+  Taverley over the rocks (planned, 28 s). Still to try: a bank line followed to its bank, and that walk.
 - **Route snapshots** (56ae37f, `RouteSnapshotTest`): the whole route for three test accounts (like elzerma's,
   mid-level with no quests, maxed) is saved in `src/test/resources`; a change that moves one fails the test, with the
   new routes in `build/route-snapshots.txt`. Worth a look there: the mid-level Yanille leg by the ring of wealth and

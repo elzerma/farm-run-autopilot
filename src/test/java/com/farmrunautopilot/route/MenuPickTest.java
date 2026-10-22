@@ -33,10 +33,10 @@ public class MenuPickTest
 	@Test
 	public void aWayFromTheAtlas()
 	{
-		// Kastori by the Civitas illa Fortis Teleport, then Renu from the city's pad (with the perfected whistle, its
-		// flight is a second quicker and costs nothing)
+		// Kastori by the Civitas illa Fortis Teleport, then Renu from the city's pad (with their whistle, its flight is
+		// under a second quicker)
 		final AccessSnapshot access = ElzermaAccount.access();
-		final Holdings holdings = ElzermaAccount.holdingsWithout(ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE);
+		final Holdings holdings = ElzermaAccount.holdingsWithout(ItemID.HG_QUETZALWHISTLE_ENHANCED);
 		final RouteStop stop = RoutePlanner.between(null, Location.KASTORI, new RunConfig().sanitise(), access, holdings,
 			new PohSetup(), AtlasPlayers.with(access, holdings));
 		assertEquals(stop.getBreakdown(), Departure.ATLAS, stop.getDeparture());
