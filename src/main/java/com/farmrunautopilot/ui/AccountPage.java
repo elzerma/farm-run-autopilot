@@ -46,7 +46,7 @@ class AccountPage extends SetupPanel
 	@Override
 	void addSections(RunConfig config, AccountSettings account, AccessSnapshot access)
 	{
-		add(pohSection(account));
+		add(pohSection(account, access));
 		unlocksSectionShown = unlocksSection(account);
 		add(unlocksSectionShown);
 		add(storageSection(config));
@@ -67,7 +67,7 @@ class AccountPage extends SetupPanel
 		});
 	}
 
-	private JComponent pohSection(AccountSettings account)
+	private JComponent pohSection(AccountSettings account, AccessSnapshot access)
 	{
 		final PohSetup poh = account.getPoh();
 		final CollapsibleSection s = section("My house");
@@ -89,7 +89,7 @@ class AccountPage extends SetupPanel
 			final JButton rescan = smallButton("Rescan house");
 			rescan.setToolTipText("<html>Detection only adds furniture. If you removed or downgraded something, "
 				+ "rescan:<br>this clears the detected furniture and your next house visit fills it in again.<br>"
-				+ "The portal location and nexus destinations are kept.</html>");
+				+ "The nexus destinations are kept.</html>");
 			rescan.addActionListener(e ->
 			{
 				PohDetector.clearDetected(poh);
@@ -98,19 +98,8 @@ class AccountPage extends SetupPanel
 			});
 			s.addContent(rescan);
 		}
-		s.help("Set the portal location and nexus destinations by hand.");
-
-		final List<Choice<HousePortal>> portals = new ArrayList<>();
-		portals.add(Choice.of(null, "Unknown / no house"));
-		for (HousePortal portal : HousePortal.values())
-		{
-			portals.add(Choice.of(portal, portal.getDisplayName() + " (" + portal.getConstructionLevel() + " Con)"));
-		}
-		s.addContent(label("House portal location"));
-		s.addContent(combo(portals, poh.getPortal(), p -> saveAccount(() -> poh.setPortal(p), true)));
-		s.addContent(checkBox("House set to teleport outside", poh.isTeleportOutside(), true,
-			"Teleport to House lands outside the portal instead of inside",
-			on -> saveAccount(() -> poh.setTeleportOutside(on), false)));
+		s.help("Where your house is comes from the game. Set the nexus destinations by hand.");
+		addHouse(s, access);
 
 		final List<Choice<JewelleryBoxTier>> boxes = new ArrayList<>();
 		boxes.add(Choice.of(null, "None"));
@@ -160,6 +149,28 @@ class AccountPage extends SetupPanel
 				}, false)));
 		}
 		return s;
+	}
+
+	/** Where the house is and how Teleport to House lands, read from the game (elzerma, 2026-10-21: not picked by hand). */
+	private static void addHouse(CollapsibleSection s, AccessSnapshot access)
+	{
+		if (!access.isKnown())
+		{
+			s.addContent(detectedRow("House", "Not read yet", "Read from the game once you're logged in"));
+			return;
+		}
+		if (!access.hasHouse())
+		{
+			s.addContent(detectedRow("House", "None", "Read from the game: you have no house, so the route won't use one"));
+			return;
+		}
+		final HousePortal portal = access.getHousePortal();
+		s.addContent(detectedRow("House", portal != null ? portal.getDisplayName() : "Unknown place", portal != null
+			? "Read from the game: where your house portal is"
+			: "Read from the game, but the plugin doesn't know this place yet, so the route won't leave your house by its "
+				+ "door. Use Report a problem in Settings so it can be added."));
+		s.addContent(detectedRow("Teleport to House", access.isHouseTeleportOutside() ? "Lands outside" : "Lands inside",
+			"Read from the game: your house's teleport setting"));
 	}
 
 	private JComponent unlocksSection(AccountSettings account)

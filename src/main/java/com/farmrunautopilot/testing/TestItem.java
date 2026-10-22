@@ -74,6 +74,10 @@ public enum TestItem
 	SPIRIT_TREES(Tab.ACCOUNT, "Planted spirit trees",
 		"Untick your planted spirit tree in Account > Unlocks, then go to it (Port Sarim, Brimhaven or the "
 			+ "Farming Guild). It should tick itself once the grown tree is in view."),
+	HOUSE_LOCATION(Tab.ACCOUNT, "Where your house is",
+		"With a house of your own, look at Account > My house: it should show where your house is and whether "
+			+ "Teleport to House lands you inside or outside, as your house is set. Teleport to your house, then leave "
+			+ "through its portal: you should come out in the place it shows."),
 	HOUSE_SCAN(Tab.ACCOUNT, "House scanning (beta)",
 		"Tick \"Detect furniture when I enter my house\" in Account > My house, then enter your house: your "
 			+ "jewellery box, pool, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned). "

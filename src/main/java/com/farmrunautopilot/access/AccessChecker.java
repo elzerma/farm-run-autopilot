@@ -177,7 +177,10 @@ public class AccessChecker
 
 		final PohAltar altar = account.getPoh().getAltar();
 		return new AccessSnapshot(true, Collections.unmodifiableMap(quests), Collections.unmodifiableMap(levels),
-			Collections.unmodifiableSet(diaries), Collections.unmodifiableSet(unlocks), account.getPoh().getPortal(),
+			Collections.unmodifiableSet(diaries), Collections.unmodifiableSet(unlocks),
+			// Where the house is (0: none) and Teleport to House landing outside (0) or inside (1), as Shortest Path's
+			// data has them. UNVERIFIED in game (help list: Where your house is)
+			client.getVarbitValue(VarbitID.POH_HOUSE_LOCATION), client.getVarbitValue(VarbitID.POH_TELE_TOGGLE) == 0,
 			spellbook(client.getVarbitValue(VarbitID.SPELLBOOK)),
 			altar != null ? altar.getSpellbooks() : Collections.emptySet(),
 			// QP_MAX is the quest points available in the game (checked in-game)
@@ -204,10 +207,11 @@ public class AccessChecker
 		}
 	}
 
-	/** Re-read soon if the varbit is the spellbook. Client thread. */
+	/** Re-read soon if the varbit is the spellbook, where the house is or how Teleport to House lands. Client thread. */
 	public void onVarbitChanged(int varbitId)
 	{
-		if (varbitId == VarbitID.SPELLBOOK)
+		if (varbitId == VarbitID.SPELLBOOK || varbitId == VarbitID.POH_HOUSE_LOCATION
+			|| varbitId == VarbitID.POH_TELE_TOGGLE)
 		{
 			refreshRequested = true;
 		}

@@ -11,13 +11,16 @@ import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.Unlock;
+import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.travel.Rune;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.data.travel.atlas.AtlasHouse;
 import com.farmrunautopilot.data.travel.atlas.AtlasWays;
+import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.route.BankStop;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
@@ -74,6 +77,7 @@ final class GuidedTests
 		TESTS.put(TestItem.BUCKET_COMPOST, new BucketCompost());
 		TESTS.put(TestItem.HOUSE_BY_TREE, new HouseByTree());
 		TESTS.put(TestItem.HOUSE_TURNED_OFF, new HouseTurnedOff());
+		TESTS.put(TestItem.HOUSE_LOCATION, new HouseLocation());
 		TESTS.put(TestItem.HOUSE_SCAN, new HouseScan());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
 	}
@@ -1039,8 +1043,7 @@ final class GuidedTests
 		@Override
 		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
 		{
-			return account.getPoh().getPortal() != null ? Collections.emptyList()
-				: Collections.singletonList("Set up your house in Account > My house");
+			return access.hasHouse() ? Collections.emptyList() : Collections.singletonList("Have a house");
 		}
 
 		@Override
@@ -1162,6 +1165,99 @@ final class GuidedTests
 					kept.getManualUnlocks().add(unlock);
 				}
 			}
+		}
+	}
+
+	/**
+	 * Where the house is and how Teleport to House lands, read from the game (POH_HOUSE_LOCATION and POH_TELE_TOGGLE,
+	 * with Shortest Path's values): UNVERIFIED, as elzerma has no house. Landing inside or by the portal, then coming out
+	 * of the portal, shows which.
+	 */
+	private static final class HouseLocation extends GuidedTest
+	{
+		/** Coming out of the house's portal puts the player this close to where Teleport to House lands outside it. */
+		private static final int BY_PORTAL_TILES = 10;
+
+		/** Where Teleport to House lands outside the house the plugin read, by its portal; null if that isn't known. */
+		private static WorldPoint portal(TestContext ctx)
+		{
+			final HousePortal place = ctx.access().getHousePortal();
+			final TravelAtlas atlas = TravelAtlas.ifLoaded();
+			final TravelAtlas.Place landing = place != null && atlas != null ? AtlasHouse.portalPlace(atlas, place) : null;
+			return landing != null ? landing.getPoint() : null;
+		}
+
+		/** "inside" the player's house, "outside" by its portal where the plugin read it, or null anywhere else. */
+		private static String where(TestContext ctx)
+		{
+			if (ctx.atHome())
+			{
+				return "inside";
+			}
+			final WorldPoint portal = portal(ctx);
+			final WorldPoint here = ctx.location();
+			return portal != null && here != null && here.distanceTo(portal) <= BY_PORTAL_TILES ? "outside" : null;
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				// Without a house the game reads 0 whatever its values mean, which proves nothing
+				ask("Do you have a house of your own?").onAnswer((ctx, yes) ->
+				{
+					if (!yes)
+					{
+						ctx.cannotTest("a house");
+						return;
+					}
+					ctx.capture("Read from the game", ctx.houseSummary());
+					if (!ctx.access().hasHouse())
+					{
+						ctx.problem("The house location read 0, as if there's no house");
+					}
+					else if (ctx.access().getHousePortal() == null)
+					{
+						ctx.problem("House location " + ctx.access().getHouseLocation() + " isn't a place the plugin knows");
+					}
+				}),
+				doThis("Away from your house, teleport to it: the spell, a tablet, or a construction or max cape",
+					ctx -> where(ctx) != null && !where(ctx).equals(ctx.recall("where")))
+					.onStart(ctx -> ctx.remember("where", String.valueOf(where(ctx))))
+					.onDone(ctx ->
+					{
+						final boolean outside = "outside".equals(where(ctx));
+						ctx.capture("Teleport to House landed", outside ? "outside, at " + ctx.location() : "inside");
+						if (outside != ctx.access().isHouseTeleportOutside())
+						{
+							ctx.problem("Teleport to House landed " + (outside ? "outside" : "inside") + ", but the plugin read "
+								+ (outside ? "inside" : "outside"));
+						}
+					})
+					.orAskAfter(DO_TICKS, "Have you teleported to your house?")
+					.onAnswer((ctx, yes) ->
+					{
+						// Without a way home, where Teleport to House lands can't be seen
+						if (!yes)
+						{
+							ctx.cannotTest("a way to teleport to your house");
+							return;
+						}
+						ctx.capture("Standing at", ctx.location());
+						ctx.problem("Not in your house, or by its portal where the plugin read it (" + portal(ctx) + ")");
+					}),
+				doThis("Leave your house through its portal", ctx -> "outside".equals(where(ctx)))
+					.onDone(ctx -> ctx.capture("Came out at", ctx.location()))
+					.orAskAfter(DO_TICKS, "Are you outside your house, by its portal?")
+					.onAnswer((ctx, yes) ->
+					{
+						if (yes)
+						{
+							ctx.capture("Standing at", ctx.location());
+							ctx.problem("Not by the portal where the plugin read the house (" + portal(ctx) + ")");
+						}
+					}),
+				ask("Does Account > My house show where your house is, and how Teleport to House lands, as in the game?"));
 		}
 	}
 

@@ -8,8 +8,10 @@ import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.poh.PortalNexus;
 import com.farmrunautopilot.data.travel.Spellbook;
+import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.supply.Holdings;
@@ -25,17 +27,27 @@ import net.runelite.api.QuestState;
 import net.runelite.api.Skill;
 import net.runelite.api.gameval.ItemID;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 /** Known-good chains a farmer would take, so the cost model can't drift away from them unnoticed. */
 public class RouteChainTest
 {
+	/** A POH_HOUSE_LOCATION value the plugin doesn't know: a place the game added later. */
+	private static final int NEW_PLACE = 99;
+
 	/**
 	 * Tree Gnome Village and The Grand Tree (the Stronghold's spirit tree needs both; the old tables only checked the
-	 * first), Fairytale II and 99 everywhere.
+	 * first), Fairytale II and 99 everywhere; no house.
 	 */
 	private static AccessSnapshot access()
+	{
+		return access(0);
+	}
+
+	/** As {@link #access()}, with the house where the game's POH_HOUSE_LOCATION puts it (0: none). */
+	private static AccessSnapshot access(int houseLocation)
 	{
 		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
 		quests.put(Quest.TREE_GNOME_VILLAGE, QuestState.FINISHED);
@@ -47,7 +59,8 @@ public class RouteChainTest
 			levels.put(skill, 99);
 		}
 		return new AccessSnapshot(true, quests, levels, Collections.emptySet(),
-			EnumSet.of(Unlock.SPIRIT_TREES, Unlock.FAIRY_RINGS), null, Spellbook.STANDARD, Collections.emptySet());
+			EnumSet.of(Unlock.SPIRIT_TREES, Unlock.FAIRY_RINGS), houseLocation, false, Spellbook.STANDARD,
+			Collections.emptySet(), 0, 0, false);
 	}
 
 	private static Holdings holdings(int... itemIds)
@@ -137,7 +150,6 @@ public class RouteChainTest
 			EnumSet.of(Unlock.SPIRIT_TREES, Unlock.SPIRIT_TREE_FARMING_GUILD), HousePortal.HOSIDIUS, Spellbook.STANDARD,
 			Collections.emptySet());
 		final PohSetup poh = new PohSetup();
-		poh.setPortal(HousePortal.HOSIDIUS);
 		poh.setSpiritTree(true);
 		final RunConfig config = new RunConfig().sanitise();
 		config.setEndNearBank(false);
@@ -149,23 +161,30 @@ public class RouteChainTest
 	}
 
 	@Test
-	public void theNexusWithoutTheHousesLocation()
+	public void theNexusWhereverTheHouseIs()
 	{
-		// Account > My house with the nexus's Catherby portal and a spirit tree set up, but not where the house is: only
-		// out of the front door needs that, so the nexus is still a way out
+		// The nexus's Catherby portal and a spirit tree set up in My house. The route goes through the house while the
+		// game says there is one, even in a place the plugin doesn't know yet (only out of the front door needs to know
+		// where), and never once it says there's none
 		final PohSetup poh = new PohSetup();
 		poh.setNexusDestinations(EnumSet.of(PortalNexus.Destination.CATHERBY));
 		poh.setSpiritTree(true);
 		final RunConfig config = new RunConfig().sanitise();
 		config.setEndNearBank(false);
+		final List<Patch> catherby = Collections.singletonList(Patch.CATHERBY_HERB);
 
 		// In by Teleport to House (99 Magic on the standard spellbook), quicker than Camelot Teleport and the walk
-		final List<RouteStop> teleport = plan(Collections.singletonList(Patch.CATHERBY_HERB), config, access(),
-			holdings(), poh, null, 0);
-		assertEquals(describe(teleport), Departure.POH_NEXUS, teleport.get(0).getDeparture());
-		assertEquals(describe(teleport), TravelMethod.CATHERBY_TELEPORT, teleport.get(0).getMethod());
+		for (int house : new int[]{HousePortal.TAVERLEY.getGameValue(), NEW_PLACE})
+		{
+			final List<RouteStop> teleport = plan(catherby, config, access(house), holdings(), poh, null, 0);
+			assertEquals(describe(teleport), Departure.POH_NEXUS, teleport.get(0).getDeparture());
+			assertEquals(describe(teleport), TravelMethod.CATHERBY_TELEPORT, teleport.get(0).getMethod());
+		}
+		final List<RouteStop> none = plan(catherby, config, access(), holdings(), poh, null, 0);
+		assertFalse(describe(none), none.get(0).getWays().contains(AtlasWays.familyKey(TravelFamily.HOUSE)));
+		assertFalse(describe(none), none.get(0).getDeparture().isViaHouse());
 
-		// In by the Farming Guild's spirit tree, without the Magic for Teleport to House
+		// In by the Farming Guild's spirit tree, without the Magic for Teleport to House, to a house somewhere new
 		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
 		for (Skill skill : AccessSnapshot.REAL_SKILLS)
 		{
@@ -175,8 +194,8 @@ public class RouteChainTest
 		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
 		quests.put(Quest.TREE_GNOME_VILLAGE, QuestState.FINISHED);
 		final AccessSnapshot noMagic = new AccessSnapshot(true, quests, levels, Collections.emptySet(),
-			EnumSet.of(Unlock.SPIRIT_TREES, Unlock.SPIRIT_TREE_FARMING_GUILD), null, Spellbook.STANDARD,
-			Collections.emptySet());
+			EnumSet.of(Unlock.SPIRIT_TREES, Unlock.SPIRIT_TREE_FARMING_GUILD), NEW_PLACE, false, Spellbook.STANDARD,
+			Collections.emptySet(), 0, 0, false);
 		final List<RouteStop> tree = plan(Arrays.asList(Patch.FARMING_GUILD_HERB, Patch.CATHERBY_HERB), config, noMagic,
 			holdings(), poh, Location.FARMING_GUILD, 0);
 		assertEquals(describe(tree), Location.CATHERBY, tree.get(1).getLocation());

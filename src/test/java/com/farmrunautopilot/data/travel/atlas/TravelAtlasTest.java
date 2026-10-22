@@ -33,6 +33,8 @@ import org.junit.Test;
 public class TravelAtlasTest
 {
 	private static final TravelAtlas ATLAS = TravelAtlas.get();
+	/** A POH_HOUSE_LOCATION value the plugin doesn't know: a place the game added later. */
+	private static final int NEW_PLACE = 99;
 
 	@Test
 	public void readsTheShippedAtlas()
@@ -113,10 +115,9 @@ public class TravelAtlasTest
 	{
 		// A Rimmington house teleported into by tablet (its location and "inside" setting as the game has them)
 		final Map<Integer, Integer> held = items(ItemID.POH_TABLET_TELEPORTTOHOUSE, 10);
-		final AtlasAccount account = new AtlasAccount(access(99), holdings(held),
+		final AtlasAccount account = new AtlasAccount(access(99, HousePortal.RIMMINGTON.getGameValue()), holdings(held),
 			Map.of(VarbitID.POH_HOUSE_LOCATION, 1, VarbitID.POH_TELE_TOGGLE, 1), Map.of());
 		final PohSetup poh = new PohSetup();
-		poh.setPortal(HousePortal.RIMMINGTON);
 		poh.setNexusDestinations(EnumSet.of(PortalNexus.Destination.CATHERBY));
 		final AtlasHouse house = AtlasHouse.of(ATLAS, account, poh);
 		assertNotNull(house);
@@ -129,12 +130,40 @@ public class TravelAtlasTest
 		assertTrue(with.getHow(), with.getHow().startsWith("House > nexus: Catherby Portal"));
 		assertTrue(without == null || without.getSeconds() > with.getSeconds());
 
-		// Without its location picked (Account > My house) the house has every way out but the front door
-		poh.setPortal(null);
-		final AtlasHouse unplaced = AtlasHouse.of(ATLAS, account, poh);
+		// In a place the plugin doesn't know yet, the house has every way out but the front door; without one, none
+		final AtlasAccount elsewhere = new AtlasAccount(access(99, NEW_PLACE), holdings(held), Map.of(), Map.of());
+		final AtlasHouse unplaced = AtlasHouse.of(ATLAS, elsewhere, poh, 10.0, false);
 		assertNotNull(unplaced);
 		assertTrue(unplaced.getExits().stream().anyMatch(e -> e.getName().equals("nexus: Catherby Portal")));
 		assertNull(unplaced.getPortal());
+		assertNull(AtlasHouse.of(ATLAS, account(99, held), poh, 10.0, false));
+	}
+
+	@Test
+	public void eachHousePortalIsWhereItsGameValueTeleportsTo()
+	{
+		// HousePortal's POH_HOUSE_LOCATION values against the atlas's Teleport to House rows (both Shortest Path's)
+		for (HousePortal portal : HousePortal.values())
+		{
+			final TravelAtlas.Place door = AtlasHouse.portalPlace(ATLAS, portal);
+			assertNotNull(portal.name(), door);
+			boolean found = false;
+			for (TravelAtlas.Jump t : ATLAS.getTeleports())
+			{
+				if (t.getName().equals("Teleport to House") && t.getTo() == door.getId())
+				{
+					for (int id : t.getNeeds())
+					{
+						final AtlasNeed need = ATLAS.need(id);
+						found |= need.getKind() == AtlasNeed.Kind.VARBIT && need.getVar() == VarbitID.POH_HOUSE_LOCATION
+							&& need.getValue() == portal.getGameValue();
+					}
+				}
+			}
+			assertTrue(portal.name(), found);
+			assertEquals(portal, HousePortal.of(portal.getGameValue()));
+		}
+		assertNull(HousePortal.of(0));
 	}
 
 	private static List<Integer> places(String patch)
@@ -157,6 +186,12 @@ public class TravelAtlasTest
 
 	private static AccessSnapshot access(int level)
 	{
+		return access(level, 0);
+	}
+
+	/** As {@link #access(int)}, with the house where the game's POH_HOUSE_LOCATION puts it (0: none). */
+	private static AccessSnapshot access(int level, int houseLocation)
+	{
 		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
 		for (Quest quest : Quest.values())
 		{
@@ -167,7 +202,8 @@ public class TravelAtlasTest
 		{
 			levels.put(skill, level);
 		}
-		return new AccessSnapshot(true, quests, levels, Collections.emptySet(), EnumSet.noneOf(Unlock.class), null);
+		return new AccessSnapshot(true, quests, levels, Collections.emptySet(), EnumSet.noneOf(Unlock.class),
+			houseLocation, false, null, Collections.emptySet(), 0, 0, false);
 	}
 
 	private static Holdings holdings(Map<Integer, Integer> bank)

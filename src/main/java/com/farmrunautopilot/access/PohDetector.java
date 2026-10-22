@@ -24,8 +24,8 @@ import net.runelite.client.util.Text;
  *
  * <p>Detection only ever adds or upgrades, because objects in another player's house look the same
  * and a partly loaded house would otherwise wipe settings. Removed furniture is picked up with Rescan
- * house in My house, which clears what was detected so the next house visit fills it in again. The house
- * portal location and nexus destinations can't be read this way and stay manual.
+ * house in My house, which clears what was detected so the next house visit fills it in again. The nexus
+ * destinations can't be read this way and stay manual; where the house is comes from the game (AccessChecker).
  *
  * <p>Only objects in the player's own house are looked at: from the "Loading house" screen (shown a tick
  * before the house's objects spawn) until a scene outside an instance loads. The game doesn't say whose house
@@ -237,7 +237,7 @@ public class PohDetector
 
 	/**
 	 * Clear the detected furniture so the next house visit records exactly what's there, removals included.
-	 * The portal location, teleport-outside and nexus destinations are kept. Call on the Swing thread.
+	 * The nexus destinations are kept. Call on the Swing thread.
 	 */
 	public static void clearDetected(PohSetup poh)
 	{

@@ -858,7 +858,7 @@ public final class RoutePlanner
 	{
 		final boolean trees = access.isMet(Requirement.unlock(Unlock.SPIRIT_TREES));
 		final Double teleportIn = canTeleportHome() ? houseTeleportSeconds()
-			+ (poh.isTeleportOutside() ? TravelTimes.HOUSE_DOOR : 0) + TravelTimes.HOUSE_WALK : null;
+			+ (access.isHouseTeleportOutside() ? TravelTimes.HOUSE_DOOR : 0) + TravelTimes.HOUSE_WALK : null;
 		final AtlasHouse house = AtlasHouse.of(atlas.getAtlas(), atlas.getAccount(), poh, teleportIn, trees);
 		return new AtlasLegs(atlas.getAtlas(), atlas.getAccount(), house, this::teleportExtra);
 	}

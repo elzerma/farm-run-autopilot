@@ -108,6 +108,8 @@ Keep to these numbers; if something looks cramped, change it here and in the cod
 - **Section** (`CollapsibleSection`): the same header style with a faint "(?)" when it has an explanation on
   hover.
 - **One-line row** (`ExpandableRow`): name left, short value right, full value on hover, controls when opened.
+- **Read-only row** (`SetupPanel.detectedRow`): what was read from the game on the left, its value on the right,
+  where it comes from on hover; Settings > Debug > Detected, and the house's place in Account > My house.
 - **Buttons** (`Style`): plain (darker grey, lighter on hover), primary (orange, dark text, slim; the main
   action on screen: Build run, Start now, Start test), danger (muted red, white text: Stop).
 - **Drop-downs and number boxes** (`Style.combo`, `Style.spinner`): darker grey, medium grey outline, orange

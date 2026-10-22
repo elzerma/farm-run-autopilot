@@ -62,6 +62,12 @@ public final class AtlasAccount
 		return ways;
 	}
 
+	/** The player's levels, quests, unlocks and house, as read with the rest. */
+	public AccessSnapshot getAccess()
+	{
+		return access;
+	}
+
 	/** Every one of these needs (ids into the atlas's requirements) is met. */
 	public boolean meetsAll(TravelAtlas atlas, int[] needs)
 	{

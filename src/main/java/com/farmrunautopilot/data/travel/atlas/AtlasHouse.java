@@ -1,5 +1,7 @@
 package com.farmrunautopilot.data.travel.atlas;
 
+import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.poh.JewelleryBoxTier;
 import com.farmrunautopilot.data.poh.PortalNexus;
 import com.farmrunautopilot.data.travel.TravelItem;
@@ -18,9 +20,9 @@ import lombok.Value;
 /**
  * The player's house as a way out (docs/plans/travel-rework.md, section 4): in by Teleport to House, or by "Your house"
  * on any spirit tree once one grows in the house (issue #16), then a nexus portal, the jewellery box, the house's fairy
- * ring or spirit tree, or (in by a tree, with the house's location set) out through the front door; each lands at an
- * atlas place. Built from the house the player set up (PohSetup); the atlas's house rows don't know which portals a
- * house has.
+ * ring or spirit tree, or (in by a tree) out through the front door; each lands at an atlas place. Built from the house
+ * the player set up (PohSetup), and where the game says it is (AccessSnapshot); the atlas's house rows don't know which
+ * portals a house has.
  */
 public final class AtlasHouse
 {
@@ -101,7 +103,7 @@ public final class AtlasHouse
 	}
 
 	/**
-	 * The house's ways out for this player, or null without a known house; whether they can teleport in comes from the
+	 * The house's ways out for this player, or null without a house; whether they can teleport in comes from the
 	 * atlas's Teleport to House rows (runes or tablet, and the house's location, read from the game), at Shortest
 	 * Path's timing. Spirit trees into the house aren't counted. For the referee and the tests.
 	 */
@@ -111,14 +113,15 @@ public final class AtlasHouse
 		{
 			return null;
 		}
-		final double in = HOUSE_TELEPORT_TICKS * SECONDS_PER_TICK + (poh.isTeleportOutside() ? TravelTimes.HOUSE_DOOR : 0)
-			+ TravelTimes.HOUSE_WALK;
+		final double in = HOUSE_TELEPORT_TICKS * SECONDS_PER_TICK
+			+ (account.getAccess().isHouseTeleportOutside() ? TravelTimes.HOUSE_DOOR : 0) + TravelTimes.HOUSE_WALK;
 		return of(atlas, account, poh, in, false);
 	}
 
 	/**
-	 * The house's ways out for this player, or null without a known house or any way in. Only the front door needs
-	 * the house's location (Account > My house): without it the house has every other way out.
+	 * The house's ways out for this player, or null if the game says they have no house, or they've no way in. Only
+	 * the front door needs to know where the house is: in a place the plugin doesn't know yet, the house has every
+	 * other way out.
 	 *
 	 * @param teleportIn seconds to teleport in and walk to the exits (the planner's own rules: a cape, the spell or a
 	 *     tablet), or null if the player can't teleport in
@@ -126,7 +129,8 @@ public final class AtlasHouse
 	 */
 	public static AtlasHouse of(TravelAtlas atlas, AtlasAccount account, PohSetup poh, Double teleportIn, boolean treeIn)
 	{
-		if (poh == null || (teleportIn == null && !treeIn))
+		final AccessSnapshot access = account.getAccess();
+		if (poh == null || !access.hasHouse() || (teleportIn == null && !treeIn))
 		{
 			return null;
 		}
@@ -138,9 +142,6 @@ public final class AtlasHouse
 		}
 		// The jewellery box's rows land where the item's own teleport does: that item says which tier they need
 		final Map<Integer, JewelleryBoxTier> boxTierAt = new HashMap<>();
-		Exit portal = null;
-		final String portalName = poh.getPortal() == null ? null
-			: "Construction cape: " + poh.getPortal().getDisplayName();
 		for (TravelAtlas.Jump t : atlas.getTeleports())
 		{
 			final TravelItem item = t.getType().equals("TELEPORTATION_ITEM") ? AtlasLinks.item(atlas, t) : null;
@@ -148,12 +149,10 @@ public final class AtlasHouse
 			{
 				boxTierAt.merge(t.getTo(), BOX_TIER.get(item), (a, b) -> a.ordinal() <= b.ordinal() ? a : b);
 			}
-			// The construction cape's teleport to a house portal lands where walking out of the house does
-			if (portal == null && t.getName().equals(portalName))
-			{
-				portal = new Exit(ExitKind.PORTAL, t.getTo(), 0, "out of the house");
-			}
 		}
+		final HousePortal place = access.getHousePortal();
+		final TravelAtlas.Place door = place != null ? portalPlace(atlas, place) : null;
+		final Exit portal = door != null ? new Exit(ExitKind.PORTAL, door.getId(), 0, "out of the house") : null;
 		for (TravelAtlas.Jump t : atlas.getTeleports())
 		{
 			if (t.getType().equals("TELEPORTATION_PORTAL_POH") && nexus.contains(t.getName()))
@@ -186,6 +185,23 @@ public final class AtlasHouse
 			}
 		}
 		return new AtlasHouse(teleportIn, treeIn && poh.isSpiritTree(), exits, portal);
+	}
+
+	/**
+	 * Where walking out of a house in this place lands, by its portal: where the construction cape's teleport there
+	 * lands. Null if the atlas has no such teleport.
+	 */
+	public static TravelAtlas.Place portalPlace(TravelAtlas atlas, HousePortal place)
+	{
+		final String name = "Construction cape: " + place.getDisplayName();
+		for (TravelAtlas.Jump t : atlas.getTeleports())
+		{
+			if (t.getName().equals(name))
+			{
+				return atlas.place(t.getTo());
+			}
+		}
+		return null;
 	}
 
 	/**

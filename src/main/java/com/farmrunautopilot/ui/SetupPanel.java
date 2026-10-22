@@ -353,6 +353,29 @@ abstract class SetupPanel extends JPanel
 		return label;
 	}
 
+	/** One read-only line: what was read or detected on the left, its value on the right, where it's from on hover. */
+	static JComponent detectedRow(String what, String value, String tooltip)
+	{
+		final JPanel row = new JPanel(new BorderLayout(6, 0));
+		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		row.setBorder(new EmptyBorder(1, 0, 1, 0));
+		// Both columns wrap: the value column is CONTROL_WIDTH - 90 wide, so the name gets the rest
+		final JLabel name = new JLabel(wrap(what, 80));
+		name.setVerticalAlignment(JLabel.TOP);
+		name.setForeground(Color.WHITE);
+		name.setFont(FontManager.getRunescapeSmallFont());
+		final JLabel shown = new JLabel(wrap(value, CONTROL_WIDTH - 90));
+		shown.setVerticalAlignment(JLabel.TOP);
+		shown.setForeground(ColorScheme.TEXT_COLOR);
+		shown.setFont(FontManager.getRunescapeSmallFont());
+		row.add(name, BorderLayout.WEST);
+		row.add(shown, BorderLayout.EAST);
+		row.setToolTipText(tooltip);
+		row.setAlignmentX(LEFT_ALIGNMENT);
+		row.setMaximumSize(new Dimension(CONTROL_WIDTH, row.getPreferredSize().height));
+		return row;
+	}
+
 	static String wrap(String text)
 	{
 		return wrap(text, CONTROL_WIDTH - 20);

@@ -16,8 +16,9 @@ import net.runelite.api.gameval.VarbitID;
 /**
  * Pretend players for planning on the travel atlas in tests (docs/plans/travel-rework.md, sprint T3). Their game values
  * match their account where the plugin reads them too: the achievement diaries and the unlocks read from varbits are
- * as the account has them (every one done when it isn't known). Every other check the atlas names (quest progress,
- * landing sites, balloon routes) passes. On the standard spellbook, without a house location.
+ * as the account has them (every one done when it isn't known), and so is the house (where it is, none without one,
+ * and how Teleport to House lands). Every other check the atlas names (quest progress, landing sites, balloon routes)
+ * passes. On the standard spellbook.
  */
 public final class AtlasPlayers
 {
@@ -85,7 +86,8 @@ public final class AtlasPlayers
 			}
 		}
 		varbits.put(VarbitID.SPELLBOOK, 0);
-		varbits.put(VarbitID.POH_HOUSE_LOCATION, 0);
+		varbits.put(VarbitID.POH_HOUSE_LOCATION, access.getHouseLocation());
+		varbits.put(VarbitID.POH_TELE_TOGGLE, access.isHouseTeleportOutside() ? 0 : 1);
 		varbits.putAll(varbitsSet);
 		varps.putAll(varpsSet);
 		return new RouteAtlas(ATLAS, new AtlasAccount(access, holdings, varbits, varps, ways, minutes));

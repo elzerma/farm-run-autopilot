@@ -707,8 +707,11 @@ route snapshots, and banks come from the atlas.
 - **Suites on the atlas** (4f04db9): test players' diaries and the unlocks read from varbits match their accounts,
   and the account like elzerma's has coins for fares. That showed set-up slips the old tables never checked: the
   Stronghold's spirit tree needs The Grand Tree, the unlimited cabbage teleport needs the hard Lumbridge diary, Ardougne
-  cloak 2's farm teleport needs the medium Ardougne diary, and the atlas planned a house only once its location was set
-  (since fixed: without the location the house has every way out but the front door, `AtlasHouse`).
+  cloak 2's farm teleport needs the medium Ardougne diary, and the atlas planned a house only once its location was set.
+  Since fixed (2026-10-21, elzerma: "Game only, no drop-down"): where the house is and how Teleport to House lands are
+  read from the game (POH_HOUSE_LOCATION, POH_TELE_TOGGLE) instead of picked in Account > My house; with no house the
+  route uses none, and a house in a place the plugin doesn't know yet has every way out but the front door
+  (`AtlasHouse`). The values are Shortest Path's, unchecked in game: help list "Where your house is".
 - **Route changes** (each explained in its test): without a whistle, Varlamore's legs each start with the Civitas illa
   Fortis Teleport and Renu from the city's pad (6 s quicker than walking back to a pad); with 68 Agility, Taverley is
   walked to over the rocks from whichever of Catherby and Falador Park is next to it; the perfected whistle's unlimited

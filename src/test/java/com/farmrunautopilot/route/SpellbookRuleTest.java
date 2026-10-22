@@ -152,14 +152,16 @@ public class SpellbookRuleTest
 	@Test
 	public void oldPicksAreIgnored()
 	{
-		// Standard book, no tablet, Catherby on the nexus; saved before 2026-10-20 with Camelot Teleport picked for it
+		// Standard book, no tablet, a house with Catherby on its nexus; saved before 2026-10-20 with Camelot Teleport
+		// picked for it
 		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
 		quests.put(Quest.LUNAR_DIPLOMACY, QuestState.FINISHED);
 		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
 		levels.put(Skill.MAGIC, 99);
 		levels.put(Skill.FARMING, 99);
 		final AccessSnapshot standard = new AccessSnapshot(true, quests, levels, Collections.emptySet(),
-			Collections.emptySet(), null, Spellbook.STANDARD, Collections.emptySet());
+			Collections.emptySet(), com.farmrunautopilot.data.poh.HousePortal.RIMMINGTON, Spellbook.STANDARD,
+			Collections.emptySet());
 		final RunConfig config = new Gson().fromJson("{\"travel\":{\"CATHERBY\":\"CAMELOT_TELEPORT\"},"
 			+ "\"travelHow\":{\"CATHERBY\":\"DIRECT\"}}", RunConfig.class).sanitise();
 		config.setStartLocation(Location.FARMING_GUILD);

@@ -2,6 +2,7 @@ package com.farmrunautopilot.access;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Patch;
@@ -111,6 +112,30 @@ public class AccessSnapshotTest
 		assertFalse(snapshot(70, 50, null).missingFor(TravelMethod.HOUSE_PORTAL_TAVERLEY).isEmpty());
 		assertFalse(snapshot(70, 50, HousePortal.RIMMINGTON).missingFor(TravelMethod.HOUSE_PORTAL_TAVERLEY).isEmpty());
 		assertTrue(snapshot(70, 50, HousePortal.TAVERLEY).missingFor(TravelMethod.HOUSE_PORTAL_TAVERLEY).isEmpty());
+	}
+
+	@Test
+	public void theHouseIsWhereTheGameSays()
+	{
+		// POH_HOUSE_LOCATION: 0 is no house, 2 Taverley, and a value the plugin doesn't know a house somewhere new
+		assertFalse(AccessSnapshot.UNKNOWN.hasHouse());
+		assertFalse(snapshot(70, 50, null).hasHouse());
+		final AccessSnapshot taverley = house(2, true);
+		assertTrue(taverley.hasHouse());
+		assertEquals(HousePortal.TAVERLEY, taverley.getHousePortal());
+		assertTrue(taverley.isHouseTeleportOutside());
+		assertTrue(taverley.missingFor(TravelMethod.HOUSE_PORTAL_TAVERLEY).isEmpty());
+		final AccessSnapshot elsewhere = house(99, false);
+		assertTrue(elsewhere.hasHouse());
+		assertNull(elsewhere.getHousePortal());
+		assertFalse(elsewhere.missingFor(TravelMethod.HOUSE_PORTAL_TAVERLEY).isEmpty());
+	}
+
+	/** Known, with the game's house location value and Teleport to House landing outside or not. */
+	private static AccessSnapshot house(int location, boolean outside)
+	{
+		return new AccessSnapshot(true, Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet(),
+			Collections.emptySet(), location, outside, null, Collections.emptySet(), 0, 0, false);
 	}
 
 	@Test

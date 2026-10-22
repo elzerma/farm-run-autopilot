@@ -54,7 +54,7 @@ A farming-run planner and guide for tree, fruit tree and herb runs that:
 | Auto-weed | If Tithe Farm **Auto-weed** is owned and switched on, empty patches stay weed-free once raked → **don't require a rake**. If off/unowned, require a rake. |
 | Teleports | **Dropdown per location + "Auto (best)"** option that picks the fastest owned and unlocked method. (Changed by elzerma, 2026-10-20: no dropdowns; every stop's way is planned from the travel atlas, docs/plans/travel-rework.md section 6.) |
 | Runes | Support rune pouch / divine rune pouch, elemental + combination runes, elemental/combination staves, tabs and jewellery. **Prefer tabs** (save slots), with a **manual "use runes instead of tabs" override** (global + per location). (Changed by elzerma, 2026-10-20: one choice for every stop, "Cast from runes, not tablets".) |
-| POH | **Auto-detect on visit + manual edit** in a "My POH" section (nexus destinations, jewellery box tier, pool tier, fairy ring, spirit tree, house portal location). |
+| POH | **Auto-detect on visit + manual edit** in a "My POH" section (nexus destinations, jewellery box tier, pool tier, fairy ring, spirit tree, house portal location). (Changed by elzerma, 2026-10-21: the house portal location and whether Teleport to House lands outside are read from the game and shown, not edited.) |
 | Storage sources | Default: **bank + inventory + equipment + tool leprechaun**. Settings toggles (default **off**) for **GIM group storage** and **seed vault**. |
 | Borrowed features (v1) | Quest Helper **bank tab + item checklist**, Quest Helper **step guidance** (highlights + arrows), **Time Tracking awareness** (patch states), **Presets**. |
 | Route optimisation modes | **On – Autopilot** (our time-based algorithm), **On – Meta** (wiki order), **Off** (player's own order). **Drag to reorder** in the sidebar in every mode (a manual reorder switches the run to "Off/custom" for that run). |
@@ -273,7 +273,7 @@ Spellbook mismatch: if a leg needs a spell from a book other than the active one
 - **Civitas / Ortus Farm** — ★Quetzal whistle → Hunter Guild (S/M); Hunter cape (S/M); Civitas Teleport + Quetzal (M); fairy ring **AJP** (M).
 
 ### 8.3 POH options
-- **House portal locations** (Teleport to House / house tabs land *inside* the house unless the house is set to "teleport outside" or the player uses a redirected tab such as the Taverley teleport tablet — add exit-portal time when neither applies, and a "My POH" setting for it): Rimmington 1, **Taverley 10**, Pollnivneach 20, **Hosidius 25**, Rellekka 30, Aldarin 35, **Brimhaven 40**, Yanille 50, Prifddinas 70 (Construction).
+- **House portal locations** (Teleport to House / house tabs land *inside* the house unless the house is set to "teleport outside" or the player uses a redirected tab such as the Taverley teleport tablet — add exit-portal time when neither applies, and a "My POH" setting for it): Rimmington 1, **Taverley 10**, Pollnivneach 20, **Hosidius 25**, Rellekka 30, Aldarin 35, **Brimhaven 40**, Yanille 50, Prifddinas 70 (Construction). (Changed by elzerma, 2026-10-21: where the house is and whether it teleports you outside come from the game's POH_HOUSE_LOCATION and POH_TELE_TOGGLE varbits, not a "My POH" setting; with no house the route uses none.)
 - **Portal nexus**: marble 72 (4 dests), gilded 82 (8), crystalline 92 (41). Farming-relevant: Catherby, Kharyrll, Harmony, Fishing Guild, Troll Stronghold, Weiss, Fenkenstrain's, Kourend, Civitas, Ardougne.
 - **Jewellery box**: basic 81 (dueling, games), fancy 86 (+ combat bracelet, skills necklace), ornate 91 (+ glory, ring of wealth). Unlimited charges.
 - **Pools**: restoration 65 = spec only (**no run energy**); revitalisation 70 = + run energy; rejuvenation 80 = + prayer; fancy 85; ornate 90.
@@ -409,7 +409,7 @@ Collapsible sections:
 3. **Crops** — one seed/sapling per run type, or 1st/2nd/3rd choices; herb multi-select for disease-free patches (see section 2).
 4. **Protection** — per type: Pay / Compost only; per-patch override; pay with notes; pay to clear; compost type; plant cure / Cure Plant / Resurrect Crops toggles; equipment boosts toggle.
 5. **Travel** — per location dropdown (Auto + owned/unlocked methods, locked ones greyed); "use runes instead of tabs" global + per location. (Changed by elzerma, 2026-10-20: no dropdowns; Ways to travel turns families of ways and single ways on and off, docs/plans/travel-rework.md section 6.)
-6. **My POH** — portal location, nexus destinations, jewellery box tier, pool tier, fairy ring, spirit tree; "last detected on <date>" + Edit.
+6. **My POH** — portal location, nexus destinations, jewellery box tier, pool tier, fairy ring, spirit tree; "last detected on <date>" + Edit. (Changed by elzerma, 2026-10-21: the portal location and Teleport to House's inside or outside are shown as read from the game.)
 7. **Route** — mode (Autopilot / Meta / Off), start location, end near bank, energy threshold and tile distance.
 8. **Storage sources** — group storage (off), seed vault (off).
 
