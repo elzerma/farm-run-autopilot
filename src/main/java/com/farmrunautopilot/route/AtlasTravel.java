@@ -35,12 +35,8 @@ import net.runelite.api.gameval.ItemID;
  */
 final class AtlasTravel
 {
-	/** Transports on a way that move the player somewhere else (a boat, a portal): a journey step each. */
-	private static final Set<String> RIDES = Set.of("SHIP", "BOAT", "TELEPORTATION_PORTAL", "TELEPORTATION_LEVER");
 	/** The plugin's travel methods by the stop they go to. */
 	private static final Map<Location, List<TravelMethod>> TO = new EnumMap<>(Location.class);
-	/** A transport that moves the player further than this is a ride (the guide's "moved" is over 10 tiles a tick). */
-	private static final int CARRIED_TILES = 10;
 	/** A ring's hub (where its hops leave from) this close to where its own code lands is that ring. */
 	private static final int RING_TILES = 8;
 	/** Where each fairy ring code lands, by code ("AJR"), found once. */
@@ -435,15 +431,14 @@ final class AtlasTravel
 		for (int id : way.getSteps())
 		{
 			final TravelAtlas.Step step = atlas.step(id);
-			if (RIDES.contains(step.getType()))
+			if (TravelAtlas.RIDES.contains(step.getType()))
 			{
 				final String what = step.getType().equals("TELEPORTATION_PORTAL") ? "portal"
 					: step.getType().equals("TELEPORTATION_LEVER") ? "lever" : "boat";
 				rides.add(JourneyStep.ride(TravelAtlas.target(step.getMenu()), "Take the " + what + ": " + step.getName(),
 					what + ": " + step.getName(), step.getOrigin()));
 			}
-			else if (step.getType().equals("TRANSPORT") && step.getOrigin().getPlane() == step.getDestination().getPlane()
-				&& step.getOrigin().distanceTo2D(step.getDestination()) > CARRIED_TILES)
+			else if (TravelAtlas.carries(step))
 			{
 				// e.g. "Follow Elkoy", "Transport Brother Tranquility": the menu option and who to use it on
 				final String name = step.getName();

@@ -112,13 +112,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Shortest Path
 -------------
 Source: https://github.com/Skretzo/shortest-path (commit 7e81a40d0312e767fd7833637e57caae80a80253)
-Used in: src/main/java/com/farmrunautopilot/data/travel/TravelTimes.java and the travel data tables that name
-         this notice
+Used in: src/main/java/com/farmrunautopilot/data/travel/atlas/AtlasLinks.java (where the plugin's own ways
+         land), AtlasBanks.java (the one bank the atlas can't reach), WalkGrid.java and walk-grid.bin, and the
+         travel data that names this notice
 
 Facts only, no code: teleport landing tiles, bank locations, hot air balloon routes and their unlock values,
 and walking distances measured on its collision map (collision-map.zip) with a one-off tool outside the
 plugin. Nothing from Shortest Path is downloaded or loaded at runtime. Its licence names no copyright holder,
-so it is credited to Skretzo and the Shortest Path contributors.
+so it is credited to Skretzo and the Shortest Path contributors. (The hand-copied walks that were in
+TravelTimes.java went in 2026-10, replaced by the travel atlas below.)
 
 tools/atlas (dev only, not part of the plugin) compiles Shortest Path's own code, unchanged, from a local clone
 (commit 37abff3a3345185fc11fccecae04d8170de25a11) to run its pathfinder with pretend accounts. That code is not in

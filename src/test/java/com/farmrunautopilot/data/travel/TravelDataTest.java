@@ -5,9 +5,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import com.farmrunautopilot.data.Location;
-import com.farmrunautopilot.data.Patch;
-import com.farmrunautopilot.data.PatchType;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,43 +13,11 @@ import org.junit.Test;
 public class TravelDataTest
 {
 	@Test
-	public void everyLocationHasAPrimaryMethodForEachOfItsPatchTypes()
-	{
-		for (Location location : Location.values())
-		{
-			for (Patch patch : location.getPatches())
-			{
-				boolean found = false;
-				for (TravelMethod method : TravelMethod.values())
-				{
-					found |= method.getDestination() == location && method.isPrimaryFor(patch.getType());
-				}
-				assertTrue("no primary method for " + patch, found);
-			}
-		}
-	}
-
-	@Test
-	public void primaryOnlyForTypesTheDestinationHas()
-	{
-		for (TravelMethod method : TravelMethod.values())
-		{
-			final Set<PatchType> types = EnumSet.noneOf(PatchType.class);
-			for (Patch patch : method.getDestination().getPatches())
-			{
-				types.add(patch.getType());
-			}
-			assertTrue(method.name(), types.containsAll(method.getPrimaryFor()));
-		}
-	}
-
-	@Test
 	public void methodsCarryWhatTheirKindNeeds()
 	{
 		for (TravelMethod method : TravelMethod.values())
 		{
 			final String name = method.name();
-			assertNotNull(name + " has no measured distance in TravelTimes", TravelTimes.tiles(method));
 			switch (method.getKind())
 			{
 				case SPELL:
@@ -61,8 +26,7 @@ public class TravelDataTest
 					assertNull(name, method.getItem());
 					break;
 				case FAIRY_RING:
-					assertNotNull(name, method.getFairyRingCode());
-					assertTrue(name, method.getFairyRingCode().matches("[A-D][I-L][P-S]"));
+					assertTrue(name, method.getDisplayName().matches("Fairy ring [A-D][I-L][P-S]"));
 					break;
 				case SPIRIT_TREE:
 				case BALLOON:
@@ -72,10 +36,6 @@ public class TravelDataTest
 				default:
 					assertNotNull(name, method.getItem());
 					assertNull(name, method.getSpell());
-			}
-			if (method.getKind() != TravelKind.FAIRY_RING)
-			{
-				assertNull(name, method.getFairyRingCode());
 			}
 			if (method.getJewelleryBox() != null)
 			{

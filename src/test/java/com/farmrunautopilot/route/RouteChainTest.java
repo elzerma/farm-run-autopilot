@@ -7,6 +7,7 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.travel.Spellbook;
+import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import net.runelite.api.Quest;
@@ -22,15 +24,21 @@ import net.runelite.api.QuestState;
 import net.runelite.api.Skill;
 import net.runelite.api.gameval.ItemID;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 /** Known-good chains a farmer would take, so the cost model can't drift away from them unnoticed. */
 public class RouteChainTest
 {
+	/**
+	 * Tree Gnome Village and The Grand Tree (the Stronghold's spirit tree needs both; the old tables only checked the
+	 * first), Fairytale II and 99 everywhere.
+	 */
 	private static AccessSnapshot access()
 	{
 		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
 		quests.put(Quest.TREE_GNOME_VILLAGE, QuestState.FINISHED);
+		quests.put(Quest.THE_GRAND_TREE, QuestState.FINISHED);
 		quests.put(Quest.FAIRYTALE_II__CURE_A_QUEEN, QuestState.FINISHED);
 		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
 		for (Skill skill : AccessSnapshot.REAL_SKILLS)
@@ -53,6 +61,14 @@ public class RouteChainTest
 		return new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false);
 	}
 
+	/** The route on the travel atlas for this player, near a stop or not (null). */
+	private static List<RouteStop> plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
+		PohSetup poh, Location near, int nearTiles)
+	{
+		return RoutePlanner.plan(patches, config, access, holdings, poh, AtlasPlayers.with(access, holdings), null, near,
+			nearTiles).getStops();
+	}
+
 	@Test
 	public void strongholdThenSpiritTreeToTreeGnomeVillage()
 	{
@@ -61,10 +77,9 @@ public class RouteChainTest
 		// Isolate the chain: ending near a bank would otherwise favour finishing at the Stronghold's bank
 		final RunConfig config = new RunConfig().sanitise();
 		config.setEndNearBank(false);
-		final Route route = RoutePlanner.plan(patches, config, access(),
-			holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF), new PohSetup());
+		final List<RouteStop> stops = plan(patches, config, access(), holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF),
+			new PohSetup(), null, 0);
 
-		final List<RouteStop> stops = route.getStops();
 		int stronghold = -1;
 		for (int i = 0; i < stops.size(); i++)
 		{
@@ -78,32 +93,29 @@ public class RouteChainTest
 			throw new AssertionError(describe(stops));
 		}
 		final RouteStop next = stops.get(stronghold + 1);
-		assertEquals(stops.toString(), Location.TREE_GNOME_VILLAGE, next.getLocation());
-		assertEquals(stops.toString(), TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, next.getMethod());
+		assertEquals(describe(stops), Location.TREE_GNOME_VILLAGE, next.getLocation());
+		assertEquals(describe(stops), TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, next.getMethod());
 	}
 
 	@Test
 	public void startsByWalkingToANearbyStop()
 	{
 		// By the Grand Tree, about 50 tiles from the Stronghold patches, with Start at: Anywhere
-		final List<RouteStop> stops = RoutePlanner.plan(Arrays.asList(Patch.values()), new RunConfig().sanitise(),
-			access(), holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF), new PohSetup(), null, null,
-			Location.GNOME_STRONGHOLD, 50).getStops();
+		final List<RouteStop> stops = plan(Arrays.asList(Patch.values()), new RunConfig().sanitise(), access(),
+			holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF), new PohSetup(), Location.GNOME_STRONGHOLD, 50);
 		assertEquals(describe(stops), Location.GNOME_STRONGHOLD, stops.get(0).getLocation());
 		assertEquals(describe(stops), Departure.WALK, stops.get(0).getDeparture());
 		assertEquals(describe(stops), TravelMethod.SPIRIT_TREE_TREE_GNOME_VILLAGE, stops.get(1).getMethod());
 
 		// Even when ending the run at the Stronghold's bank would otherwise win by a second or two
-		final List<RouteStop> few = RoutePlanner.plan(Arrays.asList(Patch.GNOME_STRONGHOLD_TREE, Patch.FALADOR_TREE,
-			Patch.LUMBRIDGE_TREE, Patch.VARROCK_TREE), new RunConfig().sanitise(), access(),
-			holdings(ItemID.SLAYER_RING_8), new PohSetup(), null, null, Location.GNOME_STRONGHOLD, 36)
-			.getStops();
+		final List<RouteStop> few = plan(Arrays.asList(Patch.GNOME_STRONGHOLD_TREE, Patch.FALADOR_TREE,
+			Patch.LUMBRIDGE_TREE, Patch.VARROCK_TREE), new RunConfig().sanitise(), access(), holdings(ItemID.SLAYER_RING_8),
+			new PohSetup(), Location.GNOME_STRONGHOLD, 36);
 		assertEquals(describe(few), Location.GNOME_STRONGHOLD, few.get(0).getLocation());
 
 		// Near Falador Park (57 tiles), where the ring of wealth is quicker than the walk: still the first stop
-		final List<RouteStop> park = RoutePlanner.plan(Arrays.asList(Patch.values()), new RunConfig().sanitise(),
-			access(), holdings(ItemID.SLAYER_RING_8, ItemID.RING_OF_WEALTH_5), new PohSetup(), null,
-			null, Location.FALADOR_PARK, 57).getStops();
+		final List<RouteStop> park = plan(Arrays.asList(Patch.values()), new RunConfig().sanitise(), access(),
+			holdings(ItemID.SLAYER_RING_8, ItemID.RING_OF_WEALTH_5), new PohSetup(), Location.FALADOR_PARK, 57);
 		assertEquals(describe(park), Location.FALADOR_PARK, park.get(0).getLocation());
 	}
 
@@ -128,8 +140,8 @@ public class RouteChainTest
 		poh.setSpiritTree(true);
 		final RunConfig config = new RunConfig().sanitise();
 		config.setEndNearBank(false);
-		final List<RouteStop> stops = RoutePlanner.plan(Arrays.asList(Patch.FARMING_GUILD_HERB, Patch.HOSIDIUS_HERB),
-			config, access, holdings(), poh, null, null, Location.FARMING_GUILD, 0).getStops();
+		final List<RouteStop> stops = plan(Arrays.asList(Patch.FARMING_GUILD_HERB, Patch.HOSIDIUS_HERB), config, access,
+			holdings(), poh, Location.FARMING_GUILD, 0);
 		assertEquals(describe(stops), Location.HOSIDIUS, stops.get(1).getLocation());
 		assertEquals(describe(stops), Departure.TREE_HOUSE_PORTAL, stops.get(1).getDeparture());
 		assertEquals(describe(stops), TravelMethod.HOUSE_PORTAL_HOSIDIUS, stops.get(1).getMethod());
@@ -139,9 +151,10 @@ public class RouteChainTest
 	public void treeGnomeVillageChainsFromTheStronghold()
 	{
 		// The CIQ fairy ring walk is long; the Stronghold's spirit tree is the way in
+		final AccessSnapshot access = access();
+		final Holdings holdings = holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF);
 		assertEquals(true, RoutePlanner.chainsFrom(Location.GNOME_STRONGHOLD, Location.TREE_GNOME_VILLAGE,
-			new RunConfig().sanitise(), access(), holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF), new PohSetup(),
-			null));
+			new RunConfig().sanitise(), access, holdings, new PohSetup(), AtlasPlayers.with(access, holdings)));
 	}
 
 	@Test
@@ -151,8 +164,8 @@ public class RouteChainTest
 		final List<Patch> patches = Arrays.asList(Patch.values());
 		final RunConfig config = new RunConfig().sanitise();
 		config.setEndNearBank(false);
-		final List<RouteStop> stops = RoutePlanner.plan(patches, config, access(),
-			holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF), new PohSetup()).getStops();
+		final List<RouteStop> stops = plan(patches, config, access(), holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF),
+			new PohSetup(), null, 0);
 		assertEquals(true, stops.size() > RoutePlanner.EXACT_LIMIT);
 		int stronghold = -1;
 		for (int i = 0; i < stops.size(); i++)
@@ -185,19 +198,19 @@ public class RouteChainTest
 			Patch.CIVITAS_HERB);
 
 		// With an unlimited whistle, whistling beats walking back to the pad; Kastori still isn't last
-		final List<RouteStop> whistle = RoutePlanner.plan(patches, config, access,
-			holdings(ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE), new PohSetup()).getStops();
+		final List<RouteStop> whistle = plan(patches, config, access,
+			holdings(ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE), new PohSetup(), null, 0);
 		assertEquals(describe(whistle), true, whistle.get(whistle.size() - 1).getLocation() != Location.KASTORI);
 
-		// Without a whistle: in by teleport, then Renu between the pads
-		final List<RouteStop> noWhistle = RoutePlanner.plan(patches, config, access, holdings(), new PohSetup())
-			.getStops();
-		int renu = 0;
+		// Without a whistle: Renu on every leg. On the atlas each is quickest from the city's pad, by the Civitas illa
+		// Fortis Teleport (16 s from Civitas illa Fortis to Kastori against 22 s walking back to the Hunter Guild's
+		// pad); the old tables only knew walking back to a pad
+		final List<RouteStop> noWhistle = plan(patches, config, access, holdings(), new PohSetup(), null, 0);
 		for (RouteStop stop : noWhistle)
 		{
-			renu += stop.getDeparture() == Departure.RENU ? 1 : 0;
+			assertTrue(describe(noWhistle), stop.describeTravel().contains("Renu")
+				&& stop.travelItem() != TravelItem.QUETZAL_WHISTLE);
 		}
-		assertEquals(describe(noWhistle), 2, renu);
 		assertEquals(describe(noWhistle), true,
 			noWhistle.get(noWhistle.size() - 1).getLocation() != Location.KASTORI);
 	}
@@ -212,13 +225,14 @@ public class RouteChainTest
 		{
 			levels.put(skill, 99);
 		}
-		// Explorer's ring needs the medium Lumbridge & Draynor diary
-		final AccessSnapshot access = new AccessSnapshot(true, Collections.emptyMap(), levels,
-			Collections.singleton(AccessSnapshot.diaryKey(AchievementDiary.LUMBRIDGE_DRAYNOR,
-				AchievementDiary.Tier.MEDIUM)), Collections.emptySet(), null, Spellbook.STANDARD, Collections.emptySet());
-		final List<RouteStop> stops = RoutePlanner.plan(Arrays.asList(Patch.FALADOR_TREE, Patch.TAVERLEY_TREE,
-			Patch.FALADOR_HERB), config, access, holdings(ItemID.RING_OF_WEALTH_5, ItemID.LUMBRIDGE_RING_ELITE),
-			new PohSetup()).getStops();
+		// The Explorer's ring 4 and its Lumbridge & Draynor diaries (the unlimited cabbage teleport needs the hard one)
+		final AccessSnapshot access = new AccessSnapshot(true, Collections.emptyMap(), levels, new HashSet<>(Arrays.asList(
+			AccessSnapshot.diaryKey(AchievementDiary.LUMBRIDGE_DRAYNOR, AchievementDiary.Tier.MEDIUM),
+			AccessSnapshot.diaryKey(AchievementDiary.LUMBRIDGE_DRAYNOR, AchievementDiary.Tier.HARD),
+			AccessSnapshot.diaryKey(AchievementDiary.LUMBRIDGE_DRAYNOR, AchievementDiary.Tier.ELITE))),
+			Collections.emptySet(), null, Spellbook.STANDARD, Collections.emptySet());
+		final List<RouteStop> stops = plan(Arrays.asList(Patch.FALADOR_TREE, Patch.TAVERLEY_TREE, Patch.FALADOR_HERB),
+			config, access, holdings(ItemID.RING_OF_WEALTH_5, ItemID.LUMBRIDGE_RING_ELITE), new PohSetup(), null, 0);
 
 		// Falador Park and Taverley back to back with a walk between (either way round), and the farm by the
 		// cabbage teleport rather than a walk; the same legs in any order cost the same

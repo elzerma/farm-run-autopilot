@@ -6,9 +6,9 @@ import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import java.util.function.Supplier;
 
 /**
- * The travel atlas and the player as it needs them (docs/plans/travel-rework.md, sprint T3). With it the planner takes
- * its legs from the atlas; without it (the atlas didn't load), from its old tables. Made for one round of planning
- * (the client thread's refresh): every plan and question in it shares the legs worked out for the player.
+ * The travel atlas and the player as it needs them (docs/plans/travel-rework.md, sprint T3): the planner takes every leg
+ * from it, and without it there's no route. Made for one round of planning (the client thread's refresh): every plan
+ * and question in it shares the legs worked out for the player.
  */
 public final class RouteAtlas
 {
