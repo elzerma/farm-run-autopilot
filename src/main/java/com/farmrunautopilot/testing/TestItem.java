@@ -58,6 +58,10 @@ public enum TestItem
 	ATES_CHARGES(Tab.TRAVEL, "Pendant of Ates charges",
 		"Check the pendant. Settings > Debug > Detected should show the same number. Teleport once and it should "
 			+ "drop by one, then match a second Check.", 2),
+	ICY_BASALT(Tab.TRAVEL, "Icy basalt to Weiss",
+		"With Making Friends with My Arm done, the Fire of Nourishment built at Weiss and an icy basalt in your bank, "
+			+ "build a run with Weiss's herb patch. Its stop should say \"Icy basalt\". Break the basalt when the step "
+			+ "outlines it (it's used up): you should land by the herb patch, outlined as the next step."),
 	HOUSE_BY_TREE(Tab.TRAVEL, "Spirit tree into your house",
 		"With a spirit tree planted in your house, plan a run where a stop is just after one with a spirit tree "
 			+ "nearby (e.g. the Farming Guild, then Hosidius with your house portal there). The stop should say "

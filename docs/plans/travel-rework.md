@@ -730,6 +730,32 @@ route snapshots, and banks come from the atlas.
 - **Follow-ups:** a house set up without its location (Account > My house) has no ways on the atlas, though only the
   front door needs it; the Stronghold bank's ladder as an atlas extra (section 3, step 2).
 
+### The snapshots' two odd legs (2026-10-21)
+
+Both checked, and fixed as elzerma picked (picker, 2026-10-21):
+
+- **The maxed Weiss leg** went by fairy ring DKS and the boat (47 s), though the account holds an icy basalt. The atlas
+  is right: the basalt needs its item (22599) and Shortest Path's MY2ARM_STATUS = 207. The test players read 75, as
+  `AtlasPlayers` gives a var the value of its first check ("> 74") and the "= 207" one never replaced it. In game the
+  plugin read the real varbit, so the basalts hung on a finished quest reading exactly 207, which no source confirms
+  (Quest Helper's last step is 196); the wiki's only rule for both basalts is Making Friends with My Arm finished. So
+  `AtlasAccount` checks that quest for Shortest Path's MY2ARM_STATUS = 207 (the Travel tab names the quest when it's
+  missing), with a guided test (ICY_BASALT) for players who have it, which records what the varbit reads. The maxed
+  snapshot takes the icy basalt to Weiss (13 s) and the stony basalt to the Troll Stronghold's roof (14 s): 573 s
+  instead of 638 s, in a new order.
+- **The mid-level Yanille leg** went by the ring of wealth to the Grand Exchange, then "Join Castle Wars" with the
+  Zamorakian recruiter (65 s). The recruiters are real (the Games Zone, since May 2021), but joining puts the player in
+  a team's waiting room, not the lobby, and Castle Wars lets in only combat items and no capes, so a farm run can't
+  take them; Shortest Path added them in its PR #580 with no requirement, as its data can't say that. `TravelAtlas`
+  leaves out every way through them when it reads the atlas: 973 ways over 557 place pairs, 262 of which had no
+  other way kept. The mid-level snapshot reaches Yanille by charter ship from Brimhaven to Port Khazard (71 s): 543 s
+  instead of 537 s, in a new order.
+- **The Weiss herb tile** isn't why the basalt was skipped (it wins by 34 s from either). elzerma: `PatchPoints`'
+  2847 3931 and the cache's 2848 3934 both work, being about two tiles apart, so it stays.
+- **Follow-ups:** at its next rebuild, tools/atlas should leave the recruiters out of the pathfinder too, so those
+  place pairs get their next-best way. Not checked: since 17 December 2025 the stony basalt's left click goes to the
+  roof or the entrance, whichever the player set, with both on its right-click menu; the atlas has two teleports.
+
 ## 10. Risks
 
 - **Shortest Path changes its internals:** pinned commit; a small harness; fallback E.
