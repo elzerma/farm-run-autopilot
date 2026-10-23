@@ -80,8 +80,9 @@ public enum TestItem
 			+ "Farming Guild). It should tick itself once the grown tree is in view."),
 	HOUSE_SCAN(Tab.ACCOUNT, "House scanning (beta)",
 		"Tick \"Detect furniture when I enter my house\" in Account > My house, then enter your house: your "
-			+ "jewellery box, pool, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned). "
-			+ "Then visit someone else's house: nothing of yours should change.", 3);
+			+ "jewellery box, pool, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned), and My house should say when it was last "
+			+ "scanned, even if your house has none of them. "
+			+ "Then visit someone else's house: nothing of yours should change.", 4);
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter

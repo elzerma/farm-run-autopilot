@@ -73,4 +73,32 @@ public class PohDetectorTest
 		detector.onObjectSpawned(ObjectID.POH_FAIRY_RING);
 		assertFalse(detector.hasFound());
 	}
+
+	@Test
+	public void aHouseWithNoneOfTheFurnitureStillCountsAsScanned()
+	{
+		final SettingsStore settings = new SettingsStore(null, new Gson());
+		settings.getAccount().setAutoDetectHouse(true);
+		final PohDetector detector = new PohDetector(null, settings, null);
+		detector.onHouseLoading();
+		assertFalse(detector.isScanDue());
+		// The house's scene loads with nothing the detector looks for in it
+		detector.onSceneLoading(true);
+		assertTrue(detector.isScanDue());
+		assertFalse(detector.hasFound());
+
+		// With the beta off, the house isn't scanned at all
+		detector.reset();
+		settings.getAccount().setAutoDetectHouse(false);
+		detector.onHouseLoading();
+		detector.onSceneLoading(true);
+		assertFalse(detector.isScanDue());
+
+		// Leaving before the next tick drops the scan
+		settings.getAccount().setAutoDetectHouse(true);
+		detector.onHouseLoading();
+		detector.onSceneLoading(true);
+		detector.onSceneLoading(false);
+		assertFalse(detector.isScanDue());
+	}
 }

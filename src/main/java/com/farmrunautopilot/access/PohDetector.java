@@ -31,7 +31,8 @@ import net.runelite.client.util.Text;
  * before the house's objects spawn) until a scene outside an instance loads. The game doesn't say whose house
  * it is, so it's worked out from how the player got in: a friend's house or the advertisement board means
  * someone else's, and the house is skipped until the player goes home again. Solo ironmen can't visit other
- * houses, so theirs is always scanned. Furniture found is collected and saved once, on the next game tick.
+ * houses, so theirs is always scanned. Once the house's scene loads, what it has is collected and saved on the
+ * next game tick, even when none of the furniture is there, so a house without any still counts as scanned.
  */
 @Slf4j
 @Singleton
@@ -50,8 +51,12 @@ public class PohDetector
 	private boolean visiting;
 	/** When a house portal was last used, for spotting the friend's-name prompt. */
 	private int portalUsedTick = -NAME_PROMPT_TICKS;
-	// Found since the last tick (client thread)
-	private boolean found;
+	/** The player's own house is loading and its scene hasn't loaded yet (client thread). */
+	private boolean awaitingScene;
+	/** How many times the player's own house has been scanned since the plugin started (client thread). */
+	private int scans;
+	// Found since the house's scene loaded, saved on the next tick (client thread)
+	private boolean scanDue;
 	private JewelleryBoxTier foundBox;
 	private PoolTier foundPool;
 	private PohAltar foundAltar;
@@ -78,11 +83,18 @@ public class PohDetector
 		return visiting;
 	}
 
+	/** How many times the player's own house has been scanned, found or not, since the plugin started. Client thread. */
+	public int getScans()
+	{
+		return scans;
+	}
+
 	/** The "Loading house" screen opened: the house's objects spawn next. Scan only the player's own. */
 	public void onHouseLoading()
 	{
 		// Beta, ticked in Account > My house
 		inHouse = settings.getAccount().isAutoDetectHouse() && (!visiting || soloIronman());
+		awaitingScene = inHouse;
 		log.debug("Entering a house: {}", inHouse ? "own, scanning" : "someone else's, not scanning");
 	}
 
@@ -157,6 +169,14 @@ public class PohDetector
 		if (!instance)
 		{
 			inHouse = false;
+			awaitingScene = false;
+			clearFound();
+		}
+		else if (awaitingScene)
+		{
+			// The house's objects spawn with this scene; the next tick saves them, or that there were none
+			awaitingScene = false;
+			scanDue = true;
 		}
 	}
 
@@ -177,7 +197,8 @@ public class PohDetector
 			return;
 		}
 
-		found = true;
+		// Also furniture built while in the house, after its scene loaded
+		scanDue = true;
 		if (box != null && (foundBox == null || box.ordinal() > foundBox.ordinal()))
 		{
 			foundBox = box;
@@ -198,10 +219,11 @@ public class PohDetector
 	public void onGameTick()
 	{
 		checkNamePrompt();
-		if (!found)
+		if (!scanDue)
 		{
 			return;
 		}
+		scans++;
 		final JewelleryBoxTier box = foundBox;
 		final PoolTier pool = foundPool;
 		final PohAltar altar = foundAltar;
@@ -216,18 +238,25 @@ public class PohDetector
 	public void reset()
 	{
 		inHouse = false;
+		awaitingScene = false;
 		clearFound();
+	}
+
+	/** The house's scene loaded and what it has is not yet saved (for tests). */
+	boolean isScanDue()
+	{
+		return scanDue;
 	}
 
 	/** Furniture was found and not yet saved (for tests). */
 	boolean hasFound()
 	{
-		return found;
+		return foundBox != null || foundPool != null || foundAltar != null || foundFairyRing || foundSpiritTree;
 	}
 
 	private void clearFound()
 	{
-		found = false;
+		scanDue = false;
 		foundBox = null;
 		foundPool = null;
 		foundAltar = null;
@@ -252,6 +281,7 @@ public class PohDetector
 	private void apply(JewelleryBoxTier box, PoolTier pool, PohAltar altar, boolean fairyRing, boolean spiritTree)
 	{
 		final PohSetup poh = settings.editAccount().getPoh();
+		final boolean firstScan = poh.getLastDetected() == 0;
 		boolean changed = false;
 		if (box != null && (poh.getJewelleryBox() == null || box.ordinal() > poh.getJewelleryBox().ordinal()))
 		{
@@ -281,13 +311,11 @@ public class PohDetector
 		}
 
 		poh.setLastDetected(Instant.now().getEpochSecond());
-		if (changed)
-		{
-			log.debug("Detected POH furniture: box={} pool={} altar={} fairyRing={} spiritTree={}", box, pool, altar, fairyRing,
-				spiritTree);
-		}
-		// Always save so "last detected" updates; refresh the tab only when something new was found.
-		settings.saveAccount(changed);
+		log.debug("Scanned the house: box={} pool={} altar={} fairyRing={} spiritTree={} (changed={})", box, pool, altar,
+			fairyRing, spiritTree, changed);
+		// Always save so "last scanned" updates; refresh the tab when something new was found, or so My house stops
+		// saying the house hasn't been scanned
+		settings.saveAccount(changed || firstScan);
 		if (changed)
 		{
 			accessChecker.requestRefresh();

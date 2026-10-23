@@ -1252,10 +1252,16 @@ final class GuidedTests
 		public List<Step> steps()
 		{
 			return Arrays.asList(
-				doThis("Enter your own house", TestContext::inOwnHouse)
-					.onStart(ctx -> ctx.capture("My house before (cleared)", ctx.houseSummary())),
+				// Waits for the house to load after the test starts: already being inside proves nothing (issue #21)
+				doThis("Enter your own house (if you're in it now, leave and come back in)",
+					ctx -> ctx.inOwnHouse() && ctx.houseScans() > ctx.<Integer>recall("scans"))
+					.onStart(ctx ->
+					{
+						ctx.remember("scans", ctx.houseScans());
+						ctx.capture("My house before (cleared)", ctx.houseSummary());
+					}),
 				ask("Look at Account > My house. Do the jewellery box, pool, altar, fairy ring and spirit tree match your "
-					+ "house? (The portal nexus isn't scanned: it stays as you set it.)")
+					+ "house, all empty if it has none of them? (The portal nexus isn't scanned: it stays as you set it.)")
 					.onAnswer((ctx, yes) ->
 					{
 						ctx.capture("My house after", ctx.houseSummary());
