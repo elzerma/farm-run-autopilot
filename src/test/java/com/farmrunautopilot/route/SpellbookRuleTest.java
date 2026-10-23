@@ -44,7 +44,7 @@ public class SpellbookRuleTest
 		final RunConfig config = new RunConfig().sanitise();
 		config.setStartLocation(Location.PORT_PHASMATYS);
 		return RoutePlanner.plan(Collections.singletonList(Patch.PORT_PHASMATYS_HERB), config, access, Holdings.EMPTY,
-			new PohSetup()).getStops().get(0);
+			new PohSetup(), AtlasPlayers.with(access, Holdings.EMPTY), null).getStops().get(0);
 	}
 
 	@Test
@@ -78,7 +78,8 @@ public class SpellbookRuleTest
 		final AccessSnapshot access = onBook(Spellbook.STANDARD, Collections.emptySet());
 
 		final RunSelection selection = RunSelector.select(config, access, p -> null, 0, true, Collections.emptyMap());
-		final Route route = RoutePlanner.plan(selection.getPatches(), config, access, Holdings.EMPTY, new PohSetup());
+		final Route route = RoutePlanner.plan(selection.getPatches(), config, access, Holdings.EMPTY, new PohSetup(),
+			AtlasPlayers.with(access, Holdings.EMPTY), null);
 		final SupplyPlan supplies = SupplyCalculator.calculate(config, access, Holdings.EMPTY, selection, route,
 			p -> null, id -> "item " + id, id -> 0);
 
@@ -95,7 +96,8 @@ public class SpellbookRuleTest
 		config.setStartLocation(Location.FARMING_GUILD);
 		final AccessSnapshot access = onBook(Spellbook.STANDARD, Collections.emptySet());
 		final Route route = RoutePlanner.plan(java.util.Arrays.asList(Patch.CATHERBY_HERB, Patch.FARMING_GUILD_HERB,
-			Patch.ARDOUGNE_HERB), config, access, Holdings.EMPTY, new PohSetup(), null, Location.CATHERBY);
+			Patch.ARDOUGNE_HERB), config, access, Holdings.EMPTY, new PohSetup(), AtlasPlayers.with(access, Holdings.EMPTY),
+			Location.CATHERBY);
 		final RouteStop first = route.getStops().get(0);
 		assertEquals(Location.CATHERBY, first.getLocation());
 		assertEquals(Departure.WALK, first.getDeparture());
@@ -127,7 +129,7 @@ public class SpellbookRuleTest
 		config.setStartLocation(Location.CATHERBY);
 		config.getTestTravel().put(Location.CATHERBY, TravelMethod.CATHERBY_TELEPORT);
 		return RoutePlanner.plan(Collections.singletonList(Patch.CATHERBY_HERB), config, standard, holdings,
-			new PohSetup()).getStops().get(0);
+			new PohSetup(), AtlasPlayers.with(standard, holdings), null).getStops().get(0);
 	}
 
 	@Test
@@ -150,14 +152,16 @@ public class SpellbookRuleTest
 	@Test
 	public void oldPicksAreIgnored()
 	{
-		// Standard book, no tablet, Catherby on the nexus; saved before 2026-10-20 with Camelot Teleport picked for it
+		// Standard book, no tablet, a house with Catherby on its nexus; saved before 2026-10-20 with Camelot Teleport
+		// picked for it
 		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
 		quests.put(Quest.LUNAR_DIPLOMACY, QuestState.FINISHED);
 		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
 		levels.put(Skill.MAGIC, 99);
 		levels.put(Skill.FARMING, 99);
 		final AccessSnapshot standard = new AccessSnapshot(true, quests, levels, Collections.emptySet(),
-			Collections.emptySet(), null, Spellbook.STANDARD, Collections.emptySet());
+			Collections.emptySet(), com.farmrunautopilot.data.poh.HousePortal.RIMMINGTON, Spellbook.STANDARD,
+			Collections.emptySet());
 		final RunConfig config = new Gson().fromJson("{\"travel\":{\"CATHERBY\":\"CAMELOT_TELEPORT\"},"
 			+ "\"travelHow\":{\"CATHERBY\":\"DIRECT\"}}", RunConfig.class).sanitise();
 		config.setStartLocation(Location.FARMING_GUILD);
@@ -166,7 +170,7 @@ public class SpellbookRuleTest
 
 		// The nexus is quicker than Camelot's walk, so the route takes it
 		final RouteStop stop = RoutePlanner.plan(Collections.singletonList(Patch.CATHERBY_HERB), config, standard,
-			Holdings.EMPTY, poh).getStops().get(0);
+			Holdings.EMPTY, poh, AtlasPlayers.with(standard, Holdings.EMPTY), null).getStops().get(0);
 		assertEquals(TravelMethod.CATHERBY_TELEPORT, stop.getMethod());
 		assertEquals(Departure.POH_NEXUS, stop.getDeparture());
 	}
@@ -223,7 +227,8 @@ public class SpellbookRuleTest
 		config.setSwitchSpellbooks(true);
 		final AccessSnapshot lunar = lunarCaster(Spellbook.LUNAR, 99);
 		final RunSelection selection = RunSelector.select(config, lunar, p -> null, 0, true, Collections.emptyMap());
-		final Route route = RoutePlanner.plan(selection.getPatches(), config, lunar, Holdings.EMPTY, new PohSetup());
+		final Route route = RoutePlanner.plan(selection.getPatches(), config, lunar, Holdings.EMPTY, new PohSetup(),
+			AtlasPlayers.with(lunar, Holdings.EMPTY), null);
 		final SupplyPlan supplies = SupplyCalculator.calculate(config, lunar, Holdings.EMPTY, selection, route,
 			p -> null, id -> "item " + id, id -> 0);
 		final String warnings = String.join(" | ", supplies.getWarnings());

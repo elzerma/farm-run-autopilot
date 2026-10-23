@@ -31,6 +31,7 @@ import net.runelite.api.Player;
 import net.runelite.api.Scene;
 import net.runelite.api.Tile;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.VarbitID;
 
 /**
  * What a guided test can see while it runs, and what it has found for the report. Client thread while the
@@ -192,9 +193,13 @@ public class TestContext
 		return client.isInInstancedRegion() && pohDetector.isVisiting();
 	}
 
+	/** My house as saved, then where the game says the house is and how Teleport to House lands. */
 	public String houseSummary()
 	{
-		return String.valueOf(settings.getAccount().getPoh());
+		final AccessSnapshot access = access();
+		return settings.getAccount().getPoh() + ", house location " + access.getHouseLocation() + " ("
+			+ access.getHousePortal() + "), teleport setting " + varbit(VarbitID.POH_TELE_TOGGLE) + " ("
+			+ (access.isHouseTeleportOutside() ? "outside" : "inside") + ")";
 	}
 
 	/** The house has been scanned since its furniture was last cleared. */

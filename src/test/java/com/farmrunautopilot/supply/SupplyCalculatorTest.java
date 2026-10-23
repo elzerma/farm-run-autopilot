@@ -14,7 +14,10 @@ import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.Rune;
+import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
+import com.farmrunautopilot.data.travel.atlas.AtlasWays;
+import com.farmrunautopilot.route.AtlasPlayers;
 import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RoutePlanner;
 import com.farmrunautopilot.route.RunSelection;
@@ -62,7 +65,10 @@ public class SupplyCalculatorTest
 	{
 		final RunSelection selection = RunSelector.select(config, access, predictions, NOW, fullRun,
 			Collections.emptyMap());
-		final Route route = RoutePlanner.plan(selection.getPatches(), config, access, holdings, new PohSetup());
+		// On the travel atlas with the Travel tab's choices, as the plugin plans
+		final Route route = RoutePlanner.plan(selection.getPatches(), config, access, holdings, new PohSetup(),
+			AtlasPlayers.with(access, holdings, new AtlasWays(config.familiesOff(), config.getWaysOff(),
+				config.isAvoidWilderness())), null);
 		return SupplyCalculator.calculate(config, access, holdings, selection, route, predictions, id -> "item " + id,
 			id -> 0);
 	}
@@ -447,6 +453,9 @@ public class SupplyCalculatorTest
 		bank.put(ItemID.FAIRY_ENCHANTED_SECATEURS, 1);
 		final RunConfig config = onlyType(PatchType.HERB);
 		config.setUseCurePlant(true);
+		// No fairy rings, whose staff would want the weapon slot too: the atlas plans them for an account not read yet
+		// (as if it had the elite Lumbridge diary), but the supply list still asks for the staff
+		config.setOn(TravelFamily.FAIRY_RINGS, false);
 		final SupplyPlan plan = plan(config, AccessSnapshot.UNKNOWN, wornAndBank(worn, bank), NEVER_SEEN, true);
 
 		final SupplyLine staff = find(plan, "item " + ItemID.LAVA_BATTLESTAFF);

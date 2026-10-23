@@ -3,6 +3,7 @@ package com.farmrunautopilot.data.travel.atlas;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Patch;
@@ -12,6 +13,7 @@ import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.poh.PortalNexus;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.supply.Holdings;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -32,6 +34,8 @@ import org.junit.Test;
 public class TravelAtlasTest
 {
 	private static final TravelAtlas ATLAS = TravelAtlas.get();
+	/** A POH_HOUSE_LOCATION value the plugin doesn't know: a place the game added later. */
+	private static final int NEW_PLACE = 99;
 
 	@Test
 	public void readsTheShippedAtlas()
@@ -112,20 +116,95 @@ public class TravelAtlasTest
 	{
 		// A Rimmington house teleported into by tablet (its location and "inside" setting as the game has them)
 		final Map<Integer, Integer> held = items(ItemID.POH_TABLET_TELEPORTTOHOUSE, 10);
-		final AtlasAccount account = new AtlasAccount(access(99), holdings(held),
+		final AtlasAccount account = new AtlasAccount(access(99, HousePortal.RIMMINGTON.getGameValue()), holdings(held),
 			Map.of(VarbitID.POH_HOUSE_LOCATION, 1, VarbitID.POH_TELE_TOGGLE, 1), Map.of());
 		final PohSetup poh = new PohSetup();
-		poh.setPortal(HousePortal.RIMMINGTON);
 		poh.setNexusDestinations(EnumSet.of(PortalNexus.Destination.CATHERBY));
 		final AtlasHouse house = AtlasHouse.of(ATLAS, account, poh);
 		assertNotNull(house);
 		assertTrue(house.getExits().stream().anyMatch(e -> e.getName().equals("nexus: Catherby Portal")));
+		assertNotNull(house.getPortal());
 
 		final AtlasLegs.Leg with = new AtlasLegs(ATLAS, account, house).quickest(-1, places("CATHERBY_HERB"));
 		final AtlasLegs.Leg without = new AtlasLegs(ATLAS, account).quickest(-1, places("CATHERBY_HERB"));
 		assertNotNull(with);
 		assertTrue(with.getHow(), with.getHow().startsWith("House > nexus: Catherby Portal"));
 		assertTrue(without == null || without.getSeconds() > with.getSeconds());
+
+		// In a place the plugin doesn't know yet, the house has every way out but the front door; without one, none
+		final AtlasAccount elsewhere = new AtlasAccount(access(99, NEW_PLACE), holdings(held), Map.of(), Map.of());
+		final AtlasHouse unplaced = AtlasHouse.of(ATLAS, elsewhere, poh, 10.0, false);
+		assertNotNull(unplaced);
+		assertTrue(unplaced.getExits().stream().anyMatch(e -> e.getName().equals("nexus: Catherby Portal")));
+		assertNull(unplaced.getPortal());
+		assertNull(AtlasHouse.of(ATLAS, account(99, held), poh, 10.0, false));
+	}
+
+	@Test
+	public void eachHousePortalIsWhereItsGameValueTeleportsTo()
+	{
+		// HousePortal's POH_HOUSE_LOCATION values against the atlas's Teleport to House rows (both Shortest Path's)
+		for (HousePortal portal : HousePortal.values())
+		{
+			final TravelAtlas.Place door = AtlasHouse.portalPlace(ATLAS, portal);
+			assertNotNull(portal.name(), door);
+			boolean found = false;
+			for (TravelAtlas.Jump t : ATLAS.getTeleports())
+			{
+				if (t.getName().equals("Teleport to House") && t.getTo() == door.getId())
+				{
+					for (int id : t.getNeeds())
+					{
+						final AtlasNeed need = ATLAS.need(id);
+						found |= need.getKind() == AtlasNeed.Kind.VARBIT && need.getVar() == VarbitID.POH_HOUSE_LOCATION
+							&& need.getValue() == portal.getGameValue();
+					}
+				}
+			}
+			assertTrue(portal.name(), found);
+			assertEquals(portal, HousePortal.of(portal.getGameValue()));
+		}
+		assertNull(HousePortal.of(0));
+	}
+
+	@Test
+	public void theBasaltsNeedMakingFriendsWithMyArmFinishedWhateverItsVarbitReads()
+	{
+		// Shortest Path checks MY2ARM_STATUS = 207, which isn't confirmed in game; the plugin checks the quest itself
+		final AtlasNeed finished = ATLAS.getNeeds().stream().filter(n -> n.getKind() == AtlasNeed.Kind.VARBIT
+			&& n.getVar() == VarbitID.MY2ARM_STATUS && "=".equals(n.getCheck()) && n.getValue() == 207).findFirst()
+			.orElse(null);
+		assertNotNull(finished);
+		assertTrue(account(99, Map.of()).meets(finished));
+		final AtlasAccount notDone = new AtlasAccount(access(99, Quest.MAKING_FRIENDS_WITH_MY_ARM), holdings(Map.of()),
+			Map.of(VarbitID.MY2ARM_STATUS, 207), Map.of());
+		assertFalse(notDone.meets(finished));
+		assertEquals("Making Friends with My Arm", notDone.missing(finished));
+
+		final AtlasLegs.Leg weiss = new AtlasLegs(ATLAS, account(99, items(ItemID.WEISS_TELEPORT_BASALT, 1)))
+			.quickest(-1, places("WEISS_HERB"));
+		assertNotNull(weiss);
+		assertTrue(weiss.getHow(), weiss.getHow().startsWith("Icy basalt"));
+	}
+
+	@Test
+	public void noWayGoesThroughTheCastleWarsRecruiters()
+	{
+		// They only take a player with no cape and nothing but combat items, into a team's waiting room
+		for (TravelAtlas.Place from : ATLAS.getPlaces())
+		{
+			for (TravelAtlas.Place to : ATLAS.getPlaces())
+			{
+				for (TravelAtlas.Way way : ATLAS.ways(from.getId(), to.getId()))
+				{
+					for (int step : way.getSteps())
+					{
+						final String menu = ATLAS.step(step).getMenu();
+						assertFalse(menu, menu.startsWith("Join Castle Wars "));
+					}
+				}
+			}
+		}
 	}
 
 	private static List<Integer> places(String patch)
@@ -146,19 +225,27 @@ public class TravelAtlasTest
 		return new AtlasAccount(access(level), holdings(bank), Map.of(), Map.of());
 	}
 
-	private static AccessSnapshot access(int level)
+	/** Every quest done but these, every skill at {@code level}, no diaries or unlocks, no house. */
+	private static AccessSnapshot access(int level, Quest... notDone)
+	{
+		return access(level, 0, notDone);
+	}
+
+	/** As {@link #access(int, Quest...)}, with the house where the game's POH_HOUSE_LOCATION puts it (0: none). */
+	private static AccessSnapshot access(int level, int houseLocation, Quest... notDone)
 	{
 		final Map<Quest, QuestState> quests = new EnumMap<>(Quest.class);
 		for (Quest quest : Quest.values())
 		{
-			quests.put(quest, QuestState.FINISHED);
+			quests.put(quest, Arrays.asList(notDone).contains(quest) ? QuestState.NOT_STARTED : QuestState.FINISHED);
 		}
 		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
 		for (Skill skill : Skill.values())
 		{
 			levels.put(skill, level);
 		}
-		return new AccessSnapshot(true, quests, levels, Collections.emptySet(), EnumSet.noneOf(Unlock.class), null);
+		return new AccessSnapshot(true, quests, levels, Collections.emptySet(), EnumSet.noneOf(Unlock.class),
+			houseLocation, false, null, Collections.emptySet(), 0, 0, false);
 	}
 
 	private static Holdings holdings(Map<Integer, Integer> bank)

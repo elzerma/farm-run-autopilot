@@ -177,13 +177,25 @@ public class AccessChecker
 
 		final PohAltar altar = account.getPoh().getAltar();
 		return new AccessSnapshot(true, Collections.unmodifiableMap(quests), Collections.unmodifiableMap(levels),
-			Collections.unmodifiableSet(diaries), Collections.unmodifiableSet(unlocks), account.getPoh().getPortal(),
+			Collections.unmodifiableSet(diaries), Collections.unmodifiableSet(unlocks),
+			// Where the house is (0: none; HousePortal) and whether Teleport to House lands outside
+			client.getVarbitValue(VarbitID.POH_HOUSE_LOCATION),
+			teleportsOutside(client.getVarbitValue(VarbitID.POH_TELE_TOGGLE)),
 			spellbook(client.getVarbitValue(VarbitID.SPELLBOOK)),
 			altar != null ? altar.getSpellbooks() : Collections.emptySet(),
 			// QP_MAX is the quest points available in the game (checked in-game)
 			client.getVarpValue(VarPlayerID.QP), client.getVarbitValue(VarbitID.QP_MAX),
 			// 0 is a normal account; every other value is an ironman type, group ones included (see PohDetector)
 			client.getVarbitValue(VarbitID.IRONMAN) != 0);
+	}
+
+	/**
+	 * The house's teleport setting (POH_TELE_TOGGLE) sends Teleport to House outside, by the portal: 0 lands inside and
+	 * 1 outside, as seen in game (elzerma's guided test, 2026-10-22), the other way round from Shortest Path's data.
+	 */
+	static boolean teleportsOutside(int value)
+	{
+		return value != 0;
 	}
 
 	/** The SPELLBOOK varbit: 0 standard, 1 ancient, 2 lunar, 3 arceuus; null for anything else. */
@@ -204,10 +216,11 @@ public class AccessChecker
 		}
 	}
 
-	/** Re-read soon if the varbit is the spellbook. Client thread. */
+	/** Re-read soon if the varbit is the spellbook, where the house is or how Teleport to House lands. Client thread. */
 	public void onVarbitChanged(int varbitId)
 	{
-		if (varbitId == VarbitID.SPELLBOOK)
+		if (varbitId == VarbitID.SPELLBOOK || varbitId == VarbitID.POH_HOUSE_LOCATION
+			|| varbitId == VarbitID.POH_TELE_TOGGLE)
 		{
 			refreshRequested = true;
 		}

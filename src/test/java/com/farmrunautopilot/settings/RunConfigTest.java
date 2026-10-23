@@ -10,7 +10,6 @@ import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Unlock;
-import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.poh.PortalNexus;
 import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelMethod;
@@ -171,7 +170,7 @@ public class RunConfigTest
 	{
 		final AccountSettings account = new AccountSettings();
 		account.getManualUnlocks().add(Unlock.FIRE_OF_NOURISHMENT);
-		account.getPoh().setPortal(HousePortal.TAVERLEY);
+		account.getPoh().setFairyRing(true);
 		account.getPoh().getNexusDestinations().add(PortalNexus.Destination.WEISS);
 
 		final AccountSettings loaded = gson.fromJson(gson.toJson(account), AccountSettings.class).sanitise();
@@ -181,6 +180,19 @@ public class RunConfigTest
 			.sanitise();
 		assertNotNull(repaired.getPoh());
 		assertTrue(repaired.getManualUnlocks().isEmpty());
+	}
+
+	@Test
+	public void theHousesPickedPlaceIsDropped()
+	{
+		// Where the house is and "teleport outside" were picked in My house before 2026-10-21 and are read from the game
+		// now: the save still loads with the rest of the house, and the picks aren't saved again
+		final AccountSettings old = gson.fromJson("{\"poh\":{\"portal\":\"TAVERLEY\",\"teleportOutside\":true,"
+			+ "\"nexusDestinations\":[\"CATHERBY\"],\"fairyRing\":true}}", AccountSettings.class).sanitise();
+		assertTrue(old.getPoh().getNexusDestinations().contains(PortalNexus.Destination.CATHERBY));
+		assertTrue(old.getPoh().isFairyRing());
+		final String saved = gson.toJson(old);
+		assertFalse(saved, saved.contains("\"portal\"") || saved.contains("teleportOutside"));
 	}
 
 	@Test

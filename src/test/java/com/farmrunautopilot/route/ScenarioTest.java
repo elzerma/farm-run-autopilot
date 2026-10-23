@@ -6,8 +6,11 @@ import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
+import com.farmrunautopilot.supply.Holdings;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import net.runelite.api.gameval.ItemID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -21,11 +24,13 @@ import org.junit.Test;
 public class ScenarioTest
 {
 	private static final PatchType[] ALL = {PatchType.HERB, PatchType.TREE, PatchType.FRUIT_TREE};
+	/** The travel atlas for an account like elzerma's (docs/plans/travel-rework.md: the old tables went in T3). */
+	private static final RouteAtlas ATLAS = ElzermaAccount.atlas();
 
 	private static List<RouteStop> plan(List<Patch> patches, Location near, int nearTiles)
 	{
 		return RoutePlanner.plan(patches, new RunConfig().sanitise(), ElzermaAccount.access(), ElzermaAccount.holdings(),
-			new PohSetup(), null, null, near, nearTiles).getStops();
+			new PohSetup(), ATLAS, null, near, nearTiles).getStops();
 	}
 
 	private static int indexOf(List<RouteStop> stops, Location location)
@@ -94,13 +99,19 @@ public class ScenarioTest
 	}
 
 	@Test
-	public void faladorParkWalksToTaverleyAndTheFarmIsByExplorersRing()
+	public void taverleyIsWalkedToFromANeighbourAndTheFarmIsByExplorersRing()
 	{
+		// On the atlas, over the 68 Agility rocks between them, Catherby's fruit tree is a 25 s walk from Taverley and
+		// Falador Park 27 s: Taverley comes on foot from whichever it's next to (it was always Falador Park on the old
+		// tables, which had no walk from Catherby)
 		final List<RouteStop> stops = plan(ElzermaAccount.patches(ALL), null, 0);
-		final int park = indexOf(stops, Location.FALADOR_PARK);
 		final int taverley = indexOf(stops, Location.TAVERLEY);
-		assertEquals(describe(stops), 1, Math.abs(park - taverley));
-		assertEquals(describe(stops), Departure.WALK, stops.get(Math.max(park, taverley)).getDeparture());
+		final Set<Location> neighbours = EnumSet.of(Location.CATHERBY, Location.FALADOR_PARK);
+		final boolean walkedIn = taverley > 0 && stops.get(taverley).getDeparture() == Departure.WALK
+			&& neighbours.contains(stops.get(taverley - 1).getLocation());
+		final boolean walkedOut = taverley + 1 < stops.size() && stops.get(taverley + 1).getDeparture() == Departure.WALK
+			&& neighbours.contains(stops.get(taverley + 1).getLocation());
+		assertTrue(describe(stops), walkedIn || walkedOut);
 		assertEquals(describe(stops), TravelMethod.EXPLORERS_RING_CABBAGE_PATCH,
 			stops.get(indexOf(stops, Location.FALADOR_FARM)).getMethod());
 	}
@@ -109,12 +120,22 @@ public class ScenarioTest
 	public void theWhistleBeatsTheCivitasTeleportToTheHunterGuild()
 	{
 		// elzerma, 2026-10-15: on a herb run the Civitas illa Fortis Teleport (then Renu) was picked over their whistle,
-		// which is faster: the charge penalty is only a tie-breaker
+		// which is faster. On the atlas the whistle is under a second quicker, and a charge is no tie-break against it
 		final List<Patch> herbs = Arrays.asList(Patch.CIVITAS_HERB, Patch.CATHERBY_HERB, Patch.ARDOUGNE_HERB);
 		final List<RouteStop> stops = RoutePlanner.plan(herbs, new RunConfig().sanitise(), ElzermaAccount.access(),
-			ElzermaAccount.holdings(), new PohSetup(), null, null, null, 0).getStops();
+			ElzermaAccount.holdings(), new PohSetup(), ATLAS, null, null, 0).getStops();
 		assertEquals(describe(stops), TravelMethod.QUETZAL_HUNTER_GUILD,
 			stops.get(indexOf(stops, Location.CIVITAS_ILLA_FORTIS)).getMethod());
+	}
+
+	@Test
+	public void kastoriIsByTheWhistleNotTheCivitasTeleport()
+	{
+		// elzerma, 2026-10-22: after Hosidius, Kastori was by the Civitas illa Fortis Teleport and Renu (24 s) over their
+		// enhanced whistle (23 s), lost by a 1 s charge tie-break, until they turned the teleport off
+		final RouteStop stop = RoutePlanner.between(Location.HOSIDIUS, Location.KASTORI, new RunConfig().sanitise(),
+			ElzermaAccount.access(), ElzermaAccount.holdings(), new PohSetup(), ATLAS);
+		assertEquals(stop.getBreakdown(), TravelMethod.QUETZAL_KASTORI, stop.getMethod());
 	}
 
 	@Test
@@ -124,9 +145,10 @@ public class ScenarioTest
 		// last. (With an unlimited whistle every Varlamore stop is its own teleport and their order doesn't matter;
 		// in a full run, Nemus Retreat is reached by fairy ring and isn't part of the chain.)
 		final List<Patch> varlamore = Arrays.asList(Patch.KASTORI_FRUIT_TREE, Patch.NEMUS_RETREAT_TREE, Patch.CIVITAS_HERB);
+		final Holdings noWhistle = ElzermaAccount.holdingsWithout(ItemID.HG_QUETZALWHISTLE_ENHANCED);
 		final List<RouteStop> stops = RoutePlanner.plan(varlamore, new RunConfig().sanitise(),
-			ElzermaAccount.access(), ElzermaAccount.holdingsWithout(ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE),
-			new PohSetup(), null, null, null, 0).getStops();
+			ElzermaAccount.access(), noWhistle, new PohSetup(), AtlasPlayers.with(ElzermaAccount.access(), noWhistle),
+			null, null, 0).getStops();
 		int seen = 0;
 		for (RouteStop stop : stops)
 		{
@@ -177,7 +199,7 @@ public class ScenarioTest
 	public void treeGnomeVillageIsQuickerByTheStrongholdSpiritTreeThanByFairyRing()
 	{
 		assertTrue(RoutePlanner.chainsFrom(Location.GNOME_STRONGHOLD, Location.TREE_GNOME_VILLAGE,
-			new RunConfig().sanitise(), ElzermaAccount.access(), ElzermaAccount.holdings(), new PohSetup(), null));
+			new RunConfig().sanitise(), ElzermaAccount.access(), ElzermaAccount.holdings(), new PohSetup(), ATLAS));
 	}
 
 	// Banking partway
@@ -199,7 +221,7 @@ public class ScenarioTest
 	{
 		final RunConfig config = new RunConfig().sanitise();
 		final Route route = RoutePlanner.plan(ElzermaAccount.patches(ALL), config, ElzermaAccount.access(),
-			ElzermaAccount.holdings(), new PohSetup(), null, null, Location.FALADOR_PARK, 57);
+			ElzermaAccount.holdings(), new PohSetup(), ATLAS, null, Location.FALADOR_PARK, 57);
 		final List<RouteStop> stops = route.getStops();
 		final BankPlanner.Guild guild = vaultOnly == null ? null : new BankPlanner.Guild()
 		{
@@ -214,14 +236,14 @@ public class ScenarioTest
 			public RouteStop to(Location from)
 			{
 				return RoutePlanner.between(from, Location.FARMING_GUILD, config, ElzermaAccount.access(),
-					ElzermaAccount.holdings(), new PohSetup(), null);
+					ElzermaAccount.holdings(), new PohSetup(), ATLAS);
 			}
 
 			@Override
 			public RouteStop from(Location to)
 			{
 				return RoutePlanner.between(Location.FARMING_GUILD, to, config, ElzermaAccount.access(),
-					ElzermaAccount.holdings(), new PohSetup(), null);
+					ElzermaAccount.holdings(), new PohSetup(), ATLAS);
 			}
 		};
 		final BankPlanner.Slots slots = (a, b) ->
@@ -237,9 +259,9 @@ public class ScenarioTest
 		return BankPlanner.place(route, slots, 28,
 			com.farmrunautopilot.data.travel.BankTeleport.best(ElzermaAccount.access(), ElzermaAccount.holdings()),
 			(from, to) -> RoutePlanner.chainSaving(from, to, config, ElzermaAccount.access(), ElzermaAccount.holdings(),
-				new PohSetup(), null),
+				new PohSetup(), ATLAS),
 			to -> RoutePlanner.fromAnywhere(to, config, ElzermaAccount.access(), ElzermaAccount.holdings(), new PohSetup(),
-				null), guild);
+				ATLAS), guild);
 	}
 
 	private static String describe(BankPlanner.Result result)
@@ -323,7 +345,7 @@ public class ScenarioTest
 		for (BankPlanner.Visit v : result.getVisits())
 		{
 			assertTrue(describe(result), v.getTeleport() != null
-				|| com.farmrunautopilot.data.travel.TravelTimes.bankTiles(v.getLocation()) != null);
+				|| com.farmrunautopilot.data.travel.atlas.AtlasBanks.near(v.getLocation()) != null);
 		}
 	}
 

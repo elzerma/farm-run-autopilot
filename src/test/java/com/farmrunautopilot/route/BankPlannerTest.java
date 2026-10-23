@@ -3,6 +3,7 @@ package com.farmrunautopilot.route;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.travel.BankTeleport;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.settings.RouteMode;
 import java.util.Arrays;
 import java.util.List;
@@ -13,14 +14,18 @@ import org.junit.Test;
 
 public class BankPlannerTest
 {
+	/** The banks by the stops are the atlas's (AtlasBanks), read once. */
+	private static final TravelAtlas ATLAS = TravelAtlas.get();
+
 	private static RouteStop stop(Location location)
 	{
 		return new RouteStop(location, TravelMethod.LUMBRIDGE_TELEPORT, Departure.DIRECT, 20, false);
 	}
 
-	/** Four stops: Farming Guild and Catherby have banks nearby, Taverley and Lumbridge don't. */
-	private static final Route ROUTE = new Route(Arrays.asList(stop(Location.TAVERLEY), stop(Location.FARMING_GUILD),
-		stop(Location.LUMBRIDGE), stop(Location.CATHERBY)), RouteMode.AUTOPILOT, 80, 0);
+	/** Four stops: Farming Guild and Catherby have banks by them, Tree Gnome Village and Troll Stronghold don't. */
+	private static final Route ROUTE = new Route(Arrays.asList(stop(Location.TREE_GNOME_VILLAGE),
+		stop(Location.FARMING_GUILD), stop(Location.TROLL_STRONGHOLD), stop(Location.CATHERBY)), RouteMode.AUTOPILOT, 80,
+		0);
 
 	/** Each stop needs this many slots. */
 	private static BankPlanner.Slots each(int perStop)
@@ -53,7 +58,8 @@ public class BankPlannerTest
 	@Test
 	public void asManyVisitsAsNeeded()
 	{
-		// 4 x 20 slots: every stop is its own inventory, so three visits; Taverley and Lumbridge have no bank
+		// 4 x 20 slots: every stop is its own inventory, so three visits; Tree Gnome Village and the Troll Stronghold
+		// have no bank
 		final BankPlanner.Result result = place(each(20), BankTeleport.RING_OF_DUELING);
 		assertEquals(3, result.getVisits().size());
 		assertEquals(BankTeleport.RING_OF_DUELING, result.getVisits().get(0).getTeleport());
@@ -65,8 +71,9 @@ public class BankPlannerTest
 		// A stop that can't fit even alone
 		assertNull(place(each(30), BankTeleport.RING_OF_DUELING));
 		// Every stretch needs a bank where none is near and there's no teleport
-		assertNull(BankPlanner.place(new Route(Arrays.asList(stop(Location.TAVERLEY), stop(Location.LUMBRIDGE)),
-			RouteMode.AUTOPILOT, 40, 0), each(20), 28, null, (from, to) -> 0.0, to -> stop(to)));
+		assertNull(BankPlanner.place(new Route(Arrays.asList(stop(Location.TREE_GNOME_VILLAGE),
+			stop(Location.TROLL_STRONGHOLD)), RouteMode.AUTOPILOT, 40, 0), each(20), 28, null, (from, to) -> 0.0,
+			to -> stop(to)));
 	}
 
 	@Test
@@ -133,7 +140,8 @@ public class BankPlannerTest
 	@Test
 	public void aPartNeedingTheVaultBanksAtTheGuildsOwnStop()
 	{
-		// Lumbridge and Catherby (stops 3 and 4) need the vault: the visit after the guild's stop is there anyway
+		// The Troll Stronghold and Catherby (stops 3 and 4) need the vault: the visit after the guild's stop is there
+		// anyway
 		final BankPlanner.Result result = place(each(10), null, guild(500, 2, 3));
 		assertEquals(1, result.getVisits().size());
 		final BankPlanner.Visit visit = result.getVisits().get(0);
@@ -145,8 +153,8 @@ public class BankPlannerTest
 	@Test
 	public void otherwiseItsATripToTheGuildAndOnFromThere()
 	{
-		// Every stop is its own inventory; Catherby (stop 4) needs the vault, so the visit after Lumbridge is at the
-		// guild even though the trip is slower than the ring of dueling
+		// Every stop is its own inventory; Catherby (stop 4) needs the vault, so the visit after the Troll Stronghold is
+		// at the guild even though the trip is slower than the ring of dueling
 		final BankPlanner.Result result = place(each(20), BankTeleport.RING_OF_DUELING, guild(500, 3));
 		assertEquals(3, result.getVisits().size());
 		final BankPlanner.Visit visit = result.getVisits().get(2);
@@ -162,7 +170,8 @@ public class BankPlannerTest
 	@Test
 	public void theFirstPartsVaultSeedsComeBeforeTheRun()
 	{
-		// Taverley (stop 1) needs the vault: that's gathered before the run starts, so it doesn't change where to bank
+		// Tree Gnome Village (stop 1) needs the vault: that's gathered before the run starts, so it doesn't change where
+		// to bank
 		assertEquals(place(each(10), null).getVisits(), place(each(10), null, guild(500, 0)).getVisits());
 	}
 }

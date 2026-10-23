@@ -100,20 +100,21 @@ public class TravelChoicesTest
 	public void houseOffKeepsTheRouteOutOfTheHouse()
 	{
 		// No spells: Teleport to House by tablet, then the nexus's Catherby portal (a Rimmington house, "inside")
-		final AccessSnapshot access = accessWith(Skill.MAGIC, 1);
+		final AccessSnapshot noSpells = accessWith(Skill.MAGIC, 1);
+		final AccessSnapshot access = new AccessSnapshot(true, noSpells.getQuests(), noSpells.getRealLevels(),
+			noSpells.getCompletedDiaries(), noSpells.getUnlocks(), HousePortal.RIMMINGTON, Spellbook.STANDARD,
+			Collections.emptySet());
 		final Holdings holdings = bank(ItemID.POH_TABLET_TELEPORTTOHOUSE, 10);
 		final PohSetup poh = new PohSetup();
-		poh.setPortal(HousePortal.RIMMINGTON);
 		poh.setNexusDestinations(EnumSet.of(PortalNexus.Destination.CATHERBY));
-		final Map<Integer, Integer> house = Map.of(VarbitID.POH_HOUSE_LOCATION, 1, VarbitID.POH_TELE_TOGGLE, 1);
 		final RunConfig config = config();
 		final RouteStop through = RoutePlanner.between(null, Location.CATHERBY, config, access, holdings, poh,
-			AtlasPlayers.with(access, holdings, house, RunService.ways(config), Map.of(), 0));
+			AtlasPlayers.with(access, holdings, Map.of(), RunService.ways(config), Map.of(), 0));
 		assertTrue(through.getBreakdown(), through.getWays().contains(AtlasWays.familyKey(TravelFamily.HOUSE)));
 
 		config.setOn(TravelFamily.HOUSE, false);
 		final RouteStop not = RoutePlanner.between(null, Location.CATHERBY, config, access, holdings, poh,
-			AtlasPlayers.with(access, holdings, house, RunService.ways(config), Map.of(), 0));
+			AtlasPlayers.with(access, holdings, Map.of(), RunService.ways(config), Map.of(), 0));
 		assertFalse(not.getBreakdown(), not.getWays().contains(AtlasWays.familyKey(TravelFamily.HOUSE)));
 		assertFalse(not.getBreakdown(), not.getDeparture().isViaHouse() || not.getAtlas() != null
 			&& (not.getAtlas().isViaHouse() || not.getAtlas().isByTree()));
