@@ -2,6 +2,7 @@ package com.farmrunautopilot.testing;
 
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.access.PohDetector;
+import com.farmrunautopilot.access.UnlockSpotter;
 import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
@@ -1189,11 +1190,15 @@ final class GuidedTests
 			account.getManualUnlocks().removeAll(PLANTED);
 		}
 
+		/**
+		 * The tree where the player is, ticked by the spotter. The access snapshot isn't read: from before setUp
+		 * cleared the trees it still counted them (GitHub #19: arrived at the Farming Guild, "Spotted" Port Sarim).
+		 */
 		private static boolean spotted(TestContext ctx)
 		{
 			for (Unlock unlock : PLANTED)
 			{
-				if (ctx.hasUnlock(unlock))
+				if (UnlockSpotter.regions(unlock).contains(ctx.region()) && ctx.ticked(unlock))
 				{
 					ctx.capture("Spotted", unlock);
 					return true;
@@ -1207,7 +1212,7 @@ final class GuidedTests
 		{
 			return Arrays.asList(
 				doThis("Go to a spirit tree you've planted: Port Sarim, Brimhaven or the Farming Guild",
-					ctx -> ctx.inRegion(12082, 11058, 11057, 4922))
+					ctx -> PLANTED.stream().anyMatch(unlock -> UnlockSpotter.regions(unlock).contains(ctx.region())))
 					.onDone(ctx -> ctx.capture("Arrived at", ctx.location())),
 				doThis("Walk up to the spirit tree", GuidedTests.SpiritTrees::spotted)
 					.orAskAfter(SPOT_TICKS, "The plugin hasn't spotted it. Is your spirit tree here fully grown?")

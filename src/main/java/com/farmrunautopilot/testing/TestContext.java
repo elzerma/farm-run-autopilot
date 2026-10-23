@@ -177,10 +177,10 @@ public class TestContext
 		return seedVault;
 	}
 
-	/** Ticked or detected in the plugin's settings right now. */
-	public boolean hasUnlock(Unlock unlock)
+	/** Ticked in the plugin's settings right now, by the player or a spotter; the access snapshot isn't read. */
+	public boolean ticked(Unlock unlock)
 	{
-		return settings.getAccount().getManualUnlocks().contains(unlock) || access().getUnlocks().contains(unlock);
+		return settings.getAccount().getManualUnlocks().contains(unlock);
 	}
 
 	public boolean inOwnHouse()

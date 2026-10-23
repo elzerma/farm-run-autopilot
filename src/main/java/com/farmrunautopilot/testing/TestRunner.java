@@ -174,6 +174,8 @@ public class TestRunner
 		busy = true;
 		final GuidedTest test = GuidedTests.of(item);
 		settings.startTest(test::setUp);
+		// Until its next read the snapshot holds the unlocks from before setUp (GitHub #19)
+		accessChecker.requestRefresh();
 		log.info("Guided test started: {}", item.name());
 		clientThread.invoke(() -> begin(item, test));
 	}
