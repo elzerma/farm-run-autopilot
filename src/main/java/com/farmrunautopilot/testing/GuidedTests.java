@@ -19,6 +19,7 @@ import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.route.BankStop;
+import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.settings.AccountSettings;
@@ -70,6 +71,7 @@ final class GuidedTests
 		TESTS.put(TestItem.ALLOTMENT_FLOWER_PROTECTION, new AllotmentFlowerProtection());
 		TESTS.put(TestItem.FORTIS_CHAMPION, new FortisChampion());
 		TESTS.put(TestItem.ATES_CHARGES, new AtesCharges());
+		TESTS.put(TestItem.ICY_BASALT, new IcyBasalt());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
 		TESTS.put(TestItem.BUCKET_COMPOST, new BucketCompost());
 		TESTS.put(TestItem.HOUSE_BY_TREE, new HouseByTree());
@@ -958,6 +960,77 @@ final class GuidedTests
 						}
 					}),
 				doThis("Check it again", ctx -> checked(ctx, "After teleporting")));
+		}
+	}
+
+	/**
+	 * The icy basalt to Weiss: the route takes it once Making Friends with My Arm is finished, which the plugin checks
+	 * itself rather than Shortest Path's MY2ARM_STATUS = 207 (AtlasAccount). elzerma doesn't have the quest. The report
+	 * has what that varbit reads with the quest finished, and where the basalt lands.
+	 */
+	private static final class IcyBasalt extends GuidedTest
+	{
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			final List<String> missing = new ArrayList<>(patchesUsable(access, Location.WEISS));
+			missing.addAll(owns(holdings, "an icy basalt", TravelItem.ICY_BASALT));
+			return missing;
+		}
+
+		@Override
+		public void setUp(RunConfig config, AccountSettings account)
+		{
+			onlyPatchesAt(config, Location.WEISS);
+			// Pinned, so a house portal or another item doesn't stand in; it's still only used if its needs are met
+			travelBy(config, TravelMethod.ICY_BASALT);
+			config.setOn(TravelFamily.TELEPORT_ITEMS, true);
+			config.getWaysOff().remove("TELEPORTATION_ITEM|Icy basalt");
+		}
+
+		@Override
+		public boolean usesRun()
+		{
+			return true;
+		}
+
+		private static boolean byBasalt(TestContext ctx)
+		{
+			return ctx.plan().getRoute().getStops().stream()
+				.anyMatch(s -> s.getLocation() == Location.WEISS && s.travelItem() == TravelItem.ICY_BASALT);
+		}
+
+		/** The Weiss stop's way as the Run tab says it, or "none". */
+		private static String weissStop(TestContext ctx)
+		{
+			return ctx.plan().getRoute().getStops().stream().filter(s -> s.getLocation() == Location.WEISS)
+				.map(RouteStop::describeTravel).findFirst().orElse("none");
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				doThis("Look at the Run tab: the Weiss stop should say \"Icy basalt\"", IcyBasalt::byBasalt)
+					.orAskAfter(SPOT_TICKS, "The Weiss stop doesn't say \"Icy basalt\". Carry on?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Weiss stop", weissStop(ctx));
+						ctx.problem("The Weiss stop wasn't the icy basalt");
+					})
+					.onStart(ctx -> ctx.capture("MY2ARM_STATUS", ctx.varbit(VarbitID.MY2ARM_STATUS)))
+					.onDone(ctx -> ctx.capture("Weiss stop", weissStop(ctx))),
+				startRun(),
+				doThis("Break the icy basalt when the step outlines it", ctx -> ctx.inRegion(Patch.WEISS_HERB.getRegionId()))
+					.orAskAfter(DO_TICKS, "Did the icy basalt take you to Weiss?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Standing at", ctx.location());
+						ctx.problem(yes ? "At Weiss, but the plugin didn't see it"
+							: "The icy basalt didn't take you to Weiss");
+					})
+					.onDone(ctx -> ctx.capture("Landed at", ctx.location())),
+				ask("Are you by the herb patch, with it outlined as the next step?"));
 		}
 	}
 

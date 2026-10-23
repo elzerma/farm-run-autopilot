@@ -120,14 +120,22 @@ public class ScenarioTest
 	public void theWhistleBeatsTheCivitasTeleportToTheHunterGuild()
 	{
 		// elzerma, 2026-10-15: on a herb run the Civitas illa Fortis Teleport (then Renu) was picked over their whistle,
-		// which is faster: the charge penalty is only a tie-breaker. On the atlas the whistle is under a second quicker,
-		// and their perfected whistle's unlimited charges cost nothing, so no tie-break goes against it
-		// (2026-10-20)
+		// which is faster. On the atlas the whistle is under a second quicker, and a charge is no tie-break against it
 		final List<Patch> herbs = Arrays.asList(Patch.CIVITAS_HERB, Patch.CATHERBY_HERB, Patch.ARDOUGNE_HERB);
 		final List<RouteStop> stops = RoutePlanner.plan(herbs, new RunConfig().sanitise(), ElzermaAccount.access(),
 			ElzermaAccount.holdings(), new PohSetup(), ATLAS, null, null, 0).getStops();
 		assertEquals(describe(stops), TravelMethod.QUETZAL_HUNTER_GUILD,
 			stops.get(indexOf(stops, Location.CIVITAS_ILLA_FORTIS)).getMethod());
+	}
+
+	@Test
+	public void kastoriIsByTheWhistleNotTheCivitasTeleport()
+	{
+		// elzerma, 2026-10-22: after Hosidius, Kastori was by the Civitas illa Fortis Teleport and Renu (24 s) over their
+		// enhanced whistle (23 s), lost by a 1 s charge tie-break, until they turned the teleport off
+		final RouteStop stop = RoutePlanner.between(Location.HOSIDIUS, Location.KASTORI, new RunConfig().sanitise(),
+			ElzermaAccount.access(), ElzermaAccount.holdings(), new PohSetup(), ATLAS);
+		assertEquals(stop.getBreakdown(), TravelMethod.QUETZAL_KASTORI, stop.getMethod());
 	}
 
 	@Test
@@ -137,7 +145,7 @@ public class ScenarioTest
 		// last. (With an unlimited whistle every Varlamore stop is its own teleport and their order doesn't matter;
 		// in a full run, Nemus Retreat is reached by fairy ring and isn't part of the chain.)
 		final List<Patch> varlamore = Arrays.asList(Patch.KASTORI_FRUIT_TREE, Patch.NEMUS_RETREAT_TREE, Patch.CIVITAS_HERB);
-		final Holdings noWhistle = ElzermaAccount.holdingsWithout(ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE);
+		final Holdings noWhistle = ElzermaAccount.holdingsWithout(ItemID.HG_QUETZALWHISTLE_ENHANCED);
 		final List<RouteStop> stops = RoutePlanner.plan(varlamore, new RunConfig().sanitise(),
 			ElzermaAccount.access(), noWhistle, new PohSetup(), AtlasPlayers.with(ElzermaAccount.access(), noWhistle),
 			null, null, 0).getStops();

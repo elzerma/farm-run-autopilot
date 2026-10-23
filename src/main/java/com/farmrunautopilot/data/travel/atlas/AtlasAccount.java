@@ -20,6 +20,12 @@ public final class AtlasAccount
 {
 	/** The spellbooks by the game's SPELLBOOK varbit value. */
 	private static final String[] SPELLBOOKS = {"standard", "Ancient", "Lunar", "Arceuus"};
+	/**
+	 * Shortest Path checks MY2ARM_STATUS = 207 for the icy and stony basalts, which the game lets anyone use once
+	 * Making Friends with My Arm is finished (the wiki); no source says the varbit always reads 207 then, so the quest
+	 * itself is checked, as RuneLite reads it. UNVERIFIED in game (guided test ICY_BASALT).
+	 */
+	private static final int MY_ARM_FINISHED = 207;
 
 	private final AccessSnapshot access;
 	private final Holdings holdings;
@@ -90,6 +96,10 @@ public final class AtlasAccount
 			case QUEST:
 				return !access.isKnown() || access.getQuests().get(need.getQuest()) == QuestState.FINISHED;
 			case VARBIT:
+				if (myArmFinished(need))
+				{
+					return finished(Quest.MAKING_FRIENDS_WITH_MY_ARM);
+				}
 				return need.isCooldown() ? cooldownOver(need, varbits) : need.passes(varbits.getOrDefault(need.getVar(), 0));
 			case VARP:
 				return need.isCooldown() ? cooldownOver(need, varps) : need.passes(varps.getOrDefault(need.getVar(), 0));
@@ -137,6 +147,10 @@ public final class AtlasAccount
 					&& need.getValue() < SPELLBOOKS.length)
 				{
 					return "the " + SPELLBOOKS[need.getValue()] + " spellbook";
+				}
+				if (myArmFinished(need))
+				{
+					return Quest.MAKING_FRIENDS_WITH_MY_ARM.getName();
 				}
 				return "an unlock";
 			default:
@@ -225,5 +239,12 @@ public final class AtlasAccount
 	private boolean finished(Quest quest)
 	{
 		return !access.isKnown() || access.getQuests().get(quest) == QuestState.FINISHED;
+	}
+
+	/** Shortest Path's check that Making Friends with My Arm is finished (see {@link #MY_ARM_FINISHED}). */
+	private static boolean myArmFinished(AtlasNeed need)
+	{
+		return need.getVar() == VarbitID.MY2ARM_STATUS && "=".equals(need.getCheck())
+			&& need.getValue() == MY_ARM_FINISHED;
 	}
 }
