@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 import javax.swing.Icon;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -184,22 +183,12 @@ class TravelPage extends SetupPanel
 		return row;
 	}
 
-	/** How much of a family is on, as its tick box shows it. */
-	private enum FamilyTick
-	{
-		/** Turned off: none of its ways are used. */
-		OFF,
-		/** On, with some of the ways the player can use turned off. */
-		PARTLY,
-		/** On, with every way the player can use on. */
-		ON
-	}
-
-	private static FamilyTick familyTick(RunConfig config, TravelFamily family, TravelWays.Family listed)
+	/** Off while the family is turned off, whatever its ways are set to; partly on with a usable way turned off. */
+	private static GroupTick familyTick(RunConfig config, TravelFamily family, TravelWays.Family listed)
 	{
 		if (!config.isOn(family))
 		{
-			return FamilyTick.OFF;
+			return GroupTick.OFF;
 		}
 		if (listed != null)
 		{
@@ -207,31 +196,24 @@ class TravelPage extends SetupPanel
 			{
 				if (way.getState() == TravelWays.State.READY && config.getWaysOff().contains(way.getKey()))
 				{
-					return FamilyTick.PARTLY;
+					return GroupTick.PARTLY;
 				}
 			}
 		}
-		return FamilyTick.ON;
+		return GroupTick.ON;
 	}
 
-	/**
-	 * A family's tick box, as a list's tick boxes work (elzerma): ticked with every usable way on, a dash with some off,
-	 * empty when the family is off. Clicked when ticked, the family goes off; otherwise it goes on with every way on.
-	 */
+	/** A family's tick box: clicked when ticked, the family goes off; otherwise it goes on with every way on. */
 	private JCheckBox familyBox(RunConfig config, TravelFamily family, TravelWays.Family listed)
 	{
-		final FamilyTick now = familyTick(config, family, listed);
-		final JCheckBox box = leadBox(now != FamilyTick.OFF, family.getDescription(), clicked -> saveRun(() ->
+		return groupBox(familyTick(config, family, listed), family.getDescription(), on -> saveRun(() ->
 		{
-			if (now == FamilyTick.ON)
+			config.setOn(family, on);
+			if (on)
 			{
-				config.setOn(family, false);
-				return;
+				config.getWaysOff().removeIf(key -> AtlasWays.familyOf(key) == family);
 			}
-			config.setOn(family, true);
-			config.getWaysOff().removeIf(key -> AtlasWays.familyOf(key) == family);
 		}));
-		return now == FamilyTick.PARTLY ? Style.partial(box) : box;
 	}
 
 	/**
@@ -285,16 +267,6 @@ class TravelPage extends SetupPanel
 		wrapper.add(card, BorderLayout.CENTER);
 		wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, wrapper.getPreferredSize().height));
 		return wrapper;
-	}
-
-	/** A tick box without text, leading a family's line. */
-	private static JCheckBox leadBox(boolean selected, String tooltip, Consumer<Boolean> onChange)
-	{
-		final JCheckBox box = new JCheckBox((String) null, selected);
-		box.setToolTipText(UiText.tooltip(tooltip, 250));
-		box.setOpaque(false);
-		box.addActionListener(e -> onChange.accept(box.isSelected()));
-		return Style.checkBox(box);
 	}
 
 	private JComponent routeSection(RunConfig config)
