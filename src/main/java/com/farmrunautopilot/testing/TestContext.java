@@ -188,6 +188,12 @@ public class TestContext
 		return pohDetector.isScanningHouse();
 	}
 
+	/** How many times the player's own house has been scanned since the plugin started. */
+	public int houseScans()
+	{
+		return pohDetector.getScans();
+	}
+
 	public boolean visitingHouse()
 	{
 		return client.isInInstancedRegion() && pohDetector.isVisiting();
