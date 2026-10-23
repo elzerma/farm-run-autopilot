@@ -672,6 +672,12 @@ whistle's real wait, and the first leg from where I stand." Built; the hand chec
     out of it (it said 7 maple saplings when the bank had 1 and 6 were to take), and the bank's inventory counts the
     seeds and saplings to take or put back, as the vault's does.
   - Teleport jewellery from the atlas (the ring of dueling to the Fortis Colosseum) is worn when its slot is free.
+  - Checked by elzerma on 2026-10-22 (0ff295b): the vault's and bank's counts, Deposit inventory then the Farm run
+    tab, Harmony Island by the Mos le'Harmless teleport (or, turned off, Bill Teach's boat), tools not outlined at a
+    patch, Wear labels once armed at a patch, Bank for them / Skip, Start now, no highlights after landing and the tick
+    colours all passed. The seed vault's Getting ready step had named only the palm sapling, worked out before the
+    bank's maple saplings and irit seeds were known, so it never ticked: it now names what's still to take, as it
+    changes. The Ardougne cloak's three uses in a day are still to try.
 - **Not yet:** the patch order inside a stop; journeys written from the atlas's steps beyond boats and NPCs (T5);
   spells the plugin doesn't know (Watchtower, Kourend Castle...) are planned only with their runes owned and on the
   spellbook in use, and their runes go on the supply list as items; planning off the client thread (T4's search will

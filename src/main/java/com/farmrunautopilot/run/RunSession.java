@@ -2562,9 +2562,15 @@ public class RunSession
 	private List<RunView.Step> gatheringSteps(int fromBank, Map<Integer, Integer> fromVault,
 		Map<Integer, Integer> toBank, List<String> nowhere)
 	{
-		if (!fromVault.isEmpty() && gatherVault == null)
+		// What's still to take, kept up to date (elzerma, 2026-10-22: it named only the palm sapling, worked out before the
+		// bank's maple saplings and irit seeds were known, so it never ticked); once it's all taken, a plain line, ticked
+		if (!fromVault.isEmpty())
 		{
 			gatherVault = "Take " + amounts(fromVault) + " from the seed vault";
+		}
+		else if (gatherVault != null)
+		{
+			gatherVault = "Take the seeds and saplings from the seed vault";
 		}
 		// After everything's been deposited, carrying seeds for later means too many were taken
 		if (!toBank.isEmpty() && depositedAll)
