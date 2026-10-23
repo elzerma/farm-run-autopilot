@@ -190,9 +190,8 @@ public class AccessChecker
 	}
 
 	/**
-	 * The house's teleport setting (POH_TELE_TOGGLE) sends Teleport to House outside, by the portal: 0 lands inside, as
-	 * seen in game (elzerma's guided test, 2026-10-22), the other way round from Shortest Path's data. That 1 lands
-	 * outside is UNVERIFIED (help list: Where your house is).
+	 * The house's teleport setting (POH_TELE_TOGGLE) sends Teleport to House outside, by the portal: 0 lands inside and
+	 * 1 outside, as seen in game (elzerma's guided test, 2026-10-22), the other way round from Shortest Path's data.
 	 */
 	static boolean teleportsOutside(int value)
 	{

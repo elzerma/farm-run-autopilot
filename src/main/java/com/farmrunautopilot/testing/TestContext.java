@@ -202,12 +202,6 @@ public class TestContext
 			+ (access.isHouseTeleportOutside() ? "outside" : "inside") + ")";
 	}
 
-	/** In a house that isn't someone else's (the player's own, e.g. just after Teleport to House), scanned or not. */
-	public boolean atHome()
-	{
-		return client.isInInstancedRegion() && !pohDetector.isVisiting();
-	}
-
 	/** The house has been scanned since its furniture was last cleared. */
 	public boolean houseScanned()
 	{

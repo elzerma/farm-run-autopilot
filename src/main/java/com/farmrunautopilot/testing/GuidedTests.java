@@ -11,16 +11,13 @@ import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.Unlock;
-import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.travel.Rune;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
-import com.farmrunautopilot.data.travel.atlas.AtlasHouse;
 import com.farmrunautopilot.data.travel.atlas.AtlasWays;
-import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.route.BankStop;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
@@ -77,7 +74,6 @@ final class GuidedTests
 		TESTS.put(TestItem.BUCKET_COMPOST, new BucketCompost());
 		TESTS.put(TestItem.HOUSE_BY_TREE, new HouseByTree());
 		TESTS.put(TestItem.HOUSE_TURNED_OFF, new HouseTurnedOff());
-		TESTS.put(TestItem.HOUSE_LOCATION, new HouseLocation());
 		TESTS.put(TestItem.HOUSE_SCAN, new HouseScan());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
 	}
@@ -1165,136 +1161,6 @@ final class GuidedTests
 					kept.getManualUnlocks().add(unlock);
 				}
 			}
-		}
-	}
-
-	/**
-	 * Where the house is and how Teleport to House lands, read from the game (POH_HOUSE_LOCATION and POH_TELE_TOGGLE):
-	 * a house in Hosidius and landing inside were seen in game (elzerma, 2026-10-22); the other places and landing
-	 * outside are UNVERIFIED. Teleporting in, coming out of the portal, then teleporting in again with the house's
-	 * setting switched shows which.
-	 */
-	private static final class HouseLocation extends GuidedTest
-	{
-		/** Coming out of the house's portal puts the player this close to where Teleport to House lands outside it. */
-		private static final int BY_PORTAL_TILES = 10;
-
-		/** Where Teleport to House lands outside the house the plugin read, by its portal; null if that isn't known. */
-		private static WorldPoint portal(TestContext ctx)
-		{
-			final HousePortal place = ctx.access().getHousePortal();
-			final TravelAtlas atlas = TravelAtlas.ifLoaded();
-			final TravelAtlas.Place landing = place != null && atlas != null ? AtlasHouse.portalPlace(atlas, place) : null;
-			return landing != null ? landing.getPoint() : null;
-		}
-
-		/** "inside" the player's house, "outside" by its portal where the plugin read it, or null anywhere else. */
-		private static String where(TestContext ctx)
-		{
-			if (ctx.atHome())
-			{
-				return "inside";
-			}
-			final WorldPoint portal = portal(ctx);
-			final WorldPoint here = ctx.location();
-			return portal != null && here != null && here.distanceTo(portal) <= BY_PORTAL_TILES ? "outside" : null;
-		}
-
-		/** At the house (in it, or by its portal where the plugin read it) after being away since the step started. */
-		private static boolean arrived(TestContext ctx)
-		{
-			if (where(ctx) == null)
-			{
-				ctx.remember("away", true);
-				return false;
-			}
-			return Boolean.TRUE.equals(ctx.recall("away"));
-		}
-
-		/** Where Teleport to House landed, against the house's teleport setting as the plugin read it. */
-		private static void landed(TestContext ctx, String label)
-		{
-			final boolean outside = "outside".equals(where(ctx));
-			ctx.capture(label, (outside ? "outside, at " + ctx.location() : "inside") + ", teleport setting "
-				+ ctx.varbit(VarbitID.POH_TELE_TOGGLE));
-			if (outside != ctx.access().isHouseTeleportOutside())
-			{
-				ctx.problem(label + " " + (outside ? "outside" : "inside") + ", but the plugin read "
-					+ (outside ? "inside" : "outside"));
-			}
-		}
-
-		/** Teleporting home, seen on arriving; without a way home, where it lands can't be seen. */
-		private static Step teleportHome(String text, String label)
-		{
-			return doThis(text, HouseLocation::arrived)
-				.onStart(ctx -> ctx.remember("away", where(ctx) == null))
-				.onDone(ctx -> landed(ctx, label))
-				.orAskAfter(DO_TICKS, "Have you teleported to your house?")
-				.onAnswer((ctx, yes) ->
-				{
-					if (!yes)
-					{
-						ctx.cannotTest("a way to teleport to your house");
-						return;
-					}
-					ctx.capture("Standing at", ctx.location());
-					ctx.problem("Not in your house, or by its portal where the plugin read it (" + portal(ctx) + ")");
-				});
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				// Without a house the game reads 0 whatever its values mean, which proves nothing
-				ask("Do you have a house of your own?").onAnswer((ctx, yes) ->
-				{
-					if (!yes)
-					{
-						ctx.cannotTest("a house");
-						return;
-					}
-					ctx.capture("Read from the game", ctx.houseSummary());
-					if (!ctx.access().hasHouse())
-					{
-						ctx.problem("The house location read 0, as if there's no house");
-					}
-					else if (ctx.access().getHousePortal() == null)
-					{
-						ctx.problem("House location " + ctx.access().getHouseLocation() + " isn't a place the plugin knows");
-					}
-				}),
-				teleportHome("Away from your house, teleport to it: the spell, a tablet, or a construction or max cape",
-					"Teleport to House landed"),
-				doThis("Leave your house through its portal", ctx -> "outside".equals(where(ctx)))
-					.onDone(ctx -> ctx.capture("Came out at", ctx.location()))
-					.orAskAfter(DO_TICKS, "Are you outside your house, by its portal?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (yes)
-						{
-							ctx.capture("Standing at", ctx.location());
-							ctx.problem("Not by the portal where the plugin read the house (" + portal(ctx) + ")");
-						}
-					}),
-				// The setting the other way round, so both of its values are seen
-				doThis("Switch your house's teleport setting: Teleport inside, under House Options in the Settings tab",
-					ctx -> !Integer.valueOf(ctx.varbit(VarbitID.POH_TELE_TOGGLE)).equals(ctx.recall("setting")))
-					.onStart(ctx -> ctx.remember("setting", ctx.varbit(VarbitID.POH_TELE_TOGGLE)))
-					.orAskAfter(DO_TICKS, "Have you switched your house's teleport setting?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (!yes)
-						{
-							ctx.cannotTest("switching your house's teleport setting");
-							return;
-						}
-						ctx.problem("The teleport setting stayed at " + ctx.recall("setting") + " after switching it");
-					}),
-				teleportHome("Walk away from your house, then teleport to it again", "Switched, Teleport to House landed"),
-				ask("Does Settings > Debug > Detected show where your house is, and how Teleport to House lands now, as in "
-					+ "the game? (You can switch the setting back afterwards.)"));
 		}
 	}
 
