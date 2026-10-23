@@ -27,6 +27,7 @@ import com.farmrunautopilot.settings.Compost;
 import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.VaultBanking;
+import com.farmrunautopilot.supply.BottomlessBucketTracker;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.ItemChargeTracker;
 import com.farmrunautopilot.supply.SupplyLine;
@@ -1035,22 +1036,83 @@ final class GuidedTests
 	}
 
 	/**
-	 * Which stored-bucket type value means which compost (the game's script only says 1 is empty, higher filled):
-	 * the player says which compost is in theirs, the test captures the value.
+	 * The bottomless bucket's type and uses values at the tool leprechaun. 4 = ultracompost passed (#20, #29); 2 and 3
+	 * are still unseen, and the uses value had nothing to compare with until the Check step.
 	 */
 	private static final class BucketCompost extends GuidedTest
 	{
-		private static Step isIt(Compost compost)
+		/** Chat lines kept for the report when the Check message isn't recognised. */
+		private static final int KEEP_MESSAGES = 5;
+
+		/**
+		 * The bucket's own Check message. UNVERIFIED: BottomlessBucketTracker.CHECK's wording is from the wiki's
+		 * transcript, not seen in game; if it's wrong, the question after DO_TICKS says so.
+		 */
+		private static boolean checked(TestContext ctx)
 		{
-			return ask("Is the bucket filled with " + compost.getDisplayName().toLowerCase() + "?").onAnswer((ctx, yes) ->
+			for (String message : ctx.chat())
+			{
+				final Matcher m = BottomlessBucketTracker.CHECK.matcher(message);
+				if (m.matches())
+				{
+					ctx.capture("Check message", message);
+					ctx.remember("check uses", ItemChargeTracker.count(m.group(1)));
+					ctx.remember("check compost", Compost.fromName(m.group(2)));
+					return true;
+				}
+				final List<String> seen = ctx.recall("messages");
+				seen.add(message);
+				if (seen.size() > KEEP_MESSAGES)
+				{
+					seen.remove(0);
+				}
+			}
+			return false;
+		}
+
+		/** The values at the leprechaun, compared with the Check message if there was one. */
+		private static void stored(TestContext ctx)
+		{
+			final int type = ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE);
+			final int uses = ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_QUANTITY);
+			ctx.remember("type", type);
+			ctx.capture("Type value", type + " (read as " + Compost.fromBucketType(type) + ")");
+			ctx.capture("Uses value", uses);
+			final Integer checkUses = ctx.recall("check uses");
+			if (checkUses == null)
+			{
+				return;
+			}
+			if (checkUses != uses)
+			{
+				ctx.problem("Uses value " + uses + ", but the Check said " + checkUses);
+			}
+			final Compost checkCompost = ctx.recall("check compost");
+			if (checkCompost != Compost.fromBucketType(type))
+			{
+				ctx.problem("Type value " + type + " was read as " + Compost.fromBucketType(type) + ", but the Check said "
+					+ checkCompost);
+			}
+		}
+
+		/** The questions don't overlap ("not super or ultra"), so exactly one should get a Yes. */
+		private static Step isIt(Compost compost, String question)
+		{
+			return ask(question).onAnswer((ctx, yes) ->
 			{
 				if (!yes)
 				{
 					return;
 				}
-				final int type = ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE);
+				final Compost said = ctx.recall("said");
+				if (said != null)
+				{
+					ctx.problem("Answered Yes to both " + said.getDisplayName() + " and " + compost.getDisplayName());
+					return;
+				}
+				ctx.remember("said", compost);
+				final int type = ctx.recall("type");
 				ctx.capture("Compost in it / type value", compost.getDisplayName() + " / " + type);
-				ctx.capture("Uses value", ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_QUANTITY));
 				if (Compost.fromBucketType(type) != compost)
 				{
 					ctx.problem("Type value " + type + " was read as " + Compost.fromBucketType(type) + ", not "
@@ -1071,11 +1133,29 @@ final class GuidedTests
 						ctx.cannotTest("a bottomless compost bucket with compost in it");
 					}
 				}),
+				doThis("Have the bucket with you (take it from the tool leprechaun if it's there), right-click it and pick "
+					+ "Check", BucketCompost::checked)
+					.onStart(ctx -> ctx.remember("messages", new ArrayList<String>()))
+					.orAskAfter(DO_TICKS, "Did you Check the bucket, and did chat say how many uses it holds?")
+					.onAnswer((ctx, yes) ->
+					{
+						if (yes)
+						{
+							final List<String> seen = ctx.recall("messages");
+							ctx.capture("Messages", seen.isEmpty() ? "none" : String.join(" | ", seen));
+							ctx.problem("The plugin didn't recognise the Check message, so its wording may be wrong");
+						}
+						else
+						{
+							ctx.capture("Check message", "not seen, so the uses value isn't compared");
+						}
+					}),
 				doThis("Store the bucket with a tool leprechaun",
-					ctx -> ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE) > Compost.EMPTY_BUCKET_TYPE),
-				isIt(Compost.COMPOST),
-				isIt(Compost.SUPERCOMPOST),
-				isIt(Compost.ULTRACOMPOST));
+					ctx -> ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE) > Compost.EMPTY_BUCKET_TYPE)
+					.onDone(BucketCompost::stored),
+				isIt(Compost.ULTRACOMPOST, "Is the bucket filled with ultracompost?"),
+				isIt(Compost.SUPERCOMPOST, "Is the bucket filled with supercompost (not ultracompost)?"),
+				isIt(Compost.COMPOST, "Is the bucket filled with plain compost (not super or ultra)?"));
 		}
 	}
 

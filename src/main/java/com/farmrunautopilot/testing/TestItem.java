@@ -73,8 +73,9 @@ public enum TestItem
 			+ "should get another way, none of them through your house. Tick it again and the stops through your house "
 			+ "should come back."),
 	BUCKET_COMPOST(Tab.FARM, "Bottomless bucket at the tool leprechaun",
-		"With a bottomless compost bucket that has compost in it, store it with any tool leprechaun. Settings > "
-			+ "Debug > Detected should then show the bucket with the right compost and uses."),
+		"Most wanted: a bottomless compost bucket filled with plain compost or supercompost (ultracompost is "
+			+ "confirmed). Right-click the bucket and pick Check, then store it with any tool leprechaun. Settings > "
+			+ "Debug > Detected should then show the bucket with the same compost and uses as the Check said.", 2),
 	SPIRIT_TREES(Tab.ACCOUNT, "Planted spirit trees",
 		"Untick your planted spirit tree in Account > Unlocks, then go to it (Port Sarim, Brimhaven or the "
 			+ "Farming Guild). It should tick itself once the grown tree is in view."),

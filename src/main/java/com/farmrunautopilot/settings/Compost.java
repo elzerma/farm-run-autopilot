@@ -41,8 +41,8 @@ public enum Compost
 
 	/**
 	 * The compost in a bucket stored at the tool leprechaun, from its type value, or null (empty, or unknown). The
-	 * game's farming_tools_getstored script says 1 is an empty bucket and anything higher a filled one. UNVERIFIED
-	 * which filled value is which compost: assumed 2 compost, 3 super, 4 ultra (guided test BUCKET_COMPOST).
+	 * game's farming_tools_getstored script says 1 is an empty bucket and anything higher a filled one. 4 ultra
+	 * confirmed (#20, #29); 2 compost and 3 super UNVERIFIED (guided test BUCKET_COMPOST).
 	 */
 	public static Compost fromBucketType(int type)
 	{
