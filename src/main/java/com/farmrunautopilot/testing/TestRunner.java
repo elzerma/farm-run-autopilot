@@ -10,7 +10,6 @@ import com.farmrunautopilot.run.SceneTracker;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
-import com.farmrunautopilot.supply.ItemChargeTracker;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
@@ -49,7 +48,6 @@ public class TestRunner
 	private final SettingsStore settings;
 	private final AccessChecker accessChecker;
 	private final HoldingsTracker holdingsTracker;
-	private final ItemChargeTracker itemCharges;
 	private final RunSession runSession;
 	private final RunService runService;
 	private final SceneTracker scene;
@@ -75,16 +73,14 @@ public class TestRunner
 
 	@Inject
 	TestRunner(Client client, ClientThread clientThread, SettingsStore settings, AccessChecker accessChecker,
-		HoldingsTracker holdingsTracker, ItemChargeTracker itemCharges, RunSession runSession, RunService runService,
-		SceneTracker scene, PohDetector pohDetector, SeedVaultSection seedVault,
-		@Named("developerMode") boolean developerMode)
+		HoldingsTracker holdingsTracker, RunSession runSession, RunService runService, SceneTracker scene,
+		PohDetector pohDetector, SeedVaultSection seedVault, @Named("developerMode") boolean developerMode)
 	{
 		this.client = client;
 		this.clientThread = clientThread;
 		this.settings = settings;
 		this.accessChecker = accessChecker;
 		this.holdingsTracker = holdingsTracker;
-		this.itemCharges = itemCharges;
 		this.runSession = runSession;
 		this.runService = runService;
 		this.scene = scene;
@@ -185,8 +181,8 @@ public class TestRunner
 		this.test = test;
 		this.steps = test.steps();
 		this.stepIndex = -1;
-		this.context = new TestContext(client, accessChecker, holdingsTracker, itemCharges, runSession, runService,
-			scene, pohDetector, settings, seedVault);
+		this.context = new TestContext(client, accessChecker, holdingsTracker, runSession, runService, scene,
+			pohDetector, settings, seedVault);
 		results.clear();
 		nextStep();
 	}

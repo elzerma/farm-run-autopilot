@@ -42,7 +42,7 @@ public class ItemChargeTracker
 	public static final Pattern WHISTLE_CHECK = Pattern.compile("Your quetzal whistle has " + COUNT + " charges? remaining\\.");
 	public static final Pattern TALISMAN_CHECK = Pattern.compile("The talisman has " + COUNT + " charges?\\.");
 	static final Pattern TALISMAN_CHARGED = Pattern.compile("Your talisman now has ([\\d,]+) charges?\\.");
-	public static final Pattern PENDANT_CHECK = Pattern.compile("The pendant has " + COUNT + " charges?\\.");
+	static final Pattern PENDANT_CHECK = Pattern.compile("The pendant has " + COUNT + " charges?\\.");
 	static final Pattern PENDANT_CHARGED = Pattern.compile(".*It now has ([\\d,]+) charges?\\.");
 	private static final int FULL = 1000;
 	/** A teleport click counts only if the player is moved within this many ticks (about 30 seconds). */

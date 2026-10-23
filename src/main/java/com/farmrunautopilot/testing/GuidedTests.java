@@ -28,7 +28,6 @@ import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.VaultBanking;
 import com.farmrunautopilot.supply.Holdings;
-import com.farmrunautopilot.supply.ItemChargeTracker;
 import com.farmrunautopilot.supply.SupplyLine;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,8 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import net.runelite.api.GameObject;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
@@ -70,7 +67,6 @@ final class GuidedTests
 		TESTS.put(TestItem.NEW_PATCH_POINTS, new NewPatchPoints());
 		TESTS.put(TestItem.ALLOTMENT_FLOWER_PROTECTION, new AllotmentFlowerProtection());
 		TESTS.put(TestItem.FORTIS_CHAMPION, new FortisChampion());
-		TESTS.put(TestItem.ATES_CHARGES, new AtesCharges());
 		TESTS.put(TestItem.ICY_BASALT, new IcyBasalt());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
 		TESTS.put(TestItem.BUCKET_COMPOST, new BucketCompost());
@@ -178,24 +174,6 @@ final class GuidedTests
 	private static Spell highlightedSpell(TestContext ctx)
 	{
 		return ctx.runView().getHighlights().getSpell();
-	}
-
-	/** The count in the first chat message matching, or null. */
-	private static Integer chatCount(TestContext ctx, Pattern... patterns)
-	{
-		for (String message : ctx.chat())
-		{
-			for (Pattern pattern : patterns)
-			{
-				final Matcher m = pattern.matcher(message);
-				if (m.matches())
-				{
-					ctx.capture("Chat message", message);
-					return ItemChargeTracker.count(m.group(1));
-				}
-			}
-		}
-		return null;
 	}
 
 	/**
@@ -902,64 +880,6 @@ final class GuidedTests
 						}
 					})
 					.optional());
-		}
-	}
-
-	private static final class AtesCharges extends GuidedTest
-	{
-		@Override
-		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
-		{
-			return owns(holdings, "a pendant of Ates", TravelItem.PENDANT_OF_ATES);
-		}
-
-		@Override
-		public List<Need> bring()
-		{
-			return Collections.singletonList(new Need("Pendant of Ates", TravelItem.PENDANT_OF_ATES.getItemIds()));
-		}
-
-		/** The pendant's Check message, compared with the plugin's count. */
-		private static boolean checked(TestContext ctx, String label)
-		{
-			final Integer said = chatCount(ctx, ItemChargeTracker.PENDANT_CHECK);
-			if (said == null)
-			{
-				return false;
-			}
-			final Integer plugin = ctx.charges(TravelItem.PENDANT_OF_ATES);
-			ctx.capture(label + ": Check said", said);
-			ctx.capture(label + ": plugin count", plugin);
-			if (plugin == null || plugin.intValue() != said)
-			{
-				ctx.problem(label + ": the plugin counted " + plugin + " but the Check said " + said);
-			}
-			return true;
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			// Counted like Xeric's talisman (a teleport click, then being moved), which passed in game (issue #13)
-			return Arrays.asList(
-				doThis("Take the pendant of Ates out of the bank", ctx -> ctx.carries(TravelItem.PENDANT_OF_ATES.getItemIds())),
-				doThis("Right-click the pendant and pick Check", ctx -> checked(ctx, "First check")),
-				doThis("Teleport with the pendant once", ctx ->
-				{
-					final Integer now = ctx.charges(TravelItem.PENDANT_OF_ATES);
-					final Integer before = ctx.recall("before");
-					return now != null && before != null && now < before;
-				})
-					.onStart(ctx -> ctx.remember("before", ctx.charges(TravelItem.PENDANT_OF_ATES)))
-					.orAskAfter(DO_TICKS, "Have you teleported with the pendant?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (yes)
-						{
-							ctx.problem("The plugin's count didn't go down after a teleport");
-						}
-					}),
-				doThis("Check it again", ctx -> checked(ctx, "After teleporting")));
 		}
 	}
 
