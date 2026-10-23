@@ -30,7 +30,7 @@ import net.runelite.api.widgets.Widget;
 public class BottomlessBucketTracker
 {
 	private static final String TYPES = "(ultracompost|supercompost|compost)";
-	static final Pattern CHECK = Pattern.compile(
+	public static final Pattern CHECK = Pattern.compile(
 		"Your bottomless compost bucket is currently holding ([\\d,]+) uses? of " + TYPES + "\\.");
 	static final Pattern EMPTY = Pattern.compile("Your (?:bottomless )?compost bucket is currently empty\\.");
 	static final Pattern FILL_TYPE = Pattern.compile(
