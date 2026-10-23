@@ -9,7 +9,8 @@ rest; elzerma asked for them to be planned as three sprints:
 
 - **1a** allotments, flowers, hops (they share the herb patch areas, and flowers protect allotments);
 - **1b** bushes, cactus, mushroom, belladonna, seaweed;
-- **1c** special trees: hardwood, calquat, celastrus, redwood, spirit tree.
+- **1c** special trees: hardwood, calquat, celastrus, redwood, spirit tree, crystal tree (added 2026-10-22, as
+  promised on GitHub #30).
 
 Section 1 is what every sprint needs from the code. Sections 2-4 are the sprints. Section 5 is the open questions
 for elzerma; nothing starts until they are answered.
@@ -26,7 +27,9 @@ Every game fact below is from one of these (checked 2026-10-17). Short names are
   /Seeds), Special patches (/Patches, /Seeds; the cactus, mushroom, belladonna, seaweed, hardwood, calquat,
   celastrus and redwood pages all redirect there), Spirit Tree (Farming), Disease (Farming), Farming, Farming
   Guild, Scarecrow, Underwater, Mernia, Seed dibber, Sapling, and the seed, sapling and location pages named
-  where used.
+  where used. The crystal tree's lines (checked 2026-10-22) are from RuneLite's `FarmingWorld` (Prifddinas),
+  `PatchImplementation.CRYSTAL_TREE` and `Produce.CRYSTAL_TREE`, and the wiki's Crystal tree, Crystal acorn and
+  Crystal tree patch pages.
 
 The full research notes, with a source on every line, are kept outside the repo in the session notes
 (`crop-types-research.md`). **UNVERIFIED** below means no source settled it; those either become a guided test on
@@ -38,7 +41,7 @@ calquat (The Summer Shore), Anglers' Retreat hardwood (51 Sailing), the hops-pat
 and the hardwoods camphor, ironwood and rosewood. This plan includes them where RuneLite tracks them, since
 leaving them out would mean "locked" patches that a player can actually use.
 
-Out of scope for all three sprints (say so in the README): anima, Hespori, crystal tree, grapes, coral, compost
+Out of scope for all three sprints (say so in the README): anima, Hespori, grapes, coral, compost
 bins, the Keldagrim quest hops patch and the Anglers' Retreat flax patches (RuneLite doesn't track those).
 
 ---
@@ -56,8 +59,8 @@ touches the ones it needs, and **1a does the shared changes once**.
 | "Seeds stack, saplings don't" decided by `type == HERB` | `SupplyCalculator` | `Crop.stackable` (true for seeds and spores, false for saplings). |
 | One payment item per crop | `Crop.paymentItemId/Quantity` | A list of `Payment(item, qty)`: the spirit tree takes 5 monkey nuts + 1 monkey bar + 1 ground tooth [Wiki: Spirit sapling]. |
 | Gardener per patch; protection = pay or compost | `Patch`, `Protection` | Allotment gardeners protect each allotment separately (two payments per set) [Wiki: Disease]. New `Protection.FLOWER` for allotments (1a). Some patch types have no gardener at all (flowers, mushroom, belladonna, Harmony Island allotment). |
-| Harvest = "pick herbs" or "pick fruit, clear tree" | `StepAdvisor`, `PatchGuide.expectedHarvest` | Per-type harvest behaviour: `HarvestKind` = PICK_ALL (allotment, hops, flower, herb, mushroom, belladonna, seaweed), PICK_REGROWS (bush, cactus, fruit tree, calquat), CHOP (tree, hardwood, celastrus, redwood), NONE (spirit tree: check health only). |
-| Clearing = axe or 200 coins | `SupplyCalculator`, `StepAdvisor` | Per-type clearing: spade (spirit tree, bushes, dead crops), axe or 200 coins (trees), **2,000 coins only** (redwood: the player can't clear it [Wiki: Redwood sapling]). |
+| Harvest = "pick herbs" or "pick fruit, clear tree" | `StepAdvisor`, `PatchGuide.expectedHarvest` | Per-type harvest behaviour: `HarvestKind` = PICK_ALL (allotment, hops, flower, herb, mushroom, belladonna, seaweed), PICK_REGROWS (bush, cactus, fruit tree, calquat), CHOP (tree, hardwood, celastrus, redwood, crystal tree), NONE (spirit tree: check health only). |
+| Clearing = axe or 200 coins | `SupplyCalculator`, `StepAdvisor` | Per-type clearing: spade (spirit tree, bushes, dead crops), axe or 200 coins (trees), **2,000 coins only** (redwood: the player can't clear it [Wiki: Redwood sapling]), nothing (crystal tree: chopping removes the tree and stump [Wiki: Crystal tree]). |
 | Message parsing "fruit tree / herb / tree patch" | `PatchGuide.patchNamed` | Word table per type ("allotment", "flower", "hops", "bush", "cactus", ...). Two allotments at one stop can't be told apart by the message: fall back to the patch being worked on (as today for "two of that type"). |
 | Planting tool: dibber for herbs, spade otherwise | `PatchGuide.plantingToolReminder` | `Crop.stackable` decides: seeds need a dibber (unless Barbarian planting), saplings a spade. |
 | Run-type toggles in one row | `RunPanel.runTypeToggles` (`GridLayout(1, n)`) | Breaks past 3-4 types. See "UI" below. |
@@ -319,9 +322,9 @@ and mushroom show "Can't be protected" as a greyed line under Protection, said o
 
 ---
 
-## 4. Sprint 1c: special trees (hardwood, calquat, celastrus, redwood, spirit tree)
+## 4. Sprint 1c: special trees (hardwood, calquat, celastrus, redwood, spirit tree, crystal tree)
 
-### Patches [RL FarmingWorld, Wiki: Special patches/Patches, Spirit Tree (Farming)/Patches, Farming Guild]
+### Patches [RL FarmingWorld, Wiki: Special patches/Patches, Spirit Tree (Farming)/Patches, Farming Guild, Crystal tree]
 
 | Type | Stop | Region, varbit | Gardener | Access |
 |---|---|---|---|---|
@@ -334,6 +337,11 @@ and mushroom show "Can't be protected" as a greyed line under Protection, said o
 | Celastrus | Farming Guild (existing) | 4922, `_L` | Taylor | 85 Farming |
 | Redwood | Farming Guild (existing) | 4922, `_I` | Alexandra | 85 to enter, 90 to plant |
 | Spirit tree | Port Sarim (new), Etceteria (1b), Brimhaven (existing), Hosidius (existing), Farming Guild (existing) | 12082 `_A` (y < 3272), 10300 `_B`, 11058 `_B`, 6967 `_F`, 4922 `_A` | five gardeners | Farming Guild 85; Etceteria as 1b |
+| Crystal tree | Prifddinas, north-east of the city (existing from 1a) | 13151 (+ 10 more, as the 1a patches), `_E` | **none** (RuneLite gives the patch no NPC; the Crystal tree page names none; Pennant, nearby, only trades crystal seeds for acorns [Wiki: Crystal acorn]) | Song of the Elves to enter Prifddinas (the patch's own pages list only 74 Farming) |
+
+The crystal tree is the only one of its kind, at the Prifddinas stop 1a already added (allotments `_A`/`_B`,
+flower `_C`, compost bin `_D`). RuneLite files it under its fruit tree tab; the plugin puts it in the Special
+trees family with the others here.
 
 ### Crops and saplings [RL Produce, Wiki: sapling pages]
 
@@ -348,8 +356,11 @@ and mushroom show "Can't be protected" as a greyed line under Protection, said o
 | Celastrus | 85 | 800 min (13 h 20) | 8 potato cacti |
 | Redwood | 90 | 6,400 min (4 d 10 h 40) | 6 dragonfruit |
 | Spirit tree | 83 | 3,840 min (2 d 16 h) | 5 monkey nuts + 1 monkey bar + 1 ground tooth |
+| Crystal tree | 74 | 480 min (8 h: RuneLite 80 min x 6, the wiki's "6 x 80 mins") | none: can't get diseased [Wiki: Crystal acorn] |
 
-All are planted as **saplings** (one per patch, don't stack, spade to plant). The plugin lists saplings it
+All are planted as **saplings** (one per patch, don't stack, spade to plant). The crystal sapling is grown from a
+crystal acorn (plant pot, trowel, water, 74 Farming) [Wiki: Crystal acorn]; as for the others, the plugin only
+lists the sapling (Q5). The plugin lists saplings it
 needs; it doesn't guide growing them from seeds (plant pot, trowel, watering can) unless elzerma wants that
 (Q5).
 
@@ -365,14 +376,22 @@ checked then chopped for bark, doesn't regrow; redwood **only** cleared by payin
 trees dug up with a spade, can't be chopped; calquat picked (6 fruit, RuneLite has no regrowth timer though the
 wiki says 1 per 20 min: use "pick what's there" like fruit trees).
 
+**Crystal tree** [Wiki: Crystal tree, Crystal acorn; RL PatchImplementation]: no payment and no protection (it can't
+get diseased, so RuneLite's table has no diseased or dead values). Compost still matters, because the harvest
+depends on it, not on Farming level: crystal shards 16-20 with none, 20-24 compost, 24-28 supercompost, 28-32
+ultracompost. The plugin's compost choice for the crystal tree should default to the best compost the player
+uses elsewhere. Check health when grown (13,240 xp; planting gives 126), then Chop-down with an axe; magic
+secateurs and the Farming cape do nothing. Chopping gives the shards (and sometimes bird nests) and removes the
+tree and stump together, so the patch is empty at once: no clearing step, no regrowth.
+
 ### Tools
 
-Spade, secateurs (prune diseased), axe (hardwood, celastrus, redwood, if not paying to clear), 2,000 coins for a
-redwood clear, magic secateurs not useful.
+Spade, secateurs (prune diseased), axe (hardwood, celastrus, redwood, if not paying to clear; always for the
+crystal tree, which has no one to pay), 2,000 coins for a redwood clear, magic secateurs not useful.
 
 ### Timing and the combined route
 
-These cycles are 13 hours to 4.5 days, so they are due rarely. The per-type due rule already skips them until
+These cycles are 8 hours (crystal tree) to 4.5 days, so they are due rarely. The per-type due rule already skips them until
 ready, so they can join the main combined route when due (the default answer to Q2). A spirit tree run that is
 only "check health" is short; Fossil Island (three hardwoods + two seaweeds from 1b) is one long detour, worth
 taking only when several of its patches are due. The route search decides that by cost, not by special case.
@@ -380,6 +399,12 @@ taking only when several of its patches are due. The route search decides that b
 A grown spirit tree can't be used for travel until its health is checked [Wiki: Spirit sapling]: once checked,
 `AccessSnapshot` should count it as a spirit tree destination for the travel graph (the Etceteria, Port Sarim,
 Brimhaven, Hosidius and Farming Guild spirit trees), which can shorten later runs.
+
+The crystal tree needs no new travel: Prifddinas is already in the travel atlas and a 1a stop. The wiki's ways
+there are a teleport crystal, the Prifddinas house portal (Teleport to House or a redirected house tab) and the
+city's north-west spirit tree, the route the patch page suggests [Wiki: Crystal tree patch]. The atlas
+picks between them by cost, as for every stop. When the allotments,
+flower and crystal tree are due together they are one Prifddinas visit.
 
 ### Supply list and bank tab
 
@@ -389,7 +414,8 @@ need the Farming Guild's advanced tier: show it as a requirement, said once in P
 ### Guide steps
 
 "Check the teak's health", "Chop the teak (or pay the squirrel to clear it, 200 coins)", "Pay Alexandra to clear
-the redwood: 2,000 coins", "Dig up the spirit tree", "Plant the spirit sapling (2 of 3 allowed)".
+the redwood: 2,000 coins", "Dig up the spirit tree", "Plant the spirit sapling (2 of 3 allowed)", "Check the
+crystal tree's health", "Chop down the crystal tree (axe)", "Plant the crystal sapling".
 
 ### UI
 
@@ -399,9 +425,12 @@ Run tab: one "Special trees" box. Farm tab: one Patches group per tree type, a s
 ### Tests
 
 - Unit: spirit tree limit by level (83 → 1, 88 → 2, 99 → all); redwood clear always costs 2,000 coins and never
-  an axe; calquat counts as picked-then-done; sapling slots don't stack.
+  an axe; calquat counts as picked-then-done; sapling slots don't stack; the crystal tree has no payment, no
+  clearing step and needs an axe; its decoder reads 0-3 weeds, 8-13 growing, 14 check-health, 15 chop-down
+  [RL PatchImplementation.CRYSTAL_TREE] and anything else as UNKNOWN.
 - Scenario: herbs + one ready spirit tree → the spirit tree joins the herb route with no extra bank stop; three
-  Fossil Island hardwoods due → one Fossil Island visit, not three.
+  Fossil Island hardwoods due → one Fossil Island visit, not three; Prifddinas allotments + a ready crystal tree
+  → one Prifddinas visit, axe on the supply list.
 
 ### UNVERIFIED (help-list guided tests)
 
@@ -412,6 +441,13 @@ Run tab: one "Special trees" box. Farm tab: one Patches group per tree type, a s
 4. Anglers' Retreat: `Skill.SAILING` exists in RuneLite's API (Sailing launched) but the plugin has never read
    it; **UNVERIFIED** that the level reads correctly. Guided test with `cannotTest` for players under 51.
 5. Patch points for each new patch.
+6. **CRYSTAL_TREE_STATES** (Farm tab): `FARMING_TRANSMIT_E` in region 13151 and its values (8-13 growing, 14
+   check-health, 15 chop-down) are RuneLite's and have never been read by this plugin; capture the value after
+   planting, at check-health and after chopping (when the patch should read as weeds or empty, not
+   UNKNOWN; **UNVERIFIED** that it goes back to 0-3). Also capture the shard count against the compost used.
+   `cannotTest` without 74 Farming, Song of the Elves or a crystal sapling.
+7. Crystal tree patch point: the wiki says only "north-east Prifddinas"; take it from Farming-Helper if it has
+   one, else from the game log, as in October.
 
 ### Risks and size
 
@@ -442,6 +478,8 @@ Questions 1-4 are asked first; 5-7 can wait until their sprint starts.
 
 **Answered by elzerma (2026-10-17):**
 1. Allotment protection: **the player picks per set** (Flower / Pay gardener / Compost only), starting on Flower.
-2. Special trees **join the main combined run** when due, with their own tick box.
+2. Special trees **join the main combined run** when due, with their own tick box. The crystal tree (added
+   2026-10-22) follows the same answer: it is in the Special trees family and joins the run at the Prifddinas
+   stop when due.
 3. Sprint order **1a → 1b → 1c**.
 4. New run types are **off** for new players.
