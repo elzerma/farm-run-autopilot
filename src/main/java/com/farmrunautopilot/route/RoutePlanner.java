@@ -1186,10 +1186,6 @@ public final class RoutePlanner
 				return cost == Cost.FREE ? 0 : STYLE_PENALTY;
 			case SAVE_CHARGES:
 				return cost == Cost.CHARGES ? STYLE_PENALTY : 0;
-			case FEWEST_ITEMS:
-				// A tablet or a charged item is one more thing per stop; runes and the house tab are shared
-				return cost == Cost.TABLET || cost == Cost.CHARGES ? STYLE_PENALTY
-					: cost == Cost.RUNES || cost == Cost.HOUSE ? STYLE_PENALTY / 3 : 0;
 			default:
 				return 0;
 		}

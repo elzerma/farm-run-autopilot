@@ -320,9 +320,6 @@ public class RoutePlannerTest
 		assertTrue(RoutePlanner.stylePenalty(TravelStyle.PREFER_FREE, RoutePlanner.Cost.TABLET) > 0);
 		assertTrue(RoutePlanner.stylePenalty(TravelStyle.SAVE_CHARGES, RoutePlanner.Cost.CHARGES) > 0);
 		assertEquals(0, RoutePlanner.stylePenalty(TravelStyle.SAVE_CHARGES, RoutePlanner.Cost.RUNES), 1e-9);
-		// Fewest items: a tablet per stop costs more than shared runes or one house tablet
-		assertTrue(RoutePlanner.stylePenalty(TravelStyle.FEWEST_ITEMS, RoutePlanner.Cost.TABLET)
-			> RoutePlanner.stylePenalty(TravelStyle.FEWEST_ITEMS, RoutePlanner.Cost.HOUSE));
 	}
 
 	@Test

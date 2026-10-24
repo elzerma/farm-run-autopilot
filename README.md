@@ -99,7 +99,7 @@ The plugin never clicks, types or acts for you. It only shows information.
   cooldown is over. "Avoid the Wilderness" is on to start with (the Ferox Enclave counts as safe). "Switch spellbook to
   cast" is off to start with: tick it to let the route cast a spell from another spellbook after Spellbook Swap or at
   your house altar.
-- Choose a travel style: Fastest, Prefer free, Save charges, or Fewest items to bring.
+- Choose a travel style: Fastest, Prefer free or Save charges.
 - Tablets come first; tick "Cast from runes, not tablets" (under Tablets and scrolls) to keep yours.
 - Charges are tracked across the whole run: jewellery charges, daily-limited teleports (Ardougne cloak,
   Explorer's ring) and items charged by hand (quetzal whistle, Xeric's talisman, pendant of Ates, counted from
