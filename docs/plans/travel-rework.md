@@ -882,7 +882,7 @@ outlined by id within 3 tiles of where its step starts; an NPC by name as before
 **Hand checks (elzerma, 2026-10-24):** the Ardougne boat ("Captain Barnaby: Brimhaven (30 coins)", outlined, ticking on
 the crossing), Harmony Island, the Troll Stronghold by Trollheim Teleport and the wording everywhere passed. Elkoy didn't
 come up: the run was armed again inside the hedge maze, where the fruit tree is in range, so the stop counted as reached
-(the old hand step did the same). Fixed in c969ddb (a ride still ahead within 25 tiles comes first); to check again.
+(the old hand step did the same). Fixed in c969ddb (a ride still ahead within 25 tiles comes first); elzerma's re-check passed (Elkoy led them out and the stop ticked). T5 is done and merged to master.
 
 ## 10. Risks
 
