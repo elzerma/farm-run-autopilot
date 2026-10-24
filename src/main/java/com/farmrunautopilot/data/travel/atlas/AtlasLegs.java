@@ -32,8 +32,8 @@ public final class AtlasLegs
 	private static final double SECONDS_PER_TICK = 0.6;
 	/** The house's exits: planned with the player's own house set-up (AtlasHouse), not from the atlas alone. */
 	private static final Set<String> HOUSE = Set.of("TELEPORTATION_PORTAL_POH", "TELEPORTATION_BOX");
-	/** Teleporting inside the house (Teleport to House with the house's teleport setting "inside"): out of the door. */
-	private static final int HOUSE_INSIDE_VARBIT = VarbitID.POH_TELE_TOGGLE;
+	/** The house's teleport setting, which the atlas's Teleport to House rows depend on. */
+	private static final int HOUSE_TELEPORT_SETTING = VarbitID.POH_TELE_TOGGLE;
 
 	private final TravelAtlas atlas;
 	private final AtlasAccount account;
@@ -186,14 +186,21 @@ public final class AtlasLegs
 			: kindSeconds(t) + extra + (insideHouse(t) ? TravelTimes.HOUSE_DOOR : 0);
 	}
 
-	/** Teleport to House set to land inside: out of the door to the portal, where the atlas puts it. */
+	/**
+	 * Teleport to House landing inside, as the house is set (read from the game): out of the door to the portal, where
+	 * the atlas puts it. Not by which of the atlas's rows this is: Shortest Path names them the other way round, its
+	 * "(Outside)" rows needing the setting at 0, which lands inside (elzerma's guided test, 2026-10-22).
+	 */
 	private boolean insideHouse(TravelAtlas.Jump t)
 	{
+		if (account.getAccess().isHouseTeleportOutside())
+		{
+			return false;
+		}
 		for (int id : t.getNeeds())
 		{
 			final AtlasNeed need = atlas.need(id);
-			if (need.getKind() == AtlasNeed.Kind.VARBIT && need.getVar() == HOUSE_INSIDE_VARBIT && need.passes(1)
-				&& !need.passes(0))
+			if (need.getKind() == AtlasNeed.Kind.VARBIT && need.getVar() == HOUSE_TELEPORT_SETTING)
 			{
 				return true;
 			}

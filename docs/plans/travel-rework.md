@@ -721,7 +721,9 @@ route snapshots, and banks come from the atlas.
   showed Hosidius is 8, and that the teleport setting reads 0 when Teleport to House lands inside and 1 when it lands
   outside: the other way round from Shortest Path's rows (harmless there, as both rows land on the same tile). It
   passed on its re-run, so "Where your house is" left the help list. Both values are shown in Settings > Debug >
-  Detected rather than My house (elzerma).
+  Detected rather than My house (elzerma). Teleport to House as a plain teleport to the portal (`AtlasLegs`) adds the
+  walk out of the door by that reading too: it went by Shortest Path's row names, so since T3 the 5 s were added for
+  houses landing outside and left off for houses landing inside.
 - **Route changes** (each explained in its test): without a whistle, Varlamore's legs each start with the Civitas illa
   Fortis Teleport and Renu from the city's pad (6 s quicker than walking back to a pad); with 68 Agility, Taverley is
   walked to over the rocks from whichever of Catherby and Falador Park is next to it; a whistle charge no longer counts

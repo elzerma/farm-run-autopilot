@@ -11,6 +11,7 @@ import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.poh.PortalNexus;
+import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.supply.Holdings;
 import java.util.Arrays;
@@ -165,6 +166,36 @@ public class TravelAtlasTest
 			assertEquals(portal, HousePortal.of(portal.getGameValue()));
 		}
 		assertNull(HousePortal.of(0));
+	}
+
+	@Test
+	public void teleportToHouseLandingInsideWalksOutOfTheDoor()
+	{
+		// Teleport to House by tablet to a Hosidius house's portal: landing inside (the game's setting at 0) takes the
+		// walk out of the door on top, landing outside (1) doesn't. Shortest Path names its two rows the other way
+		// round, so the row in use doesn't say which (elzerma's guided test, 2026-10-22)
+		assertEquals(TravelTimes.HOUSE_DOOR, houseTabletSeconds(false) - houseTabletSeconds(true), 1e-9);
+	}
+
+	/** Seconds for the Teleport to House tablet row this player can use: a Hosidius house, landing outside or not. */
+	private static double houseTabletSeconds(boolean outside)
+	{
+		final AccessSnapshot base = access(99, HousePortal.HOSIDIUS.getGameValue());
+		final AccessSnapshot access = new AccessSnapshot(true, base.getQuests(), base.getRealLevels(),
+			base.getCompletedDiaries(), base.getUnlocks(), base.getHouseLocation(), outside, null, Collections.emptySet(),
+			0, 0, false);
+		final AtlasAccount account = new AtlasAccount(access, holdings(items(ItemID.POH_TABLET_TELEPORTTOHOUSE, 10)),
+			Map.of(VarbitID.POH_HOUSE_LOCATION, access.getHouseLocation(), VarbitID.POH_TELE_TOGGLE, outside ? 1 : 0),
+			Map.of());
+		final AtlasLegs legs = new AtlasLegs(ATLAS, account);
+		for (TravelAtlas.Jump t : ATLAS.getTeleports())
+		{
+			if (t.getName().startsWith("Teleport to House tablet") && legs.usable(t))
+			{
+				return legs.teleportTime(t);
+			}
+		}
+		throw new AssertionError("No usable Teleport to House tablet " + (outside ? "outside" : "inside"));
 	}
 
 	@Test
