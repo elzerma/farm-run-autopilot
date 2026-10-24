@@ -833,8 +833,14 @@ the client thread, so:
 - **Bank costs:** left at 15 s for now. The only clean visit in elzerma's logs (2026-10-18, after Nemus Retreat) took
   36 s from opening the bank to done, during a test run; the dev log now times each visit from the stop's last patch
   ("Bank visit done after X: N s from the last patch, by ...") so the big-run check gives the number.
-- **"Fewest items to bring"** went at the start (above).
+- **"Fewest items to bring"** went at the start (above). elzerma (2026-10-24): if a GitHub issue asks for it, rebuild
+  it as a feature of its own rather than bring the old style back.
 - **Not done:** the patch order inside a stop (section 4), planning the quickest run itself off the client thread.
+- **Hand checks (elzerma, 2026-10-24), passed:** their usual run keeps the quickest ways with no stutter; every crop
+  type at once shows a banked route at once and stays smooth, with no leg swapped; the Travel style list has the three
+  styles. The dev log had searches of 1-3 s, each "leave at home: nothing". Merged to master. Bank visits timed in their
+  full run: 19 s (an unplanned visit by ring of dueling), 89 s and 106 s from the last patch (the planned ones, with
+  deposits and a wrongly asked missing item), so 15 s of banking is low; to be set once the missing-item fix below is in.
 
 ## 10. Risks
 
