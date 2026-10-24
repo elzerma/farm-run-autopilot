@@ -226,6 +226,15 @@ flowers" box and one "Hops" box.
 
 ## 3. Sprint 1b: bushes, cactus, mushroom, belladonna, seaweed
 
+**Built (2026-10-24, branch `claude/1c-plan-file-name-0cf248`, 19350b6 and 1b5a201), awaiting elzerma's hand checks.**
+Differences from the plan below: the Auburnvale belladonna is a stop of its own (`AUBURNVALE`, 84 tiles from the Nemus
+Retreat tree; RuneLite puts both in region 5427); the Fossil Island dive isn't in Shortest Path's data, so the atlas was
+rebuilt with it added by hand (`tools/atlas/extra-boats.tsv`); bushes and cacti are dug up with the spade to replant
+(the 200-coin clear stays for trees); fruit trees, bushes and cacti can be picked and left growing (Farm > Protection);
+the plan's BELLADONNA_STOP and SPORE_COUNTS tests went (the atlas settles the stop; the dive test asks about spores);
+the help list has SPECIALS_PATCH_POINTS, SEAWEED_DIVE and ETCETERIA_ACCESS. Defaults Claude picked, unconfirmed: bushes,
+cacti and seaweed paid for; no compost on bushes and cacti, ultracompost on mushrooms, belladonna and seaweed.
+
 ### Patches [RL FarmingWorld, Wiki: Bush patch/Patches, Special patches/Patches]
 
 | Type | Stop | Region (extra), varbit | Gardener | Access |
