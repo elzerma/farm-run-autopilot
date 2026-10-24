@@ -138,10 +138,17 @@ supply list, not travel, so they could run alongside T5, or as their own sprints
 
 ## 7. Open questions for elzerma
 
-1. Is P1-P3 the right split, and where do they go: before 1b, between 1b and 1c, or after 1c?
-2. Should a compost bin that's ready to collect add its stop to the run when nothing else is due there?
-3. Empty buckets after composting: drop (as now), keep for the bins, or store at the leprechaun?
-4. Which of section 4's ideas are worth planning?
+1. Which of section 4's ideas are worth planning? (Claude's own suggestions, from "Other features at the patches
+   might be good, too".)
 
-Answered in section 2: noting on by default, cleaning at the patch, every bin used, compost taken from the
-leprechaun at each stop for that stop.
+**Answered (elzerma, 2026-10-24):** after crop types 1c (T5 -> 1b -> 1c -> P1 -> P2 -> P3 -> T9); a ready bin
+never adds a stop, as the bins use the crops grown in the same run; empty buckets: drop, keep or store at the
+leprechaun (a setting, drop by default); noting on by default, cleaning at the patch, every bin used, compost taken
+from the leprechaun at each stop for that stop (section 2).
+
+**The settings** (elzerma liked this shape): a new Farm tab section, "At the patches", below "Compost and
+cures": Note produce on the tool leprechaun (on), Clean herbs (off), Empty buckets (Drop / Keep / Store at the
+leprechaun), and Make compost in the compost bins (off), which when on shows Make ultracompost (brings volcanic
+ash) and the crops for the bin (snape grass never offered). Taking compost from the leprechaun, bucket or
+bottomless bucket, and picking everything before planting need no setting. "Compost and cures" keeps which
+compost each patch type gets (say it once).
