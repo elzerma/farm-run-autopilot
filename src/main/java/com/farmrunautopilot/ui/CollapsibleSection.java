@@ -13,12 +13,13 @@ import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
 
 /**
- * A titled section whose content can be shown or hidden by clicking the title.
+ * A titled section whose content can be shown or hidden by clicking the title. It can lead with a tick box, e.g. a
+ * Farm tab patch type's on and off.
  */
 class CollapsibleSection extends JPanel
 {
 	/** The clickable title bar: a rounded card with a chevron (Sprint 7 facelift). */
-	private final Card headCard = new Card(new BorderLayout()).hoverable();
+	private final Card headCard = new Card(new BorderLayout(8, 0)).hoverable();
 	private final JLabel header = new JLabel();
 	private final JPanel content = new JPanel();
 	private final String title;
@@ -75,6 +76,14 @@ class CollapsibleSection extends JPanel
 		// On the card only: a tooltip on the label would take its clicks
 		headCard.setToolTipText(UiText.tooltip(text, 250));
 		setExpanded(expanded);
+		return this;
+	}
+
+	/** A control before the chevron, which takes its own clicks: e.g. a Farm tab patch type's tick box. */
+	CollapsibleSection lead(JComponent lead)
+	{
+		lead.setOpaque(false);
+		headCard.add(lead, BorderLayout.WEST);
 		return this;
 	}
 
