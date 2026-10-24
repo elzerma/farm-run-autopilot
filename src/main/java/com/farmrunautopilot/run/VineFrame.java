@@ -10,9 +10,9 @@ import java.util.Random;
 
 /**
  * A growing vine round something the player should click (elzerma, issue #5): the bank's Farm run button, the seed
- * vault's button, the bank's Deposit inventory button, the spell to cast and the place to pick on a travel map. A thick
- * stem with leaves and curling tendrils sprouts from the middle of the bottom edge, grows both ways and up the sides to
- * meet at the top, opens into flowers,
+ * vault's button, the bank's Deposit inventory button, the spell to cast, the item to use (inside its slot), the icon of
+ * the side-panel tab either is on and the place to pick on a travel map. A thick stem with leaves and curling tendrils
+ * sprouts from the middle of the bottom edge, grows both ways and up the sides to meet at the top, opens into flowers,
  * then wilts (browning, drooping, dropping its petals) and grows again. Lit from the top left, with a soft shadow under
  * it, so it stands off the button (elzerma, 2026-10-18: "more depth, should appear more 3d"); it can be drawn thicker
  * (a travel map's places). Each highlight keeps its own, since the falling petals are state. Drawing only; client thread.
@@ -33,6 +33,8 @@ public final class VineFrame
 	private static final long PETAL_EMIT_MILLIS = 70;
 	private static final long PETAL_LIFE_MILLIS = 1000;
 	private static final int MAX_PETALS = 30;
+	/** How far inside an item's slot the stem runs, in pixels; its flowers just reach the edge. */
+	private static final int INSIDE = 3;
 
 	private static final Color STEM = new Color(0x2E, 0x6B, 0x26);
 	private static final Color LEAF = new Color(0x6D, 0xC0, 0x3E);
@@ -83,10 +85,30 @@ public final class VineFrame
 	 */
 	public void draw(Graphics2D graphics, Rectangle bounds, int cell)
 	{
-		final long now = System.currentTimeMillis();
 		final int gap = GAP * cell;
-		final Rectangle frame = new Rectangle(bounds.x - gap, bounds.y - gap, bounds.width + 2 * gap - 1,
-			bounds.height + 2 * gap - 1);
+		drawOn(graphics, new Rectangle(bounds.x - gap, bounds.y - gap, bounds.width + 2 * gap - 1,
+			bounds.height + 2 * gap - 1), cell, 1);
+	}
+
+	/**
+	 * Draws the vine just inside {@code bounds} as it is right now: round an item, inside its slot (elzerma, 2026-10-21:
+	 * "shrink it to fit inside the frame" of a worn equipment slot, and it stays clear of the next inventory slots). Its
+	 * stem runs 3 px in and its leaves and tendrils grow inwards, so only a wilting flower or a falling petal reaches
+	 * past the edge.
+	 */
+	public void drawInside(Graphics2D graphics, Rectangle bounds)
+	{
+		drawOn(graphics, new Rectangle(bounds.x + INSIDE, bounds.y + INSIDE, bounds.width - 2 * INSIDE - 1,
+			bounds.height - 2 * INSIDE - 1), 1, -1);
+	}
+
+	/**
+	 * The vine along {@code frame}, its leaves and tendrils growing away from what it frames ({@code facing} 1) or into
+	 * it (-1).
+	 */
+	private void drawOn(Graphics2D graphics, Rectangle frame, int cell, int facing)
+	{
+		final long now = System.currentTimeMillis();
 		// Each half of the vine: along the bottom from the middle, up a side, along the top to the middle
 		final double half = frame.width + frame.height;
 		final long t = now % CYCLE_MILLIS;
@@ -98,11 +120,11 @@ public final class VineFrame
 		// The shadow first, under everything, then the vine itself
 		for (int side = -1; side <= 1; side += 2)
 		{
-			drawHalf(graphics, frame, side, grown, bloom, wilt, cell, true);
+			drawHalf(graphics, frame, side, grown, bloom, wilt, cell, facing, true);
 		}
 		for (int side = -1; side <= 1; side += 2)
 		{
-			drawHalf(graphics, frame, side, grown, bloom, wilt, cell, false);
+			drawHalf(graphics, frame, side, grown, bloom, wilt, cell, facing, false);
 		}
 
 		// A few petals fall while it's in flower; the rest all drop as it starts to wilt
@@ -126,7 +148,7 @@ public final class VineFrame
 	 * lit from the top left.
 	 */
 	private void drawHalf(Graphics2D graphics, Rectangle frame, int side, double grown, double bloom, double wilt,
-		int cell, boolean shadow)
+		int cell, int facing, boolean shadow)
 	{
 		// Wilting: the green goes brown and everything sags towards the bottom
 		final Color stem = blend(STEM, DEAD_STEM, wilt);
@@ -139,7 +161,7 @@ public final class VineFrame
 		for (int d = 0; d <= grown; d++)
 		{
 			final int[] p = pointAt(frame, side, d);
-			final int[] out = outward(frame, side, d);
+			final int[] out = outward(frame, side, d, facing);
 			// The edge facing up or left catches the light
 			final boolean outLit = out[0] < 0 || out[1] < 0;
 			for (int k = 0; k < width; k++)
@@ -171,7 +193,7 @@ public final class VineFrame
 		for (int d = leafSpacing; d <= grown; d += leafSpacing)
 		{
 			final int[] p = pointAt(frame, side, d);
-			final int[] out = outward(frame, side, d);
+			final int[] out = outward(frame, side, d, facing);
 			final int[] along = along(frame, side, d);
 			final int reach = (d / leafSpacing) % 2 == 0 ? width : -cell;
 			final int x = p[0] + out[0] * reach + drop;
@@ -196,7 +218,7 @@ public final class VineFrame
 			for (int d = tendrilSpacing; d <= grown; d += tendrilSpacing)
 			{
 				final int[] p = pointAt(frame, side, d);
-				final int[] out = outward(frame, side, d);
+				final int[] out = outward(frame, side, d, facing);
 				final int[] along = along(frame, side, d);
 				final int[][] hook = {{0, 2}, {0, 3}, {1, 4}, {2, 3}};
 				for (int[] h : hook)
@@ -386,19 +408,19 @@ public final class VineFrame
 		return new int[]{(int) Math.round(x), (int) Math.round(y)};
 	}
 
-	/** One pixel away from the button, at this point of the vine. */
-	private static int[] outward(Rectangle r, int side, int distance)
+	/** One pixel away from the button at this point of the vine, or towards it when {@code facing} is -1. */
+	private static int[] outward(Rectangle r, int side, int distance, int facing)
 	{
 		final double halfWidth = r.width / 2.0;
 		if (distance < halfWidth)
 		{
-			return new int[]{0, 1};
+			return new int[]{0, facing};
 		}
 		if (distance < halfWidth + r.height)
 		{
-			return new int[]{side, 0};
+			return new int[]{side * facing, 0};
 		}
-		return new int[]{0, -1};
+		return new int[]{0, -facing};
 	}
 
 	/** One pixel further along the vine, the way it grows, at this point. */
