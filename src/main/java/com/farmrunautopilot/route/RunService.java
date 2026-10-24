@@ -2,6 +2,7 @@ package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
@@ -14,6 +15,7 @@ import com.farmrunautopilot.data.travel.atlas.AtlasNeed;
 import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.run.StepAdvisor;
+import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.settings.VaultBanking;
@@ -21,6 +23,7 @@ import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.supply.SupplyPlan;
+import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -29,6 +32,10 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
@@ -72,6 +79,17 @@ public class RunService
 	private Future<?> atlasLoad;
 	/** Item names are fixed, so look each up once. */
 	private final Map<Integer, String> names = new HashMap<>();
+	/** Each item's wear slot, looked up once (client thread), so the travel search can use them off it. */
+	private final Map<Integer, Optional<TravelItem.WearSlot>> wearSlots = new HashMap<>();
+	/** How long the travel search may take before keeping what it has (T4; about a second for most runs). */
+	private static final long SEARCH_MILLIS = 8000;
+	/** The travel search's own thread, from startUp to shutDown. */
+	private ExecutorService searcher;
+	/** The travel search running in the background, and the quickest run it's for ({@link #searchKey}); null if none. */
+	private Future<?> search;
+	private String searchingFor;
+	/** The last travel search's answer, set from its thread. */
+	private volatile Searched searched;
 
 	private volatile boolean dirty = true;
 	/** Null until the first plan after login, so that one is always published. */
@@ -166,6 +184,8 @@ public class RunService
 	{
 		plan = null;
 		ways = TravelWays.EMPTY;
+		searched = null;
+		searchingFor = null;
 		dirty = true;
 	}
 
@@ -236,8 +256,9 @@ public class RunService
 		}
 		final Player player = client.getLocalPlayer();
 		final WorldPoint tile = player != null ? player.getWorldLocation() : null;
-		final RunAssembly.Result run = assembly(config, access, holdings, atlas, selection)
-			.assemble(new RunAssembly.Start(here, near, nearTiles, guild, tile));
+		final RunAssembly.Start start = new RunAssembly.Start(here, near, nearTiles, guild, tile);
+		final RunAssembly.Result run = searched(assembly(config, access, holdings, atlas, selection).assemble(start),
+			config, access, holdings, atlas, selection, start);
 		final Route route = run.getRoute();
 		final SupplyPlan supplies = run.getSupplies();
 		final List<BankStop> bankStops = run.getBankStops();
@@ -278,6 +299,13 @@ public class RunService
 				atlas.getPlaces().size());
 			markDirty();
 		});
+		// A thread of its own: the search can take seconds, and RuneLite's executor is shared with other plugins
+		searcher = Executors.newSingleThreadExecutor(r ->
+		{
+			final Thread thread = new Thread(r, "Farm Run Autopilot travel search");
+			thread.setDaemon(true);
+			return thread;
+		});
 	}
 
 	public void shutDown()
@@ -287,6 +315,143 @@ public class RunService
 			atlasLoad.cancel(false);
 			atlasLoad = null;
 		}
+		if (search != null)
+		{
+			search.cancel(true);
+			search = null;
+		}
+		if (searcher != null)
+		{
+			searcher.shutdownNow();
+			searcher = null;
+		}
+		searchingFor = null;
+		searched = null;
+	}
+
+	/** What the travel search found for a run (T4): what to leave at home, for the run planned with the quickest ways. */
+	private static final class Searched
+	{
+		/** {@link #searchKey} of the quickest run it searched from. */
+		final String key;
+		final Set<String> avoid;
+
+		Searched(String key, Set<String> avoid)
+		{
+			this.key = key;
+			this.avoid = avoid;
+		}
+	}
+
+	/**
+	 * The run with the travel search's answer (docs/plans/travel-rework.md, T4): a run that banks partway may be quicker
+	 * leaving a teleport at home. The search takes about a second, so it runs in the background from the quickest
+	 * run, which shows meanwhile; its answer is used once it's back, for as long as the quickest run stays the same
+	 * (withdrawing items for it doesn't change it). Counted again here with the game's item lookups, and kept only if
+	 * it's still quicker. Client thread.
+	 */
+	private RunAssembly.Result searched(RunAssembly.Result quickest, RunConfig config, AccessSnapshot access,
+		Holdings holdings, RouteAtlas atlas, RunSelection selection, RunAssembly.Start start)
+	{
+		if (quickest.getBankStops().isEmpty())
+		{
+			return quickest;
+		}
+		final String key = searchKey(quickest);
+		final Searched done = searched;
+		if (done != null && done.key.equals(key))
+		{
+			if (done.avoid.isEmpty())
+			{
+				return quickest;
+			}
+			final RunAssembly.Result run = assembly(config, access, holdings, atlas.avoiding(done.avoid), selection)
+				.assemble(start);
+			if (TravelSearch.score(run) + TravelSearch.MIN_GAIN > TravelSearch.score(quickest))
+			{
+				return quickest;
+			}
+			return TravelSearch.explain(quickest, run, done.avoid, this::itemName);
+		}
+		if (!key.equals(searchingFor))
+		{
+			startSearch(key, config, access, holdings, atlas, selection, start);
+		}
+		return quickest;
+	}
+
+	/**
+	 * The search on RuneLite's executor, with what it needs read now: the patches' predictions, the crops' prices, and
+	 * the item names and wear slots looked up so far (an item not looked up yet counts as carried, which can only make
+	 * a slot look dearer; the answer is counted again on the client thread). Client thread.
+	 */
+	private void startSearch(String key, RunConfig config, AccessSnapshot access, Holdings holdings, RouteAtlas atlas,
+		RunSelection selection, RunAssembly.Start start)
+	{
+		if (search != null)
+		{
+			search.cancel(true);
+		}
+		searchingFor = key;
+		final PohSetup poh = settings.getAccount().getPoh();
+		final Map<Patch, PatchPrediction> predictions = new EnumMap<>(Patch.class);
+		for (Patch patch : selection.getPatches())
+		{
+			final PatchPrediction prediction = patchTracker.predict(patch);
+			if (prediction != null)
+			{
+				predictions.put(patch, prediction);
+			}
+		}
+		final Map<Integer, Long> prices = new HashMap<>();
+		for (Crop crop : Crop.values())
+		{
+			prices.computeIfAbsent(crop.getPlantItemId(), id -> (long) itemManager.getItemPrice(id));
+		}
+		final Map<Integer, String> namesNow = new HashMap<>(names);
+		final Map<Integer, Optional<TravelItem.WearSlot>> slotsNow = new HashMap<>(wearSlots);
+		final RouteAtlas own = atlas.copy();
+		if (searcher == null)
+		{
+			return;
+		}
+		search = searcher.submit(() ->
+		{
+			final long began = System.currentTimeMillis();
+			final TravelSearch.Outcome outcome = TravelSearch.search(own, a -> new RunAssembly(config, access, holdings,
+					poh, a, selection, predictions::get, id -> namesNow.getOrDefault(id, ""),
+					id -> prices.getOrDefault(id, 0L), id -> slotsNow.getOrDefault(id, Optional.empty()).orElse(null)),
+				start, config, access, holdings, System::currentTimeMillis, began + SEARCH_MILLIS);
+			if (Thread.currentThread().isInterrupted())
+			{
+				return;
+			}
+			log.debug("Travel search: {} whole runs weighed in {} ms; leave at home: {}", outcome.getTried(),
+				System.currentTimeMillis() - began, outcome.getAvoid().isEmpty() ? "nothing" : outcome.getAvoid());
+			searched = new Searched(key, outcome.getAvoid());
+			markDirty();
+		});
+	}
+
+	/**
+	 * What the travel search depends on in a run: each stop and its way, and where it banks with how full each part is.
+	 * Not what's carried yet, so withdrawing the items doesn't start it again.
+	 */
+	private static String searchKey(RunAssembly.Result run)
+	{
+		final StringBuilder b = new StringBuilder();
+		for (RouteStop stop : run.getRoute().getStops())
+		{
+			b.append(stop.getLocation()).append('|').append(stop.describeTravel()).append('|')
+				.append(Math.round(stop.getLegSeconds())).append(';');
+		}
+		b.append(run.getSupplies().getSlots());
+		for (BankStop bank : run.getBankStops())
+		{
+			b.append(';').append(bank.getAfterStop()).append('|').append(bank.how()).append('|')
+				.append(bank.getSupplies().getSlots());
+		}
+		return b.toString();
 	}
 
 	/** What the player lets the route use: the Travel tab's families, single ways and the Wilderness (sprint T7). */
@@ -372,6 +537,10 @@ public class RunService
 			b.append(i + 1).append(". ").append(stop.getLocation().getDisplayName()).append(": ")
 				.append(stop.describeTravel()).append(", ").append(Math.round(stop.getLegSeconds())).append(" s = ")
 				.append(stop.getBreakdown()).append('\n');
+			if (stop.getWhy() != null)
+			{
+				b.append("   Not the quickest: ").append(stop.getWhy()).append('\n');
+			}
 			final BankStop bank = plan.bankAfter(i);
 			if (bank != null)
 			{
@@ -507,8 +676,11 @@ public class RunService
 	/** The equipment slot an item is worn in, from RuneLite's item stats; null if none the supply list plans. */
 	TravelItem.WearSlot wearSlot(int itemId)
 	{
-		final ItemStats stats = itemManager.getItemStats(itemId);
-		return stats == null || !stats.isEquipable() || stats.getEquipment() == null ? null
-			: TravelItem.WearSlot.of(stats.getEquipment().getSlot());
+		return wearSlots.computeIfAbsent(itemId, id ->
+		{
+			final ItemStats stats = itemManager.getItemStats(id);
+			return Optional.ofNullable(stats == null || !stats.isEquipable() || stats.getEquipment() == null ? null
+				: TravelItem.WearSlot.of(stats.getEquipment().getSlot()));
+		}).orElse(null);
 	}
 }

@@ -1,16 +1,22 @@
 package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.data.Location;
+import com.farmrunautopilot.data.travel.Spell;
+import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.SupplyCalculator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.function.LongSupplier;
 import lombok.Value;
 
@@ -162,6 +168,96 @@ final class TravelSearch
 			total += stop.getDeparture() == Departure.NONE ? RoutePlanner.NO_WAY_PENALTY : 0;
 		}
 		return total;
+	}
+
+	/**
+	 * The searched run with each leg that's slower than in the quickest run saying why, for the Run tab's hover (said
+	 * there only), e.g. "4 s slower than the quickest way, so your Ectophial can stay in the bank: one bank visit fewer,
+	 * 15 s quicker overall".
+	 */
+	static RunAssembly.Result explain(RunAssembly.Result quickest, RunAssembly.Result run, Set<String> avoid,
+		IntFunction<String> itemName)
+	{
+		if (avoid.isEmpty())
+		{
+			return run;
+		}
+		final Map<Location, RouteStop> before = new EnumMap<>(Location.class);
+		for (RouteStop stop : quickest.getRoute().getStops())
+		{
+			before.put(stop.getLocation(), stop);
+		}
+		final List<String> names = new ArrayList<>();
+		for (String key : avoid)
+		{
+			names.add(name(key, itemName));
+		}
+		final int fewer = quickest.getBankStops().size() - run.getBankStops().size();
+		final long saved = Math.round(score(quickest) - score(run));
+		final String gain = (fewer > 0 ? (fewer == 1 ? "one bank visit" : fewer + " bank visits") + " fewer"
+			: "a quicker bank visit") + ", " + saved + " s quicker overall";
+		final String stay = joined(names);
+		final List<RouteStop> stops = new ArrayList<>();
+		boolean changed = false;
+		for (RouteStop stop : run.getRoute().getStops())
+		{
+			final RouteStop was = before.get(stop.getLocation());
+			final long slower = was == null ? 0 : Math.round(stop.getLegSeconds() - was.getLegSeconds());
+			if (slower >= 1 && !stop.describeTravel().equals(was.describeTravel()))
+			{
+				stops.add(stop.withWhy(slower + " s slower than the quickest way, so your " + stay + " can"
+					+ " stay in the bank: " + gain));
+				changed = true;
+			}
+			else
+			{
+				stops.add(stop);
+			}
+		}
+		if (!changed)
+		{
+			return run;
+		}
+		final Route route = run.getRoute();
+		return new RunAssembly.Result(new Route(stops, route.getMode(), route.getTravelSeconds(),
+			route.getPatchSeconds(), route.getStartsFrom()), run.getSupplies(), run.getBankStops());
+	}
+
+	/** A thing carried as the player knows it, e.g. "Ectophial", "law runes", "Varrock Teleport tablets". */
+	static String name(String key, IntFunction<String> itemName)
+	{
+		final int colon = key.indexOf(':');
+		final String kind = colon < 0 ? key : key.substring(0, colon);
+		final String what = colon < 0 ? "" : key.substring(colon + 1);
+		switch (kind)
+		{
+			case "item":
+				if (!what.isEmpty() && Character.isDigit(what.charAt(0)))
+				{
+					return itemName.apply(Integer.parseInt(what));
+				}
+				return TravelItem.valueOf(what).getDisplayName();
+			case "rune":
+				return what.toLowerCase() + " runes";
+			case "tablet":
+				return Spell.valueOf(what).getDisplayName() + " tablets";
+			case "staff":
+				return "fairy ring staff";
+			case "logs":
+				return "logs for the balloon";
+			default:
+				return key;
+		}
+	}
+
+	/** "A", "A and B", "A, B and C". */
+	private static String joined(List<String> names)
+	{
+		if (names.size() == 1)
+		{
+			return names.get(0);
+		}
+		return String.join(", ", names.subList(0, names.size() - 1)) + " and " + names.get(names.size() - 1);
 	}
 
 	/** Everything the run's ways carry, as {@link Footprint} keys. */

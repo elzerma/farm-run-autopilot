@@ -37,6 +37,28 @@ public class TravelSearchTest
 		assertTrue(TravelSearch.score(o.getRun()) + TravelSearch.MIN_GAIN <= TravelSearch.score(o.getQuickest()));
 		// The way to Port Phasmatys changes; nothing on the supply list is the Ectophial
 		assertFalse(o.getRun().getSupplies().getLines().stream().anyMatch(l -> l.getName().contains("Ectophial")));
+
+		// The leg that changed says why on the Run tab's hover; the others say nothing
+		final RunAssembly.Result explained = TravelSearch.explain(o.getQuickest(), o.getRun(), o.getAvoid(),
+			id -> "item " + id);
+		final List<String> whys = new java.util.ArrayList<>();
+		for (RouteStop stop : explained.getRoute().getStops())
+		{
+			if (stop.getWhy() == null)
+			{
+				continue;
+			}
+			whys.add(stop.getLocation() + ": " + stop.getWhy());
+			// It went by the Ectophial in the quickest run (Harmony Island, through Port Phasmatys)
+			final RouteStop was = o.getQuickest().getRoute().getStops().stream()
+				.filter(s -> s.getLocation() == stop.getLocation()).findFirst().orElse(null);
+			assertTrue(stop.getLocation().name(), was != null && Footprint.of(was, new RunConfig().sanitise(), ElzermaAccount.access(),
+				ElzermaAccount.holdings()).contains("item:ECTOPHIAL"));
+		}
+		assertEquals(whys.toString(), 1, whys.size());
+		assertTrue(whys.get(0), whys.get(0).contains(" s slower than the quickest way, so your Ectophial can stay in "
+			+ "the bank: one bank visit fewer, "));
+		assertTrue(whys.get(0), whys.get(0).endsWith(" s quicker overall"));
 	}
 
 	@Test
