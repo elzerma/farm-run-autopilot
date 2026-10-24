@@ -582,10 +582,16 @@ public class RunService
 	 */
 	public SupplyPlan suppliesFor(RunPlan plan, List<RouteStop> stops)
 	{
+		return suppliesFor(plan, stops, Collections.emptySet());
+	}
+
+	/** As above, leaving out patches whose supplies are used already (done or planted this run). Client thread. */
+	public SupplyPlan suppliesFor(RunPlan plan, List<RouteStop> stops, Set<Patch> leaveOut)
+	{
 		final Holdings holdings = holdingsTracker.getHoldings();
 		// No route is planned, so no travel atlas is needed
 		return assembly(settings.getRunConfig(), accessChecker.getSnapshot(), holdings, null, plan.getSelection())
-			.part(holdings, stops, plan.getRoute());
+			.part(holdings, stops, plan.getRoute(), leaveOut);
 	}
 
 	/** The quickest bank teleport the player is carrying now and lets the route use, or null. Client thread. */

@@ -111,6 +111,8 @@ public class RunSession
 	private BankStop extraBank;
 	/** The unplanned bank visit comes before the current stop is finished: its step needs the missing item. */
 	private boolean extraNow;
+	/** The planned bank visit the unplanned one does early (its stop index), or -1: it's done with it (banking early). */
+	private int movedVisit = -1;
 	/** An unplanned bank visit was ticked away by hand: no more until the next planned one. */
 	private boolean declinedExtra;
 	/** A daily teleport the game just refused for having no uses left today, whose leg is to be planned again. */
@@ -958,6 +960,7 @@ public class RunSession
 	{
 		extraBank = null;
 		extraNow = false;
+		movedVisit = -1;
 		checkedHoldings = null;
 		missingSince = 0;
 		missingAsk = null;
@@ -1032,8 +1035,78 @@ public class RunSession
 		final List<RouteStop> stops = plan.getRoute().getStops();
 		final int end = partEnd();
 		final boolean now = patches.currentItemMissing(view.getHighlights()) || stopIndex >= end;
-		startExtraBank(runService.suppliesFor(plan, stops.subList(now ? stopIndex : stopIndex + 1, end + 1)), now);
+		SupplyPlan needed = now ? stillNeeded(end)
+			: runService.suppliesFor(plan, stops.subList(stopIndex + 1, end + 1));
+		// Banking early does the planned visit now, when the rest of this part and the next fit in the inventory
+		// (elzerma, 2026-10-24: "it should just move the scheduled stop up")
+		final BankStop planned = plan.bankAfter(end);
+		if (planned != null && !banksDone.contains(end))
+		{
+			final int nextEnd = partEndAfter(end);
+			final SupplyPlan both = now ? stillNeeded(nextEnd)
+				: runService.suppliesFor(plan, stops.subList(stopIndex + 1, nextEnd + 1));
+			if (both.getSlots() <= SupplyCalculator.INVENTORY_SLOTS)
+			{
+				needed = both;
+				movedVisit = end;
+			}
+		}
+		startExtraBank(needed, now);
 		evaluate();
+	}
+
+	/** The last stop of the part after the bank visit following stop {@code end}: up to the next visit, or the end. */
+	private int partEndAfter(int end)
+	{
+		for (BankStop bank : plan.getBankStops())
+		{
+			if (bank.getAfterStop() > end)
+			{
+				return bank.getAfterStop();
+			}
+		}
+		return plan.getRoute().getStops().size() - 1;
+	}
+
+	/** An unplanned visit is done: if it took a planned visit's place (banking early), that one is done too. */
+	private void extraBankDone()
+	{
+		if (movedVisit < 0)
+		{
+			return;
+		}
+		log.debug("Planned bank visit after {} done early", plan.getRoute().getStops().get(movedVisit).getLocation()
+			.getDisplayName());
+		banksDone.add(movedVisit);
+		// As at a planned visit: a new part
+		declinedExtra = false;
+		skippedItems.clear();
+		missingAsk = null;
+		movedVisit = -1;
+	}
+
+	/**
+	 * What's still to use from this stop to the end of the part: this stop's patches not finished or planted yet, and
+	 * its way here only if not arrived yet. What was used here already isn't asked for again (elzerma, 2026-10-24: at
+	 * Hosidius, the house tablet that got them there and the snapdragon and nasturtium just planted were asked for).
+	 */
+	private SupplyPlan stillNeeded(int end)
+	{
+		final List<RouteStop> part = new ArrayList<>(plan.getRoute().getStops().subList(stopIndex, end + 1));
+		final RouteStop here = part.get(0);
+		if (legRecorded)
+		{
+			part.set(0, new RouteStop(here.getLocation(), null, Departure.WALK, 0, false));
+		}
+		final Set<Patch> used = EnumSet.noneOf(Patch.class);
+		for (Patch patch : plan.getSelection().getPatches())
+		{
+			if (patch.getLocation() == here.getLocation() && patches.suppliesUsed(patch))
+			{
+				used.add(patch);
+			}
+		}
+		return runService.suppliesFor(plan, part, used);
 	}
 
 	/**
@@ -1142,7 +1215,7 @@ public class RunSession
 			else if (now - missingSince >= MISSING_GRACE_MILLIS)
 			{
 				final List<RouteStop> part = stops.subList(stopIndex, end + 1);
-				if (ask(runService.suppliesFor(plan, part), passesGuild(part), "now"))
+				if (ask(stillNeeded(end), passesGuild(part), "now"))
 				{
 					return;
 				}
@@ -1314,6 +1387,7 @@ public class RunSession
 					break;
 				}
 				log.debug("Unplanned bank visit done, back to {}", stop.getLocation().getDisplayName());
+				extraBankDone();
 				clearExtraBank();
 				banking = false;
 				// Back from the bank the way the stop is reached; that trip isn't a sample
@@ -1399,9 +1473,14 @@ public class RunSession
 				if (extraBank == null)
 				{
 					banksDone.add(stopIndex);
-					// A planned visit starts a new part: missing items count again
+					// A planned visit starts a new part: missing items count again, and an earlier ask is out of date
 					declinedExtra = false;
 					skippedItems.clear();
+					missingAsk = null;
+				}
+				else
+				{
+					extraBankDone();
 				}
 				legStartedAt = now;
 			}
@@ -1852,7 +1931,7 @@ public class RunSession
 				: i == stopIndex && banking && extraBank == null ? RunView.StopStatus.CURRENT : RunView.StopStatus.PENDING;
 		}
 		final boolean current = status == RunView.StopStatus.CURRENT;
-		return new RunView.Stop(bank.title(), bank == extraBank ? "Get what's missing" : "Restock for the rest of the run",
+		return new RunView.Stop(bank.title(), bank == extraBank && movedVisit < 0 ? "Get what's missing" : "Restock for the rest of the run",
 			status, current ? instruction : null, Collections.emptyList(),
 			current ? bankSteps(bank) : Collections.emptyList(), true,
 			bank != extraBank && manualBanks.contains(i));

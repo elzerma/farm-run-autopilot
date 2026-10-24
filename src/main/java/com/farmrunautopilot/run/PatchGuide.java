@@ -127,6 +127,25 @@ class PatchGuide
 		return p != null && p.done;
 	}
 
+	/**
+	 * Finished, skipped, or planted already this run, so what it needed is used or no longer needed: for the run's
+	 * missing-item check (elzerma, 2026-10-24: the snapdragon and nasturtium just planted at Hosidius were asked for).
+	 */
+	boolean suppliesUsed(Patch patch)
+	{
+		final Progress p = progress.get(patch);
+		if (p == null)
+		{
+			return false;
+		}
+		if (p.done)
+		{
+			return true;
+		}
+		final PatchPrediction live = patchTracker.predict(patch);
+		return p.sawUnplanted && live != null && live.getState() == PatchState.GROWING;
+	}
+
 	/** Ticked by hand rather than seen done, so it can be unticked. */
 	boolean isSkipped(Patch patch)
 	{

@@ -268,7 +268,15 @@ final class RunAssembly
 	/** The supplies for some of the route's stops on their own, against what the player holds then. */
 	SupplyPlan part(Holdings holdings, List<RouteStop> stops, Route route)
 	{
-		final RunSelection part = new RunSelection(patchesAt(stops), selection.getIncludedTypes(),
+		return part(holdings, stops, route, Collections.emptySet());
+	}
+
+	/** As above, leaving out these patches (done already, for a run in progress). */
+	SupplyPlan part(Holdings holdings, List<RouteStop> stops, Route route, Set<Patch> leaveOut)
+	{
+		final List<Patch> patches = patchesAt(stops);
+		patches.removeAll(leaveOut);
+		final RunSelection part = new RunSelection(patches, selection.getIncludedTypes(),
 			selection.getSkippedTypes(), Collections.emptyList(), selection.getDueCounts());
 		return SupplyCalculator.calculate(config, access, holdings, part,
 			new Route(new ArrayList<>(stops), route.getMode(), 0, 0), predict, itemName, price, wearSlot);
