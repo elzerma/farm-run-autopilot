@@ -808,6 +808,34 @@ the client thread, so:
    are never overspent by a swap; the search result is the same off the thread as on it; snapshots for banked runs.
    Hand check: a big run (every type ticked) in the dev client, with the log.
 
+**T4 built (2026-10-23, branch `claude/1c-plan-file-name-0cf248`), awaiting elzerma's hand check:**
+
+- **How it chooses** (`route/TravelSearch`, `route/Footprint`, `RouteAtlas.avoiding`): rather than swapping single legs,
+  the search tells the planner what to leave at home (a teleport item, a tablet kind, a rune type, coins, balloon
+  logs, the fairy ring staff), and the whole run is planned again without it: every leg that used it takes its next
+  best way (within two minutes; the quickest way when nothing else gets there), the stop order is worked out again,
+  charges are spent as before, and the supplies and bank visits are counted again. Each thing carried is screened by
+  the route and slot count alone (no bank visits placed); those that free a slot for less than the visits cost are
+  left at home one more at a time, cheapest per slot first (one alone rarely frees enough), each set weighed as the
+  whole run with its bank visits, and the quickest run kept if it's at least 3 s quicker.
+- **What it found** on the test account like elzerma's: their usual runs keep the quickest ways. Herbs, trees and
+  fruit trees need 39 slots and one 25 s visit (ring of dueling to Castle Wars); the teleports free at most 8 slots,
+  as seeds, saplings and compost fill the inventory. Every crop type: 97 slots over four parts, nothing to gain. Of 52
+  random runs that bank, 3 saved a visit (15-19 s: the Ectophial left at home, or the slayer ring and teleport
+  crystal) and 3 banked somewhere a little quicker. So the search mostly confirms the quickest ways.
+- **Speed:** a whole run with its bank visits takes 100-200 ms to count, so the search takes about a second (6 s for
+  every crop type at once). It runs on a thread of its own (RuneLite's executor is shared with other plugins), from
+  the quickest run, which shows at once; its answer is used while that run stays the same, counted again on the
+  client thread with the game's item lookups. Stopped at shutdown.
+- **Explained:** a leg that isn't the quickest way says why on the Run tab's hover, e.g. "7 s slower than the quickest
+  way, so your Ectophial can stay in the bank: one bank visit fewer, 15 s quicker overall", and in the dev log under
+  `Route planned:`.
+- **Bank costs:** left at 15 s for now. The only clean visit in elzerma's logs (2026-10-18, after Nemus Retreat) took
+  36 s from opening the bank to done, during a test run; the dev log now times each visit from the stop's last patch
+  ("Bank visit done after X: N s from the last patch, by ...") so the big-run check gives the number.
+- **"Fewest items to bring"** went at the start (above).
+- **Not done:** the patch order inside a stop (section 4), planning the quickest run itself off the client thread.
+
 ## 10. Risks
 
 - **Shortest Path changes its internals:** pinned commit; a small harness; fallback E.
