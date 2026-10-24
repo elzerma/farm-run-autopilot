@@ -55,9 +55,6 @@ public enum TestItem
 	FORTIS_CHAMPION(Tab.FARM, "Civitas herbs and the Colosseum",
 		"With \"Champion rank at the Fortis Colosseum\" ticked in Account > Unlocks, the Civitas herb patch "
 			+ "should count as disease-free: no plant cure or protection asked for it.", 2),
-	ATES_CHARGES(Tab.TRAVEL, "Pendant of Ates charges",
-		"Check the pendant. Settings > Debug > Detected should show the same number. Teleport once and it should "
-			+ "drop by one, then match a second Check.", 2),
 	ICY_BASALT(Tab.TRAVEL, "Icy basalt to Weiss",
 		"With Making Friends with My Arm done, the Fire of Nourishment built at Weiss and an icy basalt in your bank, "
 			+ "build a run with Weiss's herb patch. Its stop should say \"Icy basalt\". Break the basalt when the step "

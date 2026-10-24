@@ -5,7 +5,6 @@ import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.bank.SeedVaultSection;
 import com.farmrunautopilot.data.Unlock;
-import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.run.RunSession;
@@ -14,7 +13,6 @@ import com.farmrunautopilot.run.SceneTracker;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
-import com.farmrunautopilot.supply.ItemChargeTracker;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,7 +41,6 @@ public class TestContext
 	private final Client client;
 	private final AccessChecker accessChecker;
 	private final HoldingsTracker holdingsTracker;
-	private final ItemChargeTracker itemCharges;
 	private final RunSession runSession;
 	private final RunService runService;
 	@Getter
@@ -65,13 +62,12 @@ public class TestContext
 	private final Map<String, Object> memory = new HashMap<>();
 
 	TestContext(Client client, AccessChecker accessChecker, HoldingsTracker holdingsTracker,
-		ItemChargeTracker itemCharges, RunSession runSession, RunService runService, SceneTracker scene,
-		PohDetector pohDetector, SettingsStore settings, SeedVaultSection seedVault)
+		RunSession runSession, RunService runService, SceneTracker scene, PohDetector pohDetector,
+		SettingsStore settings, SeedVaultSection seedVault)
 	{
 		this.client = client;
 		this.accessChecker = accessChecker;
 		this.holdingsTracker = holdingsTracker;
-		this.itemCharges = itemCharges;
 		this.runSession = runSession;
 		this.runService = runService;
 		this.scene = scene;
@@ -148,12 +144,6 @@ public class TestContext
 	public boolean carries(int[] itemIds)
 	{
 		return holdings().carriedOnly().countAny(itemIds) > 0;
-	}
-
-	/** The plugin's count of an item's charges, or null if unknown. */
-	public Integer charges(TravelItem item)
-	{
-		return itemCharges.getCharges().get(item);
 	}
 
 	public int varbit(int varbitId)
