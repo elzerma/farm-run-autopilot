@@ -21,7 +21,7 @@ public class AllotmentScenarioTest
 	private static List<RouteStop> plan(List<Patch> patches)
 	{
 		return RoutePlanner.plan(patches, new RunConfig().sanitise(), ElzermaAccount.access(), ElzermaAccount.holdings(),
-			new PohSetup(), null, null, null, 0).getStops();
+			new PohSetup(), ElzermaAccount.atlas(), null, null, 0).getStops();
 	}
 
 	@Test

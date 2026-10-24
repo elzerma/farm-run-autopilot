@@ -5,7 +5,6 @@ import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.bank.SeedVaultSection;
 import com.farmrunautopilot.data.Unlock;
-import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.run.RunSession;
@@ -14,7 +13,6 @@ import com.farmrunautopilot.run.SceneTracker;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
-import com.farmrunautopilot.supply.ItemChargeTracker;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,6 +29,7 @@ import net.runelite.api.Player;
 import net.runelite.api.Scene;
 import net.runelite.api.Tile;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.VarbitID;
 
 /**
  * What a guided test can see while it runs, and what it has found for the report. Client thread while the
@@ -42,7 +41,6 @@ public class TestContext
 	private final Client client;
 	private final AccessChecker accessChecker;
 	private final HoldingsTracker holdingsTracker;
-	private final ItemChargeTracker itemCharges;
 	private final RunSession runSession;
 	private final RunService runService;
 	@Getter
@@ -64,13 +62,12 @@ public class TestContext
 	private final Map<String, Object> memory = new HashMap<>();
 
 	TestContext(Client client, AccessChecker accessChecker, HoldingsTracker holdingsTracker,
-		ItemChargeTracker itemCharges, RunSession runSession, RunService runService, SceneTracker scene,
-		PohDetector pohDetector, SettingsStore settings, SeedVaultSection seedVault)
+		RunSession runSession, RunService runService, SceneTracker scene, PohDetector pohDetector,
+		SettingsStore settings, SeedVaultSection seedVault)
 	{
 		this.client = client;
 		this.accessChecker = accessChecker;
 		this.holdingsTracker = holdingsTracker;
-		this.itemCharges = itemCharges;
 		this.runSession = runSession;
 		this.runService = runService;
 		this.scene = scene;
@@ -149,12 +146,6 @@ public class TestContext
 		return holdings().carriedOnly().countAny(itemIds) > 0;
 	}
 
-	/** The plugin's count of an item's charges, or null if unknown. */
-	public Integer charges(TravelItem item)
-	{
-		return itemCharges.getCharges().get(item);
-	}
-
 	public int varbit(int varbitId)
 	{
 		return client.getVarbitValue(varbitId);
@@ -187,14 +178,24 @@ public class TestContext
 		return pohDetector.isScanningHouse();
 	}
 
+	/** How many times the player's own house has been scanned since the plugin started. */
+	public int houseScans()
+	{
+		return pohDetector.getScans();
+	}
+
 	public boolean visitingHouse()
 	{
 		return client.isInInstancedRegion() && pohDetector.isVisiting();
 	}
 
+	/** My house as saved, then where the game says the house is and how Teleport to House lands. */
 	public String houseSummary()
 	{
-		return String.valueOf(settings.getAccount().getPoh());
+		final AccessSnapshot access = access();
+		return settings.getAccount().getPoh() + ", house location " + access.getHouseLocation() + " ("
+			+ access.getHousePortal() + "), teleport setting " + varbit(VarbitID.POH_TELE_TOGGLE) + " ("
+			+ (access.isHouseTeleportOutside() ? "outside" : "inside") + ")";
 	}
 
 	/** The house has been scanned since its furniture was last cleared. */

@@ -8,6 +8,7 @@ import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.Rune;
 import com.farmrunautopilot.data.travel.Spellbook;
+import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.supply.Holdings;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,7 +27,8 @@ import net.runelite.api.gameval.ItemID;
 
 /**
  * An account like elzerma's, for scenario tests: the patches their full run visits and the teleports their routes use
- * (from their in-game screenshots, 2026-10-10). Not exact; close enough that the planner faces their choices.
+ * (from their in-game screenshots, 2026-10-10). Not exact; close enough that the planner faces their choices. Their
+ * quetzal whistle is the enhanced one, with 9 charges (the dev client's log, 2026-10-22).
  */
 final class ElzermaAccount
 {
@@ -66,13 +68,19 @@ final class ElzermaAccount
 		return holdingsWithout();
 	}
 
-	/** His holdings minus some items, e.g. without the quetzal whistle so Varlamore is chained by Renu. */
+	/** The travel atlas for this account: its diaries and unlocks, and its items, coins for fares included. */
+	static RouteAtlas atlas()
+	{
+		return AtlasPlayers.with(access(), holdings());
+	}
+
+	/** Their holdings minus some items, e.g. without the quetzal whistle so Varlamore is chained by Renu. */
 	static Holdings holdingsWithout(int... missing)
 	{
 		final Map<Integer, Integer> bank = new HashMap<>();
 		for (int id : new int[]{ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF, ItemID.RING_OF_WEALTH_5,
 			ItemID.LUMBRIDGE_RING_MEDIUM, ItemID.ARDY_CAPE_MEDIUM, ItemID.ECTOPHIAL, ItemID.VEOS_KHAREDSTS_MEMOIRS,
-			ItemID.MOURNING_TELEPORT_CRYSTAL_5, ItemID.HG_QUETZALWHISTLE_PERFECTED_INFINITE, ItemID.RING_OF_DUELING_8})
+			ItemID.MOURNING_TELEPORT_CRYSTAL_5, ItemID.HG_QUETZALWHISTLE_ENHANCED, ItemID.RING_OF_DUELING_8})
 		{
 			bank.put(id, 1);
 		}
@@ -80,16 +88,21 @@ final class ElzermaAccount
 		{
 			bank.put(rune.getItemId(), 1000);
 		}
+		// Fares for boats and charter ships, as any real player has
+		bank.put(ItemID.COINS, 1_000_000);
 		for (int id : missing)
 		{
 			bank.remove(id);
 		}
 		final Map<Holdings.Source, Map<Integer, Integer>> items = new EnumMap<>(Holdings.Source.class);
 		items.put(Holdings.Source.BANK, bank);
-		return new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false);
+		final Map<TravelItem, Integer> charges = bank.containsKey(ItemID.HG_QUETZALWHISTLE_ENHANCED)
+			? Collections.singletonMap(TravelItem.QUETZAL_WHISTLE, 9) : Collections.emptyMap();
+		return new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false, -1, null,
+			Collections.emptyMap(), charges);
 	}
 
-	/** His patches of these types. */
+	/** Their patches of these types. */
 	static List<Patch> patches(PatchType... types)
 	{
 		final Set<PatchType> wanted = EnumSet.copyOf(Arrays.asList(types));

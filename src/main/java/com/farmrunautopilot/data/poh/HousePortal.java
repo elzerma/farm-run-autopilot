@@ -4,22 +4,38 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Where the house portal can be moved to, with the Construction level needed (SPEC 8.3).
+ * Where the house portal can be (SPEC 8.3), with the game's POH_HOUSE_LOCATION value for a house there, as Shortest
+ * Path's Teleport to House rows in the travel atlas have them (each lands at its own place's portal). Hosidius's 8
+ * was seen in game (elzerma's guided test, 2026-10-22).
  */
 @Getter
 @RequiredArgsConstructor
 public enum HousePortal
 {
 	RIMMINGTON("Rimmington", 1),
-	TAVERLEY("Taverley", 10),
-	POLLNIVNEACH("Pollnivneach", 20),
-	HOSIDIUS("Hosidius", 25),
-	RELLEKKA("Rellekka", 30),
-	ALDARIN("Aldarin", 35),
-	BRIMHAVEN("Brimhaven", 40),
-	YANILLE("Yanille", 50),
-	PRIFDDINAS("Prifddinas", 70);
+	TAVERLEY("Taverley", 2),
+	POLLNIVNEACH("Pollnivneach", 3),
+	HOSIDIUS("Hosidius", 8),
+	RELLEKKA("Rellekka", 4),
+	ALDARIN("Aldarin", 13),
+	BRIMHAVEN("Brimhaven", 5),
+	YANILLE("Yanille", 6),
+	PRIFDDINAS("Prifddinas", 9);
 
 	private final String displayName;
-	private final int constructionLevel;
+	/** The game's POH_HOUSE_LOCATION value for a house here. */
+	private final int gameValue;
+
+	/** Where a POH_HOUSE_LOCATION value puts the house, or null: 0 is no house, and others a place not known here. */
+	public static HousePortal of(int gameValue)
+	{
+		for (HousePortal portal : values())
+		{
+			if (portal.gameValue == gameValue)
+			{
+				return portal;
+			}
+		}
+		return null;
+	}
 }

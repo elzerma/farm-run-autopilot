@@ -1,6 +1,9 @@
 package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.data.AchievementDiary;
+import com.farmrunautopilot.data.Requirement;
+import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.atlas.AtlasAccount;
 import com.farmrunautopilot.data.travel.atlas.AtlasNeed;
 import com.farmrunautopilot.data.travel.atlas.AtlasWays;
@@ -10,32 +13,35 @@ import java.util.HashMap;
 import java.util.Map;
 import net.runelite.api.gameval.VarbitID;
 
-/** Pretend players for planning on the travel atlas in tests (docs/plans/travel-rework.md, sprint T3). */
-final class AtlasPlayers
+/**
+ * Pretend players for planning on the travel atlas in tests (docs/plans/travel-rework.md, sprint T3). Their game values
+ * match their account where the plugin reads them too: the achievement diaries and the unlocks read from varbits are
+ * as the account has them (every one done when it isn't known), and so is the house (where it is, none without one,
+ * and how Teleport to House lands). Every other check the atlas names (quest progress, landing sites, balloon routes)
+ * passes. On the standard spellbook.
+ */
+public final class AtlasPlayers
 {
-	static final TravelAtlas ATLAS = TravelAtlas.get();
+	public static final TravelAtlas ATLAS = TravelAtlas.get();
 
 	private AtlasPlayers()
 	{
 	}
 
-	/**
-	 * The atlas for a player with these levels, quests and items, whose game values (quest progress, unlocked pads and
-	 * routes) pass every check the atlas names, on the standard spellbook and without a house.
-	 */
-	static RouteAtlas with(AccessSnapshot access, Holdings holdings)
+	/** The atlas for a player with these levels, quests, diaries, unlocks and items. */
+	public static RouteAtlas with(AccessSnapshot access, Holdings holdings)
 	{
 		return with(access, holdings, Map.of());
 	}
 
 	/** As {@link #with(AccessSnapshot, Holdings)}, with some game values set (e.g. a varbit at 0: not unlocked). */
-	static RouteAtlas with(AccessSnapshot access, Holdings holdings, Map<Integer, Integer> varbitsSet)
+	public static RouteAtlas with(AccessSnapshot access, Holdings holdings, Map<Integer, Integer> varbitsSet)
 	{
 		return with(access, holdings, varbitsSet, AtlasWays.DEFAULT, Map.of(), 0);
 	}
 
 	/** As {@link #with(AccessSnapshot, Holdings)}, with what the Travel tab lets the route use. */
-	static RouteAtlas with(AccessSnapshot access, Holdings holdings, AtlasWays ways)
+	public static RouteAtlas with(AccessSnapshot access, Holdings holdings, AtlasWays ways)
 	{
 		return with(access, holdings, Map.of(), ways, Map.of(), 0);
 	}
@@ -44,8 +50,8 @@ final class AtlasPlayers
 	 * As {@link #with(AccessSnapshot, Holdings)}, with game values set, the Travel tab's choices, varplayers set (a
 	 * cooldown teleport's last use) and the time in minutes since 1970 (0: every cooldown over).
 	 */
-	static RouteAtlas with(AccessSnapshot access, Holdings holdings, Map<Integer, Integer> varbitsSet, AtlasWays ways,
-		Map<Integer, Integer> varpsSet, long minutes)
+	public static RouteAtlas with(AccessSnapshot access, Holdings holdings, Map<Integer, Integer> varbitsSet,
+		AtlasWays ways, Map<Integer, Integer> varpsSet, long minutes)
 	{
 		final Map<Integer, Integer> varbits = new HashMap<>();
 		final Map<Integer, Integer> varps = new HashMap<>();
@@ -60,8 +66,30 @@ final class AtlasPlayers
 				pass(varps, need);
 			}
 		}
+		if (access.isKnown())
+		{
+			for (AchievementDiary diary : AchievementDiary.values())
+			{
+				for (AchievementDiary.Tier tier : AchievementDiary.Tier.values())
+				{
+					// Karamja's easy, medium and hard read 2 once done (AchievementDiary.isComplete)
+					final int done = diary == AchievementDiary.KARAMJA && tier != AchievementDiary.Tier.ELITE ? 2 : 1;
+					varbits.put(diary.getCompleteVarbit(tier), access.isMet(Requirement.diary(diary, tier)) ? done : 0);
+				}
+			}
+			for (Unlock unlock : Unlock.values())
+			{
+				if (unlock.hasVarbit() && !access.isMet(Requirement.unlock(unlock)))
+				{
+					varbits.put(unlock.getVarbit(), 0);
+				}
+			}
+		}
 		varbits.put(VarbitID.SPELLBOOK, 0);
-		varbits.put(VarbitID.POH_HOUSE_LOCATION, 0);
+		varbits.put(VarbitID.POH_HOUSE_LOCATION, access.getHouseLocation());
+		// The game's values (0 lands inside); Shortest Path's rows read them the other way round, which only picks
+		// which of two rows landing on the same tile counts
+		varbits.put(VarbitID.POH_TELE_TOGGLE, access.isHouseTeleportOutside() ? 1 : 0);
 		varbits.putAll(varbitsSet);
 		varps.putAll(varpsSet);
 		return new RouteAtlas(ATLAS, new AtlasAccount(access, holdings, varbits, varps, ways, minutes));

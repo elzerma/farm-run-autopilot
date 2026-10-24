@@ -27,6 +27,18 @@ import net.runelite.api.coords.WorldPoint;
 public final class TravelAtlas
 {
 	private static final String DIR = "/com/farmrunautopilot/atlas/";
+	/** Transports that move the player somewhere else (a boat, a portal) rather than through a door or up a ladder. */
+	public static final Set<String> RIDES = Set.of("SHIP", "BOAT", "TELEPORTATION_PORTAL", "TELEPORTATION_LEVER");
+	/** A transport that moves the player further than this carries them (the guide's "moved" is over 10 tiles a tick). */
+	public static final int CARRIED_TILES = 10;
+	/**
+	 * Transports a farm run can't take, by the start of their menu text: the Grand Exchange's Castle Wars recruiters,
+	 * whose "Join Castle Wars" puts a player in a team's waiting room, and only with no cape and nothing but combat
+	 * items. Shortest Path has them with no requirement, as its data can't say that (its PR #580). Every way through one
+	 * is left out when the atlas is read; tools/atlas should leave them out at its next rebuild, so the place pairs that
+	 * had only that way get the next best (docs/plans/travel-rework.md).
+	 */
+	static final List<String> CANT_TAKE = List.of("Join Castle Wars ");
 
 	/** Where a way starts or ends. */
 	public enum Kind
@@ -230,6 +242,18 @@ public final class TravelAtlas
 		return String.join(" ", Arrays.asList(words).subList(1, words.length - 1));
 	}
 
+	/**
+	 * A step on a way that carries the player off rather than being walked through: a ship, a boat, a portal or a lever,
+	 * or a transport that moves them more than {@link #CARRIED_TILES} tiles (an NPC who leads the way, a cart). Doors,
+	 * stairs and shortcuts aren't.
+	 */
+	public static boolean carries(Step step)
+	{
+		return RIDES.contains(step.getType()) || step.getType().equals("TRANSPORT")
+			&& step.getOrigin().getPlane() == step.getDestination().getPlane()
+			&& step.getOrigin().distanceTo2D(step.getDestination()) > CARRIED_TILES;
+	}
+
 	/** Everyone a hop or a transport on a way is used on (Renu, a ship's crew, a guide), for spotting them nearby. */
 	public synchronized Set<String> targets()
 	{
@@ -268,6 +292,7 @@ public final class TravelAtlas
 			read("requirements.tsv", r -> atlas.needs.add(AtlasNeed.parse(r[1], r[2], r.length > 3 ? r[3] : "")));
 			read("transports.tsv", r -> atlas.steps.add(new Step(r[1], point(r[2]), point(r[3]), Integer.parseInt(r[4]),
 				r.length > 7 ? r[7] : "", r.length > 8 ? r[8] : "")));
+			final Set<Integer> cantTake = cantTake(atlas.steps);
 			read("teleports.tsv", r -> atlas.teleports.add(new Jump(Integer.parseInt(r[0]), r[1], -1, Integer.parseInt(r[2]),
 				Integer.parseInt(r[3]), Boolean.parseBoolean(r[4]), ids(r[6]), r.length > 7 ? r[7] : "", r.length > 8 ? r[8] : "")));
 			read("hops.tsv", r ->
@@ -281,6 +306,13 @@ public final class TravelAtlas
 			{
 				final Way way = new Way(Integer.parseInt(r[0]), Integer.parseInt(r[1]), Integer.parseInt(r[2]),
 					Integer.parseInt(r[3]), ids(r[4]), ids(r.length > 5 ? r[5] : ""));
+				for (int step : way.steps)
+				{
+					if (cantTake.contains(step))
+					{
+						return;
+					}
+				}
 				final List<Way> list = atlas.ways.computeIfAbsent(way.from, k -> new HashMap<>())
 					.computeIfAbsent(way.to, k -> new ArrayList<>());
 				if (list.isEmpty())
@@ -292,7 +324,7 @@ public final class TravelAtlas
 		}
 		catch (IOException | RuntimeException e)
 		{
-			log.warn("The travel atlas couldn't be read; travel falls back to the built-in tables", e);
+			log.warn("The travel atlas couldn't be read; no route can be planned without it", e);
 			return new TravelAtlas();
 		}
 		for (Place p : atlas.places)
@@ -308,6 +340,23 @@ public final class TravelAtlas
 		log.debug("Travel atlas: {} places, {} teleports, {} hops", atlas.places.size(), atlas.teleports.size(),
 			atlas.hops.size());
 		return atlas;
+	}
+
+	/** The transports (by id) a farm run can't take: see {@link #CANT_TAKE}. */
+	private static Set<Integer> cantTake(List<Step> steps)
+	{
+		final Set<Integer> ids = new HashSet<>();
+		for (int i = 0; i < steps.size(); i++)
+		{
+			for (String menu : CANT_TAKE)
+			{
+				if (steps.get(i).getMenu().startsWith(menu))
+				{
+					ids.add(i);
+				}
+			}
+		}
+		return ids;
 	}
 
 	/** Each row of an atlas file, without comments and the header. */

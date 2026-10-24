@@ -1,14 +1,7 @@
 package com.farmrunautopilot.data.travel;
 
-import static com.farmrunautopilot.data.PatchType.ALLOTMENT;
-import static com.farmrunautopilot.data.PatchType.FLOWER;
-import static com.farmrunautopilot.data.PatchType.FRUIT_TREE;
-import static com.farmrunautopilot.data.PatchType.HERB;
-import static com.farmrunautopilot.data.PatchType.HOPS;
-import static com.farmrunautopilot.data.PatchType.TREE;
 import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Location;
-import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.poh.HousePortal;
@@ -17,33 +10,29 @@ import com.farmrunautopilot.data.poh.PortalNexus;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import lombok.Getter;
 import net.runelite.api.Quest;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
 
 /**
- * Ways to reach each location (SPEC 8.2). How far each one lands from the patch is in {@link TravelTimes}.
- * "Primary" marks the wiki's first choice for that run type.
- *
- * <p>Gnome gliders, charter ships, the Lovakengj minecart and similar transports that must be boarded
- * somewhere specific are not planned.
+ * The plugin's own ways to each location (SPEC 8.2), with the names and written steps the guide shows for them. Routes
+ * are planned on the travel atlas (docs/plans/travel-rework.md), which knows every way and how far each walks; an atlas
+ * way that lands where one of these does, the same way (AtlasLinks has each landing), is named and guided as it until
+ * journeys are written from the atlas's own steps (sprint T5).
  */
 @Getter
 public enum TravelMethod
 {
 	// Lumbridge
-	LUMBRIDGE_TELEPORT(spell(Location.LUMBRIDGE, Spell.LUMBRIDGE_TELEPORT).primaryFor(TREE)),
-	LUMBRIDGE_HOME_TELEPORT(spell(Location.LUMBRIDGE, Spell.LUMBRIDGE_HOME_TELEPORT)
-		.note("Free, but slow to cast")),
+	LUMBRIDGE_TELEPORT(spell(Location.LUMBRIDGE, Spell.LUMBRIDGE_TELEPORT)),
+	LUMBRIDGE_HOME_TELEPORT(spell(Location.LUMBRIDGE, Spell.LUMBRIDGE_HOME_TELEPORT)),
 	DIARY_CAPE_LUMBRIDGE(item(Location.LUMBRIDGE, "Achievement diary cape (Hatius Cosaintus)",
 		TravelKind.CAPE, TravelItem.ACHIEVEMENT_DIARY_CAPE)),
 
 	// Varrock
-	VARROCK_TELEPORT(spell(Location.VARROCK, Spell.VARROCK_TELEPORT).primaryFor(TREE)),
+	VARROCK_TELEPORT(spell(Location.VARROCK, Spell.VARROCK_TELEPORT)),
 	DIARY_CAPE_VARROCK(item(Location.VARROCK, "Achievement diary cape (Toby)",
 		TravelKind.CAPE, TravelItem.ACHIEVEMENT_DIARY_CAPE)),
 	SKILLS_NECKLACE_COOKS_GUILD(item(Location.VARROCK, "Skills necklace (Cooks' Guild)",
@@ -54,7 +43,7 @@ public enum TravelMethod
 
 	// Falador Park
 	RING_OF_WEALTH_FALADOR_PARK(item(Location.FALADOR_PARK, "Ring of wealth (Falador Park)",
-		TravelKind.JEWELLERY, TravelItem.RING_OF_WEALTH).jewelleryBox(JewelleryBoxTier.ORNATE).primaryFor(TREE)),
+		TravelKind.JEWELLERY, TravelItem.RING_OF_WEALTH).jewelleryBox(JewelleryBoxTier.ORNATE)),
 	FALADOR_TELEPORT_TO_PARK(spell(Location.FALADOR_PARK, Spell.FALADOR_TELEPORT)),
 	SKILLS_NECKLACE_MINING_GUILD(item(Location.FALADOR_PARK, "Skills necklace (Mining Guild)",
 		TravelKind.JEWELLERY, TravelItem.SKILLS_NECKLACE).jewelleryBox(JewelleryBoxTier.FANCY)
@@ -63,9 +52,9 @@ public enum TravelMethod
 			new WorldPoint(3020, 9739, 0)))),
 
 	// Taverley
-	HOUSE_PORTAL_TAVERLEY(housePortal(Location.TAVERLEY, HousePortal.TAVERLEY).primaryFor(TREE).then(JourneyStep.LEAVE_HOUSE)),
+	HOUSE_PORTAL_TAVERLEY(housePortal(Location.TAVERLEY, HousePortal.TAVERLEY).then(JourneyStep.LEAVE_HOUSE)),
 	TAVERLEY_TABLET(item(Location.TAVERLEY, "Taverley teleport tablet",
-		TravelKind.TABLET, TravelItem.TAVERLEY_TABLET).primaryFor(TREE)),
+		TravelKind.TABLET, TravelItem.TAVERLEY_TABLET)),
 	CONSTRUCTION_CAPE_TAVERLEY(item(Location.TAVERLEY, "Construction cape (Taverley)",
 		TravelKind.CAPE, TravelItem.CONSTRUCTION_CAPE)),
 	FALADOR_TELEPORT_TO_TAVERLEY(spell(Location.TAVERLEY, Spell.FALADOR_TELEPORT)
@@ -81,17 +70,14 @@ public enum TravelMethod
 
 	// Gnome Stronghold (tree + fruit tree)
 	SLAYER_RING_STRONGHOLD_CAVE(item(Location.GNOME_STRONGHOLD, "Slayer ring (Stronghold Slayer Cave)",
-		TravelKind.JEWELLERY, TravelItem.SLAYER_RING).primaryFor(TREE)),
-	SPIRIT_TREE_GNOME_STRONGHOLD(spiritTree(Location.GNOME_STRONGHOLD, "Spirit tree (Gnome Stronghold)")
-		.primaryFor(FRUIT_TREE)),
+		TravelKind.JEWELLERY, TravelItem.SLAYER_RING)),
+	SPIRIT_TREE_GNOME_STRONGHOLD(spiritTree(Location.GNOME_STRONGHOLD, "Spirit tree (Gnome Stronghold)")),
 	ROYAL_SEED_POD(item(Location.GNOME_STRONGHOLD, "Royal seed pod", TravelKind.ITEM, TravelItem.ROYAL_SEED_POD)),
 
 	// Farming Guild (tree, herb, fruit tree)
-	FARMING_CAPE(item(Location.FARMING_GUILD, "Farming cape", TravelKind.CAPE, TravelItem.FARMING_CAPE)
-		.primaryFor(TREE, FRUIT_TREE, HERB, ALLOTMENT, FLOWER)),
+	FARMING_CAPE(item(Location.FARMING_GUILD, "Farming cape", TravelKind.CAPE, TravelItem.FARMING_CAPE)),
 	SKILLS_NECKLACE_FARMING_GUILD(item(Location.FARMING_GUILD, "Skills necklace (Farming Guild)",
-		TravelKind.JEWELLERY, TravelItem.SKILLS_NECKLACE).jewelleryBox(JewelleryBoxTier.FANCY)
-		.primaryFor(TREE, FRUIT_TREE, HERB, ALLOTMENT, FLOWER).note("Lands inside the guild with 45 Farming")),
+		TravelKind.JEWELLERY, TravelItem.SKILLS_NECKLACE).jewelleryBox(JewelleryBoxTier.FANCY)),
 	MAX_CAPE_FARMING_GUILD(item(Location.FARMING_GUILD, "Max cape (Farming Guild)",
 		TravelKind.CAPE, TravelItem.MAX_CAPE)),
 	SPIRIT_TREE_FARMING_GUILD(spiritTree(Location.FARMING_GUILD, "Spirit tree (Farming Guild)")
@@ -105,38 +91,38 @@ public enum TravelMethod
 	// Nemus Retreat
 	PENDANT_OF_ATES_NEMUS_RETREAT(item(Location.NEMUS_RETREAT, "Pendant of Ates (Nemus Retreat)",
 		TravelKind.ITEM, TravelItem.PENDANT_OF_ATES)
-		.requires(Requirement.unlock(Unlock.ATES_STATUE_NEMUS_RETREAT)).primaryFor(TREE)),
+		.requires(Requirement.unlock(Unlock.ATES_STATUE_NEMUS_RETREAT))),
 	QUETZAL_AUBURNVALE(quetzal(Location.NEMUS_RETREAT, "Quetzal whistle (Auburnvale)")
 		.then(JourneyStep.shortcut(33, "Go through the tunnel in the north wall next to the patch",
 			"Walk round to the camp entrance", "into the camp"))),
 	FAIRY_RING_AIS(fairyRing(Location.NEMUS_RETREAT, "AIS")
-		.requires(Requirement.skill(Skill.AGILITY, 36)).note("Stepping stones (36 Agility) and broken wall (24)")
+		.requires(Requirement.skill(Skill.AGILITY, 36))
 		.then(JourneyStep.way("Cross the stepping stones (36 Agility) and the broken wall (24 Agility) into the camp",
 			"stepping stones and wall"))),
 
 	// Tree Gnome Village
 	SPIRIT_TREE_TREE_GNOME_VILLAGE(spiritTree(Location.TREE_GNOME_VILLAGE, "Spirit tree (Tree Gnome Village)")
-		.primaryFor(FRUIT_TREE).note("Lands in the village; follow Elkoy out of the maze to the patch")
+		
 		// Lands in the middle of the hedge maze; Elkoy leads the way out (Tree Gnome Village started)
 		.then(JourneyStep.ride("Elkoy", "Find Elkoy in the village and pick Follow: he leads you out of the maze",
 			"follow Elkoy out of the maze", null))),
 	FAIRY_RING_CIQ(fairyRing(Location.TREE_GNOME_VILLAGE, "CIQ")),
 
 	// Catherby (herb + fruit tree)
-	CAMELOT_TELEPORT(spell(Location.CATHERBY, Spell.CAMELOT_TELEPORT).primaryFor(FRUIT_TREE)),
+	CAMELOT_TELEPORT(spell(Location.CATHERBY, Spell.CAMELOT_TELEPORT)),
 	CATHERBY_TELEPORT(spell(Location.CATHERBY, Spell.CATHERBY_TELEPORT)
-		.nexus(PortalNexus.Destination.CATHERBY).primaryFor(HERB, ALLOTMENT, FLOWER)),
+		.nexus(PortalNexus.Destination.CATHERBY)),
 
 	// Brimhaven
-	HOUSE_PORTAL_BRIMHAVEN(housePortal(Location.BRIMHAVEN, HousePortal.BRIMHAVEN).primaryFor(FRUIT_TREE).then(JourneyStep.LEAVE_HOUSE)),
+	HOUSE_PORTAL_BRIMHAVEN(housePortal(Location.BRIMHAVEN, HousePortal.BRIMHAVEN).then(JourneyStep.LEAVE_HOUSE)),
 	BRIMHAVEN_TABLET(item(Location.BRIMHAVEN, "Brimhaven teleport tablet",
-		TravelKind.TABLET, TravelItem.BRIMHAVEN_TABLET).primaryFor(FRUIT_TREE)),
+		TravelKind.TABLET, TravelItem.BRIMHAVEN_TABLET)),
 	CONSTRUCTION_CAPE_BRIMHAVEN(item(Location.BRIMHAVEN, "Construction cape (Brimhaven)",
 		TravelKind.CAPE, TravelItem.CONSTRUCTION_CAPE)),
 	SPIRIT_TREE_BRIMHAVEN(spiritTree(Location.BRIMHAVEN, "Spirit tree (Brimhaven)")
 		.requires(Requirement.unlock(Unlock.SPIRIT_TREE_BRIMHAVEN))),
 	ARDOUGNE_TELEPORT_AND_BOAT(spell(Location.BRIMHAVEN, Spell.ARDOUGNE_TELEPORT)
-		.coins(30).note("Then the boat from Ardougne docks")
+		.coins(30)
 		// The boat leaves from 2683, 3271 (Shortest Path's data); the line goes to Captain Barnaby once he's loaded
 		.then(JourneyStep.ride("Captain Barnaby", "Go to Captain Barnaby at the Ardougne docks and Pay-fare to "
 			+ "Brimhaven (30 coins)", "boat from the Ardougne docks", new WorldPoint(2683, 3271, 0)))),
@@ -145,17 +131,17 @@ public enum TravelMethod
 
 	// Lletya
 	TELEPORT_CRYSTAL_LLETYA(item(Location.LLETYA, "Teleport crystal (Lletya)",
-		TravelKind.ITEM, TravelItem.TELEPORT_CRYSTAL).primaryFor(FRUIT_TREE)),
+		TravelKind.ITEM, TravelItem.TELEPORT_CRYSTAL)),
 
 	// Kastori
 	QUETZAL_KASTORI(quetzal(Location.KASTORI, "Quetzal whistle (Kastori)")
-		.requires(Requirement.unlock(Unlock.QUETZAL_KASTORI)).primaryFor(FRUIT_TREE, FLOWER)),
+		.requires(Requirement.unlock(Unlock.QUETZAL_KASTORI))),
 	PENDANT_OF_ATES_NORTH_KASTORI(item(Location.KASTORI, "Pendant of Ates (North of Kastori)",
 		TravelKind.ITEM, TravelItem.PENDANT_OF_ATES).requires(Requirement.unlock(Unlock.ATES_STATUE_NORTH_KASTORI))),
 
 	// Falador farm (herb)
 	EXPLORERS_RING_CABBAGE_PATCH(item(Location.FALADOR_FARM, "Explorer's ring (cabbage patch)",
-		TravelKind.DIARY_ITEM, TravelItem.EXPLORERS_RING).primaryFor(HERB, ALLOTMENT, FLOWER).note("Ring 2: 3 uses per day")),
+		TravelKind.DIARY_ITEM, TravelItem.EXPLORERS_RING)),
 	DRAYNOR_MANOR_TELEPORT(spell(Location.FALADOR_FARM, Spell.DRAYNOR_MANOR_TELEPORT)
 		.then(JourneyStep.way("Leave the manor grounds by the south gate", "out of the manor grounds"))),
 	SPIRIT_TREE_PORT_SARIM(spiritTree(Location.FALADOR_FARM, "Spirit tree (Port Sarim)")
@@ -165,7 +151,7 @@ public enum TravelMethod
 	FALADOR_TELEPORT_TO_FARM(spell(Location.FALADOR_FARM, Spell.FALADOR_TELEPORT)),
 
 	// Port Phasmatys (herb)
-	FAIRY_RING_ALQ(fairyRing(Location.PORT_PHASMATYS, "ALQ").primaryFor(HERB, ALLOTMENT, FLOWER)),
+	FAIRY_RING_ALQ(fairyRing(Location.PORT_PHASMATYS, "ALQ")),
 	ECTOPHIAL(item(Location.PORT_PHASMATYS, "Ectophial", TravelKind.ITEM, TravelItem.ECTOPHIAL)),
 	FENKENSTRAINS_CASTLE_TELEPORT(spell(Location.PORT_PHASMATYS, Spell.FENKENSTRAINS_CASTLE_TELEPORT)
 		.nexus(PortalNexus.Destination.FENKENSTRAINS_CASTLE)),
@@ -174,8 +160,7 @@ public enum TravelMethod
 
 	// Ardougne farm (herb)
 	ARDOUGNE_CLOAK_FARM(item(Location.ARDOUGNE_FARM, "Ardougne cloak (farm)",
-		TravelKind.DIARY_ITEM, TravelItem.ARDOUGNE_CLOAK).primaryFor(HERB, ALLOTMENT, FLOWER)
-		.note("Cloak 2: 3 uses per day, cloak 3: 5, cloak 4: unlimited")),
+		TravelKind.DIARY_ITEM, TravelItem.ARDOUGNE_CLOAK)),
 	SKILLS_NECKLACE_FISHING_GUILD(item(Location.ARDOUGNE_FARM, "Skills necklace (Fishing Guild)",
 		TravelKind.JEWELLERY, TravelItem.SKILLS_NECKLACE).jewelleryBox(JewelleryBoxTier.FANCY)),
 	MAX_CAPE_FISHING_GUILD(item(Location.ARDOUGNE_FARM, "Max cape (Fishing Guild)",
@@ -190,7 +175,7 @@ public enum TravelMethod
 
 	// Hosidius (herb)
 	XERICS_TALISMAN_GLADE(item(Location.HOSIDIUS, "Xeric's talisman (Xeric's Glade)",
-		TravelKind.ITEM, TravelItem.XERICS_TALISMAN).primaryFor(HERB, ALLOTMENT, FLOWER)),
+		TravelKind.ITEM, TravelItem.XERICS_TALISMAN)),
 	HOUSE_PORTAL_HOSIDIUS(housePortal(Location.HOSIDIUS, HousePortal.HOSIDIUS).then(JourneyStep.LEAVE_HOUSE)),
 	HOSIDIUS_TABLET(item(Location.HOSIDIUS, "Hosidius teleport tablet",
 		TravelKind.TABLET, TravelItem.HOSIDIUS_TABLET)),
@@ -202,12 +187,12 @@ public enum TravelMethod
 	FAIRY_RING_AKR(fairyRing(Location.HOSIDIUS, "AKR")),
 	SKILLS_NECKLACE_WOODCUTTING_GUILD(item(Location.HOSIDIUS, "Skills necklace (Woodcutting Guild)",
 		TravelKind.JEWELLERY, TravelItem.SKILLS_NECKLACE).jewelleryBox(JewelleryBoxTier.FANCY)
-		.requires(Requirement.skill(Skill.AGILITY, 45)).note("The stepping stone needs 45 Agility")
+		.requires(Requirement.skill(Skill.AGILITY, 45))
 		.then(JourneyStep.way("Head east and cross the stepping stone just west of the farm (45 Agility)", "stepping stone"))),
 
 	// Troll Stronghold (herb)
 	STONY_BASALT_ROOF(item(Location.TROLL_STRONGHOLD, "Stony basalt (roof)",
-		TravelKind.ITEM, TravelItem.STONY_BASALT).primaryFor(HERB)
+		TravelKind.ITEM, TravelItem.STONY_BASALT)
 		.requires(Requirement.diary(AchievementDiary.FREMENNIK, AchievementDiary.Tier.HARD),
 			Requirement.skill(Skill.AGILITY, 73))),
 	// The nexus Troll Stronghold portal lands at the entrance (2845, 3694), or on the roof with the hard Fremennik
@@ -221,22 +206,21 @@ public enum TravelMethod
 
 	// Harmony Island (herb)
 	HARMONY_ISLAND_TELEPORT(spell(Location.HARMONY_ISLAND, Spell.HARMONY_ISLAND_TELEPORT)
-		.nexus(PortalNexus.Destination.HARMONY_ISLAND).primaryFor(HERB, ALLOTMENT)),
+		.nexus(PortalNexus.Destination.HARMONY_ISLAND)),
 
 	// Weiss (herb)
 	ICY_BASALT(item(Location.WEISS, "Icy basalt", TravelKind.ITEM, TravelItem.ICY_BASALT)
-		.nexus(PortalNexus.Destination.WEISS).primaryFor(HERB)),
+		.nexus(PortalNexus.Destination.WEISS)),
 
 	// Civitas illa Fortis / Ortus Farm (herb)
-	QUETZAL_HUNTER_GUILD(quetzal(Location.CIVITAS_ILLA_FORTIS, "Quetzal whistle (Hunter Guild)")
-		.primaryFor(HERB, ALLOTMENT, FLOWER)),
+	QUETZAL_HUNTER_GUILD(quetzal(Location.CIVITAS_ILLA_FORTIS, "Quetzal whistle (Hunter Guild)")),
 	HUNTER_CAPE(item(Location.CIVITAS_ILLA_FORTIS, "Hunter cape", TravelKind.CAPE, TravelItem.HUNTER_CAPE)
 		.then(JourneyStep.way("Leave the Hunter Guild and head north-east to the farm", "out of the guild"))),
 	MAX_CAPE_HUNTER_GUILD(item(Location.CIVITAS_ILLA_FORTIS, "Max cape (Hunter Guild)",
 		TravelKind.CAPE, TravelItem.MAX_CAPE)
 		.then(JourneyStep.way("Leave the Hunter Guild and head north-east to the farm", "out of the guild"))),
 	CIVITAS_ILLA_FORTIS_TELEPORT(spell(Location.CIVITAS_ILLA_FORTIS, Spell.CIVITAS_ILLA_FORTIS_TELEPORT)
-		.nexus(PortalNexus.Destination.CIVITAS_ILLA_FORTIS).note("Then the quetzal to the Hunter Guild")
+		.nexus(PortalNexus.Destination.CIVITAS_ILLA_FORTIS)
 		// The quetzal at the city's landing pad, Renu, is matched by name: its ID is one of the baby quetzal colours
 		.then(JourneyStep.ride("Renu", "Take the quetzal to the Hunter Guild", "quetzal to the Hunter Guild",
 			new WorldPoint(1696, 3141, 0)))),
@@ -244,29 +228,28 @@ public enum TravelMethod
 
 	// Prifddinas (allotments)
 	TELEPORT_CRYSTAL_PRIFDDINAS(item(Location.PRIFDDINAS, "Teleport crystal (Prifddinas)",
-		TravelKind.ITEM, TravelItem.TELEPORT_CRYSTAL).requires(Requirement.quest(Quest.SONG_OF_THE_ELVES))
-		.primaryFor(ALLOTMENT, FLOWER)),
+		TravelKind.ITEM, TravelItem.TELEPORT_CRYSTAL).requires(Requirement.quest(Quest.SONG_OF_THE_ELVES))),
 	HOUSE_PORTAL_PRIFDDINAS(housePortal(Location.PRIFDDINAS, HousePortal.PRIFDDINAS).then(JourneyStep.LEAVE_HOUSE)),
 
 	// Hops, north of Lumbridge
 	LUMBRIDGE_TELEPORT_HOPS(spell(Location.LUMBRIDGE_HOPS, Spell.LUMBRIDGE_TELEPORT)),
 	VARROCK_TELEPORT_HOPS(spell(Location.LUMBRIDGE_HOPS, Spell.VARROCK_TELEPORT)),
 	COMBAT_BRACELET_CHAMPIONS_GUILD(item(Location.LUMBRIDGE_HOPS, "Combat bracelet (Champions' Guild)",
-		TravelKind.JEWELLERY, TravelItem.COMBAT_BRACELET).jewelleryBox(JewelleryBoxTier.FANCY).primaryFor(HOPS)),
+		TravelKind.JEWELLERY, TravelItem.COMBAT_BRACELET).jewelleryBox(JewelleryBoxTier.FANCY)),
 
 	// Hops, Seers' Village (north of McGrubor's Wood)
-	CAMELOT_TELEPORT_SEERS_HOPS(spell(Location.SEERS_VILLAGE_HOPS, Spell.CAMELOT_TELEPORT).primaryFor(HOPS)),
+	CAMELOT_TELEPORT_SEERS_HOPS(spell(Location.SEERS_VILLAGE_HOPS, Spell.CAMELOT_TELEPORT)),
 	FAIRY_RING_ALS(fairyRing(Location.SEERS_VILLAGE_HOPS, "ALS")),
 	COMBAT_BRACELET_RANGING_GUILD_HOPS(item(Location.SEERS_VILLAGE_HOPS, "Combat bracelet (Ranging Guild)",
 		TravelKind.JEWELLERY, TravelItem.COMBAT_BRACELET).jewelleryBox(JewelleryBoxTier.FANCY)),
 
 	// Hops, Yanille
-	HOUSE_PORTAL_YANILLE(housePortal(Location.YANILLE_HOPS, HousePortal.YANILLE).primaryFor(HOPS)
+	HOUSE_PORTAL_YANILLE(housePortal(Location.YANILLE_HOPS, HousePortal.YANILLE)
 		.then(JourneyStep.LEAVE_HOUSE)),
 	FAIRY_RING_CIQ_HOPS(fairyRing(Location.YANILLE_HOPS, "CIQ")),
 
 	// Hops, Aldarin
-	FAIRY_RING_CKQ(fairyRing(Location.ALDARIN_HOPS, "CKQ").primaryFor(HOPS)),
+	FAIRY_RING_CKQ(fairyRing(Location.ALDARIN_HOPS, "CKQ")),
 	QUETZAL_ALDARIN(quetzal(Location.ALDARIN_HOPS, "Quetzal whistle (Aldarin)")),
 	HOUSE_PORTAL_ALDARIN(housePortal(Location.ALDARIN_HOPS, HousePortal.ALDARIN).then(JourneyStep.LEAVE_HOUSE));
 
@@ -278,9 +261,6 @@ public enum TravelMethod
 	/** The teleport item, or null. */
 	private final TravelItem item;
 	private final int coins;
-	/** Fairy ring code for FAIRY_RING methods, otherwise null. */
-	private final String fairyRingCode;
-	private final String note;
 	/**
 	 * Steps after landing and before the walk to the patch (a boat, a quetzal, an NPC who leads the way), in
 	 * order; empty if it's just a walk. The guide shows them one at a time.
@@ -295,7 +275,6 @@ public enum TravelMethod
 	private final List<JourneyStep> directions;
 	/** Requirements beyond the spell's own and owning the item. */
 	private final List<Requirement> requirements;
-	private final Set<PatchType> primaryFor;
 	/** The same teleport from a POH portal nexus, or null. */
 	private final PortalNexus.Destination nexus;
 	/** The same teleport from a POH jewellery box of at least this tier, or null. */
@@ -309,8 +288,6 @@ public enum TravelMethod
 		this.spell = def.spell;
 		this.item = def.item;
 		this.coins = def.coins;
-		this.fairyRingCode = def.fairyRingCode;
-		this.note = def.note;
 		this.then = Collections.unmodifiableList(def.then);
 		final List<JourneyStep> rides = new ArrayList<>();
 		final List<JourneyStep> directions = new ArrayList<>();
@@ -321,14 +298,8 @@ public enum TravelMethod
 		this.rides = Collections.unmodifiableList(rides);
 		this.directions = Collections.unmodifiableList(directions);
 		this.requirements = Collections.unmodifiableList(def.requirements);
-		this.primaryFor = Collections.unmodifiableSet(def.primaryFor);
 		this.nexus = def.nexus;
 		this.jewelleryBox = def.jewelleryBox;
-	}
-
-	public boolean isPrimaryFor(PatchType type)
-	{
-		return primaryFor.contains(type);
 	}
 
 	private static Def spell(Location destination, Spell spell)
@@ -348,7 +319,6 @@ public enum TravelMethod
 	private static Def fairyRing(Location destination, String code)
 	{
 		final Def def = new Def(destination, "Fairy ring " + code, TravelKind.FAIRY_RING);
-		def.fairyRingCode = code;
 		def.requirements.add(Requirement.unlock(Unlock.FAIRY_RINGS));
 		return def;
 	}
@@ -375,7 +345,6 @@ public enum TravelMethod
 			TravelKind.HOUSE_PORTAL);
 		def.spell = Spell.TELEPORT_TO_HOUSE;
 		def.requirements.add(Requirement.housePortal(portal));
-		def.note = "Lands inside the house unless it is set to teleport outside";
 		return def;
 	}
 
@@ -394,11 +363,8 @@ public enum TravelMethod
 		private Spell spell;
 		private TravelItem item;
 		private int coins;
-		private String fairyRingCode;
-		private String note;
 		private final List<JourneyStep> then = new ArrayList<>();
 		private final List<Requirement> requirements = new ArrayList<>();
-		private final Set<PatchType> primaryFor = EnumSet.noneOf(PatchType.class);
 		private PortalNexus.Destination nexus;
 		private JewelleryBoxTier jewelleryBox;
 
@@ -407,12 +373,6 @@ public enum TravelMethod
 			this.destination = destination;
 			this.displayName = displayName;
 			this.kind = kind;
-		}
-
-		Def primaryFor(PatchType... types)
-		{
-			primaryFor.addAll(Arrays.asList(types));
-			return this;
 		}
 
 		Def requires(Requirement... more)
@@ -424,12 +384,6 @@ public enum TravelMethod
 		Def coins(int amount)
 		{
 			coins = amount;
-			return this;
-		}
-
-		Def note(String text)
-		{
-			note = text;
 			return this;
 		}
 

@@ -55,9 +55,10 @@ public enum TestItem
 	FORTIS_CHAMPION(Tab.FARM, "Civitas herbs and the Colosseum",
 		"With \"Champion rank at the Fortis Colosseum\" ticked in Account > Unlocks, the Civitas herb patch "
 			+ "should count as disease-free: no plant cure or protection asked for it.", 2),
-	ATES_CHARGES(Tab.TRAVEL, "Pendant of Ates charges",
-		"Check the pendant. Settings > Debug > Detected should show the same number. Teleport once and it should "
-			+ "drop by one, then match a second Check.", 2),
+	ICY_BASALT(Tab.TRAVEL, "Icy basalt to Weiss",
+		"With Making Friends with My Arm done, the Fire of Nourishment built at Weiss and an icy basalt in your bank, "
+			+ "build a run with Weiss's herb patch. Its stop should say \"Icy basalt\". Break the basalt when the step "
+			+ "outlines it (it's used up): you should land by the herb patch, outlined as the next step."),
 	HOUSE_BY_TREE(Tab.TRAVEL, "Spirit tree into your house",
 		"With a spirit tree planted in your house, plan a run where a stop is just after one with a spirit tree "
 			+ "nearby (e.g. the Farming Guild, then Hosidius with your house portal there). The stop should say "
@@ -69,15 +70,17 @@ public enum TestItem
 			+ "should get another way, none of them through your house. Tick it again and the stops through your house "
 			+ "should come back."),
 	BUCKET_COMPOST(Tab.FARM, "Bottomless bucket at the tool leprechaun",
-		"With a bottomless compost bucket that has compost in it, store it with any tool leprechaun. Settings > "
-			+ "Debug > Detected should then show the bucket with the right compost and uses."),
+		"Most wanted: a bottomless compost bucket filled with plain compost or supercompost (ultracompost is "
+			+ "confirmed). Right-click the bucket and pick Check, then store it with any tool leprechaun. Settings > "
+			+ "Debug > Detected should then show the bucket with the same compost and uses as the Check said.", 2),
 	SPIRIT_TREES(Tab.ACCOUNT, "Planted spirit trees",
 		"Untick your planted spirit tree in Account > Unlocks, then go to it (Port Sarim, Brimhaven or the "
 			+ "Farming Guild). It should tick itself once the grown tree is in view."),
 	HOUSE_SCAN(Tab.ACCOUNT, "House scanning (beta)",
 		"Tick \"Detect furniture when I enter my house\" in Account > My house, then enter your house: your "
-			+ "jewellery box, pool, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned). "
-			+ "Then visit someone else's house: nothing of yours should change.", 3);
+			+ "jewellery box, pool, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned), and My house should say when it was last "
+			+ "scanned, even if your house has none of them. "
+			+ "Then visit someone else's house: nothing of yours should change.", 4);
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter

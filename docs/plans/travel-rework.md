@@ -202,6 +202,8 @@ the README credit. The harness is ours; the way it fakes a client follows their 
 - **Choosing stays as it is** (seconds plus the travel style's tie-breaks and charge costs), minus learned times.
 - **Deleted:** `TILES`, `EXTRA_SECONDS`, `WALKS`, `SPIRIT_TREE_WALK`, `RENU_PAD_WALK`, `BALLOON_WALK`, `BANK_TILES`,
   `BANK_POINTS` and most hand `JourneyStep`s; `LearnedTimes.adjust` in `RoutePlanner.quickest` and the outlier rules.
+  Done on 2026-10-20 (T3's last step), but for the hand `JourneyStep`s, which go when T5 writes journeys from the
+  atlas, and one bank the atlas can't reach (`AtlasBanks`).
 
 ### Choosing ways with the inventory in mind (our own algorithm)
 
@@ -382,7 +384,7 @@ charges left".
 | Hosidius, Book of the Dead and skills necklace, 50 Agility | no Xeric's | Book of the Dead unless the necklace plus stepping stone is quicker on the atlas; with 30 Agility the necklace's walk is the long way round |
 | Falador Park to Taverley | 66 / 60 Agility | Over the rocks / round by the gate |
 | Gnome Stronghold to Tree Gnome Village | spirit trees | Spirit tree, then Elkoy |
-| Civitas illa Fortis to Kastori | Twilight's Promise | Renu from the pad, no whistle charge |
+| Civitas illa Fortis to Kastori | Twilight's Promise | The whistle when it's quicker (elzerma, 2026-10-22), else the Civitas illa Fortis Teleport and Renu; preferring free ways, Renu from the pad |
 | Troll Stronghold | 73 Agility and the diary / neither | Basalt to the roof / entrance and the way up inside |
 | Catherby herb and fruit tree, then bank | any | Patch order by the atlas; bank walk from the last patch |
 | Every enabled stop | fresh account | A way there, or listed as unreachable with what's missing |
@@ -392,7 +394,8 @@ charges left".
 | A run where saving slots can't avoid the bank trip | elzerma's | The fastest way per leg |
 
 - The existing scenario suites (elzerma's expected chains) keep passing or are updated with the reason.
-- **Route snapshots:** the full planned route for the three accounts, saved and diffed whenever the atlas is rebuilt.
+- **Route snapshots:** the full planned route for the three accounts, saved and diffed whenever the atlas is rebuilt
+  (`RouteSnapshotTest`, 2026-10-20).
 - **Referee comparison** (section 3, step 10) runs in the tool, not in the plugin's tests.
 
 ## 8. Help-list guided tests
@@ -599,7 +602,7 @@ whistle's real wait, and the first leg from where I stand." Built; the hand chec
   warm-up a full 18-stop plan takes about 50 ms on the client thread, a second plan in the same refresh about 25 ms, the
   Travel tab's picks about 6 ms; the first plan after start-up a few hundred ms.
 - **Fallback:** without the atlas the planner uses the old tables as before (minus learned times); the existing
-  scenario suites still test that path. The atlas has its own suite, `AtlasRouteTest` (the section 7 scenarios that
+  scenario suites still test that path. (Both went on 2026-10-20: T3's last step, below.) The atlas has its own suite, `AtlasRouteTest` (the section 7 scenarios that
   belong to T3, charges, daily uses, the whistle's wait, the first leg).
 - **Evidence** (`AtlasRouteTest`, an account like elzerma's with coins in the bank): their full run is 482 s of travel on
   the atlas against 542 s on the old tables. Changes: Troll Stronghold 45 s (rocks at 41, 43 and 73 Agility) against
@@ -669,10 +672,102 @@ whistle's real wait, and the first leg from where I stand." Built; the hand chec
     out of it (it said 7 maple saplings when the bank had 1 and 6 were to take), and the bank's inventory counts the
     seeds and saplings to take or put back, as the vault's does.
   - Teleport jewellery from the atlas (the ring of dueling to the Fortis Colosseum) is worn when its slot is free.
-- **Not yet:** deleting the old tables (after the hand checks); the patch order inside a stop; journeys written from
-  the atlas's steps beyond boats and NPCs (T5); spells the plugin doesn't know (Watchtower, Kourend Castle...) are
-  planned only with their runes owned and on the spellbook in use, and their runes go on the supply list as items;
-  planning off the client thread (T4's search will need it). The Travel tab (T7) was built on 2026-10-20 (section 6).
+  - Checked by elzerma on 2026-10-22 (0ff295b): the vault's and bank's counts, Deposit inventory then the Farm run
+    tab, Harmony Island by the Mos le'Harmless teleport (or, turned off, Bill Teach's boat), tools not outlined at a
+    patch, Wear labels once armed at a patch, Bank for them / Skip, Start now, no highlights after landing and the tick
+    colours all passed. The seed vault's Getting ready step had named only the palm sapling, worked out before the
+    bank's maple saplings and irit seeds were known, so it never ticked: it now names what's still to take, as it
+    changes. The Ardougne cloak's three uses in a day are still to try.
+- **Not yet:** the patch order inside a stop; journeys written from the atlas's steps beyond boats and NPCs (T5);
+  spells the plugin doesn't know (Watchtower, Kourend Castle...) are planned only with their runes owned and on the
+  spellbook in use, and their runes go on the supply list as items; planning off the client thread (T4's search will
+  need it). The Travel tab (T7) was built on 2026-10-20 (section 6); the old tables went the same day (below).
+
+### T3's last step (2026-10-20): the old tables deleted
+
+Agreed with elzerma (picker, 2026-10-20), built after T7 was merged: every hand-made distance table goes with the
+planner's path that used it, the scenario suites plan on the atlas with test players that match their accounts, plus
+route snapshots, and banks come from the atlas.
+
+- **Gone** (4c8ed16): `TravelTimes`' tables (each way's walk and extra seconds, the walks between stops, the spirit tree,
+  Renu pad, balloon, fairy ring and bank walks); it keeps only the plugin's timing for each kind of travel (section 5).
+  `RoutePlanner`'s old path (`tableLeg`, `quickest`, `options` and their special cases), the dev log's "The old tables'
+  route (not used)", `FairyRingAccess`' walks to its rings, and the atlas report's comparison with `TravelTimes`
+  (`tools/atlas/report.md` keeps that section until the next rebuild). When nothing usable reaches a stop, the way to
+  bring (a tablet to buy, never for an ironman) is timed on the atlas from where it lands.
+- **Kept until T5:** `TravelMethod`, without distances (and without the fields only the old Travel tab list used): the
+  guide's names and written steps for the ways it knows (follow Elkoy, the Ardougne boat, the Taverley rocks), matched
+  to atlas ways by where they land. The link from atlas teleports to the plugin's items, spells, charges and daily uses
+  stays as it was: `AtlasLinks`, `ItemCharges`, `DailyLimits` (whose two daily teleports are saved keys).
+- **No atlas, no route:** planning waits the half second the atlas takes to read at start-up; if it can't be read, the
+  Run tab says "Travel data couldn't be read, so there's no route. Restart RuneLite; if it happens again, please use
+  Report a problem in Settings." and patches are still tracked.
+- **Banks from the atlas** (1159863, `AtlasBanks`): each stop's bank is the one the atlas walks to quickest on foot
+  from its patches (no boat or portal), timed from the patch furthest from it, and no further than Port Phasmatys's
+  (116 tiles), the longest the old table had. New: Hosidius (62 tiles), the Falador farm and Lumbridge (Draynor's bank,
+  73 and 105), the Ardougne farm (north Ardougne's, 91) and Taverley (Falador's west bank, 102). Civitas illa Fortis
+  banks in the city (77 tiles) rather than the Hunter Guild (89). None for Brimhaven, Kastori and Harmony Island (their
+  nearest banks are across the water) or the north Lumbridge hops (126 tiles). The Gnome Stronghold's upstairs bank
+  isn't in the atlas (Shortest Path's map has no way up), so it keeps one marked hand entry, 10 tiles, until the atlas
+  learns the ladder.
+- **Suites on the atlas** (4f04db9): test players' diaries and the unlocks read from varbits match their accounts,
+  and the account like elzerma's has coins for fares. That showed set-up slips the old tables never checked: the
+  Stronghold's spirit tree needs The Grand Tree, the unlimited cabbage teleport needs the hard Lumbridge diary, Ardougne
+  cloak 2's farm teleport needs the medium Ardougne diary, and the atlas planned a house only once its location was set.
+  Since fixed (2026-10-21, elzerma: "Game only, no drop-down"): where the house is and how Teleport to House lands are
+  read from the game (POH_HOUSE_LOCATION, POH_TELE_TOGGLE) instead of picked in Account > My house; with no house the
+  route uses none, and a house in a place the plugin doesn't know yet has every way out but the front door
+  (`AtlasHouse`). The places' values are Shortest Path's. elzerma's guided test (2026-10-22, a house in Hosidius)
+  showed Hosidius is 8, and that the teleport setting reads 0 when Teleport to House lands inside and 1 when it lands
+  outside: the other way round from Shortest Path's rows (harmless there, as both rows land on the same tile). It
+  passed on its re-run, so "Where your house is" left the help list. Both values are shown in Settings > Debug >
+  Detected rather than My house (elzerma).
+- **Route changes** (each explained in its test): without a whistle, Varlamore's legs each start with the Civitas illa
+  Fortis Teleport and Renu from the city's pad (6 s quicker than walking back to a pad); with 68 Agility, Taverley is
+  walked to over the rocks from whichever of Catherby and Falador Park is next to it; a whistle charge no longer counts
+  against a flight, so elzerma's Civitas illa Fortis, Kastori and Nemus Retreat legs go back to the whistle, under a
+  second quicker than the teleport and Renu (as asked on 2026-10-15). The suites first gave elzerma's account the
+  perfected whistle's unlimited charges and dropped the tie-break only for that; their hand checks showed theirs is the
+  enhanced whistle (9 charges), so on 2026-10-22 it went for every whistle. Renu from a pad keeps its 2 s preference.
+- **Hand checks (2026-10-22, the dev client on this branch):** the route plans at log-in (the atlas read in 100 ms)
+  and the dev log has no old-tables line. Kastori was still by the Civitas illa Fortis Teleport and Renu (24 s) over
+  elzerma's whistle (23 s), lost by the 1 s charge tie-break, until they turned the teleport off: fixed as above. A bank
+  visit for missing items at Civitas illa Fortis says "Bank near" the stop. With 68 Agility, Catherby is walked to from
+  Taverley over the rocks (planned, 28 s). Re-checked on the fix the same day, all passed: with the teleport back on,
+  Kastori, Civitas illa Fortis and Nemus Retreat by the whistle; the Gnome Stronghold's bank line walked to the upstairs
+  bank, its first step ticking on arrival; Taverley to Catherby walked in 27 s (28 s planned), an odd-looking path but
+  the atlas's. elzerma keeps "Start now" without items as skipped, not asked about (their second run, 2026-10-18).
+- **Route snapshots** (56ae37f, `RouteSnapshotTest`): the whole route for three test accounts (like elzerma's,
+  mid-level with no quests, maxed) is saved in `src/test/resources`; a change that moves one fails the test, with the
+  new routes in `build/route-snapshots.txt`. Worth a look there: the mid-level Yanille leg by the ring of wealth and
+  a Castle Wars recruiter, and the maxed Weiss leg by fairy ring and boat rather than the icy basalt.
+- **Follow-ups:** the Stronghold bank's ladder as an atlas extra (section 3, step 2).
+
+### The snapshots' two odd legs (2026-10-21)
+
+Both checked, and fixed as elzerma picked (picker, 2026-10-21):
+
+- **The maxed Weiss leg** went by fairy ring DKS and the boat (47 s), though the account holds an icy basalt. The atlas
+  is right: the basalt needs its item (22599) and Shortest Path's MY2ARM_STATUS = 207. The test players read 75, as
+  `AtlasPlayers` gives a var the value of its first check ("> 74") and the "= 207" one never replaced it. In game the
+  plugin read the real varbit, so the basalts hung on a finished quest reading exactly 207, which no source confirms
+  (Quest Helper's last step is 196); the wiki's only rule for both basalts is Making Friends with My Arm finished. So
+  `AtlasAccount` checks that quest for Shortest Path's MY2ARM_STATUS = 207 (the Travel tab names the quest when it's
+  missing), with a guided test (ICY_BASALT) for players who have it, which records what the varbit reads. The maxed
+  snapshot takes the icy basalt to Weiss (13 s) and the stony basalt to the Troll Stronghold's roof (14 s): 573 s
+  instead of 638 s, in a new order.
+- **The mid-level Yanille leg** went by the ring of wealth to the Grand Exchange, then "Join Castle Wars" with the
+  Zamorakian recruiter (65 s). The recruiters are real (the Games Zone, since May 2021), but joining puts the player in
+  a team's waiting room, not the lobby, and Castle Wars lets in only combat items and no capes, so a farm run can't
+  take them; Shortest Path added them in its PR #580 with no requirement, as its data can't say that. `TravelAtlas`
+  leaves out every way through them when it reads the atlas: 973 ways over 557 place pairs, 262 of which had no
+  other way kept. The mid-level snapshot reaches Yanille by charter ship from Brimhaven to Port Khazard (71 s): 543 s
+  instead of 537 s, in a new order.
+- **The Weiss herb tile** isn't why the basalt was skipped (it wins by 34 s from either). elzerma: `PatchPoints`'
+  2847 3931 and the cache's 2848 3934 both work, being about two tiles apart, so it stays.
+- **Follow-ups:** at its next rebuild, tools/atlas should leave the recruiters out of the pathfinder too, so those
+  place pairs get their next-best way. Not checked: since 17 December 2025 the stony basalt's left click goes to the
+  roof or the entrance, whichever the player set, with both on its right-click menu; the atlas has two teleports.
 
 ## 10. Risks
 

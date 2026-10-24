@@ -1,6 +1,5 @@
 package com.farmrunautopilot.settings;
 
-import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.poh.JewelleryBoxTier;
 import com.farmrunautopilot.data.poh.PohAltar;
 import com.farmrunautopilot.data.poh.PoolTier;
@@ -11,15 +10,13 @@ import lombok.Data;
 
 /**
  * The player's house (SPEC 5 PohSetup, 13.2 "My POH"). Jewellery box, pool, fairy ring and spirit tree
- * are detected when the player is in their house; everything can be edited by hand.
+ * are detected when the player is in their house; everything can be edited by hand. Where the house is and how
+ * Teleport to House lands are read from the game instead (AccessSnapshot): saves from before 2026-10-21 still
+ * load, and their picked location and "teleport outside" are dropped.
  */
 @Data
 public class PohSetup
 {
-	/** Null if unknown or no house. */
-	private HousePortal portal;
-	/** House set to "teleport outside", so Teleport to House lands at the portal. */
-	private boolean teleportOutside;
 	private Set<PortalNexus.Destination> nexusDestinations = EnumSet.noneOf(PortalNexus.Destination.class);
 	/** Null if none built. */
 	private JewelleryBoxTier jewelleryBox;

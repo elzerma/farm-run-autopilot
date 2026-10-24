@@ -33,16 +33,15 @@ class PatchDebugPanel extends JPanel
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		final JLabel title = new JLabel("Patch states (debug)");
-		Style.title(title);
-		title.setBorder(new EmptyBorder(0, 0, 6, 0));
-		add(title);
-
+		// Under the section's own "Patch details" heading, so no title of its own; one small heading per type, on the
+		// left like the rows (elzerma: two headings, and these floating in the middle, read as confusing)
 		for (PatchType type : PatchType.values())
 		{
 			final JLabel header = new JLabel(type.getDisplayName() + " patches");
 			header.setForeground(Color.WHITE);
-			header.setBorder(new EmptyBorder(8, 0, 4, 0));
+			header.setFont(FontManager.getRunescapeSmallFont());
+			header.setBorder(new EmptyBorder(8, 0, 3, 0));
+			header.setAlignmentX(LEFT_ALIGNMENT);
 			add(header);
 
 			for (Patch patch : Patch.values())
@@ -78,6 +77,7 @@ class PatchDebugPanel extends JPanel
 		wrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		wrapper.setBorder(new EmptyBorder(0, 0, 3, 0));
 		wrapper.add(row, BorderLayout.CENTER);
+		wrapper.setAlignmentX(LEFT_ALIGNMENT);
 		return wrapper;
 	}
 

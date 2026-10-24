@@ -1,7 +1,9 @@
 package com.farmrunautopilot.run;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.route.Departure;
@@ -37,6 +39,25 @@ public class TeleportMenuHighlighterTest
 	{
 		assertEquals(-1, TeleportMenuHighlighter.pick(new String[]{"Rub"}, new int[]{ItemID.AMULET_OF_GLORY_4},
 			Set.of(NECKLACE), "Farming Guild"));
+	}
+
+	@Test
+	public void rightClickWhenTheOptionIsntTheLeftClick()
+	{
+		// A ring of dueling in the inventory: Wear is its left click, Rub needs a right-click
+		final String[] ring = {null, "Wear", "Rub", null, "Drop"};
+		assertTrue(TeleportMenuHighlighter.needsRightClick(ring, false, "Castle Wars"));
+		// A worn item's left click is Remove
+		assertTrue(TeleportMenuHighlighter.needsRightClick(ring, true, "Castle Wars"));
+		// An item whose first option is the teleport
+		assertFalse(TeleportMenuHighlighter.needsRightClick(new String[]{"Rub", "Wear", null, null, "Drop"}, false,
+			"Castle Wars"));
+		// After "Use", even with nothing before it
+		assertTrue(TeleportMenuHighlighter.needsRightClick(new String[]{null, null, null, "Farm Teleport", "Drop"},
+			false, "farm"));
+		// Nothing on the item for this leg
+		assertFalse(TeleportMenuHighlighter.needsRightClick(new String[]{null, "Wear", null, null, "Drop"}, false,
+			"Castle Wars"));
 	}
 
 	@Test

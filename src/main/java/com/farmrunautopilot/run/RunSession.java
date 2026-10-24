@@ -9,7 +9,7 @@ import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
-import com.farmrunautopilot.data.travel.TravelTimes;
+import com.farmrunautopilot.data.travel.atlas.AtlasBanks;
 import com.farmrunautopilot.bank.FarmBankTab;
 import com.farmrunautopilot.bank.SeedVaultSection;
 import com.farmrunautopilot.route.AtlasLeg;
@@ -1199,7 +1199,7 @@ public class RunSession
 	{
 		final Location here = plan.getRoute().getStops().get(stopIndex).getLocation();
 		// Banking near the stop if there's a bank, else by a bank teleport carried, else any bank
-		final BankTeleport teleport = TravelTimes.bankTiles(here) != null ? null : runService.carriedBankTeleport();
+		final BankTeleport teleport = AtlasBanks.near(here) != null ? null : runService.carriedBankTeleport();
 		extraBank = new BankStop(stopIndex, here, needed, teleport);
 		extraNow = now;
 		log.debug("Item missing, unplanned bank visit {} {}: {}", now ? "now, at" : "after", here.getDisplayName(),
@@ -1558,7 +1558,7 @@ public class RunSession
 			{
 				return null;
 			}
-			return TravelTimes.bankPoint(bank.getBankLocation());
+			return bankPoint(bank.getBankLocation());
 		}
 		if (!navigator.isArrived())
 		{
@@ -1963,10 +1963,17 @@ public class RunSession
 	private boolean atBank(BankStop bank)
 	{
 		final WorldPoint point = bank.getTeleport() != null ? bank.getTeleport().getBankPoint()
-			: TravelTimes.bankPoint(bank.getBankLocation());
+			: bankPoint(bank.getBankLocation());
 		final Player player = client.getLocalPlayer();
 		return point != null && player != null && player.getWorldLocation().getPlane() == point.getPlane()
 			&& player.getWorldLocation().distanceTo2D(point) <= AT_BANK_TILES;
+	}
+
+	/** The bank booth or chest by a stop (the travel atlas's), or null if it has none. */
+	private static WorldPoint bankPoint(Location location)
+	{
+		final AtlasBanks.Bank bank = AtlasBanks.near(location);
+		return bank == null ? null : bank.getPoint();
 	}
 
 	/**
@@ -2155,7 +2162,8 @@ public class RunSession
 		}
 		if (banking)
 		{
-			// Teleporting to the bank: the bank teleport is the item to use, as for any other teleport (elzerma)
+			// Teleporting to the bank: the bank teleport is the item to use, as for any other teleport (elzerma), with
+			// its option to pick, e.g. the ring of dueling's Castle Wars (elzerma, 2026-10-21: it wasn't coloured)
 			final BankStop bank = activeBank();
 			if (bank != null && bank.getTeleport() != null && !bankProgress[0])
 			{
@@ -2164,7 +2172,8 @@ public class RunSession
 				{
 					teleport.add(id);
 				}
-				return new Highlights(null, false, null, teleport, null, wear.getItemIds());
+				return new Highlights(null, false, null, teleport, null, wear.getItemIds(), Collections.emptyList(),
+					bank.getTeleport().getOption());
 			}
 			// On the way to the Farming Guild's bank: what gets the player there, as for a stop (issue #8)
 			if (bank != null && bank.getTrip() != null && !bankProgress[0])
@@ -2553,9 +2562,15 @@ public class RunSession
 	private List<RunView.Step> gatheringSteps(int fromBank, Map<Integer, Integer> fromVault,
 		Map<Integer, Integer> toBank, List<String> nowhere)
 	{
-		if (!fromVault.isEmpty() && gatherVault == null)
+		// What's still to take, kept up to date (elzerma, 2026-10-22: it named only the palm sapling, worked out before the
+		// bank's maple saplings and irit seeds were known, so it never ticked); once it's all taken, a plain line, ticked
+		if (!fromVault.isEmpty())
 		{
 			gatherVault = "Take " + amounts(fromVault) + " from the seed vault";
+		}
+		else if (gatherVault != null)
+		{
+			gatherVault = "Take the seeds and saplings from the seed vault";
 		}
 		// After everything's been deposited, carrying seeds for later means too many were taken
 		if (!toBank.isEmpty() && depositedAll)

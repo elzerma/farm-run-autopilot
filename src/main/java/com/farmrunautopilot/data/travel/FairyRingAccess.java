@@ -6,22 +6,22 @@ import java.util.List;
 import lombok.Getter;
 
 /**
- * Ways to reach a fairy ring before dialling a code, other than the house ring (which comes from My POH).
- * Tile counts are from the wiki's fairy ring page (teleport arrival to the ring). The player picks one in
- * Rules &gt; Travel, or Auto; the ring by the last stop is always used when it's quicker.
+ * Ways to reach a fairy ring before dialling a code, other than the house ring (which comes from My POH): the ring by
+ * the last stop, or a teleport item that lands by a ring. The travel atlas times the walk to the ring; these name the
+ * way for the guide and the item to bring.
  */
 @Getter
 public enum FairyRingAccess
 {
-	/** The ring next to the stop just finished, walking the same distance as arriving there by ring. */
-	NEARBY("Fairy ring by the last stop", "from the ring by the last stop", null, 0),
+	/** The ring next to the stop just finished. */
+	NEARBY("Fairy ring by the last stop", "from the ring by the last stop", null),
 	// Every cloak tier teleports to the Monastery as often as wanted
-	ARDOUGNE_CLOAK("Ardougne cloak (Monastery), ring DJP", "from DJP by Ardougne cloak", "DJP", 51,
+	ARDOUGNE_CLOAK("Ardougne cloak (Monastery), ring DJP", "from DJP by Ardougne cloak", "DJP",
 		TravelItem.ARDOUGNE_CLOAK,
 		TravelItem.ARDOUGNE_CLOAK_1),
-	SLAYER_RING("Slayer ring (Fremennik Slayer Dungeon), ring AJR", "from AJR by slayer ring", "AJR", 16,
+	SLAYER_RING("Slayer ring (Fremennik Slayer Dungeon), ring AJR", "from AJR by slayer ring", "AJR",
 		TravelItem.SLAYER_RING),
-	QUEST_CAPE("Quest point cape (Legends' Guild), ring BLR", "from BLR by quest point cape", "BLR", 12,
+	QUEST_CAPE("Quest point cape (Legends' Guild), ring BLR", "from BLR by quest point cape", "BLR",
 		TravelItem.QUEST_POINT_CAPE);
 
 	/** Which teleport to use and the ring it reaches. */
@@ -30,17 +30,14 @@ public enum FairyRingAccess
 	private final String via;
 	/** The ring it reaches, e.g. "AJR"; null for the ring by the last stop. */
 	private final String ring;
-	/** Walk from the teleport's arrival to the ring. */
-	private final int tiles;
 	/** Teleport items that work, best first; empty for walking. */
 	private final List<TravelItem> items;
 
-	FairyRingAccess(String displayName, String via, String ring, int tiles, TravelItem... items)
+	FairyRingAccess(String displayName, String via, String ring, TravelItem... items)
 	{
 		this.displayName = displayName;
 		this.via = via;
 		this.ring = ring;
-		this.tiles = tiles;
 		this.items = Collections.unmodifiableList(Arrays.asList(items));
 	}
 
