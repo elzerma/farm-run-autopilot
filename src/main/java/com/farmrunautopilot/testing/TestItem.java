@@ -75,7 +75,7 @@ public enum TestItem
 			+ "Debug > Detected should then show the bucket with the same compost and uses as the Check said.", 2),
 	SPIRIT_TREES(Tab.ACCOUNT, "Planted spirit trees",
 		"Untick your planted spirit tree in Account > Unlocks, then go to it (Port Sarim, Brimhaven or the "
-			+ "Farming Guild). It should tick itself once the grown tree is in view."),
+			+ "Farming Guild). It should tick itself once the grown tree is in view.", 2),
 	HOUSE_SCAN(Tab.ACCOUNT, "House scanning (beta)",
 		"Tick \"Detect furniture when I enter my house\" in Account > My house, then enter your house: your "
 			+ "jewellery box, pool, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned), and My house should say when it was last "

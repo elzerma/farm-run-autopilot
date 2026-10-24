@@ -26,7 +26,9 @@ Issues #1 to #5 were answered and closed on 2026-10-15, before this ledger began
 
 ## #7 Equiping magical secateurs not needed
 
-**Kind:** Bug + ideas · **Status:** open, fixed in 96c706a and confirmed in game by elzerma 2026-10-16 (lava staff suggested; the fairy-ring stops came after the mid-run bank, where the dramen staff goes on); fix reply posted 2026-10-16 (draft B, approved); left open until the release by elzerma's choice; triage reply posted, ideas split to #16 (house) and #17 (report a problem) · **Reviewed through:** 2026-10-16 elzerma (fix reply)
+**Kind:** Bug + ideas · **Status:** closed as completed on the 62f3070 release; fixed in 96c706a and confirmed in game by elzerma 2026-10-16 (lava staff suggested; the fairy-ring stops came after the mid-run bank, where the dramen staff goes on); fix reply posted 2026-10-16 (draft B, approved); triage reply posted, ideas split to #16 (house) and #17 (report a problem); reply on the earth rune line posted 2026-10-23 (review of 2026-10-21, draft N) · **Reviewed through:** 2026-10-23 elzerma (draft N)
+
+**2026-10-21 review:** elwakka commented after the close (2026-10-17 20:19) with a screenshot: the earth rune line showed "/ 1" with a green tick under a lava staff. The staff was counted, but the ticked line read as something to bring. b84eadc (the same day) drops rune lines a staff or tome covers. **Already done (next update)**; draft N posted, elzerma's OK.
 
 **Fix (96c706a):** `SupplyCalculator.toWear` ranks every equipment slot in one pass, now with a weapon slot: needed-worn first (fairy-ring staff without the Elite Lumbridge diary), then whatever saves most (a staff or tome per rune type of the run it covers, a teleport item one slot), magic secateurs last. A staff the plan wields counts for its runes even while it's still in the bank; one that gives up its slot stops counting. The wiki says every Ardougne cloak tier teleports from the inventory ("When worn or in the player's inventory"), so the cloak stays an optional wear and gives way to a cape already worn. Equipping stays at the bank (`BankGuide.wear`). No help-list item: no new game values.
 
@@ -231,7 +233,9 @@ Weak pass. "Before" is captured before the player enters, and a scan only adds, 
 
 ## #12 Test: Pendant of Ates charges - needs attention
 
-**Kind:** Test report · **Status:** open, replied; fixed in b2f2ad7, waiting on a re-run (ATES_CHARGES revision 2) · **Reviewed through:** 2026-10-16 elzerma (triage reply)
+**Kind:** Test report · **Status:** closed as completed 2026-10-23: the re-run passed, `ATES_CHARGES` removed from the help list (f674066, merged 64ebd4a) · **Reviewed through:** 2026-10-23 elzerma (draft A)
+
+**2026-10-21 review:** elwakka's re-run (2026-10-18) went 20 to 19, with the plugin's count matching the second Check and the teleport step **Detected** (not the fallback question), so it's a real pass (`GuidedTests.AtesCharges`). With #28 that's two. **Close as passed, remove the test** (elzerma, picker); draft A posted.
 
 The report is right, though the player thought it was bugged. `CHARGES_PENDANT_OF_ATES_QUANTITY` reads 0 with 4 charges (`ItemChargeTracker.java:140`, UNVERIFIED), so the plugin can't count pendant teleports. Its "advance" after the spirit tree was the 6-minute fallback question. **Decision:** count teleports by click-then-move, as for the talisman; drop the varbit; bump ATES_CHARGES; reply and keep #12 open until a re-run.
 
@@ -350,9 +354,11 @@ runelite/plugin-hub#18748 merged at 12:04 UTC, so 62f3070 is live. Replies poste
 
 Still open: #8 (seed vault, waiting on edge-case checks and elzerma's choices on the banking setting and the routing), #12 and #16. The vine (bank, vault and spellbook) and the seed vault section are on master after 62f3070, and go out in the next update.
 
-## #18 Help wanted: 7 quick in-game tests
+## #18 Help wanted: 6 quick in-game tests
 
-**Kind:** Help wanted (opened and pinned by elzerma's OK, 2026-10-17) · **Status:** open, pinned · **Reviewed through:** 2026-10-17 elzerma (body)
+**Kind:** Help wanted (opened and pinned by elzerma's OK, 2026-10-17) · **Status:** open, pinned · **Reviewed through:** 2026-10-23 elzerma (body edit)
+
+- **2026-10-23 edit (review of 2026-10-21, draft O, elzerma's OK):** retitled from 7 to 6 tests, the "Pendant of Ates charges" row removed (passed in #12 and #28), and the bucket row now asks for "A bottomless compost bucket with compost or supercompost in it (ultracompost is done)".
 
 Lists the help-list tests elzerma's account can't run: SPELLBOOK_SWAP, FORTIS_CHAMPION, BUCKET_COMPOST, SPIRIT_TREES, HOUSE_BY_TREE, ATES_CHARGES and HOUSE_SCAN. Update the table when a test is added, passes or is removed. Close it when the list is empty.
 - **HOUSE_TURNED_OFF added (sprint T7, 2026-10-20):** draft A, a row "Turning your house off | Your own house, set up in Account > My house, on a run that goes through it" after "Spirit tree into your house", and the title "Help wanted: 8 quick in-game tests". elzerma (picker, 2026-10-20): post it once the test is in a Plugin Hub release, not before. Not posted. Withdrawn 2026-10-23 (elzerma, picker): they have a house after all (Hosidius), so the test is theirs to run and #18 needs no row for it.
@@ -360,3 +366,118 @@ Lists the help-list tests elzerma's account can't run: SPELLBOOK_SWAP, FORTIS_CH
 - **HOUSE_LOCATION added (2026-10-21, the house's place read from the game):** draft B, a row "Where your house is | Your own house, and a way to teleport to it (the spell, a tablet, or a construction or max cape)" after "House scanning (beta)", with the title's count one higher. Shown to elzerma, never asked about or posted. Withdrawn 2026-10-22: the test passed on elzerma's own house (Hosidius) and was removed, so #18 needs no row for it.
 - **#7, follow-up (2026-10-17, elzerma in game):** with a lava staff suggested, the list still showed an earth rune line with a green tick, which read as something to bring. Runes covered by a staff or tome no longer get a line of their own; the staff's line ("Covers the earth and fire runes") and the rune summary say it once.
 - **#7, follow-up (2026-10-17, elzerma: "bring multiple staves if more space efficient than runes"):** built (38920cb, f96c34d, ea00c6c), not yet checked in game. elzerma's choices (picker): guided swaps during the run are fine, but only when they free at least one inventory slot overall; the rune pouch is one slot shared by its rune types (1/3 each when full, 1/2 with two, the whole slot with one; the divine pouch holds 4, 1/4 each), and types that don't fit take a slot each; the dramen staff joins the swapping (a rune staff wielded by default, the dramen staff for fairy ring legs and back), and the Elite Lumbridge diary still means no dramen staff. `supply/StaffPlanner.java` tries every set of up to three staves against keeping one on, and swaps only just before setting off for a stop, so the staff at a herb patch (Cure plant) is the one wielded on the way there. The first staff is put on at the bank; the others are carried (a slot each), and the step before a stop that needs another says "Wield your mist battlestaff", outlined in the wear colour, moving on once it's wielded. Also fixed in passing: the house fairy ring reached by spirit tree didn't ask for the dramen staff. New help-list item STAFF_SWAPS. Then (elzerma asked how a teleport needing fire and water is handled with a fire staff and a water staff): one staff is wielded per cast, so that cast keeps one staff and carries the other rune; a staff is now worth the slots its rune types take (a rune pouch share counts), then the runes it saves, so 20 fire beat 2 water. No reply posted.
+
+## Review of 2026-10-21 (#19 to #31)
+
+Worked through in the working notes `docs/ISSUES-REVIEW-2026-10-21.md` on branch `claude/issues-review-2026-10-21`, which this section replaces. Every report below was made on the released `62f3070`; line numbers were for master `019880c`. elzerma picked each verdict in the picker on 2026-10-22 and said to post every draft ("good to post them all"); the replies, closes and labels went up on 2026-10-23 (GitHub time). Each fix promised in a reply was built in its own session and merged to master: the pendant test removed (64ebd4a), the bucket test (3a4576c), the house scan (6c6e828), crystal trees in Sprint 1c (e734870) and the spirit tree test (241244f). None of them has been checked in game by a player yet.
+
+## #19 Test: Planted spirit trees - works
+
+**Kind:** Test report · **Status:** open, `test-report`; reply posted (draft C); closes once elwakka answers · **Reviewed through:** 2026-10-23 elzerma (draft C)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| elwakka | Works: arrived at `WorldPoint(1249, 3741, 0)`, spotted `SPIRIT_TREE_PORT_SARIM` | `GuidedTests.SpiritTrees.spotted` (`:1120`), `TestContext.hasUnlock` (`:180`), `TestRunner.start`, `SettingsStore.startTest`, `AccessChecker.REFRESH_TICKS` = 50 | Weak pass. 1249, 3741 is region 4922, the Farming Guild, but `spotted` returns the first of Port Sarim, Brimhaven, Farming Guild that `hasUnlock` says is ticked, not the one where the player is, and no test refreshed the access snapshot at its start, so a tick from before `setUp` could still count | **Fix**: only the tree in the player's region counts, every guided test starts with a fresh access snapshot, `SPIRIT_TREES` revision 2 (241244f). Ask whether they have a Port Sarim tree too |
+
+## #20 Test: Bottomless bucket at the tool leprechaun - needs attention
+
+**Kind:** Test report · **Status:** closed as completed 2026-10-23, `test-report` · **Reviewed through:** 2026-10-23 elzerma (draft D)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| darkshadow0308 | Needs attention: "Type value 4 was read as Ultracompost, not Compost" | `GuidedTests.BucketCompost` (`:968`), `Compost.fromBucketType` (`:47`) | The reading was right: they answered Yes to compost **and** to ultracompost, and 4 matches the ultracompost Yes (as in #29). The question "Is the bucket filled with compost?" reads as "any compost". The uses value (38) was never compared with anything | **Fix the test**: ask about plain compost, add a uses check, mark 4 confirmed and keep 2 and 3 UNVERIFIED (3a4576c). Close; the test stays for compost and supercompost |
+
+## #21 Test: House scanning (beta) - needs attention
+
+**Kind:** Test report · **Status:** open, `test-report`, `needs-info`; question posted (draft F) · **Reviewed through:** 2026-10-23 elzerma (draft F)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| darkshadow0308 | "The house wasn't scanned"; everything empty before and after, `lastDetected=0`; answered Yes that it matched | `PohDetector.onGameTick` (`:198`), `apply` (`:252`, `:283`), `GuidedTests.HouseScan` (`:1168`), `TestContext.inOwnHouse` (`:185`) | Two possible causes: a house with none of the five scanned things (jewellery box, pool, ancient/lunar/dark/occult altar, fairy ring, spirit tree) was never marked scanned, which fits the Yes; or they were already inside when the test started, so nothing loaded after `setUp` cleared it | **Needs info** and **Fix** either way: a loaded house counts as scanned with nothing found, step 1 waits for a new house load, `HOUSE_SCAN` revision 4 (6c6e828) |
+
+## #22 Add support for Calquat trees
+
+**Kind:** Idea · **Status:** open, `enhancement` (was `idea`); reply posted (draft H) · **Reviewed through:** 2026-10-23 elzerma (draft H)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| Zerkia | No calquat options; two of three are near other fruit trees | `docs/plans/crop-types.md` section 4 | Already planned in Sprint 1c (Tai Bwo Wannai, Kastori, Great Conch), after the travel rework and 1b | **Planned**: keep open until calquats are in |
+
+## #23 Fruit Tree in Gnome Stronghold not triggering
+
+**Kind:** Bug · **Status:** open, `needs-info` (`bug` taken off until the skip is traced); questions posted (draft G) · **Reviewed through:** 2026-10-23 elzerma (draft G)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| Zerkia | On a herb + tree + fruit tree run the guide did the Stronghold tree, then sent them to Tree Gnome Village, skipping the fruit tree | `Patch.java:53` (fruit tree `FARMING_TRANSMIT_B` in 9781, as RuneLite's `FarmingWorld`), `RunSelector.java:135`, `StepAdvisor.java:83`, `PatchGuide.nextStep` (`:245`) | The varbits are right. A patch at a stop is only passed over when it isn't in the plan (not due, unticked), reads as growing since arriving, or the stop was ticked by hand. Most likely it was planned as due but still growing; can't settle without the reporter. elzerma asked whether the next release fixes it: no, master passes over a patch the same way as `62f3070` | **Needs info**: ask whether the fruit tree was in the stop's hover list and whether it was ready |
+
+## #24 Support for item customization for setup
+
+**Kind:** Idea · **Status:** open, `idea`, `needs-info` (the tome question); reply posted (draft J) · **Reviewed through:** 2026-10-23 elzerma (draft J)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| Zerkia | Can't say they don't have, or don't want, a tome of fire | `SupplyCalculator.runeItems` (`:928`) | Only staves and tomes the player owns are offered; there's no opt-out. If they don't own one, it's a bug | **Needs info**: ask whether they own one; no opt-out planned (elzerma: ask only) |
+| Zerkia | The rune pouch isn't suggested, though its runes are seen | `HoldingsTracker.readRunePouch` (`:259`), `StaffPlanner.pouchTypes` (`:102`), `SupplyCalculator.java:1299` | On `62f3070` the pouch is never named. On master (38920cb) an owned pouch, bank included, is named on the rune lines; its runes only count while it's carried | **Already done (next update)**, plus **Explore**: count a banked pouch's runes |
+| Zerkia | Without an icy basalt there's no other way to Weiss | `atlas/places.tsv` (place 21 `WEISS_HERB`), `ways.tsv` | On master the atlas reaches Weiss by fairy ring DKS, the Fremennik sea boots, the Rellekka house portal or tablet and more | **Already done (next update)** |
+| ConnorBampton | Magic secateurs on herb runs | `SupplyCalculator.secateursWanted`, `RunConfig.java:70` | Already suggested by Suggest yield boosts (on by default), for herbs, allotments and hops | **Already done** |
+
+## #25 Run times
+
+**Kind:** Idea (shared run times) · **Status:** closed as not planned 2026-10-23, `wontfix`; reply posted (draft M, with the Hosidius line) · **Reviewed through:** 2026-10-23 elzerma (draft M)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| collinphood-svg | Shared their learned legs from Settings > Help improve this plugin > Share your run times | 7d1f244, 92d4624 | Master removed the button (no crowdsourcing: times are the player's own), and learned times no longer choose routes. Their Hosidius leg by Kharedst's memoirs (119.4 s, 2 samples) is far over the estimate; elzerma's own leg there (Book of the Dead, 59 s) was already slow (a3af137) | **Close as not planned**, mention the slow Hosidius leg |
+
+## #26 Herb Seeds in Seed box should be usable
+
+**Kind:** Idea · **Status:** open, `idea`; reply posted (draft L) · **Reviewed through:** 2026-10-23 elzerma (draft L)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| ConnorBampton | Track seeds in the seed box and point to the box at the patch, not "No cadantine seeds in inventory" | OSRS wiki (Seed box; the 3 June 2026 update plants the first suitable seed when the box is used on a patch), `InventoryID.SEED_BOX` | Not supported on either build. Unknown when the server sends the box's container | **Explore**: read the box's contents and point to it when its first suitable seed is the planned crop. Asked which seeds they keep in it |
+
+## #27 Idea: Ability to whitelist or block validation on some bank items e.g. house tabs
+
+**Kind:** Idea · **Status:** open, `idea`; reply posted (draft K); closes once the update is out · **Reviewed through:** 2026-10-23 elzerma (draft K)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| ConnorBampton | Asked for house tabs with a dust staff and law runes held; any way to mark an item as covered | `62f3070` `SupplyCalculator.usesTablet` and the Travel tab box (`Departure.DIRECT` only); master `TravelPage.java:165`, `SupplyCalculator.java:1164` (862b7d4, 0bfed55) | True on the release: house stops couldn't switch to runes. Master's "Cast from runes, not tablets" covers Teleport to House | **Already done (next update)**: keep open until it's released |
+
+## #28 Test: Pendant of Ates charges - works
+
+**Kind:** Test report · **Status:** closed as completed 2026-10-23, `test-report`; reply posted (draft B) · **Reviewed through:** 2026-10-23 elzerma (draft B)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| ConnorBampton | Works: 89 to 88 | `GuidedTests.AtesCharges` (`:906`) | Real pass, the second (with #12) | **Close as passed**; `ATES_CHARGES` removed (f674066) and its #18 row dropped |
+
+## #29 Test: Bottomless bucket at the tool leprechaun - works
+
+**Kind:** Test report · **Status:** closed as completed 2026-10-23, `test-report`; reply posted (draft E) · **Reviewed through:** 2026-10-23 elzerma (draft E)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| ConnorBampton | Works: ultracompost, type 4, uses 203 | `Compost.java:42-47` | 4 = ultracompost confirmed by a second player; compost and supercompost still unseen | **Close**; the test stays for compost and supercompost (see #20) |
+
+## #30 Offer to help with Sprint 1c (special trees)
+
+**Kind:** Idea (offer of help) · **Status:** closed as completed by elzerma 2026-10-23 · **Reviewed through:** 2026-10-23 elzerma (closing comment)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| MangoTheFlamingo | Offers to help with 1c (building parts to the plan, or sharing data); their Tree Run Planner ([TreeRuns](https://github.com/MangoTheFlamingo/TreeRuns), BSD-2) covers every special tree, crystal trees too | `docs/plans/crop-types.md` section 4 | A generous offer; the plan's 1c unknowns are exactly what their testing covers. Crystal trees were left out of the plan with no reason | elzerma (picker): ask for their data in the thread, **no pull requests**; **add crystal trees to Sprint 1c** (e734870). Draft I posted |
+| MangoTheFlamingo (2026-10-23) | Great Conch: the step where you give the bandage; hardwood stump fee 200 coins; Anglers' Retreat needs 51 Sailing, a rowboat (50 Construction) from Corsair Cove recommended; patch data in TreeRuns' `data/Patch.java` | | Reports from a month of testing, not readings from this plugin | Written into the 1c plan's UNVERIFIED list, credited to them (06f16b9); the README credits them and their plugin and thanks them |
+| elzerma, MangoTheFlamingo | Thanks, the release timing and the changes in it | | | Chatter; elzerma closed the issue |
+
+## #31 House teleport options
+
+**Kind:** Idea · **Status:** open, `idea`; reply posted (draft P); closes once the update is out · **Reviewed through:** 2026-10-23 elzerma (draft P)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| iieu8827roj | Ask for the rune pouch instead of single runes; runes, not tabs, to the house (an ironman without a construction cape) | as #24 and #27 | Master names an owned pouch on the rune lines and has "Cast from runes, not tablets"; a banked pouch's runes don't count (#24) | **Already done (next update)**, linked to #24 |
+
+**Nothing new** on #8 (reviewed through 2026-10-16 elzerma) or #16 (2026-10-17 elzerma, release reply).
