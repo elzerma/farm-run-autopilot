@@ -33,6 +33,7 @@ import com.farmrunautopilot.run.SceneTracker;
 import com.farmrunautopilot.run.ShortestPathBridge;
 import com.farmrunautopilot.run.ShortestPathSecondOpinion;
 import com.farmrunautopilot.run.SpellHighlightOverlay;
+import com.farmrunautopilot.run.TabIconOverlay;
 import com.farmrunautopilot.run.TeleportMenuHighlighter;
 import com.farmrunautopilot.run.TravelMenuOverlay;
 import com.farmrunautopilot.tracking.PatchTracker;
@@ -166,6 +167,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private SpellHighlightOverlay spellHighlightOverlay;
 
 	@Inject
+	private TabIconOverlay tabIconOverlay;
+
+	@Inject
 	private TravelMenuOverlay travelMenuOverlay;
 
 	@Inject
@@ -238,6 +242,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		overlayManager.add(highlightOverlay);
 		overlayManager.add(itemHighlightOverlay);
 		overlayManager.add(spellHighlightOverlay);
+		overlayManager.add(tabIconOverlay);
 		overlayManager.add(travelMenuOverlay);
 		overlayManager.add(inventoryCountOverlay);
 		overlayManager.add(vineOverlay);
@@ -266,6 +271,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		overlayManager.remove(highlightOverlay);
 		overlayManager.remove(itemHighlightOverlay);
 		overlayManager.remove(spellHighlightOverlay);
+		overlayManager.remove(tabIconOverlay);
 		overlayManager.remove(travelMenuOverlay);
 		overlayManager.remove(inventoryCountOverlay);
 		overlayManager.remove(vineOverlay);
