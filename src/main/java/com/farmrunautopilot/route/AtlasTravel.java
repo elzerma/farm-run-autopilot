@@ -37,6 +37,8 @@ final class AtlasTravel
 {
 	/** The plugin's travel methods by the stop they go to. */
 	private static final Map<Location, List<TravelMethod>> TO = new EnumMap<>(Location.class);
+	/** Shortest Path's Teleport to House rows picked by Outside on the spell's or tablet's right-click. */
+	private static final String OUTSIDE = " (Outside)";
 	/** A ring's hub (where its hops leave from) this close to where its own code lands is that ring. */
 	private static final int RING_TILES = 8;
 	/** Where each fairy ring code lands, by code ("AJR"), found once. */
@@ -336,7 +338,7 @@ final class AtlasTravel
 
 	/**
 	 * The option or list entry a teleport item needs, from its name: "Skills necklace: Crafting Guild" is "Crafting Guild".
-	 * None for spells (cast from the spellbook) or an item with one teleport.
+	 * None for spells (their other places are {@link #spellOption}) or an item with one teleport.
 	 */
 	private static String option(TravelAtlas.Jump teleport)
 	{
@@ -540,9 +542,32 @@ final class AtlasTravel
 	}
 
 	/** The teleport's name without Shortest Path's "(Outside)" for the house setting. */
+	/**
+	 * The option a spell's or a tablet's right-click menu needs for this teleport, from its name: "Camelot Teleport:
+	 * Seers'" is "Seers'" (the hard Kandarin diary's), and Shortest Path's "(Outside)" rows are Teleport to House's
+	 * Outside, which the spell and its tablet both have (as well as Inside), for a house set to teleport inside. Null for
+	 * any other teleport; an item's place is {@link #option}.
+	 */
+	static String spellOption(TravelAtlas.Jump teleport)
+	{
+		if (teleport == null)
+		{
+			return null;
+		}
+		final String name = teleport.getName();
+		if (name.endsWith(OUTSIDE))
+		{
+			return "Outside";
+		}
+		final int colon = name.indexOf(": ");
+		return colon >= 0 && teleport.getType().equals("TELEPORTATION_SPELL") ? name.substring(colon + 2) : null;
+	}
+
+	/** A teleport's name for the guide, its right-click place after a colon: "Teleport to House: Outside". */
 	private static String teleportName(TravelAtlas.Jump teleport)
 	{
-		return teleport.getName().replace(" (Outside)", "");
+		final String name = teleport.getName();
+		return name.endsWith(OUTSIDE) ? name.substring(0, name.length() - OUTSIDE.length()) + ": Outside" : name;
 	}
 
 	private static WorldPoint point(TravelAtlas atlas, int place)

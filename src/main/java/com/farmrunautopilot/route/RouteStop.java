@@ -5,6 +5,7 @@ import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import lombok.Value;
@@ -15,6 +16,9 @@ import lombok.Value;
 @Value
 public class RouteStop
 {
+	/** Teleport to House's right-click option into the house. */
+	private static final String INSIDE = "Inside";
+
 	Location location;
 	/** Null when walking from the previous stop, for a way only the travel atlas knows, or when nothing is unlocked. */
 	TravelMethod method;
@@ -32,6 +36,12 @@ public class RouteStop
 	 * house, boats on the way), for the Run tab's "Don't use ..."; empty if nothing or not planned on the atlas.
 	 */
 	List<String> ways;
+	/**
+	 * What to pick on the way's spell or tablet's right-click: the spell's other place ("Seers'" on Camelot Teleport),
+	 * Teleport to House's "Outside" to a house's portal, or its "Inside" into a house set to teleport outside; null when
+	 * it's the left click.
+	 */
+	String spellOption;
 
 	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
 		boolean needsSupplies)
@@ -54,6 +64,13 @@ public class RouteStop
 	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
 		boolean needsSupplies, String breakdown, AtlasLeg atlas, List<String> ways)
 	{
+		this(location, method, departure, legSeconds, needsSupplies, breakdown, atlas, ways, null);
+	}
+
+	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
+		boolean needsSupplies, String breakdown, AtlasLeg atlas, List<String> ways, String spellOption)
+	{
+		this.spellOption = spellOption;
 		this.location = location;
 		this.method = method;
 		this.departure = departure;
@@ -72,7 +89,7 @@ public class RouteStop
 	{
 		final String travel = describeDeparture();
 		final List<JourneyStep> then = departure == Departure.WALK ? Collections.emptyList()
-			: atlas != null ? atlas.getRides() : method != null ? method.getThen() : Collections.emptyList();
+			: atlas != null ? atlas.getRides() : method != null ? journey(method.getThen()) : Collections.emptyList();
 		if (then.isEmpty())
 		{
 			return travel;
@@ -98,7 +115,22 @@ public class RouteStop
 		{
 			return Collections.emptyList();
 		}
-		return atlas != null ? atlas.getRides() : method != null ? method.getRides() : Collections.emptyList();
+		return atlas != null ? atlas.getRides() : method != null ? journey(method.getRides()) : Collections.emptyList();
+	}
+
+	/**
+	 * A method's steps after the way there, out of the house only when a spirit tree took the player into it: Teleport
+	 * to House to the portal lands outside, by Outside on its right-click or by the house's own setting.
+	 */
+	private List<JourneyStep> journey(List<JourneyStep> steps)
+	{
+		if (departure != Departure.DIRECT || !steps.contains(JourneyStep.LEAVE_HOUSE))
+		{
+			return steps;
+		}
+		final List<JourneyStep> outside = new ArrayList<>(steps);
+		outside.remove(JourneyStep.LEAVE_HOUSE);
+		return outside;
 	}
 
 	/**
@@ -140,13 +172,21 @@ public class RouteStop
 	/**
 	 * The teleport item's option or list entry to pick on the way here, e.g. "Farming Guild" for a skills necklace, as
 	 * the plugin's own methods name it in brackets ("Skills necklace (Farming Guild)", "Slayer ring (Fremennik Slayer
-	 * Dungeon), ring AJR"); null if the leg needs none.
+	 * Dungeon), ring AJR"), or the spell's or tablet's right-click one ({@link #spellOption}); null if the leg needs none.
 	 */
 	public String teleportOption()
 	{
-		if (atlas != null)
+		if (atlas != null && atlas.getOption() != null)
 		{
 			return atlas.getOption();
+		}
+		if (spellOption != null)
+		{
+			return spellOption;
+		}
+		if (atlas != null)
+		{
+			return null;
 		}
 		final String name;
 		if (departure == Departure.DIRECT && method != null && method.getItem() != null)
@@ -190,15 +230,15 @@ public class RouteStop
 			case NONE:
 				return "No unlocked way here";
 			case ATLAS:
-				return atlas.getWay();
+				return throughHouse(atlas.getWay());
 			case POH_NEXUS:
-				return "House portal nexus: " + method.getDisplayName();
+				return throughHouse("House portal nexus: " + method.getDisplayName());
 			case POH_JEWELLERY_BOX:
-				return "House jewellery box: " + method.getDisplayName();
+				return throughHouse("House jewellery box: " + method.getDisplayName());
 			case POH_FAIRY_RING:
-				return "House fairy ring: " + method.getDisplayName();
+				return throughHouse("House fairy ring: " + method.getDisplayName());
 			case POH_SPIRIT_TREE:
-				return "House spirit tree: " + method.getDisplayName();
+				return throughHouse("House spirit tree: " + method.getDisplayName());
 			case TREE_HOUSE_PORTAL:
 				return "Spirit tree to your house, then out of the portal";
 			case TREE_HOUSE_NEXUS:
@@ -214,7 +254,29 @@ public class RouteStop
 			case FAIRY_RING_QUEST_CAPE:
 				return method.getDisplayName() + " (" + departure.getFairyRingAccess().getVia() + ")";
 			default:
-				return method.getDisplayName();
+				return withOption(method.getDisplayName());
 		}
+	}
+
+	/**
+	 * A spell's way named with its right-click place, as the atlas names its own: "Camelot Teleport: Seers'", "Teleport
+	 * to House: Outside (Hosidius portal)".
+	 */
+	private String withOption(String name)
+	{
+		if (spellOption == null || INSIDE.equals(spellOption) || method == null || method.getSpell() == null)
+		{
+			return name;
+		}
+		final String spell = method.getSpell().getDisplayName();
+		return name.startsWith(spell) ? spell + ": " + spellOption + name.substring(spell.length())
+			: name + ": " + spellOption;
+	}
+
+	/** Through a house set to teleport outside: in by Inside on Teleport to House's right-click first. */
+	private String throughHouse(String way)
+	{
+		return INSIDE.equals(spellOption)
+			? "Teleport to House: Inside, then " + Character.toLowerCase(way.charAt(0)) + way.substring(1) : way;
 	}
 }

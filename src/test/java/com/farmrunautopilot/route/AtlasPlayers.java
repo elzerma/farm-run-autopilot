@@ -87,8 +87,7 @@ public final class AtlasPlayers
 		}
 		varbits.put(VarbitID.SPELLBOOK, 0);
 		varbits.put(VarbitID.POH_HOUSE_LOCATION, access.getHouseLocation());
-		// The game's values (0 lands inside); Shortest Path's rows read them the other way round, which only picks
-		// which of two rows landing on the same tile counts
+		// The game's values: 0 lands inside, when Shortest Path's "(Outside)" rows count (Outside on the right-click)
 		varbits.put(VarbitID.POH_TELE_TOGGLE, access.isHouseTeleportOutside() ? 1 : 0);
 		varbits.putAll(varbitsSet);
 		varps.putAll(varpsSet);

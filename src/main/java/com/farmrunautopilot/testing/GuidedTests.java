@@ -18,6 +18,7 @@ import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.data.travel.atlas.AtlasWays;
+import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.route.BankStop;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.run.RunSession;
@@ -38,15 +39,18 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import net.runelite.api.GameObject;
+import net.runelite.api.MenuEntry;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
+import net.runelite.client.util.Text;
 import static com.farmrunautopilot.testing.GuidedTest.Step.ask;
 import static com.farmrunautopilot.testing.GuidedTest.Step.doThis;
 
@@ -63,6 +67,7 @@ final class GuidedTests
 	static
 	{
 		TESTS.put(TestItem.SPELLBOOK_SWAP, new SpellbookSwap());
+		TESTS.put(TestItem.SPELL_PLACES, new SpellPlaces());
 		TESTS.put(TestItem.SEED_VAULT_SECTION, new SeedVaultTop());
 		TESTS.put(TestItem.VAULT_SEEDS_FOR_LATER, new VaultSeedsForLater());
 		TESTS.put(TestItem.VAULT_BANK_AT_GUILD, new VaultBankAtGuild());
@@ -90,14 +95,15 @@ final class GuidedTests
 
 	// Shared helpers
 
-	/** Plan a run of just this location's patches, every one counted whether due or not. */
-	private static void onlyPatchesAt(RunConfig config, Location location)
+	/** Plan a run of just these locations' patches, every one counted whether due or not. */
+	private static void onlyPatchesAt(RunConfig config, Location... locations)
 	{
+		final List<Location> wanted = Arrays.asList(locations);
 		config.getEnabledTypes().clear();
 		config.getDisabledPatches().clear();
 		for (Patch patch : Patch.values())
 		{
-			if (patch.getLocation() == location)
+			if (wanted.contains(patch.getLocation()))
 			{
 				config.getEnabledTypes().add(patch.getType());
 			}
@@ -1236,6 +1242,159 @@ final class GuidedTests
 					kept.getManualUnlocks().add(unlock);
 				}
 			}
+		}
+	}
+
+	/**
+	 * A spell's other place on its right-click (elzerma, 2026-10-23): Camelot Teleport's Seers' (hard Kandarin diary),
+	 * Watchtower Teleport's Yanille (hard Ardougne diary) or Varrock Teleport's Grand Exchange (medium Varrock diary).
+	 * UNVERIFIED: their menu options as Shortest Path names them, and the spell's own menu entries found by its name;
+	 * elzerma has none of the diaries.
+	 */
+	private static final class SpellPlaces extends GuidedTest
+	{
+		/** Each place's spell, by the place's name on the spell's right-click. */
+		private static final Map<String, String> SPELLS = Map.of("Seers'", "Camelot Teleport", "Yanille",
+			"Watchtower Teleport", "Grand Exchange", "Varrock Teleport");
+		/** Landing within this many tiles of where the place's teleport lands counts as it. */
+		private static final int LANDED_TILES = 10;
+
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			final boolean any = access.isMet(Requirement.diary(AchievementDiary.KANDARIN, AchievementDiary.Tier.HARD))
+				|| access.isMet(Requirement.diary(AchievementDiary.ARDOUGNE, AchievementDiary.Tier.HARD))
+				|| access.isMet(Requirement.diary(AchievementDiary.VARROCK, AchievementDiary.Tier.MEDIUM));
+			return any ? Collections.emptyList()
+				: Collections.singletonList("Do the hard Kandarin, the hard Ardougne or the medium Varrock diary");
+		}
+
+		@Override
+		public void setUp(RunConfig config, AccountSettings account)
+		{
+			// The hops patches that Seers' and Yanille land beside, by spells cast from runes
+			onlyPatchesAt(config, Location.SEERS_VILLAGE_HOPS, Location.YANILLE_HOPS);
+			config.setOn(TravelFamily.SPELLS, true);
+			config.setUseRunesNotTabs(true);
+		}
+
+		@Override
+		public boolean usesRun()
+		{
+			return true;
+		}
+
+		/** The planned stop going by a spell's other place, or null. */
+		private static RouteStop planned(TestContext ctx)
+		{
+			for (RouteStop stop : ctx.plan().getRoute().getStops())
+			{
+				if (stop.getSpellOption() != null && SPELLS.containsKey(stop.getSpellOption()))
+				{
+					return stop;
+				}
+			}
+			return null;
+		}
+
+		/** The open menu's options on the planned place's spell, or null while it isn't open on it. */
+		private static List<String> spellMenu(TestContext ctx)
+		{
+			final String place = ctx.recall("place");
+			if (place == null || !ctx.getClient().isMenuOpen())
+			{
+				return null;
+			}
+			final List<String> options = new ArrayList<>();
+			for (MenuEntry entry : ctx.getClient().getMenu().getMenuEntries())
+			{
+				if (entry.getTarget() != null && Text.removeTags(entry.getTarget()).equalsIgnoreCase(SPELLS.get(place)))
+				{
+					options.add(Text.removeTags(entry.getOption()));
+				}
+			}
+			return options.isEmpty() ? null : options;
+		}
+
+		/** Where the planned place's teleport lands (the travel atlas's "Camelot Teleport: Seers'"), or null. */
+		private static WorldPoint landing(TestContext ctx)
+		{
+			final String place = ctx.recall("place");
+			final TravelAtlas atlas = TravelAtlas.ifLoaded();
+			if (place == null || atlas == null)
+			{
+				return null;
+			}
+			for (TravelAtlas.Jump t : atlas.getTeleports())
+			{
+				if (t.getName().equals(SPELLS.get(place) + ": " + place))
+				{
+					return atlas.place(t.getTo()).getPoint();
+				}
+			}
+			return null;
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				doThis("On the Run tab, press Build run", ctx -> planned(ctx) != null)
+					.onDone(ctx ->
+					{
+						final RouteStop stop = planned(ctx);
+						ctx.remember("place", stop.getSpellOption());
+						ctx.capture("Planned", stop.getLocation().getDisplayName() + ": " + stop.describeTravel());
+					})
+					.orAskAfter(SPOT_TICKS, "No stop goes by Seers', Yanille or the Grand Exchange. Is the Seers' Village "
+						+ "or Yanille hops patch on the Run tab?")
+					.onAnswer((ctx, yes) ->
+					{
+						// Without the patch, or with a quicker way there, the route never casts one: nothing to see
+						if (!yes)
+						{
+							ctx.cannotTest("the Seers' Village or Yanille hops patch");
+							return;
+						}
+						ctx.problem("No stop was planned by a spell's other place");
+					}),
+				ask("Open your spellbook. Is that spell outlined, with \"Right\" over \"click\" under it?"),
+				doThis("Right-click the spell", ctx -> spellMenu(ctx) != null)
+					.onDone(ctx ->
+					{
+						final List<String> options = spellMenu(ctx);
+						final String place = ctx.recall("place");
+						ctx.capture("Its menu", options);
+						if (options.stream().noneMatch(o -> o.toLowerCase(Locale.ROOT).contains(place.toLowerCase(Locale.ROOT))))
+						{
+							ctx.problem("No " + place + " on the spell's menu");
+						}
+					})
+					.orAskAfter(DO_TICKS, "Have you right-clicked the spell?")
+					.onAnswer((ctx, yes) ->
+					{
+						if (yes)
+						{
+							ctx.problem("The spell's right-click menu wasn't recognised");
+						}
+					}),
+				ask("Is the place to pick coloured in that menu?"),
+				doThis("Pick it", ctx ->
+				{
+					final WorldPoint landing = landing(ctx);
+					final WorldPoint here = ctx.location();
+					return landing != null && here != null && here.distanceTo(landing) <= LANDED_TILES;
+				})
+					.onDone(ctx -> ctx.capture("Landed at", ctx.location()))
+					.orAskAfter(DO_TICKS, "Have you teleported with it?")
+					.onAnswer((ctx, yes) ->
+					{
+						if (yes)
+						{
+							ctx.capture("Standing at", ctx.location());
+							ctx.problem("Didn't land where the plugin planned (" + landing(ctx) + ")");
+						}
+					}));
 		}
 	}
 

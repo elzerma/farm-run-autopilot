@@ -1,6 +1,7 @@
 package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.FarmRunAutopilotConfig;
+import com.farmrunautopilot.data.travel.Spell;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -16,7 +17,9 @@ import net.runelite.client.util.Text;
 
 /**
  * Colours the option a leg needs in its teleport item's right-click menu (elzerma, 2026-10-18: "Jewelery and item
- * right click menus should also highlight option that is needed"), e.g. "Crafting Guild" on a worn skills necklace.
+ * right click menus should also highlight option that is needed"), e.g. "Crafting Guild" on a worn skills necklace,
+ * or in its spell's in the spellbook: a spell's other place ("Seers'" on Camelot Teleport) and Teleport to House's
+ * Inside or Outside (elzerma, 2026-10-23).
  * When the item's places are behind "Rub" (or "Teleport", "Reminisce"...), that option instead; TravelMenuOverlay then
  * rings the place in the list. Colour only, no frame round the option (elzerma, 2026-10-20: "just change the text
  * color"). Only colours options the menu has: adds none, removes none. Client thread.
@@ -27,6 +30,8 @@ public class TeleportMenuHighlighter
 {
 	/** Options that open an item's list of places. */
 	private static final Set<String> OPENERS = Set.of("rub", "teleport", "teleports", "reminisce", "commune", "travel");
+	/** Stands for the spell's own menu entries, which have no item: those whose target is the spell's name. */
+	static final int SPELL_ENTRY = -2;
 
 	private final RunSession session;
 	private final FarmRunAutopilotConfig config;
@@ -37,6 +42,9 @@ public class TeleportMenuHighlighter
 	 */
 	private Set<Integer> namedIds;
 	private Set<String> names;
+	/** The teleport items with {@link #SPELL_ENTRY}, for the items they were made for. */
+	private Set<Integer> spellIdsFor;
+	private Set<Integer> spellIds;
 
 	/** Where the option a leg needs is in a menu: its entry, and the entry opening the sub-menu it's in (or -1). */
 	static final class Found
@@ -103,7 +111,8 @@ public class TeleportMenuHighlighter
 	/**
 	 * The option the leg needs in these menu entries (a menu's top level), looking in their sub-menus too: an option
 	 * naming the place anywhere, or else the one opening the item's list of places. NONE when the step has no teleport
-	 * option or the menu isn't the teleport item's.
+	 * option or the menu isn't the teleport item's or spell's (a spell's other place, e.g. "Seers'" on Camelot Teleport,
+	 * or Teleport to House's Outside, is on its right-click in the spellbook).
 	 */
 	Found find(MenuEntry[] entries)
 	{
@@ -113,7 +122,7 @@ public class TeleportMenuHighlighter
 		{
 			return Found.NONE;
 		}
-		final int top = pick(entries, highlights.getItemIds(), option);
+		final int top = pick(entries, highlights, option);
 		if (top >= 0 && names(entries[top].getOption(), option))
 		{
 			return new Found(top, -1);
@@ -127,7 +136,7 @@ public class TeleportMenuHighlighter
 			{
 				continue;
 			}
-			final int pick = pick(subEntries, highlights.getItemIds(), option);
+			final int pick = pick(subEntries, highlights, option);
 			if (pick >= 0 && names(subEntries[pick].getOption(), option))
 			{
 				return new Found(pick, i);
@@ -136,26 +145,49 @@ public class TeleportMenuHighlighter
 		return top >= 0 ? new Found(top, -1) : Found.NONE;
 	}
 
-	/** {@link #pick(String[], int[], Set, String)} on menu entries, knowing a worn item by its name. */
-	private int pick(MenuEntry[] entries, Set<Integer> itemIds, String option)
+	/**
+	 * {@link #pick(String[], int[], Set, String)} on menu entries: the step's teleport items' entries, knowing a worn
+	 * item by its name, and the spell's own entries ({@link #SPELL_ENTRY}) by theirs.
+	 */
+	private int pick(MenuEntry[] entries, Highlights highlights, String option)
 	{
+		final Set<Integer> itemIds = highlights.getItemIds();
+		final Spell spell = highlights.getSpell();
 		final String[] options = new String[entries.length];
 		final int[] items = new int[entries.length];
 		for (int i = 0; i < entries.length; i++)
 		{
 			options[i] = entries[i].getOption();
 			items[i] = entries[i].getItemId();
-			if (!itemIds.contains(items[i]) && entries[i].getTarget() != null && !itemIds.isEmpty())
+			if (!itemIds.contains(items[i]) && entries[i].getTarget() != null)
 			{
-				// A worn item's options may not carry its item id; its name, in the target, does
 				final String target = Text.removeTags(entries[i].getTarget()).toLowerCase(Locale.ROOT);
-				if (names(itemIds).contains(target))
+				if (spell != null && target.equals(spell.getDisplayName().toLowerCase(Locale.ROOT)))
 				{
+					// In the spellbook: "Seers'" on Camelot Teleport, "Outside" on Teleport to House
+					items[i] = SPELL_ENTRY;
+				}
+				else if (!itemIds.isEmpty() && names(itemIds).contains(target))
+				{
+					// A worn item's options may not carry its item id; its name, in the target, does
 					items[i] = itemIds.iterator().next();
 				}
 			}
 		}
-		return pick(options, items, itemIds, option);
+		return pick(options, items, spell != null ? withSpell(itemIds) : itemIds, option);
+	}
+
+	/** The teleport items and {@link #SPELL_ENTRY}, kept while the items stay the same. */
+	private Set<Integer> withSpell(Set<Integer> itemIds)
+	{
+		if (itemIds != spellIdsFor)
+		{
+			final Set<Integer> ids = new HashSet<>(itemIds);
+			ids.add(SPELL_ENTRY);
+			spellIds = ids;
+			spellIdsFor = itemIds;
+		}
+		return spellIds;
 	}
 
 	private boolean teleportItem(MenuEntry[] entries)

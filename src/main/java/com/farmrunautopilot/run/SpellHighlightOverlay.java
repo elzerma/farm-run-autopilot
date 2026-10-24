@@ -7,9 +7,11 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
 import net.runelite.api.Client;
+import net.runelite.api.Point;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.ui.overlay.Overlay;
@@ -19,7 +21,9 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 /**
  * Outlines the spell to cast next in the spellbook (SPEC 13.4): the teleport while travelling, Teleport to
  * House for routes through the house, or Cure Plant on a diseased patch. Only drawn while the spellbook is
- * open and the spell is on it.
+ * open and the spell is on it. When the leg needs one of its right-click options (Camelot Teleport's Seers',
+ * Teleport to House's Inside or Outside), the spell is labelled "Right" over "click", as a worn teleport item is
+ * (elzerma, 2026-10-23), and its menu colours the option (TeleportMenuHighlighter).
  */
 public class SpellHighlightOverlay extends Overlay
 {
@@ -54,14 +58,19 @@ public class SpellHighlightOverlay extends Overlay
 	private final Client client;
 	private final RunSession session;
 	private final FarmRunAutopilotConfig config;
+	private final TeleportMenuHighlighter menuHighlighter;
 	private final VineFrame vine = new VineFrame();
+	/** Whether the leg's option on the spell needs a right-click, as its menu last showed it under the mouse. */
+	private final Map<String, Boolean> rightClickSeen = new HashMap<>();
 
 	@Inject
-	SpellHighlightOverlay(Client client, RunSession session, FarmRunAutopilotConfig config)
+	SpellHighlightOverlay(Client client, RunSession session, FarmRunAutopilotConfig config,
+		TeleportMenuHighlighter menuHighlighter)
 	{
 		this.client = client;
 		this.session = session;
 		this.config = config;
+		this.menuHighlighter = menuHighlighter;
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_WIDGETS);
 	}
@@ -92,11 +101,39 @@ public class SpellHighlightOverlay extends Overlay
 		if (config.vineHighlights())
 		{
 			vine.draw(graphics, bounds);
-			return null;
 		}
-		graphics.setColor(config.itemColour());
-		graphics.setStroke(new BasicStroke(2));
-		graphics.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
+		else
+		{
+			graphics.setColor(config.itemColour());
+			graphics.setStroke(new BasicStroke(2));
+			graphics.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
+		}
+		final String option = session.getView().getHighlights().getTeleportOption();
+		if (option != null && config.highlightItems() && needsRightClick(spell, option, bounds))
+		{
+			ItemHighlightOverlay.drawLabel(graphics, bounds, ItemHighlightOverlay.RIGHT_CLICK_WORN_LABEL,
+				config.itemColour());
+		}
 		return null;
+	}
+
+	/**
+	 * Whether the leg's option on the spell isn't its left click: as its menu shows under the mouse (with other plugins'
+	 * swaps), else as last seen there; a spell's left click is Cast, so until then, yes.
+	 */
+	private boolean needsRightClick(Spell spell, String option, Rectangle bounds)
+	{
+		final String key = spell + ":" + option;
+		final Point mouse = client.getMouseCanvasPosition();
+		if (!client.isMenuOpen() && mouse != null && bounds.contains(mouse.getX(), mouse.getY()))
+		{
+			final Boolean shown = menuHighlighter.needsRightClick(client.getMenu().getMenuEntries());
+			if (shown != null)
+			{
+				rightClickSeen.put(key, shown);
+				return shown;
+			}
+		}
+		return rightClickSeen.getOrDefault(key, true);
 	}
 }

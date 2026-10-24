@@ -191,7 +191,8 @@ public class AccessChecker
 
 	/**
 	 * The house's teleport setting (POH_TELE_TOGGLE) sends Teleport to House outside, by the portal: 0 lands inside and
-	 * 1 outside, as seen in game (elzerma's guided test, 2026-10-22), the other way round from Shortest Path's data.
+	 * 1 outside, as seen in game (elzerma's guided test, 2026-10-22). It's the spell's and the tablet's left click; both
+	 * have Inside and Outside on their right-click too, while a cape goes by the setting.
 	 */
 	static boolean teleportsOutside(int value)
 	{
