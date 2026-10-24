@@ -39,7 +39,9 @@ At a stop with allotments and a compost bin:
 7. **Treat and plant every patch:** compost, plant, pay the gardener where needed.
 
 Every patch at the stop is picked and noted before any is composted and planted (the guide today goes patch by
-patch). A stop with herbs but no allotments or compost bin has no compost or allotment steps: pick, clean, note, take
+patch). Once at the stop, the steps between its patches, the compost bin and the tool leprechaun need no route from
+Shortest Path or the travel atlas, only outlines on what to use next (elzerma, 2026-10-24); so the atlas's patch
+order inside a stop, left over from T3, isn't needed either. A stop with herbs but no allotments or compost bin has no compost or allotment steps: pick, clean, note, take
 compost, treat and plant.
 
 **Answered:** noting is on by default (a setting); herbs are cleaned at the patch, before noting; every stop with a

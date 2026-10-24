@@ -839,7 +839,7 @@ the client thread, so:
   ("Bank visit done after X: N s from the last patch, by ...") so the big-run check gives the number.
 - **"Fewest items to bring"** went at the start (above). elzerma (2026-10-24): if a GitHub issue asks for it, rebuild
   it as a feature of its own rather than bring the old style back.
-- **Not done:** the patch order inside a stop (section 4), planning the quickest run itself off the client thread.
+- **Not done:** planning the quickest run itself off the client thread. The patch order inside a stop is dropped: once at a stop, the guide outlines what to use next with no route from the atlas (elzerma, 2026-10-24; patch-actions.md).
 - **Hand checks (elzerma, 2026-10-24), passed:** their usual run keeps the quickest ways with no stutter; every crop
   type at once shows a banked route at once and stays smooth, with no leg swapped; the Travel style list has the three
   styles. The dev log had searches of 1-3 s, each "leave at home: nothing". Merged to master. Bank visits timed in their
