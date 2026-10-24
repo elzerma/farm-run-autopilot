@@ -1506,8 +1506,9 @@ public class RunSession
 				{
 					if (!banking)
 					{
-						log.debug("Bank visit after {}: deposit {}", stop.getLocation().getDisplayName(),
-							depositNames());
+						// What it takes too, so a list asking for a staff and its runes shows in the log (elzerma, 2026-10-24)
+						log.debug("Bank visit after {}: deposit {}; take {}", stop.getLocation().getDisplayName(),
+							depositNames(), missingNames(bank.getSupplies().counted(holdingsTracker.getHoldings())));
 					}
 					visitBank(bank);
 					patches.clearCurrent();
