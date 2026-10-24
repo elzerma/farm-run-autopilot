@@ -4,6 +4,7 @@ import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.SettingsStore;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -48,6 +49,19 @@ public class UnlockSpotter
 		new Spot(Unlock.SPIRIT_TREE_FARMING_GUILD, "Spirit tree", "Travel", 4922),
 		// Unbuilt, the spot offers "Build" instead
 		new Spot(Unlock.FIRE_OF_NOURISHMENT, "Fire of Nourishment", null, 11325));
+
+	/** The regions where this unlock is spotted; none if it isn't spotted. */
+	public static List<Integer> regions(Unlock unlock)
+	{
+		for (Spot spot : SPOTS)
+		{
+			if (spot.unlock == unlock)
+			{
+				return spot.regions;
+			}
+		}
+		return Collections.emptyList();
+	}
 
 	private final Client client;
 	private final SettingsStore settings;
