@@ -15,6 +15,7 @@ import com.farmrunautopilot.settings.SettingsStore;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import net.runelite.api.Skill;
 import net.runelite.client.ui.ColorScheme;
@@ -61,6 +62,7 @@ class FarmPage extends SetupPanel
 		for (PatchType type : PatchType.values())
 		{
 			final List<JComponent> boxes = new ArrayList<>();
+			final List<Patch> ofType = new ArrayList<>();
 			int typeUsable = 0;
 			int typeTicked = 0;
 			for (Patch patch : Patch.values())
@@ -69,6 +71,7 @@ class FarmPage extends SetupPanel
 				{
 					continue;
 				}
+				ofType.add(patch);
 				final List<Requirement> missing = access.missingFor(patch);
 				final boolean locked = !missing.isEmpty();
 				final boolean on = !locked && !config.getDisabledPatches().contains(patch);
@@ -91,6 +94,22 @@ class FarmPage extends SetupPanel
 			}
 			final CollapsibleSection group = section(type.getDisplayName() + " patches",
 				typeTicked + " of " + typeUsable);
+			// Ticks or unticks the whole type, as a Travel tab family's box does (elzerma, 2026-10-22); locked patches
+			// too, so one unlocked later follows the rest of its type
+			final JCheckBox all = groupBox(GroupTick.of(typeUsable, typeTicked),
+				"Tick or untick every " + type.getDisplayName().toLowerCase() + " patch", on -> saveRun(() ->
+				{
+					if (on)
+					{
+						config.getDisabledPatches().removeAll(ofType);
+					}
+					else
+					{
+						config.getDisabledPatches().addAll(ofType);
+					}
+				}));
+			all.setEnabled(typeUsable > 0);
+			group.lead(all);
 			group.addContent(twoPerRow(boxes));
 			s.addContent(group);
 		}

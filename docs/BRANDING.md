@@ -114,7 +114,7 @@ Keep to these numbers; if something looks cramped, change it here and in the cod
 - **Group header** (`Card.groupHeader`): a hoverable card with a chevron (right closed, down open), the title,
   and a count on the right ("3 of 7 due", "2 to try"). Remembers open/closed (`settings.isSectionOpen`).
 - **Section** (`CollapsibleSection`): the same header style with a faint "(?)" when it has an explanation on
-  hover.
+  hover. It can lead with a group's tick box (`lead`), as a Farm tab patch type does.
 - **One-line row** (`ExpandableRow`): name left, short value right, full value on hover, controls when opened.
 - **Buttons** (`Style`): plain (darker grey, lighter on hover), primary (orange, dark text, slim; the main
   action on screen: Build run, Start now, Start test), danger (muted red, white text: Stop).
@@ -127,14 +127,15 @@ Keep to these numbers; if something looks cramped, change it here and in the cod
   | Can be ticked | darker grey, grey outline |
   | Hover | orange outline |
   | Ticked by you (can untick) | orange fill, dark tick |
-  | Some of a group on, some off (a Travel tab family; `Style.partial`) | orange fill, dark dash |
+  | Some of a group on, some off (a Travel tab family, a Farm tab patch type; `SetupPanel.groupBox`, `Style.partial`) | orange fill, dark dash |
   | Locked: seen done or read from the game | green fill, dark tick |
   | Not possible yet | dark grey, faint outline |
 
 - **Links** ("Manage", "Show me", "See every report on GitHub"): small font, white, underlined, hand cursor.
 - **Tab bar** (`TabBar`, `TabIcon`): five boxed buttons sharing the width (darker grey, lighter on hover), each
   with an icon (play, sprout, map pin, person, solid gear), grey; the selected one's icon orange with an orange
-  line along its bottom; the tab's name on hover.
+  line along its bottom; the tab's name on hover, looking like a tooltip but shown whichever window is active
+  (RuneLite shows its tooltips only while its window is the active one).
 - **Tooltips**: wrapped to about the sidebar's width (`UiText.wrap(text, 250)`, route tooltips 190).
 
 ## 6. Words

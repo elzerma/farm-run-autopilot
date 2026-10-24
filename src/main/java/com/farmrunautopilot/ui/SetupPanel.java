@@ -269,6 +269,45 @@ abstract class SetupPanel extends JPanel
 		return Style.checkBox(box);
 	}
 
+	/** A tick box without text, leading a group's line. */
+	static JCheckBox leadBox(boolean selected, String tooltip, Consumer<Boolean> onChange)
+	{
+		final JCheckBox box = new JCheckBox((String) null, selected);
+		box.setToolTipText(UiText.tooltip(tooltip, 250));
+		box.setOpaque(false);
+		box.addActionListener(e -> onChange.accept(box.isSelected()));
+		return Style.checkBox(box);
+	}
+
+	/** How much of a group is on, as its tick box shows it: a Travel tab family, a Farm tab patch type. */
+	enum GroupTick
+	{
+		/** None of it is on. */
+		OFF,
+		/** Some of what the player can use is on, some off. */
+		PARTLY,
+		/** All of what the player can use is on. */
+		ON;
+
+		/** From how many of a group's items the player can use, and how many of those are on. */
+		static GroupTick of(int usable, int on)
+		{
+			return on == 0 ? OFF : on < usable ? PARTLY : ON;
+		}
+	}
+
+	/**
+	 * A group's tick box, as a list's tick boxes work (elzerma): ticked with all it has that the player can use on, a
+	 * dash with some off, empty with none on. Clicked when ticked, the whole group goes off; otherwise all of it goes on.
+	 *
+	 * @param turnOn told true to turn the whole group on, false to turn it off
+	 */
+	static JCheckBox groupBox(GroupTick now, String tooltip, Consumer<Boolean> turnOn)
+	{
+		final JCheckBox box = leadBox(now != GroupTick.OFF, tooltip, clicked -> turnOn.accept(now != GroupTick.ON));
+		return now == GroupTick.PARTLY ? Style.partial(box) : box;
+	}
+
 	static <T> JComboBox<Choice<T>> combo(List<Choice<T>> choices, T selected, Consumer<T> onChange)
 	{
 		final JComboBox<Choice<T>> combo = new JComboBox<>();
