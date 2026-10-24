@@ -165,6 +165,8 @@ class Navigator
 		final WorldPoint position = player != null ? player.getWorldLocation() : null;
 		final WorldPoint previous = lastPosition;
 		lastPosition = position;
+		// No object outlined unless the step in hand is taken on one (set again below while travelling)
+		scene.findRideObject(null);
 		if (arrived)
 		{
 			return null;
@@ -197,6 +199,8 @@ class Navigator
 			journeyStep++;
 		}
 		final JourneyStep step = journeyStep(stop);
+		// A step taken on an object (a portal, a lever, a ladder) has it outlined once it's near (sprint T5)
+		scene.findRideObject(teleported ? step : null);
 		return !teleported ? stop.describeWay() + " to " + stop.getLocation().getDisplayName()
 			: step != null ? step.getText()
 			: walkTo(stop, here.get(0), "Walk", null);

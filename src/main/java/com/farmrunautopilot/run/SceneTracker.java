@@ -2,6 +2,7 @@ package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
+import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,6 +19,10 @@ import net.runelite.api.GameObject;
 import net.runelite.api.NPC;
 import net.runelite.api.ObjectComposition;
 import net.runelite.api.Point;
+import net.runelite.api.Tile;
+import net.runelite.api.TileObject;
+import net.runelite.api.WorldView;
+import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 
 /**
@@ -158,6 +163,79 @@ public class SceneTracker
 	public NPC transferNpc(String name)
 	{
 		return transfers.get(name);
+	}
+
+	/** Tiles around where a journey step starts to look for its object, as the atlas's points are a tile or two off. */
+	private static final int RIDE_OBJECT_TILES = 3;
+	/** The object the current journey step is taken on (a portal, a lever, a ladder), once it's loaded; null if none. */
+	private TileObject rideObject;
+
+	/**
+	 * Look for the object a journey step is taken on, by the atlas's id near where the step starts (sprint T5); none for
+	 * a step on an NPC, which is outlined by name. Once a tick while travelling, over a few tiles only. Client thread.
+	 */
+	void findRideObject(JourneyStep step)
+	{
+		rideObject = null;
+		if (step == null || step.getId() < 0 || step.getAt() == null || step.getNpc() != null
+			&& transfers.containsKey(step.getNpc()))
+		{
+			return;
+		}
+		final WorldView view = client.getTopLevelWorldView();
+		final WorldPoint at = step.getAt();
+		if (view == null || view.getPlane() != at.getPlane())
+		{
+			return;
+		}
+		final Tile[][][] tiles = view.getScene().getTiles();
+		for (int dx = -RIDE_OBJECT_TILES; dx <= RIDE_OBJECT_TILES; dx++)
+		{
+			for (int dy = -RIDE_OBJECT_TILES; dy <= RIDE_OBJECT_TILES; dy++)
+			{
+				final LocalPoint local = LocalPoint.fromWorld(view, at.dx(dx).dy(dy));
+				if (local == null)
+				{
+					continue;
+				}
+				final Tile tile = tiles[at.getPlane()][local.getSceneX()][local.getSceneY()];
+				final TileObject found = tile == null ? null : objectOn(tile, step.getId());
+				if (found != null)
+				{
+					rideObject = found;
+					return;
+				}
+			}
+		}
+	}
+
+	/** The current journey step's object, for outlining; null if none is loaded. */
+	public TileObject getRideObject()
+	{
+		return rideObject;
+	}
+
+	/** The object with this id on a tile (a game object, a wall, a ground or decorative object), or null. */
+	private static TileObject objectOn(Tile tile, int id)
+	{
+		if (tile.getGameObjects() != null)
+		{
+			for (GameObject object : tile.getGameObjects())
+			{
+				if (object != null && object.getId() == id)
+				{
+					return object;
+				}
+			}
+		}
+		for (TileObject object : new TileObject[]{tile.getWallObject(), tile.getGroundObject(), tile.getDecorativeObject()})
+		{
+			if (object != null && object.getId() == id)
+			{
+				return object;
+			}
+		}
+		return null;
 	}
 
 	/** An NPC a journey step rides with: Renu, or one the travel atlas uses. */

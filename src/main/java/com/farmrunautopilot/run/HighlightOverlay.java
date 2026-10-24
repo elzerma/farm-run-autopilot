@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.NPC;
+import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.Perspective;
@@ -80,6 +81,12 @@ public class HighlightOverlay extends Overlay
 			{
 				outlines.drawOutline(ride, OUTLINE_WIDTH, config.npcColour(), OUTLINE_FEATHER);
 			}
+		}
+		// A ride taken on an object instead, from the atlas: a portal, a lever, a ladder (sprint T5)
+		final TileObject rideObject = highlights.getTravelNpc() == null ? null : scene.getRideObject();
+		if (rideObject != null && config.highlightGardener())
+		{
+			outlines.drawOutline(rideObject, OUTLINE_WIDTH, config.npcColour(), OUTLINE_FEATHER);
 		}
 		return null;
 	}
