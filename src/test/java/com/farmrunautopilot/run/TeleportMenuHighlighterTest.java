@@ -61,6 +61,20 @@ public class TeleportMenuHighlighterTest
 	}
 
 	@Test
+	public void theSpellsOwnOptionInTheSpellbook()
+	{
+		// Camelot Teleport's menu, Cast then Seers' (the hard Kandarin diary's), and Teleport to House's
+		final int spell = TeleportMenuHighlighter.SPELL_ENTRY;
+		assertEquals(1, TeleportMenuHighlighter.pick(new String[]{"Cast", "<col=ff9040>Seers'"}, new int[]{spell, spell},
+			Set.of(spell), "Seers'"));
+		assertEquals(2, TeleportMenuHighlighter.pick(new String[]{"Cast", "Inside", "Outside"},
+			new int[]{spell, spell, spell}, Set.of(spell), "Outside"));
+		// Another spell's entries aren't this one's
+		assertEquals(-1, TeleportMenuHighlighter.pick(new String[]{"Cast", "Seers'"}, new int[]{-1, -1}, Set.of(spell),
+			"Seers'"));
+	}
+
+	@Test
 	public void thePluginsOwnMethodsNameTheirOption()
 	{
 		assertEquals("Farming Guild", new RouteStop(Location.FARMING_GUILD, TravelMethod.SKILLS_NECKLACE_FARMING_GUILD,

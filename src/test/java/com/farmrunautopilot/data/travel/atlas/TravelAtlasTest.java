@@ -11,7 +11,6 @@ import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.poh.PortalNexus;
-import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.supply.Holdings;
 import java.util.Arrays;
@@ -169,12 +168,12 @@ public class TravelAtlasTest
 	}
 
 	@Test
-	public void teleportToHouseLandingInsideWalksOutOfTheDoor()
+	public void teleportToHouseToItsPortalNeverWalksOutOfTheDoor()
 	{
-		// Teleport to House by tablet to a Hosidius house's portal: landing inside (the game's setting at 0) takes the
-		// walk out of the door on top, landing outside (1) doesn't. Shortest Path names its two rows the other way
-		// round, so the row in use doesn't say which (elzerma's guided test, 2026-10-22)
-		assertEquals(TravelTimes.HOUSE_DOOR, houseTabletSeconds(false) - houseTabletSeconds(true), 1e-9);
+		// Teleport to House by tablet to a Hosidius house's portal: set to teleport inside (the game's setting at 0), the
+		// tablet's Outside on its right-click (Shortest Path's "(Outside)" row) lands by the portal just as breaking it
+		// does when set to teleport outside (1), so neither walks out of the door (elzerma, 2026-10-23)
+		assertEquals(houseTabletSeconds(true), houseTabletSeconds(false), 1e-9);
 	}
 
 	/** Seconds for the Teleport to House tablet row this player can use: a Hosidius house, landing outside or not. */

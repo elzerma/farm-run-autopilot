@@ -117,6 +117,8 @@ public class RunSession
 	private boolean declinedExtra;
 	/** A daily teleport the game just refused for having no uses left today, whose leg is to be planned again. */
 	private TravelMethod usedUpDaily;
+	/** The house's teleport setting the run's legs follow (outside or not), or null before it's frozen. */
+	private Boolean houseOutside;
 	/**
 	 * Items the plan counts on have gone missing, and the Run tab names them and asks whether to bank for them or skip
 	 * (elzerma, 2026-10-18: not straight to a bank visit): what the rest of this part needs, or null when nothing's
@@ -262,6 +264,7 @@ public class RunSession
 		stage = RunView.State.OFF;
 		shortestPath.clear();
 		plan = null;
+		houseOutside = null;
 		patches.reset(null);
 		log.debug("Run cancelled");
 		evaluate();
@@ -303,6 +306,7 @@ public class RunSession
 	private void arm(RunPlan current)
 	{
 		plan = current;
+		houseOutside = runService.houseTeleportsOutside();
 		stage = RunView.State.ARMED;
 		startedAt = 0;
 		stopIndex = 0;
@@ -436,6 +440,7 @@ public class RunSession
 		}
 		log.debug("Run ended: {}{}", lastRun, lastRunTypes != null ? "\n" + lastRunTypes : "");
 		plan = null;
+		houseOutside = null;
 		patches.reset(null);
 		// Replan with the newly learned leg times
 		runService.markDirty();
@@ -1010,7 +1015,49 @@ public class RunSession
 		}
 		log.debug("{} has no uses left today: {} now by {}", method, stop.getLocation().getDisplayName(),
 			leg.describeTravel());
-		final List<RouteStop> next = new ArrayList<>(stops);
+		replaceLeg(stop, leg);
+	}
+
+	/**
+	 * The house's teleport setting changed during the run (House Options): the leg in hand, if it goes by Teleport to
+	 * House and the player hasn't teleported yet, is planned again, so its Inside or Outside follows the setting
+	 * (elzerma, 2026-10-23: switched back mid-run, the stop still said Inside).
+	 */
+	private void replanForHouseSetting()
+	{
+		final boolean outside = runService.houseTeleportsOutside();
+		if (houseOutside == null || houseOutside == outside)
+		{
+			houseOutside = outside;
+			return;
+		}
+		houseOutside = outside;
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		if (stopIndex >= stops.size() || navigator.isArrived() || navigator.isTeleported())
+		{
+			return;
+		}
+		final RouteStop stop = stops.get(stopIndex);
+		if (stop.spell() != Spell.TELEPORT_TO_HOUSE && !stop.getDeparture().isViaHouse()
+			&& (stop.getAtlas() == null || !stop.getAtlas().isViaHouse()))
+		{
+			return;
+		}
+		final RouteStop leg = runService.leg(stopIndex == 0 ? null : stops.get(stopIndex - 1).getLocation(),
+			stop.getLocation());
+		if (leg == null)
+		{
+			return;
+		}
+		log.debug("House teleport setting changed: {} now by {}", stop.getLocation().getDisplayName(),
+			leg.describeTravel());
+		replaceLeg(stop, leg);
+	}
+
+	/** The leg in hand ({@code stop}) planned again as {@code leg}, the guide starting it afresh and not timing it. */
+	private void replaceLeg(RouteStop stop, RouteStop leg)
+	{
+		final List<RouteStop> next = new ArrayList<>(plan.getRoute().getStops());
 		next.set(stopIndex, leg);
 		final Route route = plan.getRoute();
 		plan = new RunPlan(plan.getSelection(), new Route(Collections.unmodifiableList(next), route.getMode(),
@@ -1365,6 +1412,7 @@ public class RunSession
 		}
 
 		replanUsedUpLeg();
+		replanForHouseSetting();
 		final List<RouteStop> stops = plan.getRoute().getStops();
 		final long now = System.currentTimeMillis();
 		// Armed shows the first step but doesn't time legs or move on until the timer starts
@@ -2351,6 +2399,20 @@ public class RunSession
 				}
 			}
 			items.add(Spell.TELEPORT_TO_HOUSE.getTabletItemId());
+		}
+		// The spell or its tablet, as the supply list takes it, not both (elzerma, 2026-10-24: with a tablet carried, the
+		// spell was still outlined in the spellbook): the tablet when the player has one and doesn't cast from runes
+		if (spell != null && spell.hasTablet())
+		{
+			if (SupplyCalculator.usesTablet(spell, stop.getLocation(), settings.getRunConfig(), runService.access(),
+				holdingsTracker.getHoldings()))
+			{
+				spell = null;
+			}
+			else
+			{
+				items.remove(spell.getTabletItemId());
+			}
 		}
 		// An item to put on isn't also outlined as the teleport to use, so the two can't be confused
 		items.removeAll(wear.getItemIds());

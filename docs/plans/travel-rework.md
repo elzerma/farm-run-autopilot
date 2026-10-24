@@ -723,11 +723,15 @@ route snapshots, and banks come from the atlas.
   route uses none, and a house in a place the plugin doesn't know yet has every way out but the front door
   (`AtlasHouse`). The places' values are Shortest Path's. elzerma's guided test (2026-10-22, a house in Hosidius)
   showed Hosidius is 8, and that the teleport setting reads 0 when Teleport to House lands inside and 1 when it lands
-  outside: the other way round from Shortest Path's rows (harmless there, as both rows land on the same tile). It
-  passed on its re-run, so "Where your house is" left the help list. Both values are shown in Settings > Debug >
-  Detected rather than My house (elzerma). Teleport to House as a plain teleport to the portal (`AtlasLegs`) adds the
-  walk out of the door by that reading too: it went by Shortest Path's row names, so since T3 the 5 s were added for
-  houses landing outside and left off for houses landing inside.
+  outside. It passed on its re-run, so "Where your house is" left the help list. Both values are shown in Settings >
+  Debug > Detected rather than My house (elzerma). The setting is only the spell's and the tablet's left click: both
+  have had Inside and Outside on their right-click since 2018, and Shortest Path's "(Outside)" rows are that Outside,
+  for a house set to teleport inside (not the setting the other way round, as first written here). So (elzerma,
+  2026-10-23) the guide names and colours Outside on Teleport to House to a house's portal, which never walks out of
+  the house now, and Inside into a house set to teleport outside; only a cape, which goes by the setting, walks in
+  through the door. The spells' other places on their right-click are guided the same way: Camelot Teleport's Seers'
+  (hard Kandarin diary), Watchtower Teleport's Yanille (hard Ardougne) and Varrock Teleport's Grand Exchange (medium
+  Varrock), which the atlas already planned but the guide never said to pick.
 - **Route changes** (each explained in its test): without a whistle, Varlamore's legs each start with the Civitas illa
   Fortis Teleport and Renu from the city's pad (6 s quicker than walking back to a pad); with 68 Agility, Taverley is
   walked to over the rocks from whichever of Catherby and Falador Park is next to it; a whistle charge no longer counts

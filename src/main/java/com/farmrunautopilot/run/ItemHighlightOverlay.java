@@ -40,7 +40,8 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 	static final Color WEAR_COLOUR = new Color(0x40, 0xC8, 0xFF);
 	private static final String[] WEAR_LABEL = {"Wear"};
 	private static final String[] RIGHT_CLICK_LABEL = {"Right-click"};
-	private static final String[] RIGHT_CLICK_WORN_LABEL = {"Right", "click"};
+	/** In a slot too narrow for "Right-click" on one line: an equipment slot, or a spell in the spellbook. */
+	static final String[] RIGHT_CLICK_WORN_LABEL = {"Right", "click"};
 	private static final Color LABEL_BACKGROUND = new Color(0, 0, 0, 170);
 
 	private final RunSession session;
@@ -210,7 +211,7 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 	 * on pale items too. Kept inside what RuneLite lets the slot draw on (an equipment slot clips to itself), so a wide
 	 * one isn't cut off at the edge of the inventory.
 	 */
-	private static void drawLabel(Graphics2D graphics, Rectangle bounds, String[] lines, Color colour)
+	static void drawLabel(Graphics2D graphics, Rectangle bounds, String[] lines, Color colour)
 	{
 		graphics.setFont(FontManager.getRunescapeSmallFont());
 		final FontMetrics metrics = graphics.getFontMetrics();

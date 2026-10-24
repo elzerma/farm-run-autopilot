@@ -637,6 +637,11 @@ public final class RoutePlanner
 		final List<String> ways;
 		/** The kind of cooldown teleport it uses (a home or minigame teleport, one of each per run), or null. */
 		final String cooldown;
+		/**
+		 * What to pick on its spell's or tablet's right-click: a spell's other place (Camelot Teleport's "Seers'"), Teleport
+		 * to House's "Outside", or "Inside" into a house set to teleport outside; null if it's the left click.
+		 */
+		final String spellOption;
 
 		Leg(TravelMethod method, Departure departure, double seconds, boolean needsSupplies, String breakdown)
 		{
@@ -658,6 +663,12 @@ public final class RoutePlanner
 		Leg(TravelMethod method, Departure departure, double seconds, boolean needsSupplies, double penalty,
 			String breakdown, AtlasLeg atlas, List<String> ways, String cooldown)
 		{
+			this(method, departure, seconds, needsSupplies, penalty, breakdown, atlas, ways, cooldown, null);
+		}
+
+		Leg(TravelMethod method, Departure departure, double seconds, boolean needsSupplies, double penalty,
+			String breakdown, AtlasLeg atlas, List<String> ways, String cooldown, String spellOption)
+		{
 			this.method = method;
 			this.departure = departure;
 			this.seconds = seconds;
@@ -668,11 +679,12 @@ public final class RoutePlanner
 			this.atlas = atlas;
 			this.ways = ways;
 			this.cooldown = cooldown;
+			this.spellOption = spellOption;
 		}
 
 		RouteStop stop(Location to)
 		{
-			return new RouteStop(to, method, departure, seconds, needsSupplies, breakdown, atlas, ways);
+			return new RouteStop(to, method, departure, seconds, needsSupplies, breakdown, atlas, ways, spellOption);
 		}
 	}
 
@@ -830,9 +842,13 @@ public final class RoutePlanner
 		final TravelAtlas.Jump teleport = option.getTeleport();
 		final String cooldown = teleport != null && AtlasWays.family(teleport) == TravelFamily.COOLDOWN
 			? teleport.getType() : null;
+		// Picked on the spell's or tablet's right-click: its other place (Seers'), Outside to a house's portal, or Inside
+		// into a house set to teleport outside
+		final String spellOption = option.getKind() == AtlasOption.Kind.HOUSE ? houseInOption()
+			: AtlasTravel.spellOption(teleport);
 		return new Leg(match.getMethod(), match.getDeparture(), option.getSeconds() + overhead, false,
 			walking ? 0 : preference(option, match), legs.breakdown(option) + " + overhead " + round(overhead), described,
-			AtlasWays.keys(atlas.getAtlas(), option), cooldown);
+			AtlasWays.keys(atlas.getAtlas(), option), cooldown, spellOption);
 	}
 
 	/** What an option the plugin doesn't know as one of its methods costs besides time, for the travel styles. */
@@ -886,8 +902,7 @@ public final class RoutePlanner
 	private AtlasLegs newLegs()
 	{
 		final boolean trees = access.isMet(Requirement.unlock(Unlock.SPIRIT_TREES));
-		final Double teleportIn = canTeleportHome() ? houseTeleportSeconds()
-			+ (access.isHouseTeleportOutside() ? TravelTimes.HOUSE_DOOR : 0) + TravelTimes.HOUSE_WALK : null;
+		final Double teleportIn = canTeleportHome() ? houseTeleportSeconds() + TravelTimes.HOUSE_WALK : null;
 		final AtlasHouse house = AtlasHouse.of(atlas.getAtlas(), atlas.getAccount(), poh, teleportIn, trees);
 		return new AtlasLegs(atlas.getAtlas(), atlas.getAccount(), house, this::teleportExtra);
 	}
@@ -1152,14 +1167,24 @@ public final class RoutePlanner
 		return String.valueOf(Math.round(seconds));
 	}
 
-	/** Teleport to House by a cape, a tablet, or the spell (switching spellbook first if it's another book). */
+	/**
+	 * Into the house by a cape, a tablet, or the spell (switching spellbook first if it's another book). A cape lands
+	 * as the house is set, so into a house set to teleport outside it's in through the door; the spell and its tablet
+	 * pick Inside on their right-click instead.
+	 */
 	private double houseTeleportSeconds()
 	{
 		if (capeHome())
 		{
-			return TravelTimes.ITEM_TELEPORT;
+			return TravelTimes.ITEM_TELEPORT + (access.isHouseTeleportOutside() ? TravelTimes.HOUSE_DOOR : 0);
 		}
 		return TravelTimes.TELEPORT + spellbookSwap(Spell.TELEPORT_TO_HOUSE);
+	}
+
+	/** "Inside", to pick on Teleport to House's right-click into a house set to teleport outside; null by a cape. */
+	private String houseInOption()
+	{
+		return access.isHouseTeleportOutside() && !capeHome() ? "Inside" : null;
 	}
 
 	/** A construction cape or max cape gets the player home without a tablet or runes. */
@@ -1357,7 +1382,7 @@ public final class RoutePlanner
 					// Nothing else gets there: keep it, as something to recharge, come back to tomorrow or wait for
 					leg = new Leg(leg.method, leg.departure, leg.seconds, true, MISSING_PENALTY, leg.breakdown
 						+ (cooldownOut ? ", used once already this run (cooldown)" : ", no charges left"), leg.atlas,
-						leg.ways, leg.cooldown);
+						leg.ways, leg.cooldown, leg.spellOption);
 					break;
 				}
 				leg = bestLeg(from, to);

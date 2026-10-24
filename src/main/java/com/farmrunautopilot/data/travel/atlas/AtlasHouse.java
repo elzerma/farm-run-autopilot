@@ -113,8 +113,8 @@ public final class AtlasHouse
 		{
 			return null;
 		}
-		final double in = HOUSE_TELEPORT_TICKS * SECONDS_PER_TICK
-			+ (account.getAccess().isHouseTeleportOutside() ? TravelTimes.HOUSE_DOOR : 0) + TravelTimes.HOUSE_WALK;
+		// In by the spell or its tablet, which pick Inside on their right-click whatever the house's setting
+		final double in = HOUSE_TELEPORT_TICKS * SECONDS_PER_TICK + TravelTimes.HOUSE_WALK;
 		return of(atlas, account, poh, in, false);
 	}
 
