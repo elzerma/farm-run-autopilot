@@ -107,7 +107,7 @@ bank slots (compost stays with the leprechaun until needed).
 - **Bottomless bucket:** fill it from the leprechaun's or the bin's compost as a planned step when it's low.
 - **Plant cure and Resurrect Crops:** a step for a diseased patch with what's carried, rather than skipping it.
 - **Leftover seeds:** at the end of a run, a step to put leftover seeds back in the seed vault (Farming Guild) or bank.
-- **Fruit:** note fruit tree produce like herbs (3.1).
+- **Fruit:** note fruit tree produce like herbs (3.1). **Yes** (elzerma).
 - **Payments:** take the gardener's payment out of the leprechaun's notes? (**UNVERIFIED**: he doesn't store produce.)
 - **Seaweed and giant seaweed** (crop types 1b) need the same note and compost choices.
 
@@ -136,12 +136,22 @@ supply list, not travel, so they could run alongside T5, or as their own sprints
 | P2 | Cleaning herbs (3.2) | small |
 | P3 | Making compost (3.3), with the bin varbits and a guided test | large |
 
-## 7. Open questions for elzerma
+## 7. Composting, settled (elzerma, 2026-10-24)
 
-1. Which of section 4's ideas are worth planning? (Claude's own suggestions, from "Other features at the patches
-   might be good, too".)
+- **A bin holds 15 and can't be closed part-full** (the Farming Guild's big bin holds 30 and takes 30 buckets: a
+  couple of trips to the tool leprechaun). Every watermelon picked goes in; an allotment of watermelons treated with
+  ultracompost usually gives at least 15. Short of a full bin, it's left open to fill on a later run; watermelons are
+  never brought from the bank to top it up.
+- **Watermelons are the allotment crop that makes supercompost** (snape grass does too, but never goes in). Cabbage,
+  potatoes, onions and the like turn a bin of watermelons into regular compost. The plugin doesn't aim at regular
+  compost but doesn't stop a player whose progression calls for it: those crops can be ticked for the bin.
+- **Compost taken out of a bin:** what this stop's patches need stays in the inventory (e.g. the herb and the two
+  allotments) when it's the tier those patches get; the rest goes to the leprechaun.
+- **A bin still rotting** takes about as long as herbs or allotments grow, so it's usually ready on the next run;
+  when it isn't, the stop has no bin steps and its watermelons are noted.
+- **Section 4:** noting fruit tree produce, yes (part of the Note step); the other three ideas, no.
 
-**Answered (elzerma, 2026-10-24):** after crop types 1c (T5 -> 1b -> 1c -> P1 -> P2 -> P3 -> T9); a ready bin
+**Answered earlier (elzerma, 2026-10-24):** after crop types 1c (T5 -> 1b -> 1c -> P1 -> P2 -> P3 -> T9); a ready bin
 never adds a stop, as the bins use the crops grown in the same run; empty buckets: drop, keep or store at the
 leprechaun (a setting, drop by default); noting on by default, cleaning at the patch, every bin used, compost taken
 from the leprechaun at each stop for that stop (section 2).
@@ -149,6 +159,8 @@ from the leprechaun at each stop for that stop (section 2).
 **The settings** (elzerma liked this shape): a new Farm tab section, "At the patches", below "Compost and
 cures": Note produce on the tool leprechaun (on), Clean herbs (off), Empty buckets (Drop / Keep / Store at the
 leprechaun), and Make compost in the compost bins (off), which when on shows Make ultracompost (brings volcanic
-ash) and the crops for the bin (snape grass never offered). Taking compost from the leprechaun, bucket or
-bottomless bucket, and picking everything before planting need no setting. "Compost and cures" keeps which
-compost each patch type gets (say it once).
+ash) and the crops for the bin (watermelon ticked; snape grass never offered). Taking compost from the leprechaun,
+bucket or bottomless bucket, and picking everything before planting need no setting. "Compost and cures" keeps
+which compost each patch type gets (say it once).
+
+No questions left; still to check at P3: the ash per bin and the bins' varbits (section 3.3).
