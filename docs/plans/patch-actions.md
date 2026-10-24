@@ -64,7 +64,7 @@ Herbs, allotments and a flower, 10 stops in 34:05. What they did that the plugin
 - **Noting after each patch** as well as at the end of each stop.
 - **Treated after planting** at the Farming Guild and Hosidius (planted, then ultracompost), which the game allows.
 - **Patch by patch:** each patch was usually picked, treated and planted before the next was started, rather than
-  everything picked first (section 2); worth settling which the guide should lead.
+  everything picked first (section 2). elzerma (2026-10-24): the guide leads "pick everything first", as section 2 says.
 - **The Farming Guild's bin** was filled to "full of supercompostable items" with no "You close the compost bin" after
   it in the log.
 
