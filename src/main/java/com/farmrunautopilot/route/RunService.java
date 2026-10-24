@@ -689,6 +689,12 @@ public class RunService
 	 *
 	 * @param from the stop it sets off from, or null for wherever the player is
 	 */
+	/** Whether the house is set to teleport outside, as last read from the game (House Options). */
+	public boolean houseTeleportsOutside()
+	{
+		return accessChecker.getSnapshot().isHouseTeleportOutside();
+	}
+
 	public RouteStop leg(Location from, Location to)
 	{
 		final RunConfig config = settings.getRunConfig();

@@ -1,5 +1,6 @@
 package com.farmrunautopilot.run;
 
+import com.farmrunautopilot.data.travel.Spell;
 import java.util.Set;
 import java.util.function.IntPredicate;
 import lombok.Getter;
@@ -34,8 +35,9 @@ public enum SideTab
 	}
 
 	/**
-	 * The tab the step needs open, or null: the spellbook for a spell to cast, else wherever the item to use is (the
-	 * inventory, else worn equipment), and only with nothing to use the inventory for an item to put on. The vine marks
+	 * The tab the step needs open, or null: the spellbook for a spell to cast (unless its tablet is in the inventory),
+	 * else wherever the item to use is (the inventory, else worn equipment), and only with nothing to use the inventory
+	 * for an item to put on. The vine marks
 	 * the one thing to click next, so a "Wear" reminder never takes the player away from the teleport (elzerma,
 	 * 2026-10-21: with the Ardougne cloak worn and the Graceful outfit to wear, the inventory's icon had the vine).
 	 *
@@ -45,7 +47,11 @@ public enum SideTab
 	public static SideTab needed(Highlights highlights, IntPredicate inventory, IntPredicate worn, boolean items,
 		boolean spells)
 	{
-		if (spells && highlights.getSpell() != null)
+		final Spell spell = highlights.getSpell();
+		// The spell's tablet in the inventory is the thing to click instead (elzerma, 2026-10-23: a house tablet carried,
+		// and still the spellbook's icon had the vine)
+		if (spells && spell != null && !(items && spell.hasTablet()
+			&& highlights.getItemIds().contains(spell.getTabletItemId()) && inventory.test(spell.getTabletItemId())))
 		{
 			return SPELLBOOK;
 		}
