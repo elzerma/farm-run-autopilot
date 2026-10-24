@@ -437,6 +437,10 @@ happen at any time; its hops travel is replaced by the atlas in T3. Because the 
 the game (section 3, step 2), each later crop-type sprint switches its patches on and rebuilds nothing in travel.
 Other sessions don't edit travel files (`data/travel/`, the leg code in `route/`) until T7 is done.
 
+**T9 last (elzerma, 2026-10-23):** T9 waits until crop types 1b and 1c are built, so the help list, README, notices and
+release notes are written once for the travel rework and the new crop types together. The order is T4 → T5 → 1b → 1c
+→ T9.
+
 ### T0 results (2026-10-17)
 
 **The bubble works.** `tools/atlas` compiled Shortest Path `37abff3` (the Plugin Hub's version 1.21.3) unchanged and
@@ -774,6 +778,73 @@ Both checked, and fixed as elzerma picked (picker, 2026-10-21):
 - **Follow-ups:** at its next rebuild, tools/atlas should leave the recruiters out of the pathfinder too, so those
   place pairs get their next-best way. Not checked: since 17 December 2025 the stony basalt's left click goes to the
   roof or the entrance, whichever the player set, with both on its right-click menu; the atlas has two teleports.
+
+### T4 build plan (2026-10-23)
+
+elzerma (picker, 2026-10-23): **"Fewest items to bring" goes**; a saved choice of it loads as Fastest. Measured on the
+test account like elzerma's with every crop type (24 stops, 52 patches, 65 slots): a plan takes about 47 ms, the supply
+list about 1.5 ms, and placing bank visits counts the supply list once per stretch tried (about 150 stretches), so
+scoring one choice of ways for the whole run takes tens of milliseconds. A search over every leg's ways can't run on
+the client thread, so:
+
+1. **"Fewest items" removed** (`TravelStyle`, `RoutePlanner.stylePenalty`), with the load migration and a test.
+2. **The run's assembly made pure:** route, supply list and bank visits come out of `RunService.refresh` into one
+   class the tests can drive (`RunAssembly`), with the item name, price and wear-slot lookups passed in. Behaviour
+   unchanged; snapshots unchanged.
+3. **Each leg's alternatives:** for the chosen order, `RoutePlanner` lists each leg's ways within a minute of its
+   fastest (one per thing carried, so ten ways using the same necklace count once), as legs ready to swap in, and
+   checks a whole choice of ways against the charges and daily uses held, as `spendCharges` does.
+4. **Footprints:** what a way needs carried, as keys that combine as a set (a teleport item, a tablet kind, each rune
+   type of a spell, coins, a balloon log, the dramen staff). Only used to pick which swaps are worth scoring.
+5. **The search** (section 4, last part), only for a run that banks partway (a run that fits has nothing to gain): from
+   the fastest ways and their bank visits, try each swap the footprints say could free a slot in a stretch, including
+   "this item on every leg where it's within a minute"; score the few best by the real thing, the whole run's travel
+   plus its bank visits with the supply list counted again; keep the best, repeat until nothing improves (at most a few
+   rounds and a time limit). Ties fall to the travel style. Then the stop order is checked once with the chosen ways.
+6. **Off the client thread:** the route as today is shown at once; the search runs on RuneLite's executor with the
+   inputs read on the client thread, and its result is applied on the next refresh if the plan it started from is
+   still the plan (otherwise it's dropped and started again). Cancelled at shutdown.
+7. **Explained:** a swapped leg says why on the Run tab's hover and in the dev log, e.g. "Skills necklace to Hosidius,
+   4 s slower: frees a slot, so one bank visit fewer (saves 45 s)" (said once, on the hover).
+8. **Bank costs:** `BankPlanner.BANK_SECONDS` (15 s) checked against elzerma's logs; the legs after a bank ran 7-12 s
+   over in runs 1 and 3.
+9. **Tests:** a run where one shared necklace saves a bank visit takes it; a run that fits never swaps a leg; charges
+   are never overspent by a swap; the search result is the same off the thread as on it; snapshots for banked runs.
+   Hand check: a big run (every type ticked) in the dev client, with the log.
+
+**T4 built (2026-10-23, branch `claude/1c-plan-file-name-0cf248`), awaiting elzerma's hand check:**
+
+- **How it chooses** (`route/TravelSearch`, `route/Footprint`, `RouteAtlas.avoiding`): rather than swapping single legs,
+  the search tells the planner what to leave at home (a teleport item, a tablet kind, a rune type, coins, balloon
+  logs, the fairy ring staff), and the whole run is planned again without it: every leg that used it takes its next
+  best way (within two minutes; the quickest way when nothing else gets there), the stop order is worked out again,
+  charges are spent as before, and the supplies and bank visits are counted again. Each thing carried is screened by
+  the route and slot count alone (no bank visits placed); those that free a slot for less than the visits cost are
+  left at home one more at a time, cheapest per slot first (one alone rarely frees enough), each set weighed as the
+  whole run with its bank visits, and the quickest run kept if it's at least 3 s quicker.
+- **What it found** on the test account like elzerma's: their usual runs keep the quickest ways. Herbs, trees and
+  fruit trees need 39 slots and one 25 s visit (ring of dueling to Castle Wars); the teleports free at most 8 slots,
+  as seeds, saplings and compost fill the inventory. Every crop type: 97 slots over four parts, nothing to gain. Of 52
+  random runs that bank, 3 saved a visit (15-19 s: the Ectophial left at home, or the slayer ring and teleport
+  crystal) and 3 banked somewhere a little quicker. So the search mostly confirms the quickest ways.
+- **Speed:** a whole run with its bank visits takes 100-200 ms to count, so the search takes about a second (6 s for
+  every crop type at once). It runs on a thread of its own (RuneLite's executor is shared with other plugins), from
+  the quickest run, which shows at once; its answer is used while that run stays the same, counted again on the
+  client thread with the game's item lookups. Stopped at shutdown.
+- **Explained:** a leg that isn't the quickest way says why on the Run tab's hover, e.g. "7 s slower than the quickest
+  way, so your Ectophial can stay in the bank: one bank visit fewer, 15 s quicker overall", and in the dev log under
+  `Route planned:`.
+- **Bank costs:** left at 15 s for now. The only clean visit in elzerma's logs (2026-10-18, after Nemus Retreat) took
+  36 s from opening the bank to done, during a test run; the dev log now times each visit from the stop's last patch
+  ("Bank visit done after X: N s from the last patch, by ...") so the big-run check gives the number.
+- **"Fewest items to bring"** went at the start (above). elzerma (2026-10-24): if a GitHub issue asks for it, rebuild
+  it as a feature of its own rather than bring the old style back.
+- **Not done:** the patch order inside a stop (section 4), planning the quickest run itself off the client thread.
+- **Hand checks (elzerma, 2026-10-24), passed:** their usual run keeps the quickest ways with no stutter; every crop
+  type at once shows a banked route at once and stays smooth, with no leg swapped; the Travel style list has the three
+  styles. The dev log had searches of 1-3 s, each "leave at home: nothing". Merged to master. Bank visits timed in their
+  full run: 19 s (an unplanned visit by ring of dueling), 89 s and 106 s from the last patch (the planned ones, with
+  deposits and a wrongly asked missing item), so 15 s of banking is low; to be set once the missing-item fix below is in.
 
 ## 10. Risks
 

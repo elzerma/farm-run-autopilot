@@ -42,6 +42,11 @@ public class RouteStop
 	 * it's the left click.
 	 */
 	String spellOption;
+	/**
+	 * Why the leg isn't the quickest way there, when the travel search chose another to carry less (T4), for the Run
+	 * tab's hover; null otherwise.
+	 */
+	String why;
 
 	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
 		boolean needsSupplies)
@@ -70,7 +75,12 @@ public class RouteStop
 	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
 		boolean needsSupplies, String breakdown, AtlasLeg atlas, List<String> ways, String spellOption)
 	{
-		this.spellOption = spellOption;
+		this(location, method, departure, legSeconds, needsSupplies, breakdown, atlas, ways, spellOption, null);
+	}
+
+	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
+		boolean needsSupplies, String breakdown, AtlasLeg atlas, List<String> ways, String spellOption, String why)
+	{
 		this.location = location;
 		this.method = method;
 		this.departure = departure;
@@ -79,6 +89,15 @@ public class RouteStop
 		this.breakdown = breakdown;
 		this.atlas = atlas;
 		this.ways = ways;
+		this.spellOption = spellOption;
+		this.why = why;
+	}
+
+	/** The same leg, saying why it isn't the quickest way there. */
+	RouteStop withWhy(String why)
+	{
+		return new RouteStop(location, method, departure, legSeconds, needsSupplies, breakdown, atlas, ways, spellOption,
+			why);
 	}
 
 	/**

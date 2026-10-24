@@ -1318,6 +1318,10 @@ class RunPanel extends JPanel
 			// JList shows the renderer's tooltip for the hovered row
 			final List<String> lines = new ArrayList<>(plan.getObjectives().getOrDefault(stop.getLocation(),
 				Collections.emptyList()));
+			if (!here && stop.getWhy() != null)
+			{
+				lines.add(0, stop.getWhy());
+			}
 			if (!here && !stop.getWays().isEmpty())
 			{
 				lines.add("Right-click: don't use its way");

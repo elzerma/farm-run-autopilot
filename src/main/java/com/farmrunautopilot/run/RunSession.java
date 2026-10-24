@@ -1440,7 +1440,9 @@ public class RunSession
 					instruction = bankStep(bank);
 					break;
 				}
-				log.debug("Bank visit done after {}", stop.getLocation().getDisplayName());
+				// Timed from the stop's last patch, for checking what a visit costs (BankPlanner, T4)
+				log.debug("Bank visit done after {}{}", stop.getLocation().getDisplayName(), patchesDoneAt > 0
+					? ": " + Math.round((now - patchesDoneAt) / 1000.0) + " s from the last patch, " + bank.how() : "");
 				banking = false;
 				if (extraBank == null)
 				{

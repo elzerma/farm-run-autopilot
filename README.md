@@ -99,7 +99,7 @@ The plugin never clicks, types or acts for you. It only shows information.
   cooldown is over. "Avoid the Wilderness" is on to start with (the Ferox Enclave counts as safe). "Switch spellbook to
   cast" is off to start with: tick it to let the route cast a spell from another spellbook after Spellbook Swap or at
   your house altar.
-- Choose a travel style: Fastest, Prefer free, Save charges, or Fewest items to bring.
+- Choose a travel style: Fastest, Prefer free or Save charges.
 - Tablets come first; tick "Cast from runes, not tablets" (under Tablets and scrolls) to keep yours.
 - Charges are tracked across the whole run: jewellery charges, daily-limited teleports (Ardougne cloak,
   Explorer's ring) and items charged by hand (quetzal whistle, Xeric's talisman, pendant of Ates, counted from
@@ -148,9 +148,33 @@ character name or where you've been.
 - Patch coordinates from [Farming-Helper](https://github.com/Speaax/Farming-Helper).
 - Teleport landings, banks, hot air balloons and walking distances from [Shortest Path](https://github.com/Skretzo/shortest-path)
   (measured once, nothing downloaded while playing).
+- Special tree research for the planned Sprint 1c (Great Conch access, clearing fees, Anglers' Retreat) from
+  [@MangoTheFlamingo](https://github.com/MangoTheFlamingo) and their
+  [Tree Run Planner](https://github.com/MangoTheFlamingo/TreeRuns).
 - Built on [RuneLite](https://github.com/runelite/runelite).
 
 See `THIRD_PARTY_NOTICES` for their licences.
+
+## Special thanks
+
+To everyone who has offered to help, tried the plugin and said what they found:
+
+- [@MangoTheFlamingo](https://github.com/MangoTheFlamingo), for offering to help with the special trees and
+  answering the plan's open questions, and for pointing out that crystal trees were missing (#30).
+- [@elwakka](https://github.com/elwakka), for the first bug reports (#1, #2, #3, #6, #7), for eight guided test reports,
+  and for the ideas of not travelling to a stop you're already at (#1) and using your house as a way through when you
+  arrive by spirit tree (#16).
+- [@ConnorBampton](https://github.com/ConnorBampton), for guided test reports (#28, #29) and the ideas of casting
+  Teleport to House from runes instead of tabs (#27) and planting from the seed box (#26).
+- [@darkshadow0308](https://github.com/darkshadow0308), for guided test reports (#20, #21).
+- [@Zerkia](https://github.com/Zerkia), for the ideas of calquat trees (#22) and more ways to Weiss and more say
+  over your setup (#24), and a bug report (#23).
+- [@iieu8827roj](https://github.com/iieu8827roj), for the idea of using the rune pouch (#31).
+- [@backwardspy](https://github.com/backwardspy), [@frazzorr](https://github.com/frazzorr) and
+  [@collinphood-svg](https://github.com/collinphood-svg), for reports (#4, #5, #25).
+
+Want to help? Settings > Help improve this plugin lists a few quick in-game tests, and the
+[issues](https://github.com/elzerma/farm-run-autopilot/issues) take bug reports and ideas.
 
 ## Licence
 

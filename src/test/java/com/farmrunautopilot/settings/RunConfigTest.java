@@ -67,6 +67,14 @@ public class RunConfigTest
 	}
 
 	@Test
+	public void fewestItemsLoadsAsFastest()
+	{
+		// The style went in T4 (elzerma, 2026-10-23)
+		final RunConfig old = gson.fromJson("{\"travelStyle\":\"FEWEST_ITEMS\"}", RunConfig.class).sanitise();
+		assertEquals(TravelStyle.FASTEST, old.getTravelStyle());
+	}
+
+	@Test
 	public void roundTripThroughJson()
 	{
 		final RunConfig config = new RunConfig().sanitise();

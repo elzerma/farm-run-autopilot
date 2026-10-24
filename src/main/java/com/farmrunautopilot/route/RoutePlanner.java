@@ -734,8 +734,14 @@ public final class RoutePlanner
 		AtlasOption picked = null;
 		AtlasTravel.Match pickedMatch = null;
 		double pickedRank = Double.MAX_VALUE;
+		// The travel search's items not to carry (T4): the best way without them, else the best way
+		final Set<String> avoid = atlas.getAvoid();
+		AtlasOption avoided = null;
+		AtlasTravel.Match avoidedMatch = null;
+		double avoidedRank = Double.MAX_VALUE;
 		// A pinned teleport can be any way slower, so everything is looked at; otherwise only what could win
-		for (AtlasOption option : legs.options(from, to, chosenUnlocked ? Double.MAX_VALUE : OPTION_SLACK))
+		final double slack = chosenUnlocked ? Double.MAX_VALUE : avoid.isEmpty() ? OPTION_SLACK : AVOID_SLACK;
+		for (AtlasOption option : legs.options(from, to, slack))
 		{
 			// Quickest first, and nothing takes more off than Renu's preference: the rest can't win
 			final double floor = option.getSeconds() + TravelTimes.WALK_OVERHEAD - RENU_PREFERENCE;
@@ -745,6 +751,16 @@ public final class RoutePlanner
 			}
 			final AtlasTravel.Match match = AtlasTravel.match(data, option, location);
 			final double rank = rank(option, match, location);
+			if (!avoid.isEmpty() && carries(legs, option, match, location, avoid))
+			{
+				if (rank < avoidedRank)
+				{
+					avoided = option;
+					avoidedMatch = match;
+					avoidedRank = rank;
+				}
+				continue;
+			}
 			if (rank < bestRank)
 			{
 				best = option;
@@ -763,7 +779,24 @@ public final class RoutePlanner
 		{
 			return atlasLeg(legs, picked, pickedMatch);
 		}
+		if (best == null && avoided != null)
+		{
+			return atlasLeg(legs, avoided, avoidedMatch);
+		}
 		return best == null ? null : atlasLeg(legs, best, bestMatch);
+	}
+
+	/** Whether an option needs carried any of what the travel search asked the route not to carry ({@link Footprint}). */
+	private boolean carries(AtlasLegs legs, AtlasOption option, AtlasTravel.Match match, Location to, Set<String> avoid)
+	{
+		for (String key : Footprint.of(atlasLeg(legs, option, match).stop(to), config, access, holdings))
+		{
+			if (avoid.contains(key))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** What the player would weigh an option by: its seconds and overhead, with the preferences and style. */
@@ -1202,6 +1235,11 @@ public final class RoutePlanner
 	 */
 	static final double OPTION_SLACK = TravelTimes.LEG_OVERHEAD - TravelTimes.WALK_OVERHEAD + STYLE_PENALTY
 		+ PREFER_WALKING_SECONDS + RENU_PREFERENCE + 1;
+	/**
+	 * How much slower a way can be and still be taken to leave an item at home for the travel search (T4): a slot is
+	 * worth no more than the bank visit it saves, and none takes two minutes.
+	 */
+	static final double AVOID_SLACK = 120;
 
 	static double stylePenalty(TravelStyle style, Cost cost)
 	{
@@ -1211,10 +1249,6 @@ public final class RoutePlanner
 				return cost == Cost.FREE ? 0 : STYLE_PENALTY;
 			case SAVE_CHARGES:
 				return cost == Cost.CHARGES ? STYLE_PENALTY : 0;
-			case FEWEST_ITEMS:
-				// A tablet or a charged item is one more thing per stop; runes and the house tab are shared
-				return cost == Cost.TABLET || cost == Cost.CHARGES ? STYLE_PENALTY
-					: cost == Cost.RUNES || cost == Cost.HOUSE ? STYLE_PENALTY / 3 : 0;
 			default:
 				return 0;
 		}

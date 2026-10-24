@@ -3,7 +3,8 @@
 Written 2026-10-17, planning only (nothing built). **Status:** Sprint 1a (allotments, flowers, hops) built 2026-10-17, waiting
 for elzerma's in-game checks; Entrana hops left out (question 6). **1b and 1c wait for the travel rework**
 (`travel-rework.md`, elzerma 2026-10-17): its atlas will already hold travel to every patch, so those sprints switch their
-patches on instead of researching travel per stop. The plugin today runs herbs, trees and fruit trees as one
+patches on instead of researching travel per stop. They start after T4 and T5; the rework's T9 (help list, README,
+release notes) comes after 1c (elzerma, 2026-10-23). The plugin today runs herbs, trees and fruit trees as one
 combined route with bank stops (live on the Plugin Hub at `62f3070`). SPEC section 2 "Later (not v1)" lists the
 rest; elzerma asked for them to be planned as three sprints:
 
@@ -330,10 +331,10 @@ and mushroom show "Can't be protected" as a greyed line under Protection, said o
 |---|---|---|---|---|
 | Hardwood x3 | Fossil Island, Mushroom Forest (new) | 14651 (+8), east `_A`, middle `_B`, west `_C` | squirrels | Bone Voyage; bounds exceptions on two staircases [RL] |
 | Hardwood | Locus Oasis, Avium Savannah (new) | 6702 (6446), `_A` | Marcellus | The Ribbiting Tale of a Lily Pad Labour Dispute (not just Children of the Sun) [Wiki: Locus Oasis] |
-| Hardwood | Anglers' Retreat (new) | 9770, `_A` | Argo | 51 Sailing to moor |
+| Hardwood | Anglers' Retreat (new) | 9770, `_A` | Argo | 51 Sailing to moor; 50 Construction builds a rowboat to reach it from Corsair Cove, which MangoTheFlamingo recommends (#30) |
 | Calquat | Tai Bwo Wannai (new) | 11056, `_A` | Imiago | none |
 | Calquat | Kastori (existing) | 5423, `_A` | Tziuhtla | Children of the Sun |
-| Calquat | Great Conch, The Summer Shore (new) | 12581 (+13), `_C` | Guppa | part of Troubled Tortugans (**UNVERIFIED** which quest step) |
+| Calquat | Great Conch, The Summer Shore (new) | 12581 (+13), `_C` | Guppa | part of Troubled Tortugans: the step where you give the bandage (MangoTheFlamingo, #30; **UNVERIFIED** in game here) |
 | Celastrus | Farming Guild (existing) | 4922, `_L` | Taylor | 85 Farming |
 | Redwood | Farming Guild (existing) | 4922, `_I` | Alexandra | 85 to enter, 90 to plant |
 | Spirit tree | Port Sarim (new), Etceteria (1b), Brimhaven (existing), Hosidius (existing), Farming Guild (existing) | 12082 `_A` (y < 3272), 10300 `_B`, 11058 `_B`, 6967 `_F`, 4922 `_A` | five gardeners | Farming Guild 85; Etceteria as 1b |
@@ -371,7 +372,8 @@ plants up to the limit; the Farm tab shows "2 of 3 allowed" on the spirit tree g
 ### Compost, protection and clearing
 
 Payments above, one per patch, pay-with-notes as today. Clearing differs per tree: hardwood chopped (axe, logs)
-then stump dug or 200 coins (**UNVERIFIED** that the 200-coin service applies to hardwood gardeners); celastrus
+then stump dug or 200 coins (MangoTheFlamingo, #30: the hardwood gardeners charge the usual 200 coins; still to
+see in game here); celastrus
 checked then chopped for bark, doesn't regrow; redwood **only** cleared by paying Alexandra 2,000 coins; spirit
 trees dug up with a spade, can't be chopped; calquat picked (6 fruit, RuneLite has no regrowth timer though the
 wiki says 1 per 20 min: use "pick what's there" like fruit trees).
@@ -434,20 +436,29 @@ Run tab: one "Special trees" box. Farm tab: one Patches group per tree type, a s
 
 ### UNVERIFIED (help-list guided tests)
 
-1. **GREAT_CONCH_ACCESS** (Account > Unlocks): the quest step that opens the calquat patch.
-2. **HARDWOOD_CLEAR_FEE** (Farm tab): ask a squirrel to clear a teak stump; capture the price.
+MangoTheFlamingo, who built and tested the Tree Run Planner plugin ([TreeRuns](https://github.com/MangoTheFlamingo/TreeRuns),
+BSD-2) for a month, answered items 1, 2, 4, 5 and 7 in #30 (2026-10-23). Their answers are what to build to, but
+they're reports, not readings from this plugin, so each test stays until it passes here. TreeRuns'
+`data/Patch.java` holds their patch data (points, varbits) for every special tree: anything copied from it needs
+TreeRuns' licence notice in `THIRD_PARTY_NOTICES`.
+
+1. **GREAT_CONCH_ACCESS** (Account > Unlocks): the quest step that opens the calquat patch. Reported: the
+   Troubled Tortugans step where you give the bandage; find the varbit value for that step.
+2. **HARDWOOD_CLEAR_FEE** (Farm tab): ask a squirrel to clear a teak stump; capture the price. Reported: 200 coins,
+   as for other trees.
 3. **SPIRIT_TREE_CHECKED_TRAVEL** (Travel tab): after checking a grown spirit tree's health, travel from it;
    capture that the plugin then offers it as a destination.
 4. Anglers' Retreat: `Skill.SAILING` exists in RuneLite's API (Sailing launched) but the plugin has never read
-   it; **UNVERIFIED** that the level reads correctly. Guided test with `cannotTest` for players under 51.
-5. Patch points for each new patch.
+   it; **UNVERIFIED** that the level reads correctly. Guided test with `cannotTest` for players under 51. Reported:
+   51 is the requirement; a rowboat (50 Construction) from Corsair Cove is the recommended way in.
+5. Patch points for each new patch: compare with TreeRuns' `data/Patch.java` (reported as holding them all).
 6. **CRYSTAL_TREE_STATES** (Farm tab): `FARMING_TRANSMIT_E` in region 13151 and its values (8-13 growing, 14
    check-health, 15 chop-down) are RuneLite's and have never been read by this plugin; capture the value after
    planting, at check-health and after chopping (when the patch should read as weeds or empty, not
    UNKNOWN; **UNVERIFIED** that it goes back to 0-3). Also capture the shard count against the compost used.
    `cannotTest` without 74 Farming, Song of the Elves or a crystal sapling.
-7. Crystal tree patch point: the wiki says only "north-east Prifddinas"; take it from Farming-Helper if it has
-   one, else from the game log, as in October.
+7. Crystal tree patch point: the wiki says only "north-east Prifddinas"; take it from TreeRuns' `data/Patch.java`
+   or Farming-Helper if either has it, else from the game log, as in October.
 
 ### Risks and size
 
