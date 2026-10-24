@@ -86,7 +86,12 @@ bank slots (compost stays with the leprechaun until needed).
 - **Payments:** take the gardener's payment out of the leprechaun's notes? (**UNVERIFIED**: he doesn't store produce.)
 - **Seaweed and giant seaweed** (crop types 1b) need the same note and compost choices.
 
-## 4. The banking fixes from the same run (built 2026-10-24, awaiting re-check)
+## 4. The banking fixes from the same run (built 2026-10-24)
+
+Re-checked by elzerma the same day: no Missing box named anything just used at a stop (passed), and the seed vault's
+emptied slot no longer counts as one of its item (passed: after their last kwuarm seed it said "Take 1 more", as the
+game's placeholder was counted). Not tried yet, as neither came up: a planned bank visit clearing an earlier ask, and
+banking early moving the planned visit up. Merged to master with those two still to try.
 
 - **Items wrongly asked for:** at Hosidius the run asked for the house tablet that got elzerma there and the snapdragon
   and nasturtium just planted. When a step's item was missing, the check counted the whole stop again; now it counts
