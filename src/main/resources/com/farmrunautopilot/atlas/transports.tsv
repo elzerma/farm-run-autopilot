@@ -24,627 +24,630 @@ id	type	origin	destination	ticks	guessed	needs	menu	name
 21	AGILITY_SHORTCUT	3085 3352 0	3086 3352 0	2	true	10	Squeeze-through Broken fence 62422	Squeeze-through Broken fence
 22	TRANSPORT	3295 3429 0	3296 3429 0	4	false	11	Open Gate 24561	Open Gate
 23	SHIP	3362 3445 0	3724 3807 0	12	false	12,2	Quick-Travel Barge guard 8012	Quick-Travel Barge guard
-24	AGILITY_SHORTCUT	3717 3815 0	3713 3830 0	1	false	13	Climb through Hole 31482	Climb through Hole
-25	TRANSPORT	3143 3443 0	3143 3444 0	3	false	14,15	Open Door 24958	Open Door
-26	AGILITY_SHORTCUT	3142 3513 0	3137 3516 0	7	false	16	Climb-into Underwall tunnel 16530	Climb-into Underwall tunnel
-27	TRANSPORT	3042 3305 0	3045 3305 0	6	false		Climb-over Stile 7527	Climb-over Stile
-28	TRANSPORT	3063 3284 0	3063 3281 0	6	false		Climb-over Stile 7527	Climb-over Stile
-29	AGILITY_SHORTCUT	3032 3388 0	3032 3389 1	2	true	0	Climb Rough wall 62419	Climb Rough wall
-30	AGILITY_SHORTCUT	3033 3389 1	3033 3390 0	2	true	4	Jump Wall 17051	Jump Wall
-31	AGILITY_SHORTCUT	2936 3355 0	2934 3355 0	2	true	17	Climb-over Crumbling wall 24222	Climb-over Crumbling wall
-32	AGILITY_SHORTCUT	2869 3428 0	2866 3428 0	2	true	18	Climb Rocks 62424	Climb Rocks
-33	TRANSPORT	2877 3482 0	2876 9878 0	1	true	19	Climb-down Stairs 57	Climb-down Stairs
-34	TRANSPORT	2821 9882 0	2820 3486 0	1	true	19	Climb-up Stairs 54	Climb-up Stairs
-35	TRANSPORT	2900 3428 0	2898 3427 1	1	true		Climb-up Staircase 16671	Climb-up Staircase
-36	TRANSPORT	2898 3427 1	2897 3428 0	1	true		Climb-down Staircase 16673	Climb-down Staircase
-37	SHIP	2915 3225 0	2772 3234 0	6	false	20,2	Brimhaven Captain Barnaby 8763	Brimhaven
-38	SHIP	2915 3225 0	2683 3271 0	6	false	20,2	Ardougne Captain Barnaby 8763	Ardougne
-39	AGILITY_SHORTCUT	2561 3108 0	2561 3111 0	2	false	17	Climb-up Climbing rocks 23543	Climb-up Climbing rocks
-40	SHIP	2909 3226 0	2578 2840 0	6	false	21,2	Travel Cabin Boy Colin 7967	Travel Cabin Boy Colin
-41	TRANSPORT	2458 2862 0	2458 2860 0	1	true	22	Pass Magical Barrier 31616	Pass Magical Barrier
-42	TRANSPORT	2457 2839 0	2458 2839 1	1	true	22	Climb-up Stairs 31627	Climb-up Stairs
-43	TRANSPORT	2449 2847 1	2452 2847 2	1	true	22	Climb-up Stairs 31609	Climb-up Stairs
-44	TELEPORTATION_PORTAL	2458 2853 2	2729 3367 0	1	false	22,23	Enter Portal of Legends 31622	Legends' Guild
-45	BOAT	2543 2844 0	2471 2724 0	5	false	24,8	Travel Rowboat 58637	Travel Rowboat
-46	AGILITY_SHORTCUT	2546 2873 0	2546 2871 0	2	true	25	Climb Rocks 31757	Climb Rocks
-47	AGILITY_SHORTCUT	2948 3313 0	2948 3309 0	2	true	26	Climb-into Underwall tunnel 16528	Climb-into Underwall tunnel
-48	TRANSPORT	2933 3289 0	2933 3288 0	3	false	27,28	Open Guild Door 14910	Open Guild Door
-49	TRANSPORT	2461 3385 0	2461 3382 0	3	true		Open Gate 190	Open Gate
-50	TRANSPORT	2466 3491 0	2466 3493 0	3	false		Open Tree Door 1968	Open Tree Door
-51	TRANSPORT	2465 3495 0	2465 3495 1	2	false		Climb-up Ladder 16683	Climb-up Ladder
-52	TRANSPORT	2465 3495 1	2465 3495 2	2	false		Climb-up Ladder 16684	Climb-up Ladder
-53	TRANSPORT	2465 3495 2	2465 3495 3	2	false		Climb-up Ladder 2884	Climb-up Ladder
-54	AGILITY_SHORTCUT	1369 3296 0	1369 3294 0	2	false	29	Climb-over Broken wall 56996	Climb-over Broken wall
-55	BOAT	1399 3246 0	1390 3074 0	5	false	8	Kastori Achilka 14729	Kastori
-56	AGILITY_SHORTCUT	1368 3323 0	1368 3327 0	5	false	30	Climb-into Tunnel 56989	Climb-into Tunnel
-57	AGILITY_SHORTCUT	1391 3323 0	1396 3323 0	6	false	31	Climb Rocks 56994	Climb Rocks
-58	AGILITY_SHORTCUT	1387 3303 0	1387 3301 0	2	false	29	Climb-over Broken wall 56996	Climb-over Broken wall
-59	BOAT	1399 3246 0	1257 3126 0	5	false	8	Tal Teklan Achilka 14729	Tal Teklan
-60	AGILITY_SHORTCUT	1389 3309 0	1391 3309 0	2	false	29	Climb-over Broken wall 56997	Climb-over Broken wall
-61	AGILITY_SHORTCUT	1393 3309 0	1399 3309 0	7	false	32	Cross Stepping stone 56988	Cross Stepping stone
-62	TRANSPORT	2456 3419 0	2457 3417 1	1	true		Climb-up Staircase 16675	Climb-up Staircase
-63	TRANSPORT	2457 3417 1	2456 3416 0	1	true		Climb-down Staircase 16677	Climb-down Staircase
-64	TRANSPORT	2460 3385 0	2461 3382 0	3	true		Open Gate 190	Open Gate
-65	TRANSPORT	2584 3088 0	2585 3088 0	3	false	33	Open Magic guild door 1732	Open Magic guild door
-66	TRANSPORT	2590 3088 0	2590 3092 1	1	false		Climb-up Staircase 15645	Climb-up Staircase
-67	TRANSPORT	2590 3083 1	2590 3087 2	1	false		Climb-up Staircase 15645	Climb-up Staircase
-68	TELEPORTATION_PORTAL	2590 3083 2	2907 3333 0	1	false	23	Enter Magic Portal 2157	Enter Magic Portal
-69	AGILITY_SHORTCUT	2934 3355 0	2936 3355 0	2	true	17	Climb-over Crumbling wall 24222	Climb-over Crumbling wall
-70	TRANSPORT	2584 3233 0	2570 9682 0	1	true		Enter Cave entrance 2852	Enter Cave entrance
-71	TRANSPORT	2570 9682 0	2587 3237 0	1	true		Climb-up Stairs 2853	Climb-up Stairs
-72	SHIP	2683 3271 0	2915 3225 0	6	false	20,2	Rimmington Captain Barnaby 9250	Rimmington
-73	SHIP	2578 2840 0	2909 3226 0	6	false	21,2	Travel Cabin Boy Colin 7967	Travel Cabin Boy Colin
-74	AGILITY_SHORTCUT	2489 2898 0	2485 2898 0	2	true	34,35	Climb-down Rocks 31758	Climb-down Rocks
-75	TELEPORTATION_PORTAL	2456 2853 2	2904 3512 0	1	false	22,23	Enter Portal of Heroes 31621	Heroes' Guild
-76	AGILITY_SHORTCUT	2866 3428 0	2869 3428 0	2	true	18	Climb Rocks 62423	Climb Rocks
-77	TELEPORTATION_PORTAL	2586 3087 2	2703 3406 0	1	false	23	Enter Magic Portal 2158	Enter Magic Portal
-78	SHIP	2683 3271 0	2772 3234 0	6	false	20,2	Brimhaven Captain Barnaby 9250	Brimhaven
-79	TRANSPORT	2820 3486 0	2820 9882 0	1	true	19	Climb-down Stairs 55	Climb-down Stairs
-80	TRANSPORT	2876 9879 0	2877 3482 0	1	true	19	Climb-up Stairs 56	Climb-up Stairs
-81	TELEPORTATION_PORTAL	2595 3088 2	3109 3159 0	1	false	23	Enter Magic Portal 2156	Enter Magic Portal
-82	TELEPORTATION_PORTAL	2457 2855 2	3191 3365 0	1	false	22,23	Enter Portal of Champions 31618	Champions' Guild
-83	TRANSPORT	2504 3191 0	2515 3159 0	5	false	36	Follow Elkoy 4968	Follow Elkoy
-84	SHIP	2772 3234 0	2915 3225 0	6	false	20,2	Rimmington Captain Barnaby 8764	Rimmington
-85	SHIP	2772 3234 0	2683 3271 0	6	false	20,2	Ardougne Captain Barnaby 8764	Ardougne
-86	TELEPORTATION_PORTAL	2456 2855 2	3191 3365 0	1	false	22,23	Enter Portal of Champions 31618	Champions' Guild
-87	AGILITY_SHORTCUT	2575 3112 0	2575 3107 0	2	true	37	Climb-into Hole 16520	Climb-into Hole
-88	AGILITY_SHORTCUT	2556 3075 0	2556 3074 1	2	true	38	Climb Rough wall 62417	Climb Rough wall
-89	AGILITY_SHORTCUT	2556 3073 1	2556 3072 0	2	true	4	Jump Wall 17048	Jump Wall
-90	BOAT	1390 3073 0	1400 3246 0	5	false	8	Gloomthorn Achilka 14727	Gloomthorn
-91	AGILITY_SHORTCUT	1369 3294 0	1369 3296 0	2	false	29	Climb-over Broken wall 56996	Climb-over Broken wall
-92	BOAT	1390 3073 0	1257 3126 0	5	false	8	Tal Teklan Achilka 14727	Tal Teklan
-93	AGILITY_SHORTCUT	1387 3301 0	1387 3303 0	2	false	29	Climb-over Broken wall 56996	Climb-over Broken wall
-94	SHIP	3055 3245 0	1824 3691 0	6	false	2	Port Piscarilius Veos 8630	Port Piscarilius
-95	SHIP	3029 3217 0	2956 3146 0	10	false	20,2	Musa Point Captain Tobias 14979	Musa Point
-96	AGILITY_SHORTCUT	2874 3142 0	2874 3136 0	2	true	39	Swim-to Shore 62420	Swim-to Shore
-97	AGILITY_SHORTCUT	2874 3133 0	2874 3127 0	2	true	39	Swim-to Strong Tree 17074	Swim-to Strong Tree
-98	AGILITY_SHORTCUT	1724 3551 0	1720 3551 0	2	false	40	Cross Stepping stone 29728	Cross Stepping stone
-99	SHIP	3029 3217 0	3064 3003 0	10	false	41,20,2	The Pandemonium Captain Tobias 14979	Pandemonium
-100	TRANSPORT	3659 3509 0	3659 3507 0	2	false		Pay-toll(2-Ecto) Energy Barrier 16105	Pay-toll(2-Ecto) Energy Barrier
-101	SHIP	3709 3496 0	3684 2953 0	6	false	42,2	Travel Bill Teach 4016	Travel Bill Teach
-102	TRANSPORT	3680 2963 0	3786 2824 0	2	false		Transport Brother Tranquility 550	Transport Brother Tranquility
-103	TRANSPORT	2918 3439 0	2916 3438 0	1	true		Climb-over Stile 993	Climb-over Stile
-104	TRANSPORT	2916 3438 0	2919 3438 0	1	true		Climb-over Stile 993	Climb-over Stile
-105	TRANSPORT	2462 3382 0	2461 3385 0	3	true		Open Gate 190	Open Gate
-106	TRANSPORT	2461 3415 0	2460 3417 1	1	true		Climb-up Staircase 16675	Climb-up Staircase
-107	TRANSPORT	2460 3417 1	2461 3418 0	1	true		Climb-down Staircase 16677	Climb-down Staircase
-108	TRANSPORT	2597 3088 0	2596 3088 0	3	false	33	Open Magic guild door 1733	Open Magic guild door
-109	TRANSPORT	2591 3088 0	2590 3092 1	1	false		Climb-up Staircase 15645	Climb-up Staircase
-110	TELEPORTATION_PORTAL	2595 3087 2	3109 3159 0	1	false	23	Enter Magic Portal 2156	Enter Magic Portal
-111	TRANSPORT	2597 3087 0	2596 3087 0	3	false	33	Open Magic guild door 1732	Open Magic guild door
-112	SHIP	1824 3691 0	3055 3245 0	6	false	2	Port Sarim Veos 10726	Port Sarim
-113	TRANSPORT	1702 3575 0	1830 9973 0	2	false		Climb-down Ladder 34862	Climb-down Ladder
-114	TRANSPORT	1825 9973 0	1824 9973 0	4	false	43	Open Temple Door 34843	Open Temple Door
-115	TRANSPORT	1799 9969 0	1670 3569 0	1	false		Climb-up Staircase 34864	Climb-up Staircase
-116	TRANSPORT	3786 2824 0	3680 2963 0	2	false		Transport Brother Tranquility 550	Transport Brother Tranquility
-117	SHIP	3684 2953 0	3709 3496 0	6	false	42,2	Travel Bill Teach 4016	Travel Bill Teach
-118	TRANSPORT	3660 3507 0	3660 3509 0	2	false		Pay-toll(2-Ecto) Energy Barrier 16105	Pay-toll(2-Ecto) Energy Barrier
-119	TRANSPORT	2850 3936 0	2852 3936 0	1	true		Cross Little boulder 33312	Cross Little boulder
-120	TRANSPORT	2852 3941 0	2859 3968 0	1	true		Descend Hole 33227	Descend Hole
-121	BOAT	2849 3967 0	2706 3735 0	12	false	44,8	Travel Boat 21177	Travel Boat
-122	TRANSPORT	2730 3713 0	2773 10162 0	1	true		Enter Tunnel 5008	Enter Tunnel
-123	TRANSPORT	2780 10161 0	2838 10124 0	1	true		Go-through Cave entrance 5973	Go-through Cave entrance
-124	BOAT	2841 10129 0	2892 10225 0	5	false	8	Travel Dwarven Boatman 7726	Travel Dwarven Boatman
-125	AGILITY_SHORTCUT	2691 3697 0	2688 3697 0	2	true	45	Jump Broken Fence 544	Jump Broken Fence
-126	SHIP	2629 3693 0	2581 3847 0	7	false	46,2	Miscellania Sailor 3936	Miscellania Sailor
-127	AGILITY_SHORTCUT	2573 3859 0	2575 3861 0	2	true	47	Cross Stepping stone 11768	Cross Stepping stone
-128	TRANSPORT	1703 3140 0	3280 3412 0	6	false	6	Travel Primio 12889	Varrock
-129	TRANSPORT	1486 3232 0	1361 3309 0	5	false		Follow Mountain Guide 14529	Follow Mountain Guide
-130	BOAT	1281 3385 0	1256 3395 0	5	false	8	Travel Rowboat 57271	Travel Rowboat
-131	TRANSPORT	1259 3430 0	1271 3436 0	4	false		Pass-through Cave 57219	Pass-through Cave
-132	TRANSPORT	1272 3475 0	1401 3536 0	7	false	7	Travel Mountain Guide 7600	1: The Shayzien Outpost.
-133	SHIP	1504 3399 0	3055 3245 0	6	false	2	Port Sarim Captain Magoro 7471	Port Sarim
-134	AGILITY_SHORTCUT	3066 3257 0	3070 3257 0	2	true	1	Climb-into Underwall tunnel 19032	Climb-into Underwall tunnel
-135	SHIP	1494 2985 0	1443 2977 0	4	false	48,2	Travel Antonia 13984	Aldarin
-136	TRANSPORT	3295 3428 0	3296 3428 0	4	false	11	Open Gate 24560	Open Gate
-137	AGILITY_SHORTCUT	3716 3815 0	3713 3830 0	1	false	13	Climb through Hole 31482	Climb through Hole
-138	TRANSPORT	2584 3087 0	2585 3087 0	3	false	33	Open Magic guild door 1733	Open Magic guild door
-139	TRANSPORT	3208 6081 0	2181 3329 0	4	false	49	Exit City Gate 36523	Exit City Gate
-140	BOAT	1256 3394 0	1282 3385 0	5	false	8	Travel Rowboat 57272	Travel Rowboat
-141	BOAT	2711 3732 0	2849 3967 0	12	false	44,8	Weiss Boat 21176	Weiss
-142	TRANSPORT	2858 3968 0	2854 3941 0	1	true	50	Enter Cave entrance 33194	Enter Cave entrance
-143	TRANSPORT	2852 3936 0	2850 3936 0	1	true		Cross Little boulder 33312	Cross Little boulder
-144	TRANSPORT	2852 3966 0	2852 3964 0	1	true		Climb Rockslide 33184	Climb Rockslide
-145	TRANSPORT	2852 3964 0	2855 3964 0	1	true		Climb Rockslide 33185	Climb Rockslide
-146	TRANSPORT	2855 3964 0	2853 3961 0	2	false		Climb Rope 33328	Climb Rope
-147	TRANSPORT	2853 3961 0	2857 3961 0	1	true		Cross Ledge 33190	Cross Ledge
-148	TRANSPORT	2859 3962 0	2859 3960 0	1	true		Climb Rockslide 33191	Climb Rockslide
-149	TRANSPORT	2857 3957 0	2857 3954 0	1	true		Pass Fallen Tree 33192	Pass Fallen Tree
-150	TRANSPORT	2731 3711 0	2773 10162 0	1	true		Enter Tunnel 5008	Enter Tunnel
-151	TRANSPORT	2537 3088 0	2537 3084 1	1	false		Climb-up Staircase 15646	Climb-up Staircase
-152	TELEPORTATION_PORTAL	2458 2855 2	3191 3365 0	1	false	22,23	Enter Portal of Champions 31618	Champions' Guild
-153	AGILITY_SHORTCUT	2575 3107 0	2575 3112 0	2	true	37	Climb-under Castle wall 16519	Climb-under Castle wall
-154	TRANSPORT	2587 3232 0	2570 9682 0	1	true		Enter Cave entrance 2852	Enter Cave entrance
-155	AGILITY_SHORTCUT	2948 3309 0	2948 3313 0	2	true	26	Climb-into Underwall tunnel 16527	Climb-into Underwall tunnel
-156	SHIP	1443 2977 0	1494 2985 0	4	false	48,2	Travel Antonia 13985	Sunset Coast
-157	SHIP	2834 3335 0	3048 3231 1	15	false	2	Take-boat Monk of Entrana 1168	Take-boat Monk of Entrana
-158	TRANSPORT	3048 3231 1	3048 3234 0	3	false		Cross Gangplank 2413	Cross Gangplank
-159	BOAT	2888 10226 0	2838 10127 0	5	false	8	Travel Dwarven Boatman 7726	Travel Dwarven Boatman
-160	TRANSPORT	2838 10124 0	2778 10161 0	1	true		Go-through Entrance 5998	Go-through Entrance
-161	TRANSPORT	2773 10161 0	2730 3713 0	1	true		Enter Tunnel 5014	Enter Tunnel
-162	TRANSPORT	2865 10189 0	2862 10188 1	1	true		Climb-up Stairs 6087	Climb-up Stairs
-163	TRANSPORT	2896 10189 1	2893 10188 0	1	true		Climb-down Stairs 6088	Climb-down Stairs
-164	AGILITY_SHORTCUT	2546 2871 0	2546 2873 0	2	true	25	Climb Rocks 31757	Climb Rocks
-165	AGILITY_SHORTCUT	2556 3072 0	2556 3073 1	2	true	38	Climb Rough wall 62417	Climb Rough wall
-166	AGILITY_SHORTCUT	2556 3074 1	2556 3075 0	2	true	4	Jump Wall 17048	Jump Wall
-167	TELEPORTATION_PORTAL	2586 3088 2	2703 3406 0	1	false	23	Enter Magic Portal 2158	Enter Magic Portal
-168	TRANSPORT	2657 3347 0	2654 3347 0	6	false		Climb-over Stile 993	Climb-over Stile
-169	TRANSPORT	2640 3350 0	2637 3350 0	6	false		Climb-over Stile 993	Climb-over Stile
-170	AGILITY_SHORTCUT	2575 3861 0	2573 3859 0	2	true	47	Cross Stepping stone 11768	Cross Stepping stone
-171	SHIP	2581 3847 0	2629 3693 0	7	false	46,2	Rellekka Sailor 3680	Rellekka Sailor
-172	AGILITY_SHORTCUT	2688 3697 0	2691 3697 0	2	true	45	Jump Broken Fence 544	Jump Broken Fence
-173	TRANSPORT	2461 3382 0	2461 3385 0	3	true		Open Gate 190	Open Gate
-174	TRANSPORT	3303 3117 0	3304 3115 0	2	false	51	Go-through Shantay pass 4031	Go-through Shantay pass
-175	AGILITY_SHORTCUT	3259 3179 0	3246 3179 0	2	true	3	Jump-to Broken Raft 17070	Jump-to Broken Raft
-176	AGILITY_SHORTCUT	3212 3138 0	3214 3131 0	3	false	5	Jump-to Stepping stone 16513	Jump-to Stepping stone
-177	AGILITY_SHORTCUT	3391 3155 0	3396 3155 0	2	true	52	Climb Rocks 62403	Climb Rocks
-178	TRANSPORT	3210 3216 0	3210 9616 0	1	false		Climb-down Trapdoor 14880	Climb-down Trapdoor
-179	AGILITY_SHORTCUT	3219 9618 0	3221 9618 0	3	false	53,54	Squeeze-through Hole 6905	Squeeze-through Hole
-180	TRANSPORT	3230 9609 0	3313 9613 0	8	false	55	Mines Kazgar 7301	Mines
-181	TRANSPORT	3317 9602 0	2747 5374 0	3	false		Open Door 6919	Open Door
-182	TRANSPORT	2713 5285 0	2713 5281 1	1	false		Climb-up Stairs 22937	Climb-up Stairs
-183	TRANSPORT	2722 5272 1	2722 5268 0	1	false		Climb-down Stairs 22938	Climb-down Stairs
-184	TRANSPORT	2722 5260 0	2722 5257 1	1	false		Climb-up Stairs 22939	Climb-up Stairs
-185	TRANSPORT	2723 5255 1	2722 5249 3	1	false		Climb-up Stairs 22941	Climb-up Stairs
-186	TRANSPORT	2719 5242 3	2715 5241 0	2	false		Climb-down Ladder top 22666	Climb-down Ladder top
-187	TRANSPORT	2711 5207 0	3514 9520 2	1	true		Enter Blocked tunnel 22657	Enter Blocked tunnel
-188	TRANSPORT	3484 9510 2	3226 3108 0	2	false		Climb-up Rope 3829	Climb-up Rope
-189	TRANSPORT	3230 9609 0	3245 9648 0	8	false	56	Watermill Kazgar 7301	Watermill
-190	TRANSPORT	3246 9646 0	3313 9613 0	8	false	56	Mines Dartog 7301	Mines
-191	TRANSPORT	2719 5241 3	2715 5241 0	2	false		Climb-down Ladder top 22666	Climb-down Ladder top
-192	TRANSPORT	3169 3173 0	3167 9573 0	2	false		Climb-down Dark hole 5947	Climb-down Dark hole
-193	TRANSPORT	3224 9600 0	3224 9604 0	4	false	57	Squeeze-through Hole 6912	Squeeze-through Hole
-194	TRANSPORT	2723 5260 0	2722 5257 1	1	false		Climb-up Stairs 22939	Climb-up Stairs
-195	TRANSPORT	2722 5255 1	2722 5249 3	1	false		Climb-up Stairs 22941	Climb-up Stairs
-196	AGILITY_SHORTCUT	3426 3478 0	3424 3476 0	2	true	9	Climb Rocks 16999	Climb Rocks
-197	TRANSPORT	3423 3485 0	3440 9887 0	1	false		Climb-down Trapdoor 3433	Climb-down Trapdoor
-198	TRANSPORT	3405 9906 0	3405 3506 0	2	false		Climb-up Ladder 17385	Climb-up Ladder
-199	TRANSPORT	3495 3465 0	3477 9845 0	1	false		Open Trapdoor 5055	Open Trapdoor
-200	TRANSPORT	3481 9824 0	3466 9820 0	1	true		Enter Cave entrance 5046	Enter Cave entrance
-201	TRANSPORT	3460 9813 0	3447 9822 0	1	true		Enter Cave entrance 16308	Enter Cave entrance
-202	AGILITY_SHORTCUT	3086 3352 0	3085 3352 0	2	true	10	Squeeze-through Broken fence 62422	Squeeze-through Broken fence
-203	AGILITY_SHORTCUT	1396 3323 0	1391 3323 0	6	false	31	Climb Rocks 56994	Climb Rocks
-204	AGILITY_SHORTCUT	1368 3327 0	1368 3323 0	5	false	30	Climb-into Tunnel 56989	Climb-into Tunnel
-205	AGILITY_SHORTCUT	1391 3309 0	1389 3309 0	2	false	29	Climb-over Broken wall 56997	Climb-over Broken wall
-206	AGILITY_SHORTCUT	1399 3309 0	1393 3309 0	7	false	32	Cross Stepping stone 56988	Cross Stepping stone
-207	AGILITY_SHORTCUT	3713 3830 0	3715 3815 0	1	false	13	Climb through Hole 31481	Climb through Hole
-208	SHIP	3724 3807 0	3362 3445 0	12	false	12,2	Travel Rowboat 30914	Travel Rowboat
-209	TRANSPORT	3296 3428 0	3295 3428 0	4	false	11	Open Gate 24560	Open Gate
-210	AGILITY_SHORTCUT	3778 3821 0	3784 3821 0	6	false	58	Climb Up Rope anchor 30916	Climb Up Rope anchor
-211	TRANSPORT	3665 3808 0	3685 3756 0	1	true		Jump on Rubber cap mushroom 30606	Jump on Rubber cap mushroom
-212	TRANSPORT	3728 3831 0	3730 3831 1	2	false		Climb Up Ladder 30938	Climb Up Ladder
-213	TRANSPORT	3745 3831 1	3747 3831 0	2	false		Climb Down Ladder 30941	Climb Down Ladder
-214	TRANSPORT	3753 3868 0	3757 3869 1	1	true		Climb Stairs 30681	Climb Stairs
-215	BOAT	2471 2724 0	2543 2844 0	5	false	24,8	Travel Rowboat 58636	Travel Rowboat
-216	AGILITY_SHORTCUT	2874 3127 0	2874 3133 0	2	true	39	Swim-to Strong Tree 17074	Swim-to Strong Tree
-217	AGILITY_SHORTCUT	2874 3136 0	2874 3142 0	2	true	39	Swim-to Shore 62420	Swim-to Shore
-218	SHIP	2956 3146 0	3029 3217 0	10	false	20,2	Port Sarim Customs officer 14985	Port Sarim
-219	AGILITY_SHORTCUT	3180 2432 0	3180 2434 0	2	true	59	Climb Rocks 57928	Climb Rocks
-220	TRANSPORT	2855 3168 0	2855 9568 0	1	true		Climb-down Rocks 11441	Climb-down Rocks
-221	TRANSPORT	2862 9571 0	2480 5175 0	1	true		Enter Cave entrance 11835	Enter Cave entrance
-222	AGILITY_SHORTCUT	1720 3551 0	1724 3551 0	2	false	40	Cross Stepping stone 29728	Cross Stepping stone
-223	TRANSPORT	1670 3566 0	1800 9968 0	1	false		Climb-down Staircase 34865	Climb-down Staircase
-224	TRANSPORT	1824 9973 0	1825 9973 0	4	false		Open Temple Door 34843	Open Temple Door
-225	TRANSPORT	1829 9974 0	1702 3575 0	2	false		Climb-up Ladder 34863	Climb-up Ladder
-226	TRANSPORT	1803 9968 0	1726 9994 0	1	false	60	Enter Strange passage 28918	Enter Strange passage
-227	TRANSPORT	1651 9986 0	1469 3653 0	2	false		Climb-up Vine 28896	Climb-up Vine
-228	TRANSPORT	1639 3673 0	1666 10050 0	2	false		Investigate Statue 27785	Investigate Statue
-229	AGILITY_SHORTCUT	1647 10010 0	1645 10000 0	2	false	61	Squeeze-through Crack 28892	Squeeze-through Crack
-230	AGILITY_SHORTCUT	1324 3795 0	1324 3787 0	8	false	62	Climb Rocks 34396	Climb Rocks
-231	AGILITY_SHORTCUT	1324 3785 0	1324 3777 0	8	false	63	Climb Rocks 34397	Climb Rocks
-232	AGILITY_SHORTCUT	2722 3592 0	2722 3596 0	4	false	3	Walk-across Log balance 16542	Walk-across Log balance
-233	TRANSPORT	2460 3382 0	2461 3385 0	3	true		Open Gate 190	Open Gate
-234	AGILITY_SHORTCUT	2598 3336 0	2602 3336 0	2	true	30	Walk-across Log balance 16546	Walk-across Log balance
-235	BOAT	1256 3395 0	1282 3385 0	5	false	8	Travel Rowboat 57272	Travel Rowboat
-236	TRANSPORT	3659 3507 0	3659 3509 0	2	false		Pay-toll(2-Ecto) Energy Barrier 16105	Pay-toll(2-Ecto) Energy Barrier
-237	TRANSPORT	3653 3486 0	3651 3486 0	2	false		Pay-toll(2-Ecto) Energy Barrier 16105	Pay-toll(2-Ecto) Energy Barrier
-238	TRANSPORT	2638 3349 0	2640 3350 0	6	false		Climb-over Stile 993	Climb-over Stile
-239	TRANSPORT	2654 3347 0	2657 3347 0	6	false		Climb-over Stile 993	Climb-over Stile
-240	AGILITY_SHORTCUT	2602 3336 0	2598 3336 0	2	true	30	Walk-across Log balance 16548	Walk-across Log balance
-241	BOAT	1258 3124 0	1400 3246 0	5	false	8	Gloomthorn Achilka 14728	Gloomthorn
-242	BOAT	1258 3124 0	1390 3074 0	5	false	8	Kastori Achilka 14728	Kastori
-243	AGILITY_SHORTCUT	3137 3516 0	3142 3513 0	7	false	16	Climb-into Underwall tunnel 16529	Climb-into Underwall tunnel
-244	TRANSPORT	3142 3473 0	2440 3089 0	4	false		Join Castle Wars Saradominist recruiter 8644	Join Castle Wars Saradominist recruiter
-245	TRANSPORT	3304 3117 0	3304 3115 0	2	false	51	Go-through Shantay pass 4031	Go-through Shantay pass
-246	AGILITY_SHORTCUT	3214 3130 0	3212 3138 0	3	false	5	Jump-to Stepping stone 16513	Jump-to Stepping stone
-247	TRANSPORT	3265 6024 0	2241 3269 0	4	false	49	Exit City Gate 36523	Exit City Gate
-248	AGILITY_SHORTCUT	2265 3192 0	2268 3192 0	4	false	64	Enter Dense forest 3938	Enter Dense forest
-249	AGILITY_SHORTCUT	2268 3192 0	2271 3192 0	4	false	64	Enter Dense forest 3939	Enter Dense forest
-250	AGILITY_SHORTCUT	2271 3192 0	2274 3192 0	4	false	64	Enter Dense forest 3937	Enter Dense forest
-251	AGILITY_SHORTCUT	2284 3188 0	2287 3188 0	8	false		Step-over Tripwire 3921	Step-over Tripwire
-252	TRANSPORT	2304 3194 0	2306 3194 0	5	false	65	Pass Tree 8742	Pass Tree
-253	AGILITY_SHORTCUT	2238 3181 0	2234 3181 0	6	false		Pass Sticks 3922	Pass Sticks
-254	AGILITY_SHORTCUT	2274 3172 0	2274 3176 0	4	false		Jump Leaves 3925	Jump Leaves
-255	TRANSPORT	2933 3288 0	2933 3289 0	3	false		Open Guild Door 14910	Open Guild Door
-256	SHIP	1504 3399 0	1824 3691 0	6	false	2	Port Piscarilius Captain Magoro 7471	Port Piscarilius
-257	TRANSPORT	3263 6024 0	2239 3269 0	4	false	49	Exit City Gate 36522	Exit City Gate
-258	TRANSPORT	3651 3486 0	3653 3486 0	2	false		Pay-toll(2-Ecto) Energy Barrier 16105	Pay-toll(2-Ecto) Energy Barrier
-259	AGILITY_SHORTCUT	3784 3821 0	3778 3821 0	6	false	58	Climb Down Rope anchor 30917	Climb Down Rope anchor
-260	AGILITY_SHORTCUT	3718 3816 0	3713 3830 0	1	false	13	Climb through Hole 31482	Climb through Hole
-261	AGILITY_SHORTCUT	1455 3128 0	1465 3128 0	8	false	66	Climb Rocks 51931	Climb Rocks
-262	AGILITY_SHORTCUT	1465 3128 0	1455 3128 0	8	false	66	Climb Rocks 51931	Climb Rocks
-263	AGILITY_SHORTCUT	1453 3329 0	1453 3336 0	8	false	40	Walk-across Log balance 56991	Walk-across Log balance
-264	TRANSPORT	2839 9388 0	2826 2998 0	2	false	67	Climb-up Ladder 23584	Climb-up Ladder
-265	TRANSPORT	2832 2954 0	2776 3214 0	5	false	68	Board Travel cart 2265	Board Travel cart
-266	AGILITY_SHORTCUT	2871 3003 0	2871 3008 0	5	false	69	Climb Rocks 53240	Climb Rocks
-267	TRANSPORT	2831 2954 0	2776 3214 0	5	false	70,71	Board Travel cart 2265	Board Travel cart
-268	AGILITY_SHORTCUT	2863 2976 0	2863 2971 0	2	false	72	Cross Stepping stone 16466	Cross Stepping stone
-269	TRANSPORT	2876 2953 0	2880 2952 0	2	false	70	Climb over Broken cart 28931	Climb over Broken cart
-270	TRANSPORT	2870 2971 1	2870 2971 0	2	false		Climb-down Ladder 16679	Climb-down Ladder
-271	TRANSPORT	2834 2953 0	2776 3214 0	5	false	70,71	Board Travel cart 2265	Board Travel cart
-272	AGILITY_SHORTCUT	2863 2971 0	2863 2976 0	2	false	72	Cross Stepping stone 16466	Cross Stepping stone
-273	AGILITY_SHORTCUT	3373 2955 0	3372 2959 0	2	false	73	Cross Stepping stone 53241	Cross Stepping stone
-274	TRANSPORT	3304 3115 0	3304 3117 0	2	false		Go-through Shantay pass 4031	Go-through Shantay pass
-275	TRANSPORT	3683 9888 0	3687 9887 1	1	true		Climb-up Stairs 16108	Climb-up Stairs
-276	TRANSPORT	3674 9886 1	3671 9886 2	1	true		Climb-up Stairs 16108	Climb-up Stairs
-277	AGILITY_SHORTCUT	3671 9888 2	3670 9888 3	2	true	74	Jump-up Weathered wall 16525	Jump-up Weathered wall
-278	TRANSPORT	3669 9888 3	3654 3519 0	2	false		Climb-up Ladder 16110	Climb-up Ladder
-279	TRANSPORT	3688 9887 2	3692 9887 3	1	true		Climb-up Stairs 16108	Climb-up Stairs
-280	BOAT	3525 3170 0	3663 3277 0	13	false	75,8	Board Boat 38089	3: Slepe.
-281	BOAT	3661 3278 0	3671 3542 0	5	false	8	Travel Row boat 32602	Travel Row boat
-282	TRANSPORT	3484 3243 0	3484 3244 0	3	true		Open Gate 12817	Open Gate
-283	BOAT	3522 3284 0	3498 3380 0	18	false	76,77,8	Quick-board Swamp Boaty 6969	Quick-board Swamp Boaty
-284	TRANSPORT	3502 3425 0	3502 3432 0	1	true		Cross-bridge Tree 5003	Cross-bridge Tree
-285	TRANSPORT	3509 3449 0	3500 9811 0	3	false		Open Wooden doors 5061	Open Wooden doors
-286	TRANSPORT	3477 9845 0	3495 3465 0	2	false		Climb-up Ladder 5054	Climb-up Ladder
-287	TRANSPORT	3474 3221 0	3473 3221 0	1	true	78,79	Jump-over Low fence 12776	Jump-over Low fence
-288	TRANSPORT	3660 3509 0	3660 3507 0	2	false		Pay-toll(2-Ecto) Energy Barrier 16105	Pay-toll(2-Ecto) Energy Barrier
-289	BOAT	3522 3285 0	3498 3380 0	18	false	76,77,8	Quick-board Swamp Boaty 6969	Quick-board Swamp Boaty
-290	AGILITY_SHORTCUT	3422 3325 0	3417 3325 0	2	true	59	Cross Stepping stone 13504	Cross Stepping stone
-291	AGILITY_SHORTCUT	2722 3596 0	2722 3592 0	4	false	3	Walk-across Log balance 16540	Walk-across Log balance
-292	TRANSPORT	2344 3655 0	2344 3650 0	1	true	80	Enter Hole 12656	Enter Hole
-293	BOAT	2357 3641 0	2368 3486 0	10	false	8	Travel Kathy Corkat 4299	Gnome Stronghold
-294	TRANSPORT	3062 3283 0	3063 3281 0	6	false		Climb-over Stile 7527	Climb-over Stile
-295	AGILITY_SHORTCUT	1603 3571 0	1607 3571 0	2	false	81	Cross Stepping stone 29730	Cross Stepping stone
-296	AGILITY_SHORTCUT	1610 3570 0	1614 3570 0	2	false	81	Cross Stepping stone 29729	Cross Stepping stone
-297	AGILITY_SHORTCUT	2489 3521 0	2486 3515 0	9	false	82,83	Climb Rocks 16535	Climb Rocks
-298	TRANSPORT	2447 3435 0	2445 3433 1	1	true		Climb-up Staircase 16675	Climb-up Staircase
-299	TRANSPORT	2445 3433 1	2444 3434 0	1	true		Climb-down Staircase 16677	Climb-down Staircase
-300	TRANSPORT	2510 3494 0	2512 3481 0	1	true	84	Board Log raft 1987	Board Log raft
-301	TRANSPORT	2511 3477 0	2527 3413 0	1	true	84	Swim River 10283	Swim River
-302	TRANSPORT	2512 3511 0	1768 5366 1	2	false	85	Jump-into Whirlpool 25274	Jump-into Whirlpool
-303	TRANSPORT	1768 5366 1	1772 5366 0	1	true		Climb-down Stairs 25338	Climb-down Stairs
-304	TRANSPORT	1761 5362 0	2531 3446 0	2	false		Ride Aged log 25216	Ride Aged log
-305	TRANSPORT	2511 3511 0	1768 5366 1	2	false	85	Jump-into Whirlpool 25274	Jump-into Whirlpool
-306	AGILITY_SHORTCUT	2599 3476 0	2603 3477 0	2	true	86	Walk-across Log balance 23274	Walk-across Log balance
-307	AGILITY_SHORTCUT	2598 3477 0	2603 3477 0	2	true	86	Walk-across Log balance 23274	Walk-across Log balance
-308	TRANSPORT	2522 3595 0	2522 3597 0	2	false		Jump-across Basalt rock 4551	Jump-across Basalt rock
-309	TRANSPORT	2522 3600 0	2522 3602 0	2	false		Jump-across Basalt rock 4553	Jump-across Basalt rock
-310	TRANSPORT	2518 3611 0	2516 3611 0	2	false		Jump-across Basalt rock 4555	Jump-across Basalt rock
-311	TRANSPORT	2514 3613 0	2514 3615 0	2	false		Jump-across Basalt rock 4557	Jump-across Basalt rock
-312	TRANSPORT	2514 3617 0	2514 3619 0	2	false		Jump-to Rocky shore 4559	Jump-to Rocky shore
-313	TRANSPORT	2596 3608 0	2598 3608 0	2	false		Cross Broken bridge 4615	Cross Broken bridge
-314	TRANSPORT	2467 3491 0	2466 3493 0	3	false		Open Tree Door 1968	Open Tree Door
-315	TRANSPORT	2465 3491 0	2465 3493 0	3	false		Open Tree Door 1967	Open Tree Door
-316	TRANSPORT	2964 4382 2	3206 3681 0	2	false		Exit Cave exit 679	Exit Cave exit
-317	TRANSPORT	3241 9524 2	3239 9524 2	4	false		Climb Rocks 6673	Climb Rocks
-318	TRANSPORT	3220 9532 2	3226 9542 0	2	false		Enter Tunnel 6658	Enter Tunnel
-319	AGILITY_SHORTCUT	3221 9552 0	3221 9556 0	4	false		Jump-across Stepping stone 5949	Jump-across Stepping stone
-320	AGILITY_SHORTCUT	3221 9618 0	3219 9618 0	3	false	53,54	Squeeze-through Hole 6905	Squeeze-through Hole
-321	TRANSPORT	3208 9616 0	3208 3216 0	2	false		Climb-up Ladder 17385	Climb-up Ladder
-322	TRANSPORT	3168 9572 0	3168 3172 0	2	false		Climb Climbing rope 5946	Climb Climbing rope
-323	TRANSPORT	3169 9571 0	3169 3171 0	2	false		Climb Climbing rope 5946	Climb Climbing rope
-324	TRANSPORT	3201 3169 0	3202 3169 0	3	false		Open Door 2406	Open Door
-325	TRANSPORT	3202 3169 0	2452 4473 0	8	false		Open Door 2406	Open Door
-326	TRANSPORT	2486 4471 0	3260 3171 0	6	false		Use Fairy ring 12003	Use Fairy ring
-327	TELEPORTATION_PORTAL	3147 3638 0	2440 3089 0	1	false	23	Enter Castle Wars portal 30386	Enter Castle Wars portal
-328	TRANSPORT	3154 3635 0	3155 3635 0	2	false		Pass-Through Barrier 39653	Pass-Through Barrier
-329	TRANSPORT	3134 3639 0	3134 3640 0	2	false		Pass-Through Barrier 39653	Pass-Through Barrier
-330	TRANSPORT	3060 3520 0	3060 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-331	TRANSPORT	3018 3450 0	3018 9850 0	1	false		Climb-down Trapdoor 11867	Climb-down Trapdoor
-332	TRANSPORT	3058 9776 0	3061 3376 0	1	true		Climb-up Staircase 23969	Climb-up Staircase
-333	TRANSPORT	3021 9739 0	3021 3339 0	2	false		Climb-up Ladder 17386	Climb-up Ladder
-334	AGILITY_SHORTCUT	3035 9806 0	3028 9806 0	2	true	1	Squeeze-through Crevice 16543	Squeeze-through Crevice
-335	TRANSPORT	3018 9850 0	3018 3450 0	2	false		Climb-up Ladder 17387	Climb-up Ladder
-336	AGILITY_SHORTCUT	1324 3777 0	1324 3785 0	8	false	63	Climb Rocks 34397	Climb Rocks
-337	AGILITY_SHORTCUT	1324 3787 0	1324 3795 0	8	false	62	Climb Rocks 34396	Climb Rocks
-338	TELEPORTATION_PORTAL	3082 3476 0	2206 2858 0	1	false	23	Enter Soul Wars Portal 40474	Enter Soul Wars Portal
-339	TELEPORTATION_PORTAL	2206 2858 0	3158 10027 0	1	false	23	Enter Portal 40476	2: Ferox Enclave
-340	TRANSPORT	3164 10042 0	3152 3644 0	1	true		Exit Opening 39648	Exit Opening
-341	TRANSPORT	3091 3520 0	3091 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-342	TRANSPORT	2858 3168 0	2858 9568 0	1	true		Climb-down Rocks 11441	Climb-down Rocks
-343	SHIP	2956 3146 0	3064 3003 0	10	false	41,20,2	The Pandemonium Customs officer 14985	Pandemonium
-344	AGILITY_SHORTCUT	3295 3159 0	3295 3157 0	2	true	13	Enter Big window 33348	Enter Big window
-345	BOAT	3272 3143 0	3148 2843 0	8	false	8	Board Ferry 41311	Board Ferry
-346	TRANSPORT	3193 2842 0	3196 2842 0	3	false	51	Go-through Shantay pass 41863	Go-through Shantay pass
-347	BOAT	3271 3144 0	3148 2843 0	8	false	8	Board Ferry 41311	Board Ferry
-348	AGILITY_SHORTCUT	3212 3138 0	3214 3130 0	3	false	5	Jump-to Stepping stone 16513	Jump-to Stepping stone
-349	TRANSPORT	3136 3520 0	3136 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-350	BOAT	2855 10145 0	2863 10133 0	5	false	87,8	Travel Dwarven Ferryman 4897	Travel Dwarven Ferryman
-351	TRANSPORT	2444 3416 0	2445 3416 1	1	true		Climb-up Staircase 16675	Climb-up Staircase
-352	TRANSPORT	2445 3416 1	2446 3415 0	1	true		Climb-down Staircase 16677	Climb-down Staircase
-353	TRANSPORT	2462 3385 0	2461 3382 0	3	true		Open Gate 190	Open Gate
-354	TRANSPORT	2808 10001 0	2796 3615 0	1	true		Enter Tunnel 2141	Enter Tunnel
-355	AGILITY_SHORTCUT	2820 3635 0	2822 3635 0	2	true	88,89	Climb Rocks 3748	Climb Rocks
-356	TRANSPORT	2828 3646 0	2823 10050 0	3	false		Open Secret Door 3762	Open Secret Door
-357	TRANSPORT	2852 10105 0	2852 10109 1	1	true		Climb-up Stone Staircase 3788	Climb-up Stone Staircase
-358	TRANSPORT	2848 10107 1	2847 10107 1	1	false		Unlock Prison Door 3780	Unlock Prison Door
-359	TRANSPORT	2841 10108 1	2845 10108 2	1	true		Climb-up Stone Staircase 3788	Climb-up Stone Staircase
-360	TRANSPORT	2837 10091 2	2840 3690 0	1	true		Use Exit 3772	Use Exit
-361	AGILITY_SHORTCUT	2843 3692 0	2838 3693 0	2	true	90	Climb Rocks 16464	Climb Rocks
-362	TRANSPORT	2831 10076 2	2831 3676 0	2	false		Climb-up Troll ladder 18834	Climb-up Troll ladder
-363	BOAT	3724 3807 0	3734 3893 0	4	false	8	Travel Rowboat 30914	Travel Rowboat
-364	AGILITY_SHORTCUT	3765 3883 1	3765 3898 0	10	false	91	Teeth-grip Zip line 17030	Teeth-grip Zip line
-365	BOAT	3763 3899 0	3734 3893 0	3	false	8	Travel Rowboat 30919	Travel Rowboat
-366	BOAT	3734 3893 0	3724 3807 0	3	false	8	Travel Rowboat 30915	Travel Rowboat
-367	TRANSPORT	3757 3869 1	3753 3869 0	1	true		Descend Stairs 30682	Descend Stairs
-368	TRANSPORT	3747 3831 0	3745 3831 1	2	false		Climb Up Ladder 30940	Climb Up Ladder
-369	TRANSPORT	3730 3831 1	3728 3831 0	2	false		Climb Down Ladder 30939	Climb Down Ladder
-370	TRANSPORT	3549 10448 0	3555 4002 0	1	true		Climb-up Staircase 32112	Climb-up Staircase
-371	TRANSPORT	3555 4000 0	3554 4000 1	2	false		Climb-up Ladder 32083	Climb-up Ladder
-372	TRANSPORT	3556 4003 1	3561 4004 0	1	true		Climb-down Stairs 32082	Climb-down Stairs
-373	BOAT	3583 3973 0	3660 3849 0	5	false	22,8	Travel Rowboat 32079	Travel Rowboat
-374	TRANSPORT	2386 3335 0	2386 3333 0	2	false	92	Enter Huge Gate 3944	Enter Huge Gate
-375	TRANSPORT	2298 3327 0	3319 6079 0	4	false	49	Enter City Gate 36518	Enter City Gate
-376	AGILITY_SHORTCUT	3396 3155 0	3391 3155 0	2	true	52	Climb Rocks 62404	Climb Rocks
-377	TRANSPORT	3303 3115 0	3304 3117 0	2	false		Go-through Shantay pass 4031	Go-through Shantay pass
-378	TRANSPORT	3106 3559 0	3035 4852 0	1	true	93	Teleport Mage of Zamorak 2581	Teleport Mage of Zamorak
-379	TRANSPORT	3039 4805 0	3039 4800 0	1	true		Enter Passage 27054	Enter Passage
-380	TRANSPORT	3034 4793 0	3221 3219 0	4	false		Operate Appendage 27027	Operate Appendage
-381	TRANSPORT	3243 3523 0	3243 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-382	TRANSPORT	3155 3634 0	3154 3634 0	2	false		Pass-Through Barrier 39652	Pass-Through Barrier
-383	TRANSPORT	3140 3523 0	3140 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-384	TRANSPORT	3039 4854 0	3039 4844 0	1	true		Go-through Passage 26250	Go-through Passage
-385	TRANSPORT	3047 4825 0	2846 4836 0	1	true		Exit-through Air rift 25382	Exit-through Air rift
-386	TRANSPORT	2842 4828 0	2983 3288 0	1	false		Enter Portal 34748	Enter Portal
-387	TRANSPORT	3136 3523 0	3136 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-388	TRANSPORT	3069 3523 0	3069 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-389	TRANSPORT	3029 4850 0	3033 4843 0	1	true		Go-through Passage 26250	Go-through Passage
-390	TRANSPORT	3039 4821 0	2520 4848 0	1	true		Exit-through Body rift 25382	Exit-through Body rift
-391	TRANSPORT	2521 4834 0	3050 3442 0	1	false		Enter Portal 34753	Enter Portal
-392	TRANSPORT	3044 4822 0	2784 4843 0	1	true		Exit-through Mind rift 25382	Exit-through Mind rift
-393	TRANSPORT	2792 4827 0	2980 3511 0	1	false		Enter Portal 34749	Enter Portal
-394	TRANSPORT	3049 4839 0	2464 4826 0	1	true	94	Exit-through Law rift 25382	Exit-through Law rift
-395	TRANSPORT	2464 4818 0	2858 3378 0	1	false		Enter Portal 34755	Enter Portal
-396	TRANSPORT	3035 4842 0	2400 4844 0	1	true		Exit-through Nature rift 25382	Exit-through Nature rift
-397	TRANSPORT	2400 4835 0	2865 3022 0	1	false		Use Portal 34756	Use Portal
-398	AGILITY_SHORTCUT	2871 3008 0	2871 3003 0	5	false	69	Climb Rocks 53238	Climb Rocks
-399	TRANSPORT	2833 2954 0	2776 3214 0	5	false	68	Board Travel cart 2265	Board Travel cart
-400	TRANSPORT	3029 4830 0	2587 4836 0	1	true		Exit-through Fire rift 25382	Exit-through Fire rift
-401	TRANSPORT	2575 4849 0	3310 3252 0	1	false		Use Portal 34752	Use Portal
-402	TRANSPORT	3283 3523 0	3283 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-403	TRANSPORT	3329 3523 0	3329 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-404	TRANSPORT	3031 4825 0	2660 4843 0	1	true		Exit-through Earth rift 25382	Exit-through Earth rift
-405	TRANSPORT	2655 4830 0	3302 3477 0	1	false		Use Portal 34751	Use Portal
-406	TRANSPORT	3198 3523 0	3198 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-407	TRANSPORT	2978 3523 0	2978 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-408	TRANSPORT	2957 3523 0	2957 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-409	TRANSPORT	3122 3629 0	3123 3629 0	2	false		Pass-Through Barrier 39652	Pass-Through Barrier
-410	TELEPORTATION_PORTAL	3147 3639 0	2440 3089 0	1	false	23	Enter Castle Wars portal 30386	Enter Castle Wars portal
-411	TRANSPORT	2834 2952 0	2776 3214 0	5	false	68	Board Travel cart 2265	Board Travel cart
-412	TRANSPORT	3074 3523 0	3074 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-413	AGILITY_SHORTCUT	3214 3131 0	3212 3138 0	3	false	5	Jump-to Stepping stone 16513	Jump-to Stepping stone
-414	AGILITY_SHORTCUT	3372 2959 0	3373 2955 0	2	false	73	Cross Stepping stone 53241	Cross Stepping stone
-415	TRANSPORT	3372 2902 0	3374 9305 0	1	true		Climb-down Crevice 10416	Climb-down Crevice
-416	TRANSPORT	3374 9305 0	3375 2904 0	2	false		Climb Rope 10434	Climb Rope
-417	TRANSPORT	2827 3646 0	2823 10050 0	3	false		Open Secret Door 3762	Open Secret Door
-418	TRANSPORT	2538 3088 0	2538 3084 1	1	false		Climb-up Staircase 15646	Climb-up Staircase
-419	TRANSPORT	3198 3276 0	3197 3278 0	6	false		Climb-over Stile 12982	Climb-over Stile
-420	TRANSPORT	3318 9602 0	2748 5374 0	3	false		Open Door 6919	Open Door
-421	AGILITY_SHORTCUT	2886 3683 0	2884 3683 0	2	true	95	Climb Rocks 3803	Climb Rocks
-422	AGILITY_SHORTCUT	2878 3668 0	2878 3665 0	2	true	95	Climb Rocks 16522	Climb Rocks
-423	AGILITY_SHORTCUT	2872 3671 0	2869 3671 0	2	true	31	Climb Rocks 16521	Climb Rocks
-424	AGILITY_SHORTCUT	2844 3693 0	2838 3693 0	2	true	90	Climb Rocks 16464	Climb Rocks
-425	TRANSPORT	2840 3690 0	2837 10090 2	1	true		Enter Stronghold 3771	Enter Stronghold
-426	TRANSPORT	2887 3662 0	2887 3660 0	1	true		Climb Rocks 3804	Climb Rocks
-427	TRANSPORT	3097 9868 0	3096 3468 0	2	false		Climb-up Ladder 17385	Climb-up Ladder
-428	TRANSPORT	3154 3634 0	3155 3634 0	2	false		Pass-Through Barrier 39652	Pass-Through Barrier
-429	TRANSPORT	3089 3520 0	3089 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-430	AGILITY_SHORTCUT	3002 3483 0	2997 3483 0	5	false	18	Climb Rocks 47570	Climb Rocks
-431	AGILITY_SHORTCUT	2928 3520 0	2927 3523 0	5	false	96,97	Manoeuvre-past Tight-gap 16468	Manoeuvre-past Tight-gap
-432	TRANSPORT	3058 9777 0	3061 3377 0	1	true		Climb-up Staircase 23969	Climb-up Staircase
-433	TRANSPORT	3083 3523 0	3083 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-434	TRANSPORT	2955 3523 0	2955 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-435	TRANSPORT	3135 3640 0	3135 3639 0	2	false		Pass-Through Barrier 39652	Pass-Through Barrier
-436	TRANSPORT	3241 3523 0	3241 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-437	TRANSPORT	2982 3523 0	2982 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-438	AGILITY_SHORTCUT	3201 3807 0	3201 3810 0	3	false	91	Cross Stepping stone 14918	Cross Stepping stone
-439	TRANSPORT	3158 3952 0	3158 3950 0	4	false	98	Slash Web 733	Slash Web
-440	TELEPORTATION_LEVER	3153 3923 0	2562 3311 0	5	false	99	Pull Lever 1815	Pull Lever
-441	TRANSPORT	3073 3523 0	3073 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-442	TRANSPORT	3090 3523 0	3090 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-443	TRANSPORT	2118 3895 0	2118 3893 1	2	false		Climb Ladder 16960	Climb Ladder
-444	TRANSPORT	2126 3893 1	2128 3893 2	2	false		Climb Ladder 16959	Climb Ladder
-445	SHIP	2138 3899 2	2222 3796 2	12	false	2	Travel Captain Bentley 6650	Travel Captain Bentley
-446	TRANSPORT	2214 3800 2	2214 3802 1	2	false		Climb Ladder 16961	Climb Ladder
-447	TRANSPORT	2213 3796 1	2213 3794 0	2	false		Climb Ladder 16962	Climb Ladder
-448	BOAT	2213 3794 0	2620 3693 0	9	false	46,8	Rellekka Lokar Searunner 9306	Rellekka Lokar Searunner
-449	BOAT	2544 3761 0	2621 3683 0	7	false	8	Rellekka Jarvald 10407	Rellekka Jarvald
-450	TRANSPORT	1696 3864 0	1719 10101 0	2	false	100	Enter Hole 28915	Enter Hole
-451	TRANSPORT	1725 9993 0	1803 9968 0	2	false		Climb-up Vine 28897	Climb-up Vine
-452	TRANSPORT	1800 9968 0	1670 3569 0	1	false		Climb-up Staircase 34864	Climb-up Staircase
-453	TRANSPORT	1469 3653 0	1650 9987 0	2	false	100	Enter Hole 28915	Enter Hole
-454	TRANSPORT	1800 9967 0	1670 3569 0	1	false		Climb-up Staircase 34864	Climb-up Staircase
-455	BOAT	1384 3665 0	1408 3612 0	4	false	8	Board Boaty 33614	Shayzien
-456	TRANSPORT	1420 3589 0	1432 9913 0	4	false		Enter Cave 42248	Enter Cave
-457	TRANSPORT	1461 9879 0	1639 10046 0	2	false	101	Enter Strange passage 42249	Enter Strange passage
-458	AGILITY_SHORTCUT	2997 3483 0	3002 3483 0	5	false	18	Climb Rocks 47571	Climb Rocks
-459	TRANSPORT	2556 3299 0	2559 3299 0	3	false		Open Ardougne Wall Door 8739	Open Ardougne Wall Door
-460	TRANSPORT	3538 3262 0	3538 3260 0	6	false	79	Climb-over Broken fence 18411	Climb-over Broken fence
-461	TRANSPORT	3485 3244 0	3485 3243 0	3	true	79	Open Gate 12816	Open Gate
-462	SHIP	2659 2676 0	3041 3202 0	11	false	2	Travel Squire 1769	Travel Squire
-463	AGILITY_SHORTCUT	2196 3237 0	2202 3237 0	8	false	40	Cross Log balance 3931	Cross Log balance
-464	AGILITY_SHORTCUT	2226 3219 0	2229 3219 0	4	false	64	Enter Dense forest 3938	Enter Dense forest
-465	AGILITY_SHORTCUT	2229 3219 0	2232 3219 0	4	false	64	Enter Dense forest 3939	Enter Dense forest
-466	AGILITY_SHORTCUT	2232 3219 0	2235 3219 0	4	false	64	Enter Dense forest 3937	Enter Dense forest
-467	AGILITY_SHORTCUT	2235 3219 0	2238 3219 0	4	false	64	Enter Dense forest 3939	Enter Dense forest
-468	AGILITY_SHORTCUT	2209 3205 0	2209 3201 0	4	false		Jump Leaves 3925	Jump Leaves
-469	AGILITY_SHORTCUT	2230 3249 0	2233 3249 0	4	false	64	Enter Dense forest 3938	Enter Dense forest
-470	AGILITY_SHORTCUT	2233 3249 0	2236 3249 0	4	false	64	Enter Dense forest 3939	Enter Dense forest
-471	AGILITY_SHORTCUT	2236 3249 0	2239 3249 0	4	false	64	Enter Dense forest 3937	Enter Dense forest
-472	TRANSPORT	2239 3269 0	3263 6024 0	4	false	49	Enter City Gate 36518	Enter City Gate
-473	AGILITY_SHORTCUT	2234 3181 0	2238 3181 0	6	false		Pass Sticks 3922	Pass Sticks
-474	TRANSPORT	2240 3269 0	3264 6024 0	4	false	49	Enter City Gate 36519	Enter City Gate
-475	AGILITY_SHORTCUT	2160 3072 0	2154 3072 0	6	false	102,103	Cross Stepping stone 10663	Cross Stepping stone
-476	TRANSPORT	1310 1237 0	2873 9848 0	1	true		Crawl Cave 26566	Crawl Cave
-477	AGILITY_SHORTCUT	2878 9813 0	2881 9813 0	2	true	104	Jump-over Strange floor 16510	Jump-over Strange floor
-478	TRANSPORT	2885 9797 0	2885 3397 0	2	false		Climb-up Ladder 17385	Climb-up Ladder
-479	TRANSPORT	2842 9825 0	2842 3425 0	2	false		Climb-up Ladder 17385	Climb-up Ladder
-480	AGILITY_SHORTCUT	2841 3427 0	2841 3433 0	2	true	105	Swim-to Shore 62421	Swim-to Shore
-481	AGILITY_SHORTCUT	2892 9799 0	2886 9799 0	2	true	13	Squeeze-through Obstacle pipe 16509	Squeeze-through Obstacle pipe
-482	TRANSPORT	2923 9803 0	2924 9803 0	3	true		Open Gate 2623	Open Gate
-483	AGILITY_SHORTCUT	2935 9810 0	2936 9810 0	2	true	106	Squeeze-through Loose Railing 28849	Squeeze-through Loose Railing
-484	TRANSPORT	2889 9830 0	2888 9830 0	3	false		Open Prison door 2144	Open Prison door
-485	TRANSPORT	2884 9798 0	2884 3398 0	2	false		Climb-up Ladder 17385	Climb-up Ladder
-486	TRANSPORT	3126 3832 0	3241 10233 0	2	false		Enter Cavern 31556	Enter Cavern
-487	TRANSPORT	3246 10215 0	3124 3805 0	2	false		Climb-up Stairs 43868	Climb-up Stairs
-488	TRANSPORT	1634 3570 0	1631 3570 0	3	false		Climb-over Stile 7527	Climb-over Stile
-489	SHIP	3064 3003 0	3029 3217 0	10	false	41,20,2	Port Sarim Seaman Morris 8631	Port Sarim
-490	SHIP	3064 3003 0	2956 3146 0	10	false	41,20,2	Musa Point Seaman Morris 8631	Musa Point
-491	TRANSPORT	2906 3049 0	2910 3049 0	5	false		Cross A wooden log 23644	Cross A wooden log
-492	TRANSPORT	2879 2950 0	2876 2952 0	2	false	70	Climb over Broken cart 28931	Climb over Broken cart
-493	TRANSPORT	2480 5175 0	2862 9572 0	1	true		Enter Cave exit 11836	Enter Cave exit
-494	TRANSPORT	2857 9569 0	2856 3167 0	2	false		Climb Climbing rope 18969	Climb Climbing rope
-495	TRANSPORT	1640 10047 0	1461 9879 0	2	false		Climb-up Vine 42350	Climb-up Vine
-496	TRANSPORT	1432 9913 0	1420 3588 0	4	false		Exit Cave 42247	Exit Cave
-497	BOAT	1408 3612 0	1341 3645 0	4	false	8	Board Boaty 33614	Molch
-498	TRANSPORT	3121 3520 0	3121 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-499	AGILITY_SHORTCUT	2486 3515 0	2489 3521 0	9	false	82,83	Climb Rocks 16534	Climb Rocks
-500	TRANSPORT	2306 3194 0	2304 3194 0	5	false	65	Pass Tree 8742	Pass Tree
-501	AGILITY_SHORTCUT	2287 3188 0	2284 3188 0	8	false		Step-over Tripwire 3921	Step-over Tripwire
-502	AGILITY_SHORTCUT	2274 3192 0	2271 3192 0	4	false	64	Enter Dense forest 3937	Enter Dense forest
-503	AGILITY_SHORTCUT	2271 3192 0	2268 3192 0	4	false	64	Enter Dense forest 3939	Enter Dense forest
-504	AGILITY_SHORTCUT	2268 3192 0	2265 3192 0	4	false	64	Enter Dense forest 3938	Enter Dense forest
-505	TRANSPORT	2241 3269 0	3265 6024 0	4	false	49	Enter City Gate 36519	Enter City Gate
-506	AGILITY_SHORTCUT	2274 3176 0	2274 3172 0	4	false		Jump Leaves 3925	Jump Leaves
-507	TRANSPORT	3264 6024 0	2240 3269 0	4	false	49	Exit City Gate 36523	Exit City Gate
-508	TRANSPORT	2464 3493 0	2465 3491 0	3	false		Open Tree Door 1967	Open Tree Door
-509	BOAT	2421 3781 0	2644 3709 0	10	false	46,8	Rellekka Mord Gunnars 1940	Rellekka Mord Gunnars
-510	BOAT	2311 3781 0	2644 3710 0	14	false	46,8	Rellekka Maria Gunnars 1882	Rellekka Maria Gunnars
-511	TRANSPORT	3104 9331 2	3105 9332 1	2	false		Climb-down Ladder 11042	Climb-down Ladder
-512	TRANSPORT	3105 9320 1	3105 9318 1	1	true		Pass-through Magic barrier 11005	Pass-through Magic barrier
-513	TRANSPORT	3104 9310 1	3104 9310 0	2	false		Climb-down Ladder 11042	Climb-down Ladder
-514	TRANSPORT	3122 9286 0	3122 9286 1	2	false		Climb-up Ladder 11041	Climb-up Ladder
-515	TRANSPORT	3121 9288 1	3189 2889 0	1	true		Climb Sand pile 10950	Climb Sand pile
-516	TRANSPORT	3196 2843 0	3193 2843 0	3	false		Go-through Shantay pass 41863	Go-through Shantay pass
-517	BOAT	3148 2842 0	3272 3143 0	8	false	8	Board Ferry 41311	Board Ferry
-518	TRANSPORT	3127 9330 0	3127 9330 1	2	false		Climb-up Ladder 11041	Climb-up Ladder
-519	TRANSPORT	3126 9330 1	3194 2926 0	1	true		Climb Sand pile 10950	Climb Sand pile
-520	TRANSPORT	3193 2925 0	3124 9328 1	1	true		Climb-down Secret entrance 11046	Climb-down Secret entrance
-521	TRANSPORT	3124 9328 1	3194 2926 0	1	true		Climb Sand pile 10950	Climb Sand pile
-522	AGILITY_SHORTCUT	3263 2817 0	3271 2817 0	2	true	69	Jump-to Stepping stone 62401	Jump-to Stepping stone
-523	SHIP	1824 3691 0	1504 3399 0	6	false	2	Land's End Veos 10726	Land's End
-524	AGILITY_SHORTCUT	1614 3570 0	1610 3570 0	2	false	81	Cross Stepping stone 29729	Cross Stepping stone
-525	AGILITY_SHORTCUT	1607 3571 0	1603 3571 0	2	false	81	Cross Stepping stone 29730	Cross Stepping stone
-526	TRANSPORT	1470 3652 0	1650 9987 0	2	false	100	Enter Hole 28915	Enter Hole
-527	TRANSPORT	1401 3536 0	1275 3559 0	7	false	7	Travel Mountain Guide 7600	1: Mount Quidamortem.
-528	TRANSPORT	3669 3452 0	3669 3454 0	2	false		Pay-toll(2-Ecto) Energy Barrier 16105	Pay-toll(2-Ecto) Energy Barrier
-529	TRANSPORT	2457 2860 0	2457 2862 0	1	true	22	Pass Magical Barrier 31616	Pass Magical Barrier
-530	AGILITY_SHORTCUT	2485 2898 0	2489 2898 0	2	true	34,35	Climb-down Rocks 31759	Climb-down Rocks
-531	TRANSPORT	3338 2827 0	3334 2827 0	8	false		Climb Climbing rocks 11948	Climb Climbing rocks
-532	AGILITY_SHORTCUT	3271 2817 0	3263 2817 0	2	true	69	Jump-to Stepping stone 62401	Jump-to Stepping stone
-533	TRANSPORT	3338 2829 0	3334 2829 0	8	false		Climb Climbing rocks 11948	Climb Climbing rocks
-534	TRANSPORT	3196 2842 0	3193 2842 0	3	false		Go-through Shantay pass 41863	Go-through Shantay pass
-535	TRANSPORT	3232 2898 0	3232 2900 0	1	true		Open Pyramid entrance 6547	Open Pyramid entrance
-536	AGILITY_SHORTCUT	3295 2708 0	3295 2704 0	2	true	62	Cross Stepping stone 43990	Cross Stepping stone
-537	AGILITY_SHORTCUT	3295 2700 0	3289 2700 0	2	true	62	Cross Stepping stone 43989	Cross Stepping stone
-538	TELEPORTATION_PORTAL	3081 3474 0	2206 2858 0	1	false	23	Enter Soul Wars Portal 40474	Enter Soul Wars Portal
-539	TRANSPORT	3084 3520 0	3084 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-540	TRANSPORT	1275 3559 0	1401 3536 0	7	false	7	Travel Mountain Guide 7600	1: The Shayzien Outpost.
-541	TRANSPORT	1275 3559 0	1272 3475 0	7	false	7	Travel Mountain Guide 7600	2: South of Quidamortem.
-542	BOAT	1342 3645 0	1408 3612 0	4	false	8	Board Boaty 33614	Shayzien
-543	TELEPORTATION_PORTAL	3614 9470 0	3104 9573 0	1	false	107,23	Enter Portal 43694	Enter Portal
-544	TRANSPORT	3104 9576 0	3105 3162 0	2	false		Climb-up Ladder 2148	Climb-up Ladder
-545	TRANSPORT	3169 3171 0	3169 9571 0	2	false		Climb-down Dark hole 5947	Climb-down Dark hole
-546	TRANSPORT	2400 5969 0	3654 3384 0	1	true		Climb-up Stairs 38601	Climb-up Stairs
-547	AGILITY_SHORTCUT	3667 3375 0	3670 3375 0	2	true	106,108	Climb Wall 39542	Climb Wall
-548	AGILITY_SHORTCUT	3670 3375 0	3673 3375 0	2	true	106,109	Climb Wall 39541	Climb Wall
-549	TRANSPORT	3627 3332 0	3627 3328 0	1	true		Enter Cracked wall 39170	Enter Cracked wall
-550	TRANSPORT	3630 3240 0	3628 3240 1	2	false		Climb-up Ladder 17974	Climb-up Ladder
-551	TRANSPORT	3626 3240 1	3624 3240 1	1	true		Jump-to Floorboards 18114	Jump-to Floorboards
-552	TRANSPORT	3622 3232 1	3622 3230 1	1	true		Jump-to Floorboards 18112	Jump-to Floorboards
-553	TRANSPORT	3623 3226 1	3623 3223 1	1	true		Jump-to Floorboards 18110	Jump-to Floorboards
-554	TRANSPORT	3626 3221 1	3625 3221 2	1	true		Climb-up Shelf 18108	Climb-up Shelf
-555	TRANSPORT	3623 3218 2	3623 3217 1	1	true		Climb-down Shelf 18106	Climb-down Shelf
-556	TRANSPORT	3621 3218 1	3623 3218 0	2	false		Climb-down Ladder 17975	Climb-down Ladder
-557	TRANSPORT	3603 3221 0	3603 3223 1	2	false		Climb-up Ladder 17974	Climb-up Ladder
-558	TRANSPORT	3601 3222 1	3598 3222 1	1	true		Jump-to Floorboards 18090	Jump-to Floorboards
-559	TRANSPORT	3595 3223 1	3594 3223 0	1	true		Climb-down Shelf 18087	Climb-down Shelf
-560	TRANSPORT	3592 3180 0	3588 3180 0	1	true		Climb-over Wall rubble 18038	Climb-over Wall rubble
-561	TRANSPORT	3589 3174 0	3590 3173 1	1	true		Climb-up Floor 18124	Climb-up Floor
-562	TRANSPORT	3601 3163 1	3605 3163 1	1	true		Climb-down Rock 17960	Climb-down Rock
-563	BOAT	3605 3163 1	3663 3277 0	13	false	75,8	Board Boat 38089	3: Slepe.
-564	TRANSPORT	3631 3218 0	3649 3219 0	1	false	110	Enter Door 32659	Enter Door
-565	TRANSPORT	3237 9858 0	3236 3458 0	2	false		Climb-up Ladder 11806	Climb-up Ladder
-566	AGILITY_SHORTCUT	3154 9905 0	3149 9906 0	2	true	111	Squeeze-through Obstacle pipe 16511	Squeeze-through Obstacle pipe
-567	AGILITY_SHORTCUT	3122 9880 0	3122 9883 0	4	false	112	Squeeze-through Obstacle pipe 62409	Squeeze-through Obstacle pipe
-568	AGILITY_SHORTCUT	3150 9905 0	3155 9906 0	2	true	111	Squeeze-through Obstacle pipe 16511	Squeeze-through Obstacle pipe
-569	AGILITY_SHORTCUT	2968 9550 0	2992 9547 0	1	false	112	Enter Tunnel 55988	Enter Tunnel
-570	TRANSPORT	3007 9550 0	3007 3150 0	1	false		Climb-up Ladder 17385	Climb-up Ladder
-571	TRANSPORT	3008 9549 0	3008 3149 0	1	false		Climb-up Ladder 17385	Climb-up Ladder
-572	TRANSPORT	2747 5374 0	3317 9603 0	3	false		Open Bone door 22945	Open Bone door
-573	TRANSPORT	3317 9612 0	3232 9610 0	8	false	55	Cellar Mistag 7299	Cellar
-574	TRANSPORT	3317 9612 0	3245 9648 0	8	false	56	Watermill Mistag 7299	Watermill
-575	TRANSPORT	3246 9646 0	3232 9610 0	8	false	56	Cellar Dartog 997	Cellar
-576	TRANSPORT	3224 9604 0	3224 9600 0	4	false	57	Squeeze-through Hole 6912	Squeeze-through Hole
-577	TRANSPORT	2705 5328 0	2701 5327 1	1	false		Climb-up Stairs 22937	Climb-up Stairs
-578	TRANSPORT	2701 5306 1	2705 5305 0	1	false		Climb-down Stairs 22938	Climb-down Stairs
-579	TRANSPORT	2620 9797 0	2623 3391 0	1	true		Climb-over Mud pile 13	Climb-over Mud pile
-580	TRANSPORT	2515 3159 0	2504 3191 0	5	false	36	Follow Elkoy 4968	Follow Elkoy
-581	TRANSPORT	2711 5206 0	3514 9521 2	1	true		Enter Blocked tunnel 22656	Enter Blocked tunnel
-582	TRANSPORT	2715 5241 0	2719 5241 3	2	false		Climb-up Ladder 22600	Climb-up Ladder
-583	TRANSPORT	2722 5249 3	2722 5255 1	1	false		Climb-down Stairs 22942	Climb-down Stairs
-584	TRANSPORT	2722 5257 1	2722 5260 0	1	false		Climb-down Stairs 22940	Climb-down Stairs
-585	TRANSPORT	2722 5268 0	2722 5272 1	1	false		Climb-up Stairs 22937	Climb-up Stairs
-586	TRANSPORT	2714 5281 1	2713 5285 0	1	false		Climb-down Stairs 22938	Climb-down Stairs
-587	TRANSPORT	2514 3619 0	2514 3617 0	2	false		Jump-across Basalt rock 4558	Jump-across Basalt rock
-588	TRANSPORT	2514 3615 0	2514 3613 0	2	false		Jump-across Basalt rock 4556	Jump-across Basalt rock
-589	TRANSPORT	2516 3611 0	2518 3611 0	2	false		Jump-across Basalt rock 4554	Jump-across Basalt rock
-590	TRANSPORT	2522 3602 0	2522 3600 0	2	false		Jump-across Basalt rock 4552	Jump-across Basalt rock
-591	TRANSPORT	2522 3597 0	2522 3595 0	2	false		Jump-to Beach 4550	Jump-to Beach
-592	AGILITY_SHORTCUT	3417 3325 0	3422 3325 0	2	true	59	Cross Stepping stone 13504	Cross Stepping stone
-593	TRANSPORT	3473 3221 0	3475 3221 0	1	true	78,79	Jump-over Low fence 12776	Jump-over Low fence
-594	TRANSPORT	3229 3109 0	3483 9510 2	1	true		Climb-down Tunnel entrance 3827	Climb-down Tunnel entrance
-595	TRANSPORT	3514 9520 2	2711 5206 0	1	true		Enter Tunnel 23596	Enter Tunnel
-596	AGILITY_SHORTCUT	2154 3072 0	2160 3072 0	6	false	102,103	Cross Stepping stone 10663	Cross Stepping stone
-597	TRANSPORT	2479 5175 0	2862 9572 0	1	true		Enter Cave exit 11836	Enter Cave exit
-598	TRANSPORT	2856 9570 0	2856 3167 0	2	false		Climb Climbing rope 18969	Climb Climbing rope
-599	TRANSPORT	1272 3475 0	1275 3559 0	7	false	7	Travel Mountain Guide 7600	2: Mount Quidamortem.
-600	AGILITY_SHORTCUT	3180 2434 0	3180 2432 0	2	true	59	Climb Rocks 57927	Climb Rocks
-601	TRANSPORT	2910 3049 0	2906 3049 0	5	false		Cross A wooden log 23644	Cross A wooden log
-602	TRANSPORT	2880 2951 0	2876 2952 0	2	false	70	Climb over Broken cart 28931	Climb over Broken cart
-603	TRANSPORT	3447 9822 0	3460 9813 0	1	true		Enter Cave entrance 16308	Enter Cave entrance
-604	TRANSPORT	3466 9820 0	3481 9824 0	1	true		Enter Cave entrance 5046	Enter Cave entrance
-605	TRANSPORT	2776 3211 0	2834 2951 0	5	false	70,71	Board Travel cart 2230	Board Travel cart
-606	TRANSPORT	2876 2952 0	2880 2952 0	2	false	70	Climb over Broken cart 28931	Climb over Broken cart
-607	TRANSPORT	2443 3414 0	2445 3416 1	1	true		Climb-up Staircase 16675	Climb-up Staircase
-608	TRANSPORT	2893 10189 0	2896 10188 1	1	true		Climb-up Stairs 6087	Climb-up Stairs
-609	TRANSPORT	2862 10189 1	2865 10188 0	1	true		Climb-down Stairs 6088	Climb-down Stairs
-610	TRANSPORT	3018 3231 0	2962 9650 0	1	true		Climb-down Manhole 10321	Climb-down Manhole
-611	TRANSPORT	2962 9650 0	3018 3233 0	2	false		Climb-up Ladder 10309	Climb-up Ladder
-612	BOAT	3522 3286 0	3498 3380 0	18	false	76,77,8	Quick-board Swamp Boaty 6969	Quick-board Swamp Boaty
-613	AGILITY_SHORTCUT	3714 2969 0	3708 2969 0	2	true	112	Jump-to Stepping stone 19042	Jump-to Stepping stone
-614	TRANSPORT	2796 2797 1	2796 2793 0	1	false		Climb-down Staircase	Climb-down Staircase
-615	TRANSPORT	2803 2735 0	2803 2733 2	1	false		Climb-up Bamboo Ladder 4743	Climb-up Bamboo Ladder
-616	TRANSPORT	2803 2727 2	2806 2724 0	4	false		Jump off End of bridge 4745	Jump off End of bridge
-617	BOAT	2803 2706 0	2892 2724 0	5	false	8	Travel Lumdo 1454	Travel Lumdo
-618	TRANSPORT	2896 2727 0	2393 3465 0	4	false		Travel Waydar 1446	Travel Waydar
-619	TRANSPORT	2419 3471 0	2421 3473 1	1	true		Climb-up Staircase 16675	Climb-up Staircase
-620	TRANSPORT	2421 3473 1	2422 3472 0	1	true		Climb-down Staircase 16677	Climb-down Staircase
-621	TRANSPORT	3082 3520 0	3082 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-622	TRANSPORT	2880 2952 0	2876 2952 0	2	false	70	Climb over Broken cart 28931	Climb over Broken cart
-623	TRANSPORT	2181 3329 0	3208 6081 0	4	false	49	Enter City Gate 36519	Enter City Gate
-624	TRANSPORT	1665 10051 0	1639 3673 0	2	false		Climb-up Vine ladder 28894	Climb-up Vine ladder
-625	TRANSPORT	3189 2887 0	3120 9288 1	1	true		Climb-down Secret entrance 11047	Climb-down Secret entrance
-626	TRANSPORT	3120 9288 1	3189 2889 0	1	true		Climb Sand pile 10950	Climb Sand pile
-627	TRANSPORT	3757 3870 1	3753 3869 0	1	true		Descend Stairs 30682	Descend Stairs
-628	TRANSPORT	3137 3520 0	3137 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-629	TRANSPORT	2918 3437 0	2916 3438 0	1	true		Climb-over Stile 993	Climb-over Stile
-630	TRANSPORT	3056 3523 0	3056 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-631	TRANSPORT	2966 3523 0	2966 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-632	TRANSPORT	3075 3523 0	3075 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-633	TRANSPORT	3076 3523 0	3076 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-634	TRANSPORT	3137 3523 0	3137 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-635	TRANSPORT	3265 3523 0	3265 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-636	TRANSPORT	3155 3635 0	3154 3635 0	2	false		Pass-Through Barrier 39653	Pass-Through Barrier
-637	TRANSPORT	3247 3523 0	3247 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-638	TRANSPORT	3246 3523 0	3246 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-639	TRANSPORT	3064 3523 0	3064 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-640	TRANSPORT	3282 3523 0	3282 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
-641	AGILITY_SHORTCUT	3268 3629 0	3268 3625 0	2	false	105	Cross Stepping stone 53237	Cross Stepping stone
-642	TRANSPORT	3134 3640 0	3134 3639 0	2	false		Pass-Through Barrier 39653	Pass-Through Barrier
-643	TRANSPORT	2465 3495 3	2465 3495 2	2	false		Climb-down Ladder 16679	Climb-down Ladder
-644	TRANSPORT	2465 3495 2	2465 3495 1	2	false		Climb-down Ladder 2884	Climb-down Ladder
-645	TRANSPORT	2465 3495 1	2465 3495 0	2	false		Climb-down Ladder 16684	Climb-down Ladder
-646	TRANSPORT	2465 3493 0	2465 3491 0	3	false		Open Tree Door 1967	Open Tree Door
-647	AGILITY_SHORTCUT	3028 9806 0	3035 9806 0	2	true	1	Squeeze-through Crevice 16543	Squeeze-through Crevice
+24	BOAT	3724 3807 0	3734 3893 0	4	false	8	Travel Rowboat 30914	Travel Rowboat
+25	BOAT	3734 3893 0	3764 3899 0	3	false	8	Travel Rowboat 30915	Travel Rowboat
+26	BOAT	3763 3899 0	3732 10281 1	4	false	8	Dive Rowboat 30919	Dive Rowboat
+27	AGILITY_SHORTCUT	3717 3815 0	3713 3830 0	1	false	13	Climb through Hole 31482	Climb through Hole
+28	TRANSPORT	3143 3443 0	3143 3444 0	3	false	14,15	Open Door 24958	Open Door
+29	AGILITY_SHORTCUT	3142 3513 0	3137 3516 0	7	false	16	Climb-into Underwall tunnel 16530	Climb-into Underwall tunnel
+30	TRANSPORT	3042 3305 0	3045 3305 0	6	false		Climb-over Stile 7527	Climb-over Stile
+31	TRANSPORT	3063 3284 0	3063 3281 0	6	false		Climb-over Stile 7527	Climb-over Stile
+32	AGILITY_SHORTCUT	3032 3388 0	3032 3389 1	2	true	0	Climb Rough wall 62419	Climb Rough wall
+33	AGILITY_SHORTCUT	3033 3389 1	3033 3390 0	2	true	4	Jump Wall 17051	Jump Wall
+34	AGILITY_SHORTCUT	2936 3355 0	2934 3355 0	2	true	17	Climb-over Crumbling wall 24222	Climb-over Crumbling wall
+35	AGILITY_SHORTCUT	2869 3428 0	2866 3428 0	2	true	18	Climb Rocks 62424	Climb Rocks
+36	TRANSPORT	2877 3482 0	2876 9878 0	1	true	19	Climb-down Stairs 57	Climb-down Stairs
+37	TRANSPORT	2821 9882 0	2820 3486 0	1	true	19	Climb-up Stairs 54	Climb-up Stairs
+38	TRANSPORT	2900 3428 0	2898 3427 1	1	true		Climb-up Staircase 16671	Climb-up Staircase
+39	TRANSPORT	2898 3427 1	2897 3428 0	1	true		Climb-down Staircase 16673	Climb-down Staircase
+40	SHIP	2915 3225 0	2772 3234 0	6	false	20,2	Brimhaven Captain Barnaby 8763	Brimhaven
+41	SHIP	2915 3225 0	2683 3271 0	6	false	20,2	Ardougne Captain Barnaby 8763	Ardougne
+42	AGILITY_SHORTCUT	2561 3108 0	2561 3111 0	2	false	17	Climb-up Climbing rocks 23543	Climb-up Climbing rocks
+43	SHIP	2909 3226 0	2578 2840 0	6	false	21,2	Travel Cabin Boy Colin 7967	Travel Cabin Boy Colin
+44	TRANSPORT	2458 2862 0	2458 2860 0	1	true	22	Pass Magical Barrier 31616	Pass Magical Barrier
+45	TRANSPORT	2457 2839 0	2458 2839 1	1	true	22	Climb-up Stairs 31627	Climb-up Stairs
+46	TRANSPORT	2449 2847 1	2452 2847 2	1	true	22	Climb-up Stairs 31609	Climb-up Stairs
+47	TELEPORTATION_PORTAL	2458 2853 2	2729 3367 0	1	false	22,23	Enter Portal of Legends 31622	Legends' Guild
+48	BOAT	2543 2844 0	2471 2724 0	5	false	24,8	Travel Rowboat 58637	Travel Rowboat
+49	AGILITY_SHORTCUT	2546 2873 0	2546 2871 0	2	true	25	Climb Rocks 31757	Climb Rocks
+50	AGILITY_SHORTCUT	2948 3313 0	2948 3309 0	2	true	26	Climb-into Underwall tunnel 16528	Climb-into Underwall tunnel
+51	TRANSPORT	2933 3289 0	2933 3288 0	3	false	27,28	Open Guild Door 14910	Open Guild Door
+52	TRANSPORT	2461 3385 0	2461 3382 0	3	true		Open Gate 190	Open Gate
+53	TRANSPORT	2466 3491 0	2466 3493 0	3	false		Open Tree Door 1968	Open Tree Door
+54	TRANSPORT	2465 3495 0	2465 3495 1	2	false		Climb-up Ladder 16683	Climb-up Ladder
+55	TRANSPORT	2465 3495 1	2465 3495 2	2	false		Climb-up Ladder 16684	Climb-up Ladder
+56	TRANSPORT	2465 3495 2	2465 3495 3	2	false		Climb-up Ladder 2884	Climb-up Ladder
+57	AGILITY_SHORTCUT	1369 3296 0	1369 3294 0	2	false	29	Climb-over Broken wall 56996	Climb-over Broken wall
+58	BOAT	1399 3246 0	1390 3074 0	5	false	8	Kastori Achilka 14729	Kastori
+59	AGILITY_SHORTCUT	1368 3323 0	1368 3327 0	5	false	30	Climb-into Tunnel 56989	Climb-into Tunnel
+60	AGILITY_SHORTCUT	1391 3323 0	1396 3323 0	6	false	31	Climb Rocks 56994	Climb Rocks
+61	AGILITY_SHORTCUT	1387 3303 0	1387 3301 0	2	false	29	Climb-over Broken wall 56996	Climb-over Broken wall
+62	BOAT	1399 3246 0	1257 3126 0	5	false	8	Tal Teklan Achilka 14729	Tal Teklan
+63	AGILITY_SHORTCUT	1389 3309 0	1391 3309 0	2	false	29	Climb-over Broken wall 56997	Climb-over Broken wall
+64	AGILITY_SHORTCUT	1393 3309 0	1399 3309 0	7	false	32	Cross Stepping stone 56988	Cross Stepping stone
+65	TRANSPORT	2456 3419 0	2457 3417 1	1	true		Climb-up Staircase 16675	Climb-up Staircase
+66	TRANSPORT	2457 3417 1	2456 3416 0	1	true		Climb-down Staircase 16677	Climb-down Staircase
+67	TRANSPORT	2460 3385 0	2461 3382 0	3	true		Open Gate 190	Open Gate
+68	TRANSPORT	2584 3088 0	2585 3088 0	3	false	33	Open Magic guild door 1732	Open Magic guild door
+69	TRANSPORT	2590 3088 0	2590 3092 1	1	false		Climb-up Staircase 15645	Climb-up Staircase
+70	TRANSPORT	2590 3083 1	2590 3087 2	1	false		Climb-up Staircase 15645	Climb-up Staircase
+71	TELEPORTATION_PORTAL	2590 3083 2	2907 3333 0	1	false	23	Enter Magic Portal 2157	Enter Magic Portal
+72	AGILITY_SHORTCUT	2934 3355 0	2936 3355 0	2	true	17	Climb-over Crumbling wall 24222	Climb-over Crumbling wall
+73	TRANSPORT	2584 3233 0	2570 9682 0	1	true		Enter Cave entrance 2852	Enter Cave entrance
+74	TRANSPORT	2570 9682 0	2587 3237 0	1	true		Climb-up Stairs 2853	Climb-up Stairs
+75	SHIP	2683 3271 0	2915 3225 0	6	false	20,2	Rimmington Captain Barnaby 9250	Rimmington
+76	SHIP	2578 2840 0	2909 3226 0	6	false	21,2	Travel Cabin Boy Colin 7967	Travel Cabin Boy Colin
+77	AGILITY_SHORTCUT	2489 2898 0	2485 2898 0	2	true	34,35	Climb-down Rocks 31758	Climb-down Rocks
+78	TELEPORTATION_PORTAL	2456 2853 2	2904 3512 0	1	false	22,23	Enter Portal of Heroes 31621	Heroes' Guild
+79	AGILITY_SHORTCUT	2866 3428 0	2869 3428 0	2	true	18	Climb Rocks 62423	Climb Rocks
+80	TELEPORTATION_PORTAL	2586 3087 2	2703 3406 0	1	false	23	Enter Magic Portal 2158	Enter Magic Portal
+81	SHIP	2683 3271 0	2772 3234 0	6	false	20,2	Brimhaven Captain Barnaby 9250	Brimhaven
+82	TRANSPORT	2820 3486 0	2820 9882 0	1	true	19	Climb-down Stairs 55	Climb-down Stairs
+83	TRANSPORT	2876 9879 0	2877 3482 0	1	true	19	Climb-up Stairs 56	Climb-up Stairs
+84	TELEPORTATION_PORTAL	2595 3088 2	3109 3159 0	1	false	23	Enter Magic Portal 2156	Enter Magic Portal
+85	TELEPORTATION_PORTAL	2457 2855 2	3191 3365 0	1	false	22,23	Enter Portal of Champions 31618	Champions' Guild
+86	TRANSPORT	2504 3191 0	2515 3159 0	5	false	36	Follow Elkoy 4968	Follow Elkoy
+87	SHIP	2772 3234 0	2915 3225 0	6	false	20,2	Rimmington Captain Barnaby 8764	Rimmington
+88	SHIP	2772 3234 0	2683 3271 0	6	false	20,2	Ardougne Captain Barnaby 8764	Ardougne
+89	TELEPORTATION_PORTAL	2456 2855 2	3191 3365 0	1	false	22,23	Enter Portal of Champions 31618	Champions' Guild
+90	AGILITY_SHORTCUT	2575 3112 0	2575 3107 0	2	true	37	Climb-into Hole 16520	Climb-into Hole
+91	AGILITY_SHORTCUT	2556 3075 0	2556 3074 1	2	true	38	Climb Rough wall 62417	Climb Rough wall
+92	AGILITY_SHORTCUT	2556 3073 1	2556 3072 0	2	true	4	Jump Wall 17048	Jump Wall
+93	BOAT	1390 3073 0	1400 3246 0	5	false	8	Gloomthorn Achilka 14727	Gloomthorn
+94	AGILITY_SHORTCUT	1369 3294 0	1369 3296 0	2	false	29	Climb-over Broken wall 56996	Climb-over Broken wall
+95	BOAT	1390 3073 0	1257 3126 0	5	false	8	Tal Teklan Achilka 14727	Tal Teklan
+96	AGILITY_SHORTCUT	1387 3301 0	1387 3303 0	2	false	29	Climb-over Broken wall 56996	Climb-over Broken wall
+97	SHIP	3055 3245 0	1824 3691 0	6	false	2	Port Piscarilius Veos 8630	Port Piscarilius
+98	SHIP	3029 3217 0	2956 3146 0	10	false	20,2	Musa Point Captain Tobias 14979	Musa Point
+99	AGILITY_SHORTCUT	2874 3142 0	2874 3136 0	2	true	39	Swim-to Shore 62420	Swim-to Shore
+100	AGILITY_SHORTCUT	2874 3133 0	2874 3127 0	2	true	39	Swim-to Strong Tree 17074	Swim-to Strong Tree
+101	AGILITY_SHORTCUT	1724 3551 0	1720 3551 0	2	false	40	Cross Stepping stone 29728	Cross Stepping stone
+102	SHIP	3029 3217 0	3064 3003 0	10	false	41,20,2	The Pandemonium Captain Tobias 14979	Pandemonium
+103	TRANSPORT	3659 3509 0	3659 3507 0	2	false		Pay-toll(2-Ecto) Energy Barrier 16105	Pay-toll(2-Ecto) Energy Barrier
+104	SHIP	3709 3496 0	3684 2953 0	6	false	42,2	Travel Bill Teach 4016	Travel Bill Teach
+105	TRANSPORT	3680 2963 0	3786 2824 0	2	false		Transport Brother Tranquility 550	Transport Brother Tranquility
+106	TRANSPORT	2918 3439 0	2916 3438 0	1	true		Climb-over Stile 993	Climb-over Stile
+107	TRANSPORT	2916 3438 0	2919 3438 0	1	true		Climb-over Stile 993	Climb-over Stile
+108	TRANSPORT	2462 3382 0	2461 3385 0	3	true		Open Gate 190	Open Gate
+109	TRANSPORT	2461 3415 0	2460 3417 1	1	true		Climb-up Staircase 16675	Climb-up Staircase
+110	TRANSPORT	2460 3417 1	2461 3418 0	1	true		Climb-down Staircase 16677	Climb-down Staircase
+111	TRANSPORT	2597 3088 0	2596 3088 0	3	false	33	Open Magic guild door 1733	Open Magic guild door
+112	TRANSPORT	2591 3088 0	2590 3092 1	1	false		Climb-up Staircase 15645	Climb-up Staircase
+113	TELEPORTATION_PORTAL	2595 3087 2	3109 3159 0	1	false	23	Enter Magic Portal 2156	Enter Magic Portal
+114	TRANSPORT	2597 3087 0	2596 3087 0	3	false	33	Open Magic guild door 1732	Open Magic guild door
+115	SHIP	1824 3691 0	3055 3245 0	6	false	2	Port Sarim Veos 10726	Port Sarim
+116	TRANSPORT	1702 3575 0	1830 9973 0	2	false		Climb-down Ladder 34862	Climb-down Ladder
+117	TRANSPORT	1825 9973 0	1824 9973 0	4	false	43	Open Temple Door 34843	Open Temple Door
+118	TRANSPORT	1799 9969 0	1670 3569 0	1	false		Climb-up Staircase 34864	Climb-up Staircase
+119	TRANSPORT	3786 2824 0	3680 2963 0	2	false		Transport Brother Tranquility 550	Transport Brother Tranquility
+120	SHIP	3684 2953 0	3709 3496 0	6	false	42,2	Travel Bill Teach 4016	Travel Bill Teach
+121	TRANSPORT	3660 3507 0	3660 3509 0	2	false		Pay-toll(2-Ecto) Energy Barrier 16105	Pay-toll(2-Ecto) Energy Barrier
+122	TRANSPORT	2850 3936 0	2852 3936 0	1	true		Cross Little boulder 33312	Cross Little boulder
+123	TRANSPORT	2852 3941 0	2859 3968 0	1	true		Descend Hole 33227	Descend Hole
+124	BOAT	2849 3967 0	2706 3735 0	12	false	44,8	Travel Boat 21177	Travel Boat
+125	TRANSPORT	2730 3713 0	2773 10162 0	1	true		Enter Tunnel 5008	Enter Tunnel
+126	TRANSPORT	2780 10161 0	2838 10124 0	1	true		Go-through Cave entrance 5973	Go-through Cave entrance
+127	BOAT	2841 10129 0	2892 10225 0	5	false	8	Travel Dwarven Boatman 7726	Travel Dwarven Boatman
+128	AGILITY_SHORTCUT	2691 3697 0	2688 3697 0	2	true	45	Jump Broken Fence 544	Jump Broken Fence
+129	SHIP	2629 3693 0	2581 3847 0	7	false	46,2	Miscellania Sailor 3936	Miscellania Sailor
+130	AGILITY_SHORTCUT	2573 3859 0	2575 3861 0	2	true	47	Cross Stepping stone 11768	Cross Stepping stone
+131	TRANSPORT	1703 3140 0	3280 3412 0	6	false	6	Travel Primio 12889	Varrock
+132	TRANSPORT	1486 3232 0	1361 3309 0	5	false		Follow Mountain Guide 14529	Follow Mountain Guide
+133	BOAT	1281 3385 0	1256 3395 0	5	false	8	Travel Rowboat 57271	Travel Rowboat
+134	TRANSPORT	1259 3430 0	1271 3436 0	4	false		Pass-through Cave 57219	Pass-through Cave
+135	TRANSPORT	1272 3475 0	1401 3536 0	7	false	7	Travel Mountain Guide 7600	1: The Shayzien Outpost.
+136	SHIP	1504 3399 0	3055 3245 0	6	false	2	Port Sarim Captain Magoro 7471	Port Sarim
+137	AGILITY_SHORTCUT	3066 3257 0	3070 3257 0	2	true	1	Climb-into Underwall tunnel 19032	Climb-into Underwall tunnel
+138	SHIP	1494 2985 0	1443 2977 0	4	false	48,2	Travel Antonia 13984	Aldarin
+139	TRANSPORT	3295 3428 0	3296 3428 0	4	false	11	Open Gate 24560	Open Gate
+140	AGILITY_SHORTCUT	3716 3815 0	3713 3830 0	1	false	13	Climb through Hole 31482	Climb through Hole
+141	TRANSPORT	2584 3087 0	2585 3087 0	3	false	33	Open Magic guild door 1733	Open Magic guild door
+142	TRANSPORT	3208 6081 0	2181 3329 0	4	false	49	Exit City Gate 36523	Exit City Gate
+143	BOAT	1256 3394 0	1282 3385 0	5	false	8	Travel Rowboat 57272	Travel Rowboat
+144	BOAT	2711 3732 0	2849 3967 0	12	false	44,8	Weiss Boat 21176	Weiss
+145	TRANSPORT	2858 3968 0	2854 3941 0	1	true	50	Enter Cave entrance 33194	Enter Cave entrance
+146	TRANSPORT	2852 3936 0	2850 3936 0	1	true		Cross Little boulder 33312	Cross Little boulder
+147	TRANSPORT	2852 3966 0	2852 3964 0	1	true		Climb Rockslide 33184	Climb Rockslide
+148	TRANSPORT	2852 3964 0	2855 3964 0	1	true		Climb Rockslide 33185	Climb Rockslide
+149	TRANSPORT	2855 3964 0	2853 3961 0	2	false		Climb Rope 33328	Climb Rope
+150	TRANSPORT	2853 3961 0	2857 3961 0	1	true		Cross Ledge 33190	Cross Ledge
+151	TRANSPORT	2859 3962 0	2859 3960 0	1	true		Climb Rockslide 33191	Climb Rockslide
+152	TRANSPORT	2857 3957 0	2857 3954 0	1	true		Pass Fallen Tree 33192	Pass Fallen Tree
+153	TRANSPORT	2731 3711 0	2773 10162 0	1	true		Enter Tunnel 5008	Enter Tunnel
+154	TRANSPORT	2537 3088 0	2537 3084 1	1	false		Climb-up Staircase 15646	Climb-up Staircase
+155	TELEPORTATION_PORTAL	2458 2855 2	3191 3365 0	1	false	22,23	Enter Portal of Champions 31618	Champions' Guild
+156	AGILITY_SHORTCUT	2575 3107 0	2575 3112 0	2	true	37	Climb-under Castle wall 16519	Climb-under Castle wall
+157	TRANSPORT	2587 3232 0	2570 9682 0	1	true		Enter Cave entrance 2852	Enter Cave entrance
+158	AGILITY_SHORTCUT	2948 3309 0	2948 3313 0	2	true	26	Climb-into Underwall tunnel 16527	Climb-into Underwall tunnel
+159	SHIP	1443 2977 0	1494 2985 0	4	false	48,2	Travel Antonia 13985	Sunset Coast
+160	SHIP	2834 3335 0	3048 3231 1	15	false	2	Take-boat Monk of Entrana 1168	Take-boat Monk of Entrana
+161	TRANSPORT	3048 3231 1	3048 3234 0	3	false		Cross Gangplank 2413	Cross Gangplank
+162	BOAT	2888 10226 0	2838 10127 0	5	false	8	Travel Dwarven Boatman 7726	Travel Dwarven Boatman
+163	TRANSPORT	2838 10124 0	2778 10161 0	1	true		Go-through Entrance 5998	Go-through Entrance
+164	TRANSPORT	2773 10161 0	2730 3713 0	1	true		Enter Tunnel 5014	Enter Tunnel
+165	TRANSPORT	2865 10189 0	2862 10188 1	1	true		Climb-up Stairs 6087	Climb-up Stairs
+166	TRANSPORT	2896 10189 1	2893 10188 0	1	true		Climb-down Stairs 6088	Climb-down Stairs
+167	AGILITY_SHORTCUT	2546 2871 0	2546 2873 0	2	true	25	Climb Rocks 31757	Climb Rocks
+168	AGILITY_SHORTCUT	2556 3072 0	2556 3073 1	2	true	38	Climb Rough wall 62417	Climb Rough wall
+169	AGILITY_SHORTCUT	2556 3074 1	2556 3075 0	2	true	4	Jump Wall 17048	Jump Wall
+170	TELEPORTATION_PORTAL	2586 3088 2	2703 3406 0	1	false	23	Enter Magic Portal 2158	Enter Magic Portal
+171	TRANSPORT	2657 3347 0	2654 3347 0	6	false		Climb-over Stile 993	Climb-over Stile
+172	TRANSPORT	2640 3350 0	2637 3350 0	6	false		Climb-over Stile 993	Climb-over Stile
+173	AGILITY_SHORTCUT	2575 3861 0	2573 3859 0	2	true	47	Cross Stepping stone 11768	Cross Stepping stone
+174	SHIP	2581 3847 0	2629 3693 0	7	false	46,2	Rellekka Sailor 3680	Rellekka Sailor
+175	AGILITY_SHORTCUT	2688 3697 0	2691 3697 0	2	true	45	Jump Broken Fence 544	Jump Broken Fence
+176	TRANSPORT	2461 3382 0	2461 3385 0	3	true		Open Gate 190	Open Gate
+177	TRANSPORT	3303 3117 0	3304 3115 0	2	false	51	Go-through Shantay pass 4031	Go-through Shantay pass
+178	AGILITY_SHORTCUT	3259 3179 0	3246 3179 0	2	true	3	Jump-to Broken Raft 17070	Jump-to Broken Raft
+179	AGILITY_SHORTCUT	3212 3138 0	3214 3131 0	3	false	5	Jump-to Stepping stone 16513	Jump-to Stepping stone
+180	AGILITY_SHORTCUT	3391 3155 0	3396 3155 0	2	true	52	Climb Rocks 62403	Climb Rocks
+181	TRANSPORT	3210 3216 0	3210 9616 0	1	false		Climb-down Trapdoor 14880	Climb-down Trapdoor
+182	AGILITY_SHORTCUT	3219 9618 0	3221 9618 0	3	false	53,54	Squeeze-through Hole 6905	Squeeze-through Hole
+183	TRANSPORT	3230 9609 0	3313 9613 0	8	false	55	Mines Kazgar 7301	Mines
+184	TRANSPORT	3317 9602 0	2747 5374 0	3	false		Open Door 6919	Open Door
+185	TRANSPORT	2713 5285 0	2713 5281 1	1	false		Climb-up Stairs 22937	Climb-up Stairs
+186	TRANSPORT	2722 5272 1	2722 5268 0	1	false		Climb-down Stairs 22938	Climb-down Stairs
+187	TRANSPORT	2722 5260 0	2722 5257 1	1	false		Climb-up Stairs 22939	Climb-up Stairs
+188	TRANSPORT	2723 5255 1	2722 5249 3	1	false		Climb-up Stairs 22941	Climb-up Stairs
+189	TRANSPORT	2719 5242 3	2715 5241 0	2	false		Climb-down Ladder top 22666	Climb-down Ladder top
+190	TRANSPORT	2711 5207 0	3514 9520 2	1	true		Enter Blocked tunnel 22657	Enter Blocked tunnel
+191	TRANSPORT	3484 9510 2	3226 3108 0	2	false		Climb-up Rope 3829	Climb-up Rope
+192	TRANSPORT	3230 9609 0	3245 9648 0	8	false	56	Watermill Kazgar 7301	Watermill
+193	TRANSPORT	3246 9646 0	3313 9613 0	8	false	56	Mines Dartog 7301	Mines
+194	TRANSPORT	2719 5241 3	2715 5241 0	2	false		Climb-down Ladder top 22666	Climb-down Ladder top
+195	TRANSPORT	3169 3173 0	3167 9573 0	2	false		Climb-down Dark hole 5947	Climb-down Dark hole
+196	TRANSPORT	3224 9600 0	3224 9604 0	4	false	57	Squeeze-through Hole 6912	Squeeze-through Hole
+197	TRANSPORT	2723 5260 0	2722 5257 1	1	false		Climb-up Stairs 22939	Climb-up Stairs
+198	TRANSPORT	2722 5255 1	2722 5249 3	1	false		Climb-up Stairs 22941	Climb-up Stairs
+199	AGILITY_SHORTCUT	3426 3478 0	3424 3476 0	2	true	9	Climb Rocks 16999	Climb Rocks
+200	TRANSPORT	3423 3485 0	3440 9887 0	1	false		Climb-down Trapdoor 3433	Climb-down Trapdoor
+201	TRANSPORT	3405 9906 0	3405 3506 0	2	false		Climb-up Ladder 17385	Climb-up Ladder
+202	TRANSPORT	3495 3465 0	3477 9845 0	1	false		Open Trapdoor 5055	Open Trapdoor
+203	TRANSPORT	3481 9824 0	3466 9820 0	1	true		Enter Cave entrance 5046	Enter Cave entrance
+204	TRANSPORT	3460 9813 0	3447 9822 0	1	true		Enter Cave entrance 16308	Enter Cave entrance
+205	AGILITY_SHORTCUT	3086 3352 0	3085 3352 0	2	true	10	Squeeze-through Broken fence 62422	Squeeze-through Broken fence
+206	AGILITY_SHORTCUT	1396 3323 0	1391 3323 0	6	false	31	Climb Rocks 56994	Climb Rocks
+207	AGILITY_SHORTCUT	1368 3327 0	1368 3323 0	5	false	30	Climb-into Tunnel 56989	Climb-into Tunnel
+208	AGILITY_SHORTCUT	1391 3309 0	1389 3309 0	2	false	29	Climb-over Broken wall 56997	Climb-over Broken wall
+209	AGILITY_SHORTCUT	1399 3309 0	1393 3309 0	7	false	32	Cross Stepping stone 56988	Cross Stepping stone
+210	BOAT	3731 10281 1	3763 3899 0	4	false	8	Climb Anchor rope 30948	Climb Anchor rope
+211	BOAT	3763 3899 0	3734 3893 0	3	false	8	Travel Rowboat 30919	Travel Rowboat
+212	BOAT	3734 3893 0	3724 3807 0	3	false	8	Travel Rowboat 30915	Travel Rowboat
+213	SHIP	3724 3807 0	3362 3445 0	12	false	12,2	Travel Rowboat 30914	Travel Rowboat
+214	TRANSPORT	3296 3428 0	3295 3428 0	4	false	11	Open Gate 24560	Open Gate
+215	AGILITY_SHORTCUT	3778 3821 0	3784 3821 0	6	false	58	Climb Up Rope anchor 30916	Climb Up Rope anchor
+216	TRANSPORT	3665 3808 0	3685 3756 0	1	true		Jump on Rubber cap mushroom 30606	Jump on Rubber cap mushroom
+217	AGILITY_SHORTCUT	3713 3830 0	3715 3815 0	1	false	13	Climb through Hole 31481	Climb through Hole
+218	TRANSPORT	3728 3831 0	3730 3831 1	2	false		Climb Up Ladder 30938	Climb Up Ladder
+219	TRANSPORT	3745 3831 1	3747 3831 0	2	false		Climb Down Ladder 30941	Climb Down Ladder
+220	TRANSPORT	3753 3868 0	3757 3869 1	1	true		Climb Stairs 30681	Climb Stairs
+221	BOAT	2471 2724 0	2543 2844 0	5	false	24,8	Travel Rowboat 58636	Travel Rowboat
+222	AGILITY_SHORTCUT	2874 3127 0	2874 3133 0	2	true	39	Swim-to Strong Tree 17074	Swim-to Strong Tree
+223	AGILITY_SHORTCUT	2874 3136 0	2874 3142 0	2	true	39	Swim-to Shore 62420	Swim-to Shore
+224	SHIP	2956 3146 0	3029 3217 0	10	false	20,2	Port Sarim Customs officer 14985	Port Sarim
+225	AGILITY_SHORTCUT	3180 2432 0	3180 2434 0	2	true	59	Climb Rocks 57928	Climb Rocks
+226	TRANSPORT	2855 3168 0	2855 9568 0	1	true		Climb-down Rocks 11441	Climb-down Rocks
+227	TRANSPORT	2862 9571 0	2480 5175 0	1	true		Enter Cave entrance 11835	Enter Cave entrance
+228	AGILITY_SHORTCUT	1720 3551 0	1724 3551 0	2	false	40	Cross Stepping stone 29728	Cross Stepping stone
+229	TRANSPORT	1670 3566 0	1800 9968 0	1	false		Climb-down Staircase 34865	Climb-down Staircase
+230	TRANSPORT	1824 9973 0	1825 9973 0	4	false		Open Temple Door 34843	Open Temple Door
+231	TRANSPORT	1829 9974 0	1702 3575 0	2	false		Climb-up Ladder 34863	Climb-up Ladder
+232	TRANSPORT	1803 9968 0	1726 9994 0	1	false	60	Enter Strange passage 28918	Enter Strange passage
+233	TRANSPORT	1651 9986 0	1469 3653 0	2	false		Climb-up Vine 28896	Climb-up Vine
+234	TRANSPORT	1639 3673 0	1666 10050 0	2	false		Investigate Statue 27785	Investigate Statue
+235	AGILITY_SHORTCUT	1647 10010 0	1645 10000 0	2	false	61	Squeeze-through Crack 28892	Squeeze-through Crack
+236	AGILITY_SHORTCUT	1324 3795 0	1324 3787 0	8	false	62	Climb Rocks 34396	Climb Rocks
+237	AGILITY_SHORTCUT	1324 3785 0	1324 3777 0	8	false	63	Climb Rocks 34397	Climb Rocks
+238	AGILITY_SHORTCUT	2722 3592 0	2722 3596 0	4	false	3	Walk-across Log balance 16542	Walk-across Log balance
+239	TRANSPORT	2460 3382 0	2461 3385 0	3	true		Open Gate 190	Open Gate
+240	AGILITY_SHORTCUT	2598 3336 0	2602 3336 0	2	true	30	Walk-across Log balance 16546	Walk-across Log balance
+241	BOAT	1256 3395 0	1282 3385 0	5	false	8	Travel Rowboat 57272	Travel Rowboat
+242	TRANSPORT	3659 3507 0	3659 3509 0	2	false		Pay-toll(2-Ecto) Energy Barrier 16105	Pay-toll(2-Ecto) Energy Barrier
+243	TRANSPORT	3653 3486 0	3651 3486 0	2	false		Pay-toll(2-Ecto) Energy Barrier 16105	Pay-toll(2-Ecto) Energy Barrier
+244	TRANSPORT	2638 3349 0	2640 3350 0	6	false		Climb-over Stile 993	Climb-over Stile
+245	TRANSPORT	2654 3347 0	2657 3347 0	6	false		Climb-over Stile 993	Climb-over Stile
+246	AGILITY_SHORTCUT	2602 3336 0	2598 3336 0	2	true	30	Walk-across Log balance 16548	Walk-across Log balance
+247	BOAT	1258 3124 0	1400 3246 0	5	false	8	Gloomthorn Achilka 14728	Gloomthorn
+248	BOAT	1258 3124 0	1390 3074 0	5	false	8	Kastori Achilka 14728	Kastori
+249	AGILITY_SHORTCUT	3137 3516 0	3142 3513 0	7	false	16	Climb-into Underwall tunnel 16529	Climb-into Underwall tunnel
+250	TRANSPORT	3142 3473 0	2440 3089 0	4	false		Join Castle Wars Saradominist recruiter 8644	Join Castle Wars Saradominist recruiter
+251	TRANSPORT	3304 3117 0	3304 3115 0	2	false	51	Go-through Shantay pass 4031	Go-through Shantay pass
+252	AGILITY_SHORTCUT	3214 3130 0	3212 3138 0	3	false	5	Jump-to Stepping stone 16513	Jump-to Stepping stone
+253	TRANSPORT	3265 6024 0	2241 3269 0	4	false	49	Exit City Gate 36523	Exit City Gate
+254	AGILITY_SHORTCUT	2265 3192 0	2268 3192 0	4	false	64	Enter Dense forest 3938	Enter Dense forest
+255	AGILITY_SHORTCUT	2268 3192 0	2271 3192 0	4	false	64	Enter Dense forest 3939	Enter Dense forest
+256	AGILITY_SHORTCUT	2271 3192 0	2274 3192 0	4	false	64	Enter Dense forest 3937	Enter Dense forest
+257	AGILITY_SHORTCUT	2284 3188 0	2287 3188 0	8	false		Step-over Tripwire 3921	Step-over Tripwire
+258	TRANSPORT	2304 3194 0	2306 3194 0	5	false	65	Pass Tree 8742	Pass Tree
+259	AGILITY_SHORTCUT	2238 3181 0	2234 3181 0	6	false		Pass Sticks 3922	Pass Sticks
+260	AGILITY_SHORTCUT	2274 3172 0	2274 3176 0	4	false		Jump Leaves 3925	Jump Leaves
+261	TRANSPORT	2933 3288 0	2933 3289 0	3	false		Open Guild Door 14910	Open Guild Door
+262	SHIP	1504 3399 0	1824 3691 0	6	false	2	Port Piscarilius Captain Magoro 7471	Port Piscarilius
+263	TRANSPORT	3263 6024 0	2239 3269 0	4	false	49	Exit City Gate 36522	Exit City Gate
+264	TRANSPORT	3651 3486 0	3653 3486 0	2	false		Pay-toll(2-Ecto) Energy Barrier 16105	Pay-toll(2-Ecto) Energy Barrier
+265	AGILITY_SHORTCUT	3784 3821 0	3778 3821 0	6	false	58	Climb Down Rope anchor 30917	Climb Down Rope anchor
+266	AGILITY_SHORTCUT	3718 3816 0	3713 3830 0	1	false	13	Climb through Hole 31482	Climb through Hole
+267	AGILITY_SHORTCUT	1455 3128 0	1465 3128 0	8	false	66	Climb Rocks 51931	Climb Rocks
+268	AGILITY_SHORTCUT	1465 3128 0	1455 3128 0	8	false	66	Climb Rocks 51931	Climb Rocks
+269	AGILITY_SHORTCUT	1453 3329 0	1453 3336 0	8	false	40	Walk-across Log balance 56991	Walk-across Log balance
+270	TRANSPORT	2839 9388 0	2826 2998 0	2	false	67	Climb-up Ladder 23584	Climb-up Ladder
+271	TRANSPORT	2832 2954 0	2776 3214 0	5	false	68	Board Travel cart 2265	Board Travel cart
+272	AGILITY_SHORTCUT	2871 3003 0	2871 3008 0	5	false	69	Climb Rocks 53240	Climb Rocks
+273	TRANSPORT	2831 2954 0	2776 3214 0	5	false	70,71	Board Travel cart 2265	Board Travel cart
+274	AGILITY_SHORTCUT	2863 2976 0	2863 2971 0	2	false	72	Cross Stepping stone 16466	Cross Stepping stone
+275	TRANSPORT	2876 2953 0	2880 2952 0	2	false	70	Climb over Broken cart 28931	Climb over Broken cart
+276	TRANSPORT	2870 2971 1	2870 2971 0	2	false		Climb-down Ladder 16679	Climb-down Ladder
+277	TRANSPORT	2834 2953 0	2776 3214 0	5	false	70,71	Board Travel cart 2265	Board Travel cart
+278	AGILITY_SHORTCUT	2863 2971 0	2863 2976 0	2	false	72	Cross Stepping stone 16466	Cross Stepping stone
+279	AGILITY_SHORTCUT	3373 2955 0	3372 2959 0	2	false	73	Cross Stepping stone 53241	Cross Stepping stone
+280	TRANSPORT	3304 3115 0	3304 3117 0	2	false		Go-through Shantay pass 4031	Go-through Shantay pass
+281	TRANSPORT	3683 9888 0	3687 9887 1	1	true		Climb-up Stairs 16108	Climb-up Stairs
+282	TRANSPORT	3674 9886 1	3671 9886 2	1	true		Climb-up Stairs 16108	Climb-up Stairs
+283	AGILITY_SHORTCUT	3671 9888 2	3670 9888 3	2	true	74	Jump-up Weathered wall 16525	Jump-up Weathered wall
+284	TRANSPORT	3669 9888 3	3654 3519 0	2	false		Climb-up Ladder 16110	Climb-up Ladder
+285	TRANSPORT	3688 9887 2	3692 9887 3	1	true		Climb-up Stairs 16108	Climb-up Stairs
+286	BOAT	3525 3170 0	3663 3277 0	13	false	75,8	Board Boat 38089	3: Slepe.
+287	BOAT	3661 3278 0	3671 3542 0	5	false	8	Travel Row boat 32602	Travel Row boat
+288	TRANSPORT	3484 3243 0	3484 3244 0	3	true		Open Gate 12817	Open Gate
+289	BOAT	3522 3284 0	3498 3380 0	18	false	76,77,8	Quick-board Swamp Boaty 6969	Quick-board Swamp Boaty
+290	TRANSPORT	3502 3425 0	3502 3432 0	1	true		Cross-bridge Tree 5003	Cross-bridge Tree
+291	TRANSPORT	3509 3449 0	3500 9811 0	3	false		Open Wooden doors 5061	Open Wooden doors
+292	TRANSPORT	3477 9845 0	3495 3465 0	2	false		Climb-up Ladder 5054	Climb-up Ladder
+293	TRANSPORT	3474 3221 0	3473 3221 0	1	true	78,79	Jump-over Low fence 12776	Jump-over Low fence
+294	TRANSPORT	3660 3509 0	3660 3507 0	2	false		Pay-toll(2-Ecto) Energy Barrier 16105	Pay-toll(2-Ecto) Energy Barrier
+295	BOAT	3522 3285 0	3498 3380 0	18	false	76,77,8	Quick-board Swamp Boaty 6969	Quick-board Swamp Boaty
+296	AGILITY_SHORTCUT	3422 3325 0	3417 3325 0	2	true	59	Cross Stepping stone 13504	Cross Stepping stone
+297	AGILITY_SHORTCUT	2722 3596 0	2722 3592 0	4	false	3	Walk-across Log balance 16540	Walk-across Log balance
+298	TRANSPORT	2344 3655 0	2344 3650 0	1	true	80	Enter Hole 12656	Enter Hole
+299	BOAT	2357 3641 0	2368 3486 0	10	false	8	Travel Kathy Corkat 4299	Gnome Stronghold
+300	TRANSPORT	3062 3283 0	3063 3281 0	6	false		Climb-over Stile 7527	Climb-over Stile
+301	AGILITY_SHORTCUT	1603 3571 0	1607 3571 0	2	false	81	Cross Stepping stone 29730	Cross Stepping stone
+302	AGILITY_SHORTCUT	1610 3570 0	1614 3570 0	2	false	81	Cross Stepping stone 29729	Cross Stepping stone
+303	AGILITY_SHORTCUT	2489 3521 0	2486 3515 0	9	false	82,83	Climb Rocks 16535	Climb Rocks
+304	TRANSPORT	2447 3435 0	2445 3433 1	1	true		Climb-up Staircase 16675	Climb-up Staircase
+305	TRANSPORT	2445 3433 1	2444 3434 0	1	true		Climb-down Staircase 16677	Climb-down Staircase
+306	TRANSPORT	2510 3494 0	2512 3481 0	1	true	84	Board Log raft 1987	Board Log raft
+307	TRANSPORT	2511 3477 0	2527 3413 0	1	true	84	Swim River 10283	Swim River
+308	TRANSPORT	2512 3511 0	1768 5366 1	2	false	85	Jump-into Whirlpool 25274	Jump-into Whirlpool
+309	TRANSPORT	1768 5366 1	1772 5366 0	1	true		Climb-down Stairs 25338	Climb-down Stairs
+310	TRANSPORT	1761 5362 0	2531 3446 0	2	false		Ride Aged log 25216	Ride Aged log
+311	TRANSPORT	2511 3511 0	1768 5366 1	2	false	85	Jump-into Whirlpool 25274	Jump-into Whirlpool
+312	AGILITY_SHORTCUT	2599 3476 0	2603 3477 0	2	true	86	Walk-across Log balance 23274	Walk-across Log balance
+313	AGILITY_SHORTCUT	2598 3477 0	2603 3477 0	2	true	86	Walk-across Log balance 23274	Walk-across Log balance
+314	TRANSPORT	2522 3595 0	2522 3597 0	2	false		Jump-across Basalt rock 4551	Jump-across Basalt rock
+315	TRANSPORT	2522 3600 0	2522 3602 0	2	false		Jump-across Basalt rock 4553	Jump-across Basalt rock
+316	TRANSPORT	2518 3611 0	2516 3611 0	2	false		Jump-across Basalt rock 4555	Jump-across Basalt rock
+317	TRANSPORT	2514 3613 0	2514 3615 0	2	false		Jump-across Basalt rock 4557	Jump-across Basalt rock
+318	TRANSPORT	2514 3617 0	2514 3619 0	2	false		Jump-to Rocky shore 4559	Jump-to Rocky shore
+319	TRANSPORT	2596 3608 0	2598 3608 0	2	false		Cross Broken bridge 4615	Cross Broken bridge
+320	TRANSPORT	2467 3491 0	2466 3493 0	3	false		Open Tree Door 1968	Open Tree Door
+321	TRANSPORT	2465 3491 0	2465 3493 0	3	false		Open Tree Door 1967	Open Tree Door
+322	TRANSPORT	2964 4382 2	3206 3681 0	2	false		Exit Cave exit 679	Exit Cave exit
+323	TRANSPORT	3241 9524 2	3239 9524 2	4	false		Climb Rocks 6673	Climb Rocks
+324	TRANSPORT	3220 9532 2	3226 9542 0	2	false		Enter Tunnel 6658	Enter Tunnel
+325	AGILITY_SHORTCUT	3221 9552 0	3221 9556 0	4	false		Jump-across Stepping stone 5949	Jump-across Stepping stone
+326	AGILITY_SHORTCUT	3221 9618 0	3219 9618 0	3	false	53,54	Squeeze-through Hole 6905	Squeeze-through Hole
+327	TRANSPORT	3208 9616 0	3208 3216 0	2	false		Climb-up Ladder 17385	Climb-up Ladder
+328	TRANSPORT	3168 9572 0	3168 3172 0	2	false		Climb Climbing rope 5946	Climb Climbing rope
+329	TRANSPORT	3169 9571 0	3169 3171 0	2	false		Climb Climbing rope 5946	Climb Climbing rope
+330	TRANSPORT	3201 3169 0	3202 3169 0	3	false		Open Door 2406	Open Door
+331	TRANSPORT	3202 3169 0	2452 4473 0	8	false		Open Door 2406	Open Door
+332	TRANSPORT	2486 4471 0	3260 3171 0	6	false		Use Fairy ring 12003	Use Fairy ring
+333	TELEPORTATION_PORTAL	3147 3638 0	2440 3089 0	1	false	23	Enter Castle Wars portal 30386	Enter Castle Wars portal
+334	TRANSPORT	3154 3635 0	3155 3635 0	2	false		Pass-Through Barrier 39653	Pass-Through Barrier
+335	TRANSPORT	3134 3639 0	3134 3640 0	2	false		Pass-Through Barrier 39653	Pass-Through Barrier
+336	TRANSPORT	3060 3520 0	3060 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+337	TRANSPORT	3018 3450 0	3018 9850 0	1	false		Climb-down Trapdoor 11867	Climb-down Trapdoor
+338	TRANSPORT	3058 9776 0	3061 3376 0	1	true		Climb-up Staircase 23969	Climb-up Staircase
+339	TRANSPORT	3021 9739 0	3021 3339 0	2	false		Climb-up Ladder 17386	Climb-up Ladder
+340	AGILITY_SHORTCUT	3035 9806 0	3028 9806 0	2	true	1	Squeeze-through Crevice 16543	Squeeze-through Crevice
+341	TRANSPORT	3018 9850 0	3018 3450 0	2	false		Climb-up Ladder 17387	Climb-up Ladder
+342	AGILITY_SHORTCUT	1324 3777 0	1324 3785 0	8	false	63	Climb Rocks 34397	Climb Rocks
+343	AGILITY_SHORTCUT	1324 3787 0	1324 3795 0	8	false	62	Climb Rocks 34396	Climb Rocks
+344	TELEPORTATION_PORTAL	3082 3476 0	2206 2858 0	1	false	23	Enter Soul Wars Portal 40474	Enter Soul Wars Portal
+345	TELEPORTATION_PORTAL	2206 2858 0	3158 10027 0	1	false	23	Enter Portal 40476	2: Ferox Enclave
+346	TRANSPORT	3164 10042 0	3152 3644 0	1	true		Exit Opening 39648	Exit Opening
+347	TRANSPORT	3091 3520 0	3091 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+348	TRANSPORT	2858 3168 0	2858 9568 0	1	true		Climb-down Rocks 11441	Climb-down Rocks
+349	SHIP	2956 3146 0	3064 3003 0	10	false	41,20,2	The Pandemonium Customs officer 14985	Pandemonium
+350	AGILITY_SHORTCUT	3295 3159 0	3295 3157 0	2	true	13	Enter Big window 33348	Enter Big window
+351	BOAT	3272 3143 0	3148 2843 0	8	false	8	Board Ferry 41311	Board Ferry
+352	TRANSPORT	3193 2842 0	3196 2842 0	3	false	51	Go-through Shantay pass 41863	Go-through Shantay pass
+353	BOAT	3271 3144 0	3148 2843 0	8	false	8	Board Ferry 41311	Board Ferry
+354	AGILITY_SHORTCUT	3212 3138 0	3214 3130 0	3	false	5	Jump-to Stepping stone 16513	Jump-to Stepping stone
+355	TRANSPORT	3136 3520 0	3136 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+356	BOAT	2855 10145 0	2863 10133 0	5	false	87,8	Travel Dwarven Ferryman 4897	Travel Dwarven Ferryman
+357	TRANSPORT	2444 3416 0	2445 3416 1	1	true		Climb-up Staircase 16675	Climb-up Staircase
+358	TRANSPORT	2445 3416 1	2446 3415 0	1	true		Climb-down Staircase 16677	Climb-down Staircase
+359	TRANSPORT	2462 3385 0	2461 3382 0	3	true		Open Gate 190	Open Gate
+360	TRANSPORT	2808 10001 0	2796 3615 0	1	true		Enter Tunnel 2141	Enter Tunnel
+361	AGILITY_SHORTCUT	2820 3635 0	2822 3635 0	2	true	88,89	Climb Rocks 3748	Climb Rocks
+362	TRANSPORT	2828 3646 0	2823 10050 0	3	false		Open Secret Door 3762	Open Secret Door
+363	TRANSPORT	2852 10105 0	2852 10109 1	1	true		Climb-up Stone Staircase 3788	Climb-up Stone Staircase
+364	TRANSPORT	2848 10107 1	2847 10107 1	1	false		Unlock Prison Door 3780	Unlock Prison Door
+365	TRANSPORT	2841 10108 1	2845 10108 2	1	true		Climb-up Stone Staircase 3788	Climb-up Stone Staircase
+366	TRANSPORT	2837 10091 2	2840 3690 0	1	true		Use Exit 3772	Use Exit
+367	AGILITY_SHORTCUT	2843 3692 0	2838 3693 0	2	true	90	Climb Rocks 16464	Climb Rocks
+368	TRANSPORT	2831 10076 2	2831 3676 0	2	false		Climb-up Troll ladder 18834	Climb-up Troll ladder
+369	AGILITY_SHORTCUT	3765 3883 1	3765 3898 0	10	false	91	Teeth-grip Zip line 17030	Teeth-grip Zip line
+370	TRANSPORT	3757 3869 1	3753 3869 0	1	true		Descend Stairs 30682	Descend Stairs
+371	TRANSPORT	3747 3831 0	3745 3831 1	2	false		Climb Up Ladder 30940	Climb Up Ladder
+372	TRANSPORT	3730 3831 1	3728 3831 0	2	false		Climb Down Ladder 30939	Climb Down Ladder
+373	TRANSPORT	3549 10448 0	3555 4002 0	1	true		Climb-up Staircase 32112	Climb-up Staircase
+374	TRANSPORT	3555 4000 0	3554 4000 1	2	false		Climb-up Ladder 32083	Climb-up Ladder
+375	TRANSPORT	3556 4003 1	3561 4004 0	1	true		Climb-down Stairs 32082	Climb-down Stairs
+376	BOAT	3583 3973 0	3660 3849 0	5	false	22,8	Travel Rowboat 32079	Travel Rowboat
+377	TRANSPORT	2386 3335 0	2386 3333 0	2	false	92	Enter Huge Gate 3944	Enter Huge Gate
+378	TRANSPORT	2298 3327 0	3319 6079 0	4	false	49	Enter City Gate 36518	Enter City Gate
+379	AGILITY_SHORTCUT	3396 3155 0	3391 3155 0	2	true	52	Climb Rocks 62404	Climb Rocks
+380	TRANSPORT	3303 3115 0	3304 3117 0	2	false		Go-through Shantay pass 4031	Go-through Shantay pass
+381	TRANSPORT	3106 3559 0	3035 4852 0	1	true	93	Teleport Mage of Zamorak 2581	Teleport Mage of Zamorak
+382	TRANSPORT	3039 4805 0	3039 4800 0	1	true		Enter Passage 27054	Enter Passage
+383	TRANSPORT	3034 4793 0	3221 3219 0	4	false		Operate Appendage 27027	Operate Appendage
+384	TRANSPORT	3243 3523 0	3243 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+385	TRANSPORT	3155 3634 0	3154 3634 0	2	false		Pass-Through Barrier 39652	Pass-Through Barrier
+386	TRANSPORT	3140 3523 0	3140 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+387	TRANSPORT	3039 4854 0	3039 4844 0	1	true		Go-through Passage 26250	Go-through Passage
+388	TRANSPORT	3047 4825 0	2846 4836 0	1	true		Exit-through Air rift 25382	Exit-through Air rift
+389	TRANSPORT	2842 4828 0	2983 3288 0	1	false		Enter Portal 34748	Enter Portal
+390	TRANSPORT	3136 3523 0	3136 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+391	TRANSPORT	3069 3523 0	3069 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+392	TRANSPORT	3029 4850 0	3033 4843 0	1	true		Go-through Passage 26250	Go-through Passage
+393	TRANSPORT	3039 4821 0	2520 4848 0	1	true		Exit-through Body rift 25382	Exit-through Body rift
+394	TRANSPORT	2521 4834 0	3050 3442 0	1	false		Enter Portal 34753	Enter Portal
+395	TRANSPORT	3044 4822 0	2784 4843 0	1	true		Exit-through Mind rift 25382	Exit-through Mind rift
+396	TRANSPORT	2792 4827 0	2980 3511 0	1	false		Enter Portal 34749	Enter Portal
+397	TRANSPORT	3049 4839 0	2464 4826 0	1	true	94	Exit-through Law rift 25382	Exit-through Law rift
+398	TRANSPORT	2464 4818 0	2858 3378 0	1	false		Enter Portal 34755	Enter Portal
+399	TRANSPORT	3035 4842 0	2400 4844 0	1	true		Exit-through Nature rift 25382	Exit-through Nature rift
+400	TRANSPORT	2400 4835 0	2865 3022 0	1	false		Use Portal 34756	Use Portal
+401	AGILITY_SHORTCUT	2871 3008 0	2871 3003 0	5	false	69	Climb Rocks 53238	Climb Rocks
+402	TRANSPORT	2833 2954 0	2776 3214 0	5	false	68	Board Travel cart 2265	Board Travel cart
+403	TRANSPORT	3029 4830 0	2587 4836 0	1	true		Exit-through Fire rift 25382	Exit-through Fire rift
+404	TRANSPORT	2575 4849 0	3310 3252 0	1	false		Use Portal 34752	Use Portal
+405	TRANSPORT	3283 3523 0	3283 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+406	TRANSPORT	3329 3523 0	3329 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+407	TRANSPORT	3031 4825 0	2660 4843 0	1	true		Exit-through Earth rift 25382	Exit-through Earth rift
+408	TRANSPORT	2655 4830 0	3302 3477 0	1	false		Use Portal 34751	Use Portal
+409	TRANSPORT	3198 3523 0	3198 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+410	TRANSPORT	2978 3523 0	2978 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+411	TRANSPORT	2957 3523 0	2957 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+412	TRANSPORT	3122 3629 0	3123 3629 0	2	false		Pass-Through Barrier 39652	Pass-Through Barrier
+413	TELEPORTATION_PORTAL	3147 3639 0	2440 3089 0	1	false	23	Enter Castle Wars portal 30386	Enter Castle Wars portal
+414	TRANSPORT	2834 2952 0	2776 3214 0	5	false	68	Board Travel cart 2265	Board Travel cart
+415	TRANSPORT	3074 3523 0	3074 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+416	AGILITY_SHORTCUT	3214 3131 0	3212 3138 0	3	false	5	Jump-to Stepping stone 16513	Jump-to Stepping stone
+417	AGILITY_SHORTCUT	3372 2959 0	3373 2955 0	2	false	73	Cross Stepping stone 53241	Cross Stepping stone
+418	TRANSPORT	3372 2902 0	3374 9305 0	1	true		Climb-down Crevice 10416	Climb-down Crevice
+419	TRANSPORT	3374 9305 0	3375 2904 0	2	false		Climb Rope 10434	Climb Rope
+420	TRANSPORT	2827 3646 0	2823 10050 0	3	false		Open Secret Door 3762	Open Secret Door
+421	TRANSPORT	2538 3088 0	2538 3084 1	1	false		Climb-up Staircase 15646	Climb-up Staircase
+422	TRANSPORT	3198 3276 0	3197 3278 0	6	false		Climb-over Stile 12982	Climb-over Stile
+423	TRANSPORT	3318 9602 0	2748 5374 0	3	false		Open Door 6919	Open Door
+424	AGILITY_SHORTCUT	2886 3683 0	2884 3683 0	2	true	95	Climb Rocks 3803	Climb Rocks
+425	AGILITY_SHORTCUT	2878 3668 0	2878 3665 0	2	true	95	Climb Rocks 16522	Climb Rocks
+426	AGILITY_SHORTCUT	2872 3671 0	2869 3671 0	2	true	31	Climb Rocks 16521	Climb Rocks
+427	AGILITY_SHORTCUT	2844 3693 0	2838 3693 0	2	true	90	Climb Rocks 16464	Climb Rocks
+428	TRANSPORT	2840 3690 0	2837 10090 2	1	true		Enter Stronghold 3771	Enter Stronghold
+429	TRANSPORT	2887 3662 0	2887 3660 0	1	true		Climb Rocks 3804	Climb Rocks
+430	TRANSPORT	3097 9868 0	3096 3468 0	2	false		Climb-up Ladder 17385	Climb-up Ladder
+431	TRANSPORT	3154 3634 0	3155 3634 0	2	false		Pass-Through Barrier 39652	Pass-Through Barrier
+432	TRANSPORT	3089 3520 0	3089 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+433	AGILITY_SHORTCUT	3002 3483 0	2997 3483 0	5	false	18	Climb Rocks 47570	Climb Rocks
+434	AGILITY_SHORTCUT	2928 3520 0	2927 3523 0	5	false	96,97	Manoeuvre-past Tight-gap 16468	Manoeuvre-past Tight-gap
+435	TRANSPORT	3058 9777 0	3061 3377 0	1	true		Climb-up Staircase 23969	Climb-up Staircase
+436	TRANSPORT	3083 3523 0	3083 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+437	TRANSPORT	2955 3523 0	2955 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+438	TRANSPORT	3135 3640 0	3135 3639 0	2	false		Pass-Through Barrier 39652	Pass-Through Barrier
+439	TRANSPORT	3241 3523 0	3241 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+440	TRANSPORT	2982 3523 0	2982 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+441	AGILITY_SHORTCUT	3201 3807 0	3201 3810 0	3	false	91	Cross Stepping stone 14918	Cross Stepping stone
+442	TRANSPORT	3158 3952 0	3158 3950 0	4	false	98	Slash Web 733	Slash Web
+443	TELEPORTATION_LEVER	3153 3923 0	2562 3311 0	5	false	99	Pull Lever 1815	Pull Lever
+444	TRANSPORT	3073 3523 0	3073 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+445	TRANSPORT	3090 3523 0	3090 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+446	TRANSPORT	2118 3895 0	2118 3893 1	2	false		Climb Ladder 16960	Climb Ladder
+447	TRANSPORT	2126 3893 1	2128 3893 2	2	false		Climb Ladder 16959	Climb Ladder
+448	SHIP	2138 3899 2	2222 3796 2	12	false	2	Travel Captain Bentley 6650	Travel Captain Bentley
+449	TRANSPORT	2214 3800 2	2214 3802 1	2	false		Climb Ladder 16961	Climb Ladder
+450	TRANSPORT	2213 3796 1	2213 3794 0	2	false		Climb Ladder 16962	Climb Ladder
+451	BOAT	2213 3794 0	2620 3693 0	9	false	46,8	Rellekka Lokar Searunner 9306	Rellekka Lokar Searunner
+452	BOAT	2544 3761 0	2621 3683 0	7	false	8	Rellekka Jarvald 10407	Rellekka Jarvald
+453	TRANSPORT	1696 3864 0	1719 10101 0	2	false	100	Enter Hole 28915	Enter Hole
+454	TRANSPORT	1725 9993 0	1803 9968 0	2	false		Climb-up Vine 28897	Climb-up Vine
+455	TRANSPORT	1800 9968 0	1670 3569 0	1	false		Climb-up Staircase 34864	Climb-up Staircase
+456	TRANSPORT	1469 3653 0	1650 9987 0	2	false	100	Enter Hole 28915	Enter Hole
+457	TRANSPORT	1800 9967 0	1670 3569 0	1	false		Climb-up Staircase 34864	Climb-up Staircase
+458	BOAT	1384 3665 0	1408 3612 0	4	false	8	Board Boaty 33614	Shayzien
+459	TRANSPORT	1420 3589 0	1432 9913 0	4	false		Enter Cave 42248	Enter Cave
+460	TRANSPORT	1461 9879 0	1639 10046 0	2	false	101	Enter Strange passage 42249	Enter Strange passage
+461	AGILITY_SHORTCUT	2997 3483 0	3002 3483 0	5	false	18	Climb Rocks 47571	Climb Rocks
+462	TRANSPORT	2556 3299 0	2559 3299 0	3	false		Open Ardougne Wall Door 8739	Open Ardougne Wall Door
+463	TRANSPORT	3538 3262 0	3538 3260 0	6	false	79	Climb-over Broken fence 18411	Climb-over Broken fence
+464	TRANSPORT	3485 3244 0	3485 3243 0	3	true	79	Open Gate 12816	Open Gate
+465	SHIP	2659 2676 0	3041 3202 0	11	false	2	Travel Squire 1769	Travel Squire
+466	AGILITY_SHORTCUT	2196 3237 0	2202 3237 0	8	false	40	Cross Log balance 3931	Cross Log balance
+467	AGILITY_SHORTCUT	2226 3219 0	2229 3219 0	4	false	64	Enter Dense forest 3938	Enter Dense forest
+468	AGILITY_SHORTCUT	2229 3219 0	2232 3219 0	4	false	64	Enter Dense forest 3939	Enter Dense forest
+469	AGILITY_SHORTCUT	2232 3219 0	2235 3219 0	4	false	64	Enter Dense forest 3937	Enter Dense forest
+470	AGILITY_SHORTCUT	2235 3219 0	2238 3219 0	4	false	64	Enter Dense forest 3939	Enter Dense forest
+471	AGILITY_SHORTCUT	2209 3205 0	2209 3201 0	4	false		Jump Leaves 3925	Jump Leaves
+472	AGILITY_SHORTCUT	2230 3249 0	2233 3249 0	4	false	64	Enter Dense forest 3938	Enter Dense forest
+473	AGILITY_SHORTCUT	2233 3249 0	2236 3249 0	4	false	64	Enter Dense forest 3939	Enter Dense forest
+474	AGILITY_SHORTCUT	2236 3249 0	2239 3249 0	4	false	64	Enter Dense forest 3937	Enter Dense forest
+475	TRANSPORT	2239 3269 0	3263 6024 0	4	false	49	Enter City Gate 36518	Enter City Gate
+476	AGILITY_SHORTCUT	2234 3181 0	2238 3181 0	6	false		Pass Sticks 3922	Pass Sticks
+477	TRANSPORT	2240 3269 0	3264 6024 0	4	false	49	Enter City Gate 36519	Enter City Gate
+478	AGILITY_SHORTCUT	2160 3072 0	2154 3072 0	6	false	102,103	Cross Stepping stone 10663	Cross Stepping stone
+479	TRANSPORT	1310 1237 0	2873 9848 0	1	true		Crawl Cave 26566	Crawl Cave
+480	AGILITY_SHORTCUT	2878 9813 0	2881 9813 0	2	true	104	Jump-over Strange floor 16510	Jump-over Strange floor
+481	TRANSPORT	2885 9797 0	2885 3397 0	2	false		Climb-up Ladder 17385	Climb-up Ladder
+482	TRANSPORT	2842 9825 0	2842 3425 0	2	false		Climb-up Ladder 17385	Climb-up Ladder
+483	AGILITY_SHORTCUT	2841 3427 0	2841 3433 0	2	true	105	Swim-to Shore 62421	Swim-to Shore
+484	AGILITY_SHORTCUT	2892 9799 0	2886 9799 0	2	true	13	Squeeze-through Obstacle pipe 16509	Squeeze-through Obstacle pipe
+485	TRANSPORT	2923 9803 0	2924 9803 0	3	true		Open Gate 2623	Open Gate
+486	AGILITY_SHORTCUT	2935 9810 0	2936 9810 0	2	true	106	Squeeze-through Loose Railing 28849	Squeeze-through Loose Railing
+487	TRANSPORT	2889 9830 0	2888 9830 0	3	false		Open Prison door 2144	Open Prison door
+488	TRANSPORT	2884 9798 0	2884 3398 0	2	false		Climb-up Ladder 17385	Climb-up Ladder
+489	TRANSPORT	3126 3832 0	3241 10233 0	2	false		Enter Cavern 31556	Enter Cavern
+490	TRANSPORT	3246 10215 0	3124 3805 0	2	false		Climb-up Stairs 43868	Climb-up Stairs
+491	TRANSPORT	1634 3570 0	1631 3570 0	3	false		Climb-over Stile 7527	Climb-over Stile
+492	SHIP	3064 3003 0	3029 3217 0	10	false	41,20,2	Port Sarim Seaman Morris 8631	Port Sarim
+493	SHIP	3064 3003 0	2956 3146 0	10	false	41,20,2	Musa Point Seaman Morris 8631	Musa Point
+494	TRANSPORT	2906 3049 0	2910 3049 0	5	false		Cross A wooden log 23644	Cross A wooden log
+495	TRANSPORT	2879 2950 0	2876 2952 0	2	false	70	Climb over Broken cart 28931	Climb over Broken cart
+496	TRANSPORT	2480 5175 0	2862 9572 0	1	true		Enter Cave exit 11836	Enter Cave exit
+497	TRANSPORT	2857 9569 0	2856 3167 0	2	false		Climb Climbing rope 18969	Climb Climbing rope
+498	TRANSPORT	1640 10047 0	1461 9879 0	2	false		Climb-up Vine 42350	Climb-up Vine
+499	TRANSPORT	1432 9913 0	1420 3588 0	4	false		Exit Cave 42247	Exit Cave
+500	BOAT	1408 3612 0	1341 3645 0	4	false	8	Board Boaty 33614	Molch
+501	TRANSPORT	3121 3520 0	3121 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+502	AGILITY_SHORTCUT	2486 3515 0	2489 3521 0	9	false	82,83	Climb Rocks 16534	Climb Rocks
+503	TRANSPORT	2306 3194 0	2304 3194 0	5	false	65	Pass Tree 8742	Pass Tree
+504	AGILITY_SHORTCUT	2287 3188 0	2284 3188 0	8	false		Step-over Tripwire 3921	Step-over Tripwire
+505	AGILITY_SHORTCUT	2274 3192 0	2271 3192 0	4	false	64	Enter Dense forest 3937	Enter Dense forest
+506	AGILITY_SHORTCUT	2271 3192 0	2268 3192 0	4	false	64	Enter Dense forest 3939	Enter Dense forest
+507	AGILITY_SHORTCUT	2268 3192 0	2265 3192 0	4	false	64	Enter Dense forest 3938	Enter Dense forest
+508	TRANSPORT	2241 3269 0	3265 6024 0	4	false	49	Enter City Gate 36519	Enter City Gate
+509	AGILITY_SHORTCUT	2274 3176 0	2274 3172 0	4	false		Jump Leaves 3925	Jump Leaves
+510	TRANSPORT	3264 6024 0	2240 3269 0	4	false	49	Exit City Gate 36523	Exit City Gate
+511	TRANSPORT	2464 3493 0	2465 3491 0	3	false		Open Tree Door 1967	Open Tree Door
+512	BOAT	2421 3781 0	2644 3709 0	10	false	46,8	Rellekka Mord Gunnars 1940	Rellekka Mord Gunnars
+513	BOAT	2311 3781 0	2644 3710 0	14	false	46,8	Rellekka Maria Gunnars 1882	Rellekka Maria Gunnars
+514	TRANSPORT	3104 9331 2	3105 9332 1	2	false		Climb-down Ladder 11042	Climb-down Ladder
+515	TRANSPORT	3105 9320 1	3105 9318 1	1	true		Pass-through Magic barrier 11005	Pass-through Magic barrier
+516	TRANSPORT	3104 9310 1	3104 9310 0	2	false		Climb-down Ladder 11042	Climb-down Ladder
+517	TRANSPORT	3122 9286 0	3122 9286 1	2	false		Climb-up Ladder 11041	Climb-up Ladder
+518	TRANSPORT	3121 9288 1	3189 2889 0	1	true		Climb Sand pile 10950	Climb Sand pile
+519	TRANSPORT	3196 2843 0	3193 2843 0	3	false		Go-through Shantay pass 41863	Go-through Shantay pass
+520	BOAT	3148 2842 0	3272 3143 0	8	false	8	Board Ferry 41311	Board Ferry
+521	TRANSPORT	3127 9330 0	3127 9330 1	2	false		Climb-up Ladder 11041	Climb-up Ladder
+522	TRANSPORT	3126 9330 1	3194 2926 0	1	true		Climb Sand pile 10950	Climb Sand pile
+523	TRANSPORT	3193 2925 0	3124 9328 1	1	true		Climb-down Secret entrance 11046	Climb-down Secret entrance
+524	TRANSPORT	3124 9328 1	3194 2926 0	1	true		Climb Sand pile 10950	Climb Sand pile
+525	AGILITY_SHORTCUT	3263 2817 0	3271 2817 0	2	true	69	Jump-to Stepping stone 62401	Jump-to Stepping stone
+526	SHIP	1824 3691 0	1504 3399 0	6	false	2	Land's End Veos 10726	Land's End
+527	AGILITY_SHORTCUT	1614 3570 0	1610 3570 0	2	false	81	Cross Stepping stone 29729	Cross Stepping stone
+528	AGILITY_SHORTCUT	1607 3571 0	1603 3571 0	2	false	81	Cross Stepping stone 29730	Cross Stepping stone
+529	TRANSPORT	1470 3652 0	1650 9987 0	2	false	100	Enter Hole 28915	Enter Hole
+530	TRANSPORT	1401 3536 0	1275 3559 0	7	false	7	Travel Mountain Guide 7600	1: Mount Quidamortem.
+531	TRANSPORT	3669 3452 0	3669 3454 0	2	false		Pay-toll(2-Ecto) Energy Barrier 16105	Pay-toll(2-Ecto) Energy Barrier
+532	TRANSPORT	2457 2860 0	2457 2862 0	1	true	22	Pass Magical Barrier 31616	Pass Magical Barrier
+533	AGILITY_SHORTCUT	2485 2898 0	2489 2898 0	2	true	34,35	Climb-down Rocks 31759	Climb-down Rocks
+534	TRANSPORT	3338 2827 0	3334 2827 0	8	false		Climb Climbing rocks 11948	Climb Climbing rocks
+535	AGILITY_SHORTCUT	3271 2817 0	3263 2817 0	2	true	69	Jump-to Stepping stone 62401	Jump-to Stepping stone
+536	TRANSPORT	3338 2829 0	3334 2829 0	8	false		Climb Climbing rocks 11948	Climb Climbing rocks
+537	TRANSPORT	3196 2842 0	3193 2842 0	3	false		Go-through Shantay pass 41863	Go-through Shantay pass
+538	TRANSPORT	3232 2898 0	3232 2900 0	1	true		Open Pyramid entrance 6547	Open Pyramid entrance
+539	AGILITY_SHORTCUT	3295 2708 0	3295 2704 0	2	true	62	Cross Stepping stone 43990	Cross Stepping stone
+540	AGILITY_SHORTCUT	3295 2700 0	3289 2700 0	2	true	62	Cross Stepping stone 43989	Cross Stepping stone
+541	TELEPORTATION_PORTAL	3081 3474 0	2206 2858 0	1	false	23	Enter Soul Wars Portal 40474	Enter Soul Wars Portal
+542	TRANSPORT	3084 3520 0	3084 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+543	TRANSPORT	1275 3559 0	1401 3536 0	7	false	7	Travel Mountain Guide 7600	1: The Shayzien Outpost.
+544	TRANSPORT	1275 3559 0	1272 3475 0	7	false	7	Travel Mountain Guide 7600	2: South of Quidamortem.
+545	BOAT	1342 3645 0	1408 3612 0	4	false	8	Board Boaty 33614	Shayzien
+546	TELEPORTATION_PORTAL	3614 9470 0	3104 9573 0	1	false	107,23	Enter Portal 43694	Enter Portal
+547	TRANSPORT	3104 9576 0	3105 3162 0	2	false		Climb-up Ladder 2148	Climb-up Ladder
+548	TRANSPORT	3169 3171 0	3169 9571 0	2	false		Climb-down Dark hole 5947	Climb-down Dark hole
+549	TRANSPORT	2400 5969 0	3654 3384 0	1	true		Climb-up Stairs 38601	Climb-up Stairs
+550	AGILITY_SHORTCUT	3667 3375 0	3670 3375 0	2	true	106,108	Climb Wall 39542	Climb Wall
+551	AGILITY_SHORTCUT	3670 3375 0	3673 3375 0	2	true	106,109	Climb Wall 39541	Climb Wall
+552	TRANSPORT	3627 3332 0	3627 3328 0	1	true		Enter Cracked wall 39170	Enter Cracked wall
+553	TRANSPORT	3630 3240 0	3628 3240 1	2	false		Climb-up Ladder 17974	Climb-up Ladder
+554	TRANSPORT	3626 3240 1	3624 3240 1	1	true		Jump-to Floorboards 18114	Jump-to Floorboards
+555	TRANSPORT	3622 3232 1	3622 3230 1	1	true		Jump-to Floorboards 18112	Jump-to Floorboards
+556	TRANSPORT	3623 3226 1	3623 3223 1	1	true		Jump-to Floorboards 18110	Jump-to Floorboards
+557	TRANSPORT	3626 3221 1	3625 3221 2	1	true		Climb-up Shelf 18108	Climb-up Shelf
+558	TRANSPORT	3623 3218 2	3623 3217 1	1	true		Climb-down Shelf 18106	Climb-down Shelf
+559	TRANSPORT	3621 3218 1	3623 3218 0	2	false		Climb-down Ladder 17975	Climb-down Ladder
+560	TRANSPORT	3603 3221 0	3603 3223 1	2	false		Climb-up Ladder 17974	Climb-up Ladder
+561	TRANSPORT	3601 3222 1	3598 3222 1	1	true		Jump-to Floorboards 18090	Jump-to Floorboards
+562	TRANSPORT	3595 3223 1	3594 3223 0	1	true		Climb-down Shelf 18087	Climb-down Shelf
+563	TRANSPORT	3592 3180 0	3588 3180 0	1	true		Climb-over Wall rubble 18038	Climb-over Wall rubble
+564	TRANSPORT	3589 3174 0	3590 3173 1	1	true		Climb-up Floor 18124	Climb-up Floor
+565	TRANSPORT	3601 3163 1	3605 3163 1	1	true		Climb-down Rock 17960	Climb-down Rock
+566	BOAT	3605 3163 1	3663 3277 0	13	false	75,8	Board Boat 38089	3: Slepe.
+567	TRANSPORT	3631 3218 0	3649 3219 0	1	false	110	Enter Door 32659	Enter Door
+568	TRANSPORT	3237 9858 0	3236 3458 0	2	false		Climb-up Ladder 11806	Climb-up Ladder
+569	AGILITY_SHORTCUT	3154 9905 0	3149 9906 0	2	true	111	Squeeze-through Obstacle pipe 16511	Squeeze-through Obstacle pipe
+570	AGILITY_SHORTCUT	3122 9880 0	3122 9883 0	4	false	112	Squeeze-through Obstacle pipe 62409	Squeeze-through Obstacle pipe
+571	AGILITY_SHORTCUT	3150 9905 0	3155 9906 0	2	true	111	Squeeze-through Obstacle pipe 16511	Squeeze-through Obstacle pipe
+572	AGILITY_SHORTCUT	2968 9550 0	2992 9547 0	1	false	112	Enter Tunnel 55988	Enter Tunnel
+573	TRANSPORT	3007 9550 0	3007 3150 0	1	false		Climb-up Ladder 17385	Climb-up Ladder
+574	TRANSPORT	3008 9549 0	3008 3149 0	1	false		Climb-up Ladder 17385	Climb-up Ladder
+575	TRANSPORT	2747 5374 0	3317 9603 0	3	false		Open Bone door 22945	Open Bone door
+576	TRANSPORT	3317 9612 0	3232 9610 0	8	false	55	Cellar Mistag 7299	Cellar
+577	TRANSPORT	3317 9612 0	3245 9648 0	8	false	56	Watermill Mistag 7299	Watermill
+578	TRANSPORT	3246 9646 0	3232 9610 0	8	false	56	Cellar Dartog 997	Cellar
+579	TRANSPORT	3224 9604 0	3224 9600 0	4	false	57	Squeeze-through Hole 6912	Squeeze-through Hole
+580	TRANSPORT	2705 5328 0	2701 5327 1	1	false		Climb-up Stairs 22937	Climb-up Stairs
+581	TRANSPORT	2701 5306 1	2705 5305 0	1	false		Climb-down Stairs 22938	Climb-down Stairs
+582	TRANSPORT	2620 9797 0	2623 3391 0	1	true		Climb-over Mud pile 13	Climb-over Mud pile
+583	TRANSPORT	2515 3159 0	2504 3191 0	5	false	36	Follow Elkoy 4968	Follow Elkoy
+584	TRANSPORT	2711 5206 0	3514 9521 2	1	true		Enter Blocked tunnel 22656	Enter Blocked tunnel
+585	TRANSPORT	2715 5241 0	2719 5241 3	2	false		Climb-up Ladder 22600	Climb-up Ladder
+586	TRANSPORT	2722 5249 3	2722 5255 1	1	false		Climb-down Stairs 22942	Climb-down Stairs
+587	TRANSPORT	2722 5257 1	2722 5260 0	1	false		Climb-down Stairs 22940	Climb-down Stairs
+588	TRANSPORT	2722 5268 0	2722 5272 1	1	false		Climb-up Stairs 22937	Climb-up Stairs
+589	TRANSPORT	2714 5281 1	2713 5285 0	1	false		Climb-down Stairs 22938	Climb-down Stairs
+590	TRANSPORT	2514 3619 0	2514 3617 0	2	false		Jump-across Basalt rock 4558	Jump-across Basalt rock
+591	TRANSPORT	2514 3615 0	2514 3613 0	2	false		Jump-across Basalt rock 4556	Jump-across Basalt rock
+592	TRANSPORT	2516 3611 0	2518 3611 0	2	false		Jump-across Basalt rock 4554	Jump-across Basalt rock
+593	TRANSPORT	2522 3602 0	2522 3600 0	2	false		Jump-across Basalt rock 4552	Jump-across Basalt rock
+594	TRANSPORT	2522 3597 0	2522 3595 0	2	false		Jump-to Beach 4550	Jump-to Beach
+595	AGILITY_SHORTCUT	3417 3325 0	3422 3325 0	2	true	59	Cross Stepping stone 13504	Cross Stepping stone
+596	TRANSPORT	3473 3221 0	3475 3221 0	1	true	78,79	Jump-over Low fence 12776	Jump-over Low fence
+597	TRANSPORT	3229 3109 0	3483 9510 2	1	true		Climb-down Tunnel entrance 3827	Climb-down Tunnel entrance
+598	TRANSPORT	3514 9520 2	2711 5206 0	1	true		Enter Tunnel 23596	Enter Tunnel
+599	AGILITY_SHORTCUT	2154 3072 0	2160 3072 0	6	false	102,103	Cross Stepping stone 10663	Cross Stepping stone
+600	TRANSPORT	2479 5175 0	2862 9572 0	1	true		Enter Cave exit 11836	Enter Cave exit
+601	TRANSPORT	2856 9570 0	2856 3167 0	2	false		Climb Climbing rope 18969	Climb Climbing rope
+602	TRANSPORT	1272 3475 0	1275 3559 0	7	false	7	Travel Mountain Guide 7600	2: Mount Quidamortem.
+603	AGILITY_SHORTCUT	3180 2434 0	3180 2432 0	2	true	59	Climb Rocks 57927	Climb Rocks
+604	TRANSPORT	2910 3049 0	2906 3049 0	5	false		Cross A wooden log 23644	Cross A wooden log
+605	TRANSPORT	2880 2951 0	2876 2952 0	2	false	70	Climb over Broken cart 28931	Climb over Broken cart
+606	TRANSPORT	3447 9822 0	3460 9813 0	1	true		Enter Cave entrance 16308	Enter Cave entrance
+607	TRANSPORT	3466 9820 0	3481 9824 0	1	true		Enter Cave entrance 5046	Enter Cave entrance
+608	TRANSPORT	2776 3211 0	2834 2951 0	5	false	70,71	Board Travel cart 2230	Board Travel cart
+609	TRANSPORT	2876 2952 0	2880 2952 0	2	false	70	Climb over Broken cart 28931	Climb over Broken cart
+610	TRANSPORT	2443 3414 0	2445 3416 1	1	true		Climb-up Staircase 16675	Climb-up Staircase
+611	TRANSPORT	2893 10189 0	2896 10188 1	1	true		Climb-up Stairs 6087	Climb-up Stairs
+612	TRANSPORT	2862 10189 1	2865 10188 0	1	true		Climb-down Stairs 6088	Climb-down Stairs
+613	TRANSPORT	3018 3231 0	2962 9650 0	1	true		Climb-down Manhole 10321	Climb-down Manhole
+614	TRANSPORT	2962 9650 0	3018 3233 0	2	false		Climb-up Ladder 10309	Climb-up Ladder
+615	BOAT	3522 3286 0	3498 3380 0	18	false	76,77,8	Quick-board Swamp Boaty 6969	Quick-board Swamp Boaty
+616	AGILITY_SHORTCUT	3714 2969 0	3708 2969 0	2	true	112	Jump-to Stepping stone 19042	Jump-to Stepping stone
+617	TRANSPORT	2796 2797 1	2796 2793 0	1	false		Climb-down Staircase	Climb-down Staircase
+618	TRANSPORT	2803 2735 0	2803 2733 2	1	false		Climb-up Bamboo Ladder 4743	Climb-up Bamboo Ladder
+619	TRANSPORT	2803 2727 2	2806 2724 0	4	false		Jump off End of bridge 4745	Jump off End of bridge
+620	BOAT	2803 2706 0	2892 2724 0	5	false	8	Travel Lumdo 1454	Travel Lumdo
+621	TRANSPORT	2896 2727 0	2393 3465 0	4	false		Travel Waydar 1446	Travel Waydar
+622	TRANSPORT	2419 3471 0	2421 3473 1	1	true		Climb-up Staircase 16675	Climb-up Staircase
+623	TRANSPORT	2421 3473 1	2422 3472 0	1	true		Climb-down Staircase 16677	Climb-down Staircase
+624	TRANSPORT	3082 3520 0	3082 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+625	TRANSPORT	2880 2952 0	2876 2952 0	2	false	70	Climb over Broken cart 28931	Climb over Broken cart
+626	TRANSPORT	2181 3329 0	3208 6081 0	4	false	49	Enter City Gate 36519	Enter City Gate
+627	TRANSPORT	1665 10051 0	1639 3673 0	2	false		Climb-up Vine ladder 28894	Climb-up Vine ladder
+628	TRANSPORT	3189 2887 0	3120 9288 1	1	true		Climb-down Secret entrance 11047	Climb-down Secret entrance
+629	TRANSPORT	3120 9288 1	3189 2889 0	1	true		Climb Sand pile 10950	Climb Sand pile
+630	TRANSPORT	3757 3870 1	3753 3869 0	1	true		Descend Stairs 30682	Descend Stairs
+631	TRANSPORT	3137 3520 0	3137 3523 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+632	TRANSPORT	2918 3437 0	2916 3438 0	1	true		Climb-over Stile 993	Climb-over Stile
+633	TRANSPORT	3056 3523 0	3056 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+634	TRANSPORT	2966 3523 0	2966 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+635	TRANSPORT	3075 3523 0	3075 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+636	TRANSPORT	3076 3523 0	3076 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+637	TRANSPORT	3137 3523 0	3137 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+638	TRANSPORT	3265 3523 0	3265 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+639	TRANSPORT	3155 3635 0	3154 3635 0	2	false		Pass-Through Barrier 39653	Pass-Through Barrier
+640	TRANSPORT	3247 3523 0	3247 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+641	TRANSPORT	3246 3523 0	3246 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+642	TRANSPORT	3064 3523 0	3064 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+643	TRANSPORT	3282 3523 0	3282 3520 0	4	false		Cross Wilderness Ditch 23271	Cross Wilderness Ditch
+644	AGILITY_SHORTCUT	3268 3629 0	3268 3625 0	2	false	105	Cross Stepping stone 53237	Cross Stepping stone
+645	TRANSPORT	3134 3640 0	3134 3639 0	2	false		Pass-Through Barrier 39653	Pass-Through Barrier
+646	TRANSPORT	2465 3495 3	2465 3495 2	2	false		Climb-down Ladder 16679	Climb-down Ladder
+647	TRANSPORT	2465 3495 2	2465 3495 1	2	false		Climb-down Ladder 2884	Climb-down Ladder
+648	TRANSPORT	2465 3495 1	2465 3495 0	2	false		Climb-down Ladder 16684	Climb-down Ladder
+649	TRANSPORT	2465 3493 0	2465 3491 0	3	false		Open Tree Door 1967	Open Tree Door
+650	AGILITY_SHORTCUT	3028 9806 0	3035 9806 0	2	true	1	Squeeze-through Crevice 16543	Squeeze-through Crevice

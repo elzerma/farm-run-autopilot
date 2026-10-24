@@ -28,8 +28,8 @@ id	type	landing	ticks	consumable	wilderness	needs	name	menu
 25	TELEPORTATION_ITEM	216	4	false	20	145,146	Morytania legs: Slime Pit	
 26	TELEPORTATION_ITEM	217	4	false	20	147,148	Morytania legs: Burgh de Rott	
 27	TELEPORTATION_ITEM	218	4	true	20	149,150,151	Fremennik sea boots: Teleport	
-28	TELEPORTATION_ITEM	218	4	true	20	152,150,153	Fremennik sea boots: Teleport	
-29	TELEPORTATION_ITEM	218	4	true	20	150,154,155	Fremennik sea boots: Teleport	
+28	TELEPORTATION_ITEM	218	4	true	20	149,152,153	Fremennik sea boots: Teleport	
+29	TELEPORTATION_ITEM	218	4	true	20	154,149,155	Fremennik sea boots: Teleport	
 30	TELEPORTATION_ITEM	218	4	false	20	156,157	Fremennik sea boots: Teleport	
 31	TELEPORTATION_ITEM	219	4	true	20	158,159,160	Kandarin headgear 3: Teleport	
 32	TELEPORTATION_ITEM	219	4	false	20	161,162	Kandarin headgear 4: Teleport	
@@ -96,15 +96,15 @@ id	type	landing	ticks	consumable	wilderness	needs	name	menu
 93	TELEPORTATION_ITEM	265	4	true	20	212	Burning amulet: Bandit Camp	
 94	TELEPORTATION_ITEM	266	4	true	20	212	Burning amulet: Lava Maze	
 95	TELEPORTATION_ITEM	267	4	true	20	213,214,215	Teleport to House tablet	
-96	TELEPORTATION_ITEM	267	4	true	20	216,213,215	Teleport to House tablet (Outside)	
+96	TELEPORTATION_ITEM	267	4	true	20	213,216,215	Teleport to House tablet (Outside)	
 97	TELEPORTATION_ITEM	268	4	true	20	217,214,215	Teleport to House tablet	
-98	TELEPORTATION_ITEM	268	4	true	20	217,216,215	Teleport to House tablet (Outside)	
-99	TELEPORTATION_ITEM	269	4	true	20	218,214,215	Teleport to House tablet	
-100	TELEPORTATION_ITEM	269	4	true	20	218,216,215	Teleport to House tablet (Outside)	
+98	TELEPORTATION_ITEM	268	4	true	20	216,217,215	Teleport to House tablet (Outside)	
+99	TELEPORTATION_ITEM	269	4	true	20	214,218,215	Teleport to House tablet	
+100	TELEPORTATION_ITEM	269	4	true	20	216,218,215	Teleport to House tablet (Outside)	
 101	TELEPORTATION_ITEM	270	4	true	20	214,219,215	Teleport to House tablet	
 102	TELEPORTATION_ITEM	270	4	true	20	216,219,215	Teleport to House tablet (Outside)	
-103	TELEPORTATION_ITEM	271	4	true	20	214,220,215	Teleport to House tablet	
-104	TELEPORTATION_ITEM	271	4	true	20	216,220,215	Teleport to House tablet (Outside)	
+103	TELEPORTATION_ITEM	271	4	true	20	220,214,215	Teleport to House tablet	
+104	TELEPORTATION_ITEM	271	4	true	20	220,216,215	Teleport to House tablet (Outside)	
 105	TELEPORTATION_ITEM	272	4	true	20	221,214,215	Teleport to House tablet	
 106	TELEPORTATION_ITEM	272	4	true	20	216,221,215	Teleport to House tablet (Outside)	
 107	TELEPORTATION_ITEM	273	4	true	20	214,222,215	Teleport to House tablet	
@@ -193,9 +193,9 @@ id	type	landing	ticks	consumable	wilderness	needs	name	menu
 190	TELEPORTATION_ITEM	326	4	false	20	310,311	Crafting cape: Teleport	
 191	TELEPORTATION_ITEM	267	4	false	20	312,213,214,313	Construction cape: Home	
 192	TELEPORTATION_ITEM	268	4	false	20	312,217,214,313	Construction cape: Home	
-193	TELEPORTATION_ITEM	269	4	false	20	312,218,214,313	Construction cape: Home	
+193	TELEPORTATION_ITEM	269	4	false	20	312,214,218,313	Construction cape: Home	
 194	TELEPORTATION_ITEM	270	4	false	20	312,214,219,313	Construction cape: Home	
-195	TELEPORTATION_ITEM	271	4	false	20	312,214,220,313	Construction cape: Home	
+195	TELEPORTATION_ITEM	271	4	false	20	312,220,214,313	Construction cape: Home	
 196	TELEPORTATION_ITEM	272	4	false	20	312,221,214,313	Construction cape: Home	
 197	TELEPORTATION_ITEM	273	4	false	20	312,214,222,313	Construction cape: Home	
 198	TELEPORTATION_ITEM	274	4	false	20	312,223,214,313	Construction cape: Home	
@@ -218,9 +218,9 @@ id	type	landing	ticks	consumable	wilderness	needs	name	menu
 215	TELEPORTATION_ITEM	332	4	false	20	321,322	Strength cape: Teleport	
 216	TELEPORTATION_ITEM	267	4	false	20	213,214,323	Max cape: Tele to POH	
 217	TELEPORTATION_ITEM	268	4	false	20	217,214,323	Max cape: Tele to POH	
-218	TELEPORTATION_ITEM	269	4	false	20	218,214,323	Max cape: Tele to POH	
+218	TELEPORTATION_ITEM	269	4	false	20	214,218,323	Max cape: Tele to POH	
 219	TELEPORTATION_ITEM	270	4	false	20	214,219,323	Max cape: Tele to POH	
-220	TELEPORTATION_ITEM	271	4	false	20	214,220,323	Max cape: Tele to POH	
+220	TELEPORTATION_ITEM	271	4	false	20	220,214,323	Max cape: Tele to POH	
 221	TELEPORTATION_ITEM	272	4	false	20	221,214,323	Max cape: Tele to POH	
 222	TELEPORTATION_ITEM	273	4	false	20	214,222,323	Max cape: Tele to POH	
 223	TELEPORTATION_ITEM	274	4	false	20	223,214,323	Max cape: Tele to POH	
@@ -245,22 +245,22 @@ id	type	landing	ticks	consumable	wilderness	needs	name	menu
 242	TELEPORTATION_ITEM	333	4	false	20	323	Max cape: Other Teleports: The Pandemonium	
 243	TELEPORTATION_ITEM	334	4	false	20	324	Quest point cape: Teleport	
 244	TELEPORTATION_ITEM	335	4	false	20	325	Music cape: Teleport	
-245	TELEPORTATION_ITEM	336	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: 1. Two-pints	
-246	TELEPORTATION_ITEM	337	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: 2. Jarr	
-247	TELEPORTATION_ITEM	338	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: 3. Sir Rebral	
-248	TELEPORTATION_ITEM	339	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: 4. Thorodin	
-249	TELEPORTATION_ITEM	340	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: 5. Flax keeper	
-250	TELEPORTATION_ITEM	341	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: 6. Pirate Jackie the Fruit	
-251	TELEPORTATION_ITEM	342	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: 7. Kaleb Paramaya	
-252	TELEPORTATION_ITEM	343	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: 8. Jungle forester	
-253	TELEPORTATION_ITEM	344	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: 9. TzHaar-Mej	
-254	TELEPORTATION_ITEM	345	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: A. Elise	
-255	TELEPORTATION_ITEM	346	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: B. Hatius Cosaintus	
-256	TELEPORTATION_ITEM	347	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: C. Le-sabrè	
-257	TELEPORTATION_ITEM	348	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: D. Toby	
-258	TELEPORTATION_ITEM	349	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: E. Lesser Fanatic	
-259	TELEPORTATION_ITEM	350	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: F. Elder Gnome child	
-260	TELEPORTATION_ITEM	351	4	false	20	145,156,128,326,137,171,161,327,328,166,132,329	Achievement diary cape: G. Twiggy O'Korn	
+245	TELEPORTATION_ITEM	336	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: 1. Two-pints	
+246	TELEPORTATION_ITEM	337	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: 2. Jarr	
+247	TELEPORTATION_ITEM	338	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: 3. Sir Rebral	
+248	TELEPORTATION_ITEM	339	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: 4. Thorodin	
+249	TELEPORTATION_ITEM	340	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: 5. Flax keeper	
+250	TELEPORTATION_ITEM	341	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: 6. Pirate Jackie the Fruit	
+251	TELEPORTATION_ITEM	342	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: 7. Kaleb Paramaya	
+252	TELEPORTATION_ITEM	343	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: 8. Jungle forester	
+253	TELEPORTATION_ITEM	344	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: 9. TzHaar-Mej	
+254	TELEPORTATION_ITEM	345	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: A. Elise	
+255	TELEPORTATION_ITEM	346	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: B. Hatius Cosaintus	
+256	TELEPORTATION_ITEM	347	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: C. Le-sabrè	
+257	TELEPORTATION_ITEM	348	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: D. Toby	
+258	TELEPORTATION_ITEM	349	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: E. Lesser Fanatic	
+259	TELEPORTATION_ITEM	350	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: F. Elder Gnome child	
+260	TELEPORTATION_ITEM	351	4	false	20	132,171,161,326,137,128,145,327,156,166,328,329	Achievement diary cape: G. Twiggy O'Korn	
 261	TELEPORTATION_ITEM	352	4	false	20	330	Ectophial	
 262	TELEPORTATION_ITEM	353	4	true	20	331	Teleport crystal: Lletya	
 263	TELEPORTATION_ITEM	354	4	true	20	49,331	Teleport crystal: Prifddinas	
@@ -277,17 +277,17 @@ id	type	landing	ticks	consumable	wilderness	needs	name	menu
 274	TELEPORTATION_ITEM	358	4	false	20	156,337	Enchanted lyre (i): Jatizso	
 275	TELEPORTATION_ITEM	359	4	false	20	156,337	Enchanted lyre (i): Neitiznot	
 276	TELEPORTATION_ITEM	360	4	false	20	338	Camulet: Enakhra's Temple	
-277	TELEPORTATION_ITEM	361	4	false	20	135,338	Camulet: Bandit Camp Quarry	
+277	TELEPORTATION_ITEM	361	4	false	20	134,338	Camulet: Bandit Camp Quarry	
 278	TELEPORTATION_ITEM	362	4	true	20	339,340,341	Kharedst's memoirs: Lunch by the Lancalliums	
-279	TELEPORTATION_ITEM	363	4	true	20	339,342,341	Kharedst's memoirs: The Fisher's Flute	
-280	TELEPORTATION_ITEM	364	4	true	20	339,343,341	Kharedst's memoirs: History and Hearsay	
-281	TELEPORTATION_ITEM	365	4	true	20	339,344,341	Kharedst's memoirs: Jewelry of Jubilation	
-282	TELEPORTATION_ITEM	366	4	true	20	339,345,341	Kharedst's memoirs: A Dark Disposition	
+279	TELEPORTATION_ITEM	363	4	true	20	340,342,341	Kharedst's memoirs: The Fisher's Flute	
+280	TELEPORTATION_ITEM	364	4	true	20	340,343,341	Kharedst's memoirs: History and Hearsay	
+281	TELEPORTATION_ITEM	365	4	true	20	340,344,341	Kharedst's memoirs: Jewelry of Jubilation	
+282	TELEPORTATION_ITEM	366	4	true	20	340,345,341	Kharedst's memoirs: A Dark Disposition	
 283	TELEPORTATION_ITEM	362	4	true	20	339,340,346	Book of the dead: Lunch by the Lancalliums	
-284	TELEPORTATION_ITEM	363	4	true	20	339,342,346	Book of the dead: The Fisher's Flute	
-285	TELEPORTATION_ITEM	364	4	true	20	339,343,346	Book of the dead: History and Hearsay	
-286	TELEPORTATION_ITEM	365	4	true	20	339,344,346	Book of the dead: Jewelry of Jubilation	
-287	TELEPORTATION_ITEM	366	4	true	20	339,345,346	Book of the dead: A Dark Disposition	
+284	TELEPORTATION_ITEM	363	4	true	20	340,342,346	Book of the dead: The Fisher's Flute	
+285	TELEPORTATION_ITEM	364	4	true	20	340,343,346	Book of the dead: History and Hearsay	
+286	TELEPORTATION_ITEM	365	4	true	20	340,344,346	Book of the dead: Jewelry of Jubilation	
+287	TELEPORTATION_ITEM	366	4	true	20	340,345,346	Book of the dead: A Dark Disposition	
 288	TELEPORTATION_ITEM	367	4	false	20	347	Drakan's medallion: Ver Sinhaza	
 289	TELEPORTATION_ITEM	368	4	false	20	348,347	Drakan's medallion: Darkmeyer	
 290	TELEPORTATION_ITEM	369	4	false	20	347	Drakan's medallion: Slepe	
@@ -443,287 +443,287 @@ id	type	landing	ticks	consumable	wilderness	needs	name	menu
 440	TELEPORTATION_ITEM	519	4	false	30	382	Trinket of fairies: Tool Lep - White Wolf Mountain	
 441	TELEPORTATION_ITEM	520	4	false	30	382	Trinket of fairies: Tool Lep - Yanille	
 442	TELEPORTATION_MINIGAME	521	24	false	0	390,391,392	Barbarian Assault Minigame Teleport	
-443	TELEPORTATION_MINIGAME	521	24	false	0	393,390,391	Barbarian Assault Minigame Teleport	
-444	TELEPORTATION_MINIGAME	521	21	false	0	394,390,391	Barbarian Assault Minigame Teleport	
-445	TELEPORTATION_MINIGAME	521	19	false	0	390,395,391	Barbarian Assault Minigame Teleport	
-446	TELEPORTATION_MINIGAME	521	24	false	0	390,391,396	Barbarian Assault Minigame Teleport	
-447	TELEPORTATION_MINIGAME	521	24	false	0	390,391,397	Barbarian Assault Minigame Teleport	
-448	TELEPORTATION_MINIGAME	521	25	false	0	390,391,398	Barbarian Assault Minigame Teleport	
-449	TELEPORTATION_MINIGAME	521	20	false	0	390,391,399	Barbarian Assault Minigame Teleport	
-450	TELEPORTATION_MINIGAME	521	21	false	0	390,391,400	Barbarian Assault Minigame Teleport	
-451	TELEPORTATION_MINIGAME	521	21	false	0	390,391,401	Barbarian Assault Minigame Teleport	
-452	TELEPORTATION_MINIGAME	521	19	false	0	390,391,402	Barbarian Assault Minigame Teleport	
-453	TELEPORTATION_MINIGAME	521	23	false	0	390,391,403	Barbarian Assault Minigame Teleport	
-454	TELEPORTATION_MINIGAME	522	24	false	0	404,391,392	Blast Furnace Minigame Teleport	
-455	TELEPORTATION_MINIGAME	522	24	false	0	404,393,391	Blast Furnace Minigame Teleport	
-456	TELEPORTATION_MINIGAME	522	21	false	0	404,394,391	Blast Furnace Minigame Teleport	
-457	TELEPORTATION_MINIGAME	522	19	false	0	404,395,391	Blast Furnace Minigame Teleport	
-458	TELEPORTATION_MINIGAME	522	24	false	0	404,391,396	Blast Furnace Minigame Teleport	
-459	TELEPORTATION_MINIGAME	522	24	false	0	404,391,397	Blast Furnace Minigame Teleport	
-460	TELEPORTATION_MINIGAME	522	25	false	0	404,391,398	Blast Furnace Minigame Teleport	
-461	TELEPORTATION_MINIGAME	522	20	false	0	404,391,399	Blast Furnace Minigame Teleport	
-462	TELEPORTATION_MINIGAME	522	21	false	0	404,391,400	Blast Furnace Minigame Teleport	
-463	TELEPORTATION_MINIGAME	522	21	false	0	404,391,401	Blast Furnace Minigame Teleport	
-464	TELEPORTATION_MINIGAME	522	19	false	0	404,391,402	Blast Furnace Minigame Teleport	
-465	TELEPORTATION_MINIGAME	522	23	false	0	404,391,403	Blast Furnace Minigame Teleport	
-466	TELEPORTATION_MINIGAME	226	24	false	0	391,392	Burthorpe Games Room Minigame Teleport	
-467	TELEPORTATION_MINIGAME	226	24	false	0	393,391	Burthorpe Games Room Minigame Teleport	
-468	TELEPORTATION_MINIGAME	226	21	false	0	394,391	Burthorpe Games Room Minigame Teleport	
-469	TELEPORTATION_MINIGAME	226	19	false	0	391,395	Burthorpe Games Room Minigame Teleport	
-470	TELEPORTATION_MINIGAME	226	24	false	0	391,396	Burthorpe Games Room Minigame Teleport	
-471	TELEPORTATION_MINIGAME	226	24	false	0	391,397	Burthorpe Games Room Minigame Teleport	
-472	TELEPORTATION_MINIGAME	226	25	false	0	391,398	Burthorpe Games Room Minigame Teleport	
-473	TELEPORTATION_MINIGAME	226	20	false	0	391,399	Burthorpe Games Room Minigame Teleport	
-474	TELEPORTATION_MINIGAME	226	21	false	0	391,400	Burthorpe Games Room Minigame Teleport	
-475	TELEPORTATION_MINIGAME	226	21	false	0	391,401	Burthorpe Games Room Minigame Teleport	
-476	TELEPORTATION_MINIGAME	226	19	false	0	391,402	Burthorpe Games Room Minigame Teleport	
-477	TELEPORTATION_MINIGAME	226	23	false	0	391,403	Burthorpe Games Room Minigame Teleport	
-478	TELEPORTATION_MINIGAME	523	24	false	0	391,392	Castle Wars Minigame Teleport	
-479	TELEPORTATION_MINIGAME	523	24	false	0	393,391	Castle Wars Minigame Teleport	
-480	TELEPORTATION_MINIGAME	523	21	false	0	394,391	Castle Wars Minigame Teleport	
-481	TELEPORTATION_MINIGAME	523	19	false	0	391,395	Castle Wars Minigame Teleport	
-482	TELEPORTATION_MINIGAME	523	24	false	0	391,396	Castle Wars Minigame Teleport	
-483	TELEPORTATION_MINIGAME	523	24	false	0	391,397	Castle Wars Minigame Teleport	
-484	TELEPORTATION_MINIGAME	523	25	false	0	391,398	Castle Wars Minigame Teleport	
-485	TELEPORTATION_MINIGAME	523	20	false	0	391,399	Castle Wars Minigame Teleport	
-486	TELEPORTATION_MINIGAME	523	21	false	0	391,400	Castle Wars Minigame Teleport	
-487	TELEPORTATION_MINIGAME	523	21	false	0	391,401	Castle Wars Minigame Teleport	
-488	TELEPORTATION_MINIGAME	523	19	false	0	391,402	Castle Wars Minigame Teleport	
-489	TELEPORTATION_MINIGAME	523	23	false	0	391,403	Castle Wars Minigame Teleport	
-490	TELEPORTATION_MINIGAME	232	24	false	0	391,392	Clan Wars Minigame Teleport	
-491	TELEPORTATION_MINIGAME	232	24	false	0	393,391	Clan Wars Minigame Teleport	
-492	TELEPORTATION_MINIGAME	232	21	false	0	394,391	Clan Wars Minigame Teleport	
-493	TELEPORTATION_MINIGAME	232	19	false	0	391,395	Clan Wars Minigame Teleport	
-494	TELEPORTATION_MINIGAME	232	24	false	0	391,396	Clan Wars Minigame Teleport	
-495	TELEPORTATION_MINIGAME	232	24	false	0	391,397	Clan Wars Minigame Teleport	
-496	TELEPORTATION_MINIGAME	232	25	false	0	391,398	Clan Wars Minigame Teleport	
-497	TELEPORTATION_MINIGAME	232	20	false	0	391,399	Clan Wars Minigame Teleport	
-498	TELEPORTATION_MINIGAME	232	21	false	0	391,400	Clan Wars Minigame Teleport	
-499	TELEPORTATION_MINIGAME	232	21	false	0	391,401	Clan Wars Minigame Teleport	
-500	TELEPORTATION_MINIGAME	232	19	false	0	391,402	Clan Wars Minigame Teleport	
-501	TELEPORTATION_MINIGAME	232	23	false	0	391,403	Clan Wars Minigame Teleport	
-502	TELEPORTATION_MINIGAME	524	24	false	0	405,391,392	Fishing Trawler Minigame Teleport	
-503	TELEPORTATION_MINIGAME	524	24	false	0	405,393,391	Fishing Trawler Minigame Teleport	
-504	TELEPORTATION_MINIGAME	524	21	false	0	405,394,391	Fishing Trawler Minigame Teleport	
-505	TELEPORTATION_MINIGAME	524	19	false	0	405,391,395	Fishing Trawler Minigame Teleport	
-506	TELEPORTATION_MINIGAME	524	24	false	0	405,391,396	Fishing Trawler Minigame Teleport	
-507	TELEPORTATION_MINIGAME	524	24	false	0	405,391,397	Fishing Trawler Minigame Teleport	
-508	TELEPORTATION_MINIGAME	524	25	false	0	405,391,398	Fishing Trawler Minigame Teleport	
-509	TELEPORTATION_MINIGAME	524	20	false	0	405,391,399	Fishing Trawler Minigame Teleport	
-510	TELEPORTATION_MINIGAME	524	21	false	0	405,391,400	Fishing Trawler Minigame Teleport	
-511	TELEPORTATION_MINIGAME	524	21	false	0	405,391,401	Fishing Trawler Minigame Teleport	
-512	TELEPORTATION_MINIGAME	524	19	false	0	405,391,402	Fishing Trawler Minigame Teleport	
-513	TELEPORTATION_MINIGAME	524	23	false	0	405,391,403	Fishing Trawler Minigame Teleport	
-514	TELEPORTATION_MINIGAME	525	24	false	0	391,392	Giant's Foundry Minigame Teleport	
-515	TELEPORTATION_MINIGAME	525	24	false	0	393,391	Giant's Foundry Minigame Teleport	
-516	TELEPORTATION_MINIGAME	525	21	false	0	394,391	Giant's Foundry Minigame Teleport	
-517	TELEPORTATION_MINIGAME	525	19	false	0	391,395	Giant's Foundry Minigame Teleport	
-518	TELEPORTATION_MINIGAME	525	24	false	0	391,396	Giant's Foundry Minigame Teleport	
-519	TELEPORTATION_MINIGAME	525	24	false	0	391,397	Giant's Foundry Minigame Teleport	
-520	TELEPORTATION_MINIGAME	525	25	false	0	391,398	Giant's Foundry Minigame Teleport	
-521	TELEPORTATION_MINIGAME	525	20	false	0	391,399	Giant's Foundry Minigame Teleport	
-522	TELEPORTATION_MINIGAME	525	21	false	0	391,400	Giant's Foundry Minigame Teleport	
-523	TELEPORTATION_MINIGAME	525	21	false	0	391,401	Giant's Foundry Minigame Teleport	
-524	TELEPORTATION_MINIGAME	525	19	false	0	391,402	Giant's Foundry Minigame Teleport	
-525	TELEPORTATION_MINIGAME	525	23	false	0	391,403	Giant's Foundry Minigame Teleport	
-526	TELEPORTATION_MINIGAME	526	24	false	0	107,391,392	Guardians of the Rift Minigame Teleport	
-527	TELEPORTATION_MINIGAME	526	24	false	0	107,393,391	Guardians of the Rift Minigame Teleport	
-528	TELEPORTATION_MINIGAME	526	21	false	0	107,394,391	Guardians of the Rift Minigame Teleport	
-529	TELEPORTATION_MINIGAME	526	19	false	0	107,391,395	Guardians of the Rift Minigame Teleport	
-530	TELEPORTATION_MINIGAME	526	24	false	0	107,391,396	Guardians of the Rift Minigame Teleport	
-531	TELEPORTATION_MINIGAME	526	24	false	0	107,391,397	Guardians of the Rift Minigame Teleport	
-532	TELEPORTATION_MINIGAME	526	25	false	0	107,391,398	Guardians of the Rift Minigame Teleport	
-533	TELEPORTATION_MINIGAME	526	20	false	0	107,391,399	Guardians of the Rift Minigame Teleport	
-534	TELEPORTATION_MINIGAME	526	21	false	0	107,391,400	Guardians of the Rift Minigame Teleport	
-535	TELEPORTATION_MINIGAME	526	21	false	0	107,391,401	Guardians of the Rift Minigame Teleport	
-536	TELEPORTATION_MINIGAME	526	19	false	0	107,391,402	Guardians of the Rift Minigame Teleport	
-537	TELEPORTATION_MINIGAME	526	23	false	0	107,391,403	Guardians of the Rift Minigame Teleport	
-538	TELEPORTATION_MINIGAME	232	24	false	0	391,392	Last Man Standing Minigame Teleport	
-539	TELEPORTATION_MINIGAME	232	24	false	0	393,391	Last Man Standing Minigame Teleport	
-540	TELEPORTATION_MINIGAME	232	21	false	0	394,391	Last Man Standing Minigame Teleport	
-541	TELEPORTATION_MINIGAME	232	19	false	0	391,395	Last Man Standing Minigame Teleport	
-542	TELEPORTATION_MINIGAME	232	24	false	0	391,396	Last Man Standing Minigame Teleport	
-543	TELEPORTATION_MINIGAME	232	24	false	0	391,397	Last Man Standing Minigame Teleport	
-544	TELEPORTATION_MINIGAME	232	25	false	0	391,398	Last Man Standing Minigame Teleport	
-545	TELEPORTATION_MINIGAME	232	20	false	0	391,399	Last Man Standing Minigame Teleport	
-546	TELEPORTATION_MINIGAME	232	21	false	0	391,400	Last Man Standing Minigame Teleport	
-547	TELEPORTATION_MINIGAME	232	21	false	0	391,401	Last Man Standing Minigame Teleport	
-548	TELEPORTATION_MINIGAME	232	19	false	0	391,402	Last Man Standing Minigame Teleport	
-549	TELEPORTATION_MINIGAME	232	23	false	0	391,403	Last Man Standing Minigame Teleport	
+443	TELEPORTATION_MINIGAME	521	24	false	0	390,393,392	Barbarian Assault Minigame Teleport	
+444	TELEPORTATION_MINIGAME	521	21	false	0	390,394,392	Barbarian Assault Minigame Teleport	
+445	TELEPORTATION_MINIGAME	521	19	false	0	390,392,395	Barbarian Assault Minigame Teleport	
+446	TELEPORTATION_MINIGAME	521	24	false	0	390,396,392	Barbarian Assault Minigame Teleport	
+447	TELEPORTATION_MINIGAME	521	24	false	0	390,397,392	Barbarian Assault Minigame Teleport	
+448	TELEPORTATION_MINIGAME	521	25	false	0	390,398,392	Barbarian Assault Minigame Teleport	
+449	TELEPORTATION_MINIGAME	521	20	false	0	390,399,392	Barbarian Assault Minigame Teleport	
+450	TELEPORTATION_MINIGAME	521	21	false	0	390,400,392	Barbarian Assault Minigame Teleport	
+451	TELEPORTATION_MINIGAME	521	21	false	0	390,401,392	Barbarian Assault Minigame Teleport	
+452	TELEPORTATION_MINIGAME	521	19	false	0	390,402,392	Barbarian Assault Minigame Teleport	
+453	TELEPORTATION_MINIGAME	521	23	false	0	390,403,392	Barbarian Assault Minigame Teleport	
+454	TELEPORTATION_MINIGAME	522	24	false	0	391,392,404	Blast Furnace Minigame Teleport	
+455	TELEPORTATION_MINIGAME	522	24	false	0	393,392,404	Blast Furnace Minigame Teleport	
+456	TELEPORTATION_MINIGAME	522	21	false	0	394,392,404	Blast Furnace Minigame Teleport	
+457	TELEPORTATION_MINIGAME	522	19	false	0	392,395,404	Blast Furnace Minigame Teleport	
+458	TELEPORTATION_MINIGAME	522	24	false	0	396,392,404	Blast Furnace Minigame Teleport	
+459	TELEPORTATION_MINIGAME	522	24	false	0	397,392,404	Blast Furnace Minigame Teleport	
+460	TELEPORTATION_MINIGAME	522	25	false	0	398,392,404	Blast Furnace Minigame Teleport	
+461	TELEPORTATION_MINIGAME	522	20	false	0	399,392,404	Blast Furnace Minigame Teleport	
+462	TELEPORTATION_MINIGAME	522	21	false	0	400,392,404	Blast Furnace Minigame Teleport	
+463	TELEPORTATION_MINIGAME	522	21	false	0	401,392,404	Blast Furnace Minigame Teleport	
+464	TELEPORTATION_MINIGAME	522	19	false	0	402,392,404	Blast Furnace Minigame Teleport	
+465	TELEPORTATION_MINIGAME	522	23	false	0	403,392,404	Blast Furnace Minigame Teleport	
+466	TELEPORTATION_MINIGAME	226	24	false	0	392,391	Burthorpe Games Room Minigame Teleport	
+467	TELEPORTATION_MINIGAME	226	24	false	0	392,393	Burthorpe Games Room Minigame Teleport	
+468	TELEPORTATION_MINIGAME	226	21	false	0	392,394	Burthorpe Games Room Minigame Teleport	
+469	TELEPORTATION_MINIGAME	226	19	false	0	392,395	Burthorpe Games Room Minigame Teleport	
+470	TELEPORTATION_MINIGAME	226	24	false	0	392,396	Burthorpe Games Room Minigame Teleport	
+471	TELEPORTATION_MINIGAME	226	24	false	0	392,397	Burthorpe Games Room Minigame Teleport	
+472	TELEPORTATION_MINIGAME	226	25	false	0	392,398	Burthorpe Games Room Minigame Teleport	
+473	TELEPORTATION_MINIGAME	226	20	false	0	392,399	Burthorpe Games Room Minigame Teleport	
+474	TELEPORTATION_MINIGAME	226	21	false	0	392,400	Burthorpe Games Room Minigame Teleport	
+475	TELEPORTATION_MINIGAME	226	21	false	0	392,401	Burthorpe Games Room Minigame Teleport	
+476	TELEPORTATION_MINIGAME	226	19	false	0	392,402	Burthorpe Games Room Minigame Teleport	
+477	TELEPORTATION_MINIGAME	226	23	false	0	392,403	Burthorpe Games Room Minigame Teleport	
+478	TELEPORTATION_MINIGAME	523	24	false	0	392,391	Castle Wars Minigame Teleport	
+479	TELEPORTATION_MINIGAME	523	24	false	0	392,393	Castle Wars Minigame Teleport	
+480	TELEPORTATION_MINIGAME	523	21	false	0	392,394	Castle Wars Minigame Teleport	
+481	TELEPORTATION_MINIGAME	523	19	false	0	392,395	Castle Wars Minigame Teleport	
+482	TELEPORTATION_MINIGAME	523	24	false	0	392,396	Castle Wars Minigame Teleport	
+483	TELEPORTATION_MINIGAME	523	24	false	0	392,397	Castle Wars Minigame Teleport	
+484	TELEPORTATION_MINIGAME	523	25	false	0	392,398	Castle Wars Minigame Teleport	
+485	TELEPORTATION_MINIGAME	523	20	false	0	392,399	Castle Wars Minigame Teleport	
+486	TELEPORTATION_MINIGAME	523	21	false	0	392,400	Castle Wars Minigame Teleport	
+487	TELEPORTATION_MINIGAME	523	21	false	0	392,401	Castle Wars Minigame Teleport	
+488	TELEPORTATION_MINIGAME	523	19	false	0	392,402	Castle Wars Minigame Teleport	
+489	TELEPORTATION_MINIGAME	523	23	false	0	392,403	Castle Wars Minigame Teleport	
+490	TELEPORTATION_MINIGAME	232	24	false	0	392,391	Clan Wars Minigame Teleport	
+491	TELEPORTATION_MINIGAME	232	24	false	0	392,393	Clan Wars Minigame Teleport	
+492	TELEPORTATION_MINIGAME	232	21	false	0	392,394	Clan Wars Minigame Teleport	
+493	TELEPORTATION_MINIGAME	232	19	false	0	392,395	Clan Wars Minigame Teleport	
+494	TELEPORTATION_MINIGAME	232	24	false	0	392,396	Clan Wars Minigame Teleport	
+495	TELEPORTATION_MINIGAME	232	24	false	0	392,397	Clan Wars Minigame Teleport	
+496	TELEPORTATION_MINIGAME	232	25	false	0	392,398	Clan Wars Minigame Teleport	
+497	TELEPORTATION_MINIGAME	232	20	false	0	392,399	Clan Wars Minigame Teleport	
+498	TELEPORTATION_MINIGAME	232	21	false	0	392,400	Clan Wars Minigame Teleport	
+499	TELEPORTATION_MINIGAME	232	21	false	0	392,401	Clan Wars Minigame Teleport	
+500	TELEPORTATION_MINIGAME	232	19	false	0	392,402	Clan Wars Minigame Teleport	
+501	TELEPORTATION_MINIGAME	232	23	false	0	392,403	Clan Wars Minigame Teleport	
+502	TELEPORTATION_MINIGAME	524	24	false	0	405,392,391	Fishing Trawler Minigame Teleport	
+503	TELEPORTATION_MINIGAME	524	24	false	0	405,392,393	Fishing Trawler Minigame Teleport	
+504	TELEPORTATION_MINIGAME	524	21	false	0	405,392,394	Fishing Trawler Minigame Teleport	
+505	TELEPORTATION_MINIGAME	524	19	false	0	405,392,395	Fishing Trawler Minigame Teleport	
+506	TELEPORTATION_MINIGAME	524	24	false	0	405,392,396	Fishing Trawler Minigame Teleport	
+507	TELEPORTATION_MINIGAME	524	24	false	0	405,392,397	Fishing Trawler Minigame Teleport	
+508	TELEPORTATION_MINIGAME	524	25	false	0	405,392,398	Fishing Trawler Minigame Teleport	
+509	TELEPORTATION_MINIGAME	524	20	false	0	405,392,399	Fishing Trawler Minigame Teleport	
+510	TELEPORTATION_MINIGAME	524	21	false	0	405,392,400	Fishing Trawler Minigame Teleport	
+511	TELEPORTATION_MINIGAME	524	21	false	0	405,392,401	Fishing Trawler Minigame Teleport	
+512	TELEPORTATION_MINIGAME	524	19	false	0	405,392,402	Fishing Trawler Minigame Teleport	
+513	TELEPORTATION_MINIGAME	524	23	false	0	405,392,403	Fishing Trawler Minigame Teleport	
+514	TELEPORTATION_MINIGAME	525	24	false	0	392,391	Giant's Foundry Minigame Teleport	
+515	TELEPORTATION_MINIGAME	525	24	false	0	392,393	Giant's Foundry Minigame Teleport	
+516	TELEPORTATION_MINIGAME	525	21	false	0	392,394	Giant's Foundry Minigame Teleport	
+517	TELEPORTATION_MINIGAME	525	19	false	0	392,395	Giant's Foundry Minigame Teleport	
+518	TELEPORTATION_MINIGAME	525	24	false	0	392,396	Giant's Foundry Minigame Teleport	
+519	TELEPORTATION_MINIGAME	525	24	false	0	392,397	Giant's Foundry Minigame Teleport	
+520	TELEPORTATION_MINIGAME	525	25	false	0	392,398	Giant's Foundry Minigame Teleport	
+521	TELEPORTATION_MINIGAME	525	20	false	0	392,399	Giant's Foundry Minigame Teleport	
+522	TELEPORTATION_MINIGAME	525	21	false	0	392,400	Giant's Foundry Minigame Teleport	
+523	TELEPORTATION_MINIGAME	525	21	false	0	392,401	Giant's Foundry Minigame Teleport	
+524	TELEPORTATION_MINIGAME	525	19	false	0	392,402	Giant's Foundry Minigame Teleport	
+525	TELEPORTATION_MINIGAME	525	23	false	0	392,403	Giant's Foundry Minigame Teleport	
+526	TELEPORTATION_MINIGAME	526	24	false	0	107,392,391	Guardians of the Rift Minigame Teleport	
+527	TELEPORTATION_MINIGAME	526	24	false	0	107,392,393	Guardians of the Rift Minigame Teleport	
+528	TELEPORTATION_MINIGAME	526	21	false	0	107,392,394	Guardians of the Rift Minigame Teleport	
+529	TELEPORTATION_MINIGAME	526	19	false	0	107,392,395	Guardians of the Rift Minigame Teleport	
+530	TELEPORTATION_MINIGAME	526	24	false	0	107,392,396	Guardians of the Rift Minigame Teleport	
+531	TELEPORTATION_MINIGAME	526	24	false	0	107,392,397	Guardians of the Rift Minigame Teleport	
+532	TELEPORTATION_MINIGAME	526	25	false	0	107,392,398	Guardians of the Rift Minigame Teleport	
+533	TELEPORTATION_MINIGAME	526	20	false	0	107,392,399	Guardians of the Rift Minigame Teleport	
+534	TELEPORTATION_MINIGAME	526	21	false	0	107,392,400	Guardians of the Rift Minigame Teleport	
+535	TELEPORTATION_MINIGAME	526	21	false	0	107,392,401	Guardians of the Rift Minigame Teleport	
+536	TELEPORTATION_MINIGAME	526	19	false	0	107,392,402	Guardians of the Rift Minigame Teleport	
+537	TELEPORTATION_MINIGAME	526	23	false	0	107,392,403	Guardians of the Rift Minigame Teleport	
+538	TELEPORTATION_MINIGAME	232	24	false	0	392,391	Last Man Standing Minigame Teleport	
+539	TELEPORTATION_MINIGAME	232	24	false	0	392,393	Last Man Standing Minigame Teleport	
+540	TELEPORTATION_MINIGAME	232	21	false	0	392,394	Last Man Standing Minigame Teleport	
+541	TELEPORTATION_MINIGAME	232	19	false	0	392,395	Last Man Standing Minigame Teleport	
+542	TELEPORTATION_MINIGAME	232	24	false	0	392,396	Last Man Standing Minigame Teleport	
+543	TELEPORTATION_MINIGAME	232	24	false	0	392,397	Last Man Standing Minigame Teleport	
+544	TELEPORTATION_MINIGAME	232	25	false	0	392,398	Last Man Standing Minigame Teleport	
+545	TELEPORTATION_MINIGAME	232	20	false	0	392,399	Last Man Standing Minigame Teleport	
+546	TELEPORTATION_MINIGAME	232	21	false	0	392,400	Last Man Standing Minigame Teleport	
+547	TELEPORTATION_MINIGAME	232	21	false	0	392,401	Last Man Standing Minigame Teleport	
+548	TELEPORTATION_MINIGAME	232	19	false	0	392,402	Last Man Standing Minigame Teleport	
+549	TELEPORTATION_MINIGAME	232	23	false	0	392,403	Last Man Standing Minigame Teleport	
 550	TELEPORTATION_MINIGAME	527	24	false	0	391,406,392	Mage Training Arena Minigame Teleport	
-551	TELEPORTATION_MINIGAME	527	24	false	0	393,391,406	Mage Training Arena Minigame Teleport	
-552	TELEPORTATION_MINIGAME	527	21	false	0	394,391,406	Mage Training Arena Minigame Teleport	
-553	TELEPORTATION_MINIGAME	527	19	false	0	395,391,406	Mage Training Arena Minigame Teleport	
-554	TELEPORTATION_MINIGAME	527	24	false	0	391,406,396	Mage Training Arena Minigame Teleport	
-555	TELEPORTATION_MINIGAME	527	24	false	0	391,406,397	Mage Training Arena Minigame Teleport	
-556	TELEPORTATION_MINIGAME	527	25	false	0	391,406,398	Mage Training Arena Minigame Teleport	
-557	TELEPORTATION_MINIGAME	527	20	false	0	391,406,399	Mage Training Arena Minigame Teleport	
-558	TELEPORTATION_MINIGAME	527	21	false	0	391,406,400	Mage Training Arena Minigame Teleport	
-559	TELEPORTATION_MINIGAME	527	21	false	0	391,406,401	Mage Training Arena Minigame Teleport	
-560	TELEPORTATION_MINIGAME	527	19	false	0	391,406,402	Mage Training Arena Minigame Teleport	
-561	TELEPORTATION_MINIGAME	527	23	false	0	391,406,403	Mage Training Arena Minigame Teleport	
-562	TELEPORTATION_MINIGAME	528	24	false	0	391,392	Nightmare Zone Minigame Teleport	
-563	TELEPORTATION_MINIGAME	528	24	false	0	393,391	Nightmare Zone Minigame Teleport	
-564	TELEPORTATION_MINIGAME	528	21	false	0	394,391	Nightmare Zone Minigame Teleport	
-565	TELEPORTATION_MINIGAME	528	19	false	0	391,395	Nightmare Zone Minigame Teleport	
-566	TELEPORTATION_MINIGAME	528	24	false	0	391,396	Nightmare Zone Minigame Teleport	
-567	TELEPORTATION_MINIGAME	528	24	false	0	391,397	Nightmare Zone Minigame Teleport	
-568	TELEPORTATION_MINIGAME	528	25	false	0	391,398	Nightmare Zone Minigame Teleport	
-569	TELEPORTATION_MINIGAME	528	20	false	0	391,399	Nightmare Zone Minigame Teleport	
-570	TELEPORTATION_MINIGAME	528	21	false	0	391,400	Nightmare Zone Minigame Teleport	
-571	TELEPORTATION_MINIGAME	528	21	false	0	391,401	Nightmare Zone Minigame Teleport	
-572	TELEPORTATION_MINIGAME	528	19	false	0	391,402	Nightmare Zone Minigame Teleport	
-573	TELEPORTATION_MINIGAME	528	23	false	0	391,403	Nightmare Zone Minigame Teleport	
-574	TELEPORTATION_MINIGAME	529	24	false	0	391,392	Pest Control Minigame Teleport	
-575	TELEPORTATION_MINIGAME	529	24	false	0	393,391	Pest Control Minigame Teleport	
-576	TELEPORTATION_MINIGAME	529	21	false	0	394,391	Pest Control Minigame Teleport	
-577	TELEPORTATION_MINIGAME	529	19	false	0	391,395	Pest Control Minigame Teleport	
-578	TELEPORTATION_MINIGAME	529	24	false	0	391,396	Pest Control Minigame Teleport	
-579	TELEPORTATION_MINIGAME	529	24	false	0	391,397	Pest Control Minigame Teleport	
-580	TELEPORTATION_MINIGAME	529	25	false	0	391,398	Pest Control Minigame Teleport	
-581	TELEPORTATION_MINIGAME	529	20	false	0	391,399	Pest Control Minigame Teleport	
-582	TELEPORTATION_MINIGAME	529	21	false	0	391,400	Pest Control Minigame Teleport	
-583	TELEPORTATION_MINIGAME	529	21	false	0	391,401	Pest Control Minigame Teleport	
-584	TELEPORTATION_MINIGAME	529	19	false	0	391,402	Pest Control Minigame Teleport	
-585	TELEPORTATION_MINIGAME	529	23	false	0	391,403	Pest Control Minigame Teleport	
-586	TELEPORTATION_MINIGAME	530	24	false	0	407,391,392	Rat Pits Minigame Teleport: 1. Ardougne	
-587	TELEPORTATION_MINIGAME	530	24	false	0	407,393,391	Rat Pits Minigame Teleport: 1. Ardougne	
-588	TELEPORTATION_MINIGAME	530	21	false	0	407,394,391	Rat Pits Minigame Teleport: 1. Ardougne	
-589	TELEPORTATION_MINIGAME	530	19	false	0	407,391,395	Rat Pits Minigame Teleport: 1. Ardougne	
-590	TELEPORTATION_MINIGAME	530	24	false	0	407,391,396	Rat Pits Minigame Teleport: 1. Ardougne	
-591	TELEPORTATION_MINIGAME	530	24	false	0	407,391,397	Rat Pits Minigame Teleport: 1. Ardougne	
-592	TELEPORTATION_MINIGAME	530	25	false	0	407,391,398	Rat Pits Minigame Teleport: 1. Ardougne	
-593	TELEPORTATION_MINIGAME	530	20	false	0	407,391,399	Rat Pits Minigame Teleport: 1. Ardougne	
-594	TELEPORTATION_MINIGAME	530	21	false	0	407,391,400	Rat Pits Minigame Teleport: 1. Ardougne	
-595	TELEPORTATION_MINIGAME	530	21	false	0	407,391,401	Rat Pits Minigame Teleport: 1. Ardougne	
-596	TELEPORTATION_MINIGAME	530	19	false	0	407,391,402	Rat Pits Minigame Teleport: 1. Ardougne	
-597	TELEPORTATION_MINIGAME	530	23	false	0	407,391,403	Rat Pits Minigame Teleport: 1. Ardougne	
-598	TELEPORTATION_MINIGAME	531	24	false	0	407,391,392	Rat Pits Minigame Teleport: 2. Varrock	
-599	TELEPORTATION_MINIGAME	531	24	false	0	407,393,391	Rat Pits Minigame Teleport: 2. Varrock	
-600	TELEPORTATION_MINIGAME	531	21	false	0	407,394,391	Rat Pits Minigame Teleport: 2. Varrock	
-601	TELEPORTATION_MINIGAME	531	19	false	0	407,391,395	Rat Pits Minigame Teleport: 2. Varrock	
-602	TELEPORTATION_MINIGAME	531	24	false	0	407,391,396	Rat Pits Minigame Teleport: 2. Varrock	
-603	TELEPORTATION_MINIGAME	531	24	false	0	407,391,397	Rat Pits Minigame Teleport: 2. Varrock	
-604	TELEPORTATION_MINIGAME	531	25	false	0	407,391,398	Rat Pits Minigame Teleport: 2. Varrock	
-605	TELEPORTATION_MINIGAME	531	20	false	0	407,391,399	Rat Pits Minigame Teleport: 2. Varrock	
-606	TELEPORTATION_MINIGAME	531	21	false	0	407,391,400	Rat Pits Minigame Teleport: 2. Varrock	
-607	TELEPORTATION_MINIGAME	531	21	false	0	407,391,401	Rat Pits Minigame Teleport: 2. Varrock	
-608	TELEPORTATION_MINIGAME	531	19	false	0	407,391,402	Rat Pits Minigame Teleport: 2. Varrock	
-609	TELEPORTATION_MINIGAME	531	23	false	0	407,391,403	Rat Pits Minigame Teleport: 2. Varrock	
-610	TELEPORTATION_MINIGAME	532	24	false	0	407,391,392	Rat Pits Minigame Teleport: 3. Keldagrim	
-611	TELEPORTATION_MINIGAME	532	24	false	0	407,393,391	Rat Pits Minigame Teleport: 3. Keldagrim	
-612	TELEPORTATION_MINIGAME	532	21	false	0	407,394,391	Rat Pits Minigame Teleport: 3. Keldagrim	
-613	TELEPORTATION_MINIGAME	532	19	false	0	407,391,395	Rat Pits Minigame Teleport: 3. Keldagrim	
-614	TELEPORTATION_MINIGAME	532	24	false	0	407,391,396	Rat Pits Minigame Teleport: 3. Keldagrim	
-615	TELEPORTATION_MINIGAME	532	24	false	0	407,391,397	Rat Pits Minigame Teleport: 3. Keldagrim	
-616	TELEPORTATION_MINIGAME	532	25	false	0	407,391,398	Rat Pits Minigame Teleport: 3. Keldagrim	
-617	TELEPORTATION_MINIGAME	532	20	false	0	407,391,399	Rat Pits Minigame Teleport: 3. Keldagrim	
-618	TELEPORTATION_MINIGAME	532	21	false	0	407,391,400	Rat Pits Minigame Teleport: 3. Keldagrim	
-619	TELEPORTATION_MINIGAME	532	21	false	0	407,391,401	Rat Pits Minigame Teleport: 3. Keldagrim	
-620	TELEPORTATION_MINIGAME	532	19	false	0	407,391,402	Rat Pits Minigame Teleport: 3. Keldagrim	
-621	TELEPORTATION_MINIGAME	532	23	false	0	407,391,403	Rat Pits Minigame Teleport: 3. Keldagrim	
-622	TELEPORTATION_MINIGAME	533	24	false	0	407,391,392	Rat Pits Minigame Teleport: 4. Port Sarim	
-623	TELEPORTATION_MINIGAME	533	24	false	0	407,393,391	Rat Pits Minigame Teleport: 4. Port Sarim	
-624	TELEPORTATION_MINIGAME	533	21	false	0	407,394,391	Rat Pits Minigame Teleport: 4. Port Sarim	
-625	TELEPORTATION_MINIGAME	533	19	false	0	407,391,395	Rat Pits Minigame Teleport: 4. Port Sarim	
-626	TELEPORTATION_MINIGAME	533	24	false	0	407,391,396	Rat Pits Minigame Teleport: 4. Port Sarim	
-627	TELEPORTATION_MINIGAME	533	24	false	0	407,391,397	Rat Pits Minigame Teleport: 4. Port Sarim	
-628	TELEPORTATION_MINIGAME	533	25	false	0	407,391,398	Rat Pits Minigame Teleport: 4. Port Sarim	
-629	TELEPORTATION_MINIGAME	533	20	false	0	407,391,399	Rat Pits Minigame Teleport: 4. Port Sarim	
-630	TELEPORTATION_MINIGAME	533	21	false	0	407,391,400	Rat Pits Minigame Teleport: 4. Port Sarim	
-631	TELEPORTATION_MINIGAME	533	21	false	0	407,391,401	Rat Pits Minigame Teleport: 4. Port Sarim	
-632	TELEPORTATION_MINIGAME	533	19	false	0	407,391,402	Rat Pits Minigame Teleport: 4. Port Sarim	
-633	TELEPORTATION_MINIGAME	533	23	false	0	407,391,403	Rat Pits Minigame Teleport: 4. Port Sarim	
-634	TELEPORTATION_MINIGAME	534	24	false	0	408,391,392	Shades of Mort'ton Minigame Teleport	
-635	TELEPORTATION_MINIGAME	534	24	false	0	408,393,391	Shades of Mort'ton Minigame Teleport	
-636	TELEPORTATION_MINIGAME	534	21	false	0	408,394,391	Shades of Mort'ton Minigame Teleport	
-637	TELEPORTATION_MINIGAME	534	19	false	0	408,391,395	Shades of Mort'ton Minigame Teleport	
-638	TELEPORTATION_MINIGAME	534	24	false	0	408,391,396	Shades of Mort'ton Minigame Teleport	
-639	TELEPORTATION_MINIGAME	534	24	false	0	408,391,397	Shades of Mort'ton Minigame Teleport	
-640	TELEPORTATION_MINIGAME	534	25	false	0	408,391,398	Shades of Mort'ton Minigame Teleport	
-641	TELEPORTATION_MINIGAME	534	20	false	0	408,391,399	Shades of Mort'ton Minigame Teleport	
-642	TELEPORTATION_MINIGAME	534	21	false	0	408,391,400	Shades of Mort'ton Minigame Teleport	
-643	TELEPORTATION_MINIGAME	534	21	false	0	408,391,401	Shades of Mort'ton Minigame Teleport	
-644	TELEPORTATION_MINIGAME	534	19	false	0	408,391,402	Shades of Mort'ton Minigame Teleport	
-645	TELEPORTATION_MINIGAME	534	23	false	0	408,391,403	Shades of Mort'ton Minigame Teleport	
-646	TELEPORTATION_MINIGAME	535	24	false	0	391,392	Soul Wars Minigame Teleport	
-647	TELEPORTATION_MINIGAME	535	24	false	0	393,391	Soul Wars Minigame Teleport	
-648	TELEPORTATION_MINIGAME	535	21	false	0	394,391	Soul Wars Minigame Teleport	
-649	TELEPORTATION_MINIGAME	535	19	false	0	391,395	Soul Wars Minigame Teleport	
-650	TELEPORTATION_MINIGAME	535	24	false	0	391,396	Soul Wars Minigame Teleport	
-651	TELEPORTATION_MINIGAME	535	24	false	0	391,397	Soul Wars Minigame Teleport	
-652	TELEPORTATION_MINIGAME	535	25	false	0	391,398	Soul Wars Minigame Teleport	
-653	TELEPORTATION_MINIGAME	535	20	false	0	391,399	Soul Wars Minigame Teleport	
-654	TELEPORTATION_MINIGAME	535	21	false	0	391,400	Soul Wars Minigame Teleport	
-655	TELEPORTATION_MINIGAME	535	21	false	0	391,401	Soul Wars Minigame Teleport	
-656	TELEPORTATION_MINIGAME	535	19	false	0	391,402	Soul Wars Minigame Teleport	
-657	TELEPORTATION_MINIGAME	535	23	false	0	391,403	Soul Wars Minigame Teleport	
-658	TELEPORTATION_MINIGAME	536	24	false	0	409,410,391,392	Tithe Farm Minigame Teleport	
-659	TELEPORTATION_MINIGAME	536	24	false	0	409,393,410,391	Tithe Farm Minigame Teleport	
-660	TELEPORTATION_MINIGAME	536	21	false	0	409,394,410,391	Tithe Farm Minigame Teleport	
-661	TELEPORTATION_MINIGAME	536	19	false	0	409,395,410,391	Tithe Farm Minigame Teleport	
-662	TELEPORTATION_MINIGAME	536	24	false	0	409,410,391,396	Tithe Farm Minigame Teleport	
-663	TELEPORTATION_MINIGAME	536	24	false	0	409,410,391,397	Tithe Farm Minigame Teleport	
-664	TELEPORTATION_MINIGAME	536	25	false	0	409,410,391,398	Tithe Farm Minigame Teleport	
-665	TELEPORTATION_MINIGAME	536	20	false	0	409,410,391,399	Tithe Farm Minigame Teleport	
-666	TELEPORTATION_MINIGAME	536	21	false	0	409,410,391,400	Tithe Farm Minigame Teleport	
-667	TELEPORTATION_MINIGAME	536	21	false	0	409,410,391,401	Tithe Farm Minigame Teleport	
-668	TELEPORTATION_MINIGAME	536	19	false	0	409,410,391,402	Tithe Farm Minigame Teleport	
-669	TELEPORTATION_MINIGAME	536	23	false	0	409,410,391,403	Tithe Farm Minigame Teleport	
-670	TELEPORTATION_MINIGAME	536	23	false	0	409,391,410	Tithe Farm Minigame Teleport	
-671	TELEPORTATION_MINIGAME	537	24	false	0	411,42,391,392	Trouble Brewing Minigame Teleport	
-672	TELEPORTATION_MINIGAME	537	24	false	0	411,42,393,391	Trouble Brewing Minigame Teleport	
-673	TELEPORTATION_MINIGAME	537	21	false	0	411,42,394,391	Trouble Brewing Minigame Teleport	
-674	TELEPORTATION_MINIGAME	537	19	false	0	411,42,391,395	Trouble Brewing Minigame Teleport	
-675	TELEPORTATION_MINIGAME	537	24	false	0	411,42,391,396	Trouble Brewing Minigame Teleport	
-676	TELEPORTATION_MINIGAME	537	24	false	0	411,42,391,397	Trouble Brewing Minigame Teleport	
-677	TELEPORTATION_MINIGAME	537	25	false	0	411,42,391,398	Trouble Brewing Minigame Teleport	
-678	TELEPORTATION_MINIGAME	537	20	false	0	411,42,391,399	Trouble Brewing Minigame Teleport	
-679	TELEPORTATION_MINIGAME	537	21	false	0	411,42,391,400	Trouble Brewing Minigame Teleport	
-680	TELEPORTATION_MINIGAME	537	21	false	0	411,42,391,401	Trouble Brewing Minigame Teleport	
-681	TELEPORTATION_MINIGAME	537	19	false	0	411,42,391,402	Trouble Brewing Minigame Teleport	
-682	TELEPORTATION_MINIGAME	537	23	false	0	411,42,391,403	Trouble Brewing Minigame Teleport	
-683	TELEPORTATION_MINIGAME	538	24	false	0	391,392	TzHaar Fight Pit Minigame Teleport	
-684	TELEPORTATION_MINIGAME	538	24	false	0	393,391	TzHaar Fight Pit Minigame Teleport	
-685	TELEPORTATION_MINIGAME	538	21	false	0	394,391	TzHaar Fight Pit Minigame Teleport	
-686	TELEPORTATION_MINIGAME	538	19	false	0	391,395	TzHaar Fight Pit Minigame Teleport	
-687	TELEPORTATION_MINIGAME	538	24	false	0	391,396	TzHaar Fight Pit Minigame Teleport	
-688	TELEPORTATION_MINIGAME	538	24	false	0	391,397	TzHaar Fight Pit Minigame Teleport	
-689	TELEPORTATION_MINIGAME	538	25	false	0	391,398	TzHaar Fight Pit Minigame Teleport	
-690	TELEPORTATION_MINIGAME	538	20	false	0	391,399	TzHaar Fight Pit Minigame Teleport	
-691	TELEPORTATION_MINIGAME	538	21	false	0	391,400	TzHaar Fight Pit Minigame Teleport	
-692	TELEPORTATION_MINIGAME	538	21	false	0	391,401	TzHaar Fight Pit Minigame Teleport	
-693	TELEPORTATION_MINIGAME	538	19	false	0	391,402	TzHaar Fight Pit Minigame Teleport	
-694	TELEPORTATION_MINIGAME	538	23	false	0	391,403	TzHaar Fight Pit Minigame Teleport	
+551	TELEPORTATION_MINIGAME	527	24	false	0	393,406,392	Mage Training Arena Minigame Teleport	
+552	TELEPORTATION_MINIGAME	527	21	false	0	394,406,392	Mage Training Arena Minigame Teleport	
+553	TELEPORTATION_MINIGAME	527	19	false	0	406,392,395	Mage Training Arena Minigame Teleport	
+554	TELEPORTATION_MINIGAME	527	24	false	0	396,406,392	Mage Training Arena Minigame Teleport	
+555	TELEPORTATION_MINIGAME	527	24	false	0	397,406,392	Mage Training Arena Minigame Teleport	
+556	TELEPORTATION_MINIGAME	527	25	false	0	398,406,392	Mage Training Arena Minigame Teleport	
+557	TELEPORTATION_MINIGAME	527	20	false	0	399,406,392	Mage Training Arena Minigame Teleport	
+558	TELEPORTATION_MINIGAME	527	21	false	0	400,406,392	Mage Training Arena Minigame Teleport	
+559	TELEPORTATION_MINIGAME	527	21	false	0	401,406,392	Mage Training Arena Minigame Teleport	
+560	TELEPORTATION_MINIGAME	527	19	false	0	402,406,392	Mage Training Arena Minigame Teleport	
+561	TELEPORTATION_MINIGAME	527	23	false	0	403,406,392	Mage Training Arena Minigame Teleport	
+562	TELEPORTATION_MINIGAME	528	24	false	0	392,391	Nightmare Zone Minigame Teleport	
+563	TELEPORTATION_MINIGAME	528	24	false	0	392,393	Nightmare Zone Minigame Teleport	
+564	TELEPORTATION_MINIGAME	528	21	false	0	392,394	Nightmare Zone Minigame Teleport	
+565	TELEPORTATION_MINIGAME	528	19	false	0	392,395	Nightmare Zone Minigame Teleport	
+566	TELEPORTATION_MINIGAME	528	24	false	0	392,396	Nightmare Zone Minigame Teleport	
+567	TELEPORTATION_MINIGAME	528	24	false	0	392,397	Nightmare Zone Minigame Teleport	
+568	TELEPORTATION_MINIGAME	528	25	false	0	392,398	Nightmare Zone Minigame Teleport	
+569	TELEPORTATION_MINIGAME	528	20	false	0	392,399	Nightmare Zone Minigame Teleport	
+570	TELEPORTATION_MINIGAME	528	21	false	0	392,400	Nightmare Zone Minigame Teleport	
+571	TELEPORTATION_MINIGAME	528	21	false	0	392,401	Nightmare Zone Minigame Teleport	
+572	TELEPORTATION_MINIGAME	528	19	false	0	392,402	Nightmare Zone Minigame Teleport	
+573	TELEPORTATION_MINIGAME	528	23	false	0	392,403	Nightmare Zone Minigame Teleport	
+574	TELEPORTATION_MINIGAME	529	24	false	0	392,391	Pest Control Minigame Teleport	
+575	TELEPORTATION_MINIGAME	529	24	false	0	392,393	Pest Control Minigame Teleport	
+576	TELEPORTATION_MINIGAME	529	21	false	0	392,394	Pest Control Minigame Teleport	
+577	TELEPORTATION_MINIGAME	529	19	false	0	392,395	Pest Control Minigame Teleport	
+578	TELEPORTATION_MINIGAME	529	24	false	0	392,396	Pest Control Minigame Teleport	
+579	TELEPORTATION_MINIGAME	529	24	false	0	392,397	Pest Control Minigame Teleport	
+580	TELEPORTATION_MINIGAME	529	25	false	0	392,398	Pest Control Minigame Teleport	
+581	TELEPORTATION_MINIGAME	529	20	false	0	392,399	Pest Control Minigame Teleport	
+582	TELEPORTATION_MINIGAME	529	21	false	0	392,400	Pest Control Minigame Teleport	
+583	TELEPORTATION_MINIGAME	529	21	false	0	392,401	Pest Control Minigame Teleport	
+584	TELEPORTATION_MINIGAME	529	19	false	0	392,402	Pest Control Minigame Teleport	
+585	TELEPORTATION_MINIGAME	529	23	false	0	392,403	Pest Control Minigame Teleport	
+586	TELEPORTATION_MINIGAME	530	24	false	0	407,392,391	Rat Pits Minigame Teleport: 1. Ardougne	
+587	TELEPORTATION_MINIGAME	530	24	false	0	407,392,393	Rat Pits Minigame Teleport: 1. Ardougne	
+588	TELEPORTATION_MINIGAME	530	21	false	0	407,392,394	Rat Pits Minigame Teleport: 1. Ardougne	
+589	TELEPORTATION_MINIGAME	530	19	false	0	407,392,395	Rat Pits Minigame Teleport: 1. Ardougne	
+590	TELEPORTATION_MINIGAME	530	24	false	0	407,392,396	Rat Pits Minigame Teleport: 1. Ardougne	
+591	TELEPORTATION_MINIGAME	530	24	false	0	407,392,397	Rat Pits Minigame Teleport: 1. Ardougne	
+592	TELEPORTATION_MINIGAME	530	25	false	0	407,392,398	Rat Pits Minigame Teleport: 1. Ardougne	
+593	TELEPORTATION_MINIGAME	530	20	false	0	407,392,399	Rat Pits Minigame Teleport: 1. Ardougne	
+594	TELEPORTATION_MINIGAME	530	21	false	0	407,392,400	Rat Pits Minigame Teleport: 1. Ardougne	
+595	TELEPORTATION_MINIGAME	530	21	false	0	407,392,401	Rat Pits Minigame Teleport: 1. Ardougne	
+596	TELEPORTATION_MINIGAME	530	19	false	0	407,392,402	Rat Pits Minigame Teleport: 1. Ardougne	
+597	TELEPORTATION_MINIGAME	530	23	false	0	407,392,403	Rat Pits Minigame Teleport: 1. Ardougne	
+598	TELEPORTATION_MINIGAME	531	24	false	0	407,392,391	Rat Pits Minigame Teleport: 2. Varrock	
+599	TELEPORTATION_MINIGAME	531	24	false	0	407,392,393	Rat Pits Minigame Teleport: 2. Varrock	
+600	TELEPORTATION_MINIGAME	531	21	false	0	407,392,394	Rat Pits Minigame Teleport: 2. Varrock	
+601	TELEPORTATION_MINIGAME	531	19	false	0	407,392,395	Rat Pits Minigame Teleport: 2. Varrock	
+602	TELEPORTATION_MINIGAME	531	24	false	0	407,392,396	Rat Pits Minigame Teleport: 2. Varrock	
+603	TELEPORTATION_MINIGAME	531	24	false	0	407,392,397	Rat Pits Minigame Teleport: 2. Varrock	
+604	TELEPORTATION_MINIGAME	531	25	false	0	407,392,398	Rat Pits Minigame Teleport: 2. Varrock	
+605	TELEPORTATION_MINIGAME	531	20	false	0	407,392,399	Rat Pits Minigame Teleport: 2. Varrock	
+606	TELEPORTATION_MINIGAME	531	21	false	0	407,392,400	Rat Pits Minigame Teleport: 2. Varrock	
+607	TELEPORTATION_MINIGAME	531	21	false	0	407,392,401	Rat Pits Minigame Teleport: 2. Varrock	
+608	TELEPORTATION_MINIGAME	531	19	false	0	407,392,402	Rat Pits Minigame Teleport: 2. Varrock	
+609	TELEPORTATION_MINIGAME	531	23	false	0	407,392,403	Rat Pits Minigame Teleport: 2. Varrock	
+610	TELEPORTATION_MINIGAME	532	24	false	0	407,392,391	Rat Pits Minigame Teleport: 3. Keldagrim	
+611	TELEPORTATION_MINIGAME	532	24	false	0	407,392,393	Rat Pits Minigame Teleport: 3. Keldagrim	
+612	TELEPORTATION_MINIGAME	532	21	false	0	407,392,394	Rat Pits Minigame Teleport: 3. Keldagrim	
+613	TELEPORTATION_MINIGAME	532	19	false	0	407,392,395	Rat Pits Minigame Teleport: 3. Keldagrim	
+614	TELEPORTATION_MINIGAME	532	24	false	0	407,392,396	Rat Pits Minigame Teleport: 3. Keldagrim	
+615	TELEPORTATION_MINIGAME	532	24	false	0	407,392,397	Rat Pits Minigame Teleport: 3. Keldagrim	
+616	TELEPORTATION_MINIGAME	532	25	false	0	407,392,398	Rat Pits Minigame Teleport: 3. Keldagrim	
+617	TELEPORTATION_MINIGAME	532	20	false	0	407,392,399	Rat Pits Minigame Teleport: 3. Keldagrim	
+618	TELEPORTATION_MINIGAME	532	21	false	0	407,392,400	Rat Pits Minigame Teleport: 3. Keldagrim	
+619	TELEPORTATION_MINIGAME	532	21	false	0	407,392,401	Rat Pits Minigame Teleport: 3. Keldagrim	
+620	TELEPORTATION_MINIGAME	532	19	false	0	407,392,402	Rat Pits Minigame Teleport: 3. Keldagrim	
+621	TELEPORTATION_MINIGAME	532	23	false	0	407,392,403	Rat Pits Minigame Teleport: 3. Keldagrim	
+622	TELEPORTATION_MINIGAME	533	24	false	0	407,392,391	Rat Pits Minigame Teleport: 4. Port Sarim	
+623	TELEPORTATION_MINIGAME	533	24	false	0	407,392,393	Rat Pits Minigame Teleport: 4. Port Sarim	
+624	TELEPORTATION_MINIGAME	533	21	false	0	407,392,394	Rat Pits Minigame Teleport: 4. Port Sarim	
+625	TELEPORTATION_MINIGAME	533	19	false	0	407,392,395	Rat Pits Minigame Teleport: 4. Port Sarim	
+626	TELEPORTATION_MINIGAME	533	24	false	0	407,392,396	Rat Pits Minigame Teleport: 4. Port Sarim	
+627	TELEPORTATION_MINIGAME	533	24	false	0	407,392,397	Rat Pits Minigame Teleport: 4. Port Sarim	
+628	TELEPORTATION_MINIGAME	533	25	false	0	407,392,398	Rat Pits Minigame Teleport: 4. Port Sarim	
+629	TELEPORTATION_MINIGAME	533	20	false	0	407,392,399	Rat Pits Minigame Teleport: 4. Port Sarim	
+630	TELEPORTATION_MINIGAME	533	21	false	0	407,392,400	Rat Pits Minigame Teleport: 4. Port Sarim	
+631	TELEPORTATION_MINIGAME	533	21	false	0	407,392,401	Rat Pits Minigame Teleport: 4. Port Sarim	
+632	TELEPORTATION_MINIGAME	533	19	false	0	407,392,402	Rat Pits Minigame Teleport: 4. Port Sarim	
+633	TELEPORTATION_MINIGAME	533	23	false	0	407,392,403	Rat Pits Minigame Teleport: 4. Port Sarim	
+634	TELEPORTATION_MINIGAME	534	24	false	0	408,392,391	Shades of Mort'ton Minigame Teleport	
+635	TELEPORTATION_MINIGAME	534	24	false	0	408,392,393	Shades of Mort'ton Minigame Teleport	
+636	TELEPORTATION_MINIGAME	534	21	false	0	408,392,394	Shades of Mort'ton Minigame Teleport	
+637	TELEPORTATION_MINIGAME	534	19	false	0	408,392,395	Shades of Mort'ton Minigame Teleport	
+638	TELEPORTATION_MINIGAME	534	24	false	0	408,392,396	Shades of Mort'ton Minigame Teleport	
+639	TELEPORTATION_MINIGAME	534	24	false	0	408,392,397	Shades of Mort'ton Minigame Teleport	
+640	TELEPORTATION_MINIGAME	534	25	false	0	408,392,398	Shades of Mort'ton Minigame Teleport	
+641	TELEPORTATION_MINIGAME	534	20	false	0	408,392,399	Shades of Mort'ton Minigame Teleport	
+642	TELEPORTATION_MINIGAME	534	21	false	0	408,392,400	Shades of Mort'ton Minigame Teleport	
+643	TELEPORTATION_MINIGAME	534	21	false	0	408,392,401	Shades of Mort'ton Minigame Teleport	
+644	TELEPORTATION_MINIGAME	534	19	false	0	408,392,402	Shades of Mort'ton Minigame Teleport	
+645	TELEPORTATION_MINIGAME	534	23	false	0	408,392,403	Shades of Mort'ton Minigame Teleport	
+646	TELEPORTATION_MINIGAME	535	24	false	0	392,391	Soul Wars Minigame Teleport	
+647	TELEPORTATION_MINIGAME	535	24	false	0	392,393	Soul Wars Minigame Teleport	
+648	TELEPORTATION_MINIGAME	535	21	false	0	392,394	Soul Wars Minigame Teleport	
+649	TELEPORTATION_MINIGAME	535	19	false	0	392,395	Soul Wars Minigame Teleport	
+650	TELEPORTATION_MINIGAME	535	24	false	0	392,396	Soul Wars Minigame Teleport	
+651	TELEPORTATION_MINIGAME	535	24	false	0	392,397	Soul Wars Minigame Teleport	
+652	TELEPORTATION_MINIGAME	535	25	false	0	392,398	Soul Wars Minigame Teleport	
+653	TELEPORTATION_MINIGAME	535	20	false	0	392,399	Soul Wars Minigame Teleport	
+654	TELEPORTATION_MINIGAME	535	21	false	0	392,400	Soul Wars Minigame Teleport	
+655	TELEPORTATION_MINIGAME	535	21	false	0	392,401	Soul Wars Minigame Teleport	
+656	TELEPORTATION_MINIGAME	535	19	false	0	392,402	Soul Wars Minigame Teleport	
+657	TELEPORTATION_MINIGAME	535	23	false	0	392,403	Soul Wars Minigame Teleport	
+658	TELEPORTATION_MINIGAME	536	24	false	0	409,391,392,410	Tithe Farm Minigame Teleport	
+659	TELEPORTATION_MINIGAME	536	24	false	0	409,393,392,410	Tithe Farm Minigame Teleport	
+660	TELEPORTATION_MINIGAME	536	21	false	0	409,394,392,410	Tithe Farm Minigame Teleport	
+661	TELEPORTATION_MINIGAME	536	19	false	0	409,392,395,410	Tithe Farm Minigame Teleport	
+662	TELEPORTATION_MINIGAME	536	24	false	0	409,396,392,410	Tithe Farm Minigame Teleport	
+663	TELEPORTATION_MINIGAME	536	24	false	0	409,397,392,410	Tithe Farm Minigame Teleport	
+664	TELEPORTATION_MINIGAME	536	25	false	0	409,398,392,410	Tithe Farm Minigame Teleport	
+665	TELEPORTATION_MINIGAME	536	20	false	0	409,399,392,410	Tithe Farm Minigame Teleport	
+666	TELEPORTATION_MINIGAME	536	21	false	0	409,400,392,410	Tithe Farm Minigame Teleport	
+667	TELEPORTATION_MINIGAME	536	21	false	0	409,401,392,410	Tithe Farm Minigame Teleport	
+668	TELEPORTATION_MINIGAME	536	19	false	0	409,402,392,410	Tithe Farm Minigame Teleport	
+669	TELEPORTATION_MINIGAME	536	23	false	0	409,403,392,410	Tithe Farm Minigame Teleport	
+670	TELEPORTATION_MINIGAME	536	23	false	0	409,392,410	Tithe Farm Minigame Teleport	
+671	TELEPORTATION_MINIGAME	537	24	false	0	411,42,392,391	Trouble Brewing Minigame Teleport	
+672	TELEPORTATION_MINIGAME	537	24	false	0	411,42,392,393	Trouble Brewing Minigame Teleport	
+673	TELEPORTATION_MINIGAME	537	21	false	0	411,42,392,394	Trouble Brewing Minigame Teleport	
+674	TELEPORTATION_MINIGAME	537	19	false	0	411,42,392,395	Trouble Brewing Minigame Teleport	
+675	TELEPORTATION_MINIGAME	537	24	false	0	411,42,392,396	Trouble Brewing Minigame Teleport	
+676	TELEPORTATION_MINIGAME	537	24	false	0	411,42,392,397	Trouble Brewing Minigame Teleport	
+677	TELEPORTATION_MINIGAME	537	25	false	0	411,42,392,398	Trouble Brewing Minigame Teleport	
+678	TELEPORTATION_MINIGAME	537	20	false	0	411,42,392,399	Trouble Brewing Minigame Teleport	
+679	TELEPORTATION_MINIGAME	537	21	false	0	411,42,392,400	Trouble Brewing Minigame Teleport	
+680	TELEPORTATION_MINIGAME	537	21	false	0	411,42,392,401	Trouble Brewing Minigame Teleport	
+681	TELEPORTATION_MINIGAME	537	19	false	0	411,42,392,402	Trouble Brewing Minigame Teleport	
+682	TELEPORTATION_MINIGAME	537	23	false	0	411,42,392,403	Trouble Brewing Minigame Teleport	
+683	TELEPORTATION_MINIGAME	538	24	false	0	392,391	TzHaar Fight Pit Minigame Teleport	
+684	TELEPORTATION_MINIGAME	538	24	false	0	392,393	TzHaar Fight Pit Minigame Teleport	
+685	TELEPORTATION_MINIGAME	538	21	false	0	392,394	TzHaar Fight Pit Minigame Teleport	
+686	TELEPORTATION_MINIGAME	538	19	false	0	392,395	TzHaar Fight Pit Minigame Teleport	
+687	TELEPORTATION_MINIGAME	538	24	false	0	392,396	TzHaar Fight Pit Minigame Teleport	
+688	TELEPORTATION_MINIGAME	538	24	false	0	392,397	TzHaar Fight Pit Minigame Teleport	
+689	TELEPORTATION_MINIGAME	538	25	false	0	392,398	TzHaar Fight Pit Minigame Teleport	
+690	TELEPORTATION_MINIGAME	538	20	false	0	392,399	TzHaar Fight Pit Minigame Teleport	
+691	TELEPORTATION_MINIGAME	538	21	false	0	392,400	TzHaar Fight Pit Minigame Teleport	
+692	TELEPORTATION_MINIGAME	538	21	false	0	392,401	TzHaar Fight Pit Minigame Teleport	
+693	TELEPORTATION_MINIGAME	538	19	false	0	392,402	TzHaar Fight Pit Minigame Teleport	
+694	TELEPORTATION_MINIGAME	538	23	false	0	392,403	TzHaar Fight Pit Minigame Teleport	
 695	TELEPORTATION_SPELL	276	4	false	20	412,413,414,415,416	Varrock Teleport	
 696	TELEPORTATION_SPELL	250	4	false	20	412,413,226,414,415,416	Varrock Teleport: Grand Exchange	
 697	TELEPORTATION_SPELL	278	4	false	20	417,413,414,418,416	Lumbridge Teleport	
 698	TELEPORTATION_SPELL	277	4	false	20	419,413,414,420,416	Falador Teleport	
-699	TELEPORTATION_SPELL	267	4	false	20	421,213,214,413,422,418,416	Teleport to House	
-700	TELEPORTATION_SPELL	267	4	false	20	421,213,413,216,422,418,416	Teleport to House (Outside)	
-701	TELEPORTATION_SPELL	268	4	false	20	421,217,214,413,422,418,416	Teleport to House	
-702	TELEPORTATION_SPELL	268	4	false	20	421,217,413,216,422,418,416	Teleport to House (Outside)	
-703	TELEPORTATION_SPELL	269	4	false	20	421,218,214,413,422,418,416	Teleport to House	
-704	TELEPORTATION_SPELL	269	4	false	20	421,218,413,216,422,418,416	Teleport to House (Outside)	
-705	TELEPORTATION_SPELL	270	4	false	20	421,214,413,219,422,418,416	Teleport to House	
-706	TELEPORTATION_SPELL	270	4	false	20	421,413,216,219,422,418,416	Teleport to House (Outside)	
-707	TELEPORTATION_SPELL	271	4	false	20	421,214,413,220,422,418,416	Teleport to House	
-708	TELEPORTATION_SPELL	271	4	false	20	421,413,216,220,422,418,416	Teleport to House (Outside)	
-709	TELEPORTATION_SPELL	272	4	false	20	421,214,413,221,422,418,416	Teleport to House	
-710	TELEPORTATION_SPELL	272	4	false	20	421,413,216,221,422,418,416	Teleport to House (Outside)	
-711	TELEPORTATION_SPELL	273	4	false	20	421,214,222,413,422,418,416	Teleport to House	
-712	TELEPORTATION_SPELL	273	4	false	20	421,222,413,216,422,418,416	Teleport to House (Outside)	
-713	TELEPORTATION_SPELL	274	4	false	20	421,223,214,413,422,418,416	Teleport to House	
-714	TELEPORTATION_SPELL	274	4	false	20	421,223,413,216,422,418,416	Teleport to House (Outside)	
-715	TELEPORTATION_SPELL	275	4	false	20	421,214,413,224,422,418,416	Teleport to House	
-716	TELEPORTATION_SPELL	275	4	false	20	421,413,216,224,422,418,416	Teleport to House (Outside)	
+699	TELEPORTATION_SPELL	267	4	false	20	421,213,413,214,422,418,416	Teleport to House	
+700	TELEPORTATION_SPELL	267	4	false	20	421,213,216,413,422,418,416	Teleport to House (Outside)	
+701	TELEPORTATION_SPELL	268	4	false	20	421,413,217,214,422,418,416	Teleport to House	
+702	TELEPORTATION_SPELL	268	4	false	20	421,216,413,217,422,418,416	Teleport to House (Outside)	
+703	TELEPORTATION_SPELL	269	4	false	20	421,218,413,214,422,418,416	Teleport to House	
+704	TELEPORTATION_SPELL	269	4	false	20	421,218,216,413,422,418,416	Teleport to House (Outside)	
+705	TELEPORTATION_SPELL	270	4	false	20	421,219,413,214,422,418,416	Teleport to House	
+706	TELEPORTATION_SPELL	270	4	false	20	421,219,216,413,422,418,416	Teleport to House (Outside)	
+707	TELEPORTATION_SPELL	271	4	false	20	421,220,413,214,422,418,416	Teleport to House	
+708	TELEPORTATION_SPELL	271	4	false	20	421,220,216,413,422,418,416	Teleport to House (Outside)	
+709	TELEPORTATION_SPELL	272	4	false	20	421,221,413,214,422,418,416	Teleport to House	
+710	TELEPORTATION_SPELL	272	4	false	20	421,221,216,413,422,418,416	Teleport to House (Outside)	
+711	TELEPORTATION_SPELL	273	4	false	20	421,413,214,222,422,418,416	Teleport to House	
+712	TELEPORTATION_SPELL	273	4	false	20	421,216,413,222,422,418,416	Teleport to House (Outside)	
+713	TELEPORTATION_SPELL	274	4	false	20	421,413,223,214,422,418,416	Teleport to House	
+714	TELEPORTATION_SPELL	274	4	false	20	421,216,413,223,422,418,416	Teleport to House (Outside)	
+715	TELEPORTATION_SPELL	275	4	false	20	421,224,413,214,422,418,416	Teleport to House	
+716	TELEPORTATION_SPELL	275	4	false	20	421,224,216,413,422,418,416	Teleport to House (Outside)	
 717	TELEPORTATION_SPELL	279	4	false	20	423,413,424,416	Camelot Teleport	
-718	TELEPORTATION_SPELL	539	4	false	20	423,413,158,424,416	Camelot Teleport: Seers'	
+718	TELEPORTATION_SPELL	539	4	false	20	423,158,413,424,416	Camelot Teleport: Seers'	
 719	TELEPORTATION_SPELL	540	4	false	20	425,426,413,415,420,427	Kourend Castle Teleport	
 720	TELEPORTATION_SPELL	280	4	false	20	428,230,413,429,430,427	Ardougne Teleport	
 721	TELEPORTATION_SPELL	541	4	false	20	431,432,413,418,415,427	Civitas illa Fortis Teleport	
 722	TELEPORTATION_SPELL	281	4	false	20	433,232,413,434,435,427	Watchtower Teleport	
-723	TELEPORTATION_SPELL	282	4	false	20	433,232,434,125,413,435,427	Watchtower Teleport: Yanille	
+723	TELEPORTATION_SPELL	282	4	false	20	433,232,434,413,125,435,427	Watchtower Teleport: Yanille	
 724	TELEPORTATION_SPELL	283	4	false	20	436,437,413,438,427	Trollheim Teleport	
 725	TELEPORTATION_SPELL	542	4	false	20	439,440,413,438,430,427,441	Ape Atoll Teleport	
 726	TELEPORTATION_SPELL	284	5	false	20	431,244,442,422,415,427	Paddewwa Teleport	
@@ -746,14 +746,14 @@ id	type	landing	ticks	consumable	wilderness	needs	name	menu
 743	TELEPORTATION_SPELL	300	4	false	20	471,470,418,420,416	Draynor Manor Teleport	
 744	TELEPORTATION_SPELL	301	4	false	20	472,470,418,415,416	Battlefront Teleport	
 745	TELEPORTATION_SPELL	302	4	false	20	473,470,416,474	Mind Altar Teleport	
-746	TELEPORTATION_SPELL	278	4	false	20	475,470,476,477,478,479,480,481,416,444	Respawn Teleport	
-747	TELEPORTATION_SPELL	277	4	false	20	475,470,482,416,444	Respawn Teleport	
+746	TELEPORTATION_SPELL	278	4	false	20	475,476,470,477,478,479,480,481,416,444	Respawn Teleport	
+747	TELEPORTATION_SPELL	277	4	false	20	475,482,470,416,444	Respawn Teleport	
 748	TELEPORTATION_SPELL	279	4	false	20	475,470,483,416,444	Respawn Teleport	
-749	TELEPORTATION_SPELL	543	4	false	20	475,470,484,416,444	Respawn Teleport	
-750	TELEPORTATION_SPELL	544	4	false	20	475,470,476,477,478,479,480,481,416,444	Respawn Teleport	
-751	TELEPORTATION_SPELL	232	4	false	20	475,470,485,416,444	Respawn Teleport	
-752	TELEPORTATION_SPELL	545	4	false	20	475,470,486,416,444	Respawn Teleport	
-753	TELEPORTATION_SPELL	541	4	false	20	475,470,487,416,444	Respawn Teleport	
+749	TELEPORTATION_SPELL	543	4	false	20	475,484,470,416,444	Respawn Teleport	
+750	TELEPORTATION_SPELL	544	4	false	20	475,476,470,477,478,479,480,481,416,444	Respawn Teleport	
+751	TELEPORTATION_SPELL	232	4	false	20	475,485,470,416,444	Respawn Teleport	
+752	TELEPORTATION_SPELL	545	4	false	20	475,486,470,416,444	Respawn Teleport	
+753	TELEPORTATION_SPELL	541	4	false	20	475,487,470,416,444	Respawn Teleport	
 754	TELEPORTATION_SPELL	303	4	false	20	421,206,470,416,452	Salve Graveyard Teleport	
 755	TELEPORTATION_SPELL	304	4	false	20	425,206,470,418,416,444	Fenkenstrain's Castle Teleport	
 756	TELEPORTATION_SPELL	305	4	false	20	436,268,470,427,452	West Ardougne Teleport	
@@ -761,34 +761,34 @@ id	type	landing	ticks	consumable	wilderness	needs	name	menu
 758	TELEPORTATION_SPELL	307	4	false	20	460,470,445,416,444	Cemetery Teleport	
 759	TELEPORTATION_SPELL	308	4	false	20	490,470,445,427,452	Barrows Teleport	
 760	TELEPORTATION_SPELL	309	4	false	20	453,274,470,454,427,452	Ape Atoll Teleport	
-761	TELEPORTATION_SPELL_HOME	278	24	false	20	413,392,491	Lumbridge Home Teleport	
-762	TELEPORTATION_SPELL_HOME	278	24	false	20	393,413,491	Lumbridge Home Teleport	
-763	TELEPORTATION_SPELL_HOME	278	21	false	20	394,413,491	Lumbridge Home Teleport	
-764	TELEPORTATION_SPELL_HOME	278	19	false	20	395,413,491	Lumbridge Home Teleport	
-765	TELEPORTATION_SPELL_HOME	278	24	false	20	413,396,491	Lumbridge Home Teleport	
-766	TELEPORTATION_SPELL_HOME	278	24	false	20	413,397,491	Lumbridge Home Teleport	
-767	TELEPORTATION_SPELL_HOME	278	25	false	20	413,398,491	Lumbridge Home Teleport	
-768	TELEPORTATION_SPELL_HOME	278	20	false	20	413,399,491	Lumbridge Home Teleport	
-769	TELEPORTATION_SPELL_HOME	278	21	false	20	413,400,491	Lumbridge Home Teleport	
-770	TELEPORTATION_SPELL_HOME	278	21	false	20	413,401,491	Lumbridge Home Teleport	
-771	TELEPORTATION_SPELL_HOME	278	19	false	20	413,402,491	Lumbridge Home Teleport	
-772	TELEPORTATION_SPELL_HOME	278	23	false	20	413,491,403	Lumbridge Home Teleport	
-773	TELEPORTATION_SPELL_HOME	546	24	false	20	244,442,392,491	Edgeville Home Teleport	
-774	TELEPORTATION_SPELL_HOME	546	24	false	20	244,393,442,491	Edgeville Home Teleport	
-775	TELEPORTATION_SPELL_HOME	546	21	false	20	244,394,442,491	Edgeville Home Teleport	
-776	TELEPORTATION_SPELL_HOME	546	19	false	20	244,395,442,491	Edgeville Home Teleport	
-777	TELEPORTATION_SPELL_HOME	546	24	false	20	244,442,396,491	Edgeville Home Teleport	
-778	TELEPORTATION_SPELL_HOME	546	24	false	20	244,442,397,491	Edgeville Home Teleport	
-779	TELEPORTATION_SPELL_HOME	546	25	false	20	244,442,398,491	Edgeville Home Teleport	
-780	TELEPORTATION_SPELL_HOME	546	20	false	20	244,442,399,491	Edgeville Home Teleport	
-781	TELEPORTATION_SPELL_HOME	546	21	false	20	244,442,400,491	Edgeville Home Teleport	
-782	TELEPORTATION_SPELL_HOME	546	21	false	20	244,442,401,491	Edgeville Home Teleport	
-783	TELEPORTATION_SPELL_HOME	546	19	false	20	244,442,402,491	Edgeville Home Teleport	
-784	TELEPORTATION_SPELL_HOME	546	23	false	20	244,442,491,403	Edgeville Home Teleport	
-785	TELEPORTATION_SPELL_HOME	292	24	false	20	253,458,392,491	Lunar Home Teleport	
-786	TELEPORTATION_SPELL_HOME	292	24	false	20	253,393,458,491	Lunar Home Teleport	
-787	TELEPORTATION_SPELL_HOME	292	21	false	20	253,394,458,491	Lunar Home Teleport	
-788	TELEPORTATION_SPELL_HOME	292	19	false	20	253,395,458,491	Lunar Home Teleport	
+761	TELEPORTATION_SPELL_HOME	278	24	false	20	491,391,413	Lumbridge Home Teleport	
+762	TELEPORTATION_SPELL_HOME	278	24	false	20	393,491,413	Lumbridge Home Teleport	
+763	TELEPORTATION_SPELL_HOME	278	21	false	20	491,394,413	Lumbridge Home Teleport	
+764	TELEPORTATION_SPELL_HOME	278	19	false	20	491,413,395	Lumbridge Home Teleport	
+765	TELEPORTATION_SPELL_HOME	278	24	false	20	396,491,413	Lumbridge Home Teleport	
+766	TELEPORTATION_SPELL_HOME	278	24	false	20	397,491,413	Lumbridge Home Teleport	
+767	TELEPORTATION_SPELL_HOME	278	25	false	20	398,491,413	Lumbridge Home Teleport	
+768	TELEPORTATION_SPELL_HOME	278	20	false	20	399,491,413	Lumbridge Home Teleport	
+769	TELEPORTATION_SPELL_HOME	278	21	false	20	400,491,413	Lumbridge Home Teleport	
+770	TELEPORTATION_SPELL_HOME	278	21	false	20	401,491,413	Lumbridge Home Teleport	
+771	TELEPORTATION_SPELL_HOME	278	19	false	20	402,491,413	Lumbridge Home Teleport	
+772	TELEPORTATION_SPELL_HOME	278	23	false	20	403,491,413	Lumbridge Home Teleport	
+773	TELEPORTATION_SPELL_HOME	546	24	false	20	244,491,391,442	Edgeville Home Teleport	
+774	TELEPORTATION_SPELL_HOME	546	24	false	20	244,393,491,442	Edgeville Home Teleport	
+775	TELEPORTATION_SPELL_HOME	546	21	false	20	244,491,394,442	Edgeville Home Teleport	
+776	TELEPORTATION_SPELL_HOME	546	19	false	20	244,491,442,395	Edgeville Home Teleport	
+777	TELEPORTATION_SPELL_HOME	546	24	false	20	244,396,491,442	Edgeville Home Teleport	
+778	TELEPORTATION_SPELL_HOME	546	24	false	20	244,397,491,442	Edgeville Home Teleport	
+779	TELEPORTATION_SPELL_HOME	546	25	false	20	244,398,491,442	Edgeville Home Teleport	
+780	TELEPORTATION_SPELL_HOME	546	20	false	20	244,399,491,442	Edgeville Home Teleport	
+781	TELEPORTATION_SPELL_HOME	546	21	false	20	244,400,491,442	Edgeville Home Teleport	
+782	TELEPORTATION_SPELL_HOME	546	21	false	20	244,401,491,442	Edgeville Home Teleport	
+783	TELEPORTATION_SPELL_HOME	546	19	false	20	244,402,491,442	Edgeville Home Teleport	
+784	TELEPORTATION_SPELL_HOME	546	23	false	20	244,403,491,442	Edgeville Home Teleport	
+785	TELEPORTATION_SPELL_HOME	292	24	false	20	253,458,491,391	Lunar Home Teleport	
+786	TELEPORTATION_SPELL_HOME	292	24	false	20	253,458,393,491	Lunar Home Teleport	
+787	TELEPORTATION_SPELL_HOME	292	21	false	20	253,458,491,394	Lunar Home Teleport	
+788	TELEPORTATION_SPELL_HOME	292	19	false	20	253,458,491,395	Lunar Home Teleport	
 789	TELEPORTATION_SPELL_HOME	292	24	false	20	253,396,458,491	Lunar Home Teleport	
 790	TELEPORTATION_SPELL_HOME	292	24	false	20	253,397,458,491	Lunar Home Teleport	
 791	TELEPORTATION_SPELL_HOME	292	25	false	20	253,398,458,491	Lunar Home Teleport	
@@ -796,19 +796,19 @@ id	type	landing	ticks	consumable	wilderness	needs	name	menu
 793	TELEPORTATION_SPELL_HOME	292	21	false	20	253,400,458,491	Lunar Home Teleport	
 794	TELEPORTATION_SPELL_HOME	292	21	false	20	253,401,458,491	Lunar Home Teleport	
 795	TELEPORTATION_SPELL_HOME	292	19	false	20	253,402,458,491	Lunar Home Teleport	
-796	TELEPORTATION_SPELL_HOME	292	23	false	20	253,458,491,403	Lunar Home Teleport	
-797	TELEPORTATION_SPELL_HOME	547	24	false	20	470,392,491	Arceuus Home Teleport	
-798	TELEPORTATION_SPELL_HOME	547	24	false	20	470,393,491	Arceuus Home Teleport	
-799	TELEPORTATION_SPELL_HOME	547	21	false	20	470,394,491	Arceuus Home Teleport	
-800	TELEPORTATION_SPELL_HOME	547	19	false	20	470,395,491	Arceuus Home Teleport	
-801	TELEPORTATION_SPELL_HOME	547	24	false	20	470,396,491	Arceuus Home Teleport	
-802	TELEPORTATION_SPELL_HOME	547	24	false	20	470,397,491	Arceuus Home Teleport	
-803	TELEPORTATION_SPELL_HOME	547	25	false	20	470,398,491	Arceuus Home Teleport	
-804	TELEPORTATION_SPELL_HOME	547	20	false	20	470,399,491	Arceuus Home Teleport	
-805	TELEPORTATION_SPELL_HOME	547	21	false	20	470,400,491	Arceuus Home Teleport	
-806	TELEPORTATION_SPELL_HOME	547	21	false	20	470,401,491	Arceuus Home Teleport	
-807	TELEPORTATION_SPELL_HOME	547	19	false	20	470,402,491	Arceuus Home Teleport	
-808	TELEPORTATION_SPELL_HOME	547	23	false	20	470,491,403	Arceuus Home Teleport	
+796	TELEPORTATION_SPELL_HOME	292	23	false	20	253,403,458,491	Lunar Home Teleport	
+797	TELEPORTATION_SPELL_HOME	547	24	false	20	491,470,391	Arceuus Home Teleport	
+798	TELEPORTATION_SPELL_HOME	547	24	false	20	393,491,470	Arceuus Home Teleport	
+799	TELEPORTATION_SPELL_HOME	547	21	false	20	491,470,394	Arceuus Home Teleport	
+800	TELEPORTATION_SPELL_HOME	547	19	false	20	491,470,395	Arceuus Home Teleport	
+801	TELEPORTATION_SPELL_HOME	547	24	false	20	396,491,470	Arceuus Home Teleport	
+802	TELEPORTATION_SPELL_HOME	547	24	false	20	397,491,470	Arceuus Home Teleport	
+803	TELEPORTATION_SPELL_HOME	547	25	false	20	398,491,470	Arceuus Home Teleport	
+804	TELEPORTATION_SPELL_HOME	547	20	false	20	399,491,470	Arceuus Home Teleport	
+805	TELEPORTATION_SPELL_HOME	547	21	false	20	400,491,470	Arceuus Home Teleport	
+806	TELEPORTATION_SPELL_HOME	547	21	false	20	401,491,470	Arceuus Home Teleport	
+807	TELEPORTATION_SPELL_HOME	547	19	false	20	402,491,470	Arceuus Home Teleport	
+808	TELEPORTATION_SPELL_HOME	547	23	false	20	403,491,470	Arceuus Home Teleport	
 809	TELEPORTATION_BOX	245	4	false	-1		Edgeville	Edgeville Amulet of Glory 13523
 810	TELEPORTATION_BOX	246	4	false	-1		Karamja	Karamja Amulet of Glory 13523
 811	TELEPORTATION_BOX	247	4	false	-1		Draynor Village	Draynor Village Amulet of Glory 13523

@@ -1,5 +1,11 @@
 package com.farmrunautopilot.atlas;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Set;
 import net.runelite.api.Quest;
@@ -10,6 +16,7 @@ import shortestpath.transport.TransportLoader;
 import shortestpath.pathfinder.PathfinderConfig;
 import shortestpath.pathfinder.SplitFlagMap;
 import shortestpath.transport.Transport;
+import shortestpath.transport.TransportType;
 import shortestpath.transport.parser.VarRequirement;
 
 /**
@@ -93,8 +100,32 @@ final class BubbleConfig extends PathfinderConfig
 		/** Shortest Path's collision map, transports, destinations and bank gates from its resources. */
 		static World load()
 		{
-			return new World(SplitFlagMap.fromResources(), TransportLoader.loadAllFromResources(),
-				Destination.loadAllFromResources(), Destination.loadBankRequirementsFromResources());
+			final Map<Integer, Set<Transport>> transports = TransportLoader.loadAllFromResources();
+			addExtras(transports);
+			return new World(SplitFlagMap.fromResources(), transports, Destination.loadAllFromResources(),
+				Destination.loadBankRequirementsFromResources());
+		}
+
+		/**
+		 * Ways Shortest Path has none for, from {@code extra-boats.tsv} next to this build (the Fossil Island dive to the
+		 * underwater seaweed patches, sprint 1b), read as its boats are. Shortest Path's own files stay unchanged.
+		 */
+		private static void addExtras(Map<Integer, Set<Transport>> transports)
+		{
+			final Path extras = Paths.get("extra-boats.tsv");
+			if (!Files.exists(extras))
+			{
+				throw new IllegalStateException("extra-boats.tsv not found: run from tools/atlas");
+			}
+			try
+			{
+				TransportLoader.addTransportsFromContents(transports,
+					new String(Files.readAllBytes(extras), StandardCharsets.UTF_8), TransportType.BOAT, 0);
+			}
+			catch (IOException e)
+			{
+				throw new UncheckedIOException(e);
+			}
 		}
 	}
 }
