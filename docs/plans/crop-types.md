@@ -44,6 +44,8 @@ leaving them out would mean "locked" patches that a player can actually use.
 
 Out of scope for all three sprints (say so in the README): anima, Hespori, grapes, coral, compost
 bins, the Keldagrim quest hops patch and the Anglers' Retreat flax patches (RuneLite doesn't track those).
+Coral stays with the types after 1c (elzerma, 2026-10-24); like the seaweed it needs a way down added to the atlas by
+hand (`tools/atlas/extra-boats.tsv`): fairy ring CJQ, east to the nurseries, with Troubled Tortugans and diving gear.
 
 ---
 
