@@ -6,7 +6,7 @@
  2. Falador Park: Ring of wealth (Falador Park), 14 s
  3. Port Phasmatys: Ectophial, 29 s
  4. Hosidius: Book of the Dead / Kharedst's memoirs (Lunch by the Lancalliums), 32 s
- 5. Brimhaven: Ardougne Teleport, then boat from the Ardougne docks, 34 s
+ 5. Brimhaven: Ardougne Teleport, then boat to Brimhaven, 34 s
  6. Civitas illa Fortis (Ortus Farm): Quetzal whistle (Hunter Guild), 35 s
  7. Catherby: Camelot Teleport, 28 s
  8. Taverley: Walk, 28 s
@@ -17,21 +17,21 @@
 13. Falador farm (south): Explorer's ring (cabbage patch), 17 s
 14. Lletya: Teleport crystal (Lletya), 16 s
 15. Gnome Stronghold: Slayer ring (Stronghold Slayer Cave), 13 s
-16. Tree Gnome Village: Spirit tree (Tree Gnome Village), then follow Elkoy out of the maze, 32 s
-17. Troll Stronghold: Trollheim Teleport, then down to the stronghold, then up to the roof, 45 s
+16. Tree Gnome Village: Spirit tree (Tree Gnome Village), then follow Elkoy, 32 s
+17. Troll Stronghold: Trollheim Teleport, 45 s
 18. Farming Guild: Kharedst's memoirs: Jewelry of Jubilation, then minecart to Farming Guild, 47 s
 
 ## Mid-level: 50 in every skill, no quests, a skills necklace, a ring of wealth and a games necklace
 31 patches, 15 stops, travel 543 s
  1. Seers' Village: Camelot Teleport, 39 s
- 2. Taverley: Falador Teleport, then rocks or gate into Taverley, 38 s
+ 2. Taverley: Falador Teleport, 38 s
  3. Varrock: Varrock Teleport, 22 s
  4. Falador Park: Ring of wealth (Falador Park), 14 s
  5. Falador farm (south): Walk, 37 s
  6. Lumbridge: Lumbridge Teleport, 25 s
  7. Lumbridge (north farm): Walk, 37 s
  8. Ardougne farm (north): Skills necklace (Fishing Guild), 29 s
- 9. Hosidius: Skills necklace (Woodcutting Guild), then stepping stone, 37 s
+ 9. Hosidius: Skills necklace (Woodcutting Guild), 37 s
 10. Catherby: Camelot Teleport, 28 s
 11. Brimhaven: Charter ship (Brimhaven), 46 s
 12. Yanille: Charter ship (Port Khazard), 71 s
@@ -57,7 +57,7 @@
 14. Kastori: Pendant of Ates (North of Kastori), 22 s
 15. Civitas illa Fortis (Ortus Farm): Back to the landing pad, then Renu, 30 s
 16. Brimhaven: Brimhaven teleport tablet, 22 s
-17. Harmony Island: Charter ship (Port Phasmatys), then boat: Travel Bill Teach, then transport Brother Tranquility, 47 s
+17. Harmony Island: Charter ship (Port Phasmatys), then travel Bill Teach, then transport Brother Tranquility, 47 s
 18. Hosidius: Xeric's talisman (Xeric's Glade), 18 s
 19. Falador farm (south): Explorer's ring (cabbage patch), 17 s
 20. Lletya: Teleport crystal (Lletya), 16 s

@@ -234,12 +234,61 @@ public final class TravelAtlas
 	 */
 	public static String target(String menu)
 	{
-		final String[] words = menu == null ? new String[0] : menu.trim().split(" ");
-		if (words.length < 3)
+		return menu(menu, null).getTarget();
+	}
+
+	/**
+	 * A transport's menu text read as the right-click it is (Shortest Path's: the option, the target, its NPC or object
+	 * id), with its name to tell a place of several words from the target: "Brimhaven Captain Barnaby 8763" named
+	 * "Brimhaven" is the option "Brimhaven" on "Captain Barnaby", and "Land's End Veos 8630" named "Land's End" is "Land's
+	 * End" on "Veos", where splitting at the first word would make it "Land's" on "End Veos" (sprint T5).
+	 *
+	 * @param name the step's or hop's name, or null
+	 */
+	public static Menu menu(String menu, String name)
+	{
+		final List<String> words = new ArrayList<>(menu == null ? Collections.emptyList()
+			: Arrays.asList(menu.trim().split(" ")));
+		int id = -1;
+		if (words.size() > 1 && words.get(words.size() - 1).matches("\\d+"))
 		{
-			return null;
+			id = Integer.parseInt(words.remove(words.size() - 1));
 		}
-		return String.join(" ", Arrays.asList(words).subList(1, words.length - 1));
+		if (words.isEmpty() || words.get(0).isEmpty())
+		{
+			return new Menu(null, null, id, false);
+		}
+		final String body = String.join(" ", words);
+		// The option is the name when the name is a place the menu starts with ("Brimhaven", "Land's End"); a name that's
+		// the whole right-click ("Climb-over Stile") or starts with an action ("Travel Rowboat") isn't
+		if (name != null && body.length() > name.length() + 1 && body.startsWith(name + " ") && !isVerb(name))
+		{
+			return new Menu(name, body.substring(name.length() + 1), id, true);
+		}
+		final String target = words.size() < 2 ? null : String.join(" ", words.subList(1, words.size()));
+		return new Menu(words.get(0), target, id, false);
+	}
+
+	/** A one-word option that's an action ("Travel", "Climb-over", "Take-boat"), not a place ("Ardougne"). */
+	private static boolean isVerb(String option)
+	{
+		return option.contains("-") || VERBS.contains(option);
+	}
+
+	/** One-word options that are actions, from Shortest Path's transports (the rest of one-word options are places). */
+	private static final Set<String> VERBS = Set.of("Travel", "Enter", "Climb", "Cross", "Jump", "Squeeze", "Pass",
+		"Open", "Use", "Pull", "Push", "Board", "Charter", "Follow", "Transport", "Ride", "Teleport", "Walk", "Swing",
+		"Crawl", "Balance", "Search", "Exit", "Leave", "Go", "Talk", "Pay", "Sail", "Row", "Fly", "Take", "Dive");
+
+	/** A transport's menu read: the option, who or what it's on (null if nothing), and its id (-1 if none). */
+	@lombok.Value
+	public static class Menu
+	{
+		String option;
+		String target;
+		int id;
+		/** The option is a place to go ("Brimhaven"), not an action ("Travel"). */
+		boolean place;
 	}
 
 	/**
@@ -262,7 +311,7 @@ public final class TravelAtlas
 			final Set<String> found = new HashSet<>();
 			for (Jump hop : hops)
 			{
-				final String target = target(hop.getMenu());
+				final String target = menu(hop.getMenu(), hop.getName()).getTarget();
 				if (target != null)
 				{
 					found.add(target);
@@ -270,7 +319,7 @@ public final class TravelAtlas
 			}
 			for (Step step : steps)
 			{
-				final String target = target(step.getMenu());
+				final String target = menu(step.getMenu(), step.getName()).getTarget();
 				if (target != null)
 				{
 					found.add(target);

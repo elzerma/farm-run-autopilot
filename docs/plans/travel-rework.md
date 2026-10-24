@@ -846,6 +846,31 @@ the client thread, so:
   full run: 19 s (an unplanned visit by ring of dueling), 89 s and 106 s from the last patch (the planned ones, with
   deposits and a wrongly asked missing item), so 15 s of banking is low; to be set once the missing-item fix below is in.
 
+### T5 build plan (2026-10-24)
+
+Today a leg the atlas finds that is one of the plugin's own methods takes that method's hand-written journey
+(`TravelMethod`'s `then`: follow Elkoy, Captain Barnaby's boat, the Taverley rocks, the Troll Stronghold's roof, the
+Mining Guild's ladder...), and only a leg the plugin doesn't know (`Departure.ATLAS`) has its boats and NPCs from the
+atlas. The atlas's steps carry what's needed for every leg: each step's menu is the right-click option, who or what
+it's used on and its NPC or object id ("Travel Primio 12888", "Brimhaven Captain Barnaby 8763", "Climb-over Stile
+7527"), with where it starts and ends.
+
+1. **Every leg's journey from the atlas:** the planner writes the boats, NPCs, portals and hops on the way from the
+   leg's atlas option whether or not it's one of the plugin's methods, and the hand steps in `TravelMethod` go. Kept:
+   leaving the house by its portal after a spirit tree into it, which the atlas has no step for.
+2. **Step text from the menu:** an option that's a verb reads as the game's right-click ("Travel Mountain Guide",
+   "Take-boat Monk of Entrana"); one that's a place reads "Captain Barnaby: Brimhaven"; a fare on the way is added
+   ("(30 coins)"). The menu is read with the step's name, so a place of several words ("Land's End") isn't split.
+3. **Outlines:** the step's NPC (by name, as now) or, when it's an object (a portal, a lever, a ladder, a rowboat), the
+   object with the menu's id near where the step starts.
+4. **Directions without Shortest Path's line:** the Agility shortcuts and the ladders and stairs on the way, in the
+   game's words, from the atlas (which only takes shortcuts the player's levels allow), e.g. "Climb Rocks, then
+   Climb-up Ladder". With the line shown it stays "Follow the line to the ... patch". The route list names only the
+   rides ("Ardougne Teleport, then Captain Barnaby: Brimhaven"), not every stile.
+5. **Tests:** the menu reading; the snapshots' journeys (Elkoy, the Ardougne boat, Brother Tranquility, the Mountain
+   Guide) still there from the atlas; the house's portal step after a spirit tree. Snapshots updated after a look.
+   Hand check: a boat or NPC journey (Brimhaven by the Ardougne boat, Tree Gnome Village by Elkoy, Harmony Island).
+
 ## 10. Risks
 
 - **Shortest Path changes its internals:** pinned commit; a small harness; fallback E.

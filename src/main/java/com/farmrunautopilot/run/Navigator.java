@@ -12,7 +12,6 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
-import net.runelite.api.Skill;
 import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
@@ -199,25 +198,25 @@ class Navigator
 		}
 		final JourneyStep step = journeyStep(stop);
 		return !teleported ? stop.describeWay() + " to " + stop.getLocation().getDisplayName()
-			: step != null ? step.textFor(client.getBoostedSkillLevel(Skill.AGILITY))
+			: step != null ? step.getText()
 			: walkTo(stop, here.get(0), "Walk", null);
 	}
 
 	/**
-	 * The stop's walking directions (rocks, gates, stairs) for the player's Agility level, e.g. "Climb the Rocks
-	 * beside the entrance up to the roof (73 Agility)"; null if none or it's a walk from the last stop.
+	 * The stop's walking directions (shortcuts, ladders, stairs) from the travel atlas, e.g. "Climb Rocks, then
+	 * Climb-up Ladder" (the atlas only takes shortcuts the player's levels allow); null if none or it's a walk from the
+	 * last stop.
 	 */
 	String directions(RouteStop stop)
 	{
-		if (stop.getMethod() == null || stop.getDeparture() == Departure.WALK || stop.getMethod().getDirections().isEmpty())
+		if (stop.directions().isEmpty())
 		{
 			return null;
 		}
-		final int agility = client.getBoostedSkillLevel(Skill.AGILITY);
 		final List<String> parts = new ArrayList<>();
-		for (JourneyStep step : stop.getMethod().getDirections())
+		for (JourneyStep step : stop.directions())
 		{
-			parts.add(step.textFor(agility));
+			parts.add(step.getText());
 		}
 		return String.join(", then ", parts);
 	}

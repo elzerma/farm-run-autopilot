@@ -2,14 +2,11 @@ package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
-import com.farmrunautopilot.data.travel.JourneyStep;
-import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,8 +43,8 @@ public class SceneTracker
 	private final Client client;
 	private final Map<Patch, List<GameObject>> patchObjects = new EnumMap<>(Patch.class);
 	private final Map<Patch, NPC> gardeners = new EnumMap<>(Patch.class);
-	/** NPCs in journey steps after a teleport (Renu, Captain Barnaby, Elkoy), by name. */
-	private static final Set<String> TRANSFER_NPC_NAMES = transferNpcNames();
+	/** Renu, the quetzal a Renu leg walks back to first (Navigator); everyone else ridden comes from the atlas. */
+	private static final Set<String> TRANSFER_NPC_NAMES = Set.of("Renu");
 	private final Map<String, NPC> transfers = new HashMap<>();
 	/** Everyone the travel atlas's journeys are used on (Renu, a ship's crew, a guide), once it's read. */
 	private Set<String> atlasRideNames;
@@ -163,7 +160,7 @@ public class SceneTracker
 		return transfers.get(name);
 	}
 
-	/** An NPC a journey step rides with: one of the plugin's own, or one the travel atlas uses. */
+	/** An NPC a journey step rides with: Renu, or one the travel atlas uses. */
 	private boolean isRideNpc(String name)
 	{
 		if (TRANSFER_NPC_NAMES.contains(name))
@@ -180,22 +177,6 @@ public class SceneTracker
 			atlasRideNames = atlas.targets();
 		}
 		return atlasRideNames.contains(name);
-	}
-
-	private static Set<String> transferNpcNames()
-	{
-		final Set<String> names = new HashSet<>();
-		for (TravelMethod method : TravelMethod.values())
-		{
-			for (JourneyStep step : method.getThen())
-			{
-				if (step.getNpc() != null)
-				{
-					names.add(step.getNpc());
-				}
-			}
-		}
-		return names;
 	}
 
 	/** The patch's gardener if loaded, or null. */

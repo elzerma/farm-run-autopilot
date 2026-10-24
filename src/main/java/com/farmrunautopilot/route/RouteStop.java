@@ -5,7 +5,6 @@ import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import lombok.Value;
@@ -47,6 +46,13 @@ public class RouteStop
 	 * tab's hover; null otherwise.
 	 */
 	String why;
+	/**
+	 * The boats, NPCs, portals and hops after the way there, written from the travel atlas (sprint T5); null for a leg
+	 * not planned on it (then only the house's portal after a spirit tree, or an atlas leg's own).
+	 */
+	List<JourneyStep> journey;
+	/** The shortcuts, ladders and stairs on the way, from the atlas, for when Shortest Path isn't drawing; null if none. */
+	List<JourneyStep> directions;
 
 	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
 		boolean needsSupplies)
@@ -81,6 +87,16 @@ public class RouteStop
 	public RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
 		boolean needsSupplies, String breakdown, AtlasLeg atlas, List<String> ways, String spellOption, String why)
 	{
+		this(location, method, departure, legSeconds, needsSupplies, breakdown, atlas, ways, spellOption, why, null,
+			null);
+	}
+
+	private RouteStop(Location location, TravelMethod method, Departure departure, double legSeconds,
+		boolean needsSupplies, String breakdown, AtlasLeg atlas, List<String> ways, String spellOption, String why,
+		List<JourneyStep> journey, List<JourneyStep> directions)
+	{
+		this.journey = journey;
+		this.directions = directions;
 		this.location = location;
 		this.method = method;
 		this.departure = departure;
@@ -97,18 +113,24 @@ public class RouteStop
 	RouteStop withWhy(String why)
 	{
 		return new RouteStop(location, method, departure, legSeconds, needsSupplies, breakdown, atlas, ways, spellOption,
-			why);
+			why, journey, directions);
+	}
+
+	/** The same leg with its journey and directions from the travel atlas (sprint T5). */
+	RouteStop withJourney(List<JourneyStep> journey, List<JourneyStep> directions)
+	{
+		return new RouteStop(location, method, departure, legSeconds, needsSupplies, breakdown, atlas, ways, spellOption,
+			why, journey, directions);
 	}
 
 	/**
-	 * e.g. "Spirit tree (Tree Gnome Village), then follow Elkoy out of the maze" or "House portal nexus: Catherby
-	 * Teleport": the whole journey, so nobody is left guessing about a boat or an NPC.
+	 * e.g. "Spirit tree (Tree Gnome Village), then follow Elkoy" or "House portal nexus: Catherby Teleport": the whole
+	 * journey, so nobody is left guessing about a boat or an NPC.
 	 */
 	public String describeTravel()
 	{
 		final String travel = describeDeparture();
-		final List<JourneyStep> then = departure == Departure.WALK ? Collections.emptyList()
-			: atlas != null ? atlas.getRides() : method != null ? journey(method.getThen()) : Collections.emptyList();
+		final List<JourneyStep> then = rides();
 		if (then.isEmpty())
 		{
 			return travel;
@@ -134,22 +156,27 @@ public class RouteStop
 		{
 			return Collections.emptyList();
 		}
-		return atlas != null ? atlas.getRides() : method != null ? journey(method.getRides()) : Collections.emptyList();
+		if (journey != null)
+		{
+			return journey;
+		}
+		if (atlas != null)
+		{
+			return atlas.getRides();
+		}
+		return departure == Departure.TREE_HOUSE_PORTAL ? LEAVING_HOUSE : Collections.emptyList();
 	}
 
 	/**
-	 * A method's steps after the way there, out of the house only when a spirit tree took the player into it: Teleport
-	 * to House to the portal lands outside, by Outside on its right-click or by the house's own setting.
+	 * Into the house by a spirit tree, then out of its portal: the one step the atlas has none for. Teleport to House to
+	 * the portal lands outside, by Outside on its right-click or by the house's own setting.
 	 */
-	private List<JourneyStep> journey(List<JourneyStep> steps)
+	static final List<JourneyStep> LEAVING_HOUSE = Collections.singletonList(JourneyStep.LEAVE_HOUSE);
+
+	/** The shortcuts, ladders and stairs on the way, for when Shortest Path isn't drawing; empty if none. */
+	public List<JourneyStep> directions()
 	{
-		if (departure != Departure.DIRECT || !steps.contains(JourneyStep.LEAVE_HOUSE))
-		{
-			return steps;
-		}
-		final List<JourneyStep> outside = new ArrayList<>(steps);
-		outside.remove(JourneyStep.LEAVE_HOUSE);
-		return outside;
+		return directions == null || departure == Departure.WALK ? Collections.emptyList() : directions;
 	}
 
 	/**

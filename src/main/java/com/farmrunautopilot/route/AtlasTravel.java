@@ -430,25 +430,121 @@ final class AtlasTravel
 	private static List<JourneyStep> rides(TravelAtlas atlas, TravelAtlas.Way way)
 	{
 		final List<JourneyStep> rides = new ArrayList<>();
+		int fare = fare(atlas, way);
 		for (int id : way.getSteps())
 		{
 			final TravelAtlas.Step step = atlas.step(id);
-			if (TravelAtlas.RIDES.contains(step.getType()))
+			if (!TravelAtlas.carries(step))
 			{
-				final String what = step.getType().equals("TELEPORTATION_PORTAL") ? "portal"
-					: step.getType().equals("TELEPORTATION_LEVER") ? "lever" : "boat";
-				rides.add(JourneyStep.ride(TravelAtlas.target(step.getMenu()), "Take the " + what + ": " + step.getName(),
-					what + ": " + step.getName(), step.getOrigin()));
+				continue;
 			}
-			else if (TravelAtlas.carries(step))
+			// In the game's words, from the right-click: "Follow Elkoy", "Captain Barnaby: Brimhaven"
+			final TravelAtlas.Menu menu = TravelAtlas.menu(step.getMenu(), step.getName());
+			String text = say(menu, step.getName());
+			final boolean boat = step.getType().equals("SHIP") || step.getType().equals("BOAT");
+			if (fare > 0 && boat)
 			{
-				// e.g. "Follow Elkoy", "Transport Brother Tranquility": the menu option and who to use it on
-				final String name = step.getName();
-				rides.add(JourneyStep.ride(TravelAtlas.target(step.getMenu()), name,
-					Character.toLowerCase(name.charAt(0)) + name.substring(1), step.getOrigin()));
+				text += " (" + fare + " coins)";
+				fare = 0;
 			}
+			rides.add(JourneyStep.ride(menu.getTarget(), menu.getId(), text, brief(menu, step.getName(), boat),
+				step.getOrigin()));
 		}
 		return rides;
+	}
+
+	/**
+	 * A leg's journey after the way there when it's one of the plugin's own methods (sprint T5): the boats, NPCs and
+	 * portals on its ways, written from the atlas as for any other leg. The method's way there (its teleport, ring or
+	 * tree) is named by the departure, so no hop step is added.
+	 */
+	static List<JourneyStep> journey(TravelAtlas atlas, AtlasOption option)
+	{
+		final List<JourneyStep> journey = new ArrayList<>();
+		for (TravelAtlas.Way way : option.ways())
+		{
+			journey.addAll(rides(atlas, way));
+		}
+		return journey;
+	}
+
+	/**
+	 * The shortcuts, ladders and stairs on a leg's ways, in the game's words ("Climb Rocks", "Climb-up Ladder"), for
+	 * the guide when Shortest Path isn't drawing the line (sprint T5). The atlas only takes shortcuts the player's
+	 * levels allow, so no level is named.
+	 */
+	static List<JourneyStep> directions(TravelAtlas atlas, AtlasOption option)
+	{
+		final List<JourneyStep> directions = new ArrayList<>();
+		for (TravelAtlas.Way way : option.ways())
+		{
+			for (int id : way.getSteps())
+			{
+				final TravelAtlas.Step step = atlas.step(id);
+				final boolean climb = step.getType().equals("TRANSPORT") && step.getDestination() != null
+					&& step.getOrigin().getPlane() != step.getDestination().getPlane();
+				if (TravelAtlas.carries(step) || !climb && !step.getType().equals("AGILITY_SHORTCUT"))
+				{
+					continue;
+				}
+				final TravelAtlas.Menu menu = TravelAtlas.menu(step.getMenu(), step.getName());
+				final String text = say(menu, step.getName());
+				directions.add(JourneyStep.way(text, Character.toLowerCase(text.charAt(0)) + text.substring(1)));
+			}
+		}
+		return directions;
+	}
+
+	/** A step as the guide says it: "Follow Elkoy", "Captain Barnaby: Brimhaven", or its name if the menu is empty. */
+	private static String say(TravelAtlas.Menu menu, String name)
+	{
+		if (menu.getOption() == null)
+		{
+			return name;
+		}
+		if (menu.isPlace())
+		{
+			return menu.getTarget() + ": " + menu.getOption();
+		}
+		return menu.getTarget() == null ? menu.getOption() : menu.getOption() + " " + menu.getTarget();
+	}
+
+	/** For the route list after the way there: "follow Elkoy", "boat to Brimhaven", "Veos to Land's End". */
+	private static String brief(TravelAtlas.Menu menu, String name, boolean boat)
+	{
+		if (menu.getOption() == null)
+		{
+			return name;
+		}
+		if (menu.isPlace())
+		{
+			return (boat ? "boat" : menu.getTarget()) + " to " + menu.getOption();
+		}
+		final String option = Character.toLowerCase(menu.getOption().charAt(0)) + menu.getOption().substring(1);
+		return menu.getTarget() == null ? option : option + " " + menu.getTarget();
+	}
+
+	/** The coins a way's fares take (a boat, a cart), or 0. */
+	private static int fare(TravelAtlas atlas, TravelAtlas.Way way)
+	{
+		int coins = 0;
+		for (int id : way.getNeeds())
+		{
+			final AtlasNeed need = atlas.need(id);
+			if (need.getKind() != AtlasNeed.Kind.ITEMS)
+			{
+				continue;
+			}
+			for (AtlasNeed.Branch branch : need.getBranches())
+			{
+				if (branch.getItems().length == 1 && branch.getItems()[0] == ItemID.COINS)
+				{
+					coins += branch.getQuantity();
+					break;
+				}
+			}
+		}
+		return coins;
 	}
 
 	/** Walking to a hop and taking it, e.g. "Take the gnome glider to Ta Quir Priw". */
@@ -473,7 +569,8 @@ final class AtlasTravel
 				break;
 		}
 		// Who to use it on, outlined when they're near (Renu, a ship's crew); a ring or a tree isn't found among NPCs
-		return JourneyStep.ride(TravelAtlas.target(hop.getMenu()), text, brief, point(atlas, hop.getFrom()));
+		final TravelAtlas.Menu menu = TravelAtlas.menu(hop.getMenu(), hop.getName());
+		return JourneyStep.ride(menu.getTarget(), menu.getId(), text, brief, point(atlas, hop.getFrom()));
 	}
 
 	/** e.g. "spirit tree", "gnome glider", "charter ship". */

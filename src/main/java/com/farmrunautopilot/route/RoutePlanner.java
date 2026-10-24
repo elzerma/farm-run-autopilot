@@ -7,6 +7,7 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
+import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
@@ -682,9 +683,23 @@ public final class RoutePlanner
 			this.spellOption = spellOption;
 		}
 
+		/** The journey and directions written from the atlas (sprint T5), or null for a leg not planned on it. */
+		List<JourneyStep> journey;
+		List<JourneyStep> directions;
+
+		/** This leg, with its journey and directions from the atlas. */
+		Leg withJourney(List<JourneyStep> journey, List<JourneyStep> directions)
+		{
+			this.journey = journey;
+			this.directions = directions;
+			return this;
+		}
+
 		RouteStop stop(Location to)
 		{
-			return new RouteStop(to, method, departure, seconds, needsSupplies, breakdown, atlas, ways, spellOption);
+			final RouteStop stop = new RouteStop(to, method, departure, seconds, needsSupplies, breakdown, atlas, ways,
+				spellOption);
+			return journey == null && directions == null ? stop : stop.withJourney(journey, directions);
 		}
 	}
 
@@ -846,9 +861,22 @@ public final class RoutePlanner
 		// into a house set to teleport outside
 		final String spellOption = option.getKind() == AtlasOption.Kind.HOUSE ? houseInOption()
 			: AtlasTravel.spellOption(teleport);
-		return new Leg(match.getMethod(), match.getDeparture(), option.getSeconds() + overhead, false,
+		final Leg leg = new Leg(match.getMethod(), match.getDeparture(), option.getSeconds() + overhead, false,
 			walking ? 0 : preference(option, match), legs.breakdown(option) + " + overhead " + round(overhead), described,
 			AtlasWays.keys(atlas.getAtlas(), option), cooldown, spellOption);
+		if (walking)
+		{
+			return leg;
+		}
+		// The journey from the atlas whether or not it's one of the plugin's methods (sprint T5); out of the house's
+		// portal after a spirit tree into it, which the atlas has no step for
+		final List<JourneyStep> journey = new ArrayList<>();
+		if (match.getDeparture() == Departure.TREE_HOUSE_PORTAL)
+		{
+			journey.add(JourneyStep.LEAVE_HOUSE);
+		}
+		journey.addAll(described != null ? described.getRides() : AtlasTravel.journey(atlas.getAtlas(), option));
+		return leg.withJourney(journey, AtlasTravel.directions(atlas.getAtlas(), option));
 	}
 
 	/** What an option the plugin doesn't know as one of its methods costs besides time, for the travel styles. */
