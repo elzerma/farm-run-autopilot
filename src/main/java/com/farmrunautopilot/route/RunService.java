@@ -6,6 +6,7 @@ import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
+import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.travel.BankTeleport;
 import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
@@ -600,7 +601,9 @@ public class RunService
 	/** As above, leaving out patches whose supplies are used already (done or planted this run). Client thread. */
 	public SupplyPlan suppliesFor(RunPlan plan, List<RouteStop> stops, Set<Patch> leaveOut)
 	{
-		final Holdings holdings = holdingsTracker.getHoldings();
+		// A staff or tome left in the bank isn't offered for runes mid-run: the runes carried count instead (elzerma,
+		// 2026-10-24: asked at Kastori for the mystic air staff they'd banked, carrying the air runes it would replace)
+		final Holdings holdings = holdingsTracker.getHoldings().carriedOnly(SupplyItems.INFINITE_RUNE_ITEMS.keySet());
 		// No route is planned, so no travel atlas is needed
 		return assembly(settings.getRunConfig(), accessChecker.getSnapshot(), holdings, null, plan.getSelection())
 			.part(holdings, stops, plan.getRoute(), leaveOut);

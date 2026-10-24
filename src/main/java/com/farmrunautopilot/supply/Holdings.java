@@ -159,6 +159,28 @@ public class Holdings
 			itemCharges);
 	}
 
+	/**
+	 * The same, but these items count only where they're carried (inventory or worn): for a run in progress, where an
+	 * item in the bank can't be fetched without a bank visit.
+	 */
+	public Holdings carriedOnly(Set<Integer> itemIds)
+	{
+		final Map<Source, Map<Integer, Integer>> left = new EnumMap<>(Source.class);
+		items.forEach((source, counts) ->
+		{
+			if (source == Source.INVENTORY || source == Source.WORN)
+			{
+				left.put(source, counts);
+				return;
+			}
+			final Map<Integer, Integer> kept = new HashMap<>(counts);
+			kept.keySet().removeAll(itemIds);
+			left.put(source, kept);
+		});
+		return new Holdings(left, runePouch, infiniteRunes, bankKnown, autoweedOn, bucketUses, bucketCompost, usedToday,
+			itemCharges);
+	}
+
 	public Map<Integer, Integer> in(Source source)
 	{
 		return items.getOrDefault(source, Collections.emptyMap());
