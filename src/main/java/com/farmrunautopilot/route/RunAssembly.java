@@ -94,8 +94,46 @@ final class RunAssembly
 		this.wearSlot = wearSlot;
 	}
 
+	/** The route and the whole run's supplies as one inventory, before any bank visit is placed. */
+	@Value
+	static class Unbanked
+	{
+		Route route;
+		SupplyPlan supplies;
+		/** "Bank at the Farming Guild" decides where the run sets off once its bank visits are placed (issue #8). */
+		boolean guildBanks;
+	}
+
 	/** The run from where the player is. */
 	Result assemble(Start start)
+	{
+		final Unbanked unbanked = unbanked(start);
+		Route route = unbanked.route;
+		SupplyPlan supplies = unbanked.supplies;
+		final boolean guildBanks = unbanked.guildBanks;
+		// Too much for one inventory: bank partway, as often as needed, where it costs least
+		final List<BankStop> bankStops = new ArrayList<>();
+		if (supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
+		{
+			Banked banked = bankStops(route);
+			if (banked != null && guildBanks && RunService.plansFromGuild(config, banked.route, banked.first))
+			{
+				route = fromGuild();
+				supplies = supplies(route);
+				banked = supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS ? bankStops(route) : null;
+			}
+			if (banked != null)
+			{
+				route = banked.route;
+				supplies = banked.first;
+				bankStops.addAll(banked.stops);
+			}
+		}
+		return new Result(route, supplies, Collections.unmodifiableList(bankStops));
+	}
+
+	/** The route from where the player is, and its supplies as one inventory: quick, as no bank visit is placed. */
+	Unbanked unbanked(Start start)
 	{
 		// In the Farming Guild, where it isn't a stop: the run sets off from there (issue #8)
 		Route route = RoutePlanner.plan(selection.getPatches(), config, access, holdings, poh, atlas, start.here,
@@ -122,25 +160,7 @@ final class RunAssembly
 			route = fromGuild();
 			supplies = supplies(route);
 		}
-		// Too much for one inventory: bank partway, as often as needed, where it costs least
-		final List<BankStop> bankStops = new ArrayList<>();
-		if (supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS)
-		{
-			Banked banked = bankStops(route);
-			if (banked != null && guildBanks && RunService.plansFromGuild(config, banked.route, banked.first))
-			{
-				route = fromGuild();
-				supplies = supplies(route);
-				banked = supplies.getSlots() > SupplyCalculator.INVENTORY_SLOTS ? bankStops(route) : null;
-			}
-			if (banked != null)
-			{
-				route = banked.route;
-				supplies = banked.first;
-				bankStops.addAll(banked.stops);
-			}
-		}
-		return new Result(route, supplies, Collections.unmodifiableList(bankStops));
+		return new Unbanked(route, supplies, guildBanks);
 	}
 
 	private Route fromGuild()
