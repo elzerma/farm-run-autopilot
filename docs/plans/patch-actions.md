@@ -7,7 +7,7 @@ from the leprechaun at a planned step rather than letting the user rely on their
 be a 'Note' step for crops or herbs, I think crops really depend on if they're being used for compost or not. Start some
 planning for all of these items and we can evaluate later. Other features at the patches might be good, too."
 
-Nothing here starts until elzerma has looked it over and answered section 6.
+Nothing here starts until elzerma has looked it over and answered section 7.
 
 ## 1. What the plugin does at a patch today
 
@@ -20,12 +20,37 @@ Nothing here starts until elzerma has looked it over and answered section 6.
   bottomless compost bucket is tracked and filled.
 - **Banking:** what to deposit at a bank visit (`depositNames`) includes produce, buckets and leftovers.
 
-## 2. The features asked for
+## 2. The workflow at a stop (elzerma, 2026-10-24, read back and confirmed)
 
-### 2.1 A planned "Note" step
+At a stop with allotments and a compost bin:
+
+1. **Arrive.**
+2. **Empty the compost bin if it's ready.** Supercompost becomes ultracompost straight away when volcanic ash is added
+   to the bin, so with "make ultracompost": add the ash, then take the compost out in the same visit with empty
+   buckets or the bottomless compost bucket used on the bin. Buckets of compost go to the tool leprechaun; a
+   bottomless bucket keeps its compost.
+3. **Refill the bin.** Pick the watermelon allotments first and put the watermelons straight in (supercompost);
+   other allotment crops can go in too, but never snape grass (worth more sold or for potions). Spare watermelons
+   past the bin's 15 are noted. Close the bin.
+4. **Pick the other allotments and note them** on the leprechaun. The flower patch depends: left alone while it's
+   still protecting a growing crop, picked and replanted when it's being replanted (for the extra XP).
+5. **Pick the herbs, clean them, then note them** on the leprechaun.
+6. **Take compost from the leprechaun** for every patch at the stop (not with a bottomless bucket).
+7. **Treat and plant every patch:** compost, plant, pay the gardener where needed.
+
+Every patch at the stop is picked and noted before any is composted and planted (the guide today goes patch by
+patch). A stop with herbs but no allotments or compost bin has no compost or allotment steps: pick, clean, note, take
+compost, treat and plant.
+
+**Answered:** noting is on by default (a setting); herbs are cleaned at the patch, before noting; every stop with a
+compost bin uses it.
+
+## 3. The features asked for
+
+### 3.1 A planned "Note" step
 
 After a stop's last harvest, one step: "Note your herbs on the tool leprechaun" (use the produce on him; he notes it
-for free). Always for herbs; for allotment crops, hops and flowers only when they aren't kept for compost (2.3). Ticked
+for free). Always for herbs; for allotment crops, hops and flowers only when they aren't kept for compost (3.3). Ticked
 when no unnoted produce of the stop's crops is left in the inventory. Saves slots for the rest of the part, so the
 bank planner can count noted produce as one slot per kind rather than its harvest.
 
@@ -33,7 +58,7 @@ bank planner can count noted produce as one slot per kind rather than its harves
   (fruit can be noted; logs aren't from the patch run); what to do at stops with no leprechaun nearby (**UNVERIFIED**
   which farming areas lack one; most have one).
 
-### 2.2 Cleaning herbs
+### 3.2 Cleaning herbs
 
 Option "Clean herbs" (off by default): after harvesting, clean each grimy herb the player's Herblore allows, before the
 Note step (noted grimy herbs can't be cleaned). The step lists which herbs are cleanable at their level; the rest stay
@@ -45,7 +70,7 @@ grimy. Cleaning takes time (about a tick per herb, **UNVERIFIED**), so the route
 - **Questions:** clean at the patch (between harvest and note) or only at the end; whether it should be skipped when
   the next leg is a long one (no time to lose) or always done.
 
-### 2.3 Making compost from the run's produce
+### 3.3 Making compost from the run's produce
 
 Option "Make compost" (off by default): crops that make compost go into the compost bin at the stop instead of being
 noted, and the bin is collected on a later run.
@@ -56,18 +81,18 @@ noted, and the bin is collected on a later run.
 - **The steps:** fill the bin (15 items), close it, and on a later run open it and take the compost with 15 empty
   buckets (or the bottomless bucket). With ultracompost: add the ash when it's supercompost, before taking it.
 - **What it changes:** the supply list brings volcanic ash and, for a collecting run, buckets; produce for the bin isn't
-  noted (2.1); the bin's state is a varbit per farming area (RuneLite's Time Tracking tracks compost bins:
+  noted (3.1); the bin's state is a varbit per farming area (RuneLite's Time Tracking tracks compost bins:
   **UNVERIFIED** which varbits), so the plugin can tell a bin is ready to collect.
 - **Questions:** which bins (every stop that has one, or only some); whether to fill a bin from one stop's crops or
   carry watermelons to the next bin; whether collecting compost belongs in the run when nothing else is due there.
 
-### 2.4 Buckets: keep or drop
+### 3.4 Buckets: keep or drop
 
 A setting for empty buckets after composting: drop them (as now), keep them (to collect compost, 2.3), or store them
 at the tool leprechaun (he holds up to 31, **UNVERIFIED**). With "Make compost" on, buckets are kept as needed for the
 bins to collect.
 
-### 2.5 Compost from the leprechaun at a planned step
+### 3.5 Compost from the leprechaun at a planned step
 
 When compost is stored at the tool leprechaun, the run gets a step "Take 8 ultracompost from the tool leprechaun" at
 the first stop with one, for as much as the rest of the part needs, instead of waiting for the compost step to say
@@ -77,16 +102,16 @@ bank slots (compost stays with the leprechaun until needed).
 - **Questions:** take it all at the first leprechaun, or at each stop only what that stop needs (fewer slots carried,
   more steps); how to handle the leprechaun's limit of one kind of compost per take (**UNVERIFIED**).
 
-## 3. Other things worth doing at the patches (ideas, for elzerma to pick from)
+## 4. Other things worth doing at the patches (ideas, for elzerma to pick from)
 
 - **Bottomless bucket:** fill it from the leprechaun's or the bin's compost as a planned step when it's low.
 - **Plant cure and Resurrect Crops:** a step for a diseased patch with what's carried, rather than skipping it.
 - **Leftover seeds:** at the end of a run, a step to put leftover seeds back in the seed vault (Farming Guild) or bank.
-- **Fruit:** note fruit tree produce like herbs (2.1).
+- **Fruit:** note fruit tree produce like herbs (3.1).
 - **Payments:** take the gardener's payment out of the leprechaun's notes? (**UNVERIFIED**: he doesn't store produce.)
 - **Seaweed and giant seaweed** (crop types 1b) need the same note and compost choices.
 
-## 4. The banking fixes from the same run (built 2026-10-24)
+## 5. The banking fixes from the same run (built 2026-10-24)
 
 Re-checked by elzerma the same day: no Missing box named anything just used at a stop (passed), and the seed vault's
 emptied slot no longer counts as one of its item (passed: after their last kwuarm seed it said "Take 1 more", as the
@@ -100,24 +125,23 @@ banking early moving the planned visit up. Merged to master with those two still
 - **Banking early moves the planned visit up:** "Bank for them" does the next planned visit now when what's left of
   this part and the next fit in the inventory; that visit is then done and isn't made again later.
 
-## 5. Where this could go
+## 6. Where this could go
 
 The roadmap is T5 (journeys) → crop types 1b → 1c → T9 (elzerma, 2026-10-23). These features change the steps and the
 supply list, not travel, so they could run alongside T5, or as their own sprints after 1c:
 
 | Sprint | What | Size |
 |---|---|---|
-| P1 | Note step (2.1), leprechaun compost step (2.5), buckets setting (2.4) | medium |
-| P2 | Cleaning herbs (2.2) | small |
-| P3 | Making compost (2.3), with the bin varbits and a guided test | large |
+| P1 | The stop workflow of section 2 (everything picked and noted before treating and planting), Note step (3.1), leprechaun compost step (3.5), buckets setting (3.4) | large |
+| P2 | Cleaning herbs (3.2) | small |
+| P3 | Making compost (3.3), with the bin varbits and a guided test | large |
 
-## 6. Open questions for elzerma
+## 7. Open questions for elzerma
 
 1. Is P1-P3 the right split, and where do they go: before 1b, between 1b and 1c, or after 1c?
-2. The Note step: a setting on by default, or always?
-3. Cleaning herbs: at the patch (before noting), or once at the end of the run?
-4. Making compost: every stop with a bin, or bins you choose? And should a bin ready to collect add a stop to the run
-   on its own?
-5. Empty buckets: drop by default (as now), keep, or store at the leprechaun?
-6. Leprechaun compost: all at the first leprechaun, or each stop only its own?
-7. Which of section 3's ideas are worth planning?
+2. Should a compost bin that's ready to collect add its stop to the run when nothing else is due there?
+3. Empty buckets after composting: drop (as now), keep for the bins, or store at the leprechaun?
+4. Which of section 4's ideas are worth planning?
+
+Answered in section 2: noting on by default, cleaning at the patch, every bin used, compost taken from the
+leprechaun at each stop for that stop.
