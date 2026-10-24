@@ -4,7 +4,6 @@ import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.data.Unlock;
-import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.poh.JewelleryBoxTier;
 import com.farmrunautopilot.data.poh.PohAltar;
 import com.farmrunautopilot.data.poh.PoolTier;
@@ -89,7 +88,7 @@ class AccountPage extends SetupPanel
 			final JButton rescan = smallButton("Rescan house");
 			rescan.setToolTipText("<html>Detection only adds furniture. If you removed or downgraded something, "
 				+ "rescan:<br>this clears the detected furniture and your next house visit fills it in again.<br>"
-				+ "The portal location and nexus destinations are kept.</html>");
+				+ "The nexus destinations are kept.</html>");
 			rescan.addActionListener(e ->
 			{
 				PohDetector.clearDetected(poh);
@@ -98,19 +97,8 @@ class AccountPage extends SetupPanel
 			});
 			s.addContent(rescan);
 		}
-		s.help("Set the portal location and nexus destinations by hand.");
-
-		final List<Choice<HousePortal>> portals = new ArrayList<>();
-		portals.add(Choice.of(null, "Unknown / no house"));
-		for (HousePortal portal : HousePortal.values())
-		{
-			portals.add(Choice.of(portal, portal.getDisplayName() + " (" + portal.getConstructionLevel() + " Con)"));
-		}
-		s.addContent(label("House portal location"));
-		s.addContent(combo(portals, poh.getPortal(), p -> saveAccount(() -> poh.setPortal(p), true)));
-		s.addContent(checkBox("House set to teleport outside", poh.isTeleportOutside(), true,
-			"Teleport to House lands outside the portal instead of inside",
-			on -> saveAccount(() -> poh.setTeleportOutside(on), false)));
+		s.help("Where your house is comes from the game (Settings > Debug > Detected). Set the nexus destinations by "
+			+ "hand.");
 
 		final List<Choice<JewelleryBoxTier>> boxes = new ArrayList<>();
 		boxes.add(Choice.of(null, "None"));

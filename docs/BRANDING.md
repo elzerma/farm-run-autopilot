@@ -47,6 +47,8 @@ Orange is an accent, not a text colour: one orange thing per area at most. Never
 | Reminders (drop weeds, inventory full) | `#ff981f` | `GuidanceOverlay.REMINDER` |
 | Timer note | white | `GuidanceOverlay.TIMER` |
 | Item to wear: outline and "Wear" label | `#40c8ff` sky blue on `#000000aa` | `ItemHighlightOverlay.WEAR_COLOUR` |
+| Teleport needing a right-click: "Right-click" label ("Right" over "click" in an equipment slot) | item colour on `#000000aa` | `ItemHighlightOverlay` |
+| Option to pick in a teleport's right-click menu: its text, no outline | item colour | `TeleportMenuHighlighter` |
 | Patch / NPC / item highlights (player can change) | `#00ffff` / `#ffd700` / `#00ff00`, alpha 220 | `FarmRunAutopilotConfig` |
 
 Wear blue is only for "put this on", so it's never confused with an item to use.

@@ -49,4 +49,14 @@ public class BankTeleportTest
 		assertEquals(BankTeleport.RING_OF_WEALTH, BankTeleport.best(crafting(50), bank(ItemID.RING_OF_WEALTH_5)));
 		assertNull(BankTeleport.best(crafting(50), bank()));
 	}
+
+	/** The option to pick on the item, coloured in its right-click menu (elzerma, 2026-10-21). */
+	@Test
+	public void eachNamesItsOption()
+	{
+		assertEquals("Castle Wars", BankTeleport.RING_OF_DUELING.getOption());
+		assertEquals("Teleport", BankTeleport.CRAFTING_CAPE.getOption());
+		assertEquals("Crafting Guild", BankTeleport.MAX_CAPE.getOption());
+		assertEquals("Grand Exchange", BankTeleport.RING_OF_WEALTH.getOption());
+	}
 }

@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
+import com.farmrunautopilot.route.AtlasPlayers;
 import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RoutePlanner;
 import com.farmrunautopilot.route.RunSelection;
@@ -130,7 +131,7 @@ public class ProtectionFallbackTest
 		final RunSelection selection = RunSelector.select(config, AccessSnapshot.UNKNOWN, p -> null, NOW, true,
 			Collections.emptyMap());
 		final Route route = RoutePlanner.plan(selection.getPatches(), config, AccessSnapshot.UNKNOWN, holdings,
-			new PohSetup());
+			new PohSetup(), AtlasPlayers.with(AccessSnapshot.UNKNOWN, holdings), null);
 		return SupplyCalculator.calculate(config, AccessSnapshot.UNKNOWN, holdings, selection, route, p -> null,
 			id -> "item " + id, id -> 0);
 	}

@@ -5,7 +5,9 @@ list (BSD-2, see `THIRD_PARTY_NOTICES`) from a local clone and write numbers the
 
 - `Measure.java`: walking tiles from each teleport landing to its stop's nearest patch, from each patch to its
   bank, spirit tree, fairy ring, quetzal pad and hot air balloon, and named walks. The results were copied into
-  `TravelTimes.java` by hand.
+  `TravelTimes.java` by hand until the travel atlas (`tools/atlas`) replaced those tables in sprint T3 of
+  `docs/plans/travel-rework.md`; `methods.tsv`'s landings still say where each of the plugin's own ways lands
+  (`AtlasLinks`).
 - `Grid.java`: walking tiles from each stop's patches out to 150 tiles, per 4x4 block, written to
   `src/main/resources/com/farmrunautopilot/walk-grid.bin` (read by `WalkGrid.java`).
 - `Walk.java`: loads the collision map; the shared walking rules (8 directions, the game's diagonal rule).
@@ -21,4 +23,4 @@ java -Xmx2g -cp out Grid <shortest-path>/src/main/resources/collision-map.zip pa
 java -Xmx2g -cp out Measure <shortest-path>/src/main/resources/collision-map.zip .
 ```
 
-Review big changes before copying any number into `TravelTimes.java`.
+Only the grid is still read by the plugin; the travel atlas measures every walk the route plans.

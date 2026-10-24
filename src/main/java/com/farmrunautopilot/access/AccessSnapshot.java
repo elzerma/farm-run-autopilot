@@ -43,8 +43,10 @@ public class AccessSnapshot
 	Set<String> completedDiaries;
 	/** Detected unlocks plus the ones the player ticked by hand. */
 	Set<Unlock> unlocks;
-	/** House portal location from My POH, or null. */
-	HousePortal housePortal;
+	/** Where the house is, as the game keeps it (POH_HOUSE_LOCATION): 0 without one; {@link #getHousePortal()}. */
+	int houseLocation;
+	/** Teleport to House lands outside the house, by its portal (the house's own setting, read from the game). */
+	boolean houseTeleportOutside;
 	/** The spellbook the player is on, or null if unknown. */
 	Spellbook spellbook;
 	/** Spellbooks a POH altar can switch to (empty without one). */
@@ -57,20 +59,30 @@ public class AccessSnapshot
 	boolean ironman;
 
 	public AccessSnapshot(boolean known, Map<Quest, QuestState> quests, Map<Skill, Integer> realLevels,
-		Set<String> completedDiaries, Set<Unlock> unlocks, HousePortal housePortal, Spellbook spellbook,
-		Set<Spellbook> altarSpellbooks, int questPoints, int maxQuestPoints, boolean ironman)
+		Set<String> completedDiaries, Set<Unlock> unlocks, int houseLocation, boolean houseTeleportOutside,
+		Spellbook spellbook, Set<Spellbook> altarSpellbooks, int questPoints, int maxQuestPoints, boolean ironman)
 	{
 		this.known = known;
 		this.quests = quests;
 		this.realLevels = realLevels;
 		this.completedDiaries = completedDiaries;
 		this.unlocks = unlocks;
-		this.housePortal = housePortal;
+		this.houseLocation = houseLocation;
+		this.houseTeleportOutside = houseTeleportOutside;
 		this.spellbook = spellbook;
 		this.altarSpellbooks = altarSpellbooks;
 		this.questPoints = questPoints;
 		this.maxQuestPoints = maxQuestPoints;
 		this.ironman = ironman;
+	}
+
+	/** With a house in this place (null: none), Teleport to House landing inside it. */
+	public AccessSnapshot(boolean known, Map<Quest, QuestState> quests, Map<Skill, Integer> realLevels,
+		Set<String> completedDiaries, Set<Unlock> unlocks, HousePortal housePortal, Spellbook spellbook,
+		Set<Spellbook> altarSpellbooks, int questPoints, int maxQuestPoints, boolean ironman)
+	{
+		this(known, quests, realLevels, completedDiaries, unlocks, housePortal != null ? housePortal.getGameValue() : 0,
+			false, spellbook, altarSpellbooks, questPoints, maxQuestPoints, ironman);
 	}
 
 	/** Without the account type: a normal account, not an ironman. */
@@ -102,6 +114,18 @@ public class AccessSnapshot
 		return diary.name() + ":" + tier.name();
 	}
 
+	/** The player has a house, as the game says (before the first login, none: the route plans no house then). */
+	public boolean hasHouse()
+	{
+		return houseLocation != 0;
+	}
+
+	/** Where the house portal is, or null without a house or in a place the plugin doesn't know yet. */
+	public HousePortal getHousePortal()
+	{
+		return HousePortal.of(houseLocation);
+	}
+
 	public boolean isMet(Requirement requirement)
 	{
 		if (!known)
@@ -124,7 +148,7 @@ public class AccessSnapshot
 			case UNLOCK:
 				return unlocks.contains(requirement.getUnlock());
 			case HOUSE_PORTAL:
-				return requirement.getHousePortal() == housePortal;
+				return requirement.getHousePortal() == getHousePortal();
 			case ALL_SKILLS:
 				for (Skill skill : REAL_SKILLS)
 				{

@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelFamily;
@@ -70,7 +71,7 @@ public class TravelWaysTest
 			ItemID.ARDY_CAPE_MEDIUM, 1)));
 		final Holdings holdings = new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false, -1,
 			null, used);
-		final TravelWays ways = ways(keep, access(99), holdings);
+		final TravelWays ways = ways(keep, ardougneMedium(99), holdings);
 		final TravelWays.Way necklace = way(ways, TravelFamily.TELEPORT_ITEMS, "Skills necklace: Farming Guild");
 		assertEquals(TravelWays.State.LAST_CHARGE_KEPT, necklace.getState());
 		assertTrue(necklace.getDetail(), necklace.getDetail().contains("last charge is kept back"));
@@ -273,6 +274,21 @@ public class TravelWaysTest
 			levels.put(skill, level);
 		}
 		return new AccessSnapshot(true, quests, levels, Collections.emptySet(),
+			EnumSet.of(Unlock.FAIRY_RINGS, Unlock.SPIRIT_TREES, Unlock.QUETZAL_KASTORI), null, Spellbook.STANDARD,
+			Collections.emptySet());
+	}
+
+	/** As {@link #access(int, Quest...)}, with the medium Ardougne diary, which Ardougne cloak 2's farm teleport needs. */
+	private static AccessSnapshot ardougneMedium(int level)
+	{
+		final AccessSnapshot all = access(level);
+		final Map<Skill, Integer> levels = new EnumMap<>(Skill.class);
+		for (Skill skill : AccessSnapshot.REAL_SKILLS)
+		{
+			levels.put(skill, level);
+		}
+		return new AccessSnapshot(true, all.getQuests(), levels,
+			Collections.singleton(AccessSnapshot.diaryKey(AchievementDiary.ARDOUGNE, AchievementDiary.Tier.MEDIUM)),
 			EnumSet.of(Unlock.FAIRY_RINGS, Unlock.SPIRIT_TREES, Unlock.QUETZAL_KASTORI), null, Spellbook.STANDARD,
 			Collections.emptySet());
 	}

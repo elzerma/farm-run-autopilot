@@ -9,9 +9,9 @@ import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.travel.BankTeleport;
 import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
-import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.data.travel.WalkGrid;
 import com.farmrunautopilot.data.travel.atlas.AtlasAccount;
+import com.farmrunautopilot.data.travel.atlas.AtlasBanks;
 import com.farmrunautopilot.data.travel.atlas.AtlasNeed;
 import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
@@ -66,6 +66,9 @@ public class RunService
 	private static final int STANDING_TILES = 25;
 	/** A stop whose patch is within this many tiles can be the first stop by walking there. */
 	private static final int NEARBY_TILES = 120;
+	/** The Run tab when the travel atlas couldn't be read (it ships in the plugin): there's no route without it. */
+	static final String NO_ATLAS = "Travel data couldn't be read, so there's no route. Restart RuneLite; if it happens "
+		+ "again, please use Report a problem in Settings.";
 
 	private final Client client;
 	private final ItemManager itemManager;
@@ -208,6 +211,11 @@ public class RunService
 		{
 			return false;
 		}
+		if (TravelAtlas.ifLoaded() == null)
+		{
+			// The travel atlas is read in the background at start-up (about half a second): planned once it's read
+			return false;
+		}
 		dirty = false;
 		ticksSinceRefresh = 0;
 
@@ -223,6 +231,20 @@ public class RunService
 		{
 			ways = nowWays;
 		}
+		if (atlas == null)
+		{
+			// It couldn't be read: no route at all rather than one without travel, and the Run tab says why
+			final RunPlan none = new RunPlan(selection, new Route(new ArrayList<>(), config.getRouteMode(), 0, 0),
+				new SupplyPlan(Collections.emptyList(), Collections.emptyMap(), Collections.emptyList(),
+					Collections.emptyList(), Collections.singletonList(NO_ATLAS), 0, "", 0, Collections.emptyMap()),
+				Collections.emptyMap());
+			if (none.equals(plan))
+			{
+				return false;
+			}
+			plan = none;
+			return true;
+		}
 		final Player player = client.getLocalPlayer();
 		final WorldPoint tile = player != null ? player.getWorldLocation() : null;
 		// In the Farming Guild, where it isn't a stop: the run sets off from there (issue #8)
@@ -235,7 +257,7 @@ public class RunService
 		// somewhere first, so plan from anywhere (elzerma). The same for setting off on foot from where they stand.
 		final Location startStop = here != null ? here : near;
 		final boolean missing = supplies.missingCount(startStop == Location.FARMING_GUILD) > 0;
-		if (missing && (startStop != null ? TravelTimes.bankTiles(startStop) == null
+		if (missing && (startStop != null ? AtlasBanks.near(startStop) == null
 			: atlas != null && tile != null && !RoutePlanner.bankNear(atlas, tile)))
 		{
 			route = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
@@ -293,21 +315,14 @@ public class RunService
 			|| !next.getBankStops().equals(plan.getBankStops())) && log.isDebugEnabled())
 		{
 			log.debug("Route planned:\n{}", explain(next));
-			if (atlas != null)
-			{
-				// Sprint T3 of docs/plans/travel-rework.md: the same run on the old tables, for comparing in the dev client
-				final Route old = RoutePlanner.plan(selection.getPatches(), config, access, holdings,
-					settings.getAccount().getPoh(), null, here, near, nearTiles, guild ? Location.FARMING_GUILD : null);
-				log.debug("The old tables' route (not used): {}", summary(old));
-			}
 		}
 		plan = next;
 		return true;
 	}
 
 	/**
-	 * Read the travel atlas in the background (about half a second), never on the client thread; routes are planned on
-	 * the old tables until it's read, then again on the atlas.
+	 * Read the travel atlas in the background (about half a second), never on the client thread; no route is planned
+	 * until it's read.
 	 */
 	public void startUp()
 	{
@@ -344,7 +359,7 @@ public class RunService
 
 	/**
 	 * The travel atlas with the player as it needs them (the varbits and varplayers it names, read now, and what the
-	 * Travel tab lets the route use), or null if it didn't load: routes are then planned on the old tables. Client
+	 * Travel tab lets the route use), or null if it hasn't been read or couldn't be: there's no route then. Client
 	 * thread.
 	 */
 	private RouteAtlas routeAtlas(RunConfig config, AccessSnapshot access, Holdings holdings)
@@ -370,18 +385,6 @@ public class RunService
 		// Minutes since 1970, as the game keeps when a home or minigame teleport was last used
 		return new RouteAtlas(atlas, new AtlasAccount(access, holdings, varbits, varps, ways(config),
 			Instant.now().getEpochSecond() / 60));
-	}
-
-	/** e.g. "Catherby (Camelot Teleport, 31 s), Ardougne farm (Ardougne cloak (farm), 18 s); travel 49 s". */
-	private static String summary(Route route)
-	{
-		final List<String> stops = new ArrayList<>();
-		for (RouteStop stop : route.getStops())
-		{
-			stops.add(stop.getLocation().getDisplayName() + " (" + stop.describeWay() + ", "
-				+ Math.round(stop.getLegSeconds()) + " s)");
-		}
-		return String.join(", ", stops) + "; travel " + Math.round(route.getTravelSeconds()) + " s";
 	}
 
 	/**
@@ -573,9 +576,9 @@ public class RunService
 				if (to == Location.FARMING_GUILD)
 				{
 					// From the guild's bank out to its patches
-					final int tiles = TravelTimes.bankTiles(Location.FARMING_GUILD);
-					return new RouteStop(to, null, Departure.WALK, tiles * TravelTimes.SECONDS_PER_TILE, false,
-						"from the bank " + tiles + " tiles");
+					final AtlasBanks.Bank bank = AtlasBanks.near(Location.FARMING_GUILD);
+					return new RouteStop(to, null, Departure.WALK, bank == null ? 0 : bank.getSeconds(), false,
+						"from the bank " + (bank == null ? 0 : bank.getTiles()) + " tiles");
 				}
 				return RoutePlanner.between(Location.FARMING_GUILD, to, config, access, holdings, poh, atlas);
 			}
@@ -682,7 +685,7 @@ public class RunService
 
 	/**
 	 * The best way to a stop with what the player has now, for a run in progress whose leg can't be taken as planned
-	 * (a daily teleport with no uses left). Client thread.
+	 * (a daily teleport with no uses left); null without the travel atlas. Client thread.
 	 *
 	 * @param from the stop it sets off from, or null for wherever the player is
 	 */
@@ -691,8 +694,9 @@ public class RunService
 		final RunConfig config = settings.getRunConfig();
 		final AccessSnapshot access = accessChecker.getSnapshot();
 		final Holdings holdings = holdingsTracker.getHoldings();
-		return RoutePlanner.between(from, to, config, access, holdings, settings.getAccount().getPoh(),
-			routeAtlas(config, access, holdings));
+		final RouteAtlas atlas = routeAtlas(config, access, holdings);
+		return atlas == null ? null : RoutePlanner.between(from, to, config, access, holdings,
+			settings.getAccount().getPoh(), atlas);
 	}
 
 	/**

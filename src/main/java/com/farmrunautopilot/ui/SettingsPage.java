@@ -11,6 +11,7 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.Unlock;
+import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.travel.DailyLimits;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
@@ -165,6 +166,7 @@ class SettingsPage extends SetupPanel
 				"From Fairytale II; a dramen or lunar staff is needed until the Elite Lumbridge & Draynor diary");
 			addDetected("Spirit trees", access.getUnlocks().contains(Unlock.SPIRIT_TREES) ? "Unlocked" : "Not unlocked",
 				"From Tree Gnome Village");
+			addHouse(access);
 			for (Unlock unlock : Unlock.values())
 			{
 				// Confirmed game values, so these aren't in Unlocks to tick
@@ -257,6 +259,28 @@ class SettingsPage extends SetupPanel
 		row.setAlignmentX(LEFT_ALIGNMENT);
 		row.setMaximumSize(new Dimension(CONTROL_WIDTH, row.getPreferredSize().height));
 		detected.add(row);
+	}
+
+	/** Where the house is and how Teleport to House lands, read from the game (elzerma, 2026-10-22: here, not My house). */
+	private void addHouse(AccessSnapshot access)
+	{
+		if (!access.hasHouse())
+		{
+			addDetected("House", "None", "Read from the game: you have no house, so the route won't use one");
+			return;
+		}
+		final HousePortal portal = access.getHousePortal();
+		if (portal != null)
+		{
+			addDetected("House", portal.getDisplayName(), "Read from the game: where your house portal is");
+		}
+		else
+		{
+			addDetected("House", "Unknown place", "Read from the game, but the plugin doesn't know this place yet, so "
+				+ "the route won't leave your house by its door. Use Report a problem so it can be added.");
+		}
+		addDetected("Teleport to House", access.isHouseTeleportOutside() ? "Lands outside" : "Lands inside",
+			"Read from the game: your house's teleport setting");
 	}
 
 	/** How the run is shown in game: highlights, colours and reminders. */

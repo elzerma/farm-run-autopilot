@@ -19,6 +19,7 @@ import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.route.BankStop;
+import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.settings.AccountSettings;
@@ -26,6 +27,7 @@ import com.farmrunautopilot.settings.Compost;
 import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.VaultBanking;
+import com.farmrunautopilot.supply.BottomlessBucketTracker;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.ItemChargeTracker;
 import com.farmrunautopilot.supply.SupplyLine;
@@ -40,7 +42,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import net.runelite.api.GameObject;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
@@ -69,7 +70,7 @@ final class GuidedTests
 		TESTS.put(TestItem.NEW_PATCH_POINTS, new NewPatchPoints());
 		TESTS.put(TestItem.ALLOTMENT_FLOWER_PROTECTION, new AllotmentFlowerProtection());
 		TESTS.put(TestItem.FORTIS_CHAMPION, new FortisChampion());
-		TESTS.put(TestItem.ATES_CHARGES, new AtesCharges());
+		TESTS.put(TestItem.ICY_BASALT, new IcyBasalt());
 		TESTS.put(TestItem.SPIRIT_TREES, new SpiritTrees());
 		TESTS.put(TestItem.BUCKET_COMPOST, new BucketCompost());
 		TESTS.put(TestItem.HOUSE_BY_TREE, new HouseByTree());
@@ -176,24 +177,6 @@ final class GuidedTests
 	private static Spell highlightedSpell(TestContext ctx)
 	{
 		return ctx.runView().getHighlights().getSpell();
-	}
-
-	/** The count in the first chat message matching, or null. */
-	private static Integer chatCount(TestContext ctx, Pattern... patterns)
-	{
-		for (String message : ctx.chat())
-		{
-			for (Pattern pattern : patterns)
-			{
-				final Matcher m = pattern.matcher(message);
-				if (m.matches())
-				{
-					ctx.capture("Chat message", message);
-					return ItemChargeTracker.count(m.group(1));
-				}
-			}
-		}
-		return null;
 	}
 
 	/**
@@ -903,81 +886,155 @@ final class GuidedTests
 		}
 	}
 
-	private static final class AtesCharges extends GuidedTest
+	/**
+	 * The icy basalt to Weiss: the route takes it once Making Friends with My Arm is finished, which the plugin checks
+	 * itself rather than Shortest Path's MY2ARM_STATUS = 207 (AtlasAccount). elzerma doesn't have the quest. The report
+	 * has what that varbit reads with the quest finished, and where the basalt lands.
+	 */
+	private static final class IcyBasalt extends GuidedTest
 	{
 		@Override
 		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
 		{
-			return owns(holdings, "a pendant of Ates", TravelItem.PENDANT_OF_ATES);
+			final List<String> missing = new ArrayList<>(patchesUsable(access, Location.WEISS));
+			missing.addAll(owns(holdings, "an icy basalt", TravelItem.ICY_BASALT));
+			return missing;
 		}
 
 		@Override
-		public List<Need> bring()
+		public void setUp(RunConfig config, AccountSettings account)
 		{
-			return Collections.singletonList(new Need("Pendant of Ates", TravelItem.PENDANT_OF_ATES.getItemIds()));
+			onlyPatchesAt(config, Location.WEISS);
+			// Pinned, so a house portal or another item doesn't stand in; it's still only used if its needs are met
+			travelBy(config, TravelMethod.ICY_BASALT);
+			config.setOn(TravelFamily.TELEPORT_ITEMS, true);
+			config.getWaysOff().remove("TELEPORTATION_ITEM|Icy basalt");
 		}
 
-		/** The pendant's Check message, compared with the plugin's count. */
-		private static boolean checked(TestContext ctx, String label)
+		@Override
+		public boolean usesRun()
 		{
-			final Integer said = chatCount(ctx, ItemChargeTracker.PENDANT_CHECK);
-			if (said == null)
-			{
-				return false;
-			}
-			final Integer plugin = ctx.charges(TravelItem.PENDANT_OF_ATES);
-			ctx.capture(label + ": Check said", said);
-			ctx.capture(label + ": plugin count", plugin);
-			if (plugin == null || plugin.intValue() != said)
-			{
-				ctx.problem(label + ": the plugin counted " + plugin + " but the Check said " + said);
-			}
 			return true;
+		}
+
+		private static boolean byBasalt(TestContext ctx)
+		{
+			return ctx.plan().getRoute().getStops().stream()
+				.anyMatch(s -> s.getLocation() == Location.WEISS && s.travelItem() == TravelItem.ICY_BASALT);
+		}
+
+		/** The Weiss stop's way as the Run tab says it, or "none". */
+		private static String weissStop(TestContext ctx)
+		{
+			return ctx.plan().getRoute().getStops().stream().filter(s -> s.getLocation() == Location.WEISS)
+				.map(RouteStop::describeTravel).findFirst().orElse("none");
 		}
 
 		@Override
 		public List<Step> steps()
 		{
-			// Counted like Xeric's talisman (a teleport click, then being moved), which passed in game (issue #13)
 			return Arrays.asList(
-				doThis("Take the pendant of Ates out of the bank", ctx -> ctx.carries(TravelItem.PENDANT_OF_ATES.getItemIds())),
-				doThis("Right-click the pendant and pick Check", ctx -> checked(ctx, "First check")),
-				doThis("Teleport with the pendant once", ctx ->
-				{
-					final Integer now = ctx.charges(TravelItem.PENDANT_OF_ATES);
-					final Integer before = ctx.recall("before");
-					return now != null && before != null && now < before;
-				})
-					.onStart(ctx -> ctx.remember("before", ctx.charges(TravelItem.PENDANT_OF_ATES)))
-					.orAskAfter(DO_TICKS, "Have you teleported with the pendant?")
+				doThis("Look at the Run tab: the Weiss stop should say \"Icy basalt\"", IcyBasalt::byBasalt)
+					.orAskAfter(SPOT_TICKS, "The Weiss stop doesn't say \"Icy basalt\". Carry on?")
 					.onAnswer((ctx, yes) ->
 					{
-						if (yes)
-						{
-							ctx.problem("The plugin's count didn't go down after a teleport");
-						}
-					}),
-				doThis("Check it again", ctx -> checked(ctx, "After teleporting")));
+						ctx.capture("Weiss stop", weissStop(ctx));
+						ctx.problem("The Weiss stop wasn't the icy basalt");
+					})
+					.onStart(ctx -> ctx.capture("MY2ARM_STATUS", ctx.varbit(VarbitID.MY2ARM_STATUS)))
+					.onDone(ctx -> ctx.capture("Weiss stop", weissStop(ctx))),
+				startRun(),
+				doThis("Break the icy basalt when the step outlines it", ctx -> ctx.inRegion(Patch.WEISS_HERB.getRegionId()))
+					.orAskAfter(DO_TICKS, "Did the icy basalt take you to Weiss?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Standing at", ctx.location());
+						ctx.problem(yes ? "At Weiss, but the plugin didn't see it"
+							: "The icy basalt didn't take you to Weiss");
+					})
+					.onDone(ctx -> ctx.capture("Landed at", ctx.location())),
+				ask("Are you by the herb patch, with it outlined as the next step?"));
 		}
 	}
 
 	/**
-	 * Which stored-bucket type value means which compost (the game's script only says 1 is empty, higher filled):
-	 * the player says which compost is in theirs, the test captures the value.
+	 * The bottomless bucket's type and uses values at the tool leprechaun. 4 = ultracompost passed (#20, #29); 2 and 3
+	 * are still unseen, and the uses value had nothing to compare with until the Check step.
 	 */
 	private static final class BucketCompost extends GuidedTest
 	{
-		private static Step isIt(Compost compost)
+		/** Chat lines kept for the report when the Check message isn't recognised. */
+		private static final int KEEP_MESSAGES = 5;
+
+		/**
+		 * The bucket's own Check message. UNVERIFIED: BottomlessBucketTracker.CHECK's wording is from the wiki's
+		 * transcript, not seen in game; if it's wrong, the question after DO_TICKS says so.
+		 */
+		private static boolean checked(TestContext ctx)
 		{
-			return ask("Is the bucket filled with " + compost.getDisplayName().toLowerCase() + "?").onAnswer((ctx, yes) ->
+			for (String message : ctx.chat())
+			{
+				final Matcher m = BottomlessBucketTracker.CHECK.matcher(message);
+				if (m.matches())
+				{
+					ctx.capture("Check message", message);
+					ctx.remember("check uses", ItemChargeTracker.count(m.group(1)));
+					ctx.remember("check compost", Compost.fromName(m.group(2)));
+					return true;
+				}
+				final List<String> seen = ctx.recall("messages");
+				seen.add(message);
+				if (seen.size() > KEEP_MESSAGES)
+				{
+					seen.remove(0);
+				}
+			}
+			return false;
+		}
+
+		/** The values at the leprechaun, compared with the Check message if there was one. */
+		private static void stored(TestContext ctx)
+		{
+			final int type = ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE);
+			final int uses = ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_QUANTITY);
+			ctx.remember("type", type);
+			ctx.capture("Type value", type + " (read as " + Compost.fromBucketType(type) + ")");
+			ctx.capture("Uses value", uses);
+			final Integer checkUses = ctx.recall("check uses");
+			if (checkUses == null)
+			{
+				return;
+			}
+			if (checkUses != uses)
+			{
+				ctx.problem("Uses value " + uses + ", but the Check said " + checkUses);
+			}
+			final Compost checkCompost = ctx.recall("check compost");
+			if (checkCompost != Compost.fromBucketType(type))
+			{
+				ctx.problem("Type value " + type + " was read as " + Compost.fromBucketType(type) + ", but the Check said "
+					+ checkCompost);
+			}
+		}
+
+		/** The questions don't overlap ("not super or ultra"), so exactly one should get a Yes. */
+		private static Step isIt(Compost compost, String question)
+		{
+			return ask(question).onAnswer((ctx, yes) ->
 			{
 				if (!yes)
 				{
 					return;
 				}
-				final int type = ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE);
+				final Compost said = ctx.recall("said");
+				if (said != null)
+				{
+					ctx.problem("Answered Yes to both " + said.getDisplayName() + " and " + compost.getDisplayName());
+					return;
+				}
+				ctx.remember("said", compost);
+				final int type = ctx.recall("type");
 				ctx.capture("Compost in it / type value", compost.getDisplayName() + " / " + type);
-				ctx.capture("Uses value", ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_QUANTITY));
 				if (Compost.fromBucketType(type) != compost)
 				{
 					ctx.problem("Type value " + type + " was read as " + Compost.fromBucketType(type) + ", not "
@@ -998,11 +1055,29 @@ final class GuidedTests
 						ctx.cannotTest("a bottomless compost bucket with compost in it");
 					}
 				}),
+				doThis("Have the bucket with you (take it from the tool leprechaun if it's there), right-click it and pick "
+					+ "Check", BucketCompost::checked)
+					.onStart(ctx -> ctx.remember("messages", new ArrayList<String>()))
+					.orAskAfter(DO_TICKS, "Did you Check the bucket, and did chat say how many uses it holds?")
+					.onAnswer((ctx, yes) ->
+					{
+						if (yes)
+						{
+							final List<String> seen = ctx.recall("messages");
+							ctx.capture("Messages", seen.isEmpty() ? "none" : String.join(" | ", seen));
+							ctx.problem("The plugin didn't recognise the Check message, so its wording may be wrong");
+						}
+						else
+						{
+							ctx.capture("Check message", "not seen, so the uses value isn't compared");
+						}
+					}),
 				doThis("Store the bucket with a tool leprechaun",
-					ctx -> ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE) > Compost.EMPTY_BUCKET_TYPE),
-				isIt(Compost.COMPOST),
-				isIt(Compost.SUPERCOMPOST),
-				isIt(Compost.ULTRACOMPOST));
+					ctx -> ctx.varbit(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE) > Compost.EMPTY_BUCKET_TYPE)
+					.onDone(BucketCompost::stored),
+				isIt(Compost.ULTRACOMPOST, "Is the bucket filled with ultracompost?"),
+				isIt(Compost.SUPERCOMPOST, "Is the bucket filled with supercompost (not ultracompost)?"),
+				isIt(Compost.COMPOST, "Is the bucket filled with plain compost (not super or ultra)?"));
 		}
 	}
 
@@ -1039,8 +1114,7 @@ final class GuidedTests
 		@Override
 		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
 		{
-			return account.getPoh().getPortal() != null ? Collections.emptyList()
-				: Collections.singletonList("Set up your house in Account > My house");
+			return access.hasHouse() ? Collections.emptyList() : Collections.singletonList("Have a house");
 		}
 
 		@Override
@@ -1180,10 +1254,16 @@ final class GuidedTests
 		public List<Step> steps()
 		{
 			return Arrays.asList(
-				doThis("Enter your own house", TestContext::inOwnHouse)
-					.onStart(ctx -> ctx.capture("My house before (cleared)", ctx.houseSummary())),
+				// Waits for the house to load after the test starts: already being inside proves nothing (issue #21)
+				doThis("Enter your own house (if you're in it now, leave and come back in)",
+					ctx -> ctx.inOwnHouse() && ctx.houseScans() > ctx.<Integer>recall("scans"))
+					.onStart(ctx ->
+					{
+						ctx.remember("scans", ctx.houseScans());
+						ctx.capture("My house before (cleared)", ctx.houseSummary());
+					}),
 				ask("Look at Account > My house. Do the jewellery box, pool, altar, fairy ring and spirit tree match your "
-					+ "house? (The portal nexus isn't scanned: it stays as you set it.)")
+					+ "house, all empty if it has none of them? (The portal nexus isn't scanned: it stays as you set it.)")
 					.onAnswer((ctx, yes) ->
 					{
 						ctx.capture("My house after", ctx.houseSummary());
