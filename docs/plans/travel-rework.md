@@ -871,6 +871,14 @@ it's used on and its NPC or object id ("Travel Primio 12888", "Brimhaven Captain
    Guide) still there from the atlas; the house's portal step after a spirit tree. Snapshots updated after a look.
    Hand check: a boat or NPC journey (Brimhaven by the Ardougne boat, Tree Gnome Village by Elkoy, Harmony Island).
 
+**T5 built (2026-10-24, branch `claude/1c-plan-file-name-0cf248`, 256cd98 and 0fb333e), awaiting elzerma's hand check:**
+as planned above. The route snapshots changed only in wording, every leg's time the same: "Ardougne Teleport, then boat
+to Brimhaven", "Spirit tree (Tree Gnome Village), then follow Elkoy", "then travel Bill Teach, then transport Brother
+Tranquility"; Trollheim and the Falador Teleport to Taverley lost their written steps from the route list (the climb and
+the rocks are directions on the way). `TravelMethod` keeps names, items, spells, requirements, the nexus and jewellery
+box links; `JourneyStep` lost its Agility variants (the atlas only takes shortcuts the player can use). An object is
+outlined by id within 3 tiles of where its step starts; an NPC by name as before.
+
 ## 10. Risks
 
 - **Shortest Path changes its internals:** pinned commit; a small harness; fallback E.
