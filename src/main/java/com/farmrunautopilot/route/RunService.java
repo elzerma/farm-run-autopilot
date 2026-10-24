@@ -268,7 +268,8 @@ public class RunService
 		for (Patch patch : selection.getPatches())
 		{
 			objectives.computeIfAbsent(patch.getLocation(), k -> new ArrayList<>()).add(StepAdvisor.objectives(
-				patch, patchTracker.predict(patch), supplies.getPlantings().get(patch)));
+				patch, patchTracker.predict(patch), supplies.getPlantings().get(patch),
+				config.keepsGrowing(patch.getType())));
 		}
 
 		final RunPlan next = new RunPlan(selection, route, supplies, objectives,

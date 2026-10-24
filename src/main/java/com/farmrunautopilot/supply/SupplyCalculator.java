@@ -128,8 +128,10 @@ public final class SupplyCalculator
 			final List<Patch> ofType = new ArrayList<>();
 			for (Patch patch : patches)
 			{
-				// Flowers kept for protecting allotments get the flower that suits them, below
-				if (patch.getType() == type && !FlowerProtection.isProtecting(patch, config, access))
+				// Flowers kept for protecting allotments get the flower that suits them, below; a crop picked and left
+				// growing isn't replanted
+				if (patch.getType() == type && !FlowerProtection.isProtecting(patch, config, access)
+					&& !keptGrowing(patch, config, predictions))
 				{
 					ofType.add(patch);
 				}
@@ -158,11 +160,17 @@ public final class SupplyCalculator
 			final PatchPrediction prediction = predictions.apply(patch);
 			final PatchState state = prediction != null ? prediction.getState() : PatchState.UNKNOWN;
 			anyWeeds |= state == PatchState.WEEDS;
+			// Picked and left growing (elzerma, 2026-10-24): nothing to clear, plant, pay or compost
+			if (keptGrowing(patch, config, predictions))
+			{
+				continue;
+			}
 
 			if (type.isProtectable())
 			{
-				// Only trees are cleared; a grown allotment or hops patch is just picked
-				if (type.isHealthChecked() && needsClearing(state))
+				// Only trees are cleared by axe or coins; a grown allotment or hops patch is just picked, and a bush or
+				// cactus dug up with the spade
+				if ((type == PatchType.TREE || type == PatchType.FRUIT_TREE) && needsClearing(state))
 				{
 					if (config.getPayToClear().contains(type))
 					{
@@ -563,6 +571,12 @@ public final class SupplyCalculator
 				: (herbs == boosted ? "+10% herb yield" : "+10% yield") + "; in the inventory, as the " + takenBy + " takes the weapon slot",
 				wearSecateurs ? 0 : 1, SupplyItems.MAGIC_SECATEURS), RUN_OPTIONS);
 			lines.add(wearSecateurs ? secateurs.worn() : secateurs);
+		}
+		// Picking belladonna bare-handed poisons (wiki: Belladonna); any gloves do, so it's worn, not counted as missing
+		if (patches.stream().anyMatch(patch -> patch.getType() == PatchType.BELLADONNA))
+		{
+			lines.add(line(SupplyLine.Group.OPTIONAL, "Gloves", 1, holdings, carried,
+				"Wear any gloves to pick the belladonna", 0, ItemID.LEATHER_GLOVES).worn());
 		}
 		if (config.getOutfit() != Outfit.NONE)
 		{
@@ -1152,6 +1166,22 @@ public final class SupplyCalculator
 		}
 		return patch.getType().isProtectable() && patch.hasGardener()
 			&& (protection == Protection.PAY_GARDENER || (patch == Patch.FALADOR_TREE && faladorElite));
+	}
+
+	/**
+	 * A grown crop its type picks and leaves growing (RunConfig.keepsGrowing): still alive, so it isn't cleared or
+	 * replanted, and needs no seed, payment or compost this run. A dead one is replanted as usual.
+	 */
+	static boolean keptGrowing(Patch patch, RunConfig config, Function<Patch, PatchPrediction> predictions)
+	{
+		if (!config.keepsGrowing(patch.getType()))
+		{
+			return false;
+		}
+		final PatchPrediction live = predictions.apply(patch);
+		return live != null && live.getCrop() != null && (live.getState() == PatchState.CHECK_HEALTH
+			|| live.getState() == PatchState.HARVESTABLE || live.getState() == PatchState.GROWING
+			|| live.getState() == PatchState.DISEASED);
 	}
 
 	/**

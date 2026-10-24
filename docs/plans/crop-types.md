@@ -494,3 +494,17 @@ Questions 1-4 are asked first; 5-7 can wait until their sprint starts.
    stop when due.
 3. Sprint order **1a → 1b → 1c**.
 4. New run types are **off** for new players.
+
+**Answered by elzerma at the start of 1b (picker, 2026-10-24):**
+- Grown bushes and cacti: **a setting per type**, "replant each run" (check health, clear, plant a new seed) or "pick
+  and leave it" (pick what's grown, replant only when it dies or the crop changes); **fruit trees get the same
+  setting**.
+- The Run tab groups 1b as **Bushes** and **Specials** (cactus, mushroom, belladonna, seaweed); which specials run is
+  set on the Farm tab.
+- Question 7 for 1b: **yes**, the newer patches RuneLite tracks are included (the Auburnvale belladonna).
+
+**From RuneLite's source (master, read 2026-10-24):** the Auburnvale belladonna is in the same region (5427, with 5428
+and 5684) as the Nemus Retreat tree patch, varbit FARMING_TRANSMIT_B, so it joins the Nemus Retreat stop. Bush and
+cactus "check health" is a growing value at the last stage (bush 250-255, cactus 31, potato cactus 58), not a
+harvestable one. The Ardougne bush (region 10290) and the Canifis mushroom (13622, "Morytania") are regions apart from
+the Ardougne farm and Port Phasmatys. The Farming Guild's cactus is FARMING_TRANSMIT_F (7904).

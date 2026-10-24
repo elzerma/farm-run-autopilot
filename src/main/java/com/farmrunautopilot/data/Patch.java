@@ -284,7 +284,36 @@ public enum Patch
 	YANILLE_HOPS(Location.YANILLE_HOPS, PatchType.HOPS, 10288, regions(), VarbitID.FARMING_TRANSMIT_A,
 		NpcID.FARMING_GARDENER_HOPS_1, "Selena"),
 	ALDARIN_HOPS(Location.ALDARIN_HOPS, PatchType.HOPS, 5421, regions(5165, 5166, 5422, 5677, 5678),
-		VarbitID.FARMING_TRANSMIT_A, NpcID.FARMING_GARDENER_HOPS_5, "Ercos", Requirement.quest(Quest.CHILDREN_OF_THE_SUN));
+		VarbitID.FARMING_TRANSMIT_A, NpcID.FARMING_GARDENER_HOPS_5, "Ercos", Requirement.quest(Quest.CHILDREN_OF_THE_SUN)),
+
+	// Sprint 1b. Regions, varbits and gardeners from RuneLite FarmingWorld (master, 2026-10-24); names match the travel
+	// atlas's places
+	CHAMPIONS_GUILD_BUSH(Location.CHAMPIONS_GUILD, PatchType.BUSH, 12596, regions(), VarbitID.FARMING_TRANSMIT_A,
+		NpcID.FARMING_GARDENER_BUSH_1, "Dreven"),
+	RIMMINGTON_BUSH(Location.RIMMINGTON, PatchType.BUSH, 11570, regions(11826), VarbitID.FARMING_TRANSMIT_A,
+		NpcID.FARMING_GARDENER_BUSH_2, "Taria"),
+	// Reached by Rellekka's boat after The Fremennik Trials; whether Throne of Miscellania is also needed is UNVERIFIED
+	ETCETERIA_BUSH(Location.ETCETERIA, PatchType.BUSH, 10300, regions(), VarbitID.FARMING_TRANSMIT_A,
+		NpcID.FARMING_GARDENER_BUSH_3, "Rhazien", Requirement.quest(Quest.THE_FREMENNIK_TRIALS)),
+	ARDOUGNE_MONASTERY_BUSH(Location.ARDOUGNE_MONASTERY, PatchType.BUSH, 10290, regions(10546), VarbitID.FARMING_TRANSMIT_A,
+		NpcID.FARMING_GARDENER_BUSH_4, "Torrell"),
+	FARMING_GUILD_BUSH(Location.FARMING_GUILD, PatchType.BUSH, 4922, farmingGuildRegions(), VarbitID.FARMING_TRANSMIT_B,
+		NpcID.FARMING_GARDENER_FARMGUILD_T1, "Alan", Requirement.skill(Skill.FARMING, 45)),
+	AL_KHARID_CACTUS(Location.AL_KHARID, PatchType.CACTUS, 13106, regions(13362, 13105), VarbitID.FARMING_TRANSMIT_A,
+		NpcID.FARMING_GARDENER_CACTUS, "Ayesha"),
+	FARMING_GUILD_CACTUS(Location.FARMING_GUILD, PatchType.CACTUS, 4922, farmingGuildRegions(),
+		VarbitID.FARMING_TRANSMIT_F, NpcID.FARMING_GARDENER_FARMGUILD_T1, "Alan", Requirement.skill(Skill.FARMING, 45)),
+	// No gardener: mushrooms and belladonna can't be protected
+	CANIFIS_MUSHROOM(Location.CANIFIS, PatchType.MUSHROOM, 13622, regions(13878), VarbitID.FARMING_TRANSMIT_A,
+		Requirement.quest(Quest.PRIEST_IN_PERIL)),
+	DRAYNOR_MANOR_BELLADONNA(Location.DRAYNOR_MANOR, PatchType.BELLADONNA, 12340, regions(), VarbitID.FARMING_TRANSMIT_A),
+	AUBURNVALE_BELLADONNA(Location.AUBURNVALE, PatchType.BELLADONNA, 5427, regions(5428, 5684), VarbitID.FARMING_TRANSMIT_B,
+		Requirement.quest(Quest.CHILDREN_OF_THE_SUN)),
+	// Underwater off Fossil Island; Mernia protects each patch
+	FOSSIL_ISLAND_SEAWEED_NORTH("north", Location.FOSSIL_ISLAND_UNDERWATER, PatchType.SEAWEED, 15008, regions(),
+		VarbitID.FARMING_TRANSMIT_A, NpcID.FOSSIL_GARDENER_UNDERWATER, "Mernia", Requirement.quest(Quest.BONE_VOYAGE)),
+	FOSSIL_ISLAND_SEAWEED_SOUTH("south", Location.FOSSIL_ISLAND_UNDERWATER, PatchType.SEAWEED, 15008, regions(),
+		VarbitID.FARMING_TRANSMIT_B, NpcID.FOSSIL_GARDENER_UNDERWATER, "Mernia", Requirement.quest(Quest.BONE_VOYAGE));
 
 	private final Location location;
 	private final PatchType type;

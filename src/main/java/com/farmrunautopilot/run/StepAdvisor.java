@@ -61,6 +61,32 @@ public final class StepAdvisor
 		boolean paid;
 		/** Seen empty, ready or dead during this run, so a growing crop was planted this run. */
 		boolean plantedThisRun;
+		/** A grown crop is picked and left growing, not cleared and replanted (RunConfig.keepsGrowing). */
+		boolean keepGrowing;
+
+		public PatchGoal(Patch patch, Crop crop, String plantName, Compost compost, boolean protectionNeeded,
+			String paymentText, boolean payToClear, boolean composted, boolean paid, boolean plantedThisRun)
+		{
+			this(patch, crop, plantName, compost, protectionNeeded, paymentText, payToClear, composted, paid,
+				plantedThisRun, false);
+		}
+
+		public PatchGoal(Patch patch, Crop crop, String plantName, Compost compost, boolean protectionNeeded,
+			String paymentText, boolean payToClear, boolean composted, boolean paid, boolean plantedThisRun,
+			boolean keepGrowing)
+		{
+			this.patch = patch;
+			this.crop = crop;
+			this.plantName = plantName;
+			this.compost = compost;
+			this.protectionNeeded = protectionNeeded;
+			this.paymentText = paymentText;
+			this.payToClear = payToClear;
+			this.composted = composted;
+			this.paid = paid;
+			this.plantedThisRun = plantedThisRun;
+			this.keepGrowing = keepGrowing;
+		}
 	}
 
 	private StepAdvisor()
@@ -95,17 +121,28 @@ public final class StepAdvisor
 				return new Advice(Action.DONE, "Done");
 			case CHECK_HEALTH:
 				return new Advice(Action.CHECK_HEALTH, "Check the health of the " + (live.getCrop() != null
-					? what + " tree" : patch.getType().getDisplayName().toLowerCase()) + " (replanting: "
-					+ goal.getPlantName() + ")");
+					? what + " " + grown(patch.getType()) : patch.getType().getDisplayName().toLowerCase())
+					+ (goal.isKeepGrowing() ? "" : " (replanting: " + goal.getPlantName() + ")"));
 			case HARVESTABLE:
-				// Herbs, allotments, flowers and hops are picked, then replanted
+				// Herbs, allotments, flowers, hops and the specials are picked, then replanted
 				if (!tree)
 				{
 					return new Advice(Action.PICK, "Pick the " + what);
 				}
-				if (patch.getType() == PatchType.FRUIT_TREE && live.getStage() > 0)
+				if (patch.getType().regrows() && live.getStage() > 0)
 				{
-					return new Advice(Action.PICK, "Pick the " + what + " fruit (" + live.getStage() + " left)");
+					return new Advice(Action.PICK, "Pick the " + picked(patch.getType(), what) + " (" + live.getStage()
+						+ " left)");
+				}
+				// Picked and left growing (elzerma, 2026-10-24): nothing more until it regrows
+				if (goal.isKeepGrowing())
+				{
+					return new Advice(Action.DONE, "Done");
+				}
+				if (patch.getType() == PatchType.BUSH || patch.getType() == PatchType.CACTUS)
+				{
+					return new Advice(Action.CLEAR_DEAD, "Dig up the " + what + " " + grown(patch.getType())
+						+ " with your spade to replant");
 				}
 				return clearTree(goal, gardener);
 			case STUMP:
@@ -113,10 +150,11 @@ public final class StepAdvisor
 					? new Advice(Action.PAY_TO_CLEAR, "Ask " + gardener + " to remove the stump (200 coins)")
 					: new Advice(Action.DIG_STUMP, "Dig up the stump with your spade");
 			case DEAD:
-				return new Advice(Action.CLEAR_DEAD, "Clear the dead " + what + (tree ? " tree" : "") + " (spade)");
+				return new Advice(Action.CLEAR_DEAD, "Clear the dead " + what + (tree ? " " + grown(patch.getType()) : "")
+					+ " (spade)");
 			case DISEASED:
 				return tree
-					? new Advice(Action.PRUNE, "Prune the diseased " + what + " tree with secateurs")
+					? new Advice(Action.PRUNE, "Prune the diseased " + what + " " + grown(patch.getType()) + " with secateurs")
 					: new Advice(Action.CURE, "Cure the diseased " + what + " with plant cure, or clear it");
 			case WEEDS:
 				return new Advice(Action.RAKE, "Rake the patch");
@@ -145,8 +183,18 @@ public final class StepAdvisor
 	 */
 	public static String objectives(Patch patch, PatchPrediction live, Crop plant)
 	{
+		return objectives(patch, live, plant, false);
+	}
+
+	/**
+	 * As above.
+	 *
+	 * @param keepGrowing the type's grown crop is picked and left growing (RunConfig.keepsGrowing)
+	 */
+	public static String objectives(Patch patch, PatchPrediction live, Crop plant, boolean keepGrowing)
+	{
 		final List<String> steps = new ArrayList<>();
-		final boolean tree = patch.getType() == PatchType.TREE || patch.getType() == PatchType.FRUIT_TREE;
+		final boolean tree = patch.getType().isHealthChecked();
 		boolean replant = true;
 		if (live == null)
 		{
@@ -163,16 +211,28 @@ public final class StepAdvisor
 					break;
 				case CHECK_HEALTH:
 					steps.add("check health of " + what);
-					if (tree)
+					if (keepGrowing)
+					{
+						steps.add("pick");
+						replant = false;
+					}
+					else if (tree)
 					{
 						steps.add("clear");
 					}
 					break;
 				case HARVESTABLE:
-					if (patch.getType() == PatchType.FRUIT_TREE)
+					if (patch.getType().regrows())
 					{
 						steps.add((live.getStage() > 0 ? "pick " : "") + what);
-						steps.add("clear");
+						if (keepGrowing)
+						{
+							replant = false;
+						}
+						else
+						{
+							steps.add("clear");
+						}
 					}
 					else
 					{
@@ -215,6 +275,34 @@ public final class StepAdvisor
 	private static Advice compost(PatchGoal goal)
 	{
 		return new Advice(Action.COMPOST, "Use " + goal.getCompost().getDisplayName().toLowerCase() + " on the patch");
+	}
+
+	/** What a grown, health-checked crop is: "tree", "bush" or "cactus". */
+	static String grown(PatchType type)
+	{
+		switch (type)
+		{
+			case BUSH:
+				return "bush";
+			case CACTUS:
+				return "cactus";
+			default:
+				return "tree";
+		}
+	}
+
+	/** What's picked from a crop that regrows: "papaya fruit", "redberries", "potato cacti". */
+	private static String picked(PatchType type, String what)
+	{
+		switch (type)
+		{
+			case BUSH:
+				return what.endsWith("berry") ? what.substring(0, what.length() - 1) + "ies" : what + " berries";
+			case CACTUS:
+				return what.equals("cactus") ? "cactus spines" : "potato cacti";
+			default:
+				return what + " fruit";
+		}
 	}
 
 	private static Advice clearTree(PatchGoal goal, String gardener)

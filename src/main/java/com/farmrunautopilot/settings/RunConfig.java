@@ -63,6 +63,11 @@ public class RunConfig
 	private boolean payWithNotes = true;
 	/** Run types where the gardener is paid 200 coins to clear a grown tree instead of chopping it. */
 	private Set<PatchType> payToClear = EnumSet.of(PatchType.TREE, PatchType.FRUIT_TREE);
+	/**
+	 * Run types whose grown crop is picked and left growing rather than cleared and replanted (fruit trees, bushes,
+	 * cacti: elzerma, 2026-10-24); none by default, so every run replants as before. Null in saves from before it.
+	 */
+	private Set<PatchType> keepGrowing = EnumSet.noneOf(PatchType.class);
 	private Map<PatchType, Compost> compost = defaultCompost();
 	private int plantCureDoses = 0;
 	private boolean useCurePlant = false;
@@ -142,6 +147,8 @@ public class RunConfig
 		enabledTypes = cleanSet(enabledTypes, PatchType.class, originalTypes());
 		disabledPatches = cleanSet(disabledPatches, Patch.class, EnumSet.noneOf(Patch.class));
 		payToClear = cleanSet(payToClear, PatchType.class, EnumSet.noneOf(PatchType.class));
+		keepGrowing = cleanSet(keepGrowing, PatchType.class, EnumSet.noneOf(PatchType.class));
+		keepGrowing.removeIf(type -> !type.regrows());
 		if (runesNotTabsAt != null)
 		{
 			// Runes per stop went with the Locations list: runes at any stop means runes at every stop
@@ -225,6 +232,12 @@ public class RunConfig
 	public boolean isPatchSelected(Patch patch)
 	{
 		return enabledTypes.contains(patch.getType()) && !disabledPatches.contains(patch);
+	}
+
+	/** This run type's grown crop is picked and left growing, not cleared and replanted (fruit trees, bushes, cacti). */
+	public boolean keepsGrowing(PatchType type)
+	{
+		return type.regrows() && keepGrowing.contains(type);
 	}
 
 	/** A Travel tab family is on: as the player set it, or its default. */
@@ -319,6 +332,10 @@ public class RunConfig
 		// elzerma: allotments are protected by a flower in their set by default, changeable per set
 		map.put(PatchType.ALLOTMENT, Protection.FLOWER);
 		map.put(PatchType.HOPS, Protection.COMPOST_ONLY);
+		// Sprint 1b defaults, as for trees (UNCONFIRMED with elzerma): bushes, cacti and seaweed paid for
+		map.put(PatchType.BUSH, Protection.PAY_GARDENER);
+		map.put(PatchType.CACTUS, Protection.PAY_GARDENER);
+		map.put(PatchType.SEAWEED, Protection.PAY_GARDENER);
 		return map;
 	}
 
@@ -331,6 +348,13 @@ public class RunConfig
 		map.put(PatchType.ALLOTMENT, Compost.ULTRACOMPOST);
 		map.put(PatchType.FLOWER, Compost.NONE);
 		map.put(PatchType.HOPS, Compost.ULTRACOMPOST);
+		// Sprint 1b: none where paid and compost only lowers disease; ultracompost where it can't be protected or raises
+		// the harvest (seaweed)
+		map.put(PatchType.BUSH, Compost.NONE);
+		map.put(PatchType.CACTUS, Compost.NONE);
+		map.put(PatchType.MUSHROOM, Compost.ULTRACOMPOST);
+		map.put(PatchType.BELLADONNA, Compost.ULTRACOMPOST);
+		map.put(PatchType.SEAWEED, Compost.ULTRACOMPOST);
 		return map;
 	}
 

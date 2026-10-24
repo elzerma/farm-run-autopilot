@@ -17,7 +17,14 @@ public enum PatchType
 	// Sprint 1a (docs/plans/crop-types.md)
 	ALLOTMENT("Allotment", "Allotments", true, false, true),
 	FLOWER("Flower", "Flowers", false, false, false),
-	HOPS("Hops", "Hops", true, false, true);
+	HOPS("Hops", "Hops", true, false, true),
+	// Sprint 1b. Compost raises a seaweed patch's harvest (a life per tier, wiki: Seaweed patch); on bushes and cacti
+	// it's taken as lowering disease only (UNVERIFIED), and mushroom and belladonna can't be protected
+	BUSH("Bush", "Bushes", true, true, false),
+	CACTUS("Cactus", "Cacti", true, true, false),
+	MUSHROOM("Mushroom", "Mushrooms", false, false, false),
+	BELLADONNA("Belladonna", "Belladonna", false, false, false),
+	SEAWEED("Seaweed", "Seaweed", true, false, true);
 
 	private final String displayName;
 	private final String pluralName;
@@ -30,6 +37,15 @@ public enum PatchType
 	 * on the others it only lowers the chance of disease (elzerma, 2026-10-18).
 	 */
 	private final boolean compostRaisesYield;
+
+	/**
+	 * A grown crop regrows what's picked (fruit, berries, spines), so it can be picked and left growing rather than
+	 * replanted each run: a choice per type (elzerma, 2026-10-24).
+	 */
+	public boolean regrows()
+	{
+		return this == FRUIT_TREE || this == BUSH || this == CACTUS;
+	}
 
 	/** The run types every player had before more were added; new players start with only these ticked. */
 	public static boolean isOriginal(PatchType type)

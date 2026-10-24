@@ -280,7 +280,25 @@ class FarmPage extends SetupPanel
 			{
 				s.addContent(allotmentSets(config));
 			}
-			if (!type.isHealthChecked())
+			if (type.regrows())
+			{
+				final String plural = type.getPluralName().toLowerCase();
+				s.addContent(checkBox("Pick grown " + plural + " and leave them growing", config.keepsGrowing(type), true,
+					"Check health and pick each run, without clearing and replanting; a dead one is replanted",
+					on -> saveRun(() ->
+					{
+						if (on)
+						{
+							config.getKeepGrowing().add(type);
+						}
+						else
+						{
+							config.getKeepGrowing().remove(type);
+						}
+					})));
+			}
+			// Bushes and cacti are dug up with the spade every run brings
+			if (type != PatchType.TREE && type != PatchType.FRUIT_TREE)
 			{
 				continue;
 			}

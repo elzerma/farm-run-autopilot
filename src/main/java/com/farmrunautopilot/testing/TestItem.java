@@ -86,7 +86,19 @@ public enum TestItem
 		"Tick \"Detect furniture when I enter my house\" in Account > My house, then enter your house: your "
 			+ "jewellery box, pool, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned), and My house should say when it was last "
 			+ "scanned, even if your house has none of them. "
-			+ "Then visit someone else's house: nothing of yours should change.", 4);
+			+ "Then visit someone else's house: nothing of yours should change.", 4),
+	SPECIALS_PATCH_POINTS(Tab.RUN, "Where the bush, cactus and special patches are",
+		"Tick Bushes or Specials on the Run tab and stand by any bush, cactus, mushroom, belladonna or seaweed patch you "
+			+ "can use. The patch should be outlined when it's the next step, and the hint arrow should point at it, not a "
+			+ "few tiles away."),
+	SEAWEED_DIVE(Tab.TRAVEL, "Diving to the seaweed patches",
+		"With Bone Voyage done, build a run with only the Fossil Island seaweed patches and follow the guide: the "
+			+ "rowboat out to the small bank island, then the Dive step with the rowboat outlined. You should land "
+			+ "underwater by Mernia and the two seaweed patches, with the next one outlined."),
+	ETCETERIA_ACCESS(Tab.ACCOUNT, "Etceteria's bush patch",
+		"Only if you've done The Fremennik Trials but not Throne of Miscellania: take the boat from Rellekka to "
+			+ "Etceteria and go to the bush patch by the castle. If you can rake or plant it, the plugin is right to need "
+			+ "only The Fremennik Trials for it.");
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter

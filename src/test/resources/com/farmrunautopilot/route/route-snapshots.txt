@@ -1,7 +1,7 @@
 # Routes planned on the travel atlas (RouteSnapshotTest)
 
 ## Like elzerma's: every patch at their 18 stops
-44 patches, 18 stops, travel 486 s
+46 patches, 18 stops, travel 486 s
  1. Ardougne farm (north): Ardougne cloak (farm), 13 s
  2. Falador Park: Ring of wealth (Falador Park), 14 s
  3. Port Phasmatys: Ectophial, 29 s
@@ -22,47 +22,61 @@
 18. Farming Guild: Kharedst's memoirs: Jewelry of Jubilation, then minecart to Farming Guild, 47 s
 
 ## Mid-level: 50 in every skill, no quests, a skills necklace, a ring of wealth and a games necklace
-31 patches, 15 stops, travel 543 s
- 1. Seers' Village: Camelot Teleport, 39 s
- 2. Taverley: Falador Teleport, 38 s
+38 patches, 20 stops, travel 636 s
+ 1. Lumbridge: Lumbridge Teleport, 25 s
+ 2. Farming Guild: Skills necklace (Farming Guild), 15 s
  3. Varrock: Varrock Teleport, 22 s
- 4. Falador Park: Ring of wealth (Falador Park), 14 s
- 5. Falador farm (south): Walk, 37 s
- 6. Lumbridge: Lumbridge Teleport, 25 s
- 7. Lumbridge (north farm): Walk, 37 s
- 8. Ardougne farm (north): Skills necklace (Fishing Guild), 29 s
- 9. Hosidius: Skills necklace (Woodcutting Guild), 37 s
-10. Catherby: Camelot Teleport, 28 s
-11. Brimhaven: Charter ship (Brimhaven), 46 s
-12. Yanille: Charter ship (Port Khazard), 71 s
-13. Tree Gnome Village: Walk, 47 s
-14. Farming Guild: Skills necklace (Farming Guild), 17 s
-15. Gnome Stronghold: Games necklace: Barbarian Outpost, 55 s
+ 4. Catherby: Camelot Teleport, 28 s
+ 5. Champions' Guild: Varrock Teleport, 33 s
+ 6. Lumbridge (north farm): Walk, 19 s
+ 7. Hosidius: Skills necklace (Woodcutting Guild), 37 s
+ 8. Taverley: Falador Teleport, 38 s
+ 9. Seers' Village: Camelot Teleport, 39 s
+10. Al Kharid: Lumbridge Teleport, 39 s
+11. Falador Park: Ring of wealth (Falador Park), 14 s
+12. Falador farm (south): Walk, 37 s
+13. Draynor Manor: Walk, 19 s
+14. Ardougne farm (north): Skills necklace (Fishing Guild), 29 s
+15. Rimmington: Skills necklace: Crafting Guild, 35 s
+16. Brimhaven: Walk, 20 s
+17. Ardougne monastery: Walk, 41 s
+18. Tree Gnome Village: Walk, 42 s
+19. Yanille: Walk, 47 s
+20. Gnome Stronghold: Games necklace: Barbarian Outpost, 55 s
 
 ## Maxed: 99 in every skill, every quest, diary and unlock, every teleport item, no house
-54 patches, 25 stops, travel 573 s
+66 patches, 34 stops, travel 786 s
  1. Taverley: Taverley teleport tablet, 26 s
- 2. Tree Gnome Village: Achievement diary cape: F. Elder Gnome child, then spirit tree to Tree Gnome Village, then follow Elkoy, 36 s
- 3. Aldarin: Construction cape: Aldarin, 30 s
- 4. Seers' Village: Camelot Teleport: Seers', 29 s
- 5. Port Phasmatys: Ectophial, 29 s
- 6. Lumbridge (north farm): Combat bracelet (Champions' Guild), 29 s
- 7. Catherby: Camelot Teleport, 28 s
- 8. Lumbridge: Lumbridge Teleport, 25 s
- 9. Ardougne farm (north): Ardougne cloak (farm), 13 s
-10. Weiss: Icy basalt, 13 s
-11. Yanille: Watchtower Teleport: Yanille, 13 s
-12. Nemus Retreat: Pendant of Ates (Nemus Retreat), 26 s
-13. Varrock: Varrock Teleport, 22 s
-14. Kastori: Pendant of Ates (North of Kastori), 22 s
-15. Civitas illa Fortis (Ortus Farm): Back to the landing pad, then Renu, 30 s
-16. Brimhaven: Brimhaven teleport tablet, 22 s
-17. Harmony Island: Charter ship (Port Phasmatys), then travel Bill Teach, then transport Brother Tranquility, 47 s
-18. Hosidius: Xeric's talisman (Xeric's Glade), 18 s
-19. Falador farm (south): Explorer's ring (cabbage patch), 17 s
-20. Lletya: Teleport crystal (Lletya), 16 s
-21. Gnome Stronghold: Slayer ring (Stronghold Slayer Cave), 13 s
-22. Prifddinas: Spirit tree (Prifddinas), 25 s
-23. Falador Park: Ring of wealth (Falador Park), 14 s
-24. Troll Stronghold: Stony basalt (roof), 14 s
-25. Farming Guild: Skills necklace (Farming Guild), 14 s
+ 2. Fossil Island (underwater): Royal seed pod, then gnome glider to Lemanto Andra, then Quick-Travel Barge guard, then travel Rowboat, then travel Rowboat, then dive Rowboat, 55 s
+ 3. Tree Gnome Village: Achievement diary cape: F. Elder Gnome child, then spirit tree to Tree Gnome Village, then follow Elkoy, 36 s
+ 4. Falador farm (south): Explorer's ring (cabbage patch), 17 s
+ 5. Draynor Manor: Walk, 19 s
+ 6. Etceteria: Ring of wealth: Miscellania, 31 s
+ 7. Seers' Village: Camelot Teleport: Seers', 29 s
+ 8. Champions' Guild: Combat bracelet: Champions' Guild, 15 s
+ 9. Lumbridge (north farm): Walk, 19 s
+10. Catherby: Camelot Teleport, 28 s
+11. Port Phasmatys: Ectophial, 29 s
+12. Ardougne farm (north): Ardougne cloak (farm), 13 s
+13. Weiss: Icy basalt, 13 s
+14. Yanille: Watchtower Teleport: Yanille, 13 s
+15. Nemus Retreat: Pendant of Ates (Nemus Retreat), 26 s
+16. Al Kharid: Amulet of glory: Al Kharid, 25 s
+17. Lumbridge: Lumbridge Teleport, 25 s
+18. Varrock: Varrock Teleport, 22 s
+19. Kastori: Pendant of Ates (North of Kastori), 22 s
+20. Auburnvale: Renu (Auburnvale), 28 s
+21. Civitas illa Fortis (Ortus Farm): Hunter cape, 34 s
+22. Lletya: Teleport crystal (Lletya), 16 s
+23. Rimmington: Construction cape: Rimmington, 16 s
+24. Brimhaven: Walk, 20 s
+25. Harmony Island: Charter ship (Port Phasmatys), then travel Bill Teach, then transport Brother Tranquility, 47 s
+26. Hosidius: Xeric's talisman (Xeric's Glade), 18 s
+27. Canifis: Achievement diary cape: C. Le-sabrè, 15 s
+28. Aldarin: Walk to the fairy ring here: Fairy ring CKQ, 25 s
+29. Ardougne monastery: Ardougne cloak: Kandarin Monastery, 14 s
+30. Gnome Stronghold: Slayer ring (Stronghold Slayer Cave), 13 s
+31. Prifddinas: Spirit tree (Prifddinas), 25 s
+32. Falador Park: Falador Teleport, 23 s
+33. Troll Stronghold: Stony basalt (roof), 14 s
+34. Farming Guild: Skills necklace (Farming Guild), 14 s

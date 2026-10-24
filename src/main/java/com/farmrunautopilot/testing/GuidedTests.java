@@ -47,6 +47,7 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import net.runelite.api.GameObject;
 import net.runelite.api.MenuEntry;
+import net.runelite.api.Quest;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.ItemID;
@@ -82,6 +83,9 @@ final class GuidedTests
 		TESTS.put(TestItem.HOUSE_BY_TREE, new HouseByTree());
 		TESTS.put(TestItem.HOUSE_TURNED_OFF, new HouseTurnedOff());
 		TESTS.put(TestItem.HOUSE_SCAN, new HouseScan());
+		TESTS.put(TestItem.SPECIALS_PATCH_POINTS, new SpecialsPatchPoints());
+		TESTS.put(TestItem.SEAWEED_DIVE, new SeaweedDive());
+		TESTS.put(TestItem.ETCETERIA_ACCESS, new EtceteriaAccess());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
 	}
 
@@ -206,11 +210,20 @@ final class GuidedTests
 	/** Each allotment, flower and hops patch loaded nearby: where its object is, against its map point. */
 	private static String newPatchObjects(TestContext ctx)
 	{
+		return patchObjects(ctx, EnumSet.of(PatchType.ALLOTMENT, PatchType.FLOWER, PatchType.HOPS));
+	}
+
+	/** Sprint 1b's patch types. */
+	private static final Set<PatchType> SPECIAL_TYPES = EnumSet.of(PatchType.BUSH, PatchType.CACTUS,
+		PatchType.MUSHROOM, PatchType.BELLADONNA, PatchType.SEAWEED);
+
+	/** The patches of these types the scene tracker has matched to objects, with how far off their map points are. */
+	private static String patchObjects(TestContext ctx, Set<PatchType> types)
+	{
 		final List<String> found = new ArrayList<>();
 		for (Patch patch : Patch.values())
 		{
-			if (patch.getType() != PatchType.ALLOTMENT && patch.getType() != PatchType.FLOWER
-				&& patch.getType() != PatchType.HOPS)
+			if (!types.contains(patch.getType()))
 			{
 				continue;
 			}
@@ -1470,6 +1483,123 @@ final class GuidedTests
 			{
 				kept.setPoh(during.getPoh());
 			}
+		}
+	}
+
+	/** Sprint 1b: the new patches' map points against their objects in game. */
+	private static final class SpecialsPatchPoints extends GuidedTest
+	{
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			for (Patch patch : Patch.values())
+			{
+				if (SPECIAL_TYPES.contains(patch.getType()) && access.missingFor(patch).isEmpty())
+				{
+					return Collections.emptyList();
+				}
+			}
+			return Collections.singletonList("Unlock a bush, cactus, mushroom, belladonna or seaweed patch");
+		}
+
+		private static Step visit(String text)
+		{
+			return doThis(text, ctx -> !"none".equals(patchObjects(ctx, SPECIAL_TYPES)))
+				.onDone(ctx -> ctx.capture("Patches at " + ctx.location(), patchObjects(ctx, SPECIAL_TYPES)))
+				.orAskAfter(DO_TICKS, "The plugin hasn't seen a bush, cactus or special patch yet. Are you by one?")
+				.onAnswer((ctx, yes) ->
+				{
+					if (yes)
+					{
+						ctx.problem("By a patch at " + ctx.location() + " but its object wasn't matched");
+					}
+				});
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				visit("Go to any bush, cactus, mushroom, belladonna or seaweed patch and stand by it"),
+				visit("Now another one (a different place)").optional(),
+				visit("And one more, if you can").optional());
+		}
+	}
+
+	/**
+	 * Sprint 1b: the Fossil Island dive the travel atlas was given by hand (tools/atlas/extra-boats.tsv): where it lands
+	 * (3732 10281 1 from the game's world-map link, UNVERIFIED to the tile), that the guide shows it, and how many spores
+	 * planting takes (UNVERIFIED).
+	 */
+	private static final class SeaweedDive extends GuidedTest
+	{
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			return patchesUsable(access, Location.FOSSIL_ISLAND_UNDERWATER);
+		}
+
+		@Override
+		public void setUp(RunConfig config, AccountSettings account)
+		{
+			onlyPatchesAt(config, Location.FOSSIL_ISLAND_UNDERWATER);
+		}
+
+		@Override
+		public boolean usesRun()
+		{
+			return true;
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				startRun(),
+				doThis("Follow the guide to the seaweed patches: the rowboats, then Dive",
+					ctx -> ctx.inRegion(Patch.FOSSIL_ISLAND_SEAWEED_NORTH.getRegionId()))
+					.orAskAfter(DO_TICKS, "Did you dive and land underwater?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Standing at", ctx.location());
+						ctx.problem(yes ? "Underwater, but the plugin didn't see it" : "The dive didn't happen");
+					})
+					.onDone(ctx -> ctx.capture("Landed at", ctx.location())),
+				ask("Before you dived, did the guide say \"Dive Rowboat\" with the rowboat outlined?"),
+				ask("Is the next seaweed patch outlined as the step?"),
+				ask("Did planting take just one seaweed spore?"));
+		}
+	}
+
+	/** Sprint 1b: whether Etceteria's bush patch needs only The Fremennik Trials (the plugin's requirement). */
+	private static final class EtceteriaAccess extends GuidedTest
+	{
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			return access.isMet(Requirement.quest(Quest.THE_FREMENNIK_TRIALS)) ? Collections.emptyList()
+				: Collections.singletonList("Finish The Fremennik Trials");
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				doThis("Take the boat from Rellekka to Etceteria, then walk to the bush patch by the castle",
+					ctx -> ctx.inRegion(Patch.ETCETERIA_BUSH.getRegionId()))
+					.onStart(ctx ->
+					{
+						// Only a player without Throne of Miscellania can show whether it's needed
+						if (ctx.access().isMet(Requirement.quest(Quest.THRONE_OF_MISCELLANIA)))
+						{
+							ctx.cannotTest("The Fremennik Trials done but not Throne of Miscellania");
+						}
+					})
+					.orAskAfter(DO_TICKS, "Did the boat take you to Etceteria?")
+					.onAnswer((ctx, yes) -> ctx.problem(yes ? "At Etceteria, but the plugin didn't see it"
+						: "The boat didn't take you to Etceteria"))
+					.onDone(ctx -> ctx.capture("Arrived at", ctx.location())),
+				ask("Can you rake or plant in the bush patch?"));
 		}
 	}
 }

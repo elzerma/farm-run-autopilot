@@ -74,7 +74,7 @@ public final class RunSelector
 			for (Patch patch : usable)
 			{
 				final PatchPrediction prediction = predictions.apply(patch);
-				if (isDue(prediction))
+				if (isDue(prediction, config.keepsGrowing(type)))
 				{
 					due++;
 					readyTimes.add(now);
@@ -103,7 +103,7 @@ public final class RunSelector
 			for (Patch patch : usable)
 			{
 				final PatchPrediction prediction = predictions.apply(patch);
-				if (fullRun || isDue(prediction))
+				if (fullRun || isDue(prediction, config.keepsGrowing(type)))
 				{
 					patches.add(patch);
 				}
@@ -134,7 +134,26 @@ public final class RunSelector
 	/** A patch is due unless it is still growing (SPEC 10). Never-seen patches count as due. */
 	public static boolean isDue(PatchPrediction prediction)
 	{
-		return prediction == null || prediction.getState() != PatchState.GROWING;
+		return isDue(prediction, false);
+	}
+
+	/**
+	 * As above; a crop picked and left growing (elzerma, 2026-10-24) is due again only once it has regrown in full, not
+	 * as soon as it's been picked.
+	 *
+	 * @param keepGrowing its type is picked and left growing ({@link RunConfig#keepsGrowing})
+	 */
+	public static boolean isDue(PatchPrediction prediction, boolean keepGrowing)
+	{
+		if (prediction == null || prediction.getState() == PatchState.GROWING)
+		{
+			return prediction == null;
+		}
+		if (keepGrowing && prediction.getState() == PatchState.HARVESTABLE && prediction.getCrop() != null)
+		{
+			return prediction.getStage() >= prediction.getCrop().getHarvestStages() - 1;
+		}
+		return true;
 	}
 
 	/** How many of {@code total} patches must be due to reach {@code percent}, rounded up. */

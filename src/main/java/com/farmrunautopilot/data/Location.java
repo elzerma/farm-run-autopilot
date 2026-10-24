@@ -38,7 +38,18 @@ public enum Location
 	LUMBRIDGE_HOPS("Lumbridge (north farm)"),
 	SEERS_VILLAGE_HOPS("Seers' Village"),
 	YANILLE_HOPS("Yanille"),
-	ALDARIN_HOPS("Aldarin");
+	ALDARIN_HOPS("Aldarin"),
+	// Bushes, cactus, mushroom, belladonna and seaweed (Sprint 1b): the travel atlas's stops of the same names
+	CHAMPIONS_GUILD("Champions' Guild"),
+	RIMMINGTON("Rimmington"),
+	ARDOUGNE_MONASTERY("Ardougne monastery"),
+	ETCETERIA("Etceteria"),
+	AL_KHARID("Al Kharid"),
+	CANIFIS("Canifis"),
+	DRAYNOR_MANOR("Draynor Manor"),
+	// The belladonna patch, 84 tiles east of the Nemus Retreat tree patch in the same RuneLite region
+	AUBURNVALE("Auburnvale"),
+	FOSSIL_ISLAND_UNDERWATER("Fossil Island (underwater)");
 
 	private final String displayName;
 

@@ -16,9 +16,6 @@ import com.farmrunautopilot.data.PatchType;
  */
 public final class PatchPredictor
 {
-	/** A grown fruit tree holds 0-6 fruit. */
-	static final int FRUIT_STAGES = 7;
-
 	private PatchPredictor()
 	{
 	}
@@ -38,10 +35,11 @@ public final class PatchPredictor
 			tickMinutes = crop.getTickMinutes();
 			stages = crop.getStages();
 		}
-		else if (state == PatchState.HARVESTABLE && patch.getType() == PatchType.FRUIT_TREE)
+		else if (state == PatchState.HARVESTABLE && patch.getType().regrows() && crop != null)
 		{
-			tickMinutes = Crop.FRUIT_REGROW_MINUTES;
-			stages = FRUIT_STAGES;
+			// Fruit, berries and cactus spines regrow one at a time (RuneLite Produce's regrow ticks)
+			tickMinutes = crop.getRegrowMinutes();
+			stages = crop.getHarvestStages();
 		}
 
 		if (leagues)

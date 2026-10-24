@@ -1,6 +1,15 @@
 package com.farmrunautopilot.data;
 
 import static com.farmrunautopilot.data.Location.ALDARIN_HOPS;
+import static com.farmrunautopilot.data.Location.AL_KHARID;
+import static com.farmrunautopilot.data.Location.ARDOUGNE_MONASTERY;
+import static com.farmrunautopilot.data.Location.AUBURNVALE;
+import static com.farmrunautopilot.data.Location.CANIFIS;
+import static com.farmrunautopilot.data.Location.CHAMPIONS_GUILD;
+import static com.farmrunautopilot.data.Location.DRAYNOR_MANOR;
+import static com.farmrunautopilot.data.Location.ETCETERIA;
+import static com.farmrunautopilot.data.Location.FOSSIL_ISLAND_UNDERWATER;
+import static com.farmrunautopilot.data.Location.RIMMINGTON;
 import static com.farmrunautopilot.data.Location.ARDOUGNE_FARM;
 import static com.farmrunautopilot.data.Location.BRIMHAVEN;
 import static com.farmrunautopilot.data.Location.CATHERBY;
@@ -59,6 +68,18 @@ public final class MetaOrder
 	private static final List<Location> HOPS = Collections.unmodifiableList(Arrays.asList(
 		LUMBRIDGE_HOPS, SEERS_VILLAGE_HOPS, YANILLE_HOPS, ALDARIN_HOPS));
 
+	// Sprint 1b: the bush run from the guild round Asgarnia, Ardougne and Etceteria; the specials by type
+	private static final List<Location> BUSH = Collections.unmodifiableList(Arrays.asList(
+		FARMING_GUILD, CHAMPIONS_GUILD, RIMMINGTON, ARDOUGNE_MONASTERY, ETCETERIA));
+
+	private static final List<Location> CACTUS = Collections.unmodifiableList(Arrays.asList(FARMING_GUILD, AL_KHARID));
+
+	private static final List<Location> MUSHROOM = Collections.singletonList(CANIFIS);
+
+	private static final List<Location> BELLADONNA = Collections.unmodifiableList(Arrays.asList(DRAYNOR_MANOR, AUBURNVALE));
+
+	private static final List<Location> SEAWEED = Collections.singletonList(FOSSIL_ISLAND_UNDERWATER);
+
 	private MetaOrder()
 	{
 	}
@@ -93,6 +114,16 @@ public final class MetaOrder
 				return FLOWER;
 			case HOPS:
 				return HOPS;
+			case BUSH:
+				return BUSH;
+			case CACTUS:
+				return CACTUS;
+			case MUSHROOM:
+				return MUSHROOM;
+			case BELLADONNA:
+				return BELLADONNA;
+			case SEAWEED:
+				return SEAWEED;
 			default:
 				throw new IllegalArgumentException("No meta order for " + type);
 		}

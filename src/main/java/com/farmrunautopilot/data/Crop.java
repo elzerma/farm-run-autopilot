@@ -79,7 +79,24 @@ public enum Crop
 	KRANDORIAN(PatchType.HOPS, "Krandorian", 21, ItemID.KRANDORIAN_HOP_SEED, 4, 10, 8, ItemID.SACK_CABBAGE_10, 3),
 	WILDBLOOD(PatchType.HOPS, "Wildblood", 28, ItemID.WILDBLOOD_HOP_SEED, 4, 10, 9, ItemID.NASTURTIUM, 1),
 	HEMP(PatchType.HOPS, "Hemp", 37, ItemID.HEMP_SEED, 3, 20, 5, ItemID.FLAX, 6),
-	COTTON(PatchType.HOPS, "Cotton", 71, ItemID.COTTON_SEED, 3, 20, 6, ItemID.HEMP, 6);
+	COTTON(PatchType.HOPS, "Cotton", 71, ItemID.COTTON_SEED, 3, 20, 6, ItemID.HEMP, 6),
+
+	// Sprint 1b. Bushes: one seed; the berries regrow every 20 minutes, up to 4 (wiki: Bush patch/Seeds; payments there)
+	REDBERRY(PatchType.BUSH, "Redberry", 10, ItemID.REDBERRY_BUSH_SEED, 20, 6, ItemID.SACK_CABBAGE_10, 4),
+	CADAVABERRY(PatchType.BUSH, "Cadavaberry", 22, ItemID.CADAVABERRY_BUSH_SEED, 20, 7, ItemID.BASKET_TOMATO_5, 3),
+	DWELLBERRY(PatchType.BUSH, "Dwellberry", 36, ItemID.DWELLBERRY_BUSH_SEED, 20, 8, ItemID.BASKET_STRAWBERRY_5, 3),
+	JANGERBERRY(PatchType.BUSH, "Jangerberry", 48, ItemID.JANGERBERRY_BUSH_SEED, 20, 9, ItemID.WATERMELON, 6),
+	WHITEBERRY(PatchType.BUSH, "Whiteberry", 59, ItemID.WHITEBERRY_BUSH_SEED, 20, 9, ItemID.BITTERCAP_MUSHROOM, 8),
+	// Immune to disease: no payment
+	POISON_IVY(PatchType.BUSH, "Poison ivy", 70, ItemID.POISONIVY_BUSH_SEED, 20, 9, NONE, 0),
+	// Cacti (wiki: Special patches/Seeds): one seed (UNVERIFIED)
+	CACTUS(PatchType.CACTUS, "Cactus", 55, ItemID.CACTUS_SEED, 80, 8, ItemID.CADAVABERRIES, 6),
+	POTATO_CACTUS(PatchType.CACTUS, "Potato cactus", 64, ItemID.POTATO_CACTUS_SEED, 10, 8, ItemID.SNAPE_GRASS, 8),
+	// Can't be protected: one spore or seed (UNVERIFIED for the spore)
+	BITTERCAP(PatchType.MUSHROOM, "Bittercap", 53, ItemID.MUSHROOM_SEED, 40, 7, NONE, 0),
+	BELLADONNA(PatchType.BELLADONNA, "Belladonna", 63, ItemID.BELLADONNA_SEED, 80, 5, NONE, 0),
+	// Mernia protects each underwater patch for 200 numulites (wiki: Mernia); one spore (UNVERIFIED)
+	GIANT_SEAWEED(PatchType.SEAWEED, "Giant seaweed", 23, ItemID.SEAWEED_SEED, 10, 5, ItemID.FOSSIL_NUMULITE, 200);
 
 	/**
 	 * Minutes for one fruit to regrow on a grown fruit tree. RuneLite uses 45; the wiki says 40
@@ -126,6 +143,44 @@ public enum Crop
 	public int getGrowthMinutes()
 	{
 		return tickMinutes * (stages - 1);
+	}
+
+	/**
+	 * Minutes for one fruit, berry or spine to regrow on a grown crop that regrows, 0 for the rest (RuneLite Produce:
+	 * bushes and the cactus 20, the potato cactus 5; fruit trees {@link #FRUIT_REGROW_MINUTES}).
+	 */
+	public int getRegrowMinutes()
+	{
+		switch (type)
+		{
+			case FRUIT_TREE:
+				return FRUIT_REGROW_MINUTES;
+			case BUSH:
+				return 20;
+			case CACTUS:
+				return this == POTATO_CACTUS ? 5 : 20;
+			default:
+				return 0;
+		}
+	}
+
+	/**
+	 * How many a grown crop that regrows holds at most, as the harvestable stages count (RuneLite: fruit 0-6, berries
+	 * 0-4, cactus spines 0-3, potato cacti 0-6); 0 for crops that don't regrow.
+	 */
+	public int getHarvestStages()
+	{
+		switch (type)
+		{
+			case FRUIT_TREE:
+				return 7;
+			case BUSH:
+				return 5;
+			case CACTUS:
+				return this == POTATO_CACTUS ? 7 : 4;
+			default:
+				return 0;
+		}
 	}
 
 	/** Offered as a crop to grow; the scarecrow is only placed to protect sweetcorn. */

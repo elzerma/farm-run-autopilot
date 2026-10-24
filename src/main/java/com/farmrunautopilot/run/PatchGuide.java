@@ -240,6 +240,12 @@ class PatchGuide
 			: text.contains("allotment") ? PatchType.ALLOTMENT
 			: text.contains("flower") ? PatchType.FLOWER
 			: text.contains("hops") ? PatchType.HOPS
+			// Sprint 1b, as the game names them in "You treat the ... patch" (UNVERIFIED for these patches)
+			: text.contains("bush") ? PatchType.BUSH
+			: text.contains("cactus") ? PatchType.CACTUS
+			: text.contains("mushroom") ? PatchType.MUSHROOM
+			: text.contains("belladonna") ? PatchType.BELLADONNA
+			: text.contains("seaweed") ? PatchType.SEAWEED
 			: text.contains("tree") ? PatchType.TREE : null;
 		Patch found = null;
 		for (Patch patch : here)
@@ -435,7 +441,7 @@ class PatchGuide
 			: null;
 		return new StepAdvisor.PatchGoal(patch, crop, plantName, compostFor(patch),
 			protectionNeeded, payment, config.getPayToClear().contains(patch.getType()), p.composted, p.paid,
-			p.sawUnplanted);
+			p.sawUnplanted, config.keepsGrowing(patch.getType()));
 	}
 
 	/** The compost a patch gets: as the supplies were worked out (falling back to what the player has), else its type's. */
@@ -653,13 +659,16 @@ class PatchGuide
 			// Herbs, allotments and hops: a handful each (flowers are a few)
 			return action == StepAdvisor.Action.PICK ? SupplyCalculator.HERBS_PER_PATCH : 0;
 		}
-		if (patch.getType() == PatchType.FRUIT_TREE)
+		if (patch.getType().regrows())
 		{
+			// Fruit, berries or spines: what's on it, or a full crop once its health is checked
 			if (action == StepAdvisor.Action.PICK && live != null)
 			{
 				return live.getStage();
 			}
-			return action == StepAdvisor.Action.CHECK_HEALTH ? SupplyCalculator.FRUIT_PER_TREE : 0;
+			final int full = live != null && live.getCrop() != null ? live.getCrop().getHarvestStages() - 1
+				: SupplyCalculator.FRUIT_PER_TREE;
+			return action == StepAdvisor.Action.CHECK_HEALTH ? full : 0;
 		}
 		return 0;
 	}

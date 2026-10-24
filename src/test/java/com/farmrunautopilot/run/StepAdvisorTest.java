@@ -46,6 +46,28 @@ public class StepAdvisorTest
 	}
 
 	@Test
+	public void aBushIsReplantedOrPickedAndLeftGrowing()
+	{
+		final Patch p = Patch.CHAMPIONS_GUILD_BUSH;
+		final StepAdvisor.PatchGoal replant = new StepAdvisor.PatchGoal(p, Crop.REDBERRY, "Redberry seed", Compost.NONE,
+			true, "4 x Cabbages(10)", false, false, true, false, false);
+		final StepAdvisor.PatchGoal keep = new StepAdvisor.PatchGoal(p, Crop.REDBERRY, "Redberry seed", Compost.NONE,
+			true, "4 x Cabbages(10)", false, false, true, false, true);
+		assertEquals("Check the health of the redberry bush (replanting: Redberry seed)",
+			StepAdvisor.advise(replant, live(p, Crop.REDBERRY, PatchState.CHECK_HEALTH, 5)).getText());
+		assertEquals("Check the health of the redberry bush",
+			StepAdvisor.advise(keep, live(p, Crop.REDBERRY, PatchState.CHECK_HEALTH, 5)).getText());
+		assertEquals("Pick the redberries (4 left)",
+			StepAdvisor.advise(keep, live(p, Crop.REDBERRY, PatchState.HARVESTABLE, 4)).getText());
+		// Picked bare: left growing, or dug up to replant
+		assertEquals(StepAdvisor.Action.DONE, action(keep, live(p, Crop.REDBERRY, PatchState.HARVESTABLE, 0)));
+		assertEquals("Dig up the redberry bush with your spade to replant",
+			StepAdvisor.advise(replant, live(p, Crop.REDBERRY, PatchState.HARVESTABLE, 0)).getText());
+		assertEquals("Fruit tree: pick papaya", StepAdvisor.objectives(Patch.CATHERBY_FRUIT_TREE,
+			live(Patch.CATHERBY_FRUIT_TREE, Crop.PAPAYA, PatchState.HARVESTABLE, 3), Crop.PAPAYA, true));
+	}
+
+	@Test
 	public void compostAfterPlantingIsStillAskedFor()
 	{
 		final Patch p = Patch.CATHERBY_HERB;

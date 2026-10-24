@@ -55,8 +55,8 @@ public class AtlasBanksTest
 		final AtlasBanks.Bank civitas = AtlasBanks.near(Location.CIVITAS_ILLA_FORTIS);
 		assertEquals(new WorldPoint(1648, 3118, 0), civitas.getPoint());
 		assertTrue(civitas.getTiles() + " tiles", civitas.getTiles() < 89);
-		// The Farming Guild's chest is by its patches
-		assertTrue(AtlasBanks.near(Location.FARMING_GUILD).getSeconds() < 15);
+		// The Farming Guild's chest is by its patches, timed from the furthest (the cactus, since sprint 1b)
+		assertTrue(AtlasBanks.near(Location.FARMING_GUILD).getSeconds() + " s", AtlasBanks.near(Location.FARMING_GUILD).getSeconds() < 20);
 		// Stops the old table had none for: Hosidius, the Falador farm and Lumbridge (Draynor's), the Ardougne farm
 		// (north Ardougne's) and Taverley (Falador's west bank)
 		for (Location location : EnumSet.of(Location.HOSIDIUS, Location.FALADOR_FARM, Location.LUMBRIDGE,

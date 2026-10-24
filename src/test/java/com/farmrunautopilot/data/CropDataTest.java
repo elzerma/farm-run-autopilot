@@ -61,7 +61,8 @@ public class CropDataTest
 	{
 		for (Crop crop : Crop.values())
 		{
-			if (crop.getType().isProtectable())
+			// Poison ivy is immune to disease: a bush with no payment
+			if (crop.getType().isProtectable() && crop != Crop.POISON_IVY)
 			{
 				assertTrue(crop.name(), crop.hasPayment());
 				assertTrue(crop.name(), crop.getPaymentQuantity() > 0);

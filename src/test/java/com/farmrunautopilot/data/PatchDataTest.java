@@ -19,9 +19,9 @@ import org.junit.Test;
 public class PatchDataTest
 {
 	@Test
-	public void catalogueHas54Patches()
+	public void catalogueHas66Patches()
 	{
-		assertEquals(54, Patch.values().length);
+		assertEquals(66, Patch.values().length);
 		assertEquals(7, countOfType(PatchType.TREE));
 		assertEquals(7, countOfType(PatchType.FRUIT_TREE));
 		assertEquals(10, countOfType(PatchType.HERB));
@@ -30,6 +30,12 @@ public class PatchDataTest
 		assertEquals(9, countOfType(PatchType.FLOWER));
 		// Entrana left out for now
 		assertEquals(4, countOfType(PatchType.HOPS));
+		// Sprint 1b
+		assertEquals(5, countOfType(PatchType.BUSH));
+		assertEquals(2, countOfType(PatchType.CACTUS));
+		assertEquals(1, countOfType(PatchType.MUSHROOM));
+		assertEquals(2, countOfType(PatchType.BELLADONNA));
+		assertEquals(2, countOfType(PatchType.SEAWEED));
 	}
 
 	@Test
@@ -47,7 +53,7 @@ public class PatchDataTest
 	{
 		final List<Integer> transmit = Arrays.asList(VarbitID.FARMING_TRANSMIT_A, VarbitID.FARMING_TRANSMIT_B,
 			VarbitID.FARMING_TRANSMIT_C, VarbitID.FARMING_TRANSMIT_D, VarbitID.FARMING_TRANSMIT_E, VarbitID.FARMING_TRANSMIT_G,
-			VarbitID.FARMING_TRANSMIT_H, VarbitID.FARMING_TRANSMIT_K);
+			VarbitID.FARMING_TRANSMIT_F, VarbitID.FARMING_TRANSMIT_H, VarbitID.FARMING_TRANSMIT_K);
 		for (Patch patch : Patch.values())
 		{
 			assertTrue(patch.name(), transmit.contains(patch.getVarbitId()));
@@ -134,7 +140,8 @@ public class PatchDataTest
 	@Test
 	public void farmingGuildPatches()
 	{
-		assertEquals(6, Location.FARMING_GUILD.getPatches().size());
+		// Tree, fruit tree, herb, two allotments, flower, bush and cactus
+		assertEquals(8, Location.FARMING_GUILD.getPatches().size());
 		for (Patch patch : Location.FARMING_GUILD.getPatches())
 		{
 			assertEquals(4922, patch.getRegionId());

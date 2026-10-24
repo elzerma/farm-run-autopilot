@@ -24,6 +24,126 @@ public final class PatchStateDecoder
 		TABLES.put(PatchType.ALLOTMENT, allotmentTable());
 		TABLES.put(PatchType.FLOWER, flowerTable());
 		TABLES.put(PatchType.HOPS, hopsTable());
+		TABLES.put(PatchType.BUSH, bushTable());
+		TABLES.put(PatchType.CACTUS, cactusTable());
+		TABLES.put(PatchType.MUSHROOM, mushroomTable());
+		TABLES.put(PatchType.BELLADONNA, belladonnaTable());
+		TABLES.put(PatchType.SEAWEED, seaweedTable());
+	}
+
+	/**
+	 * Sprint 1b, from RuneLite's BUSH (master, 2026-10-24). Check-health is RuneLite's last growing stage (250-255), read
+	 * here as CHECK_HEALTH as for trees; harvestable counts the berries (0-4).
+	 */
+	private static DecodedPatch[] bushTable()
+	{
+		final Table t = new Table();
+		t.weedsBeingRaked(0, 3);
+		t.overgrown(4, 4);
+		bushGrowing(t, 5, 10, 14, Crop.REDBERRY);
+		bushGrowing(t, 15, 21, 25, Crop.CADAVABERRY);
+		bushGrowing(t, 26, 33, 37, Crop.DWELLBERRY);
+		bushGrowing(t, 38, 46, 50, Crop.JANGERBERRY);
+		bushGrowing(t, 51, 59, 63, Crop.WHITEBERRY);
+		t.overgrown(64, 69);
+		t.counting(70, 74, Crop.REDBERRY, PatchState.DISEASED, 69);
+		t.overgrown(75, 79);
+		t.counting(80, 85, Crop.CADAVABERRY, PatchState.DISEASED, 79);
+		t.overgrown(86, 90);
+		t.counting(91, 97, Crop.DWELLBERRY, PatchState.DISEASED, 90);
+		t.overgrown(98, 102);
+		t.counting(103, 110, Crop.JANGERBERRY, PatchState.DISEASED, 102);
+		t.overgrown(111, 115);
+		t.counting(116, 123, Crop.WHITEBERRY, PatchState.DISEASED, 115);
+		t.overgrown(124, 133);
+		t.counting(134, 138, Crop.REDBERRY, PatchState.DEAD, 133);
+		t.overgrown(139, 143);
+		t.counting(144, 149, Crop.CADAVABERRY, PatchState.DEAD, 143);
+		t.overgrown(150, 154);
+		t.counting(155, 161, Crop.DWELLBERRY, PatchState.DEAD, 154);
+		t.overgrown(162, 166);
+		t.counting(167, 174, Crop.JANGERBERRY, PatchState.DEAD, 166);
+		t.overgrown(175, 179);
+		t.counting(180, 187, Crop.WHITEBERRY, PatchState.DEAD, 179);
+		t.overgrown(188, 196);
+		bushGrowing(t, 197, 205, 209, Crop.POISON_IVY);
+		t.counting(210, 216, Crop.POISON_IVY, PatchState.DISEASED, 209);
+		t.counting(217, 224, Crop.POISON_IVY, PatchState.DEAD, 216);
+		t.single(225, Crop.POISON_IVY, PatchState.DISEASED, 8);
+		t.overgrown(226, 249);
+		final Crop[] checked = {Crop.REDBERRY, Crop.CADAVABERRY, Crop.DWELLBERRY, Crop.JANGERBERRY, Crop.WHITEBERRY,
+			Crop.POISON_IVY};
+		for (int i = 0; i < checked.length; i++)
+		{
+			t.single(250 + i, checked[i], PatchState.CHECK_HEALTH, checked[i].getStages() - 1);
+		}
+		return t.values;
+	}
+
+	/** A bush's growing values from {@code grow}, then its harvestable ones (berries, counting up). */
+	private static void bushGrowing(Table t, int grow, int ripe, int ripeEnd, Crop crop)
+	{
+		t.counting(grow, ripe - 1, crop, PatchState.GROWING, grow);
+		t.counting(ripe, ripeEnd, crop, PatchState.HARVESTABLE, ripe);
+	}
+
+	/** Sprint 1b, from RuneLite's CACTUS: check-health is 31 for the cactus and 58 for the potato cactus. */
+	private static DecodedPatch[] cactusTable()
+	{
+		final Table t = new Table();
+		t.weedsBeingRaked(0, 3);
+		t.overgrown(4, 7);
+		t.counting(8, 14, Crop.CACTUS, PatchState.GROWING, 8);
+		t.counting(15, 18, Crop.CACTUS, PatchState.HARVESTABLE, 15);
+		t.counting(19, 24, Crop.CACTUS, PatchState.DISEASED, 18);
+		t.counting(25, 30, Crop.CACTUS, PatchState.DEAD, 24);
+		t.single(31, Crop.CACTUS, PatchState.CHECK_HEALTH, Crop.CACTUS.getStages() - 1);
+		t.counting(32, 38, Crop.POTATO_CACTUS, PatchState.GROWING, 32);
+		t.counting(39, 45, Crop.POTATO_CACTUS, PatchState.HARVESTABLE, 39);
+		t.counting(46, 51, Crop.POTATO_CACTUS, PatchState.DISEASED, 45);
+		t.counting(52, 57, Crop.POTATO_CACTUS, PatchState.DEAD, 51);
+		t.single(58, Crop.POTATO_CACTUS, PatchState.CHECK_HEALTH, Crop.POTATO_CACTUS.getStages() - 1);
+		t.overgrown(59, 255);
+		return t.values;
+	}
+
+	/** Sprint 1b, from RuneLite's MUSHROOM: harvestable counts the mushrooms picked (0-5). */
+	private static DecodedPatch[] mushroomTable()
+	{
+		final Table t = new Table();
+		t.weedsBeingRaked(0, 3);
+		t.counting(4, 9, Crop.BITTERCAP, PatchState.GROWING, 4);
+		t.counting(10, 15, Crop.BITTERCAP, PatchState.HARVESTABLE, 10);
+		t.counting(16, 20, Crop.BITTERCAP, PatchState.DISEASED, 15);
+		t.counting(21, 25, Crop.BITTERCAP, PatchState.DEAD, 20);
+		t.overgrown(26, 255);
+		return t.values;
+	}
+
+	/** Sprint 1b, from RuneLite's BELLADONNA: one harvestable value. */
+	private static DecodedPatch[] belladonnaTable()
+	{
+		final Table t = new Table();
+		t.weedsBeingRaked(0, 3);
+		t.counting(4, 7, Crop.BELLADONNA, PatchState.GROWING, 4);
+		t.single(8, Crop.BELLADONNA, PatchState.HARVESTABLE, 0);
+		t.counting(9, 11, Crop.BELLADONNA, PatchState.DISEASED, 8);
+		t.counting(12, 14, Crop.BELLADONNA, PatchState.DEAD, 11);
+		t.overgrown(15, 255);
+		return t.values;
+	}
+
+	/** Sprint 1b, from RuneLite's SEAWEED (giant seaweed): harvestable counts up (0-2). */
+	private static DecodedPatch[] seaweedTable()
+	{
+		final Table t = new Table();
+		t.weedsBeingRaked(0, 3);
+		t.counting(4, 7, Crop.GIANT_SEAWEED, PatchState.GROWING, 4);
+		t.counting(8, 10, Crop.GIANT_SEAWEED, PatchState.HARVESTABLE, 8);
+		t.counting(11, 13, Crop.GIANT_SEAWEED, PatchState.DISEASED, 10);
+		t.counting(14, 16, Crop.GIANT_SEAWEED, PatchState.DEAD, 13);
+		t.overgrown(17, 255);
+		return t.values;
 	}
 
 	private PatchStateDecoder()

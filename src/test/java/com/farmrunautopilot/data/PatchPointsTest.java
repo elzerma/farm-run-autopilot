@@ -22,7 +22,10 @@ public class PatchPointsTest
 					&& a.isInBounds(PatchPoints.of(b)) && b.isInBounds(PatchPoints.of(a)))
 				{
 					final int distance = PatchPoints.of(a).distanceTo2D(PatchPoints.of(b));
-					assertTrue(a + " and " + b + " are only " + distance + " tiles apart", distance > 60);
+					// In different regions (the Falador farm and Draynor Manor, 46 tiles; the Lumbridge hops and the Champions'
+					// Guild, 48), beyond the tracker's 30 is enough
+					final int least = sameRegion(a, b) ? 60 : 30;
+					assertTrue(a + " and " + b + " are only " + distance + " tiles apart", distance > least);
 				}
 			}
 		}
@@ -46,5 +49,29 @@ public class PatchPointsTest
 				regions.contains(point.getRegionID()));
 			assertTrue(patch + " bounds", patch.isInBounds(point));
 		}
+	}
+
+	/** Whether one patch's region is the other's, or one of its extra regions. */
+	private static boolean sameRegion(Patch a, Patch b)
+	{
+		if (a.getRegionId() == b.getRegionId())
+		{
+			return true;
+		}
+		for (int id : a.getExtraRegionIds())
+		{
+			if (id == b.getRegionId())
+			{
+				return true;
+			}
+		}
+		for (int id : b.getExtraRegionIds())
+		{
+			if (id == a.getRegionId())
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 }

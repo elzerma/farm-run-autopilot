@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,7 +85,15 @@ class RunPanel extends JPanel
 	private static final Color CARRIED = new Color(0x4C, 0xC1, 0x52);
 	private static final Color IN_STORAGE = new Color(0xE8, 0xC5, 0x3A);
 	/** Run type labels short enough for three across the sidebar, in {@link PatchType} order. */
-	private static final String[] SHORT_TYPE_NAMES = {"Trees", "Fruit", "Herbs", "Allotments", "Flowers", "Hops"};
+	/** The run types under the Run tab's one Specials box (sprint 1b). */
+	private static final Set<PatchType> SPECIALS = EnumSet.of(PatchType.CACTUS, PatchType.MUSHROOM,
+		PatchType.BELLADONNA, PatchType.SEAWEED);
+
+	/** A run type's name on its Run tab box. */
+	private static String shortName(PatchType type)
+	{
+		return type == PatchType.FRUIT_TREE ? "Fruit" : type.getPluralName();
+	}
 	/** Shown in the preset picker when the settings no longer match any preset. */
 	private static final String EDITED_PRESET = "Custom (changed)";
 
@@ -583,7 +592,7 @@ class RunPanel extends JPanel
 					protecting.add(patch);
 				}
 				if (keeps ? FlowerProtection.isDue(predictions.get(patch), allotmentCrop)
-					: RunSelector.isDue(predictions.get(patch)))
+					: RunSelector.isDue(predictions.get(patch), config.keepsGrowing(patch.getType())))
 				{
 					duePatches.add(patch);
 				}
@@ -1046,15 +1055,25 @@ class RunPanel extends JPanel
 
 	private JComponent runTypeToggles()
 	{
-		// Three to a row (two rows since allotments, flowers and hops)
+		// Three to a row; cactus, mushroom, belladonna and seaweed share one Specials box (elzerma, 2026-10-24), and which
+		// of their patches run is set on the Farm tab
 		final JPanel types = new JPanel(new GridLayout(0, 3));
 		types.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		final Map<String, Set<PatchType>> families = new LinkedHashMap<>();
 		for (PatchType type : PatchType.values())
 		{
-			final JCheckBox box = new JCheckBox(SHORT_TYPE_NAMES[type.ordinal()],
-				settings.editRunConfig().getEnabledTypes().contains(type));
+			families.computeIfAbsent(SPECIALS.contains(type) ? "Specials" : shortName(type),
+				k -> EnumSet.noneOf(PatchType.class)).add(type);
+		}
+		for (Map.Entry<String, Set<PatchType>> family : families.entrySet())
+		{
+			final Set<PatchType> members = family.getValue();
+			final PatchType type = members.iterator().next();
+			final JCheckBox box = new JCheckBox(family.getKey(),
+				members.stream().anyMatch(settings.editRunConfig().getEnabledTypes()::contains));
 			box.setToolTipText(type == PatchType.FLOWER
 				? "Include flower patches in this run. Flowers that protect your allotments come with them anyway"
+				: members.size() > 1 ? "Include cactus, mushroom, belladonna and seaweed patches in this run"
 				: "Include " + type.getDisplayName().toLowerCase() + " patches in this run");
 			box.setBackground(ColorScheme.DARK_GRAY_COLOR);
 			Style.checkBox(box);
@@ -1065,11 +1084,11 @@ class RunPanel extends JPanel
 			{
 				if (box.isSelected())
 				{
-					settings.editRunConfig().getEnabledTypes().add(type);
+					settings.editRunConfig().getEnabledTypes().addAll(members);
 				}
 				else
 				{
-					settings.editRunConfig().getEnabledTypes().remove(type);
+					settings.editRunConfig().getEnabledTypes().removeAll(members);
 				}
 				settings.saveRunConfig();
 				// The preset picker depends on the run types

@@ -65,6 +65,19 @@ public final class PatchPoints
 		set(new WorldPoint(2667, 3526, 0), Patch.SEERS_VILLAGE_HOPS);
 		set(new WorldPoint(2576, 3105, 0), Patch.YANILLE_HOPS);
 		set(new WorldPoint(1365, 2939, 0), Patch.ALDARIN_HOPS);
+		// Sprint 1b: from the travel atlas's patch places (Farming-Helper's points), to correct from the game log
+		set(new WorldPoint(3181, 3357, 0), Patch.CHAMPIONS_GUILD_BUSH);
+		set(new WorldPoint(2940, 3221, 0), Patch.RIMMINGTON_BUSH);
+		set(new WorldPoint(2591, 3863, 0), Patch.ETCETERIA_BUSH);
+		set(new WorldPoint(2617, 3225, 0), Patch.ARDOUGNE_MONASTERY_BUSH);
+		set(new WorldPoint(1260, 3733, 0), Patch.FARMING_GUILD_BUSH);
+		set(new WorldPoint(3315, 3202, 0), Patch.AL_KHARID_CACTUS);
+		set(new WorldPoint(1264, 3747, 0), Patch.FARMING_GUILD_CACTUS);
+		set(new WorldPoint(3451, 3472, 0), Patch.CANIFIS_MUSHROOM);
+		set(new WorldPoint(3086, 3354, 0), Patch.DRAYNOR_MANOR_BELLADONNA);
+		set(new WorldPoint(1450, 3354, 0), Patch.AUBURNVALE_BELLADONNA);
+		set(new WorldPoint(3733, 10273, 1), Patch.FOSSIL_ISLAND_SEAWEED_NORTH);
+		set(new WorldPoint(3733, 10267, 1), Patch.FOSSIL_ISLAND_SEAWEED_SOUTH);
 	}
 
 	private static void set(WorldPoint point, Patch... patches)

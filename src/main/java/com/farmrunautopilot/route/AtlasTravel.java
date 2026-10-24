@@ -520,7 +520,10 @@ final class AtlasTravel
 		{
 			return (boat ? "boat" : menu.getTarget()) + " to " + menu.getOption();
 		}
-		final String option = Character.toLowerCase(menu.getOption().charAt(0)) + menu.getOption().substring(1);
+		// "travel Primio", but "Quick-Travel Barge guard" kept as it is
+		final String given = menu.getOption();
+		final String option = given.substring(1).chars().anyMatch(Character::isUpperCase) ? given
+			: Character.toLowerCase(given.charAt(0)) + given.substring(1);
 		return menu.getTarget() == null ? option : option + " " + menu.getTarget();
 	}
 
