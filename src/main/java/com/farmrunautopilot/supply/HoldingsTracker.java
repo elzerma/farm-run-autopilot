@@ -247,9 +247,12 @@ public class HoldingsTracker
 		}
 		for (Item item : container.getItems())
 		{
-			if (item.getId() >= 0 && item.getQuantity() > 0)
+			// A placeholder is an emptied slot, none of the item: the seed vault's last kwuarm seed taken still counted
+			// as 1 (elzerma, 2026-10-24), so it's checked by name rather than trusting its quantity
+			if (item.getId() >= 0 && item.getQuantity() > 0
+				&& itemManager.getItemComposition(item.getId()).getPlaceholderTemplateId() == -1)
 			{
-				// Noted items and placeholders count as the real item.
+				// Noted items count as the real item.
 				counts.merge(itemManager.canonicalize(item.getId()), item.getQuantity(), Integer::sum);
 			}
 		}
