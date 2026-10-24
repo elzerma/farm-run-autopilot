@@ -437,6 +437,10 @@ happen at any time; its hops travel is replaced by the atlas in T3. Because the 
 the game (section 3, step 2), each later crop-type sprint switches its patches on and rebuilds nothing in travel.
 Other sessions don't edit travel files (`data/travel/`, the leg code in `route/`) until T7 is done.
 
+**T9 last (elzerma, 2026-10-23):** T9 waits until crop types 1b and 1c are built, so the help list, README, notices and
+release notes are written once for the travel rework and the new crop types together. The order is T4 → T5 → 1b → 1c
+→ T9.
+
 ### T0 results (2026-10-17)
 
 **The bubble works.** `tools/atlas` compiled Shortest Path `37abff3` (the Plugin Hub's version 1.21.3) unchanged and
