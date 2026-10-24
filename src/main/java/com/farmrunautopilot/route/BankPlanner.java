@@ -28,8 +28,11 @@ import lombok.Value;
  */
 final class BankPlanner
 {
-	/** Depositing and withdrawing, the same at any bank. */
-	static final double BANK_SECONDS = 15;
+	/**
+	 * Depositing and withdrawing, the same at any bank: 40 s, from elzerma's timed visits (2026-10-24: 55 s from the last
+	 * patch by ring of dueling, 89 s and 106 s with deposit lists), as elzerma chose; it was 15 s.
+	 */
+	static final double BANK_SECONDS = 40;
 
 	/** Inventory slots for the stops in [from, to) of the route, as one inventory. */
 	interface Slots
