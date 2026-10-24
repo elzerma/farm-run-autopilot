@@ -47,6 +47,27 @@ compost, treat and plant.
 **Answered:** noting is on by default (a setting); herbs are cleaned at the patch, before noting; every stop with a
 compost bin uses it.
 
+### What elzerma did on their run of 2026-10-24 (from the dev log's game chat)
+
+Herbs, allotments and a flower, 10 stops in 34:05. What they did that the plugin doesn't plan or follow:
+
+- **Compost bins at every stop with one:** opened and emptied (supercompost: the Farming Guild's big bin 30 before the
+  run, Hosidius, Civitas illa Fortis, Ardougne), refilled with watermelons as they were picked, and closed (Hosidius,
+  Civitas illa Fortis, Ardougne, Port Phasmatys, Catherby). No volcanic ash this run: the supercompost went to the
+  leprechaun ("Store-All"), and the patches got ultracompost from what they carried.
+- **Buckets from the leprechaun:** taken out ("Remove-All") to empty a bin, and stored back; "You haven't got any
+  buckets to store" after most stops shows they tried to store buckets each time.
+- **Noting while picking:** the inventory filled during almost every allotment harvest ("You have run out of inventory
+  space"); they noted at the leprechaun and went back to picking, up to five times at Port Phasmatys. Watermelons went
+  into the bin in the same breaks.
+- **Cleaning herbs** straight after each herb patch, then noting them.
+- **Noting after each patch** as well as at the end of each stop.
+- **Treated after planting** at the Farming Guild and Hosidius (planted, then ultracompost), which the game allows.
+- **Patch by patch:** each patch was usually picked, treated and planted before the next was started, rather than
+  everything picked first (section 2); worth settling which the guide should lead.
+- **The Farming Guild's bin** was filled to "full of supercompostable items" with no "You close the compost bin" after
+  it in the log.
+
 ## 3. The features asked for
 
 ### 3.1 A planned "Note" step
