@@ -689,10 +689,16 @@ public class RunService
 	 *
 	 * @param from the stop it sets off from, or null for wherever the player is
 	 */
+	/** The account's levels, quests, unlocks and house, as last read. */
+	public AccessSnapshot access()
+	{
+		return accessChecker.getSnapshot();
+	}
+
 	/** Whether the house is set to teleport outside, as last read from the game (House Options). */
 	public boolean houseTeleportsOutside()
 	{
-		return accessChecker.getSnapshot().isHouseTeleportOutside();
+		return access().isHouseTeleportOutside();
 	}
 
 	public RouteStop leg(Location from, Location to)

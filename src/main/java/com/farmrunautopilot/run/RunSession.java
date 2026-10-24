@@ -2319,6 +2319,20 @@ public class RunSession
 			}
 			items.add(Spell.TELEPORT_TO_HOUSE.getTabletItemId());
 		}
+		// The spell or its tablet, as the supply list takes it, not both (elzerma, 2026-10-24: with a tablet carried, the
+		// spell was still outlined in the spellbook): the tablet when the player has one and doesn't cast from runes
+		if (spell != null && spell.hasTablet())
+		{
+			if (SupplyCalculator.usesTablet(spell, stop.getLocation(), settings.getRunConfig(), runService.access(),
+				holdingsTracker.getHoldings()))
+			{
+				spell = null;
+			}
+			else
+			{
+				items.remove(spell.getTabletItemId());
+			}
+		}
 		// An item to put on isn't also outlined as the teleport to use, so the two can't be confused
 		items.removeAll(wear.getItemIds());
 		return new Highlights(null, false, npc, items, patches.castableNow(spell), wear.getItemIds(), stop.menuPicks(),

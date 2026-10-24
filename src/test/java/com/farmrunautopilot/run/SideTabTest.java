@@ -51,18 +51,6 @@ public class SideTabTest
 	}
 
 	@Test
-	public void theSpellsTabletInTheInventoryRatherThanTheSpellbook()
-	{
-		// elzerma, 2026-10-23: a house tablet carried, and still the spellbook's icon had the vine
-		final Highlights both = new Highlights(null, false, null, Set.of(ItemID.POH_TABLET_TELEPORTTOHOUSE),
-			Spell.TELEPORT_TO_HOUSE);
-		assertEquals(SideTab.INVENTORY, SideTab.needed(both, holding(ItemID.POH_TABLET_TELEPORTTOHOUSE), NOTHING, true,
-			true));
-		// Not carried: the spellbook
-		assertEquals(SideTab.SPELLBOOK, SideTab.needed(both, NOTHING, NOTHING, true, true));
-	}
-
-	@Test
 	public void aTabletInTheInventoryNeedsTheInventory()
 	{
 		assertEquals(SideTab.INVENTORY, SideTab.needed(items(ItemID.POH_TABLET_FALADORTELEPORT),
