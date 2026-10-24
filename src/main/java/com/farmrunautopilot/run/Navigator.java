@@ -32,6 +32,8 @@ class Navigator
 	private static final int LANDED_NEAR_TILES = 150;
 	/** A journey step's walk is done this close to where it goes. */
 	private static final int JOURNEY_NEAR_TILES = 4;
+	/** A ride on the way starting this close to the player is still to take, though the patch is in range. */
+	private static final int RIDE_AHEAD_TILES = 25;
 	/** A teleport landing this close to a journey's first step counts as having arrived in the area. */
 	private static final int FIRST_STEP_LANDING_TILES = 60;
 	/** The quetzal that flies between Varlamore landing pads, matched by name. */
@@ -171,7 +173,7 @@ class Navigator
 		{
 			return null;
 		}
-		if (inRange(here))
+		if (inRange(here) && !rideStillAhead(stop, position))
 		{
 			// Teleported straight into range still counts as teleported, so the way there shows as done; walking in,
 			// or being there already, doesn't
@@ -367,6 +369,32 @@ class Navigator
 	}
 
 	/** The journey step to do now, after the teleport and before the walk to the patch, or null. */
+	/**
+	 * A ride on the way not taken yet starts close to the player, so the patch being in range doesn't mean they're there:
+	 * in Tree Gnome Village's hedge maze the fruit tree is in range, yet Elkoy leads the way out (elzerma, 2026-10-24,
+	 * armed in the maze: "Follow the line" was shown instead of Follow Elkoy). That ride becomes the step in hand.
+	 */
+	private boolean rideStillAhead(RouteStop stop, WorldPoint position)
+	{
+		if (position == null)
+		{
+			return false;
+		}
+		final List<JourneyStep> rides = stop.rides();
+		for (int i = teleported ? journeyStep : 0; i < rides.size(); i++)
+		{
+			final WorldPoint at = rides.get(i).getAt();
+			if (rides.get(i).getKind() == JourneyStep.Kind.RIDE && at != null && at.getPlane() == position.getPlane()
+				&& at.distanceTo2D(position) <= RIDE_AHEAD_TILES)
+			{
+				teleported = true;
+				journeyStep = i;
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private JourneyStep journeyStep(RouteStop stop)
 	{
 		final List<JourneyStep> rides = stop.rides();
