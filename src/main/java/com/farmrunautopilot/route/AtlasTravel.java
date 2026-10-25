@@ -447,7 +447,8 @@ final class AtlasTravel
 				text += " (" + fare + " coins)";
 				fare = 0;
 			}
-			rides.add(JourneyStep.ride(menu.getTarget(), menu.getId(), text, brief(menu, step.getName(), boat),
+			rides.add(JourneyStep.ride(menu.getTarget(), menu.getId(), menu.getOption(), text,
+				brief(menu, step.getName(), boat),
 				step.getOrigin()));
 		}
 		return rides;
@@ -573,7 +574,7 @@ final class AtlasTravel
 		}
 		// Who to use it on, outlined when they're near (Renu, a ship's crew); a ring or a tree isn't found among NPCs
 		final TravelAtlas.Menu menu = TravelAtlas.menu(hop.getMenu(), hop.getName());
-		return JourneyStep.ride(menu.getTarget(), menu.getId(), text, brief, point(atlas, hop.getFrom()));
+		return JourneyStep.ride(menu.getTarget(), menu.getId(), menu.getOption(), text, brief, point(atlas, hop.getFrom()));
 	}
 
 	/** e.g. "spirit tree", "gnome glider", "charter ship". */

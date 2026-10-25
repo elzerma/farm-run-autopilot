@@ -1,6 +1,7 @@
 package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.FarmRunAutopilotConfig;
+import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.data.travel.Spell;
 import java.util.HashSet;
 import java.util.Locale;
@@ -76,12 +77,18 @@ public class TeleportMenuHighlighter
 
 	public void onMenuOpened(MenuOpened event)
 	{
-		final String option = session.getView().getHighlights().getTeleportOption();
-		if (option == null || !config.highlightItems())
+		if (!config.highlightItems())
 		{
 			return;
 		}
 		final MenuEntry[] entries = event.getMenuEntries();
+		colourRide(entries);
+		final String option = session.getView().getHighlights().getTeleportOption();
+		if (option == null)
+		{
+			colourOpener(entries);
+			return;
+		}
 		final Found found = find(entries);
 		if (!found.isFound())
 		{
@@ -99,6 +106,51 @@ public class TeleportMenuHighlighter
 			return;
 		}
 		colour(entries[found.index]);
+	}
+
+	/**
+	 * The ride in hand's option on its boat, NPC or object, e.g. "Dive" on the rowboat or "Quick-Travel" on the barge
+	 * guard (elzerma, 2026-10-24), matched by option and, where the atlas names one, target.
+	 */
+	private void colourRide(MenuEntry[] entries)
+	{
+		final JourneyStep ride = session.currentRide();
+		if (ride == null || ride.getOption() == null || entries == null)
+		{
+			return;
+		}
+		for (MenuEntry entry : entries)
+		{
+			final String option = Text.removeTags(entry.getOption());
+			final String target = entry.getTarget() == null ? "" : Text.removeTags(entry.getTarget());
+			if (option.equalsIgnoreCase(ride.getOption())
+				&& (ride.getNpc() == null || target.equalsIgnoreCase(ride.getNpc())))
+			{
+				colour(entry);
+			}
+		}
+	}
+
+	/**
+	 * A teleport item with one teleport and no place to pick (the Skull sceptre's "Teleport", elzerma, 2026-10-24):
+	 * the option that teleports, on the step's teleport item, while the step is to teleport.
+	 */
+	private void colourOpener(MenuEntry[] entries)
+	{
+		final Highlights highlights = session.getView().getHighlights();
+		if (entries == null || highlights.getItemIds().isEmpty() || highlights.getSpell() != null
+			|| highlights.getTravelNpc() != null)
+		{
+			return;
+		}
+		for (MenuEntry entry : entries)
+		{
+			if (highlights.getItemIds().contains(entry.getItemId())
+				&& OPENERS.contains(Text.removeTags(entry.getOption()).toLowerCase(Locale.ROOT)))
+			{
+				colour(entry);
+			}
+		}
 	}
 
 	private void colour(MenuEntry entry)

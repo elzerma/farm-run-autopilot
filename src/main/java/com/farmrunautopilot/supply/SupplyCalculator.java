@@ -572,11 +572,25 @@ public final class SupplyCalculator
 				wearSecateurs ? 0 : 1, SupplyItems.MAGIC_SECATEURS), RUN_OPTIONS);
 			lines.add(wearSecateurs ? secateurs.worn() : secateurs);
 		}
-		// Picking belladonna bare-handed poisons (wiki: Belladonna); any gloves do, so it's worn, not counted as missing
+		// Picking belladonna bare-handed poisons (wiki: Belladonna); any gloves do (UNVERIFIED), so gloves already worn
+		// count, whatever they are
 		if (patches.stream().anyMatch(patch -> patch.getType() == PatchType.BELLADONNA))
 		{
-			lines.add(line(SupplyLine.Group.OPTIONAL, "Gloves", 1, holdings, carried,
-				"Wear any gloves to pick the belladonna", 0, ItemID.LEATHER_GLOVES).worn());
+			final boolean gloved = holdings.in(Holdings.Source.WORN).keySet().stream()
+				.anyMatch(id -> wearSlot.apply(id) == TravelItem.WearSlot.HANDS);
+			final SupplyLine gloves = line(SupplyLine.Group.TOOLS, "Gloves", 1, holdings, carried,
+				gloved ? "The gloves you're wearing protect you from the belladonna"
+					: "Wear gloves (any) to pick the belladonna", 0, ItemID.LEATHER_GLOVES).worn();
+			lines.add(gloved ? gloves.coveredOtherwise() : gloves);
+		}
+		// Underwater by Fossil Island, worn (elzerma, 2026-10-24: needed for the seaweed)
+		if (patches.stream().anyMatch(patch -> patch.getType() == PatchType.SEAWEED))
+		{
+			lines.add(line(SupplyLine.Group.TOOLS, "Fishbowl helmet", 1, holdings, carried,
+				"Wear it to farm the seaweed underwater", 0, ItemID.HUNDRED_PIRATE_DIVING_HELMET).worn());
+			lines.add(line(SupplyLine.Group.TOOLS, "Diving apparatus", 1, holdings, carried,
+				"Wear it with the fishbowl helmet to farm the seaweed underwater", 0,
+				ItemID.HUNDRED_PIRATE_DIVING_BACKPACK).worn());
 		}
 		if (config.getOutfit() != Outfit.NONE)
 		{

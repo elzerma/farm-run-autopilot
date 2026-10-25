@@ -395,6 +395,12 @@ class Navigator
 		return false;
 	}
 
+	/** The journey step in hand while travelling (a boat, an NPC, a portal), or null. */
+	JourneyStep currentRide(RouteStop stop)
+	{
+		return journeyStep(stop);
+	}
+
 	private JourneyStep journeyStep(RouteStop stop)
 	{
 		final List<JourneyStep> rides = stop.rides();

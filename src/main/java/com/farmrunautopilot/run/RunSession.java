@@ -6,6 +6,7 @@ import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.travel.BankTeleport;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
+import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
@@ -2322,6 +2323,19 @@ public class RunSession
 		}
 		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
 		return travelHighlights(stop, wear, navigator.travelNpc(stop), navigator.isTeleported());
+	}
+
+	/**
+	 * The ride the guide is on (a boat, an NPC, a portal), for colouring its right-click option (elzerma, 2026-10-24:
+	 * "Dive" on the rowboat, Captain Barnaby's, the barge guard's); null when not travelling. Client thread.
+	 */
+	JourneyStep currentRide()
+	{
+		if (stage != RunView.State.RUNNING || banking || plan == null || stopIndex >= plan.getRoute().getStops().size())
+		{
+			return null;
+		}
+		return navigator.currentRide(plan.getRoute().getStops().get(stopIndex));
 	}
 
 	/**

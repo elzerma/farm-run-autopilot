@@ -112,6 +112,13 @@ public class SupplyLine
 			consumed, true);
 	}
 
+	/** The same line met some other way (gloves of another kind already worn), so nothing is asked for. */
+	public SupplyLine coveredOtherwise()
+	{
+		return new SupplyLine(group, name, need, have, carried, where, note, slots, true, changeIn, itemIds, consumed,
+			wear);
+	}
+
 	/** The same line marked as used up on the run. */
 	public SupplyLine usedUp()
 	{
