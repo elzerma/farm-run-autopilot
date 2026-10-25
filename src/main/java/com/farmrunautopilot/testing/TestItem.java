@@ -81,10 +81,6 @@ public enum TestItem
 			+ "jewellery box, pool, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned), and My house should say when it was last "
 			+ "scanned, even if your house has none of them. "
 			+ "Then visit someone else's house: nothing of yours should change.", 4),
-	SPECIALS_PATCH_POINTS(Tab.RUN, "Where the bush, cactus and special patches are",
-		"Tick Bushes or Specials on the Run tab and stand by any bush, cactus, mushroom, belladonna or seaweed patch you "
-			+ "can use. The patch should be outlined when it's the next step, and the hint arrow should point at it, not a "
-			+ "few tiles away."),
 	SEAWEED_DIVE(Tab.TRAVEL, "Diving to the seaweed patches",
 		"With Bone Voyage done, build a run with only the Fossil Island seaweed patches and follow the guide: the "
 			+ "rowboat out to the small bank island, then the Dive step with the rowboat outlined. You should land "

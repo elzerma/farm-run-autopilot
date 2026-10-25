@@ -82,7 +82,6 @@ final class GuidedTests
 		TESTS.put(TestItem.HOUSE_BY_TREE, new HouseByTree());
 		TESTS.put(TestItem.HOUSE_TURNED_OFF, new HouseTurnedOff());
 		TESTS.put(TestItem.HOUSE_SCAN, new HouseScan());
-		TESTS.put(TestItem.SPECIALS_PATCH_POINTS, new SpecialsPatchPoints());
 		TESTS.put(TestItem.SEAWEED_DIVE, new SeaweedDive());
 		TESTS.put(TestItem.ETCETERIA_ACCESS, new EtceteriaAccess());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
@@ -211,10 +210,6 @@ final class GuidedTests
 	{
 		return patchObjects(ctx, EnumSet.of(PatchType.ALLOTMENT, PatchType.FLOWER, PatchType.HOPS));
 	}
-
-	/** Sprint 1b's patch types. */
-	private static final Set<PatchType> SPECIAL_TYPES = EnumSet.of(PatchType.BUSH, PatchType.CACTUS,
-		PatchType.MUSHROOM, PatchType.BELLADONNA, PatchType.SEAWEED);
 
 	/** The patches of these types the scene tracker has matched to objects, with how far off their map points are. */
 	private static String patchObjects(TestContext ctx, Set<PatchType> types)
@@ -1332,49 +1327,9 @@ final class GuidedTests
 		}
 	}
 
-	/** Sprint 1b: the new patches' map points against their objects in game. */
-	private static final class SpecialsPatchPoints extends GuidedTest
-	{
-		@Override
-		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
-		{
-			for (Patch patch : Patch.values())
-			{
-				if (SPECIAL_TYPES.contains(patch.getType()) && access.missingFor(patch).isEmpty())
-				{
-					return Collections.emptyList();
-				}
-			}
-			return Collections.singletonList("Unlock a bush, cactus, mushroom, belladonna or seaweed patch");
-		}
-
-		private static Step visit(String text)
-		{
-			return doThis(text, ctx -> !"none".equals(patchObjects(ctx, SPECIAL_TYPES)))
-				.onDone(ctx -> ctx.capture("Patches at " + ctx.location(), patchObjects(ctx, SPECIAL_TYPES)))
-				.orAskAfter(DO_TICKS, "The plugin hasn't seen a bush, cactus or special patch yet. Are you by one?")
-				.onAnswer((ctx, yes) ->
-				{
-					if (yes)
-					{
-						ctx.problem("By a patch at " + ctx.location() + " but its object wasn't matched");
-					}
-				});
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				visit("Go to any bush, cactus, mushroom, belladonna or seaweed patch and stand by it"),
-				visit("Now another one (a different place)").optional(),
-				visit("And one more, if you can").optional());
-		}
-	}
-
 	/**
 	 * Sprint 1b: the Fossil Island dive the travel atlas was given by hand (tools/atlas/extra-boats.tsv): where it lands
-	 * (3732 10281 1 from the game's world-map link, UNVERIFIED to the tile), that the guide shows it, and how many spores
+	 * (3732 10281 1, confirmed on elzerma's run, 2026-10-25, as was the guide showing it), and how many spores
 	 * planting takes (UNVERIFIED).
 	 */
 	private static final class SeaweedDive extends GuidedTest

@@ -1,8 +1,9 @@
 # Origin	Destination	menuOption menuTarget objectID	Skills	Items	Quests	Varbits	Duration	Display info
 # Ways Shortest Path has none for, added to its boats when the atlas is built (BubbleConfig; docs/plans/travel-rework.md).
 # Fossil Island, underwater (sprint 1b): from the bank island's rowboat (object 30919, "Dive", mejrs data_osrs) to where
-# the game's world-map link lands (3732 10281 1, UNVERIFIED to the tile), and back up the anchor rope (30948 at
-# 3731 10282 1) to the bank island. No items needed (wiki: Underwater); Bone Voyage gets the player to Fossil Island.
+# the game's world-map link lands (3732 10281 1, where elzerma landed, 2026-10-25), and back up the anchor rope (30948 at
+# 3731 10282 1) to the bank island. The fishbowl helmet and diving apparatus are worn for it (elzerma); Bone Voyage gets
+# the player to Fossil Island.
 3763 3899 0	3732 10281 1	Dive Rowboat 30919					4	
 3731 10281 1	3763 3899 0	Climb Anchor rope 30948					4	
 # The Museum Camp's rowboat rows straight out to sea too ("Row out to sea, north of the island" in its list, elzerma's
