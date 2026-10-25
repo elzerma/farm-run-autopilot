@@ -16,12 +16,6 @@ public enum TestItem
 			+ "this test: it plans Catherby by Camelot Teleport, cast from runes. The Run tab should warn that you need "
 			+ "Spellbook Swap, its runes should be on the bank's Farm run tab, and the spell should be outlined in your "
 			+ "spellbook on that step."),
-	SPELL_PLACES(Tab.RUN, "Spells' right-click places",
-		"With the hard Kandarin diary (Camelot Teleport to Seers'), the hard Ardougne diary (Watchtower Teleport to Yanille) "
-			+ "or the medium Varrock diary (Varrock Teleport to the Grand Exchange), build a run with the Seers' Village or "
-			+ "Yanille hops patch. A stop should go by the spell's place, e.g. \"Camelot Teleport: Seers'\". In the spellbook "
-			+ "the spell is outlined with \"Right\" over \"click\" under it, right-clicking it shows that place coloured, and "
-			+ "picking it lands you where the route expects."),
 	SEED_VAULT_SECTION(Tab.RUN, "Farm run section in the seed vault",
 		"Build a run needing seeds your bank doesn't have but the Farming Guild's seed vault does, and open the vault: "
 			+ "the button by its close button should flash, with the same outline round it as the bank's Farm run "
