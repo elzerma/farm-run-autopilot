@@ -1,6 +1,7 @@
 package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.FarmRunAutopilotConfig;
+import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.route.MenuPick;
 import java.awt.BasicStroke;
 import java.awt.Dimension;
@@ -24,7 +25,8 @@ import net.runelite.client.util.Text;
  * Rings the place to pick while travelling there (elzerma, 2026-10-18): the landing site on Renu's map or the quetzal
  * whistle's, or the destination on a hot air balloon's (under the setting for the spell to cast, twice as thick: the
  * maps are big), and the place in a teleport item's list of places (under the setting for items to use). A growing
- * vine, or the item colour's outline with vines off. Only drawn while that map or list is open.
+ * vine, or the item colour's outline with vines off. Only drawn while that map or list is open. Also the line a ride
+ * needs in its list of places, e.g. a rowboat's.
  */
 @Slf4j
 public class TravelMenuOverlay extends Overlay
@@ -79,6 +81,12 @@ public class TravelMenuOverlay extends Overlay
 		if (bounds == null && highlights.getTeleportOption() != null && config.highlightItems())
 		{
 			bounds = listEntry(highlights.getTeleportOption());
+		}
+		// A ride's list of places: the Museum Camp rowboat's "Row out to sea, north of the island" (elzerma, 2026-10-25)
+		if (bounds == null && config.highlightItems())
+		{
+			final JourneyStep ride = session.currentRide();
+			bounds = ride != null && ride.getDialog() != null ? listEntry(ride.getDialog()) : null;
 		}
 		if (bounds == null)
 		{

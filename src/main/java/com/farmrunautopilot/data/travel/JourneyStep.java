@@ -36,6 +36,11 @@ public class JourneyStep
 	int id;
 	/** The right-click option that takes it ("Dive", "Travel", "Quick-Travel"), coloured in the menu; null if none. */
 	String option;
+	/**
+	 * The line to pick in the "Select an option" list its option opens, e.g. a rowboat's "Row out to sea, north of the
+	 * island", ringed in the chatbox; null if none.
+	 */
+	String dialog;
 
 	public static JourneyStep ride(String npc, String text, String brief, WorldPoint at)
 	{
@@ -45,23 +50,30 @@ public class JourneyStep
 	/** A ride on an NPC or object the atlas names by id. */
 	public static JourneyStep ride(String npc, int id, String option, String text, String brief, WorldPoint at)
 	{
-		return new JourneyStep(Kind.RIDE, text, brief, npc, at, id, option);
+		return ride(npc, id, option, text, brief, at, null);
+	}
+
+	/** A ride whose option opens a list of places, picking this line in it. */
+	public static JourneyStep ride(String npc, int id, String option, String text, String brief, WorldPoint at,
+		String dialog)
+	{
+		return new JourneyStep(Kind.RIDE, text, brief, npc, at, id, option, dialog);
 	}
 
 	public static JourneyStep walk(String text, String brief, WorldPoint at)
 	{
-		return new JourneyStep(Kind.WALK, text, brief, null, at, -1, null);
+		return new JourneyStep(Kind.WALK, text, brief, null, at, -1, null, null);
 	}
 
 	/** Directions for the way to the patch (shortcuts, ladders, stairs): shown until the patch is reached. */
 	public static JourneyStep way(String text, String brief)
 	{
-		return new JourneyStep(Kind.WALK, text, brief, null, null, -1, null);
+		return new JourneyStep(Kind.WALK, text, brief, null, null, -1, null, null);
 	}
 
 	/** Leaving somewhere by a portal or ladder: done when the player is moved. */
 	public static JourneyStep exit(String text, String brief, WorldPoint at)
 	{
-		return new JourneyStep(Kind.RIDE, text, brief, null, at, -1, null);
+		return new JourneyStep(Kind.RIDE, text, brief, null, at, -1, null, null);
 	}
 }

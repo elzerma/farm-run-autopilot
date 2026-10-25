@@ -143,6 +143,17 @@ public class RouteStop
 		return whole.toString();
 	}
 
+	/** A fairy ring code as the way there names it: "Fairy ring CIP", "House fairy ring: Fairy ring CIR", "ring AJR". */
+	private static final java.util.regex.Pattern RING_CODE =
+		java.util.regex.Pattern.compile("(?i:ring):? ([A-D][I-L][P-S])\\b");
+
+	/** The fairy ring code dialled on the way here (e.g. "CIP"), or null if the way takes no fairy ring. */
+	public String fairyRingCode()
+	{
+		final java.util.regex.Matcher m = RING_CODE.matcher(describeDeparture());
+		return m.find() ? m.group(1) : null;
+	}
+
 	/** The way there without the journey steps after it, e.g. "Trollheim Teleport". */
 	public String describeWay()
 	{

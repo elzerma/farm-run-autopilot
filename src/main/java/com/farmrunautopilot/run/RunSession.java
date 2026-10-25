@@ -70,6 +70,9 @@ public class RunSession
 	/** How long "Run finished" stays under the player. */
 	private static final long FINISHED_NOTICE_MILLIS = 15_000;
 	private static final int BEST_TIMES = 3;
+	/** The fishbowl helmet and diving apparatus, worn only for the dive by Fossil Island. */
+	private static final Set<Integer> DIVING_GEAR = Set.of(ItemID.HUNDRED_PIRATE_DIVING_HELMET,
+		ItemID.HUNDRED_PIRATE_DIVING_BACKPACK);
 	/** How long the step in hand must lack its item before the task becomes a bank visit. */
 	private static final long MISSING_GRACE_MILLIS = 1800;
 	/** Moving further than this in one tick can only be a teleport. */
@@ -1955,8 +1958,13 @@ public class RunSession
 		}
 		// Before leaving and at each bank: what to put on for this part of the run. On the way, the staves swapped
 		// between are left to their own step (issue #7).
-		final Set<Integer> swapped = stage == RunView.State.RUNNING && !banking
-			? partFor(plan, stopIndex, false).getStaffSwaps().getItemIds() : Collections.emptySet();
+		final Set<Integer> swapped = new HashSet<>(stage == RunView.State.RUNNING && !banking
+			? partFor(plan, stopIndex, false).getStaffSwaps().getItemIds() : Collections.emptySet());
+		// The diving gear only for the dive, not on the way to the stops after it (elzerma, 2026-10-25)
+		if (!nextStopIs(Location.FOSSIL_ISLAND_UNDERWATER))
+		{
+			swapped.addAll(DIVING_GEAR);
+		}
 		final BankGuide.Wear wear = !wieldIds.isEmpty() ? new BankGuide.Wear(null, wieldIds)
 			: stage == RunView.State.ARMED || banking || patches.getCurrentPatch() == null
 			? BankGuide.wear(bankSupplies(), holdingsTracker.getHoldings(), settings.getRunConfig().getOutfit(), swapped)
@@ -2323,6 +2331,35 @@ public class RunSession
 		}
 		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
 		return travelHighlights(stop, wear, navigator.travelNpc(stop), navigator.isTeleported());
+	}
+
+	/** The fairy ring code on the way to the stop in hand (e.g. "CIP"), for the travel log; null if none. Client thread. */
+	String fairyRingCode()
+	{
+		if (stage != RunView.State.RUNNING || banking || plan == null || patches.getCurrentPatch() != null
+			|| stopIndex >= plan.getRoute().getStops().size())
+		{
+			return null;
+		}
+		return plan.getRoute().getStops().get(stopIndex).fairyRingCode();
+	}
+
+	/** Whether the stop in hand, or the one after a bank visit, is at this place. */
+	private boolean nextStopIs(Location location)
+	{
+		if (plan == null)
+		{
+			return false;
+		}
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		for (int i = stopIndex; i < stops.size() && i <= stopIndex + (banking ? 1 : 0); i++)
+		{
+			if (stops.get(i).getLocation() == location)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

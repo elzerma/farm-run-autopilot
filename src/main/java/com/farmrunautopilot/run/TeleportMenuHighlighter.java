@@ -298,7 +298,11 @@ public class TeleportMenuHighlighter
 	static int pick(String[] options, int[] items, Set<Integer> teleportIds, String option)
 	{
 		final String place = option.toLowerCase(Locale.ROOT);
+		// The place's last word with "Teleport", as the Ardougne cloak words its places: "Monastery Teleport" for Kandarin
+		// Monastery, "Farm Teleport" for Ardougne Farm (elzerma, 2026-10-25)
+		final String teleport = place.substring(place.lastIndexOf(' ') + 1) + " teleport";
 		int opener = -1;
+		int worded = -1;
 		for (int i = 0; i < options.length; i++)
 		{
 			if (!teleportIds.contains(items[i]) || options[i] == null)
@@ -310,12 +314,16 @@ public class TeleportMenuHighlighter
 			{
 				return i;
 			}
+			if (worded < 0 && text.equals(teleport))
+			{
+				worded = i;
+			}
 			if (opener < 0 && OPENERS.contains(text))
 			{
 				opener = i;
 			}
 		}
-		return opener;
+		return worded >= 0 ? worded : opener;
 	}
 
 	/**

@@ -5,3 +5,7 @@
 # 3731 10282 1) to the bank island. No items needed (wiki: Underwater); Bone Voyage gets the player to Fossil Island.
 3763 3899 0	3732 10281 1	Dive Rowboat 30919					4	
 3731 10281 1	3763 3899 0	Climb Anchor rope 30948					4	
+# The Museum Camp's rowboat rows straight out to sea too ("Row out to sea, north of the island" in its list, elzerma's
+# screenshot, 2026-10-25), where Shortest Path goes by the north of the island and a second rowboat. As long as its
+# trip to the north of the island.
+3724 3807 0	3764 3899 0	Travel Rowboat 30914					4	

@@ -1,6 +1,6 @@
 # Travel atlas report
 
-Built 2026-10-24 by `tools/atlas` from Shortest Path `37abff3a3345185fc11fccecae04d8170de25a11`. Times are walk tiles x 0.3 s + transport ticks x 0.6 s (a 0-tick transport counts as 1, an agility shortcut as 2), before the plugin's set-off overhead. Sweep budget 300 (banks 150), ways over 300 s dropped, up to 8 questions and 6 ways a pair.
+Built 2026-10-25 by `tools/atlas` from Shortest Path `37abff3a3345185fc11fccecae04d8170de25a11`. Times are walk tiles x 0.3 s + transport ticks x 0.6 s (a 0-tick transport counts as 1, an agility shortcut as 2), before the plugin's set-off overhead. Sweep budget 300 (banks 150), ways over 300 s dropped, up to 8 questions and 6 ways a pair.
 
 ## Build
 
@@ -13,18 +13,18 @@ Built 2026-10-24 by `tools/atlas` from Shortest Path `37abff3a3345185fc11fccecae
 | Teleports (anywhere, or from the house) | 986 |
 | Hops (fairy rings, spirit trees, quetzals, gliders, charter ships...) | 6935 |
 | Pairs asked (start within the sweep budget) | 11549 |
-| Questions asked | 34972 |
-| Searches stopped at the 4 s limit | 7 |
-| Pairs with at least one way | 11517 |
-| Ways kept | 20739 |
+| Questions asked | 34980 |
+| Searches stopped at the 4 s limit | 28 |
+| Pairs with at least one way | 11518 |
+| Ways kept | 20744 |
 | Hops kept (walked to and leading somewhere) | 6935 |
-| Build time (s) | 601 |
+| Build time (s) | 623 |
 | `places.tsv` | 50 KB |
 | `teleports.tsv` | 82 KB |
 | `hops.tsv` | 488 KB |
 | `transports.tsv` | 58 KB |
 | `requirements.tsv` | 28 KB |
-| `ways.tsv` | 499 KB |
+| `ways.tsv` | 498 KB |
 | All data files | 1207 KB |
 
 ## Checks
@@ -122,5 +122,9 @@ Counted as 1 tick (2 for an agility shortcut). Worth a real duration from the wi
 
 ## Changes since the last build
 
-Pairs added: 120, removed: 1, fastest way moved more than 10%: 0.
+Pairs added: 1, removed: 0, fastest way moved more than 10%: 4.
 
+- BANK 3741 3805 0 > PATCH 3733 10273 1: 11.7 s, was 13.5 s
+- LANDING 3710 3838 0 > PATCH 3733 10273 1: 12.3 s, was 14.1 s
+- PATCH 3715 3835 0 > PATCH 3733 10273 1: 12.3 s, was 14.1 s
+- PATCH 3702 3837 0 > PATCH 3733 10273 1: 14.1 s, was 15.9 s

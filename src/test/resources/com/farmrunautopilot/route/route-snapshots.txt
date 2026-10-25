@@ -45,9 +45,9 @@
 20. Gnome Stronghold: Games necklace: Barbarian Outpost, 55 s
 
 ## Maxed: 99 in every skill, every quest, diary and unlock, every teleport item, no house
-66 patches, 34 stops, travel 786 s
+66 patches, 34 stops, travel 784 s
  1. Taverley: Taverley teleport tablet, 26 s
- 2. Fossil Island (underwater): Royal seed pod, then gnome glider to Lemanto Andra, then Quick-Travel Barge guard, then travel Rowboat, then travel Rowboat, then dive Rowboat, 55 s
+ 2. Fossil Island (underwater): Royal seed pod, then gnome glider to Lemanto Andra, then Quick-Travel Barge guard, then travel Rowboat, then dive Rowboat, 53 s
  3. Tree Gnome Village: Achievement diary cape: F. Elder Gnome child, then spirit tree to Tree Gnome Village, then follow Elkoy, 36 s
  4. Falador farm (south): Explorer's ring (cabbage patch), 17 s
  5. Draynor Manor: Walk, 19 s

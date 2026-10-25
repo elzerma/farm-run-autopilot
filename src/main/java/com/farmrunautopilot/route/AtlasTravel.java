@@ -4,6 +4,7 @@ import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.travel.DailyLimits;
 import com.farmrunautopilot.data.travel.FairyRingAccess;
 import com.farmrunautopilot.data.travel.JourneyStep;
+import com.farmrunautopilot.data.travel.RideDialogs;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelKind;
@@ -449,7 +450,7 @@ final class AtlasTravel
 			}
 			rides.add(JourneyStep.ride(menu.getTarget(), menu.getId(), menu.getOption(), text,
 				brief(menu, step.getName(), boat),
-				step.getOrigin()));
+				step.getOrigin(), RideDialogs.line(menu.getId(), step.getDestination())));
 		}
 		return rides;
 	}

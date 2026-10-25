@@ -25,6 +25,12 @@ public class TeleportMenuHighlighterTest
 		// The Ardougne cloak's "Ardougne Farm" for the plugin's "Ardougne cloak (farm)"
 		assertEquals(0, TeleportMenuHighlighter.pick(new String[]{"Ardougne Farm"}, new int[]{ItemID.ARDY_CAPE_MEDIUM},
 			Set.of(ItemID.ARDY_CAPE_MEDIUM), "farm"));
+		// In the inventory it says "Monastery Teleport" and "Farm Teleport" (elzerma, 2026-10-25)
+		final String[] cloak = {"Wear", "Monastery Teleport", "Use", "Farm Teleport", "Drop"};
+		final int[] ids = {ItemID.ARDY_CAPE_MEDIUM, ItemID.ARDY_CAPE_MEDIUM, ItemID.ARDY_CAPE_MEDIUM,
+			ItemID.ARDY_CAPE_MEDIUM, ItemID.ARDY_CAPE_MEDIUM};
+		assertEquals(1, TeleportMenuHighlighter.pick(cloak, ids, Set.of(ItemID.ARDY_CAPE_MEDIUM), "Kandarin Monastery"));
+		assertEquals(3, TeleportMenuHighlighter.pick(cloak, ids, Set.of(ItemID.ARDY_CAPE_MEDIUM), "Ardougne Farm"));
 	}
 
 	@Test
