@@ -100,6 +100,7 @@ All RuneScape fonts from `FontManager`. No other fonts, no added bold.
 | Inside a card | 4 top/bottom, 7 sides (+3 for an accent bar) |
 | Between cards, rows and sections | 3 |
 | Above / below a heading | 8 / 3 |
+| Rows under a group header (the help list's tests), set in from it | 10 |
 | Section content | 3 top, 2 sides |
 | Tick box margin | 3 above and below; 5 between box and text |
 | Under the Trees / Fruit / Herbs row | 5 |

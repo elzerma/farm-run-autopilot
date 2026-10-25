@@ -29,6 +29,10 @@ final class HelpWanted
 {
 	static final String ISSUES_URL = "https://github.com/elzerma/farm-run-autopilot/issues";
 	private static final int TEXT_WIDTH = 184;
+	/** How far a group's tests sit in from its heading (docs/BRANDING.md, spacing). */
+	private static final int INDENT = 10;
+	/** Space above each group's heading, as above a heading. */
+	private static final int GROUP_GAP = 8;
 	/** Tests opened to show their steps, kept while the page redraws. */
 	private static final java.util.Set<TestItem> OPEN_ROWS = java.util.EnumSet.noneOf(TestItem.class);
 
@@ -119,6 +123,12 @@ final class HelpWanted
 			}
 			final String key = "Guided tests: " + tab.name();
 			final boolean open = settings.isSectionOpen(key);
+			// Room above each tab's heading, and its tests indented under it, so a heading and a test don't look alike
+			// (elzerma, 2026-10-25)
+			if (panel.getComponentCount() > 0)
+			{
+				add(panel, gap(GROUP_GAP));
+			}
 			add(panel, Card.groupHeader(tab.getLabel() + " tab", items.size() + " to try", open, () ->
 			{
 				settings.setSectionOpen(key, !open);
@@ -128,7 +138,7 @@ final class HelpWanted
 			{
 				for (TestItem item : items)
 				{
-					add(panel, testRow(item, runner, showRun, "Start test"));
+					add(panel, indented(testRow(item, runner, showRun, "Start test")));
 				}
 			}
 		}
@@ -148,6 +158,29 @@ final class HelpWanted
 		});
 		add(panel, issues);
 		return panel;
+	}
+
+	/** A component set in under its group's heading. */
+	private static JComponent indented(JComponent component)
+	{
+		final JPanel holder = new JPanel(new java.awt.BorderLayout())
+		{
+			@Override
+			public java.awt.Dimension getMaximumSize()
+			{
+				return new java.awt.Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+			}
+		};
+		holder.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		holder.setBorder(new EmptyBorder(0, INDENT, 0, 0));
+		holder.add(component, java.awt.BorderLayout.CENTER);
+		return holder;
+	}
+
+	/** Empty space of this height. */
+	private static JComponent gap(int height)
+	{
+		return (JComponent) javax.swing.Box.createVerticalStrut(height);
 	}
 
 	private static void add(JPanel panel, JComponent component)
@@ -226,6 +259,10 @@ final class HelpWanted
 			return;
 		}
 		final String key = "Guided tests: done";
+		if (panel.getComponentCount() > 0)
+		{
+			add(panel, gap(GROUP_GAP));
+		}
 		final boolean open = settings.isSectionOpen(key);
 		add(panel, Card.groupHeader("Done", String.valueOf(done.size()), open, () ->
 		{
@@ -240,13 +277,13 @@ final class HelpWanted
 		{
 			if (developer)
 			{
-				add(panel, testRow(item, runner, showRun, "Run again"));
+				add(panel, indented(testRow(item, runner, showRun, "Run again")));
 			}
 			else
 			{
 				final JLabel line = text(item.getTitle() + ": " + settings.getClientValue(item.key()),
 					ColorScheme.MEDIUM_GRAY_COLOR, 2);
-				line.setBorder(new EmptyBorder(1, 8, 2, 0));
+				line.setBorder(new EmptyBorder(1, INDENT, 2, 0));
 				add(panel, line);
 			}
 		}
