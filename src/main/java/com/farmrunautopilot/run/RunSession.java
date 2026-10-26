@@ -2735,8 +2735,10 @@ public class RunSession
 		}
 		final List<RouteStop> stops = current.getRoute().getStops();
 		final boolean atFirstStop = !stops.isEmpty() && navigator.inRange(patchesAt(current, stops.get(0).getLocation()));
+		// The diving gear is put on for the dive, unless that's where the run starts (elzerma, 2026-10-25)
+		final boolean diveFirst = !stops.isEmpty() && stops.get(0).getLocation() == Location.FOSSIL_ISLAND_UNDERWATER;
 		final BankGuide.Wear wear = BankGuide.wear(current.getSupplies(), holdingsTracker.getHoldings(),
-			settings.getRunConfig().getOutfit());
+			settings.getRunConfig().getOutfit(), diveFirst ? Collections.emptySet() : DIVING_GEAR);
 		return new RunView(RunView.State.BUILDING, 0, ready, notice, atFirstStop, null,
 			bestTimes(current), null, wear.getText(), new Highlights(null, false, null, outlined, null,
 			wear.getItemIds()), null, Collections.emptyList());
