@@ -90,7 +90,6 @@ public class RunSession
 
 	private final Client client;
 	private final ItemManager itemManager;
-	private final ChatOptions chatOptions;
 	private final RunService runService;
 	private final HoldingsTracker holdingsTracker;
 	private final SettingsStore settings;
@@ -228,10 +227,8 @@ public class RunSession
 	@Inject
 	RunSession(Client client, RunService runService, HoldingsTracker holdingsTracker, SettingsStore settings,
 		RunTimings timings, SceneTracker scene, ShortestPathBridge shortestPath, Navigator navigator,
-		PatchGuide patches, FarmBankTab bankTab, SeedVaultSection seedVault, ItemManager itemManager,
-		ChatOptions chatOptions)
+		PatchGuide patches, FarmBankTab bankTab, SeedVaultSection seedVault, ItemManager itemManager)
 	{
-		this.chatOptions = chatOptions;
 		this.itemManager = itemManager;
 		this.client = client;
 		this.runService = runService;
@@ -2687,11 +2684,6 @@ public class RunSession
 		if (drop != null)
 		{
 			lines.add(drop);
-		}
-		final String press = chatOptions.reminder();
-		if (press != null)
-		{
-			lines.add(press);
 		}
 		if (surfacedWithRunOff)
 		{

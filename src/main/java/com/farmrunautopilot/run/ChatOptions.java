@@ -11,17 +11,15 @@ import net.runelite.client.util.Text;
 
 /**
  * The option a step needs in an open chatbox list ("Select an option", "Your hands are full."): coloured in the item
- * colour, with its number to press shown under the step (elzerma, 2026-10-25: "any dialogue options to be highlighted
- * and number to be listed to press"). A ride's line (a rowboat's "Row out to sea, north of the island") or the place in
- * a teleport item's list. Colour only: the game's text is left as it is. Client thread.
+ * colour, with its number to press in front of it (elzerma, 2026-10-25: "any dialogue options to be highlighted and
+ * number to be listed to press", then "add the number to select in the dialogue box"). A ride's line (a rowboat's
+ * "Row out to sea, north of the island") or the place in a teleport item's list. Client thread.
  */
 @Singleton
 public class ChatOptions
 {
 	private final Client client;
 	private final FarmRunAutopilotConfig config;
-	/** The number to press for the option in the open list, or 0 when none is showing. */
-	private int press;
 
 	@Inject
 	ChatOptions(Client client, FarmRunAutopilotConfig config)
@@ -33,7 +31,6 @@ public class ChatOptions
 	/** Each client tick, as the list is built by a script after it opens. */
 	public void onPostClientTick(RunSession session)
 	{
-		press = 0;
 		final Widget options = client.getWidget(InterfaceID.Chatmenu.OPTIONS);
 		if (options == null || options.isHidden() || !config.highlightItems())
 		{
@@ -59,15 +56,13 @@ public class ChatOptions
 			if (number > 0 && Text.removeTags(child.getText()).toLowerCase(Locale.ROOT).contains(text))
 			{
 				child.setTextColor(config.itemColour().getRGB() & 0xFFFFFF);
-				press = number;
+				// Its number in front, once (elzerma, 2026-10-25: "add the number to select in the dialogue box")
+				if (!Text.removeTags(child.getText()).startsWith(number + ": "))
+				{
+					child.setText(number + ": " + child.getText());
+				}
 				return;
 			}
 		}
-	}
-
-	/** "Press 4" while the option is showing in an open list, else null. */
-	String reminder()
-	{
-		return press > 0 ? "Press " + press : null;
 	}
 }
