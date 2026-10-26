@@ -95,6 +95,12 @@ public class TravelMenuOverlay extends Overlay
 		{
 			bounds = fairyRingLog.entryBounds();
 		}
+		// The run orb, while run is still off after the dive (elzerma, 2026-10-25: "circle the toggle run orb")
+		if (bounds == null && session.isSurfacedWithRunOff())
+		{
+			final Widget orb = client.getWidget(InterfaceID.Orbs.RUNBUTTON);
+			bounds = orb != null && !orb.isHidden() ? orb.getBounds() : null;
+		}
 		if (bounds == null)
 		{
 			vine.clear();

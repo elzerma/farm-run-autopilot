@@ -55,6 +55,8 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarPlayerID;
+import net.runelite.client.game.ItemManager;
+import net.runelite.client.game.ItemStats;
 
 /**
  * Runs a farm run (SPEC 13.4): off until Build run, building while supplies are gathered, armed (plan frozen,
@@ -85,6 +87,7 @@ public class RunSession
 	private static final int TELEPORT_TILES = 30;
 
 	private final Client client;
+	private final ItemManager itemManager;
 	private final RunService runService;
 	private final HoldingsTracker holdingsTracker;
 	private final SettingsStore settings;
@@ -222,8 +225,9 @@ public class RunSession
 	@Inject
 	RunSession(Client client, RunService runService, HoldingsTracker holdingsTracker, SettingsStore settings,
 		RunTimings timings, SceneTracker scene, ShortestPathBridge shortestPath, Navigator navigator,
-		PatchGuide patches, FarmBankTab bankTab, SeedVaultSection seedVault)
+		PatchGuide patches, FarmBankTab bankTab, SeedVaultSection seedVault, ItemManager itemManager)
 	{
+		this.itemManager = itemManager;
 		this.client = client;
 		this.runService = runService;
 		this.holdingsTracker = holdingsTracker;
@@ -1999,7 +2003,7 @@ public class RunSession
 		final Outfit outfit = settings.getRunConfig().getOutfit();
 		if (dive)
 		{
-			swapped.addAll(pieceIds(outfit));
+			swapped.addAll(piecesUnderDivingGear(outfit));
 		}
 		final BankGuide.Wear wear = !wieldIds.isEmpty() ? new BankGuide.Wear(null, wieldIds)
 			: stage == RunView.State.ARMED || banking || patches.getCurrentPatch() == null
@@ -2380,18 +2384,46 @@ public class RunSession
 		return plan.getRoute().getStops().get(stopIndex).fairyRingCode();
 	}
 
-	/** Every item id of the outfit's pieces. */
-	private static Set<Integer> pieceIds(Outfit outfit)
+	/**
+	 * The outfit's pieces worn in the fishbowl helmet's or diving apparatus's slot, left off for the dive; the rest are
+	 * still asked for (elzerma, 2026-10-25: "equip what you can, with the apparatus and helmet"). Client thread.
+	 */
+	private Set<Integer> piecesUnderDivingGear(Outfit outfit)
 	{
+		final Set<Integer> slots = new HashSet<>();
+		for (int id : DIVING_GEAR)
+		{
+			if (slot(id) >= 0)
+			{
+				slots.add(slot(id));
+			}
+		}
 		final Set<Integer> ids = new HashSet<>();
 		for (int[] piece : outfit.getPieces())
 		{
+			if (piece.length == 0 || !slots.contains(slot(piece[0])))
+			{
+				continue;
+			}
 			for (int id : piece)
 			{
 				ids.add(id);
 			}
 		}
 		return ids;
+	}
+
+	/** Back up from the dive with run still off, for the run orb's vine. Client thread. */
+	boolean isSurfacedWithRunOff()
+	{
+		return surfacedWithRunOff;
+	}
+
+	/** An item's equipment slot, or -1 if it isn't worn or its stats aren't known. Client thread. */
+	private int slot(int itemId)
+	{
+		final ItemStats stats = itemManager.getItemStats(itemId);
+		return stats != null && stats.getEquipment() != null ? stats.getEquipment().getSlot() : -1;
 	}
 
 	/** Whether the stop in hand, or the one after a bank visit, is at this place. */
@@ -2792,7 +2824,7 @@ public class RunSession
 		// The diving gear is put on for the dive, unless that's where the run starts (elzerma, 2026-10-25)
 		final boolean diveFirst = !stops.isEmpty() && stops.get(0).getLocation() == Location.FOSSIL_ISLAND_UNDERWATER;
 		final BankGuide.Wear wear = BankGuide.wear(current.getSupplies(), holdingsTracker.getHoldings(),
-			settings.getRunConfig().getOutfit(), diveFirst ? pieceIds(settings.getRunConfig().getOutfit()) : DIVING_GEAR);
+			settings.getRunConfig().getOutfit(), diveFirst ? piecesUnderDivingGear(settings.getRunConfig().getOutfit()) : DIVING_GEAR);
 		return new RunView(RunView.State.BUILDING, 0, ready, notice, atFirstStop, null,
 			bestTimes(current), null, wear.getText(), new Highlights(null, false, null, outlined, null,
 			wear.getItemIds()), null, Collections.emptyList());
