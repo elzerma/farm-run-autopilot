@@ -35,6 +35,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -576,12 +577,23 @@ public final class SupplyCalculator
 		// count, whatever they are
 		if (patches.stream().anyMatch(patch -> patch.getType() == PatchType.BELLADONNA))
 		{
-			final boolean gloved = holdings.in(Holdings.Source.WORN).keySet().stream()
-				.anyMatch(id -> wearSlot.apply(id) == TravelItem.WearSlot.HANDS);
-			final SupplyLine gloves = line(SupplyLine.Group.TOOLS, "Gloves", 1, holdings, carried,
-				gloved ? "The gloves you're wearing protect you from the belladonna"
-					: "Wear gloves (any) to pick the belladonna", 0, ItemID.LEATHER_GLOVES).worn();
-			lines.add(gloved ? gloves.coveredOtherwise() : gloves);
+			// Whatever gloves they hold count, worn first, then carried, then banked, e.g. Graceful gloves to put on
+			// (elzerma, 2026-10-25: "shouldn't it turn green if the graceful gloves are good?"); else leather gloves
+			final Set<Integer> held = new LinkedHashSet<>();
+			for (Holdings.Source source : new Holdings.Source[]{Holdings.Source.WORN, Holdings.Source.INVENTORY,
+				Holdings.Source.BANK})
+			{
+				for (int id : holdings.in(source).keySet())
+				{
+					if (wearSlot.apply(id) == TravelItem.WearSlot.HANDS)
+					{
+						held.add(id);
+					}
+				}
+			}
+			held.add(ItemID.LEATHER_GLOVES);
+			lines.add(line(SupplyLine.Group.TOOLS, "Gloves", 1, holdings, carried,
+				"Wear gloves (any) to pick the belladonna", 0, held.stream().mapToInt(Integer::intValue).toArray()).worn());
 		}
 		// Underwater by Fossil Island, worn (elzerma, 2026-10-24: needed for the seaweed)
 		if (patches.stream().anyMatch(patch -> patch.getType() == PatchType.SEAWEED))
