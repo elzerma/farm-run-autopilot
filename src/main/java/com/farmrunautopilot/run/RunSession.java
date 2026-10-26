@@ -21,6 +21,7 @@ import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
+import com.farmrunautopilot.settings.Outfit;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.settings.VaultBanking;
@@ -1960,14 +1961,21 @@ public class RunSession
 		// between are left to their own step (issue #7).
 		final Set<Integer> swapped = new HashSet<>(stage == RunView.State.RUNNING && !banking
 			? partFor(plan, stopIndex, false).getStaffSwaps().getItemIds() : Collections.emptySet());
-		// The diving gear only for the dive, not on the way to the stops after it (elzerma, 2026-10-25)
-		if (!nextStopIs(Location.FOSSIL_ISLAND_UNDERWATER))
+		// The diving gear only for the dive, not on the way to the stops after it; on the way to the dive the outfit isn't
+		// asked for, as the gear takes its hood's and cape's slots (elzerma, 2026-10-25: "Wear: Graceful outfit" in diving gear)
+		final boolean dive = nextStopIs(Location.FOSSIL_ISLAND_UNDERWATER);
+		if (!dive)
 		{
 			swapped.addAll(DIVING_GEAR);
 		}
+		final Outfit outfit = settings.getRunConfig().getOutfit();
+		if (dive)
+		{
+			swapped.addAll(pieceIds(outfit));
+		}
 		final BankGuide.Wear wear = !wieldIds.isEmpty() ? new BankGuide.Wear(null, wieldIds)
 			: stage == RunView.State.ARMED || banking || patches.getCurrentPatch() == null
-			? BankGuide.wear(bankSupplies(), holdingsTracker.getHoldings(), settings.getRunConfig().getOutfit(), swapped)
+			? BankGuide.wear(bankSupplies(), holdingsTracker.getHoldings(), outfit, swapped)
 			: BankGuide.Wear.NONE;
 		final Highlights highlights = highlights(wear);
 		return new RunView(stage, startedAt, stopViews, instruction, false, null, null,
@@ -2342,6 +2350,20 @@ public class RunSession
 			return null;
 		}
 		return plan.getRoute().getStops().get(stopIndex).fairyRingCode();
+	}
+
+	/** Every item id of the outfit's pieces. */
+	private static Set<Integer> pieceIds(Outfit outfit)
+	{
+		final Set<Integer> ids = new HashSet<>();
+		for (int[] piece : outfit.getPieces())
+		{
+			for (int id : piece)
+			{
+				ids.add(id);
+			}
+		}
+		return ids;
 	}
 
 	/** Whether the stop in hand, or the one after a bank visit, is at this place. */
@@ -2738,7 +2760,7 @@ public class RunSession
 		// The diving gear is put on for the dive, unless that's where the run starts (elzerma, 2026-10-25)
 		final boolean diveFirst = !stops.isEmpty() && stops.get(0).getLocation() == Location.FOSSIL_ISLAND_UNDERWATER;
 		final BankGuide.Wear wear = BankGuide.wear(current.getSupplies(), holdingsTracker.getHoldings(),
-			settings.getRunConfig().getOutfit(), diveFirst ? Collections.emptySet() : DIVING_GEAR);
+			settings.getRunConfig().getOutfit(), diveFirst ? pieceIds(settings.getRunConfig().getOutfit()) : DIVING_GEAR);
 		return new RunView(RunView.State.BUILDING, 0, ready, notice, atFirstStop, null,
 			bestTimes(current), null, wear.getText(), new Highlights(null, false, null, outlined, null,
 			wear.getItemIds()), null, Collections.emptyList());

@@ -139,7 +139,7 @@ final class BankGuide
 		boolean outfitToWear = false;
 		for (int[] piece : outfit.getPieces())
 		{
-			if (!any(piece, worn) && any(piece, inventory))
+			if (!any(piece, worn) && any(piece, inventory) && java.util.Arrays.stream(piece).noneMatch(skip::contains))
 			{
 				outfitToWear = true;
 				for (int id : piece)

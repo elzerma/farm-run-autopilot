@@ -145,8 +145,11 @@ public class TeleportMenuHighlighter
 		}
 		for (MenuEntry entry : entries)
 		{
-			if (highlights.getItemIds().contains(entry.getItemId())
-				&& OPENERS.contains(Text.removeTags(entry.getOption()).toLowerCase(Locale.ROOT)))
+			// A worn item (the Chronicle in the shield slot, elzerma, 2026-10-25) by its name, as its options may not carry
+			// its item id
+			final boolean item = highlights.getItemIds().contains(entry.getItemId()) || entry.getTarget() != null
+				&& names(highlights.getItemIds()).contains(Text.removeTags(entry.getTarget()).toLowerCase(Locale.ROOT));
+			if (item && OPENERS.contains(Text.removeTags(entry.getOption()).toLowerCase(Locale.ROOT)))
 			{
 				colour(entry);
 			}

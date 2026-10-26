@@ -45,16 +45,18 @@ public class TravelMenuOverlay extends Overlay
 	private final Client client;
 	private final RunSession session;
 	private final FarmRunAutopilotConfig config;
+	private final FairyRingLog fairyRingLog;
 	private final VineFrame vine = new VineFrame();
 	/** A quetzal map already logged as open without the place in it, so the log says so once while it's open. */
 	private Widget loggedMissing;
 
 	@Inject
-	TravelMenuOverlay(Client client, RunSession session, FarmRunAutopilotConfig config)
+	TravelMenuOverlay(Client client, RunSession session, FarmRunAutopilotConfig config, FairyRingLog fairyRingLog)
 	{
 		this.client = client;
 		this.session = session;
 		this.config = config;
+		this.fairyRingLog = fairyRingLog;
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_WIDGETS);
 	}
@@ -87,6 +89,11 @@ public class TravelMenuOverlay extends Overlay
 		{
 			final JourneyStep ride = session.currentRide();
 			bounds = ride != null && ride.getDialog() != null ? listEntry(ride.getDialog()) : null;
+		}
+		// The leg's code in the fairy ring's travel log (elzerma, 2026-10-25)
+		if (bounds == null)
+		{
+			bounds = fairyRingLog.entryBounds();
 		}
 		if (bounds == null)
 		{
