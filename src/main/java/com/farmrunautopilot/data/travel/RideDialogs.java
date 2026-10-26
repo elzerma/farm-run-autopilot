@@ -27,11 +27,14 @@ public final class RideDialogs
 		}
 	}
 
-	/** The Museum Camp's rowboat on Fossil Island, as its list words them (elzerma's screenshot, 2026-10-25). */
+	/** Fossil Island's rowboats, as their lists word them (elzerma's screenshots, 2026-10-25). */
 	private static final List<Line> LINES = List.of(
 		new Line(ObjectID.FOSSIL_ROWBOAT_CAMP, new WorldPoint(3734, 3893, 0), "Row to the north of the island"),
 		new Line(ObjectID.FOSSIL_ROWBOAT_CAMP, new WorldPoint(3764, 3899, 0), "Row out to sea, north of the island"),
-		new Line(ObjectID.FOSSIL_ROWBOAT_CAMP, new WorldPoint(3362, 3445, 0), "Row to the barge and travel to the Digsite"));
+		new Line(ObjectID.FOSSIL_ROWBOAT_CAMP, new WorldPoint(3362, 3445, 0), "Row to the barge and travel to the Digsite"),
+		// Diving with a weapon or shield on asks "Your hands are full."; walking keeps them on, and the seaweed is
+		// reached on foot from the anchor rope (elzerma's screenshot and choice, 2026-10-25). Not asked with empty hands.
+		new Line(ObjectID.FOSSIL_ROWBOAT_DIVING, new WorldPoint(3732, 10281, 1), "Dive and walk on the seabed"));
 
 	private RideDialogs()
 	{
