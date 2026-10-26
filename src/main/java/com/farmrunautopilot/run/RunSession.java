@@ -54,6 +54,7 @@ import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.gameval.ItemID;
+import net.runelite.api.gameval.VarPlayerID;
 
 /**
  * Runs a farm run (SPEC 13.4): off until Build run, building while supplies are gathered, armed (plan frozen,
@@ -71,6 +72,10 @@ public class RunSession
 	/** How long "Run finished" stays under the player. */
 	private static final long FINISHED_NOTICE_MILLIS = 15_000;
 	private static final int BEST_TIMES = 3;
+	/** Dived during this run, so run may have been turned off underwater. */
+	private boolean dived;
+	/** Back up from the dive with run still off: the reminder to turn it on is shown. */
+	private boolean surfacedWithRunOff;
 	/** The fishbowl helmet and diving apparatus, worn only for the dive by Fossil Island. */
 	private static final Set<Integer> DIVING_GEAR = Set.of(ItemID.HUNDRED_PIRATE_DIVING_HELMET,
 		ItemID.HUNDRED_PIRATE_DIVING_BACKPACK);
@@ -1384,7 +1389,30 @@ public class RunSession
 			return;
 		}
 		lastLocation = location;
+		trackDiveRun(location);
 		evaluate();
+	}
+
+	/**
+	 * Underwater turns run off (elzerma, 2026-10-25: "after diving run is toggled off"): once back up with run still off,
+	 * a reminder to turn it on, until it is. Client thread.
+	 */
+	private void trackDiveRun(WorldPoint location)
+	{
+		final boolean underwater = location != null
+			&& location.getRegionID() == Patch.FOSSIL_ISLAND_SEAWEED_NORTH.getRegionId();
+		if (underwater && stage == RunView.State.RUNNING)
+		{
+			surfacedWithRunOff = false;
+			dived = true;
+			return;
+		}
+		final boolean runOn = client.getVarpValue(VarPlayerID.OPTION_RUN) != 0;
+		surfacedWithRunOff = dived && !runOn && stage == RunView.State.RUNNING && location != null;
+		if (runOn || stage != RunView.State.RUNNING)
+		{
+			dived = false;
+		}
 	}
 
 	private void evaluate()
@@ -2601,6 +2629,10 @@ public class RunSession
 		if (drop != null)
 		{
 			lines.add(drop);
+		}
+		if (surfacedWithRunOff)
+		{
+			lines.add("Turn your run back on: the dive turned it off");
 		}
 		final String space = patches.spaceReminder();
 		if (space != null)

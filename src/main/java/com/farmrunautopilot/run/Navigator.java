@@ -34,6 +34,8 @@ class Navigator
 	private static final int JOURNEY_NEAR_TILES = 4;
 	/** A ride on the way starting this close to the player is still to take, though the patch is in range. */
 	private static final int RIDE_AHEAD_TILES = 25;
+	/** A ride's NPC this close to where the atlas has the ride start is the one to walk to; another of that name isn't. */
+	private static final int NPC_AT_TILES = 25;
 	/** A teleport landing this close to a journey's first step counts as having arrived in the area. */
 	private static final int FIRST_STEP_LANDING_TILES = 60;
 	/** The quetzal that flies between Varlamore landing pads, matched by name. */
@@ -447,6 +449,11 @@ class Navigator
 	private WorldPoint journeyTarget(JourneyStep step)
 	{
 		final NPC npc = step.getNpc() != null ? scene.transferNpc(step.getNpc()) : null;
-		return npc != null ? npc.getWorldLocation() : step.getAt();
+		final WorldPoint at = step.getAt();
+		// Only the NPC where the ride starts: the Sailor back to Rellekka stands on Miscellania's jetty, and the line went
+		// to him after landing (elzerma, 2026-10-25)
+		final boolean there = npc != null && (at == null || at.getPlane() == npc.getWorldLocation().getPlane()
+			&& at.distanceTo2D(npc.getWorldLocation()) <= NPC_AT_TILES);
+		return there ? npc.getWorldLocation() : at;
 	}
 }
