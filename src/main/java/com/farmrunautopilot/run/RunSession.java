@@ -78,6 +78,8 @@ public class RunSession
 	private boolean dived;
 	/** Back up from the dive with run still off: the reminder to turn it on is shown. */
 	private boolean surfacedWithRunOff;
+	/** Underwater by Fossil Island, where nothing can be wielded. */
+	private boolean underwater;
 	/** The fishbowl helmet and diving apparatus, worn only for the dive by Fossil Island. */
 	private static final Set<Integer> DIVING_GEAR = Set.of(ItemID.HUNDRED_PIRATE_DIVING_HELMET,
 		ItemID.HUNDRED_PIRATE_DIVING_BACKPACK);
@@ -88,6 +90,7 @@ public class RunSession
 
 	private final Client client;
 	private final ItemManager itemManager;
+	private final ChatOptions chatOptions;
 	private final RunService runService;
 	private final HoldingsTracker holdingsTracker;
 	private final SettingsStore settings;
@@ -225,8 +228,10 @@ public class RunSession
 	@Inject
 	RunSession(Client client, RunService runService, HoldingsTracker holdingsTracker, SettingsStore settings,
 		RunTimings timings, SceneTracker scene, ShortestPathBridge shortestPath, Navigator navigator,
-		PatchGuide patches, FarmBankTab bankTab, SeedVaultSection seedVault, ItemManager itemManager)
+		PatchGuide patches, FarmBankTab bankTab, SeedVaultSection seedVault, ItemManager itemManager,
+		ChatOptions chatOptions)
 	{
+		this.chatOptions = chatOptions;
 		this.itemManager = itemManager;
 		this.client = client;
 		this.runService = runService;
@@ -1403,8 +1408,7 @@ public class RunSession
 	 */
 	private void trackDiveRun(WorldPoint location)
 	{
-		final boolean underwater = location != null
-			&& location.getRegionID() == Patch.FOSSIL_ISLAND_SEAWEED_NORTH.getRegionId();
+		underwater = location != null && location.getRegionID() == Patch.FOSSIL_ISLAND_SEAWEED_NORTH.getRegionId();
 		if (underwater && stage == RunView.State.RUNNING)
 		{
 			surfacedWithRunOff = false;
@@ -1491,8 +1495,16 @@ public class RunSession
 			{
 				// Swapping staves (issue #7): the one this leg needs goes on before setting off. Ticking the way there
 				// done skips it.
-				final String wield = timing && !navigator.isTeleported()
-					? wieldStep(partFor(plan, stopIndex, false).getStaffSwaps().getWield().get(stop.getLocation())) : null;
+				// Nothing can be wielded underwater ("You won't be able to swim carrying that"), so the staff for the leg
+				// after the dive goes on before it (elzerma, 2026-10-25: back up to wield it cost 10 seconds)
+				StaffSwaps.Swap swap = partFor(plan, stopIndex, false).getStaffSwaps().getWield().get(stop.getLocation());
+				if (swap == null && stop.getLocation() == Location.FOSSIL_ISLAND_UNDERWATER
+					&& stopIndex + 1 < plan.getRoute().getStops().size())
+				{
+					swap = partFor(plan, stopIndex + 1, false).getStaffSwaps().getWield()
+						.get(plan.getRoute().getStops().get(stopIndex + 1).getLocation());
+				}
+				final String wield = timing && !navigator.isTeleported() && !underwater ? wieldStep(swap) : null;
 				if (wield != null)
 				{
 					instruction = wield;
@@ -2413,6 +2425,20 @@ public class RunSession
 		return ids;
 	}
 
+	/**
+	 * The option the step needs in a chatbox list: the ride's line (a rowboat's), or the place in the teleport item's list.
+	 * Null if none. Client thread.
+	 */
+	String chatOption()
+	{
+		final JourneyStep ride = currentRide();
+		if (ride != null && ride.getDialog() != null)
+		{
+			return ride.getDialog();
+		}
+		return view != null && view.getHighlights() != null ? view.getHighlights().getTeleportOption() : null;
+	}
+
 	/** Back up from the dive with run still off, for the run orb's vine. Client thread. */
 	boolean isSurfacedWithRunOff()
 	{
@@ -2661,6 +2687,11 @@ public class RunSession
 		if (drop != null)
 		{
 			lines.add(drop);
+		}
+		final String press = chatOptions.reminder();
+		if (press != null)
+		{
+			lines.add(press);
 		}
 		if (surfacedWithRunOff)
 		{

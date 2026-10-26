@@ -1,7 +1,6 @@
 package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.FarmRunAutopilotConfig;
-import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.route.MenuPick;
 import java.awt.BasicStroke;
 import java.awt.Dimension;
@@ -24,9 +23,9 @@ import net.runelite.client.util.Text;
 /**
  * Rings the place to pick while travelling there (elzerma, 2026-10-18): the landing site on Renu's map or the quetzal
  * whistle's, or the destination on a hot air balloon's (under the setting for the spell to cast, twice as thick: the
- * maps are big), and the place in a teleport item's list of places (under the setting for items to use). A growing
- * vine, or the item colour's outline with vines off. Only drawn while that map or list is open. Also the line a ride
- * needs in its list of places, e.g. a rowboat's.
+ * maps are big), the leg's code in a fairy ring's travel log, and the run orb while run is off after the dive. A
+ * growing vine, or the item colour's outline with vines off. Only drawn while that map or list is open. A chatbox
+ * list's option is coloured instead ({@link ChatOptions}).
  */
 @Slf4j
 public class TravelMenuOverlay extends Overlay
@@ -79,17 +78,8 @@ public class TravelMenuOverlay extends Overlay
 				}
 			}
 		}
-		// A teleport item's list of places (a jewellery item's "Rub", a cape's "Teleport"): the place this leg needs
-		if (bounds == null && highlights.getTeleportOption() != null && config.highlightItems())
-		{
-			bounds = listEntry(highlights.getTeleportOption());
-		}
-		// A ride's list of places: the Museum Camp rowboat's "Row out to sea, north of the island" (elzerma, 2026-10-25)
-		if (bounds == null && config.highlightItems())
-		{
-			final JourneyStep ride = session.currentRide();
-			bounds = ride != null && ride.getDialog() != null ? listEntry(ride.getDialog()) : null;
-		}
+		// A chatbox list's option (a teleport item's place, a ride's line) is coloured with its number to press instead
+		// (ChatOptions; elzerma, 2026-10-25)
 		// The leg's code in the fairy ring's travel log (elzerma, 2026-10-25)
 		if (bounds == null)
 		{
@@ -118,19 +108,6 @@ public class TravelMenuOverlay extends Overlay
 		return null;
 	}
 
-	/** The entry naming the place in an open list of options (the chatbox's "Select an option"), or null. */
-	private Rectangle listEntry(String place)
-	{
-		final Widget options = client.getWidget(InterfaceID.Chatmenu.OPTIONS);
-		if (options == null || options.isHidden())
-		{
-			return null;
-		}
-		final Widget found = find(options, place.toLowerCase(Locale.ROOT), 0);
-		return found != null && !found.isHidden() ? found.getBounds() : null;
-	}
-
-	/** Where the place is on its map, if that map is open. */
 	private Rectangle bounds(MenuPick pick)
 	{
 		switch (pick.getMenu())

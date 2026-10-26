@@ -34,6 +34,7 @@ import com.farmrunautopilot.run.ShortestPathBridge;
 import com.farmrunautopilot.run.ShortestPathSecondOpinion;
 import com.farmrunautopilot.run.SpellHighlightOverlay;
 import com.farmrunautopilot.run.TabIconOverlay;
+import com.farmrunautopilot.run.ChatOptions;
 import com.farmrunautopilot.run.FairyRingLog;
 import com.farmrunautopilot.run.TeleportMenuHighlighter;
 import com.farmrunautopilot.run.TravelMenuOverlay;
@@ -182,6 +183,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 
 	@Inject
 	private FairyRingLog fairyRingLog;
+
+	@Inject
+	private ChatOptions chatOptions;
 
 	@Inject
 	private SceneTracker sceneTracker;
@@ -594,6 +598,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	public void onPostClientTick(PostClientTick event)
 	{
 		fairyRingLog.onPostClientTick();
+		chatOptions.onPostClientTick(runSession);
 	}
 
 	// After other plugins, so withdraw clicks are re-pointed last
