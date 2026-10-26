@@ -29,6 +29,12 @@ public final class PatchStateDecoder
 		TABLES.put(PatchType.MUSHROOM, mushroomTable());
 		TABLES.put(PatchType.BELLADONNA, belladonnaTable());
 		TABLES.put(PatchType.SEAWEED, seaweedTable());
+		TABLES.put(PatchType.HARDWOOD, hardwoodTable());
+		TABLES.put(PatchType.CALQUAT, calquatTable());
+		TABLES.put(PatchType.CELASTRUS, celastrusTable());
+		TABLES.put(PatchType.REDWOOD, redwoodTable());
+		TABLES.put(PatchType.SPIRIT_TREE, spiritTreeTable());
+		TABLES.put(PatchType.CRYSTAL_TREE, crystalTreeTable());
 	}
 
 	/**
@@ -143,6 +149,122 @@ public final class PatchStateDecoder
 		t.counting(11, 13, Crop.GIANT_SEAWEED, PatchState.DISEASED, 10);
 		t.counting(14, 16, Crop.GIANT_SEAWEED, PatchState.DEAD, 13);
 		t.overgrown(17, 255);
+		return t.values;
+	}
+
+	/**
+	 * Sprint 1c, from RuneLite's HARDWOOD_TREE (master, 2026-10-25). Its two grown values after the check-health one are
+	 * read as grown (to chop) then stump, as for trees.
+	 */
+	private static DecodedPatch[] hardwoodTable()
+	{
+		final Table t = new Table();
+		t.weedsBeingRaked(0, 3);
+		t.overgrown(4, 7);
+		hardwood(t, 8, Crop.TEAK);
+		hardwood(t, 30, Crop.MAHOGANY);
+		hardwood(t, 55, Crop.CAMPHOR);
+		hardwood(t, 80, Crop.IRONWOOD);
+		hardwood(t, 105, Crop.ROSEWOOD);
+		t.overgrown(133, 255);
+		return t.values;
+	}
+
+	/** Growing, check-health, grown, stump, then as many diseased and dead values as growing stages less one. */
+	private static void hardwood(Table t, int base, Crop crop)
+	{
+		tree(t, base, crop);
+		final int checkHealth = base + crop.getStages() - 1;
+		final int diseased = checkHealth + 3;
+		final int dead = diseased + crop.getStages() - 2;
+		t.counting(diseased, dead - 1, crop, PatchState.DISEASED, diseased - 1);
+		t.counting(dead, dead + crop.getStages() - 3, crop, PatchState.DEAD, dead - 1);
+	}
+
+	/** Sprint 1c, from RuneLite's CALQUAT: like a fruit tree, its fruit (0-6) picked from a checked tree. */
+	private static DecodedPatch[] calquatTable()
+	{
+		final Table t = new Table();
+		t.weedsBeingRaked(0, 3);
+		t.counting(4, 11, Crop.CALQUAT, PatchState.GROWING, 4);
+		t.counting(12, 18, Crop.CALQUAT, PatchState.HARVESTABLE, 12);
+		t.counting(19, 25, Crop.CALQUAT, PatchState.DISEASED, 18);
+		t.counting(26, 33, Crop.CALQUAT, PatchState.DEAD, 25);
+		t.single(34, Crop.CALQUAT, PatchState.CHECK_HEALTH, Crop.CALQUAT.getStages() - 1);
+		t.overgrown(35, 255);
+		return t.values;
+	}
+
+	/**
+	 * Sprint 1c, from RuneLite's CELASTRUS: bark is harvested from a checked tree (14-16); 17 and 28, which RuneLite also
+	 * calls harvestable, are read as the bare tree to clear (UNVERIFIED).
+	 */
+	private static DecodedPatch[] celastrusTable()
+	{
+		final Table t = new Table();
+		t.weedsBeingRaked(0, 3);
+		t.overgrown(4, 7);
+		t.counting(8, 12, Crop.CELASTRUS, PatchState.GROWING, 8);
+		t.single(13, Crop.CELASTRUS, PatchState.CHECK_HEALTH, Crop.CELASTRUS.getStages() - 1);
+		t.counting(14, 16, Crop.CELASTRUS, PatchState.HARVESTABLE, 14);
+		t.single(17, Crop.CELASTRUS, PatchState.STUMP, 0);
+		t.counting(18, 22, Crop.CELASTRUS, PatchState.DISEASED, 17);
+		t.counting(23, 27, Crop.CELASTRUS, PatchState.DEAD, 22);
+		t.single(28, Crop.CELASTRUS, PatchState.STUMP, 0);
+		t.overgrown(29, 255);
+		return t.values;
+	}
+
+	/**
+	 * Sprint 1c, from RuneLite's REDWOOD: grown at 18 and while being chopped (41-55); 38-40 and above 55 RuneLite doesn't
+	 * know either.
+	 */
+	private static DecodedPatch[] redwoodTable()
+	{
+		final Table t = new Table();
+		t.weedsBeingRaked(0, 3);
+		t.overgrown(4, 7);
+		t.counting(8, 17, Crop.REDWOOD, PatchState.GROWING, 8);
+		t.single(18, Crop.REDWOOD, PatchState.HARVESTABLE, 0);
+		t.counting(19, 27, Crop.REDWOOD, PatchState.DISEASED, 18);
+		t.counting(28, 36, Crop.REDWOOD, PatchState.DEAD, 27);
+		t.single(37, Crop.REDWOOD, PatchState.CHECK_HEALTH, Crop.REDWOOD.getStages() - 1);
+		for (int v = 41; v <= 55; v++)
+		{
+			t.single(v, Crop.REDWOOD, PatchState.HARVESTABLE, 0);
+		}
+		return t.values;
+	}
+
+	/**
+	 * Sprint 1c, from RuneLite's SPIRIT_TREE: 20 is the grown tree, checked and usable for travel, read as grown; 44 is
+	 * check-health. Above 63 RuneLite doesn't know either.
+	 */
+	private static DecodedPatch[] spiritTreeTable()
+	{
+		final Table t = new Table();
+		t.weedsBeingRaked(0, 3);
+		t.overgrown(4, 7);
+		t.counting(8, 19, Crop.SPIRIT_TREE, PatchState.GROWING, 8);
+		t.single(20, Crop.SPIRIT_TREE, PatchState.HARVESTABLE, 0);
+		t.counting(21, 31, Crop.SPIRIT_TREE, PatchState.DISEASED, 20);
+		t.counting(32, 43, Crop.SPIRIT_TREE, PatchState.DEAD, 31);
+		t.single(44, Crop.SPIRIT_TREE, PatchState.CHECK_HEALTH, Crop.SPIRIT_TREE.getStages() - 1);
+		t.overgrown(45, 63);
+		return t.values;
+	}
+
+	/**
+	 * Sprint 1c, from RuneLite's CRYSTAL_TREE: it can't get diseased, so no diseased or dead values; 15 is the checked
+	 * tree to chop down. 4-7 and above 15 RuneLite doesn't know (UNVERIFIED what chopping leaves).
+	 */
+	private static DecodedPatch[] crystalTreeTable()
+	{
+		final Table t = new Table();
+		t.weedsBeingRaked(0, 3);
+		t.counting(8, 13, Crop.CRYSTAL_TREE, PatchState.GROWING, 8);
+		t.single(14, Crop.CRYSTAL_TREE, PatchState.CHECK_HEALTH, Crop.CRYSTAL_TREE.getStages() - 1);
+		t.single(15, Crop.CRYSTAL_TREE, PatchState.HARVESTABLE, 0);
 		return t.values;
 	}
 

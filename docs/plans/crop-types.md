@@ -228,7 +228,7 @@ flowers" box and one "Hops" box.
 
 ## 3. Sprint 1b: bushes, cactus, mushroom, belladonna, seaweed
 
-**Built (2026-10-24, branch `claude/1c-plan-file-name-0cf248`, 19350b6 and 1b5a201), awaiting elzerma's hand checks.**
+**Built (2026-10-24, 19350b6 and 1b5a201), checked in game and merged to master 2026-10-25 (12f576e).**
 Differences from the plan below: the Auburnvale belladonna is a stop of its own (`AUBURNVALE`, 84 tiles from the Nemus
 Retreat tree; RuneLite puts both in region 5427); the Fossil Island dive isn't in Shortest Path's data, so the atlas was
 rebuilt with it added by hand (`tools/atlas/extra-boats.tsv`); bushes and cacti are dug up with the spade to replant
@@ -335,6 +335,20 @@ and mushroom show "Can't be protected" as a greyed line under Protection, said o
 ---
 
 ## 4. Sprint 1c: special trees (hardwood, calquat, celastrus, redwood, spirit tree, crystal tree)
+
+**Built (2026-10-25, branch `claude/1c-plan-file-name-0cf248`), awaiting elzerma's hand checks.** elzerma's choices
+(picker): saplings are only listed, not grown; the newer patches are in (camphor, ironwood and rosewood, Anglers'
+Retreat, the Great Conch, Locus Oasis); one Special trees box on the Run tab; using planted spirit trees for travel is a
+task of its own, after 1c. Differences from the plan below: the atlas already had every 1c patch, so it was only
+rebuilt to mark them run and to move the redwood's point to its footprint's south edge (1229,3751; from its centre
+there was no tile to stand on); a walk between stops now keeps the boats on its way as steps (Rimmington's ship and
+the rowboat to Anglers' Retreat, the Fossil Island rowboat and dive from the hardwoods); spirit trees can be kept
+standing (Farm > Protection) and count towards the level's limit; the redwood always pays Alexandra 2,000 coins; the
+crystal tree is chopped with an axe and needs no payment. The celastrus' values 17 and 28 are read as the bare tree to
+clear, and calquat fruit as regrowing every 20 minutes (both UNVERIFIED). Help list: SPECIAL_TREE_PATCH_POINTS,
+HARDWOOD_CLEAR_FEE, CRYSTAL_TREE_STATES, GREAT_CONCH_ACCESS, SAILING_LEVEL (the plan's SPIRIT_TREE_CHECKED_TRAVEL waits
+for the travel task). Defaults Claude picked, unconfirmed: every special tree but the crystal tree paid for, no compost
+on them, ultracompost on the crystal tree; hardwoods, calquats and celastrus paid to clear (200 coins).
 
 ### Patches [RL FarmingWorld, Wiki: Special patches/Patches, Spirit Tree (Farming)/Patches, Farming Guild, Crystal tree]
 

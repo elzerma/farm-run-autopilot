@@ -866,7 +866,10 @@ public final class RoutePlanner
 			AtlasWays.keys(atlas.getAtlas(), option), cooldown, spellOption);
 		if (walking)
 		{
-			return leg;
+			// A walk can still take a boat on the way, e.g. Rimmington's ship to Corsair Cove and the rowboat to Anglers'
+			// Retreat (sprint 1c): its rides are steps as for any journey
+			final List<JourneyStep> rides = AtlasTravel.journey(atlas.getAtlas(), option);
+			return rides.isEmpty() ? leg : leg.withJourney(rides, Collections.emptyList());
 		}
 		// The journey from the atlas whether or not it's one of the plugin's methods (sprint T5); out of the house's
 		// portal after a spirit tree into it, which the atlas has no step for

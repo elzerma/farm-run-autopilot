@@ -191,8 +191,14 @@ class Navigator
 		// line (elzerma: it took two Mark done presses)
 		if (stop.getDeparture() == Departure.WALK)
 		{
-			markArrived(nowMillis);
-			return null;
+			if (stop.rides().isEmpty())
+			{
+				markArrived(nowMillis);
+				return null;
+			}
+			// A walk with a boat on the way (Rimmington's ship to Corsair Cove, sprint 1c): no teleport, straight to its
+			// journey
+			teleported = true;
 		}
 		if (!teleported && (jumpedTowards(previous, position, here.get(0)) || jumpedToFirstStep(stop, previous, position)))
 		{

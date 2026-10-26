@@ -78,6 +78,24 @@ public final class PatchPoints
 		set(new WorldPoint(1450, 3354, 0), Patch.AUBURNVALE_BELLADONNA);
 		set(new WorldPoint(3733, 10273, 1), Patch.FOSSIL_ISLAND_SEAWEED_NORTH);
 		set(new WorldPoint(3733, 10267, 1), Patch.FOSSIL_ISLAND_SEAWEED_SOUTH);
+		// Sprint 1c: the travel atlas's patch places (the cache's object tiles, tools/atlas/patches.tsv), to correct from the
+		// game log
+		set(new WorldPoint(3715, 3835, 0), Patch.FOSSIL_ISLAND_HARDWOOD_EAST);
+		set(new WorldPoint(3708, 3833, 0), Patch.FOSSIL_ISLAND_HARDWOOD_MIDDLE);
+		set(new WorldPoint(3702, 3837, 0), Patch.FOSSIL_ISLAND_HARDWOOD_WEST);
+		set(new WorldPoint(1687, 2972, 0), Patch.LOCUS_OASIS_HARDWOOD);
+		set(new WorldPoint(2471, 2703, 0), Patch.ANGLERS_RETREAT_HARDWOOD);
+		set(new WorldPoint(2796, 3101, 0), Patch.TAI_BWO_WANNAI_CALQUAT);
+		set(new WorldPoint(1367, 3032, 0), Patch.KASTORI_CALQUAT);
+		set(new WorldPoint(3128, 2405, 0), Patch.THE_GREAT_CONCH_CALQUAT);
+		set(new WorldPoint(1244, 3750, 0), Patch.FARMING_GUILD_CELASTRUS);
+		set(new WorldPoint(1229, 3751, 0), Patch.FARMING_GUILD_REDWOOD);
+		set(new WorldPoint(3060, 3258, 0), Patch.PORT_SARIM_SPIRIT_TREE);
+		set(new WorldPoint(2613, 3858, 0), Patch.ETCETERIA_SPIRIT_TREE);
+		set(new WorldPoint(2802, 3203, 0), Patch.BRIMHAVEN_SPIRIT_TREE);
+		set(new WorldPoint(1693, 3542, 0), Patch.HOSIDIUS_SPIRIT_TREE);
+		set(new WorldPoint(1253, 3750, 0), Patch.FARMING_GUILD_SPIRIT_TREE);
+		set(new WorldPoint(3291, 6118, 0), Patch.PRIFDDINAS_CRYSTAL_TREE);
 	}
 
 	private static void set(WorldPoint point, Patch... patches)

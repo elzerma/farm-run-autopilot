@@ -19,9 +19,9 @@ import org.junit.Test;
 public class PatchDataTest
 {
 	@Test
-	public void catalogueHas66Patches()
+	public void catalogueHas82Patches()
 	{
-		assertEquals(66, Patch.values().length);
+		assertEquals(82, Patch.values().length);
 		assertEquals(7, countOfType(PatchType.TREE));
 		assertEquals(7, countOfType(PatchType.FRUIT_TREE));
 		assertEquals(10, countOfType(PatchType.HERB));
@@ -36,6 +36,13 @@ public class PatchDataTest
 		assertEquals(1, countOfType(PatchType.MUSHROOM));
 		assertEquals(2, countOfType(PatchType.BELLADONNA));
 		assertEquals(2, countOfType(PatchType.SEAWEED));
+		// Sprint 1c
+		assertEquals(5, countOfType(PatchType.HARDWOOD));
+		assertEquals(3, countOfType(PatchType.CALQUAT));
+		assertEquals(1, countOfType(PatchType.CELASTRUS));
+		assertEquals(1, countOfType(PatchType.REDWOOD));
+		assertEquals(5, countOfType(PatchType.SPIRIT_TREE));
+		assertEquals(1, countOfType(PatchType.CRYSTAL_TREE));
 	}
 
 	@Test
@@ -53,7 +60,8 @@ public class PatchDataTest
 	{
 		final List<Integer> transmit = Arrays.asList(VarbitID.FARMING_TRANSMIT_A, VarbitID.FARMING_TRANSMIT_B,
 			VarbitID.FARMING_TRANSMIT_C, VarbitID.FARMING_TRANSMIT_D, VarbitID.FARMING_TRANSMIT_E, VarbitID.FARMING_TRANSMIT_G,
-			VarbitID.FARMING_TRANSMIT_F, VarbitID.FARMING_TRANSMIT_H, VarbitID.FARMING_TRANSMIT_K);
+			VarbitID.FARMING_TRANSMIT_F, VarbitID.FARMING_TRANSMIT_H, VarbitID.FARMING_TRANSMIT_I, VarbitID.FARMING_TRANSMIT_K,
+			VarbitID.FARMING_TRANSMIT_L);
 		for (Patch patch : Patch.values())
 		{
 			assertTrue(patch.name(), transmit.contains(patch.getVarbitId()));
@@ -140,8 +148,8 @@ public class PatchDataTest
 	@Test
 	public void farmingGuildPatches()
 	{
-		// Tree, fruit tree, herb, two allotments, flower, bush and cactus
-		assertEquals(8, Location.FARMING_GUILD.getPatches().size());
+		// Tree, fruit tree, herb, two allotments, flower, bush, cactus, celastrus, redwood and spirit tree
+		assertEquals(11, Location.FARMING_GUILD.getPatches().size());
 		for (Patch patch : Location.FARMING_GUILD.getPatches())
 		{
 			assertEquals(4922, patch.getRegionId());

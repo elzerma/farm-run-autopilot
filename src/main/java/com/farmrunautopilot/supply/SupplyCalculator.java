@@ -171,17 +171,24 @@ public final class SupplyCalculator
 			{
 				// Only trees are cleared by axe or coins; a grown allotment or hops patch is just picked, and a bush or
 				// cactus dug up with the spade
-				if ((type == PatchType.TREE || type == PatchType.FRUIT_TREE) && needsClearing(state))
+				if (clearedByAxeOrCoins(type) && needsClearing(state))
 				{
-					if (config.getPayToClear().contains(type))
+					if (config.paysToClear(type))
 					{
-						coins += Crop.CLEAR_PATCH_COINS;
+						coins += Crop.clearCoins(type);
 					}
 					else if (state != PatchState.STUMP)
 					{
 						needAxe = true;
 					}
 				}
+			}
+			// The crystal tree is chopped down with an axe, and the celastrus' bark is cut with one, whoever clears it
+			// (sprint 1c)
+			if ((type == PatchType.CRYSTAL_TREE || type == PatchType.CELASTRUS) && state != PatchState.STUMP
+				&& needsClearing(state))
+			{
+				needAxe = true;
 			}
 
 			final Crop crop = plantings.get(patch);
@@ -200,6 +207,8 @@ public final class SupplyCalculator
 				{
 					paymentsLeft.put(id, left - crop.getPaymentQuantity());
 					payments.merge(id, crop.getPaymentQuantity(), Integer::sum);
+					// A spirit tree also takes a monkey bar and a ground tooth
+					crop.getExtraPayments().forEach((extra, qty) -> payments.merge(extra, qty, Integer::sum));
 					paid = true;
 				}
 				else
@@ -1277,6 +1286,27 @@ public final class SupplyCalculator
 			+ "; switch at your house altar first, and back again after");
 		return " (runes, " + book + "; switch at your house altar)";
 	}
+	/**
+	 * Cleared by chopping or paying the gardener: trees, fruit trees, hardwoods and calquats, the celastrus' bare tree
+	 * (sprint 1c) and the redwood, which only Alexandra clears. Bushes, cacti and spirit trees are dug up with the spade
+	 * every run brings; the crystal tree is gone once chopped.
+	 */
+	static boolean clearedByAxeOrCoins(PatchType type)
+	{
+		switch (type)
+		{
+			case TREE:
+			case FRUIT_TREE:
+			case HARDWOOD:
+			case CALQUAT:
+			case CELASTRUS:
+			case REDWOOD:
+				return true;
+			default:
+				return false;
+		}
+	}
+
 	/** A grown tree or its stump must be cleared before replanting; unknown patches are assumed grown. */
 	static boolean needsClearing(PatchState state)
 	{

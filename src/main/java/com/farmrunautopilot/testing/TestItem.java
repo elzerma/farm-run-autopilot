@@ -88,7 +88,25 @@ public enum TestItem
 	ETCETERIA_ACCESS(Tab.ACCOUNT, "Etceteria's bush patch",
 		"Only if you've done The Fremennik Trials but not Throne of Miscellania: take the boat from Rellekka to "
 			+ "Etceteria and go to the bush patch by the castle. If you can rake or plant it, the plugin is right to need "
-			+ "only The Fremennik Trials for it.");
+			+ "only The Fremennik Trials for it."),
+	// Sprint 1c, the special trees
+	SPECIAL_TREE_PATCH_POINTS(Tab.RUN, "Where the special tree patches are",
+		"Tick Special trees on the Run tab and stand by any hardwood, calquat, celastrus, redwood, spirit tree or crystal "
+			+ "tree patch you can use, then another at a different place. The patch should be outlined when it's the next "
+			+ "step, and the hint arrow should point at it, not a few tiles away."),
+	HARDWOOD_CLEAR_FEE(Tab.FARM, "Paying to clear a hardwood tree",
+		"With a grown teak, mahogany or other hardwood tree you want gone, ask its gardener (a squirrel on Fossil Island, "
+			+ "Marcellus or Argo) to clear it and pay. The plugin plans 200 coins, as for other trees."),
+	CRYSTAL_TREE_STATES(Tab.FARM, "The crystal tree in Prifddinas",
+		"With 74 Farming, Song of the Elves done and a crystal sapling, go to the crystal tree patch north-east of "
+			+ "Prifddinas, then plant the sapling, check a grown tree's health or chop one down. The plugin reads what's in "
+			+ "the patch before and after."),
+	GREAT_CONCH_ACCESS(Tab.ACCOUNT, "The Great Conch's calquat patch",
+		"Only if you've started Troubled Tortugans: go to the calquat patch on the Summer Shore of the Great Conch. If "
+			+ "you can rake or plant it, the plugin is right to need only the quest started."),
+	SAILING_LEVEL(Tab.ACCOUNT, "Your Sailing level",
+		"Anglers' Retreat's hardwood patch needs 51 Sailing to moor there. Start the test and say whether your Sailing "
+			+ "level is 51 or more: the plugin checks it reads the same.");
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter

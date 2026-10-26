@@ -49,7 +49,14 @@ public enum Location
 	DRAYNOR_MANOR("Draynor Manor"),
 	// The belladonna patch, 84 tiles east of the Nemus Retreat tree patch in the same RuneLite region
 	AUBURNVALE("Auburnvale"),
-	FOSSIL_ISLAND_UNDERWATER("Fossil Island (underwater)");
+	FOSSIL_ISLAND_UNDERWATER("Fossil Island (underwater)"),
+	// The special trees (Sprint 1c): the travel atlas's stops of the same names
+	FOSSIL_ISLAND("Fossil Island"),
+	LOCUS_OASIS("Locus Oasis"),
+	ANGLERS_RETREAT("Anglers' Retreat"),
+	TAI_BWO_WANNAI("Tai Bwo Wannai"),
+	THE_GREAT_CONCH("The Great Conch"),
+	PORT_SARIM("Port Sarim");
 
 	private final String displayName;
 

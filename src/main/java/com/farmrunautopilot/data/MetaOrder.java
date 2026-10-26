@@ -80,6 +80,20 @@ public final class MetaOrder
 
 	private static final List<Location> SEAWEED = Collections.singletonList(FOSSIL_ISLAND_UNDERWATER);
 
+	// Sprint 1c: the special trees by type
+	private static final List<Location> HARDWOOD = Collections.unmodifiableList(Arrays.asList(Location.FOSSIL_ISLAND,
+		Location.LOCUS_OASIS, Location.ANGLERS_RETREAT));
+
+	private static final List<Location> CALQUAT = Collections.unmodifiableList(Arrays.asList(Location.TAI_BWO_WANNAI, KASTORI,
+		Location.THE_GREAT_CONCH));
+
+	private static final List<Location> GUILD_ONLY = Collections.singletonList(FARMING_GUILD);
+
+	private static final List<Location> SPIRIT_TREE = Collections.unmodifiableList(Arrays.asList(FARMING_GUILD, HOSIDIUS,
+		Location.PORT_SARIM, ETCETERIA, BRIMHAVEN));
+
+	private static final List<Location> CRYSTAL_TREE = Collections.singletonList(PRIFDDINAS);
+
 	private MetaOrder()
 	{
 	}
@@ -124,6 +138,17 @@ public final class MetaOrder
 				return BELLADONNA;
 			case SEAWEED:
 				return SEAWEED;
+			case HARDWOOD:
+				return HARDWOOD;
+			case CALQUAT:
+				return CALQUAT;
+			case CELASTRUS:
+			case REDWOOD:
+				return GUILD_ONLY;
+			case SPIRIT_TREE:
+				return SPIRIT_TREE;
+			case CRYSTAL_TREE:
+				return CRYSTAL_TREE;
 			default:
 				throw new IllegalArgumentException("No meta order for " + type);
 		}

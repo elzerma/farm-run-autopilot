@@ -24,7 +24,15 @@ public enum PatchType
 	CACTUS("Cactus", "Cacti", true, true, false),
 	MUSHROOM("Mushroom", "Mushrooms", false, false, false),
 	BELLADONNA("Belladonna", "Belladonna", false, false, false),
-	SEAWEED("Seaweed", "Seaweed", true, false, true);
+	SEAWEED("Seaweed", "Seaweed", true, false, true),
+	// Sprint 1c, the special trees. Compost only lowers disease on them, but raises the crystal tree's shards (wiki: Crystal
+	// tree), which nobody can protect
+	HARDWOOD("Hardwood tree", "Hardwood trees", true, true, false),
+	CALQUAT("Calquat", "Calquats", true, true, false),
+	CELASTRUS("Celastrus", "Celastrus trees", true, true, false),
+	REDWOOD("Redwood", "Redwoods", true, true, false),
+	SPIRIT_TREE("Spirit tree", "Spirit trees", true, true, false),
+	CRYSTAL_TREE("Crystal tree", "Crystal trees", false, true, true);
 
 	private final String displayName;
 	private final String pluralName;
@@ -44,7 +52,16 @@ public enum PatchType
 	 */
 	public boolean regrows()
 	{
-		return this == FRUIT_TREE || this == BUSH || this == CACTUS;
+		return this == FRUIT_TREE || this == BUSH || this == CACTUS || this == CALQUAT;
+	}
+
+	/**
+	 * A grown crop can be left as it is rather than replanted each run: those that regrow, and spirit trees, kept for
+	 * travel (sprint 1c). A choice per type.
+	 */
+	public boolean keepable()
+	{
+		return regrows() || this == SPIRIT_TREE;
 	}
 
 	/** The run types every player had before more were added; new players start with only these ticked. */

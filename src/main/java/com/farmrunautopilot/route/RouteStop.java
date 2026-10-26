@@ -165,7 +165,8 @@ public class RouteStop
 	{
 		if (departure == Departure.WALK)
 		{
-			return Collections.emptyList();
+			// A walk's boats on the way, if it takes any (sprint 1c)
+			return journey != null ? journey : Collections.emptyList();
 		}
 		if (journey != null)
 		{

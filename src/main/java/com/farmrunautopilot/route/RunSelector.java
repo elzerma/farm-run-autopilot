@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -114,6 +115,11 @@ public final class RunSelector
 			}
 		}
 
+		if (included.contains(PatchType.SPIRIT_TREE) && !fullRun)
+		{
+			limitSpiritTrees(patches, notDue, predictions, access);
+		}
+
 		if (included.contains(PatchType.ALLOTMENT))
 		{
 			final int farming = access.isKnown() ? access.level(Skill.FARMING) : 99;
@@ -151,9 +157,70 @@ public final class RunSelector
 		}
 		if (keepGrowing && prediction.getState() == PatchState.HARVESTABLE && prediction.getCrop() != null)
 		{
+			// A kept spirit tree has nothing to pick: it's due again only if it dies or the crop changes
+			if (prediction.getCrop().getHarvestStages() == 0)
+			{
+				return false;
+			}
 			return prediction.getStage() >= prediction.getCrop().getHarvestStages() - 1;
 		}
 		return true;
+	}
+
+	/**
+	 * Leaves out empty spirit tree patches beyond what the player's Farming level allows to stand at once (wiki: Spirit
+	 * Tree (Farming)): those already standing count, wherever they are; a grown one replanted is still one.
+	 */
+	static void limitSpiritTrees(List<Patch> patches, List<String> notDue, Function<Patch, PatchPrediction> predictions,
+		AccessSnapshot access)
+	{
+		final int limit = spiritTreeLimit(access.isKnown() ? access.level(Skill.FARMING) : 99);
+		int standing = 0;
+		for (Patch patch : Patch.values())
+		{
+			if (patch.getType() == PatchType.SPIRIT_TREE && standing(predictions.apply(patch)))
+			{
+				standing++;
+			}
+		}
+		for (Iterator<Patch> it = patches.iterator(); it.hasNext(); )
+		{
+			final Patch patch = it.next();
+			final PatchPrediction live = predictions.apply(patch);
+			// Never seen: it may hold one, so it's still visited
+			if (patch.getType() != PatchType.SPIRIT_TREE || live == null || standing(live))
+			{
+				continue;
+			}
+			if (standing >= limit)
+			{
+				it.remove();
+				notDue.add(patch.getDisplayName() + ": your Farming level allows " + limit + " spirit tree"
+					+ (limit == 1 ? "" : "s") + " at once");
+			}
+			else
+			{
+				standing++;
+			}
+		}
+	}
+
+	/** A spirit tree is growing or grown in the patch (a diseased one counts: it can be pruned). */
+	private static boolean standing(PatchPrediction live)
+	{
+		return live != null && live.getCrop() != null && (live.getState() == PatchState.GROWING
+			|| live.getState() == PatchState.CHECK_HEALTH || live.getState() == PatchState.HARVESTABLE
+			|| live.getState() == PatchState.DISEASED);
+	}
+
+	/**
+	 * How many spirit trees may stand at once at this Farming level (boosts count): 1 at 83, 2 at 88, 3 at 93, 4 at 96,
+	 * any number at 99 (wiki: Spirit Tree (Farming)/Patches).
+	 */
+	public static int spiritTreeLimit(int farming)
+	{
+		return farming >= 99 ? Integer.MAX_VALUE : farming >= 96 ? 4 : farming >= 93 ? 3 : farming >= 88 ? 2
+			: farming >= 83 ? 1 : 0;
 	}
 
 	/** How many of {@code total} patches must be due to reach {@code percent}, rounded up. */

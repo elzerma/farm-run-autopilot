@@ -62,7 +62,10 @@ public class RunConfig
 	/** Bring gardener payments noted (one slot each); confirmed preferable in-game. */
 	private boolean payWithNotes = true;
 	/** Run types where the gardener is paid 200 coins to clear a grown tree instead of chopping it. */
-	private Set<PatchType> payToClear = EnumSet.of(PatchType.TREE, PatchType.FRUIT_TREE);
+	private Set<PatchType> payToClear = EnumSet.of(PatchType.TREE, PatchType.FRUIT_TREE, PatchType.HARDWOOD, PatchType.CALQUAT,
+		PatchType.CELASTRUS);
+	/** Set once the special trees have joined {@link #payToClear}; null in saves from before sprint 1c. */
+	private Boolean specialTreesClearing;
 	/**
 	 * Run types whose grown crop is picked and left growing rather than cleared and replanted (fruit trees, bushes,
 	 * cacti: elzerma, 2026-10-24); none by default, so every run replants as before. Null in saves from before it.
@@ -147,8 +150,14 @@ public class RunConfig
 		enabledTypes = cleanSet(enabledTypes, PatchType.class, originalTypes());
 		disabledPatches = cleanSet(disabledPatches, Patch.class, EnumSet.noneOf(Patch.class));
 		payToClear = cleanSet(payToClear, PatchType.class, EnumSet.noneOf(PatchType.class));
+		// Saves from before sprint 1c never offered the special trees: they start paid to clear, as trees do
+		if (specialTreesClearing == null)
+		{
+			payToClear.addAll(EnumSet.of(PatchType.HARDWOOD, PatchType.CALQUAT, PatchType.CELASTRUS));
+			specialTreesClearing = true;
+		}
 		keepGrowing = cleanSet(keepGrowing, PatchType.class, EnumSet.noneOf(PatchType.class));
-		keepGrowing.removeIf(type -> !type.regrows());
+		keepGrowing.removeIf(type -> !type.keepable());
 		if (runesNotTabsAt != null)
 		{
 			// Runes per stop went with the Locations list: runes at any stop means runes at every stop
@@ -237,7 +246,25 @@ public class RunConfig
 	/** This run type's grown crop is picked and left growing, not cleared and replanted (fruit trees, bushes, cacti). */
 	public boolean keepsGrowing(PatchType type)
 	{
-		return type.regrows() && keepGrowing.contains(type);
+		return type.keepable() && keepGrowing.contains(type);
+	}
+
+	/**
+	 * A grown tree of this type is cleared by paying its gardener rather than chopped: as the player set it, but always
+	 * for a redwood (only Alexandra clears one), never for a spirit tree (dug up) or the crystal tree (no gardener).
+	 */
+	public boolean paysToClear(PatchType type)
+	{
+		switch (type)
+		{
+			case REDWOOD:
+				return true;
+			case SPIRIT_TREE:
+			case CRYSTAL_TREE:
+				return false;
+			default:
+				return payToClear.contains(type);
+		}
 	}
 
 	/** A Travel tab family is on: as the player set it, or its default. */
@@ -336,6 +363,12 @@ public class RunConfig
 		map.put(PatchType.BUSH, Protection.PAY_GARDENER);
 		map.put(PatchType.CACTUS, Protection.PAY_GARDENER);
 		map.put(PatchType.SEAWEED, Protection.PAY_GARDENER);
+		// Sprint 1c, as for trees (UNCONFIRMED with elzerma): the special trees paid for; the crystal tree has no gardener
+		map.put(PatchType.HARDWOOD, Protection.PAY_GARDENER);
+		map.put(PatchType.CALQUAT, Protection.PAY_GARDENER);
+		map.put(PatchType.CELASTRUS, Protection.PAY_GARDENER);
+		map.put(PatchType.REDWOOD, Protection.PAY_GARDENER);
+		map.put(PatchType.SPIRIT_TREE, Protection.PAY_GARDENER);
 		return map;
 	}
 
@@ -355,6 +388,13 @@ public class RunConfig
 		map.put(PatchType.MUSHROOM, Compost.ULTRACOMPOST);
 		map.put(PatchType.BELLADONNA, Compost.ULTRACOMPOST);
 		map.put(PatchType.SEAWEED, Compost.ULTRACOMPOST);
+		// Sprint 1c: none on the paid special trees; ultracompost on the crystal tree, whose shards it raises
+		map.put(PatchType.HARDWOOD, Compost.NONE);
+		map.put(PatchType.CALQUAT, Compost.NONE);
+		map.put(PatchType.CELASTRUS, Compost.NONE);
+		map.put(PatchType.REDWOOD, Compost.NONE);
+		map.put(PatchType.SPIRIT_TREE, Compost.NONE);
+		map.put(PatchType.CRYSTAL_TREE, Compost.ULTRACOMPOST);
 		return map;
 	}
 

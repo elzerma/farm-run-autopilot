@@ -3,7 +3,9 @@ package com.farmrunautopilot.data;
 import static com.farmrunautopilot.data.DataConstants.NONE;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import net.runelite.api.gameval.ItemID;
 
@@ -96,7 +98,23 @@ public enum Crop
 	BITTERCAP(PatchType.MUSHROOM, "Bittercap", 53, ItemID.MUSHROOM_SEED, 40, 7, NONE, 0),
 	BELLADONNA(PatchType.BELLADONNA, "Belladonna", 63, ItemID.BELLADONNA_SEED, 80, 5, NONE, 0),
 	// Mernia protects each underwater patch for 200 numulites (wiki: Mernia); one spore (UNVERIFIED)
-	GIANT_SEAWEED(PatchType.SEAWEED, "Giant seaweed", 23, ItemID.SEAWEED_SEED, 10, 5, ItemID.FOSSIL_NUMULITE, 200);
+	GIANT_SEAWEED(PatchType.SEAWEED, "Giant seaweed", 23, ItemID.SEAWEED_SEED, 10, 5, ItemID.FOSSIL_NUMULITE, 200),
+
+	// Sprint 1c, the special trees: one sapling each; growth from RuneLite Produce (master, 2026-10-25), levels and payments
+	// from the wiki's sapling pages (docs/plans/crop-types.md, section 4). Rosewood is RuneLite's 5,760 minutes
+	TEAK(PatchType.HARDWOOD, "Teak", 35, ItemID.PLANTPOT_TEAK_SAPLING, 640, 8, ItemID.LIMPWURT_ROOT, 15),
+	MAHOGANY(PatchType.HARDWOOD, "Mahogany", 55, ItemID.PLANTPOT_MAHOGANY_SAPLING, 640, 9, ItemID.YANILLIAN_HOPS, 25),
+	CAMPHOR(PatchType.HARDWOOD, "Camphor", 66, ItemID.PLANTPOT_CAMPHOR_SAPLING, 640, 9, ItemID.WHITE_BERRIES, 10),
+	IRONWOOD(PatchType.HARDWOOD, "Ironwood", 80, ItemID.PLANTPOT_IRONWOOD_SAPLING, 640, 9, ItemID.CURRY_LEAF, 10),
+	ROSEWOOD(PatchType.HARDWOOD, "Rosewood", 92, ItemID.PLANTPOT_ROSEWOOD_SAPLING, 640, 10, ItemID.DRAGONFRUIT, 8),
+	CALQUAT(PatchType.CALQUAT, "Calquat", 72, ItemID.PLANTPOT_CALQUAT_SAPLING, 160, 9, ItemID.POISONIVY_BERRIES, 8),
+	CELASTRUS(PatchType.CELASTRUS, "Celastrus", 85, ItemID.PLANTPOT_CELASTRUS_TREE_SAPLING, 160, 6, ItemID.CACTUS_POTATO, 8),
+	REDWOOD(PatchType.REDWOOD, "Redwood", 90, ItemID.PLANTPOT_REDWOOD_TREE_SAPLING, 640, 11, ItemID.DRAGONFRUIT, 6),
+	// Also a monkey bar and a ground tooth ({@link #getExtraPayments})
+	SPIRIT_TREE(PatchType.SPIRIT_TREE, "Spirit tree", 83, ItemID.PLANTPOT_SPIRIT_TREE_SAPLING, 320, 13, ItemID.MM_MONKEY_NUTS,
+		5),
+	// Can't get diseased: no payment (wiki: Crystal acorn)
+	CRYSTAL_TREE(PatchType.CRYSTAL_TREE, "Crystal tree", 74, ItemID.PLANTPOT_CRYSTAL_TREE_SAPLING, 80, 7, NONE, 0);
 
 	/**
 	 * Minutes for one fruit to regrow on a grown fruit tree. RuneLite uses 45; the wiki says 40
@@ -105,6 +123,8 @@ public enum Crop
 	public static final int FRUIT_REGROW_MINUTES = 45;
 	/** Coins a gardener charges to remove a grown tree or fruit tree (wiki). */
 	public static final int CLEAR_PATCH_COINS = 200;
+	/** Coins Alexandra charges to clear a redwood, the only way to (wiki: Redwood tree). */
+	public static final int CLEAR_REDWOOD_COINS = 2000;
 
 	private final PatchType type;
 	private final String displayName;
@@ -159,6 +179,9 @@ public enum Crop
 				return 20;
 			case CACTUS:
 				return this == POTATO_CACTUS ? 5 : 20;
+			// RuneLite has no regrow timer for it; the wiki says one fruit per 20 minutes (UNVERIFIED)
+			case CALQUAT:
+				return 20;
 			default:
 				return 0;
 		}
@@ -178,9 +201,18 @@ public enum Crop
 				return 5;
 			case CACTUS:
 				return this == POTATO_CACTUS ? 7 : 4;
+			// RuneLite: calquat fruit 0-6
+			case CALQUAT:
+				return 7;
 			default:
 				return 0;
 		}
+	}
+
+	/** Coins the gardener charges to clear a grown tree of this type (the hardwood squirrels too, as reported in #30). */
+	public static int clearCoins(PatchType type)
+	{
+		return type == PatchType.REDWOOD ? CLEAR_REDWOOD_COINS : CLEAR_PATCH_COINS;
 	}
 
 	/** Offered as a crop to grow; the scarecrow is only placed to protect sweetcorn. */
@@ -189,10 +221,29 @@ public enum Crop
 		return this != SCARECROW;
 	}
 
-	/** Planted from a stack of seeds with a dibber; saplings (trees, fruit trees) don't stack and need a spade. */
+	/**
+	 * Planted from a stack of seeds with a dibber; saplings (every tree, the special trees too) don't stack and need a
+	 * spade. Bushes and cacti are health-checked but grown from seed.
+	 */
 	public boolean isSeed()
 	{
-		return type != PatchType.TREE && type != PatchType.FRUIT_TREE;
+		return !type.isHealthChecked() || type == PatchType.BUSH || type == PatchType.CACTUS;
+	}
+
+	/**
+	 * Items the gardener takes besides {@link #getPaymentItemId}: a spirit tree's monkey bar and ground tooth, with its
+	 * 5 monkey nuts (wiki: Spirit Tree (Farming)). Empty for the rest.
+	 */
+	public Map<Integer, Integer> getExtraPayments()
+	{
+		if (this == SPIRIT_TREE)
+		{
+			final Map<Integer, Integer> extras = new LinkedHashMap<>();
+			extras.put(ItemID.MM_MONKEY_BAR, 1);
+			extras.put(ItemID.LUNAR_GROUNDTOOTH, 1);
+			return extras;
+		}
+		return Collections.emptyMap();
 	}
 
 	/**

@@ -313,7 +313,78 @@ public enum Patch
 	FOSSIL_ISLAND_SEAWEED_NORTH("north", Location.FOSSIL_ISLAND_UNDERWATER, PatchType.SEAWEED, 15008, regions(),
 		VarbitID.FARMING_TRANSMIT_A, NpcID.FOSSIL_GARDENER_UNDERWATER, "Mernia", Requirement.quest(Quest.BONE_VOYAGE)),
 	FOSSIL_ISLAND_SEAWEED_SOUTH("south", Location.FOSSIL_ISLAND_UNDERWATER, PatchType.SEAWEED, 15008, regions(),
-		VarbitID.FARMING_TRANSMIT_B, NpcID.FOSSIL_GARDENER_UNDERWATER, "Mernia", Requirement.quest(Quest.BONE_VOYAGE));
+		VarbitID.FARMING_TRANSMIT_B, NpcID.FOSSIL_GARDENER_UNDERWATER, "Mernia", Requirement.quest(Quest.BONE_VOYAGE)),
+
+	// Sprint 1c, the special trees. Regions, varbits and gardeners from RuneLite FarmingWorld (master, 2026-10-25),
+	// gardeners' names from the wiki; names match the travel atlas's places
+	FOSSIL_ISLAND_HARDWOOD_EAST("east", Location.FOSSIL_ISLAND, PatchType.HARDWOOD, 14651, fossilIslandRegions(),
+		VarbitID.FARMING_TRANSMIT_A, NpcID.FOSSIL_SQUIRREL_GARDENER1, "the squirrel", Requirement.quest(Quest.BONE_VOYAGE))
+	{
+		@Override
+		public boolean isInBounds(WorldPoint loc)
+		{
+			return onFossilIsland(loc);
+		}
+	},
+	FOSSIL_ISLAND_HARDWOOD_MIDDLE("middle", Location.FOSSIL_ISLAND, PatchType.HARDWOOD, 14651, fossilIslandRegions(),
+		VarbitID.FARMING_TRANSMIT_B, NpcID.FOSSIL_SQUIRREL_GARDENER2, "the squirrel", Requirement.quest(Quest.BONE_VOYAGE))
+	{
+		@Override
+		public boolean isInBounds(WorldPoint loc)
+		{
+			return onFossilIsland(loc);
+		}
+	},
+	FOSSIL_ISLAND_HARDWOOD_WEST("west", Location.FOSSIL_ISLAND, PatchType.HARDWOOD, 14651, fossilIslandRegions(),
+		VarbitID.FARMING_TRANSMIT_C, NpcID.FOSSIL_SQUIRREL_GARDENER3, "the squirrel", Requirement.quest(Quest.BONE_VOYAGE))
+	{
+		@Override
+		public boolean isInBounds(WorldPoint loc)
+		{
+			return onFossilIsland(loc);
+		}
+	},
+	LOCUS_OASIS_HARDWOOD(Location.LOCUS_OASIS, PatchType.HARDWOOD, 6702, regions(6446), VarbitID.FARMING_TRANSMIT_A,
+		NpcID.FROG_QUEST_MARCELLUS, "Marcellus", Requirement.quest(Quest.THE_RIBBITING_TALE_OF_A_LILY_PAD_LABOUR_DISPUTE)),
+	// Moored at with 51 Sailing (UNVERIFIED that the level reads), or by the rowboat from Corsair Cove once built
+	ANGLERS_RETREAT_HARDWOOD(Location.ANGLERS_RETREAT, PatchType.HARDWOOD, 9770, regions(), VarbitID.FARMING_TRANSMIT_A,
+		NpcID.FARMING_GARDENER_HARDWOOD_TREE_5, "Argo", Requirement.skill(Skill.SAILING, 51)),
+	TAI_BWO_WANNAI_CALQUAT(Location.TAI_BWO_WANNAI, PatchType.CALQUAT, 11056, regions(), VarbitID.FARMING_TRANSMIT_A,
+		NpcID.FARMING_GARDENER_CALQUAT, "Imiago"),
+	KASTORI_CALQUAT(Location.KASTORI, PatchType.CALQUAT, 5423, regions(5167, 5424), VarbitID.FARMING_TRANSMIT_A,
+		NpcID.FARMING_GARDENER_CALQUAT_2, "Tziuhtla", Requirement.quest(Quest.CHILDREN_OF_THE_SUN)),
+	// Opened partway through Troubled Tortugans (reported: the step giving the bandage; UNVERIFIED, taken as started)
+	THE_GREAT_CONCH_CALQUAT(Location.THE_GREAT_CONCH, PatchType.CALQUAT, 12581, regions(12325, 12326, 12327, 12580,
+		12582, 12583, 12836, 12837, 12838, 12839, 13092, 13093, 13194), VarbitID.FARMING_TRANSMIT_C,
+		NpcID.FARMING_GARDENER_CALQUAT_3, "Guppa", Requirement.questStarted(Quest.TROUBLED_TORTUGANS)),
+	FARMING_GUILD_CELASTRUS(Location.FARMING_GUILD, PatchType.CELASTRUS, 4922, farmingGuildRegions(),
+		VarbitID.FARMING_TRANSMIT_L, NpcID.FARMING_GARDENER_FARMGUILD_CELASTRUS, "Taylor",
+		Requirement.skill(Skill.FARMING, 85)),
+	FARMING_GUILD_REDWOOD(Location.FARMING_GUILD, PatchType.REDWOOD, 4922, farmingGuildRegions(),
+		VarbitID.FARMING_TRANSMIT_I, NpcID.FARMING_GARDENER_FARMGUILD_REDWOOD, "Alexandra",
+		Requirement.skill(Skill.FARMING, 85)),
+	// Port Sarim's shares its region's varbit with the Falador farm, told apart by y
+	PORT_SARIM_SPIRIT_TREE(Location.PORT_SARIM, PatchType.SPIRIT_TREE, 12082, regions(12083), VarbitID.FARMING_TRANSMIT_A,
+		NpcID.FARMING_GARDENER_SPIRIT_TREE_1, "Frizzy Skernip")
+	{
+		@Override
+		public boolean isInBounds(WorldPoint loc)
+		{
+			return loc.getY() < 3272;
+		}
+	},
+	ETCETERIA_SPIRIT_TREE(Location.ETCETERIA, PatchType.SPIRIT_TREE, 10300, regions(), VarbitID.FARMING_TRANSMIT_B,
+		NpcID.FARMING_GARDENER_SPIRIT_TREE_2, "Yulf Squecks", Requirement.quest(Quest.THE_FREMENNIK_TRIALS)),
+	BRIMHAVEN_SPIRIT_TREE(Location.BRIMHAVEN, PatchType.SPIRIT_TREE, 11058, regions(11057), VarbitID.FARMING_TRANSMIT_B,
+		NpcID.FARMING_GARDENER_SPIRIT_TREE_3, "Praistan Ebola"),
+	HOSIDIUS_SPIRIT_TREE(Location.HOSIDIUS, PatchType.SPIRIT_TREE, 6967, regions(6711), VarbitID.FARMING_TRANSMIT_F,
+		NpcID.FARMING_GARDENER_SPIRIT_TREE_4, "Lammy Langle"),
+	FARMING_GUILD_SPIRIT_TREE(Location.FARMING_GUILD, PatchType.SPIRIT_TREE, 4922, farmingGuildRegions(),
+		VarbitID.FARMING_TRANSMIT_A, NpcID.FARMING_GARDENER_SPIRIT_TREE_5, "Latlink Fastbell",
+		Requirement.skill(Skill.FARMING, 85)),
+	// No gardener: it can't get diseased (wiki: Crystal acorn)
+	PRIFDDINAS_CRYSTAL_TREE(Location.PRIFDDINAS, PatchType.CRYSTAL_TREE, 13151, prifddinasRegions(),
+		VarbitID.FARMING_TRANSMIT_E, Requirement.quest(Quest.SONG_OF_THE_ELVES));
 
 	private final Location location;
 	private final PatchType type;
@@ -437,6 +508,30 @@ public enum Patch
 	private static int[] prifddinasRegions()
 	{
 		return new int[]{12895, 12894, 13150, 12994, 12993, 12737, 12738, 12126, 12127, 13250};
+	}
+
+	/** Fossil Island around the mushroom forest (RuneLite FarmingWorld). */
+	private static int[] fossilIslandRegions()
+	{
+		return new int[]{14907, 14908, 15164, 14652, 14906, 14650, 15162, 15163};
+	}
+
+	/**
+	 * The hardwood varbits are sent anywhere on Fossil Island's ground floor, but a tick early on two staircases and the
+	 * rope bridge's ladders (RuneLite FarmingWorld).
+	 */
+	private static boolean onFossilIsland(WorldPoint loc)
+	{
+		if (loc.getX() == 3753 && loc.getY() >= 3868 && loc.getY() <= 3870)
+		{
+			return false;
+		}
+		if ((loc.getX() == 3729 || loc.getX() == 3728 || loc.getX() == 3747 || loc.getX() == 3746)
+			&& loc.getY() <= 3832 && loc.getY() >= 3830)
+		{
+			return false;
+		}
+		return loc.getPlane() == 0;
 	}
 
 	/** Full 3x3 region area centred on the Farming Guild. */

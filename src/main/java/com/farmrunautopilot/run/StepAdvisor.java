@@ -121,7 +121,7 @@ public final class StepAdvisor
 				return new Advice(Action.DONE, "Done");
 			case CHECK_HEALTH:
 				return new Advice(Action.CHECK_HEALTH, "Check the health of the " + (live.getCrop() != null
-					? what + " " + grown(patch.getType()) : patch.getType().getDisplayName().toLowerCase())
+					? named(patch.getType(), what) : patch.getType().getDisplayName().toLowerCase())
 					+ (goal.isKeepGrowing() ? "" : " (replanting: " + goal.getPlantName() + ")"));
 			case HARVESTABLE:
 				// Herbs, allotments, flowers, hops and the specials are picked, then replanted
@@ -139,22 +139,34 @@ public final class StepAdvisor
 				{
 					return new Advice(Action.DONE, "Done");
 				}
-				if (patch.getType() == PatchType.BUSH || patch.getType() == PatchType.CACTUS)
+				switch (patch.getType())
 				{
-					return new Advice(Action.CLEAR_DEAD, "Dig up the " + what + " " + grown(patch.getType())
-						+ " with your spade to replant");
+					case BUSH:
+					case CACTUS:
+					case SPIRIT_TREE:
+						// Dug up, not chopped (a spirit tree can't be)
+						return new Advice(Action.CLEAR_DEAD, "Dig up the " + named(patch.getType(), what)
+							+ " with your spade to replant");
+					case CELASTRUS:
+						return new Advice(Action.CHOP, "Cut the celastrus bark with your axe");
+					case CRYSTAL_TREE:
+						// Its shards come from chopping it down, which leaves the patch empty
+						return new Advice(Action.CHOP, "Chop down the crystal tree with your axe");
+					default:
+						return clearTree(goal, gardener, named(patch.getType(), what));
 				}
-				return clearTree(goal, gardener);
 			case STUMP:
+				final String stump = patch.getType() == PatchType.CELASTRUS ? "bare celastrus" : "stump";
 				return goal.isPayToClear()
-					? new Advice(Action.PAY_TO_CLEAR, "Ask " + gardener + " to remove the stump (200 coins)")
-					: new Advice(Action.DIG_STUMP, "Dig up the stump with your spade");
+					? new Advice(Action.PAY_TO_CLEAR, "Ask " + gardener + " to remove the " + stump + " ("
+						+ coins(patch.getType()) + " coins)")
+					: new Advice(Action.DIG_STUMP, "Dig up the " + stump + " with your spade");
 			case DEAD:
-				return new Advice(Action.CLEAR_DEAD, "Clear the dead " + what + (tree ? " " + grown(patch.getType()) : "")
+				return new Advice(Action.CLEAR_DEAD, "Clear the dead " + (tree ? named(patch.getType(), what) : what)
 					+ " (spade)");
 			case DISEASED:
 				return tree
-					? new Advice(Action.PRUNE, "Prune the diseased " + what + " " + grown(patch.getType()) + " with secateurs")
+					? new Advice(Action.PRUNE, "Prune the diseased " + named(patch.getType(), what) + " with secateurs")
 					: new Advice(Action.CURE, "Cure the diseased " + what + " with plant cure, or clear it");
 			case WEEDS:
 				return new Advice(Action.RAKE, "Rake the patch");
@@ -305,10 +317,23 @@ public final class StepAdvisor
 		}
 	}
 
-	private static Advice clearTree(PatchGoal goal, String gardener)
+	/** A grown crop with what it is: "papaya tree", "redberry bush", but "spirit tree" as it is. */
+	private static String named(PatchType type, String what)
+	{
+		return what.endsWith("tree") ? what : what + " " + grown(type);
+	}
+
+	/** What the gardener charges to clear a grown tree, as written in a step: "200", "2,000" for a redwood. */
+	private static String coins(PatchType type)
+	{
+		return String.format("%,d", Crop.clearCoins(type));
+	}
+
+	private static Advice clearTree(PatchGoal goal, String gardener, String tree)
 	{
 		return goal.isPayToClear()
-			? new Advice(Action.PAY_TO_CLEAR, "Ask " + gardener + " to remove the tree (200 coins)")
-			: new Advice(Action.CHOP, "Chop down the tree");
+			? new Advice(Action.PAY_TO_CLEAR, "Ask " + gardener + " to remove the " + tree + " ("
+				+ coins(goal.getPatch().getType()) + " coins)")
+			: new Advice(Action.CHOP, "Chop down the " + tree);
 	}
 }

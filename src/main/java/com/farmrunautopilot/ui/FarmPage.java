@@ -280,11 +280,14 @@ class FarmPage extends SetupPanel
 			{
 				s.addContent(allotmentSets(config));
 			}
-			if (type.regrows())
+			if (type.keepable())
 			{
 				final String plural = type.getPluralName().toLowerCase();
-				s.addContent(checkBox("Pick grown " + plural + " and leave them growing", config.keepsGrowing(type), true,
-					"Check health and pick each run, without clearing and replanting; a dead one is replanted",
+				final boolean spirit = type == PatchType.SPIRIT_TREE;
+				s.addContent(checkBox(spirit ? "Keep grown spirit trees for travel"
+					: "Pick grown " + plural + " and leave them growing", config.keepsGrowing(type), true,
+					spirit ? "Check their health once grown, then leave them standing rather than digging them up to replant"
+					: "Check health and pick each run, without clearing and replanting; a dead one is replanted",
 					on -> saveRun(() ->
 					{
 						if (on)
@@ -297,12 +300,18 @@ class FarmPage extends SetupPanel
 						}
 					})));
 			}
-			// Bushes and cacti are dug up with the spade every run brings
-			if (type != PatchType.TREE && type != PatchType.FRUIT_TREE)
+			// Bushes, cacti and spirit trees are dug up with the spade every run brings; only Alexandra clears a redwood
+			if (type == PatchType.REDWOOD)
+			{
+				s.addContent(label("A grown redwood is cleared by paying Alexandra 2,000 coins: nobody else can"));
+				continue;
+			}
+			if (type != PatchType.TREE && type != PatchType.FRUIT_TREE && type != PatchType.HARDWOOD
+				&& type != PatchType.CALQUAT && type != PatchType.CELASTRUS)
 			{
 				continue;
 			}
-			s.addContent(checkBox("Pay 200 coins to clear grown " + type.getDisplayName().toLowerCase() + "s",
+			s.addContent(checkBox("Pay 200 coins to clear grown " + type.getPluralName().toLowerCase(),
 				config.getPayToClear().contains(type), true,
 				"The gardener removes the old tree, so no axe is needed",
 				on -> saveRun(() ->

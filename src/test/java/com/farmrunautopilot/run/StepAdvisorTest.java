@@ -84,7 +84,7 @@ public class StepAdvisorTest
 		final Patch p = Patch.TAVERLEY_TREE;
 		assertEquals(StepAdvisor.Action.CHECK_HEALTH,
 			action(tree(true, false), live(p, Crop.MAGIC, PatchState.CHECK_HEALTH, 12)));
-		assertEquals("Ask Alain to remove the tree (200 coins)",
+		assertEquals("Ask Alain to remove the magic tree (200 coins)",
 			StepAdvisor.advise(tree(true, false), live(p, Crop.MAGIC, PatchState.HARVESTABLE, 0)).getText());
 		assertEquals(StepAdvisor.Action.CHOP, action(tree(false, false), live(p, Crop.MAGIC, PatchState.HARVESTABLE, 0)));
 		assertEquals(StepAdvisor.Action.DIG_STUMP, action(tree(false, false), live(p, Crop.MAGIC, PatchState.STUMP, 0)));

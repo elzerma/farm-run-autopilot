@@ -8,6 +8,7 @@ import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
+import com.farmrunautopilot.data.PatchStateDecoder;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.SupplyItems;
@@ -85,6 +86,11 @@ final class GuidedTests
 		TESTS.put(TestItem.SEAWEED_DIVE, new SeaweedDive());
 		TESTS.put(TestItem.ETCETERIA_ACCESS, new EtceteriaAccess());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
+		TESTS.put(TestItem.SPECIAL_TREE_PATCH_POINTS, new SpecialTreePatchPoints());
+		TESTS.put(TestItem.HARDWOOD_CLEAR_FEE, new HardwoodClearFee());
+		TESTS.put(TestItem.CRYSTAL_TREE_STATES, new CrystalTreeStates());
+		TESTS.put(TestItem.GREAT_CONCH_ACCESS, new GreatConchAccess());
+		TESTS.put(TestItem.SAILING_LEVEL, new SailingLevel());
 	}
 
 	private GuidedTests()
@@ -1401,6 +1407,254 @@ final class GuidedTests
 						: "The boat didn't take you to Etceteria"))
 					.onDone(ctx -> ctx.capture("Arrived at", ctx.location())),
 				ask("Can you rake or plant in the bush patch?"));
+		}
+	}
+
+	/** Sprint 1c's run types. */
+	private static final Set<PatchType> SPECIAL_TREE_TYPES = EnumSet.of(PatchType.HARDWOOD, PatchType.CALQUAT,
+		PatchType.CELASTRUS, PatchType.REDWOOD, PatchType.SPIRIT_TREE, PatchType.CRYSTAL_TREE);
+
+	/**
+	 * Sprint 1c: the special trees' map points against their objects in game, at a different place each step (the 1b
+	 * test took the same patches for "another one", elzerma, 2026-10-25).
+	 */
+	private static final class SpecialTreePatchPoints extends GuidedTest
+	{
+		private static final String SEEN = "special tree patches seen";
+
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			for (Patch patch : Patch.values())
+			{
+				if (SPECIAL_TREE_TYPES.contains(patch.getType()) && access.missingFor(patch).isEmpty())
+				{
+					return Collections.emptyList();
+				}
+			}
+			return Collections.singletonList("Unlock a hardwood, calquat, celastrus, redwood, spirit tree or crystal tree "
+				+ "patch");
+		}
+
+		/** The special tree patches matched nearby that no earlier step saw. */
+		private static List<Patch> unseen(TestContext ctx)
+		{
+			final Set<Patch> seen = ctx.recall(SEEN) != null ? ctx.recall(SEEN) : Collections.emptySet();
+			final List<Patch> found = new ArrayList<>();
+			for (Patch patch : Patch.values())
+			{
+				if (SPECIAL_TREE_TYPES.contains(patch.getType()) && !seen.contains(patch)
+					&& !ctx.getScene().objectsFor(patch).isEmpty())
+				{
+					found.add(patch);
+				}
+			}
+			return found;
+		}
+
+		private static Step visit(String text)
+		{
+			return doThis(text, ctx -> !unseen(ctx).isEmpty())
+				.onDone(ctx ->
+				{
+					final List<Patch> found = unseen(ctx);
+					final List<String> points = new ArrayList<>();
+					for (Patch patch : found)
+					{
+						final WorldPoint at = ctx.getScene().objectsFor(patch).get(0).getWorldLocation();
+						points.add(patch + " at " + at + " (map point " + PatchPoints.of(patch) + ", "
+							+ at.distanceTo2D(PatchPoints.of(patch)) + " tiles off)");
+					}
+					ctx.capture("Patches at " + ctx.location(), String.join("; ", points));
+					final Set<Patch> seen = new HashSet<>();
+					if (ctx.recall(SEEN) != null)
+					{
+						seen.addAll(ctx.<Set<Patch>>recall(SEEN));
+					}
+					seen.addAll(found);
+					ctx.remember(SEEN, seen);
+				})
+				.orAskAfter(DO_TICKS, "The plugin hasn't seen a special tree patch it hadn't seen yet. Are you by one?")
+				.onAnswer((ctx, yes) ->
+				{
+					if (yes)
+					{
+						ctx.problem("By a patch at " + ctx.location() + " but its object wasn't matched");
+					}
+				});
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				visit("Go to any hardwood, calquat, celastrus, redwood, spirit tree or crystal tree patch and stand by it")
+					.onStart(ctx -> ctx.remember(SEEN, new HashSet<Patch>())),
+				visit("Now one at a different place").optional(),
+				visit("And one more, if you can").optional());
+		}
+	}
+
+	/** Sprint 1c: what a hardwood gardener charges to clear a grown tree (the plugin plans 200 coins, reported in #30). */
+	private static final class HardwoodClearFee extends GuidedTest
+	{
+		private static final String COINS = "coins before";
+
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			for (Patch patch : Patch.values())
+			{
+				if (patch.getType() == PatchType.HARDWOOD && access.missingFor(patch).isEmpty())
+				{
+					return Collections.emptyList();
+				}
+			}
+			return Collections.singletonList("Unlock a hardwood tree patch (Bone Voyage for Fossil Island's)");
+		}
+
+		private static int coins(TestContext ctx)
+		{
+			return ctx.holdings().in(Holdings.Source.INVENTORY).getOrDefault(ItemID.COINS, 0);
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				ask("Do you have a grown hardwood tree to clear, and some coins in your inventory?")
+					.onAnswer((ctx, yes) ->
+					{
+						if (!yes)
+						{
+							ctx.cannotTest("a grown hardwood tree to clear");
+						}
+					}),
+				doThis("Ask its gardener to clear it and pay", ctx -> coins(ctx) < ctx.<Integer>recall(COINS))
+					.onStart(ctx -> ctx.remember(COINS, coins(ctx)))
+					.onDone(ctx ->
+					{
+						final int paid = ctx.<Integer>recall(COINS) - coins(ctx);
+						ctx.capture("Coins paid", paid);
+						ctx.capture("Where", ctx.location());
+						if (paid != Crop.CLEAR_PATCH_COINS)
+						{
+							ctx.problem("Paid " + paid + " coins, not " + Crop.CLEAR_PATCH_COINS);
+						}
+					})
+					.orAskAfter(DO_TICKS * 4, "Did you pay the gardener?")
+					.onAnswer((ctx, yes) -> ctx.problem(yes ? "Paid, but the plugin didn't see the coins go"
+						: "Not paid")));
+		}
+	}
+
+	/**
+	 * Sprint 1c: the crystal tree patch's values (FARMING_TRANSMIT_E in Prifddinas, from RuneLite's table and never read
+	 * by this plugin), before and after planting, checking health or chopping it down.
+	 */
+	private static final class CrystalTreeStates extends GuidedTest
+	{
+		private static final String BEFORE = "value before";
+
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			final List<String> missing = new ArrayList<>(patchesUsable(access, Location.PRIFDDINAS));
+			if (access.isKnown() && access.level(Skill.FARMING) < 74)
+			{
+				missing.add("Reach 74 Farming");
+			}
+			return missing;
+		}
+
+		private static String reading(TestContext ctx)
+		{
+			final int value = ctx.varbit(VarbitID.FARMING_TRANSMIT_E);
+			return value + " = " + PatchStateDecoder.decode(PatchType.CRYSTAL_TREE, value);
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				doThis("Go to the crystal tree patch north-east of Prifddinas",
+					ctx -> ctx.inRegion(Patch.PRIFDDINAS_CRYSTAL_TREE.getRegionId()))
+					.onDone(ctx ->
+					{
+						ctx.capture("On arrival", reading(ctx));
+						ctx.remember(BEFORE, ctx.varbit(VarbitID.FARMING_TRANSMIT_E));
+					}),
+				ask("Do you have a crystal sapling to plant, or a grown crystal tree here?")
+					.onAnswer((ctx, yes) ->
+					{
+						if (!yes)
+						{
+							ctx.cannotTest("a crystal sapling or a grown crystal tree");
+						}
+					}),
+				doThis("Plant the sapling, check the grown tree's health, or chop it down",
+					ctx -> ctx.varbit(VarbitID.FARMING_TRANSMIT_E) != ctx.<Integer>recall(BEFORE))
+					.onDone(ctx ->
+					{
+						ctx.capture("After", reading(ctx));
+						if (reading(ctx).contains("UNKNOWN"))
+						{
+							ctx.problem("The patch's value isn't in the plugin's table");
+						}
+					})
+					.orAskAfter(DO_TICKS * 4, "Did you plant, check or chop it?")
+					.onAnswer((ctx, yes) -> ctx.problem(yes ? "Done, but the patch's value didn't change" : "Not done")),
+				ask("Does the Run tab show what's in the patch now?"));
+		}
+	}
+
+	/** Sprint 1c: the Great Conch's calquat patch opens partway through Troubled Tortugans (taken as started). */
+	private static final class GreatConchAccess extends GuidedTest
+	{
+		@Override
+		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
+		{
+			return access.isMet(Requirement.questStarted(Quest.TROUBLED_TORTUGANS)) ? Collections.emptyList()
+				: Collections.singletonList("Start Troubled Tortugans");
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				doThis("Go to the calquat patch on the Summer Shore of the Great Conch",
+					ctx -> ctx.inRegion(Patch.THE_GREAT_CONCH_CALQUAT.getRegionId()))
+					.onDone(ctx ->
+					{
+						ctx.capture("Arrived at", ctx.location());
+						ctx.capture("Troubled Tortugans finished",
+							ctx.access().isMet(Requirement.quest(Quest.TROUBLED_TORTUGANS)));
+					})
+					.orAskAfter(DO_TICKS * 4, "Are you by the calquat patch?")
+					.onAnswer((ctx, yes) -> ctx.problem(yes ? "By the patch, but the plugin didn't see it"
+						: "Couldn't get to the patch")),
+				ask("Can you rake or plant in the calquat patch?"));
+		}
+	}
+
+	/** Sprint 1c: the plugin reads the Sailing level for Anglers' Retreat (51 to moor), never read before. */
+	private static final class SailingLevel extends GuidedTest
+	{
+		@Override
+		public List<Step> steps()
+		{
+			return Collections.singletonList(
+				ask("Is your Sailing level 51 or more?")
+					.onAnswer((ctx, yes) ->
+					{
+						final AccessSnapshot access = ctx.access();
+						final int level = access.isKnown() ? access.level(Skill.SAILING) : -1;
+						ctx.capture("Sailing level read", level);
+						if (yes != level >= 51)
+						{
+							ctx.problem("You said " + (yes ? "51 or more" : "under 51") + ", the plugin read " + level);
+						}
+					}));
 		}
 	}
 }

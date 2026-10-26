@@ -75,6 +75,20 @@ public class RouteChainTest
 		return new Holdings(items, Collections.emptyMap(), Collections.emptySet(), true, false);
 	}
 
+	/** Every patch but the special trees (sprint 1c), whose stops these chains were written without. */
+	private static List<Patch> beforeSpecialTrees()
+	{
+		final List<Patch> patches = new java.util.ArrayList<>();
+		for (Patch patch : Patch.values())
+		{
+			if (patch.getType().ordinal() < com.farmrunautopilot.data.PatchType.HARDWOOD.ordinal())
+			{
+				patches.add(patch);
+			}
+		}
+		return patches;
+	}
+
 	/** The route on the travel atlas for this player, near a stop or not (null). */
 	private static List<RouteStop> plan(List<Patch> patches, RunConfig config, AccessSnapshot access, Holdings holdings,
 		PohSetup poh, Location near, int nearTiles)
@@ -115,7 +129,7 @@ public class RouteChainTest
 	public void startsByWalkingToANearbyStop()
 	{
 		// By the Grand Tree, about 50 tiles from the Stronghold patches, with Start at: Anywhere
-		final List<RouteStop> stops = plan(Arrays.asList(Patch.values()), new RunConfig().sanitise(), access(),
+		final List<RouteStop> stops = plan(beforeSpecialTrees(), new RunConfig().sanitise(), access(),
 			holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF), new PohSetup(), Location.GNOME_STRONGHOLD, 50);
 		assertEquals(describe(stops), Location.GNOME_STRONGHOLD, stops.get(0).getLocation());
 		assertEquals(describe(stops), Departure.WALK, stops.get(0).getDeparture());
@@ -128,7 +142,7 @@ public class RouteChainTest
 		assertEquals(describe(few), Location.GNOME_STRONGHOLD, few.get(0).getLocation());
 
 		// Near Falador Park (57 tiles), where the ring of wealth is quicker than the walk: still the first stop
-		final List<RouteStop> park = plan(Arrays.asList(Patch.values()), new RunConfig().sanitise(), access(),
+		final List<RouteStop> park = plan(beforeSpecialTrees(), new RunConfig().sanitise(), access(),
 			holdings(ItemID.SLAYER_RING_8, ItemID.RING_OF_WEALTH_5), new PohSetup(), Location.FALADOR_PARK, 57);
 		assertEquals(describe(park), Location.FALADOR_PARK, park.get(0).getLocation());
 	}
@@ -216,7 +230,7 @@ public class RouteChainTest
 	public void bigRunsKeepTheStrongholdChain()
 	{
 		// Above the exact-search limit the fast search must still find the chain
-		final List<Patch> patches = Arrays.asList(Patch.values());
+		final List<Patch> patches = beforeSpecialTrees();
 		final RunConfig config = new RunConfig().sanitise();
 		config.setEndNearBank(false);
 		final List<RouteStop> stops = plan(patches, config, access(), holdings(ItemID.SLAYER_RING_8, ItemID.DRAMEN_STAFF),

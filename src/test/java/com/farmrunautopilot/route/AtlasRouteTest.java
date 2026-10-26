@@ -68,8 +68,9 @@ public class AtlasRouteTest
 	public void hosidiusBySkillsNecklaceNeedsTheSteppingStone()
 	{
 		final Holdings holdings = bank(ItemID.JEWL_NECKLACE_OF_SKILLS_4, 1);
-		final RouteStop agile = between(null, Location.HOSIDIUS, accessWith(Skill.AGILITY, 50), holdings);
-		final RouteStop not = between(null, Location.HOSIDIUS, accessWith(Skill.AGILITY, 30), holdings);
+		// To the herb patch: Hosidius's spirit tree patch (sprint 1c) is on the near side of the stone
+		final RouteStop agile = first(Patch.HOSIDIUS_HERB, accessWith(Skill.AGILITY, 50), holdings, null);
+		final RouteStop not = first(Patch.HOSIDIUS_HERB, accessWith(Skill.AGILITY, 30), holdings, null);
 		assertEquals(agile.getBreakdown(), TravelMethod.SKILLS_NECKLACE_WOODCUTTING_GUILD, agile.getMethod());
 		assertTrue(agile.getBreakdown(), agile.getBreakdown().contains("Stepping stone"));
 		// 122 tiles round without the stone (T0)

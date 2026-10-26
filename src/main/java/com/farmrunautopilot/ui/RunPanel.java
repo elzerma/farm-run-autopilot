@@ -88,6 +88,9 @@ class RunPanel extends JPanel
 	/** The run types under the Run tab's one Specials box (sprint 1b). */
 	private static final Set<PatchType> SPECIALS = EnumSet.of(PatchType.CACTUS, PatchType.MUSHROOM,
 		PatchType.BELLADONNA, PatchType.SEAWEED);
+	/** The run types under the Run tab's one Special trees box (sprint 1c, elzerma's choice). */
+	private static final Set<PatchType> SPECIAL_TREES = EnumSet.of(PatchType.HARDWOOD, PatchType.CALQUAT,
+		PatchType.CELASTRUS, PatchType.REDWOOD, PatchType.SPIRIT_TREE, PatchType.CRYSTAL_TREE);
 
 	/** A run type's name on its Run tab box. */
 	private static String shortName(PatchType type)
@@ -1055,14 +1058,15 @@ class RunPanel extends JPanel
 
 	private JComponent runTypeToggles()
 	{
-		// Three to a row; cactus, mushroom, belladonna and seaweed share one Specials box (elzerma, 2026-10-24), and which
-		// of their patches run is set on the Farm tab
+		// Three to a row; cactus, mushroom, belladonna and seaweed share one Specials box (elzerma, 2026-10-24), the special
+		// trees one Special trees box (sprint 1c), and which of their patches run is set on the Farm tab
 		final JPanel types = new JPanel(new GridLayout(0, 3));
 		types.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		final Map<String, Set<PatchType>> families = new LinkedHashMap<>();
 		for (PatchType type : PatchType.values())
 		{
-			families.computeIfAbsent(SPECIALS.contains(type) ? "Specials" : shortName(type),
+			families.computeIfAbsent(SPECIALS.contains(type) ? "Specials"
+				: SPECIAL_TREES.contains(type) ? "Special trees" : shortName(type),
 				k -> EnumSet.noneOf(PatchType.class)).add(type);
 		}
 		for (Map.Entry<String, Set<PatchType>> family : families.entrySet())
@@ -1073,6 +1077,8 @@ class RunPanel extends JPanel
 				members.stream().anyMatch(settings.editRunConfig().getEnabledTypes()::contains));
 			box.setToolTipText(type == PatchType.FLOWER
 				? "Include flower patches in this run. Flowers that protect your allotments come with them anyway"
+				: SPECIAL_TREES.contains(type) ? "Include hardwood, calquat, celastrus, redwood, spirit and crystal trees in this "
+					+ "run; which ones is set on the Farm tab"
 				: members.size() > 1 ? "Include cactus, mushroom, belladonna and seaweed patches in this run"
 				: "Include " + type.getDisplayName().toLowerCase() + " patches in this run");
 			box.setBackground(ColorScheme.DARK_GRAY_COLOR);

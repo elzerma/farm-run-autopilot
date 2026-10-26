@@ -246,6 +246,13 @@ class PatchGuide
 			: text.contains("mushroom") ? PatchType.MUSHROOM
 			: text.contains("belladonna") ? PatchType.BELLADONNA
 			: text.contains("seaweed") ? PatchType.SEAWEED
+			// Sprint 1c (UNVERIFIED wording for these patches), before plain "tree"
+			: text.contains("hardwood") ? PatchType.HARDWOOD
+			: text.contains("calquat") ? PatchType.CALQUAT
+			: text.contains("celastrus") ? PatchType.CELASTRUS
+			: text.contains("redwood") ? PatchType.REDWOOD
+			: text.contains("spirit tree") ? PatchType.SPIRIT_TREE
+			: text.contains("crystal tree") ? PatchType.CRYSTAL_TREE
 			: text.contains("tree") ? PatchType.TREE : null;
 		Patch found = null;
 		for (Patch patch : here)
@@ -436,12 +443,20 @@ class PatchGuide
 			patchTracker::predict) == Protection.PAY_GARDENER && !faladorElite;
 		final String plantName = crop != null ? runService.itemName(crop.getPlantItemId()) : "your seed";
 		final String payment = protectionNeeded
-			? crop.getPaymentQuantity() + " x " + runService.itemName(crop.getPaymentItemId())
+			? crop.getPaymentQuantity() + " x " + runService.itemName(crop.getPaymentItemId()) + extras(crop)
 			+ (config.isPayWithNotes() ? " (noted is fine)" : "")
 			: null;
 		return new StepAdvisor.PatchGoal(patch, crop, plantName, compostFor(patch),
-			protectionNeeded, payment, config.getPayToClear().contains(patch.getType()), p.composted, p.paid,
+			protectionNeeded, payment, config.paysToClear(patch.getType()), p.composted, p.paid,
 			p.sawUnplanted, config.keepsGrowing(patch.getType()));
+	}
+
+	/** The rest of a payment after its main item, e.g. ", 1 x Monkey bar, 1 x Ground tooth" for a spirit tree. */
+	private String extras(Crop crop)
+	{
+		final StringBuilder s = new StringBuilder();
+		crop.getExtraPayments().forEach((id, qty) -> s.append(", ").append(qty).append(" x ").append(runService.itemName(id)));
+		return s.toString();
 	}
 
 	/** The compost a patch gets: as the supplies were worked out (falling back to what the player has), else its type's. */
@@ -516,6 +531,11 @@ class PatchGuide
 				{
 					needed.add(crop.getPaymentItemId());
 					needed.add(runService.notedId(crop.getPaymentItemId()));
+					for (int extra : crop.getExtraPayments().keySet())
+					{
+						needed.add(extra);
+						needed.add(runService.notedId(extra));
+					}
 				}
 				break;
 			case PAY_TO_CLEAR:
