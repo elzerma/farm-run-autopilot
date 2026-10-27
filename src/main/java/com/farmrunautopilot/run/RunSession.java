@@ -1394,6 +1394,11 @@ public class RunSession
 			startClock(System.currentTimeMillis());
 			return;
 		}
+		// Landed somewhere new: the walking line is asked for again from here
+		if (stage == RunView.State.RUNNING && isTeleport(lastLocation, location))
+		{
+			shortestPath.moved();
+		}
 		lastLocation = location;
 		trackDiveRun(location);
 		evaluate();

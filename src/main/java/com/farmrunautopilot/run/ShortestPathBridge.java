@@ -110,6 +110,20 @@ public class ShortestPathBridge
 		return target != null;
 	}
 
+	/**
+	 * The player was carried somewhere (a teleport, a boat): the same target is sent again, as a walk-only line asked
+	 * for from the other side of the sea has no path and isn't drawn once they land (elzerma, 2026-10-26).
+	 */
+	public void moved()
+	{
+		final WorldPoint again = target;
+		if (again != null)
+		{
+			target = null;
+			setTarget(again);
+		}
+	}
+
 	public void clear()
 	{
 		if (target != null)

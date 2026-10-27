@@ -346,7 +346,7 @@ public enum Patch
 	},
 	LOCUS_OASIS_HARDWOOD(Location.LOCUS_OASIS, PatchType.HARDWOOD, 6702, regions(6446), VarbitID.FARMING_TRANSMIT_A,
 		NpcID.FROG_QUEST_MARCELLUS, "Marcellus", Requirement.quest(Quest.THE_RIBBITING_TALE_OF_A_LILY_PAD_LABOUR_DISPUTE)),
-	// Moored at with 51 Sailing (UNVERIFIED that the level reads), or by the rowboat from Corsair Cove once built
+	// Moored at with 51 Sailing (read as elzerma has it, 2026-10-26), or by the rowboat from Corsair Cove once built
 	ANGLERS_RETREAT_HARDWOOD(Location.ANGLERS_RETREAT, PatchType.HARDWOOD, 9770, regions(), VarbitID.FARMING_TRANSMIT_A,
 		NpcID.FARMING_GARDENER_HARDWOOD_TREE_5, "Argo", Requirement.skill(Skill.SAILING, 51)),
 	TAI_BWO_WANNAI_CALQUAT(Location.TAI_BWO_WANNAI, PatchType.CALQUAT, 11056, regions(), VarbitID.FARMING_TRANSMIT_A,

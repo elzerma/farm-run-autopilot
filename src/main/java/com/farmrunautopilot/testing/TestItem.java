@@ -103,10 +103,7 @@ public enum TestItem
 			+ "the patch before and after."),
 	GREAT_CONCH_ACCESS(Tab.ACCOUNT, "The Great Conch's calquat patch",
 		"Only if you've started Troubled Tortugans: go to the calquat patch on the Summer Shore of the Great Conch. If "
-			+ "you can rake or plant it, the plugin is right to need only the quest started."),
-	SAILING_LEVEL(Tab.ACCOUNT, "Your Sailing level",
-		"Anglers' Retreat's hardwood patch needs 51 Sailing to moor there. Start the test and say whether your Sailing "
-			+ "level is 51 or more: the plugin checks it reads the same.");
+			+ "you can rake or plant it, the plugin is right to need only the quest started.");
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter

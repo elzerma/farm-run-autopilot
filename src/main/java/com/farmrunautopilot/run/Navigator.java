@@ -445,7 +445,9 @@ class Navigator
 		}
 		if (step.getKind() == JourneyStep.Kind.RIDE)
 		{
-			return jumped(from, to);
+			// Carried somewhere, not just up a plane: crossing a ship's gangplank onto its deck counted as the trip and put
+			// the guide a step ahead (elzerma, 2026-10-26: Cabin Boy Colin)
+			return from != null && from.distanceTo2D(to) > JUMP_TILES;
 		}
 		final WorldPoint target = journeyTarget(step);
 		return target != null && target.getPlane() == to.getPlane() && target.distanceTo2D(to) <= JOURNEY_NEAR_TILES;

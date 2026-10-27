@@ -474,7 +474,10 @@ public final class SupplyCalculator
 		wayItems.forEach((key, need) ->
 		{
 			final boolean worn = wear.containsValue(need);
-			final SupplyLine line = line(SupplyLine.Group.TRAVEL, itemName.apply(key), wayCounts.get(key), holdings, carried,
+			// Named without its charges: any of its charged forms counts ("Digsite pendant", not "Digsite pendant (1)", which
+			// read as only a one-charge pendant would do, elzerma 2026-10-26)
+			final String name = itemName.apply(key).replaceFirst(" ?\\(\\d+\\)$", "");
+			final SupplyLine line = line(SupplyLine.Group.TRAVEL, name, wayCounts.get(key), holdings, carried,
 				(need.isTeleport() ? "The teleport on the way" : "Needed on the way")
 					+ (worn ? ". Wear it: no inventory slot" : ""), worn ? 0 : 1, need.getIds());
 			final SupplyLine used = need.isUsedUp() ? line.usedUp() : line;

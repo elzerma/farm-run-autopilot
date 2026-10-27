@@ -90,7 +90,6 @@ final class GuidedTests
 		TESTS.put(TestItem.HARDWOOD_CLEAR_FEE, new HardwoodClearFee());
 		TESTS.put(TestItem.CRYSTAL_TREE_STATES, new CrystalTreeStates());
 		TESTS.put(TestItem.GREAT_CONCH_ACCESS, new GreatConchAccess());
-		TESTS.put(TestItem.SAILING_LEVEL, new SailingLevel());
 	}
 
 	private GuidedTests()
@@ -1634,27 +1633,6 @@ final class GuidedTests
 					.onAnswer((ctx, yes) -> ctx.problem(yes ? "By the patch, but the plugin didn't see it"
 						: "Couldn't get to the patch")),
 				ask("Can you rake or plant in the calquat patch?"));
-		}
-	}
-
-	/** Sprint 1c: the plugin reads the Sailing level for Anglers' Retreat (51 to moor), never read before. */
-	private static final class SailingLevel extends GuidedTest
-	{
-		@Override
-		public List<Step> steps()
-		{
-			return Collections.singletonList(
-				ask("Is your Sailing level 51 or more?")
-					.onAnswer((ctx, yes) ->
-					{
-						final AccessSnapshot access = ctx.access();
-						final int level = access.isKnown() ? access.level(Skill.SAILING) : -1;
-						ctx.capture("Sailing level read", level);
-						if (yes != level >= 51)
-						{
-							ctx.problem("You said " + (yes ? "51 or more" : "under 51") + ", the plugin read " + level);
-						}
-					}));
 		}
 	}
 }
