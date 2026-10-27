@@ -128,6 +128,8 @@ public class RunConfig
 	private boolean noteProduce = true;
 	/** Empty buckets after composting: dropped, kept or stored at the tool leprechaun (P1; dropped by default). */
 	private EmptyBuckets emptyBuckets = EmptyBuckets.DROP;
+	/** How the work at a stop's patches is ordered: patch by patch, or nearby patches as a group (P1, elzerma). */
+	private StopOrder stopOrder = StopOrder.PATCH_BY_PATCH;
 	/** Walk instead of teleporting when the walk is only a little slower (saves charges and clicks). */
 	private boolean preferWalking = true;
 
@@ -229,6 +231,10 @@ public class RunConfig
 		if (emptyBuckets == null)
 		{
 			emptyBuckets = EmptyBuckets.DROP;
+		}
+		if (stopOrder == null)
+		{
+			stopOrder = StopOrder.PATCH_BY_PATCH;
 		}
 		if (routeMode == null)
 		{

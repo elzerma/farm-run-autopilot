@@ -18,6 +18,7 @@ import com.farmrunautopilot.settings.Compost;
 import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
+import com.farmrunautopilot.settings.StopOrder;
 import com.farmrunautopilot.supply.FlowerProtection;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
@@ -331,8 +332,10 @@ class PatchGuide
 			atStop = stop;
 			arrivedWith = new HashMap<>(holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY));
 		}
-		// Every patch here is picked and cleared before any is treated and planted (patch actions P1, elzerma's workflow):
-		// those steps wait until the rest are done, the produce is noted and the compost taken
+		// Patch by patch, or (elzerma's choice, for players without a bottomless compost bucket) nearby patches as a group: the
+		// group's patches are picked and cleared, its produce noted and its compost taken before any is treated and planted
+		final boolean grouped = settings.getRunConfig().getStopOrder() == StopOrder.GROUP_NEARBY;
+		Set<Patch> group = null;
 		final List<Patch> treatLater = new ArrayList<>();
 		final Map<Patch, StepAdvisor.Advice> later = new EnumMap<>(Patch.class);
 		for (Patch patch : protectingFlowersFirst(navigator.nearestFirst(here, currentPatch)))
@@ -384,7 +387,19 @@ class PatchGuide
 				p.done = true;
 				continue;
 			}
-			if (treatsOrPlants(advice.getAction()))
+			if (grouped)
+			{
+				// The group is the first patch with work left and those near it; the rest wait their turn
+				if (group == null)
+				{
+					group = nearby(patch, here);
+				}
+				else if (!group.contains(patch))
+				{
+					continue;
+				}
+			}
+			if (grouped && treatsOrPlants(advice.getAction()))
 			{
 				treatLater.add(patch);
 				later.put(patch, advice);
@@ -394,6 +409,12 @@ class PatchGuide
 		}
 		if (treatLater.isEmpty())
 		{
+			// Every patch done: the produce still unnoted is noted before leaving, while still here
+			final String note = navigator.nearAny(here) ? noteStep(here.get(0)) : null;
+			if (note != null)
+			{
+				return note;
+			}
 			clearCurrent();
 			return null;
 		}
@@ -429,6 +450,43 @@ class PatchGuide
 			return navigator.walkTo(stop, patch, "Run", advice.getText());
 		}
 		return advice.getText();
+	}
+
+	/** Patches this close to each other (by their map points) work as a group: an allotment set and its flower. */
+	static final int GROUP_TILES = 12;
+
+	/**
+	 * The patch and every patch here linked to it by steps of at most {@link #GROUP_TILES}: an allotment set, its flower
+	 * and a herb beside them, but the Farming Guild's two wings apart.
+	 */
+	static Set<Patch> nearby(Patch patch, List<Patch> here)
+	{
+		final Set<Patch> group = new LinkedHashSet<>();
+		group.add(patch);
+		boolean grew = true;
+		while (grew)
+		{
+			grew = false;
+			for (Patch other : here)
+			{
+				if (group.contains(other))
+				{
+					continue;
+				}
+				for (Patch member : new ArrayList<>(group))
+				{
+					final net.runelite.api.coords.WorldPoint a = com.farmrunautopilot.data.PatchPoints.of(member);
+					final net.runelite.api.coords.WorldPoint b = com.farmrunautopilot.data.PatchPoints.of(other);
+					if (a != null && b != null && a.getPlane() == b.getPlane() && a.distanceTo2D(b) <= GROUP_TILES)
+					{
+						group.add(other);
+						grew = true;
+						break;
+					}
+				}
+			}
+		}
+		return group;
 	}
 
 	/** Composting, planting and paying the gardener: done once every patch at the stop is picked (P1). */

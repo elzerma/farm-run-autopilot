@@ -12,6 +12,7 @@ import com.farmrunautopilot.settings.EmptyBuckets;
 import com.farmrunautopilot.settings.Outfit;
 import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
+import com.farmrunautopilot.settings.StopOrder;
 import com.farmrunautopilot.settings.SettingsStore;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -434,8 +435,13 @@ class FarmPage extends SetupPanel
 	private JComponent atThePatchesSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("At the patches");
-		s.help("At each stop every patch is picked first, then the produce noted and the compost taken from the tool "
-			+ "leprechaun, then every patch treated and planted.");
+		s.help("Patch by patch: each patch harvested, treated and planted before the next, and the produce noted before "
+			+ "leaving. Group nearby patches: patches close together (an allotment set and its flower) are picked, then the "
+			+ "produce noted and the compost taken from the tool leprechaun, then treated and planted. Grouping suits you best "
+			+ "without a bottomless compost bucket.");
+		s.addContent(label("Order at a stop"));
+		s.addContent(combo(enumChoices(StopOrder.values()), config.getStopOrder(),
+			o -> saveRun(() -> config.setStopOrder(o))));
 		s.addContent(checkBox("Note produce on the tool leprechaun", config.isNoteProduce(), true,
 			"Once everything at a stop is picked, a step to use the produce on the leprechaun, saving inventory slots",
 			on -> saveRun(() -> config.setNoteProduce(on))));

@@ -71,11 +71,23 @@ public class PatchActionsTest
 	}
 
 	@Test
+	public void nearbyPatchesGroupByWing()
+	{
+		final java.util.List<com.farmrunautopilot.data.Patch> guild = com.farmrunautopilot.data.Location.FARMING_GUILD.getPatches();
+		final Set<com.farmrunautopilot.data.Patch> group = PatchGuide.nearby(com.farmrunautopilot.data.Patch.FARMING_GUILD_ALLOTMENT_N, guild);
+		// The allotment set and its flower work together; the herb, across the guild, waits
+		assertTrue(group.contains(com.farmrunautopilot.data.Patch.FARMING_GUILD_ALLOTMENT_S));
+		assertTrue(group.contains(com.farmrunautopilot.data.Patch.FARMING_GUILD_FLOWER));
+		assertFalse(group.contains(com.farmrunautopilot.data.Patch.FARMING_GUILD_HERB));
+	}
+
+	@Test
 	public void settingsDefaults()
 	{
 		final RunConfig config = new RunConfig().sanitise();
 		assertTrue(config.isNoteProduce());
 		assertEquals(EmptyBuckets.DROP, config.getEmptyBuckets());
+		assertEquals(com.farmrunautopilot.settings.StopOrder.PATCH_BY_PATCH, config.getStopOrder());
 		config.setEmptyBuckets(null);
 		assertEquals(EmptyBuckets.DROP, config.sanitise().getEmptyBuckets());
 	}
