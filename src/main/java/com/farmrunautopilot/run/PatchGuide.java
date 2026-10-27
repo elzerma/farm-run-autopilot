@@ -59,6 +59,20 @@ class PatchGuide
 	static final Pattern INSPECTED_COMPOSTED = Pattern.compile(
 		"This is an? .+?\\. The soil has been treated with (ultra|super|)compost.*");
 	private static final int INVENTORY_SLOTS = 28;
+	/** Gained at a patch but never produce to note: weeds, what's left from composting and planting, his own stock. */
+	private static final Set<Integer> NOT_PRODUCE = notProduce();
+
+	private static Set<Integer> notProduce()
+	{
+		final Set<Integer> ids = new java.util.HashSet<>(java.util.Arrays.asList(ItemID.WEEDS, ItemID.BUCKET_EMPTY,
+			ItemID.PLANTPOT_EMPTY, ItemID.BOTTOMLESS_COMPOST_BUCKET, ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED));
+		for (com.farmrunautopilot.supply.LeprechaunItem item : com.farmrunautopilot.supply.LeprechaunItem.values())
+		{
+			ids.add(item.getItemId());
+		}
+		return java.util.Collections.unmodifiableSet(ids);
+	}
+
 	/** The NPC who notes produce and stores tools and compost at every farming area. */
 	static final String TOOL_LEPRECHAUN = "Tool Leprechaun";
 
@@ -436,7 +450,14 @@ class PatchGuide
 		}
 		produce = produceGained(arrivedWith, holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY),
 			runService::notedId);
-		// Logs from chopping a tree aren't farming produce he notes
+		// Not produce: what the run brought (seeds, payments), and logs from chopping a tree
+		for (com.farmrunautopilot.supply.SupplyLine line : plan.getSupplies().getLines())
+		{
+			for (int id : line.getItemIds())
+			{
+				produce.remove(id);
+			}
+		}
 		produce.removeIf(id -> runService.itemName(id).toLowerCase().endsWith("logs"));
 		if (produce.isEmpty())
 		{
@@ -454,7 +475,8 @@ class PatchGuide
 
 	/**
 	 * What's gained since arriving that the leprechaun can note: items with a noted form, more of them than were carried
-	 * in; not weeds, which are dropped.
+	 * in; not weeds or empty buckets and pots (elzerma, 2026-10-27: "it said to note my bucket"), nor what he stores
+	 * (compost, tools, plant cure) taken from him.
 	 */
 	static Set<Integer> produceGained(Map<Integer, Integer> before, Map<Integer, Integer> now,
 		java.util.function.IntUnaryOperator noted)
@@ -462,7 +484,7 @@ class PatchGuide
 		final Set<Integer> gained = new LinkedHashSet<>();
 		now.forEach((id, count) ->
 		{
-			if (id != ItemID.WEEDS && count > before.getOrDefault(id, 0) && noted.applyAsInt(id) != id)
+			if (!NOT_PRODUCE.contains(id) && count > before.getOrDefault(id, 0) && noted.applyAsInt(id) != id)
 			{
 				gained.add(id);
 			}

@@ -31,6 +31,9 @@ public class PatchActionsTest
 		now.put(ItemID.WATERMELON, 12);
 		now.put(ItemID.WEEDS, 3);
 		now.put(ItemID.COINS, 50);
+		now.put(ItemID.BUCKET_EMPTY, 2);
+		now.put(ItemID.BUCKET_ULTRACOMPOST, 3);
+		now.put(ItemID.RAKE, 1);
 		final Set<Integer> produce = PatchGuide.produceGained(before, now, PatchActionsTest::noted);
 		assertTrue(produce.contains(ItemID.UNIDENTIFIED_RANARR));
 		assertTrue(produce.contains(ItemID.WATERMELON));
@@ -38,6 +41,10 @@ public class PatchActionsTest
 		assertFalse(produce.contains(ItemID.WEEDS));
 		assertFalse(produce.contains(ItemID.COINS));
 		assertFalse(produce.contains(ItemID.DIBBER));
+		// Nor what composting leaves or the leprechaun gives back
+		assertFalse(produce.contains(ItemID.BUCKET_EMPTY));
+		assertFalse(produce.contains(ItemID.BUCKET_ULTRACOMPOST));
+		assertFalse(produce.contains(ItemID.RAKE));
 		assertTrue(PatchGuide.produceGained(before, before, PatchActionsTest::noted).isEmpty());
 	}
 
