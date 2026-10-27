@@ -407,8 +407,9 @@ public final class SupplyCalculator
 
 		// Spells used on patches
 		final int herbs = patchCounts.getOrDefault(PatchType.HERB, 0);
-		// Magic secateurs also add to allotment and hops yields (wiki: Magic secateurs)
-		final int boosted = herbs + patchCounts.getOrDefault(PatchType.ALLOTMENT, 0) + patchCounts.getOrDefault(PatchType.HOPS, 0);
+		// Magic secateurs also add to allotment, hops, bush and celastrus yields (wiki: Magic secateurs, elzerma 2026-10-26)
+		final int boosted = herbs + patchCounts.getOrDefault(PatchType.ALLOTMENT, 0) + patchCounts.getOrDefault(PatchType.HOPS, 0)
+			+ patchCounts.getOrDefault(PatchType.BUSH, 0) + patchCounts.getOrDefault(PatchType.CELASTRUS, 0);
 		final boolean seeds = plantings.values().stream().anyMatch(crop -> crop.isSeed() && crop != Crop.SCARECROW);
 		if (config.isUseCurePlant() && herbs > 0)
 		{

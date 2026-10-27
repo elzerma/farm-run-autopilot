@@ -13,6 +13,7 @@ import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.JCheckBox;
@@ -132,6 +133,12 @@ class FarmPage extends SetupPanel
 		// One line per choice (elzerma): "1st [drop-down]"; the 3rd only once the 2nd is set
 		for (PatchType type : PatchType.values())
 		{
+			// Nothing to choose where the type grows one crop (mushroom, belladonna, seaweed, calquat, celastrus, redwood,
+			// spirit and crystal trees: elzerma, 2026-10-26)
+			if (Arrays.stream(Crop.values()).filter(c -> c.getType() == type && c.isChoosable()).count() < 2)
+			{
+				continue;
+			}
 			s.addContent(subheader(type.getDisplayName()));
 			final Crop firstCrop = config.cropFor(type, farming);
 			final JComponent first = combo(cropChoices(type, farming, false, Collections.emptyList()), firstCrop,

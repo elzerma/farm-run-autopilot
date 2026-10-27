@@ -1066,7 +1066,7 @@ class RunPanel extends JPanel
 		for (PatchType type : PatchType.values())
 		{
 			families.computeIfAbsent(SPECIALS.contains(type) ? "Specials"
-				: SPECIAL_TREES.contains(type) ? "Special trees" : shortName(type),
+				: SPECIAL_TREES.contains(type) ? "Sp. trees" : shortName(type),
 				k -> EnumSet.noneOf(PatchType.class)).add(type);
 		}
 		for (Map.Entry<String, Set<PatchType>> family : families.entrySet())
