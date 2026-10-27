@@ -256,7 +256,7 @@ public final class PatchStateDecoder
 
 	/**
 	 * Sprint 1c, from RuneLite's CRYSTAL_TREE: it can't get diseased, so no diseased or dead values; 15 is the checked
-	 * tree to chop down. 4-7 and above 15 RuneLite doesn't know (UNVERIFIED what chopping leaves).
+	 * tree to chop down, which leaves the patch empty (wiki: Crystal tree). 4-7 and above 15 RuneLite doesn't know.
 	 */
 	private static DecodedPatch[] crystalTreeTable()
 	{

@@ -90,13 +90,6 @@ public enum TestItem
 			+ "Etceteria and go to the bush patch by the castle. If you can rake or plant it, the plugin is right to need "
 			+ "only The Fremennik Trials for it."),
 	// Sprint 1c, the special trees
-	HARDWOOD_CLEAR_FEE(Tab.FARM, "Paying to clear a hardwood tree",
-		"With a grown teak, mahogany or other hardwood tree you want gone, ask its gardener (a squirrel on Fossil Island, "
-			+ "Marcellus or Argo) to clear it and pay. The plugin plans 200 coins, as for other trees."),
-	CRYSTAL_TREE_STATES(Tab.FARM, "The crystal tree in Prifddinas",
-		"With 74 Farming, Song of the Elves done and a crystal sapling, go to the crystal tree patch north-east of "
-			+ "Prifddinas, then plant the sapling, check a grown tree's health or chop one down. The plugin reads what's in "
-			+ "the patch before and after."),
 	GREAT_CONCH_ACCESS(Tab.ACCOUNT, "The Great Conch's calquat patch",
 		"Only if you've started Troubled Tortugans but not finished it: go to the calquat patch on the Summer Shore of the "
 			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2);

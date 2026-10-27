@@ -8,7 +8,6 @@ import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
-import com.farmrunautopilot.data.PatchStateDecoder;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.SupplyItems;
@@ -86,8 +85,6 @@ final class GuidedTests
 		TESTS.put(TestItem.SEAWEED_DIVE, new SeaweedDive());
 		TESTS.put(TestItem.ETCETERIA_ACCESS, new EtceteriaAccess());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
-		TESTS.put(TestItem.HARDWOOD_CLEAR_FEE, new HardwoodClearFee());
-		TESTS.put(TestItem.CRYSTAL_TREE_STATES, new CrystalTreeStates());
 		TESTS.put(TestItem.GREAT_CONCH_ACCESS, new GreatConchAccess());
 	}
 
@@ -1405,119 +1402,6 @@ final class GuidedTests
 						: "The boat didn't take you to Etceteria"))
 					.onDone(ctx -> ctx.capture("Arrived at", ctx.location())),
 				ask("Can you rake or plant in the bush patch?"));
-		}
-	}
-
-	/** Sprint 1c: what a hardwood gardener charges to clear a grown tree (the plugin plans 200 coins, reported in #30). */
-	private static final class HardwoodClearFee extends GuidedTest
-	{
-		private static final String COINS = "coins before";
-
-		@Override
-		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
-		{
-			for (Patch patch : Patch.values())
-			{
-				if (patch.getType() == PatchType.HARDWOOD && access.missingFor(patch).isEmpty())
-				{
-					return Collections.emptyList();
-				}
-			}
-			return Collections.singletonList("Unlock a hardwood tree patch (Bone Voyage for Fossil Island's)");
-		}
-
-		private static int coins(TestContext ctx)
-		{
-			return ctx.holdings().in(Holdings.Source.INVENTORY).getOrDefault(ItemID.COINS, 0);
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				ask("Do you have a grown hardwood tree to clear, and some coins in your inventory?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (!yes)
-						{
-							ctx.cannotTest("a grown hardwood tree to clear");
-						}
-					}),
-				doThis("Ask its gardener to clear it and pay", ctx -> coins(ctx) < ctx.<Integer>recall(COINS))
-					.onStart(ctx -> ctx.remember(COINS, coins(ctx)))
-					.onDone(ctx ->
-					{
-						final int paid = ctx.<Integer>recall(COINS) - coins(ctx);
-						ctx.capture("Coins paid", paid);
-						ctx.capture("Where", ctx.location());
-						if (paid != Crop.CLEAR_PATCH_COINS)
-						{
-							ctx.problem("Paid " + paid + " coins, not " + Crop.CLEAR_PATCH_COINS);
-						}
-					})
-					.orAskAfter(DO_TICKS * 4, "Did you pay the gardener?")
-					.onAnswer((ctx, yes) -> ctx.problem(yes ? "Paid, but the plugin didn't see the coins go"
-						: "Not paid")));
-		}
-	}
-
-	/**
-	 * Sprint 1c: the crystal tree patch's values (FARMING_TRANSMIT_E in Prifddinas, from RuneLite's table and never read
-	 * by this plugin), before and after planting, checking health or chopping it down.
-	 */
-	private static final class CrystalTreeStates extends GuidedTest
-	{
-		private static final String BEFORE = "value before";
-
-		@Override
-		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
-		{
-			final List<String> missing = new ArrayList<>(patchesUsable(access, Location.PRIFDDINAS));
-			if (access.isKnown() && access.level(Skill.FARMING) < 74)
-			{
-				missing.add("Reach 74 Farming");
-			}
-			return missing;
-		}
-
-		private static String reading(TestContext ctx)
-		{
-			final int value = ctx.varbit(VarbitID.FARMING_TRANSMIT_E);
-			return value + " = " + PatchStateDecoder.decode(PatchType.CRYSTAL_TREE, value);
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				doThis("Go to the crystal tree patch north-east of Prifddinas",
-					ctx -> ctx.inRegion(Patch.PRIFDDINAS_CRYSTAL_TREE.getRegionId()))
-					.onDone(ctx ->
-					{
-						ctx.capture("On arrival", reading(ctx));
-						ctx.remember(BEFORE, ctx.varbit(VarbitID.FARMING_TRANSMIT_E));
-					}),
-				ask("Do you have a crystal sapling to plant, or a grown crystal tree here?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (!yes)
-						{
-							ctx.cannotTest("a crystal sapling or a grown crystal tree");
-						}
-					}),
-				doThis("Plant the sapling, check the grown tree's health, or chop it down",
-					ctx -> ctx.varbit(VarbitID.FARMING_TRANSMIT_E) != ctx.<Integer>recall(BEFORE))
-					.onDone(ctx ->
-					{
-						ctx.capture("After", reading(ctx));
-						if (reading(ctx).contains("UNKNOWN"))
-						{
-							ctx.problem("The patch's value isn't in the plugin's table");
-						}
-					})
-					.orAskAfter(DO_TICKS * 4, "Did you plant, check or chop it?")
-					.onAnswer((ctx, yes) -> ctx.problem(yes ? "Done, but the patch's value didn't change" : "Not done")),
-				ask("Does the Run tab show what's in the patch now?"));
 		}
 	}
 

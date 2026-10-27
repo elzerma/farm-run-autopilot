@@ -209,7 +209,7 @@ public enum Crop
 		}
 	}
 
-	/** Coins the gardener charges to clear a grown tree of this type (the hardwood squirrels too, as reported in #30). */
+	/** Coins the gardener charges to clear a grown tree of this type (the hardwood squirrels and Argo too, wiki). */
 	public static int clearCoins(PatchType type)
 	{
 		return type == PatchType.REDWOOD ? CLEAR_REDWOOD_COINS : CLEAR_PATCH_COINS;
