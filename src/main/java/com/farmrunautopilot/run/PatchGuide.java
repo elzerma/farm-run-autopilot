@@ -55,6 +55,9 @@ class PatchGuide
 		"You treat the .+ with (ultra|super|)compost\\.|^The .+ has been treated with (ultra|super|)compost.*");
 	private static final Pattern ALREADY_COMPOSTED = Pattern.compile(
 		"This .+ has already been (treated|fertilised) with (ultra|super|)compost.*");
+	/** Inspecting a treated patch: "This is an allotment. The soil has been treated with ultracompost. ..." */
+	static final Pattern INSPECTED_COMPOSTED = Pattern.compile(
+		"This is an? .+?\\. The soil has been treated with (ultra|super|)compost.*");
 	private static final int INVENTORY_SLOTS = 28;
 	/** The NPC who notes produce and stores tools and compost at every farming area. */
 	static final String TOOL_LEPRECHAUN = "Tool Leprechaun";
@@ -228,12 +231,29 @@ class PatchGuide
 	 */
 	void onChatMessage(String message, List<Patch> here)
 	{
-		if (!COMPOST_USED.matcher(message).matches() && !ALREADY_COMPOSTED.matcher(message).matches())
+		if (!COMPOST_USED.matcher(message).matches() && !ALREADY_COMPOSTED.matcher(message).matches()
+			&& !INSPECTED_COMPOSTED.matcher(message).matches())
 		{
 			return;
 		}
-		final Patch named = patchNamed(message, here);
-		final Patch patch = named != null ? named : currentPatch;
+		Patch patch = patchNamed(message, here);
+		if (patch == null)
+		{
+			// Two of the type it names (the two allotments): the nearer one not yet credited, which is the one just used.
+			// Crediting the patch the guide was on instead left an allotment asking for compost it had (elzerma,
+			// 2026-10-27: composted out of order at the Farming Guild)
+			final PatchType type = typeNamed(message);
+			final List<Patch> candidates = new ArrayList<>();
+			for (Patch p : here)
+			{
+				if (p.getType() == type && !progress(p).composted)
+				{
+					candidates.add(p);
+				}
+			}
+			final List<Patch> nearest = navigator.nearestFirst(candidates, null);
+			patch = !nearest.isEmpty() ? nearest.get(0) : type == null ? currentPatch : null;
+		}
 		if (patch != null)
 		{
 			progress(patch).composted = true;
@@ -243,8 +263,28 @@ class PatchGuide
 	/** The one patch of the type a message names ("fruit tree patch", "herb patch", "allotment", ...), or null. */
 	static Patch patchNamed(String message, List<Patch> here)
 	{
+		final PatchType type = typeNamed(message);
+		Patch found = null;
+		for (Patch patch : here)
+		{
+			if (patch.getType() == type)
+			{
+				if (found != null)
+				{
+					// Two of that type here: can't tell which
+					return null;
+				}
+				found = patch;
+			}
+		}
+		return found;
+	}
+
+	/** The patch type a message names ("fruit tree patch", "herb patch", "allotment", ...), or null. */
+	static PatchType typeNamed(String message)
+	{
 		final String text = message.toLowerCase();
-		final PatchType type = text.contains("fruit tree") ? PatchType.FRUIT_TREE
+		return text.contains("fruit tree") ? PatchType.FRUIT_TREE
 			: text.contains("herb") ? PatchType.HERB
 			: text.contains("allotment") ? PatchType.ALLOTMENT
 			: text.contains("flower") ? PatchType.FLOWER
@@ -263,20 +303,6 @@ class PatchGuide
 			: text.contains("spirit tree") ? PatchType.SPIRIT_TREE
 			: text.contains("crystal tree") ? PatchType.CRYSTAL_TREE
 			: text.contains("tree") ? PatchType.TREE : null;
-		Patch found = null;
-		for (Patch patch : here)
-		{
-			if (patch.getType() == type)
-			{
-				if (found != null)
-				{
-					// Two of that type here: can't tell which
-					return null;
-				}
-				found = patch;
-			}
-		}
-		return found;
 	}
 
 	/**

@@ -54,6 +54,16 @@ public class PatchActionsTest
 	}
 
 	@Test
+	public void inspectingATreatedPatchCountsItsCompost()
+	{
+		assertTrue(PatchGuide.INSPECTED_COMPOSTED.matcher("This is an allotment. The soil has been treated with ultracompost. The "
+			+ "patch has watermelons growing in it and is at state 1/9.").matches());
+		assertFalse(PatchGuide.INSPECTED_COMPOSTED.matcher("This is a hardwood tree patch. The soil has not been treated. The patch "
+			+ "is empty and weeded.").matches());
+		assertEquals(com.farmrunautopilot.data.PatchType.ALLOTMENT, PatchGuide.typeNamed("You treat the allotment with ultracompost."));
+	}
+
+	@Test
 	public void settingsDefaults()
 	{
 		final RunConfig config = new RunConfig().sanitise();
