@@ -21,6 +21,7 @@ import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
+import com.farmrunautopilot.settings.EmptyBuckets;
 import com.farmrunautopilot.settings.Outfit;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
@@ -2650,20 +2651,25 @@ public class RunSession
 		{
 			parts.add(pots + (pots == 1 ? " empty plant pot" : " empty plant pots"));
 		}
-		if (buckets > 0)
+		// Empty buckets as the player chose (patch actions P1): dropped, kept, or stored with the tool leprechaun
+		final EmptyBuckets bucketChoice = settings.getRunConfig().getEmptyBuckets();
+		final String bucketText = buckets + (buckets == 1 ? " empty bucket" : " empty buckets");
+		if (buckets > 0 && bucketChoice == EmptyBuckets.DROP)
 		{
-			parts.add(buckets + (buckets == 1 ? " empty bucket" : " empty buckets"));
+			parts.add(bucketText);
 		}
+		final String store = buckets > 0 && bucketChoice == EmptyBuckets.STORE
+			? "Store " + bucketText + " with the tool leprechaun" : null;
 		if (parts.isEmpty())
 		{
-			return null;
+			return store;
 		}
 		String text = parts.get(0);
 		for (int i = 1; i < parts.size(); i++)
 		{
 			text += (i == parts.size() - 1 ? " and " : ", ") + parts.get(i);
 		}
-		return "Drop " + text;
+		return "Drop " + text + (store != null ? "\n" + store : "");
 	}
 
 	/** Reminders shown under the step, one per line, or null when there are none. */

@@ -33,6 +33,10 @@ public final class StepAdvisor
 		COMPOST,
 		PLANT,
 		PAY,
+		/** Note the stop's produce on the tool leprechaun, once everything here is picked (patch actions P1). */
+		NOTE,
+		/** Take the compost this stop's patches need from the tool leprechaun (P1). */
+		TAKE_COMPOST,
 		DONE
 	}
 

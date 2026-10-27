@@ -28,6 +28,7 @@ import com.farmrunautopilot.tracking.PatchTracker;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,8 @@ class PatchGuide
 	private static final Pattern ALREADY_COMPOSTED = Pattern.compile(
 		"This .+ has already been (treated|fertilised) with (ultra|super|)compost.*");
 	private static final int INVENTORY_SLOTS = 28;
+	/** The NPC who notes produce and stores tools and compost at every farming area. */
+	static final String TOOL_LEPRECHAUN = "Tool Leprechaun";
 
 	private final Client client;
 	private final RunService runService;
@@ -71,6 +74,11 @@ class PatchGuide
 	private final Map<Patch, Progress> progress = new EnumMap<>(Patch.class);
 	/** Patches finished this run, in the order they were finished, for the checklist's order. */
 	private final Set<Patch> finishedOrder = new LinkedHashSet<>();
+	/** The stop being worked at, and what the inventory held on arriving there, to tell its produce (P1). */
+	private RouteStop atStop;
+	private Map<Integer, Integer> arrivedWith = Collections.emptyMap();
+	/** The produce the Note step outlines. */
+	private Set<Integer> produce = Collections.emptySet();
 
 	/** What has happened at a patch during this run. */
 	private static final class Progress
@@ -105,6 +113,7 @@ class PatchGuide
 		this.plan = plan;
 		progress.clear();
 		finishedOrder.clear();
+		atStop = null;
 		clearCurrent();
 	}
 
@@ -276,6 +285,16 @@ class PatchGuide
 	 */
 	String nextStep(RouteStop stop, List<Patch> here)
 	{
+		if (stop != atStop)
+		{
+			// What was carried on arriving: anything notable gained here is the stop's produce, to note (P1)
+			atStop = stop;
+			arrivedWith = new HashMap<>(holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY));
+		}
+		// Every patch here is picked and cleared before any is treated and planted (patch actions P1, elzerma's workflow):
+		// those steps wait until the rest are done, the produce is noted and the compost taken
+		final List<Patch> treatLater = new ArrayList<>();
+		final Map<Patch, StepAdvisor.Advice> later = new EnumMap<>(Patch.class);
 		for (Patch patch : protectingFlowersFirst(navigator.nearestFirst(here, currentPatch)))
 		{
 			final Progress p = progress(patch);
@@ -320,21 +339,158 @@ class PatchGuide
 					continue;
 				}
 			}
-			if (advice.getAction() != StepAdvisor.Action.DONE)
+			if (advice.getAction() == StepAdvisor.Action.DONE)
 			{
-				currentPatch = patch;
-				currentAction = advice.getAction();
-				// The area loads well before the patch is reached, and some places have several patches
-				if (advice.getAction() != StepAdvisor.Action.INSPECT && navigator.farFrom(patch))
-				{
-					return navigator.walkTo(stop, patch, "Run", advice.getText());
-				}
-				return advice.getText();
+				p.done = true;
+				continue;
 			}
-			p.done = true;
+			if (treatsOrPlants(advice.getAction()))
+			{
+				treatLater.add(patch);
+				later.put(patch, advice);
+				continue;
+			}
+			return step(stop, patch, advice);
 		}
-		clearCurrent();
+		if (treatLater.isEmpty())
+		{
+			clearCurrent();
+			return null;
+		}
+		// Treating or planting already begun means the player went their own way: the note and compost steps aren't
+		// pressed on them
+		final boolean begun = treatLater.stream().anyMatch(patch -> progress(patch).composted || progress(patch).paid
+			|| suppliesUsed(patch));
+		if (!begun)
+		{
+			final String note = noteStep(treatLater.get(0));
+			if (note != null)
+			{
+				return note;
+			}
+			final String compost = compostStep(treatLater, later);
+			if (compost != null)
+			{
+				return compost;
+			}
+		}
+		final Patch patch = treatLater.get(0);
+		return step(stop, patch, later.get(patch));
+	}
+
+	/** The step at a patch, with the walk to it first while it's still far off. */
+	private String step(RouteStop stop, Patch patch, StepAdvisor.Advice advice)
+	{
+		currentPatch = patch;
+		currentAction = advice.getAction();
+		// The area loads well before the patch is reached, and some places have several patches
+		if (advice.getAction() != StepAdvisor.Action.INSPECT && navigator.farFrom(patch))
+		{
+			return navigator.walkTo(stop, patch, "Run", advice.getText());
+		}
+		return advice.getText();
+	}
+
+	/** Composting, planting and paying the gardener: done once every patch at the stop is picked (P1). */
+	static boolean treatsOrPlants(StepAdvisor.Action action)
+	{
+		return action == StepAdvisor.Action.COMPOST || action == StepAdvisor.Action.PLANT
+			|| action == StepAdvisor.Action.PAY;
+	}
+
+	/**
+	 * "Note your produce on the tool leprechaun", while anything notable picked at this stop is still unnoted in the
+	 * inventory and noting is on (P1, on by default); null otherwise.
+	 */
+	private String noteStep(Patch at)
+	{
+		if (!settings.getRunConfig().isNoteProduce())
+		{
+			return null;
+		}
+		produce = produceGained(arrivedWith, holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY),
+			runService::notedId);
+		// Logs from chopping a tree aren't farming produce he notes
+		produce.removeIf(id -> runService.itemName(id).toLowerCase().endsWith("logs"));
+		if (produce.isEmpty())
+		{
+			return null;
+		}
+		currentPatch = at;
+		currentAction = StepAdvisor.Action.NOTE;
+		final List<String> names = new ArrayList<>();
+		for (int id : produce)
+		{
+			names.add(runService.itemName(id).toLowerCase());
+		}
+		return "Note your " + join(names) + " on the tool leprechaun (use them on him)";
+	}
+
+	/**
+	 * What's gained since arriving that the leprechaun can note: items with a noted form, more of them than were carried
+	 * in; not weeds, which are dropped.
+	 */
+	static Set<Integer> produceGained(Map<Integer, Integer> before, Map<Integer, Integer> now,
+		java.util.function.IntUnaryOperator noted)
+	{
+		final Set<Integer> gained = new LinkedHashSet<>();
+		now.forEach((id, count) ->
+		{
+			if (id != ItemID.WEEDS && count > before.getOrDefault(id, 0) && noted.applyAsInt(id) != id)
+			{
+				gained.add(id);
+			}
+		});
+		return gained;
+	}
+
+	/**
+	 * "Take 3 ultracompost from the tool leprechaun": the compost this stop's patches still need, when there's too little
+	 * in the inventory and enough stored with him (P1: at each stop for that stop); null otherwise, or with a filled
+	 * bottomless bucket.
+	 */
+	private String compostStep(List<Patch> treatLater, Map<Patch, StepAdvisor.Advice> later)
+	{
+		final Holdings holdings = holdingsTracker.getHoldings();
+		final Map<Integer, Integer> inventory = holdings.in(Holdings.Source.INVENTORY);
+		if (inventory.getOrDefault(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED, 0) > 0)
+		{
+			return null;
+		}
+		final Map<Compost, Integer> need = new EnumMap<>(Compost.class);
+		for (Patch patch : treatLater)
+		{
+			final Compost compost = compostFor(patch);
+			final StepAdvisor.Action action = later.get(patch).getAction();
+			if (compost != null && compost != Compost.NONE && !progress(patch).composted
+				&& (action == StepAdvisor.Action.COMPOST || action == StepAdvisor.Action.PLANT))
+			{
+				need.merge(compost, 1, Integer::sum);
+			}
+		}
+		final Map<Integer, Integer> stored = holdings.in(Holdings.Source.LEPRECHAUN);
+		for (Map.Entry<Compost, Integer> e : need.entrySet())
+		{
+			final int id = e.getKey().getItemId();
+			final int missing = e.getValue() - inventory.getOrDefault(id, 0);
+			if (missing > 0 && stored.getOrDefault(id, 0) >= missing)
+			{
+				currentPatch = treatLater.get(0);
+				currentAction = StepAdvisor.Action.TAKE_COMPOST;
+				return "Take " + missing + " " + e.getKey().getDisplayName().toLowerCase() + " from the tool leprechaun";
+			}
+		}
 		return null;
+	}
+
+	private static String join(List<String> parts)
+	{
+		String text = parts.get(0);
+		for (int i = 1; i < parts.size(); i++)
+		{
+			text += (i == parts.size() - 1 ? " and " : ", ") + parts.get(i);
+		}
+		return text;
 	}
 
 	/** Paid once the payment items leave the inventory after paying became the next step. */
@@ -477,6 +633,13 @@ class PatchGuide
 		if (currentPatch == null || currentAction == null)
 		{
 			return null;
+		}
+		// The tool leprechaun outlined, with the produce to use on him (P1)
+		if (currentAction == StepAdvisor.Action.NOTE || currentAction == StepAdvisor.Action.TAKE_COMPOST)
+		{
+			return new Highlights(null, false, TOOL_LEPRECHAUN, currentAction == StepAdvisor.Action.NOTE ? produce
+				: Collections.emptySet(), null, Collections.emptySet(), Collections.emptyList(), null,
+				Collections.emptySet());
 		}
 		// Main item first: reminders name it. Only what gets clicked is outlined (elzerma, 2026-10-19: the rake and
 		// spades were outlined, though raking and clearing click the patch); the rest is still checked as carried.

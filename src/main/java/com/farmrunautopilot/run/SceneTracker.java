@@ -49,7 +49,7 @@ public class SceneTracker
 	private final Map<Patch, List<GameObject>> patchObjects = new EnumMap<>(Patch.class);
 	private final Map<Patch, NPC> gardeners = new EnumMap<>(Patch.class);
 	/** Renu, the quetzal a Renu leg walks back to first (Navigator); everyone else ridden comes from the atlas. */
-	private static final Set<String> TRANSFER_NPC_NAMES = Set.of("Renu");
+	private static final Set<String> TRANSFER_NPC_NAMES = Set.of("Renu", PatchGuide.TOOL_LEPRECHAUN);
 	private final Map<String, NPC> transfers = new HashMap<>();
 	/** Everyone the travel atlas's journeys are used on (Renu, a ship's crew, a guide), once it's read. */
 	private Set<String> atlasRideNames;
