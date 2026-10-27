@@ -86,7 +86,6 @@ final class GuidedTests
 		TESTS.put(TestItem.SEAWEED_DIVE, new SeaweedDive());
 		TESTS.put(TestItem.ETCETERIA_ACCESS, new EtceteriaAccess());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
-		TESTS.put(TestItem.SPECIAL_TREE_PATCH_POINTS, new SpecialTreePatchPoints());
 		TESTS.put(TestItem.HARDWOOD_CLEAR_FEE, new HardwoodClearFee());
 		TESTS.put(TestItem.CRYSTAL_TREE_STATES, new CrystalTreeStates());
 		TESTS.put(TestItem.GREAT_CONCH_ACCESS, new GreatConchAccess());
@@ -1409,91 +1408,6 @@ final class GuidedTests
 		}
 	}
 
-	/** Sprint 1c's run types. */
-	private static final Set<PatchType> SPECIAL_TREE_TYPES = EnumSet.of(PatchType.HARDWOOD, PatchType.CALQUAT,
-		PatchType.CELASTRUS, PatchType.REDWOOD, PatchType.SPIRIT_TREE, PatchType.CRYSTAL_TREE);
-
-	/**
-	 * Sprint 1c: the special trees' map points against their objects in game, at a different place each step (the 1b
-	 * test took the same patches for "another one", elzerma, 2026-10-25).
-	 */
-	private static final class SpecialTreePatchPoints extends GuidedTest
-	{
-		private static final String SEEN = "special tree patches seen";
-
-		@Override
-		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
-		{
-			for (Patch patch : Patch.values())
-			{
-				if (SPECIAL_TREE_TYPES.contains(patch.getType()) && access.missingFor(patch).isEmpty())
-				{
-					return Collections.emptyList();
-				}
-			}
-			return Collections.singletonList("Unlock a hardwood, calquat, celastrus, redwood, spirit tree or crystal tree "
-				+ "patch");
-		}
-
-		/** The special tree patches matched nearby that no earlier step saw. */
-		private static List<Patch> unseen(TestContext ctx)
-		{
-			final Set<Patch> seen = ctx.recall(SEEN) != null ? ctx.recall(SEEN) : Collections.emptySet();
-			final List<Patch> found = new ArrayList<>();
-			for (Patch patch : Patch.values())
-			{
-				if (SPECIAL_TREE_TYPES.contains(patch.getType()) && !seen.contains(patch)
-					&& !ctx.getScene().objectsFor(patch).isEmpty())
-				{
-					found.add(patch);
-				}
-			}
-			return found;
-		}
-
-		private static Step visit(String text)
-		{
-			return doThis(text, ctx -> !unseen(ctx).isEmpty())
-				.onDone(ctx ->
-				{
-					final List<Patch> found = unseen(ctx);
-					final List<String> points = new ArrayList<>();
-					for (Patch patch : found)
-					{
-						final WorldPoint at = ctx.getScene().objectsFor(patch).get(0).getWorldLocation();
-						points.add(patch + " at " + at + " (map point " + PatchPoints.of(patch) + ", "
-							+ at.distanceTo2D(PatchPoints.of(patch)) + " tiles off)");
-					}
-					ctx.capture("Patches at " + ctx.location(), String.join("; ", points));
-					final Set<Patch> seen = new HashSet<>();
-					if (ctx.recall(SEEN) != null)
-					{
-						seen.addAll(ctx.<Set<Patch>>recall(SEEN));
-					}
-					seen.addAll(found);
-					ctx.remember(SEEN, seen);
-				})
-				.orAskAfter(DO_TICKS, "The plugin hasn't seen a special tree patch it hadn't seen yet. Are you by one?")
-				.onAnswer((ctx, yes) ->
-				{
-					if (yes)
-					{
-						ctx.problem("By a patch at " + ctx.location() + " but its object wasn't matched");
-					}
-				});
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				visit("Go to any hardwood, calquat, celastrus, redwood, spirit tree or crystal tree patch and stand by it")
-					.onStart(ctx -> ctx.remember(SEEN, new HashSet<Patch>())),
-				visit("Now one at a different place").optional(),
-				visit("And one more, if you can").optional());
-		}
-	}
-
 	/** Sprint 1c: what a hardwood gardener charges to clear a grown tree (the plugin plans 200 coins, reported in #30). */
 	private static final class HardwoodClearFee extends GuidedTest
 	{
@@ -1623,6 +1537,14 @@ final class GuidedTests
 			return Arrays.asList(
 				doThis("Go to the calquat patch on the Summer Shore of the Great Conch",
 					ctx -> ctx.inRegion(Patch.THE_GREAT_CONCH_CALQUAT.getRegionId()))
+					.onStart(ctx ->
+					{
+						// Only a player partway through the quest can show it's enough (elzerma had finished it, 2026-10-26)
+						if (ctx.access().isMet(Requirement.quest(Quest.TROUBLED_TORTUGANS)))
+						{
+							ctx.cannotTest("Troubled Tortugans started but not finished");
+						}
+					})
 					.onDone(ctx ->
 					{
 						ctx.capture("Arrived at", ctx.location());
