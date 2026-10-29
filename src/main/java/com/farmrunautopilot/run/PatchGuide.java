@@ -95,6 +95,8 @@ class PatchGuide
 	/** The stop being worked at, and what the inventory held on arriving there, to tell its produce (P1). */
 	private RouteStop atStop;
 	private Map<Integer, Integer> arrivedWith = Collections.emptyMap();
+	/** The stop's patches, for what's still to be composted there when the inventory fills. */
+	private List<Patch> atStopPatches = Collections.emptyList();
 	/** The produce the Note step outlines. */
 	private Set<Integer> produce = Collections.emptySet();
 
@@ -332,6 +334,7 @@ class PatchGuide
 			atStop = stop;
 			arrivedWith = new HashMap<>(holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY));
 		}
+		atStopPatches = here;
 		// Patch by patch, or (elzerma's choice, for players without a bottomless compost bucket) nearby patches as a group: the
 		// group's patches are picked and cleared, its produce noted and its compost taken before any is treated and planted
 		final boolean grouped = settings.getRunConfig().getStopOrder() == StopOrder.GROUP_NEARBY;
@@ -506,29 +509,41 @@ class PatchGuide
 		{
 			return null;
 		}
-		produce = produceGained(arrivedWith, holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY),
-			runService::notable);
-		// Not produce: what the run brought (seeds, payments), and logs from chopping a tree
-		for (com.farmrunautopilot.supply.SupplyLine line : plan.getSupplies().getLines())
-		{
-			for (int id : line.getItemIds())
-			{
-				produce.remove(id);
-			}
-		}
-		produce.removeIf(id -> runService.itemName(id).toLowerCase().endsWith("logs"));
+		produce = unnotedProduce();
 		if (produce.isEmpty())
 		{
 			return null;
 		}
 		currentPatch = at;
 		currentAction = StepAdvisor.Action.NOTE;
+		return "Note your " + produceNames(produce) + " on the tool leprechaun (use them on him)";
+	}
+
+	/** The produce picked at this stop still unnoted in the inventory. */
+	private Set<Integer> unnotedProduce()
+	{
+		final Set<Integer> gained = produceGained(arrivedWith, holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY),
+			runService::notable);
+		// Not produce: what the run brought (seeds, payments), and logs from chopping a tree
+		for (com.farmrunautopilot.supply.SupplyLine line : plan.getSupplies().getLines())
+		{
+			for (int id : line.getItemIds())
+			{
+				gained.remove(id);
+			}
+		}
+		gained.removeIf(id -> runService.itemName(id).toLowerCase().endsWith("logs"));
+		return gained;
+	}
+
+	private String produceNames(Set<Integer> ids)
+	{
 		final List<String> names = new ArrayList<>();
-		for (int id : produce)
+		for (int id : ids)
 		{
 			names.add(runService.itemName(id).toLowerCase());
 		}
-		return "Note your " + join(names) + " on the tool leprechaun (use them on him)";
+		return join(names);
 	}
 
 	/**
@@ -925,7 +940,9 @@ class PatchGuide
 
 	/**
 	 * The inventory is full and something is about to be picked here. Only when full, not when it merely might
-	 * not fit (elzerma): herbs and fruit can be noted by the tool leprechaun at every patch.
+	 * not fit (elzerma): herbs and fruit can be noted by the tool leprechaun at every patch. Says what makes the
+	 * room: the produce still unnoted, else the compost this stop won't use, to store with the leprechaun (elzerma,
+	 * 2026-10-28: full of buckets from the compost bin, with no produce to note, it still said to note produce).
 	 */
 	String spaceReminder()
 	{
@@ -934,11 +951,63 @@ class PatchGuide
 			return null;
 		}
 		final int expected = expectedHarvest(currentPatch, currentAction, patchTracker.predict(currentPatch));
-		if (expected == 0)
+		if (expected == 0 || freeInventorySlots() > 0)
 		{
 			return null;
 		}
-		return freeInventorySlots() > 0 ? null : "Inventory full: note produce on the tool leprechaun";
+		final Set<Integer> unnoted = unnotedProduce();
+		if (!unnoted.isEmpty())
+		{
+			return "Inventory full: note your " + produceNames(unnoted) + " on the tool leprechaun";
+		}
+		final Map<Integer, Integer> inventory = holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY);
+		final Map<Compost, Integer> spare = spareCompost(inventory, compostStillNeeded(inventory));
+		if (!spare.isEmpty())
+		{
+			final List<String> parts = new ArrayList<>();
+			spare.forEach((compost, count) -> parts.add(count + " " + compost.getDisplayName().toLowerCase()));
+			return "Inventory full: store " + join(parts) + " with the tool leprechaun";
+		}
+		return "Inventory full: make room for the harvest";
+	}
+
+	/** Buckets of each compost this stop's patches still need: none with a filled bottomless bucket. */
+	private Map<Compost, Integer> compostStillNeeded(Map<Integer, Integer> inventory)
+	{
+		final Map<Compost, Integer> need = new EnumMap<>(Compost.class);
+		if (inventory.getOrDefault(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED, 0) > 0)
+		{
+			return need;
+		}
+		for (Patch patch : atStopPatches)
+		{
+			final Progress p = progress(patch);
+			final Compost compost = compostFor(patch);
+			if (!p.done && !p.skipped && !p.composted && compost != null && compost != Compost.NONE)
+			{
+				need.merge(compost, 1, Integer::sum);
+			}
+		}
+		return need;
+	}
+
+	/** Buckets of compost carried past what's still needed here, e.g. supercompost taken from a bin. */
+	static Map<Compost, Integer> spareCompost(Map<Integer, Integer> inventory, Map<Compost, Integer> need)
+	{
+		final Map<Compost, Integer> spare = new EnumMap<>(Compost.class);
+		for (Compost compost : Compost.values())
+		{
+			if (compost == Compost.NONE)
+			{
+				continue;
+			}
+			final int extra = inventory.getOrDefault(compost.getItemId(), 0) - need.getOrDefault(compost, 0);
+			if (extra > 0)
+			{
+				spare.put(compost, extra);
+			}
+		}
+		return spare;
 	}
 
 	/** Inventory slots the next harvest here will take (herbs and fruit), 0 if none. */

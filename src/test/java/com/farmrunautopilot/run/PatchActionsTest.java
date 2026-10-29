@@ -55,6 +55,22 @@ public class PatchActionsTest
 	}
 
 	@Test
+	public void compostNotNeededHereIsSpare()
+	{
+		// elzerma, 2026-10-28: 7 supercompost from the bin and ultracompost for the two allotments still to treat
+		final Map<Integer, Integer> inventory = new HashMap<>();
+		inventory.put(ItemID.BUCKET_SUPERCOMPOST, 7);
+		inventory.put(ItemID.BUCKET_ULTRACOMPOST, 2);
+		inventory.put(ItemID.BUCKET_EMPTY, 16);
+		final Map<com.farmrunautopilot.settings.Compost, Integer> need = new java.util.EnumMap<>(com.farmrunautopilot.settings.Compost.class);
+		need.put(com.farmrunautopilot.settings.Compost.ULTRACOMPOST, 2);
+		final Map<com.farmrunautopilot.settings.Compost, Integer> spare = PatchGuide.spareCompost(inventory, need);
+		assertEquals(Integer.valueOf(7), spare.get(com.farmrunautopilot.settings.Compost.SUPERCOMPOST));
+		assertFalse(spare.containsKey(com.farmrunautopilot.settings.Compost.ULTRACOMPOST));
+		assertEquals(1, spare.size());
+	}
+
+	@Test
 	public void treatingAndPlantingWait()
 	{
 		assertTrue(PatchGuide.treatsOrPlants(StepAdvisor.Action.COMPOST));
