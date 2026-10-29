@@ -507,7 +507,7 @@ class PatchGuide
 			return null;
 		}
 		produce = produceGained(arrivedWith, holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY),
-			runService::notedId);
+			runService::notable);
 		// Not produce: what the run brought (seeds, payments), and logs from chopping a tree
 		for (com.farmrunautopilot.supply.SupplyLine line : plan.getSupplies().getLines())
 		{
@@ -534,15 +534,16 @@ class PatchGuide
 	/**
 	 * What's gained since arriving that the leprechaun can note: items with a noted form, more of them than were carried
 	 * in; not weeds or empty buckets and pots (elzerma, 2026-10-27: "it said to note my bucket"), nor what he stores
-	 * (compost, tools, plant cure) taken from him.
+	 * (compost, tools, plant cure) taken from him, nor the notes he gives (elzerma, 2026-10-28: the step stayed after
+	 * noting, as the noted irit and watermelons counted as gained).
 	 */
 	static Set<Integer> produceGained(Map<Integer, Integer> before, Map<Integer, Integer> now,
-		java.util.function.IntUnaryOperator noted)
+		java.util.function.IntPredicate notable)
 	{
 		final Set<Integer> gained = new LinkedHashSet<>();
 		now.forEach((id, count) ->
 		{
-			if (!NOT_PRODUCE.contains(id) && count > before.getOrDefault(id, 0) && noted.applyAsInt(id) != id)
+			if (!NOT_PRODUCE.contains(id) && count > before.getOrDefault(id, 0) && notable.test(id))
 			{
 				gained.add(id);
 			}

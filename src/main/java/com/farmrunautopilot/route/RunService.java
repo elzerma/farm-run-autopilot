@@ -689,6 +689,16 @@ public class RunService
 		return noted > 0 ? noted : itemId;
 	}
 
+	/**
+	 * Whether the tool leprechaun can note this item: it has a noted form and isn't a note already (a note links back to
+	 * its item, so {@link #notedId} alone can't tell). Client thread.
+	 */
+	public boolean notable(int itemId)
+	{
+		final net.runelite.api.ItemComposition item = itemManager.getItemComposition(itemId);
+		return item.getNote() == -1 && item.getLinkedNoteId() > 0;
+	}
+
 	/** An item's name, looked up once. Client thread. */
 	public String itemName(int itemId)
 	{

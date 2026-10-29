@@ -16,6 +16,7 @@ Every time you ask elzerma to check something in game by hand (anything beyond a
 
 - **Do:** exact steps: where to be, what to have, what to click.
 - **Expect:** what they should see if it works.
+- **Screenshot:** the moment to take one and what it must show (the step text, the sidebar, the inventory), so you can judge the check from it rather than asking them to (elzerma, 2026-10-28: "not really sure what I'm looking for").
 - **Result:** pass / fail / couldn't test, on a line of its own, left blank.
 - **Notes:** left blank.
 
@@ -25,6 +26,7 @@ Put three empty lines after each check, so there's room to write. For example:
 1. Counts as you withdraw
 Do: Open the seed vault with the Farm Run Autopilot section showing. Withdraw one Avantoe seed, then the rest you need.
 Expect: The count under it goes up each time; once you have enough it stays in the section, shown as done.
+Screenshot: After the last seed is withdrawn, with the seed vault and the sidebar section both in view.
 Result:
 Notes:
 

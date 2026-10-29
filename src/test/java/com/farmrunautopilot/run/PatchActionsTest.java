@@ -14,10 +14,10 @@ import org.junit.Test;
 /** Patch actions P1 (docs/plans/patch-actions.md): the stop's produce, its order of work and the new settings. */
 public class PatchActionsTest
 {
-	/** Every item has a noted form here but the dibber and coins. */
-	private static int noted(int id)
+	/** Every item has a noted form here but the dibber and coins, and the notes themselves. */
+	private static boolean noted(int id)
 	{
-		return id == ItemID.DIBBER || id == ItemID.COINS ? id : id + 1;
+		return id != ItemID.DIBBER && id != ItemID.COINS && id != ItemID.Cert.UNIDENTIFIED_IRIT && id != ItemID.Cert.WATERMELON;
 	}
 
 	@Test
@@ -46,6 +46,12 @@ public class PatchActionsTest
 		assertFalse(produce.contains(ItemID.BUCKET_ULTRACOMPOST));
 		assertFalse(produce.contains(ItemID.RAKE));
 		assertTrue(PatchGuide.produceGained(before, before, PatchActionsTest::noted).isEmpty());
+
+		// Once noted on the leprechaun, the notes gained aren't produce, so the Note step clears (elzerma, 2026-10-28)
+		final Map<Integer, Integer> noted = new HashMap<>(before);
+		noted.put(ItemID.Cert.UNIDENTIFIED_IRIT, 11);
+		noted.put(ItemID.Cert.WATERMELON, 20);
+		assertTrue(PatchGuide.produceGained(before, noted, PatchActionsTest::noted).isEmpty());
 	}
 
 	@Test
