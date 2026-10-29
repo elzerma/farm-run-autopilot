@@ -14,12 +14,14 @@ or logs), then a step to take what compost the stop's patches still need from th
 bottomless bucket), then every patch treated and planted. Both steps outline the Tool Leprechaun and stand aside once
 the player has started treating or planting. Farm tab "At the patches": Note produce (on), Empty buckets (Drop, Keep,
 Store at the tool leprechaun; drop by default). P2 (cleaning herbs) and P3 (making compost) are still to build.
-**Changed after elzerma's first P1 run (2026-10-27):** picking everything first sent them across the Farming Guild and back,
-so "Order at a stop" (Farm > At the patches) chooses: **patch by patch** (the default: each patch harvested, treated and
-planted before the next, the produce noted before leaving) or **group nearby patches** (patches within 12 tiles, e.g. an
-allotment set and its flower, picked, noted and given their compost together before treating and planting; elective,
-best without a bottomless compost bucket). The Note step only counts farming produce (not buckets, pots, the
-leprechaun's stock or the run's supplies), and "You treat the allotment" goes to the nearer allotment not yet composted.
+**Changed after elzerma's P1 runs (2026-10-27 and 28):** picking everything first sent them across the Farming Guild
+and back, and grouping nearby patches was tried and dropped ("kinda shit"). Now, at every stop: on arriving, "Take N
+ultracompost from the tool leprechaun" for the whole stop (until picking or composting begins there); then each patch
+picked, **planted, then composted** (elzerma: "I have always planted then composted"), and paid for, before the next;
+then the Note step before leaving. No "Order at a stop" setting. The Note step counts only what came into the inventory
+while picking, read with notes as notes (it stayed after noting, and asked to note a staff taken off). "Inventory full"
+says what makes room: produce to note, else compost this stop won't use, to store. "You treat the allotment" goes to
+the nearer allotment not yet composted.
 
 ## 1. What the plugin does at a patch today
 

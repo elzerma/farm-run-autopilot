@@ -175,10 +175,7 @@ public final class StepAdvisor
 			case WEEDS:
 				return new Advice(Action.RAKE, "Rake the patch");
 			case EMPTY:
-				if (wantsCompost(goal))
-				{
-					return compost(goal);
-				}
+				// Planted, then composted once growing (elzerma, 2026-10-28: "I have always planted then composted")
 				if (goal.getCrop() == Crop.SCARECROW)
 				{
 					return new Advice(Action.PLANT, "Put the scarecrow in the flower patch: it protects the sweetcorn");

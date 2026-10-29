@@ -18,7 +18,6 @@ import com.farmrunautopilot.settings.Compost;
 import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
-import com.farmrunautopilot.settings.StopOrder;
 import com.farmrunautopilot.supply.FlowerProtection;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
@@ -346,12 +345,17 @@ class PatchGuide
 		}
 		lastSeen = held;
 		atStopPatches = here;
-		// Patch by patch, or (elzerma's choice, for players without a bottomless compost bucket) nearby patches as a group: the
-		// group's patches are picked and cleared, its produce noted and its compost taken before any is treated and planted
-		final boolean grouped = settings.getRunConfig().getStopOrder() == StopOrder.GROUP_NEARBY;
-		Set<Patch> group = null;
-		final List<Patch> treatLater = new ArrayList<>();
-		final Map<Patch, StepAdvisor.Advice> later = new EnumMap<>(Patch.class);
+		// On arriving, the compost for the whole stop from the tool leprechaun, then each patch picked, planted and
+		// composted in turn (elzerma, 2026-10-28: "Take N ultracompost" at the start, not everything picked first). It
+		// stands aside once picking or composting has begun here.
+		if (picked.isEmpty() && navigator.nearAny(here) && here.stream().noneMatch(patch -> progress(patch).composted))
+		{
+			final String compost = compostStep(here);
+			if (compost != null)
+			{
+				return compost;
+			}
+		}
 		for (Patch patch : protectingFlowersFirst(navigator.nearestFirst(here, currentPatch)))
 		{
 			final Progress p = progress(patch);
@@ -401,56 +405,16 @@ class PatchGuide
 				p.done = true;
 				continue;
 			}
-			if (grouped)
-			{
-				// The group is the first patch with work left and those near it; the rest wait their turn
-				if (group == null)
-				{
-					group = nearby(patch, here);
-				}
-				else if (!group.contains(patch))
-				{
-					continue;
-				}
-			}
-			if (grouped && treatsOrPlants(advice.getAction()))
-			{
-				treatLater.add(patch);
-				later.put(patch, advice);
-				continue;
-			}
 			return step(stop, patch, advice);
 		}
-		if (treatLater.isEmpty())
+		// Every patch done: the produce still unnoted is noted before leaving, while still here
+		final String note = navigator.nearAny(here) ? noteStep(here.get(0)) : null;
+		if (note != null)
 		{
-			// Every patch done: the produce still unnoted is noted before leaving, while still here
-			final String note = navigator.nearAny(here) ? noteStep(here.get(0)) : null;
-			if (note != null)
-			{
-				return note;
-			}
-			clearCurrent();
-			return null;
+			return note;
 		}
-		// Treating or planting already begun means the player went their own way: the note and compost steps aren't
-		// pressed on them
-		final boolean begun = treatLater.stream().anyMatch(patch -> progress(patch).composted || progress(patch).paid
-			|| suppliesUsed(patch));
-		if (!begun)
-		{
-			final String note = noteStep(treatLater.get(0));
-			if (note != null)
-			{
-				return note;
-			}
-			final String compost = compostStep(treatLater, later);
-			if (compost != null)
-			{
-				return compost;
-			}
-		}
-		final Patch patch = treatLater.get(0);
-		return step(stop, patch, later.get(patch));
+		clearCurrent();
+		return null;
 	}
 
 	/** The step at a patch, with the walk to it first while it's still far off. */
@@ -464,50 +428,6 @@ class PatchGuide
 			return navigator.walkTo(stop, patch, "Run", advice.getText());
 		}
 		return advice.getText();
-	}
-
-	/** Patches this close to each other (by their map points) work as a group: an allotment set and its flower. */
-	static final int GROUP_TILES = 12;
-
-	/**
-	 * The patch and every patch here linked to it by steps of at most {@link #GROUP_TILES}: an allotment set, its flower
-	 * and a herb beside them, but the Farming Guild's two wings apart.
-	 */
-	static Set<Patch> nearby(Patch patch, List<Patch> here)
-	{
-		final Set<Patch> group = new LinkedHashSet<>();
-		group.add(patch);
-		boolean grew = true;
-		while (grew)
-		{
-			grew = false;
-			for (Patch other : here)
-			{
-				if (group.contains(other))
-				{
-					continue;
-				}
-				for (Patch member : new ArrayList<>(group))
-				{
-					final net.runelite.api.coords.WorldPoint a = com.farmrunautopilot.data.PatchPoints.of(member);
-					final net.runelite.api.coords.WorldPoint b = com.farmrunautopilot.data.PatchPoints.of(other);
-					if (a != null && b != null && a.getPlane() == b.getPlane() && a.distanceTo2D(b) <= GROUP_TILES)
-					{
-						group.add(other);
-						grew = true;
-						break;
-					}
-				}
-			}
-		}
-		return group;
-	}
-
-	/** Composting, planting and paying the gardener: done once every patch at the stop is picked (P1). */
-	static boolean treatsOrPlants(StepAdvisor.Action action)
-	{
-		return action == StepAdvisor.Action.COMPOST || action == StepAdvisor.Action.PLANT
-			|| action == StepAdvisor.Action.PAY;
 	}
 
 	/**
@@ -592,36 +512,21 @@ class PatchGuide
 
 	/**
 	 * "Take 3 ultracompost from the tool leprechaun": the compost this stop's patches still need, when there's too little
-	 * in the inventory and enough stored with him (P1: at each stop for that stop); null otherwise, or with a filled
-	 * bottomless bucket.
+	 * in the inventory and enough stored with him (P1: on arriving at each stop, for that stop); null otherwise, or with
+	 * a filled bottomless bucket.
 	 */
-	private String compostStep(List<Patch> treatLater, Map<Patch, StepAdvisor.Advice> later)
+	private String compostStep(List<Patch> here)
 	{
 		final Holdings holdings = holdingsTracker.getHoldings();
 		final Map<Integer, Integer> inventory = holdings.in(Holdings.Source.INVENTORY);
-		if (inventory.getOrDefault(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED, 0) > 0)
-		{
-			return null;
-		}
-		final Map<Compost, Integer> need = new EnumMap<>(Compost.class);
-		for (Patch patch : treatLater)
-		{
-			final Compost compost = compostFor(patch);
-			final StepAdvisor.Action action = later.get(patch).getAction();
-			if (compost != null && compost != Compost.NONE && !progress(patch).composted
-				&& (action == StepAdvisor.Action.COMPOST || action == StepAdvisor.Action.PLANT))
-			{
-				need.merge(compost, 1, Integer::sum);
-			}
-		}
 		final Map<Integer, Integer> stored = holdings.in(Holdings.Source.LEPRECHAUN);
-		for (Map.Entry<Compost, Integer> e : need.entrySet())
+		for (Map.Entry<Compost, Integer> e : compostStillNeeded(inventory).entrySet())
 		{
 			final int id = e.getKey().getItemId();
 			final int missing = e.getValue() - inventory.getOrDefault(id, 0);
 			if (missing > 0 && stored.getOrDefault(id, 0) >= missing)
 			{
-				currentPatch = treatLater.get(0);
+				currentPatch = here.get(0);
 				currentAction = StepAdvisor.Action.TAKE_COMPOST;
 				return "Take " + missing + " " + e.getKey().getDisplayName().toLowerCase() + " from the tool leprechaun";
 			}
