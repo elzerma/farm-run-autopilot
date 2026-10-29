@@ -55,6 +55,18 @@ public class PatchActionsTest
 	}
 
 	@Test
+	public void onlyPickingGivesProduce()
+	{
+		assertTrue(PatchGuide.harvests(StepAdvisor.Action.PICK));
+		assertTrue(PatchGuide.harvests(StepAdvisor.Action.CHECK_HEALTH));
+		// A staff taken off or compost taken out between patches isn't produce (elzerma, 2026-10-28)
+		assertFalse(PatchGuide.harvests(StepAdvisor.Action.NOTE));
+		assertFalse(PatchGuide.harvests(StepAdvisor.Action.TAKE_COMPOST));
+		assertFalse(PatchGuide.harvests(StepAdvisor.Action.COMPOST));
+		assertFalse(PatchGuide.harvests(null));
+	}
+
+	@Test
 	public void compostNotNeededHereIsSpare()
 	{
 		// elzerma, 2026-10-28: 7 supercompost from the bin and ultracompost for the two allotments still to treat

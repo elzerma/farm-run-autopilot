@@ -92,9 +92,14 @@ class PatchGuide
 	private final Map<Patch, Progress> progress = new EnumMap<>(Patch.class);
 	/** Patches finished this run, in the order they were finished, for the checklist's order. */
 	private final Set<Patch> finishedOrder = new LinkedHashSet<>();
-	/** The stop being worked at, and what the inventory held on arriving there, to tell its produce (P1). */
+	/**
+	 * The stop being worked at, and what came into the inventory there while picking: its produce (P1). Only gains
+	 * while picking count (elzerma, 2026-10-28: a staff taken off at the stop was asked to be noted).
+	 */
 	private RouteStop atStop;
-	private Map<Integer, Integer> arrivedWith = Collections.emptyMap();
+	private final Set<Integer> picked = new LinkedHashSet<>();
+	/** The inventory as last seen, to tell what picking added. */
+	private Map<Integer, Integer> lastSeen = Collections.emptyMap();
 	/** The stop's patches, for what's still to be composted there when the inventory fills. */
 	private List<Patch> atStopPatches = Collections.emptyList();
 	/** The produce the Note step outlines. */
@@ -328,12 +333,18 @@ class PatchGuide
 	 */
 	String nextStep(RouteStop stop, List<Patch> here)
 	{
+		final Map<Integer, Integer> held = inventoryAsHeld();
 		if (stop != atStop)
 		{
-			// What was carried on arriving: anything notable gained here is the stop's produce, to note (P1)
 			atStop = stop;
-			arrivedWith = inventoryAsHeld();
+			picked.clear();
 		}
+		else if (harvests(currentAction))
+		{
+			// The step as last shown: what its picking added is produce, to note (P1)
+			picked.addAll(produceGained(lastSeen, held, runService::notable));
+		}
+		lastSeen = held;
 		atStopPatches = here;
 		// Patch by patch, or (elzerma's choice, for players without a bottomless compost bucket) nearby patches as a group: the
 		// group's patches are picked and cleared, its produce noted and its compost taken before any is treated and planted
@@ -519,10 +530,24 @@ class PatchGuide
 		return "Note your " + produceNames(produce) + " on the tool leprechaun (use them on him)";
 	}
 
+	/** Steps whose gains are the patch's produce: picking, and checking a tree's health (its first fruit). */
+	static boolean harvests(StepAdvisor.Action action)
+	{
+		return action == StepAdvisor.Action.PICK || action == StepAdvisor.Action.CHECK_HEALTH;
+	}
+
 	/** The produce picked at this stop still unnoted in the inventory. */
 	private Set<Integer> unnotedProduce()
 	{
-		final Set<Integer> gained = produceGained(arrivedWith, inventoryAsHeld(), runService::notable);
+		final Map<Integer, Integer> held = inventoryAsHeld();
+		final Set<Integer> gained = new LinkedHashSet<>();
+		for (int id : picked)
+		{
+			if (held.getOrDefault(id, 0) > 0)
+			{
+				gained.add(id);
+			}
+		}
 		// Not produce: what the run brought (seeds, payments), and logs from chopping a tree
 		for (com.farmrunautopilot.supply.SupplyLine line : plan.getSupplies().getLines())
 		{
