@@ -332,7 +332,7 @@ class PatchGuide
 		{
 			// What was carried on arriving: anything notable gained here is the stop's produce, to note (P1)
 			atStop = stop;
-			arrivedWith = new HashMap<>(holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY));
+			arrivedWith = inventoryAsHeld();
 		}
 		atStopPatches = here;
 		// Patch by patch, or (elzerma's choice, for players without a bottomless compost bucket) nearby patches as a group: the
@@ -522,8 +522,7 @@ class PatchGuide
 	/** The produce picked at this stop still unnoted in the inventory. */
 	private Set<Integer> unnotedProduce()
 	{
-		final Set<Integer> gained = produceGained(arrivedWith, holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY),
-			runService::notable);
+		final Set<Integer> gained = produceGained(arrivedWith, inventoryAsHeld(), runService::notable);
 		// Not produce: what the run brought (seeds, payments), and logs from chopping a tree
 		for (com.farmrunautopilot.supply.SupplyLine line : plan.getSupplies().getLines())
 		{
@@ -1030,6 +1029,27 @@ class PatchGuide
 			return action == StepAdvisor.Action.CHECK_HEALTH ? full : 0;
 		}
 		return 0;
+	}
+
+	/**
+	 * The inventory with notes as notes: the holdings count a note as its item, so noting at the leprechaun changed
+	 * nothing the Note step could see (elzerma, 2026-10-28: it stayed after noting at Civitas illa Fortis).
+	 */
+	private Map<Integer, Integer> inventoryAsHeld()
+	{
+		final Map<Integer, Integer> counts = new HashMap<>();
+		final ItemContainer inventory = client.getItemContainer(InventoryID.INV);
+		if (inventory != null)
+		{
+			for (Item item : inventory.getItems())
+			{
+				if (item.getId() > 0 && item.getQuantity() > 0)
+				{
+					counts.merge(item.getId(), item.getQuantity(), Integer::sum);
+				}
+			}
+		}
+		return counts;
 	}
 
 	private int freeInventorySlots()
