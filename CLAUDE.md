@@ -12,6 +12,8 @@ Before reading, discussing, replying to, closing or acting on any issue in this 
 
 ## Asking elzerma to test by hand
 
+Check from the dev client's log first. During a run it logs (debug) `Guide step: <stop> / <patch> | <step> | <reminders> | <wear>` each time what the guide shows changes, `Inventory: +N item #id, -N item (noted) #id (S slots free)` each time the inventory changes, the guide's decisions (`Picked at ...`, `Compost for the stop: ...`, `Inventory full: ...`), and the game's chat messages. Ask elzerma only to play a normal run and say when it's done, then judge each change from the log. Ask for hand checks only for what the log can't show (outlines, layout, overlapping text), keep them to one or two, and batch fixes before asking for another run (elzerma, 2026-10-29: "super burned out on doing checks").
+
 Every time you ask elzerma to check something in game by hand (anything beyond a guided test), give the checks as one fenced code block they can copy, fill in and paste back. Each check is numbered and has:
 
 - **Do:** exact steps: where to be, what to have, what to click.

@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
@@ -47,6 +48,7 @@ import net.runelite.api.gameval.ItemID;
  * ({@link StepAdvisor}), what to highlight for it, and reminders (an item to take from the leprechaun, too
  * little space for the harvest). Remembers what was done at each patch this run. Client thread.
  */
+@Slf4j
 @Singleton
 class PatchGuide
 {
@@ -341,7 +343,12 @@ class PatchGuide
 		else if (harvests(currentAction))
 		{
 			// The step as last shown: what its picking added is produce, to note (P1)
-			picked.addAll(produceGained(lastSeen, held, runService::notable));
+			final Set<Integer> gained = produceGained(lastSeen, held, runService::notable);
+			if (!gained.isEmpty())
+			{
+				picked.addAll(gained);
+				log.debug("Picked at {}: {}; produce so far {}", currentPatch, produceNames(gained), produceNames(picked));
+			}
 		}
 		lastSeen = held;
 		atStopPatches = here;
@@ -450,6 +457,28 @@ class PatchGuide
 		return "Note your " + produceNames(produce) + " on the tool leprechaun (use them on him)";
 	}
 
+	/** The step log's last decision line, so each is logged once when it changes (debug: the developer client only). */
+	private String loggedDecision;
+
+	private void logDecision(String decision)
+	{
+		if (!decision.equals(loggedDecision))
+		{
+			loggedDecision = decision;
+			log.debug(decision);
+		}
+	}
+
+	private static Map<Compost, Integer> countsOf(Set<Compost> composts, Map<Integer, Integer> held)
+	{
+		final Map<Compost, Integer> counts = new EnumMap<>(Compost.class);
+		for (Compost compost : composts)
+		{
+			counts.put(compost, held.getOrDefault(compost.getItemId(), 0));
+		}
+		return counts;
+	}
+
 	/** Steps whose gains are the patch's produce: picking, and checking a tree's health (its first fruit). */
 	static boolean harvests(StepAdvisor.Action action)
 	{
@@ -520,7 +549,10 @@ class PatchGuide
 		final Holdings holdings = holdingsTracker.getHoldings();
 		final Map<Integer, Integer> inventory = holdings.in(Holdings.Source.INVENTORY);
 		final Map<Integer, Integer> stored = holdings.in(Holdings.Source.LEPRECHAUN);
-		for (Map.Entry<Compost, Integer> e : compostStillNeeded(inventory).entrySet())
+		final Map<Compost, Integer> need = compostStillNeeded(inventory);
+		logDecision("Compost for the stop: need " + need + ", carried " + countsOf(need.keySet(), inventory) + ", stored "
+			+ countsOf(need.keySet(), stored));
+		for (Map.Entry<Compost, Integer> e : need.entrySet())
 		{
 			final int id = e.getKey().getItemId();
 			final int missing = e.getValue() - inventory.getOrDefault(id, 0);
@@ -885,6 +917,7 @@ class PatchGuide
 			return null;
 		}
 		final Set<Integer> unnoted = unnotedProduce();
+		logDecision("Inventory full: unnoted produce " + (unnoted.isEmpty() ? "none" : produceNames(unnoted)));
 		if (!unnoted.isEmpty())
 		{
 			return "Inventory full: note your " + produceNames(unnoted) + " on the tool leprechaun";

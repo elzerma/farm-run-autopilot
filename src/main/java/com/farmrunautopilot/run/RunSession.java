@@ -37,6 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -50,10 +51,13 @@ import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
 import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.MenuOptionClicked;
+import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.client.game.ItemManager;
@@ -1629,6 +1633,7 @@ public class RunSession
 		// At a bank visit with the bank open: the seeds and saplings the next part plants, still to take or to put back
 		bankCounts = banking && !vaultStep && bankTab.isBankOpen()
 			? bankCounts(bankSupplies(), holdingsTracker.getHoldings(), runService::itemName) : Collections.emptyList();
+		logInventory();
 		view = runningView(instruction);
 	}
 
@@ -2025,8 +2030,75 @@ public class RunSession
 			? BankGuide.wear(bankSupplies(), holdingsTracker.getHoldings(), outfit, swapped)
 			: BankGuide.Wear.NONE;
 		final Highlights highlights = highlights(wear);
+		final String reminders = reminders(highlights);
+		logStep(instruction, reminders, wear.getText());
 		return new RunView(stage, startedAt, stopViews, instruction, false, null, null,
-			reminders(highlights), wear.getText(), highlights, split, missingAsked());
+			reminders, wear.getText(), highlights, split, missingAsked());
+	}
+
+	/** What the guide shows, as last logged. */
+	private String loggedStep;
+	/** The inventory as last logged, notes as notes. */
+	private Map<Integer, Integer> loggedInventory = Collections.emptyMap();
+
+	/**
+	 * The step log (debug, so the developer client only): each time what the guide shows changes, so a run can be
+	 * checked from the log instead of by hand (elzerma, 2026-10-29: "super burned out on doing checks").
+	 */
+	private void logStep(String instruction, String reminders, String wear)
+	{
+		final String where = banking ? "bank visit" : stopIndex < plan.getRoute().getStops().size()
+			? plan.getRoute().getStops().get(stopIndex).getLocation().getDisplayName() : "end";
+		final Patch patch = patches.getCurrentPatch();
+		final String shown = where + (patch != null ? " / " + patch.getDisplayName() : "") + " | " + instruction
+			+ (reminders != null ? " | " + reminders.replace('\n', ';') : "") + (wear != null ? " | " + wear : "");
+		if (!shown.equals(loggedStep))
+		{
+			loggedStep = shown;
+			log.debug("Guide step: {}", shown);
+		}
+	}
+
+	/** The step log's inventory line: what came in and went out since the last one, notes as notes. */
+	private void logInventory()
+	{
+		final Map<Integer, Integer> now = new HashMap<>();
+		final ItemContainer inventory = client.getItemContainer(InventoryID.INV);
+		if (inventory != null)
+		{
+			for (Item item : inventory.getItems())
+			{
+				if (item.getId() > 0 && item.getQuantity() > 0)
+				{
+					now.merge(item.getId(), item.getQuantity(), Integer::sum);
+				}
+			}
+		}
+		if (now.equals(loggedInventory))
+		{
+			return;
+		}
+		final List<String> changes = new ArrayList<>();
+		final Set<Integer> ids = new HashSet<>(now.keySet());
+		ids.addAll(loggedInventory.keySet());
+		for (int id : ids)
+		{
+			final int change = now.getOrDefault(id, 0) - loggedInventory.getOrDefault(id, 0);
+			if (change != 0)
+			{
+				changes.add((change > 0 ? "+" : "") + change + " " + itemLabel(id));
+			}
+		}
+		loggedInventory = now;
+		log.debug("Inventory: {} ({} slots free)", String.join(", ", changes),
+			inventory == null ? 28 : 28 - inventory.count());
+	}
+
+	/** An item's name for the log, "(noted)" after a note. */
+	private String itemLabel(int id)
+	{
+		final net.runelite.api.ItemComposition item = itemManager.getItemComposition(id);
+		return item.getName() + (item.getNote() != -1 ? " (noted)" : "") + " #" + id;
 	}
 
 	/** A bank visit's row: planned, or unplanned because an item went missing. */
