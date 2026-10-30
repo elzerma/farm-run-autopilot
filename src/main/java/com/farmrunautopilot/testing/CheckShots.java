@@ -21,7 +21,7 @@ import net.runelite.client.util.Filepath;
 import net.runelite.client.util.ImageUtil;
 
 /**
- * Screenshots of the game at the moments a hand check is about (a Take compost or Note step, "Inventory full", a bucket
+ * Screenshots of the game at the moments a hand check is about (a visit to the tool leprechaun, "Inventory full", a bucket
  * line, arriving at a stop), so a run can be checked from the log and these instead of by hand (elzerma, 2026-10-29).
  * Developer client only. Each is named after its log line's time and kept in the plugin's folder under check-shots,
  * at most {@link #PER_SESSION} a session; those older than {@link #KEEP_DAYS} days are deleted at startup.

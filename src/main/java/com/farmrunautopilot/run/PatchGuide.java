@@ -15,6 +15,7 @@ import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.route.RunPlan;
 import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.settings.Compost;
+import com.farmrunautopilot.settings.EmptyBuckets;
 import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.settings.SettingsStore;
@@ -107,6 +108,8 @@ class PatchGuide
 	 * while picking count (elzerma, 2026-10-28: a staff taken off at the stop was asked to be noted).
 	 */
 	private RouteStop atStop;
+	/** The stop's visit to the tool leprechaun before planting is done, or the player went their own way. */
+	private boolean visited;
 	private final Set<Integer> picked = new LinkedHashSet<>();
 	/** The inventory as last seen, to tell what picking added. */
 	private Map<Integer, Integer> lastSeen = Collections.emptyMap();
@@ -418,6 +421,7 @@ class PatchGuide
 		{
 			atStop = stop;
 			picked.clear();
+			visited = false;
 		}
 		else if (harvests(currentAction))
 		{
@@ -440,17 +444,6 @@ class PatchGuide
 		}
 		lastSeen = held;
 		atStopPatches = here;
-		// On arriving, the compost for the whole stop from the tool leprechaun, then each patch picked, planted and
-		// composted in turn (elzerma, 2026-10-28: "Take N ultracompost" at the start, not everything picked first). It
-		// stands aside once picking or composting has begun here.
-		if (picked.isEmpty() && navigator.nearAny(here) && here.stream().noneMatch(patch -> progress(patch).composted))
-		{
-			final String compost = compostStep(here);
-			if (compost != null)
-			{
-				return compost;
-			}
-		}
 		for (Patch patch : protectingFlowersFirst(navigator.nearestFirst(here, currentPatch)))
 		{
 			final Progress p = progress(patch);
@@ -504,16 +497,45 @@ class PatchGuide
 				p.done = true;
 				continue;
 			}
+			// Picked and about to plant: the stop's one visit to the tool leprechaun comes first, to note what was picked,
+			// store the empty buckets and take the stop's compost all at once (elzerma, 2026-10-30: "it should tell you to
+			// pick stuff first then when you're already going to note produce on the leprechaun it should then tell you to
+			// dump buckets/grab ultracompost"). Not once planting or composting has begun here: the player went their own way.
+			if (!visited && advice.getAction() == StepAdvisor.Action.PLANT)
+			{
+				final String visit = plantingBegun(here) ? null : leprechaunVisit(patch, true);
+				if (visit != null)
+				{
+					return visit;
+				}
+				visited = true;
+			}
 			return step(stop, patch, advice);
 		}
-		// Every patch done: the produce still unnoted is noted before leaving, while still here
-		final String note = navigator.nearAny(here) ? noteStep(here.get(0)) : null;
+		// Every patch done: what was picked since is noted before leaving, while still here, with the buckets stored then
+		final String note = navigator.nearAny(here) ? leprechaunVisit(here.get(0), false) : null;
 		if (note != null)
 		{
 			return note;
 		}
 		clearCurrent();
 		return null;
+	}
+
+	/** Planted or treated here this run: the player has started on the stop's planting their own way. */
+	private boolean plantingBegun(List<Patch> here)
+	{
+		for (Patch patch : here)
+		{
+			final Progress p = progress(patch);
+			final PatchPrediction live = patchTracker.predict(patch);
+			if (p.composted || p.paid || p.sawUnplanted && (justPlanted(p)
+				|| live != null && live.getState() == PatchState.GROWING))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** The step at a patch, with the walk to it first while it's still far off. */
@@ -530,23 +552,40 @@ class PatchGuide
 	}
 
 	/**
-	 * "Note your produce on the tool leprechaun", while anything notable picked at this stop is still unnoted in the
-	 * inventory and noting is on (P1, on by default); null otherwise.
+	 * The stop's visit to the tool leprechaun as one step, for whichever of these are needed: noting what was picked here
+	 * (noting on, as by default), storing the empty buckets (Empty buckets: Store) and taking the compost the stop's patches
+	 * still need, e.g. "At the tool leprechaun: note your grimy irit leaf, store 1 empty bucket and take 1 ultracompost";
+	 * null when none is.
+	 *
+	 * @param beforePlanting the visit before the stop's planting, which takes the compost; after the last patch, it's only
+	 *                       for noting, with the buckets stored while there
 	 */
-	private String noteStep(Patch at)
+	private String leprechaunVisit(Patch at, boolean beforePlanting)
 	{
-		if (!settings.getRunConfig().isNoteProduce())
+		final List<String> parts = new ArrayList<>();
+		produce = settings.getRunConfig().isNoteProduce() ? unnotedProduce() : Collections.emptySet();
+		if (!produce.isEmpty())
 		{
-			return null;
+			parts.add("note your " + produceNames(produce));
 		}
-		produce = unnotedProduce();
-		if (produce.isEmpty())
+		final int buckets = settings.getRunConfig().getEmptyBuckets() == EmptyBuckets.STORE
+			? inventoryAsHeld().getOrDefault(ItemID.BUCKET_EMPTY, 0) : 0;
+		if (buckets > 0 && (beforePlanting || !parts.isEmpty()))
+		{
+			parts.add("store " + buckets + (buckets == 1 ? " empty bucket" : " empty buckets"));
+		}
+		final String compost = beforePlanting ? compostToTake() : null;
+		if (compost != null)
+		{
+			parts.add("take " + compost);
+		}
+		if (parts.isEmpty())
 		{
 			return null;
 		}
 		currentPatch = at;
-		currentAction = StepAdvisor.Action.NOTE;
-		return "Note your " + produceNames(produce) + " on the tool leprechaun (use them on him)";
+		currentAction = !produce.isEmpty() ? StepAdvisor.Action.NOTE : StepAdvisor.Action.TAKE_COMPOST;
+		return "At the tool leprechaun: " + join(parts);
 	}
 
 	/** The step log's last decision line, so each is logged once when it changes (debug: the developer client only). */
@@ -632,11 +671,10 @@ class PatchGuide
 	}
 
 	/**
-	 * "Take 3 ultracompost from the tool leprechaun": the compost this stop's patches still need, when there's too little
-	 * in the inventory and enough stored with him (P1: on arriving at each stop, for that stop); null otherwise, or with
-	 * a filled bottomless bucket.
+	 * "3 ultracompost": the compost this stop's patches still need, when there's too little in the inventory and enough
+	 * stored with the tool leprechaun (P1: at each stop, for that stop); null otherwise, or with a filled bottomless bucket.
 	 */
-	private String compostStep(List<Patch> here)
+	private String compostToTake()
 	{
 		final Holdings holdings = holdingsTracker.getHoldings();
 		final Map<Integer, Integer> inventory = holdings.in(Holdings.Source.INVENTORY);
@@ -644,18 +682,16 @@ class PatchGuide
 		final Map<Compost, Integer> need = compostStillNeeded(inventory);
 		logDecision("Compost for the stop: need " + need + ", carried " + countsOf(need.keySet(), inventory) + ", stored "
 			+ countsOf(need.keySet(), stored));
+		final List<String> take = new ArrayList<>();
 		for (Map.Entry<Compost, Integer> e : need.entrySet())
 		{
-			final int id = e.getKey().getItemId();
-			final int missing = e.getValue() - inventory.getOrDefault(id, 0);
-			if (missing > 0 && stored.getOrDefault(id, 0) >= missing)
+			final int missing = e.getValue() - inventory.getOrDefault(e.getKey().getItemId(), 0);
+			if (missing > 0 && stored.getOrDefault(e.getKey().getItemId(), 0) >= missing)
 			{
-				currentPatch = here.get(0);
-				currentAction = StepAdvisor.Action.TAKE_COMPOST;
-				return "Take " + missing + " " + e.getKey().getDisplayName().toLowerCase() + " from the tool leprechaun";
+				take.add(missing + " " + e.getKey().getDisplayName().toLowerCase());
 			}
 		}
-		return null;
+		return take.isEmpty() ? null : join(take);
 	}
 
 	private static String join(List<String> parts)
