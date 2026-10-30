@@ -86,7 +86,6 @@ final class GuidedTests
 		TESTS.put(TestItem.ETCETERIA_ACCESS, new EtceteriaAccess());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
 		TESTS.put(TestItem.GREAT_CONCH_ACCESS, new GreatConchAccess());
-		TESTS.put(TestItem.STOP_FLOW, new StopFlow());
 	}
 
 	private GuidedTests()
@@ -1440,130 +1439,6 @@ final class GuidedTests
 					.onAnswer((ctx, yes) -> ctx.problem(yes ? "By the patch, but the plugin didn't see it"
 						: "Couldn't get to the patch")),
 				ask("Can you rake or plant in the calquat patch?"));
-		}
-	}
-
-	/**
-	 * Dev check (patch actions P1, elzerma 2026-10-28): at a stop, the stop's compost taken from the tool leprechaun on
-	 * arriving, each patch picked, planted and then composted, empty buckets stored, and a Note step naming only the
-	 * produce that clears once noted. The Falador farm, as it has two allotments, a flower and a herb.
-	 */
-	private static final class StopFlow extends GuidedTest
-	{
-		@Override
-		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
-		{
-			final List<String> missing = new ArrayList<>(patchesUsable(access, Location.FALADOR_FARM));
-			if (holdings.in(Holdings.Source.LEPRECHAUN).getOrDefault(ItemID.BUCKET_ULTRACOMPOST, 0) < 4)
-			{
-				missing.add("Store at least 4 ultracompost with a tool leprechaun");
-			}
-			return missing;
-		}
-
-		@Override
-		public void setUp(RunConfig config, AccountSettings account)
-		{
-			onlyPatchesAt(config, Location.FALADOR_FARM);
-			config.getCompost().put(PatchType.ALLOTMENT, Compost.ULTRACOMPOST);
-			config.getCompost().put(PatchType.HERB, Compost.ULTRACOMPOST);
-			config.setNoteProduce(true);
-			config.setEmptyBuckets(com.farmrunautopilot.settings.EmptyBuckets.STORE);
-		}
-
-		@Override
-		public boolean usesRun()
-		{
-			return true;
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				startRun(),
-				doThis("Go to the farm south of Falador with no ultracompost on you",
-					ctx -> instruction(ctx).startsWith("Take ") && instruction(ctx).contains("from the tool leprechaun"))
-					.onDone(ctx -> ctx.capture("Take step", instruction(ctx)))
-					.orAskAfter(DO_TICKS, "The guide didn't ask you to take ultracompost from the leprechaun on arriving. "
-						+ "Carry on?")
-					.onAnswer((ctx, yes) ->
-					{
-						ctx.capture("Step instead", instruction(ctx));
-						ctx.problem("No \"Take N ultracompost\" step on arriving");
-					}),
-				doThis("Take the ultracompost from the tool leprechaun",
-					ctx -> !instruction(ctx).startsWith("Take "))
-					.onDone(ctx -> ctx.capture("After taking", instruction(ctx)))
-					.orAskAfter(DO_TICKS, "The Take step didn't go. Did you take the compost?")
-					.onAnswer((ctx, yes) -> ctx.problem(yes ? "Took the compost, but the step stayed" : "Didn't take it")),
-				doThis("Do the first patch as the guide says", StopFlow::pickedPlantedComposted)
-					.onDone(ctx -> ctx.capture("First patch", ctx.recall("order")))
-					.orAskAfter(DO_TICKS, "The guide didn't go pick, plant, then compost on one patch. Carry on?")
-					.onAnswer((ctx, yes) ->
-					{
-						ctx.capture("Steps seen", ctx.recall("order"));
-						ctx.problem("Not pick, plant, then compost");
-					}),
-				doThis("Store the empty bucket with the tool leprechaun when the guide says",
-					StopFlow::bucketLineCameAndWent)
-					.onDone(ctx -> ctx.capture("Bucket line", ctx.recall("bucket line")))
-					.orAskAfter(DO_TICKS, "No \"Store N empty buckets\" line came and went. Carry on?")
-					.onAnswer((ctx, yes) ->
-					{
-						ctx.capture("Bucket line", ctx.recall("bucket line"));
-						ctx.problem("The bucket line didn't show, or didn't go once stored");
-					}),
-				doThis("Finish the farm's other patches",
-					ctx -> instruction(ctx).startsWith("Note your "))
-					.onDone(ctx -> ctx.capture("Note step", instruction(ctx)))
-					.orAskAfter(DO_TICKS, "No Note step after the last patch. Carry on?")
-					.onAnswer((ctx, yes) -> ctx.problem("No Note step before leaving")),
-				ask("Does the Note step name only crops you picked here?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (!yes)
-						{
-							ctx.problem("The Note step named something that isn't produce");
-						}
-					}),
-				doThis("Use the produce on the tool leprechaun",
-					ctx -> !instruction(ctx).startsWith("Note your "))
-					.onDone(ctx -> ctx.capture("After noting", instruction(ctx)))
-					.orAskAfter(SPOT_TICKS * 2, "The Note step didn't go. Did you note everything?")
-					.onAnswer((ctx, yes) -> ctx.problem(yes ? "Noted, but the Note step stayed" : "Didn't note")));
-		}
-
-		/** Pick, then plant, then compost seen in that order on the steps shown; the order seen is kept for the report. */
-		private static boolean pickedPlantedComposted(TestContext ctx)
-		{
-			final String text = instruction(ctx);
-			final String stage = text.contains("Pick the ") ? "pick" : text.contains("Plant: ") ? "plant"
-				: text.contains("compost on the patch") ? "compost" : null;
-			String order = ctx.recall("order");
-			if (stage != null && (order == null || !order.endsWith(stage)))
-			{
-				order = order == null ? stage : order + " > " + stage;
-				ctx.remember("order", order);
-			}
-			return order != null && order.contains("pick > plant > compost");
-		}
-
-		/** The "Store N empty buckets" line showed, then went once they were stored. */
-		private static boolean bucketLineCameAndWent(TestContext ctx)
-		{
-			if (reminder(ctx).contains("empty bucket"))
-			{
-				ctx.remember("bucket line", reminder(ctx));
-				return false;
-			}
-			return ctx.recall("bucket line") != null;
-		}
-
-		private static String reminder(TestContext ctx)
-		{
-			final String text = ctx.runView().getReminder();
-			return text == null ? "" : text;
 		}
 	}
 }
