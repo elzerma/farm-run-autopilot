@@ -98,6 +98,20 @@ public class PatchActionsTest
 		assertFalse(PatchGuide.INSPECTED_COMPOSTED.matcher("This is a hardwood tree patch. The soil has not been treated. The patch "
 			+ "is empty and weeded.").matches());
 		assertEquals(com.farmrunautopilot.data.PatchType.ALLOTMENT, PatchGuide.typeNamed("You treat the allotment with ultracompost."));
+		// And the special herb patch's own wording, which is not treated (elzerma, 2026-10-30, Troll Stronghold)
+		assertFalse(PatchGuide.INSPECTED_COMPOSTED.matcher("This is a very special herb patch. The soil has not been treated. "
+			+ "The patch has snapdragon growing in it and is at state 1/5.").matches());
+	}
+
+	@Test
+	public void onlyPatchesThePlayerIsAtTakeAMessage()
+	{
+		// elzerma, 2026-10-30: "You treat the herb patch" at Civitas illa Fortis, with the guide on Troll Stronghold, left the
+		// Troll Stronghold herb uncomposted as if it had been
+		final java.util.List<com.farmrunautopilot.data.Patch> troll =
+			java.util.Collections.singletonList(com.farmrunautopilot.data.Patch.TROLL_STRONGHOLD_HERB);
+		assertTrue(PatchGuide.atHand(troll, java.util.EnumSet.of(com.farmrunautopilot.data.Patch.CIVITAS_HERB)).isEmpty());
+		assertEquals(troll, PatchGuide.atHand(troll, java.util.EnumSet.of(com.farmrunautopilot.data.Patch.TROLL_STRONGHOLD_HERB)));
 	}
 
 	@Test

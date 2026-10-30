@@ -297,13 +297,22 @@ class PatchGuide
 	 * A compost message: credit the patch it names ("You treat the herb patch...") among this stop's patches, so
 	 * at a stop with several patches it lands on the right one; otherwise the patch being worked on.
 	 */
-	void onChatMessage(String message, List<Patch> here)
+	void onChatMessage(String message, List<Patch> stopPatches)
 	{
+		// Only the stop's patches the player is next to: planting and composting at the stop before, after the guide had
+		// moved on, was credited to this stop's herb patch, which then wasn't asked for its compost (elzerma, 2026-10-30:
+		// irit planted and treated at Civitas illa Fortis while the guide was on Troll Stronghold)
+		final List<Patch> here = atHand(stopPatches, patchTracker.getPatchesInRange());
+		if (here.isEmpty())
+		{
+			return;
+		}
 		if (PLANTED.matcher(message).matches())
 		{
 			// The patch it names, else the one the Plant step is on
 			final Patch named = patchNamed(message, here);
-			final Patch patch = named != null ? named : currentAction == StepAdvisor.Action.PLANT ? currentPatch : null;
+			final Patch patch = named != null ? named
+				: currentAction == StepAdvisor.Action.PLANT && here.contains(currentPatch) ? currentPatch : null;
 			if (patch != null)
 			{
 				markPlanted(patch, message);
@@ -331,12 +340,26 @@ class PatchGuide
 				}
 			}
 			final List<Patch> nearest = navigator.nearestFirst(candidates, null);
-			patch = !nearest.isEmpty() ? nearest.get(0) : type == null ? currentPatch : null;
+			patch = !nearest.isEmpty() ? nearest.get(0) : type == null && here.contains(currentPatch) ? currentPatch : null;
 		}
 		if (patch != null)
 		{
 			progress(patch).composted = true;
 		}
+	}
+
+	/** The stop's patches the game is sending readings for, i.e. the player is next to them. */
+	static List<Patch> atHand(List<Patch> stopPatches, Set<Patch> inRange)
+	{
+		final List<Patch> at = new ArrayList<>();
+		for (Patch patch : stopPatches)
+		{
+			if (inRange.contains(patch))
+			{
+				at.add(patch);
+			}
+		}
+		return at;
 	}
 
 	/** The one patch of the type a message names ("fruit tree patch", "herb patch", "allotment", ...), or null. */
