@@ -52,7 +52,7 @@ final class HelpWanted
 		int count = 0;
 		for (TestItem item : TestItem.values())
 		{
-			count += isDone(settings, item) ? 0 : 1;
+			count += isDone(settings, item) || item.getTab() == TestItem.Tab.DEV ? 0 : 1;
 		}
 		return count;
 	}
@@ -109,6 +109,10 @@ final class HelpWanted
 		}
 		for (TestItem.Tab tab : TestItem.Tab.values())
 		{
+			if (tab == TestItem.Tab.DEV)
+			{
+				continue;
+			}
 			final List<TestItem> items = new ArrayList<>();
 			for (TestItem item : TestItem.values())
 			{
@@ -249,7 +253,7 @@ final class HelpWanted
 		final List<TestItem> done = new ArrayList<>();
 		for (TestItem item : TestItem.values())
 		{
-			if (isDone(settings, item))
+			if (isDone(settings, item) && item.getTab() != TestItem.Tab.DEV)
 			{
 				done.add(item);
 			}
@@ -287,6 +291,35 @@ final class HelpWanted
 				add(panel, line);
 			}
 		}
+	}
+
+	/**
+	 * Settings > Dev checks (developer client only, elzerma 2026-10-29: "a separate panel just for me"): the guided checks
+	 * for the developer's own runs, apart from the players' list. Each can be run again; its last result shows under it.
+	 */
+	static JPanel devList(SettingsStore settings, TestRunner runner, Runnable showRun)
+	{
+		final JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		panel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		for (TestItem item : TestItem.values())
+		{
+			if (item.getTab() != TestItem.Tab.DEV)
+			{
+				continue;
+			}
+			add(panel, testRow(item, runner, showRun, isDone(settings, item) ? "Run again" : "Start test"));
+			if (isDone(settings, item))
+			{
+				add(panel, text("Last: " + settings.getClientValue(item.key()), ColorScheme.MEDIUM_GRAY_COLOR, 4));
+			}
+		}
+		if (panel.getComponentCount() == 0)
+		{
+			add(panel, text("No dev checks right now.", ColorScheme.MEDIUM_GRAY_COLOR, 4));
+		}
+		return panel;
 	}
 
 	private static JLabel text(String text, Color colour, int gapBelow)

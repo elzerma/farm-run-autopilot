@@ -92,13 +92,22 @@ public enum TestItem
 	// Sprint 1c, the special trees
 	GREAT_CONCH_ACCESS(Tab.ACCOUNT, "The Great Conch's calquat patch",
 		"Only if you've started Troubled Tortugans but not finished it: go to the calquat patch on the Summer Shore of the "
-			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2);
+			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2),
+	// Dev checks: elzerma's own, in Settings > Dev checks on the developer client only, never in the players' list
+	STOP_FLOW(Tab.DEV, "A stop: compost first, then pick, plant, compost",
+		"Leave your ultracompost with the Falador tool leprechaun (none carried) and start the test when the farm "
+			+ "south of Falador is ready to pick. On arriving the guide should say \"Take N ultracompost from the tool "
+			+ "leprechaun\"; then each patch is picked, planted, then composted before the next; empty buckets are to be "
+			+ "stored with the leprechaun; and before leaving, a Note step naming only what you picked, which goes once "
+			+ "you've noted it.");
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter
 	public enum Tab
 	{
-		RUN("Run"), FARM("Farm"), TRAVEL("Travel"), ACCOUNT("Account");
+		RUN("Run"), FARM("Farm"), TRAVEL("Travel"), ACCOUNT("Account"),
+		/** The developer's own checks, not in the players' list. */
+		DEV("Dev checks");
 
 		private final String label;
 
