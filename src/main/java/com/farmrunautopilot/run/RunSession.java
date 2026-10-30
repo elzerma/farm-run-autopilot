@@ -1388,6 +1388,29 @@ public class RunSession
 		}
 	}
 
+	/** A run is armed or timing: it follows the plan it was armed with, not the live one. */
+	public boolean isUnderWay()
+	{
+		return stage == RunView.State.ARMED || stage == RunView.State.RUNNING;
+	}
+
+	/**
+	 * A new area finished loading during a run, as after a teleport: the guide looks again now rather than at the next game
+	 * tick, so the step and its walking line come with the new area (elzerma, 2026-10-30: "after teleporting somewhere it
+	 * takes a second or two for the line to show"). The patches' own readings still come a tick later, as the game sends
+	 * them. Client thread.
+	 */
+	public void onAreaLoaded()
+	{
+		if (!isUnderWay())
+		{
+			return;
+		}
+		areaLoadedAt = System.currentTimeMillis();
+		log.debug("Area loaded {}", when());
+		onGameTick();
+	}
+
 	/** Re-evaluate the run, and start the timer if the player just teleported. Call every game tick. */
 	public void onGameTick()
 	{
@@ -2039,6 +2062,19 @@ public class RunSession
 	/** Screenshots at the moments a check is about (developer client only). */
 	@Inject
 	private com.farmrunautopilot.testing.CheckShots checkShots;
+	/** The step log says how long after a new area loaded for this long after it. */
+	private static final long AREA_LOADED_LOG_MILLIS = 10_000;
+	/** When a new area last finished loading during a run (epoch millis), for the step log. */
+	private long areaLoadedAt;
+
+	/** The step log's time: to the millisecond, the game tick, and how long after a new area loaded, while that's recent. */
+	private String when()
+	{
+		final long since = System.currentTimeMillis() - areaLoadedAt;
+		return LogClock.now() + " (tick " + client.getTickCount()
+			+ (since < AREA_LOADED_LOG_MILLIS ? ", " + since + " ms after the area loaded" : "") + ")";
+	}
+
 	/** What the guide shows, as last logged. */
 	private String loggedStep;
 	private String loggedWhere;
@@ -2061,7 +2097,7 @@ public class RunSession
 		if (!shown.equals(loggedStep))
 		{
 			loggedStep = shown;
-			log.debug("Guide step: {}", shown);
+			log.debug("Guide step: {} | {}", shown, when());
 			final String moment = checkMoment(where, instruction, reminders);
 			if (moment != null)
 			{

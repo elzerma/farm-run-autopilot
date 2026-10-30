@@ -228,6 +228,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 
 	private WorldPoint lastTickLocation;
 	private boolean lastTickPostLogin;
+	/** The last game state, to tell a new area loading in game (a teleport) from logging in or hopping. */
+	private GameState lastGameState;
+	/** The area loading now started from being in game, not from logging in or hopping worlds. */
+	private boolean loadingInGame;
 	private int lastModalCloseTick;
 
 	@Override
@@ -336,6 +340,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 			rebuildSetupLater();
 			runService.markDirty();
 		}
+		runService.setRunUnderWay(runSession.isUnderWay());
 		if (runService.onGameTick())
 		{
 			final RunPlan plan = runService.getPlan();
@@ -401,6 +406,13 @@ public class FarmRunAutopilotPlugin extends Plugin
 			shownRunView = runView;
 			showPlanLater(runService.getPlan(), client.getGameState() == GameState.LOGGED_IN);
 		}
+	}
+
+	/** A new area finished loading during a run: the guide's step, walking line and hint arrow are worked out now. */
+	private void areaLoadedDuringRun()
+	{
+		runSession.onAreaLoaded();
+		hintArrow.update();
 	}
 
 	/** Read the patches in range this tick (SPEC 9). */
@@ -474,14 +486,28 @@ public class FarmRunAutopilotPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged event)
 	{
+		final GameState previous = lastGameState;
+		lastGameState = event.getGameState();
 		if (event.getGameState() == GameState.LOGGED_IN)
 		{
-			accessChecker.requestRefresh();
 			holdingsTracker.markDirty();
-			runService.reset();
+			// A new area loading in game during a run (a teleport) isn't a fresh start: the run keeps its plan, so quests
+			// aren't read again and the route isn't planned from nothing there, and the guide looks again straight away
+			// rather than at the next game tick (elzerma, 2026-10-30: "after teleporting somewhere it takes a second or two
+			// for the line to show")
+			if (previous == GameState.LOADING && loadingInGame && runSession.isUnderWay())
+			{
+				clientThread.invokeLater(this::areaLoadedDuringRun);
+			}
+			else
+			{
+				accessChecker.requestRefresh();
+				runService.reset();
+			}
 		}
 		else if (event.getGameState() == GameState.LOADING)
 		{
+			loadingInGame = previous == GameState.LOGGED_IN;
 			// Objects are spawned again once the new scene loads; NPCs nearby aren't, so keep those
 			sceneTracker.clearObjects();
 			pohDetector.onSceneLoading(client.getTopLevelWorldView().isInstance());

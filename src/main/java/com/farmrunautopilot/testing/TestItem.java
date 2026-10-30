@@ -92,7 +92,12 @@ public enum TestItem
 	// Sprint 1c, the special trees
 	GREAT_CONCH_ACCESS(Tab.ACCOUNT, "The Great Conch's calquat patch",
 		"Only if you've started Troubled Tortugans but not finished it: go to the calquat patch on the Summer Shore of the "
-			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2);
+			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2),
+	// Dev checks: elzerma's own, in Settings > Dev checks on the developer client only, never in the players' list
+	LINE_AFTER_TELEPORT(Tab.DEV, "The walking line comes as you land",
+		"Do your normal run with Shortest Path's walking lines on. After a teleport to a stop, the guide should say "
+			+ "\"Follow the line to the ... patch\" and the line should show as you land, not a second or two later. Your "
+			+ "settings are left as they are and the run carries on after the check.");
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter

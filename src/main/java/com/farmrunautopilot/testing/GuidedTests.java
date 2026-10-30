@@ -86,6 +86,7 @@ final class GuidedTests
 		TESTS.put(TestItem.ETCETERIA_ACCESS, new EtceteriaAccess());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
 		TESTS.put(TestItem.GREAT_CONCH_ACCESS, new GreatConchAccess());
+		TESTS.put(TestItem.LINE_AFTER_TELEPORT, new LineAfterTeleport());
 	}
 
 	private GuidedTests()
@@ -1439,6 +1440,39 @@ final class GuidedTests
 					.onAnswer((ctx, yes) -> ctx.problem(yes ? "By the patch, but the plugin didn't see it"
 						: "Couldn't get to the patch")),
 				ask("Can you rake or plant in the calquat patch?"));
+		}
+	}
+
+	/**
+	 * Dev check (elzerma, 2026-10-30: "after teleporting somewhere it takes a second or two for the line to show"): on a
+	 * normal run, the guide's "Follow the line" step and its walking line come as the player lands. Their settings are
+	 * left alone, so the run carries on after the check; the log's "Area loaded", "Guide step" and "Walking line asked
+	 * for" lines have the times.
+	 */
+	private static final class LineAfterTeleport extends GuidedTest
+	{
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				startRun(),
+				doThis("Teleport to your next stop as the guide says",
+					ctx -> instruction(ctx).startsWith("Follow the line"))
+					.onDone(ctx -> ctx.capture("Step after landing", instruction(ctx)))
+					.orAskAfter(DO_TICKS, "The guide didn't say \"Follow the line ...\" after a teleport. Carry on?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("Step instead", instruction(ctx));
+						ctx.problem("No \"Follow the line\" step after landing");
+					}),
+				ask("Did the walking line show as you landed, without a wait of a second or two?")
+					.onAnswer((ctx, yes) ->
+					{
+						if (!yes)
+						{
+							ctx.problem("The line still came a second or two after landing");
+						}
+					}));
 		}
 	}
 }
