@@ -98,7 +98,9 @@ public enum TestItem
 	@Getter
 	public enum Tab
 	{
-		RUN("Run"), FARM("Farm"), TRAVEL("Travel"), ACCOUNT("Account");
+		RUN("Run"), FARM("Farm"), TRAVEL("Travel"), ACCOUNT("Account"),
+		/** The developer's own checks, not in the players' list. */
+		DEV("Dev checks");
 
 		private final String label;
 

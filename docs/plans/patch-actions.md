@@ -7,7 +7,21 @@ from the leprechaun at a planned step rather than letting the user rely on their
 be a 'Note' step for crops or herbs, I think crops really depend on if they're being used for compost or not. Start some
 planning for all of these items and we can evaluate later. Other features at the patches might be good, too."
 
-Nothing here starts until elzerma has looked it over and answered section 7.
+**P1 built 2026-10-27 (branch `claude/1c-plan-file-name-0cf248`), awaiting elzerma's hand checks:** at each stop every patch is
+picked and cleared first (raking, checking health, clearing included), then a Note step while anything notable picked
+there is still unnoted in the inventory (produce is whatever was gained since arriving that has a noted form; not weeds
+or logs), then a step to take what compost the stop's patches still need from the tool leprechaun (none with a filled
+bottomless bucket), then every patch treated and planted. Both steps outline the Tool Leprechaun and stand aside once
+the player has started treating or planting. Farm tab "At the patches": Note produce (on), Empty buckets (Drop, Keep,
+Store at the tool leprechaun; drop by default). P2 (cleaning herbs) and P3 (making compost) are still to build.
+**Changed after elzerma's P1 runs (2026-10-27 and 28):** picking everything first sent them across the Farming Guild
+and back, and grouping nearby patches was tried and dropped ("kinda shit"). Now, at every stop: on arriving, "Take N
+ultracompost from the tool leprechaun" for the whole stop (until picking or composting begins there); then each patch
+picked, **planted, then composted** (elzerma: "I have always planted then composted"), and paid for, before the next;
+then the Note step before leaving. No "Order at a stop" setting. The Note step counts only what came into the inventory
+while picking, read with notes as notes (it stayed after noting, and asked to note a staff taken off). "Inventory full"
+says what makes room: produce to note, else compost this stop won't use, to store. "You treat the allotment" goes to
+the nearer allotment not yet composted.
 
 ## 1. What the plugin does at a patch today
 

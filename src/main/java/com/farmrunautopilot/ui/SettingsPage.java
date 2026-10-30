@@ -104,6 +104,21 @@ class SettingsPage extends SetupPanel
 		add(debugSection(config));
 		add(resetSection());
 		add(testingSection());
+		if (testRunner != null && testRunner.isDeveloperMode())
+		{
+			add(devChecksSection());
+		}
+	}
+
+	/** Developer client only: the developer's own guided checks, apart from the players' help list. */
+	private JComponent devChecksSection()
+	{
+		final CollapsibleSection s = section("Dev checks");
+		s.addContent(note("Your own checks, never shown to players. Start one: the Run tab walks you through it and "
+			+ "your settings are put back after. The result goes to your clipboard, the log has the details, and check "
+			+ "screenshots are saved as you go."));
+		s.addContent(HelpWanted.devList(settings, testRunner, showRunTab));
+		return s;
 	}
 
 	/** Open the Presets section and scroll to it. Swing thread. */

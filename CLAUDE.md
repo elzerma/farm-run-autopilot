@@ -12,10 +12,15 @@ Before reading, discussing, replying to, closing or acting on any issue in this 
 
 ## Asking elzerma to test by hand
 
+Check from the dev client's log first. During a run it logs (debug) `Guide step: <stop> / <patch> | <step> | <reminders> | <wear>` each time what the guide shows changes, `Inventory: +N item #id, -N item (noted) #id (S slots free)` each time the inventory changes, the guide's decisions (`Picked at ...`, `Compost for the stop: ...`, `Inventory full: ...`), and the game's chat messages. Ask elzerma only to play a normal run and say when it's done, then judge each change from the log. Ask for hand checks only for what the log can't show (outlines, layout, overlapping text), keep them to one or two, and batch fixes before asking for another run (elzerma, 2026-10-29: "super burned out on doing checks"). The dev client also saves check screenshots (`testing/CheckShots`) to `~/.runelite/farm-run-autopilot/check-shots` at the moments a check is about; read them alongside the log, and delete the ones you've read.
+
+A check elzerma needs to do in game is built as a dev check, not typed out: a `TestItem` on `Tab.DEV` with its guided test in `GuidedTests`. Dev checks show only in Settings > Dev checks on the developer client, never in the players' help list, and are removed once they pass, like any test. The fenced-block format below is the fallback for a check a guided test can't walk through.
+
 Every time you ask elzerma to check something in game by hand (anything beyond a guided test), give the checks as one fenced code block they can copy, fill in and paste back. Each check is numbered and has:
 
 - **Do:** exact steps: where to be, what to have, what to click.
 - **Expect:** what they should see if it works.
+- **Screenshot:** the moment to take one and what it must show (the step text, the sidebar, the inventory), so you can judge the check from it rather than asking them to (elzerma, 2026-10-28: "not really sure what I'm looking for").
 - **Result:** pass / fail / couldn't test, on a line of its own, left blank.
 - **Notes:** left blank.
 
@@ -25,6 +30,7 @@ Put three empty lines after each check, so there's room to write. For example:
 1. Counts as you withdraw
 Do: Open the seed vault with the Farm Run Autopilot section showing. Withdraw one Avantoe seed, then the rest you need.
 Expect: The count under it goes up each time; once you have enough it stays in the section, shown as done.
+Screenshot: After the last seed is withdrawn, with the seed vault and the sidebar section both in view.
 Result:
 Notes:
 

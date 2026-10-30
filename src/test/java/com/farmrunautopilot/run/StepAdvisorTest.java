@@ -39,8 +39,9 @@ public class StepAdvisorTest
 		assertEquals(StepAdvisor.Action.INSPECT, action(herb(false), null));
 		assertEquals(StepAdvisor.Action.PICK, action(herb(false), live(p, Crop.RANARR, PatchState.HARVESTABLE, 2)));
 		assertEquals(StepAdvisor.Action.RAKE, action(herb(false), live(p, null, PatchState.WEEDS, 2)));
-		assertEquals(StepAdvisor.Action.COMPOST, action(herb(false), live(p, null, PatchState.EMPTY, 0)));
-		assertEquals("Plant: Ranarr seed", StepAdvisor.advise(herb(true), live(p, null, PatchState.EMPTY, 0)).getText());
+		// Planted first, then composted while growing (elzerma, 2026-10-28)
+		assertEquals("Plant: Ranarr seed", StepAdvisor.advise(herb(false), live(p, null, PatchState.EMPTY, 0)).getText());
+		assertEquals(StepAdvisor.Action.COMPOST, action(herb(false), live(p, Crop.RANARR, PatchState.GROWING, 0)));
 		assertEquals(StepAdvisor.Action.DONE, action(herb(true), live(p, Crop.RANARR, PatchState.GROWING, 0)));
 		assertEquals(StepAdvisor.Action.CLEAR_DEAD, action(herb(false), live(p, null, PatchState.DEAD, 1)));
 	}

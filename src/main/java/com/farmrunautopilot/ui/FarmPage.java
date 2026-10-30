@@ -8,6 +8,7 @@ import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.Compost;
+import com.farmrunautopilot.settings.EmptyBuckets;
 import com.farmrunautopilot.settings.Outfit;
 import com.farmrunautopilot.settings.Protection;
 import com.farmrunautopilot.settings.RunConfig;
@@ -40,6 +41,7 @@ class FarmPage extends SetupPanel
 		add(diseaseFreeSection(config, access));
 		add(protectionSection(config));
 		add(compostSection(config));
+		add(atThePatchesSection(config));
 		add(extrasSection(config));
 		add(advancedFarmSection(config));
 	}
@@ -422,6 +424,24 @@ class FarmPage extends SetupPanel
 			on -> saveRun(() -> config.setUseCurePlant(on))));
 		s.addContent(spinnerRow("Plant cures to bring (backup)", spinner(config.getPlantCureDoses(), 0, 40, 1,
 			v -> saveRunQuietly(() -> config.setPlantCureDoses(v)))));
+		return s;
+	}
+
+	/**
+	 * What's done at each stop besides planting (patch actions P1, the section elzerma liked): noting the produce on the tool
+	 * leprechaun and what happens to empty buckets. Cleaning herbs and making compost join it in P2 and P3.
+	 */
+	private JComponent atThePatchesSection(RunConfig config)
+	{
+		final CollapsibleSection s = section("At the patches");
+		s.help("On arriving, take the stop's compost from the tool leprechaun. Then each patch is harvested, planted and "
+			+ "composted before the next, and the produce noted before leaving.");
+		s.addContent(checkBox("Note produce on the tool leprechaun", config.isNoteProduce(), true,
+			"Once every patch at a stop is done, a step to use the produce on the leprechaun, saving inventory slots",
+			on -> saveRun(() -> config.setNoteProduce(on))));
+		s.addContent(label("Empty buckets"));
+		s.addContent(combo(enumChoices(EmptyBuckets.values()), config.getEmptyBuckets(),
+			b -> saveRun(() -> config.setEmptyBuckets(b))));
 		return s;
 	}
 
