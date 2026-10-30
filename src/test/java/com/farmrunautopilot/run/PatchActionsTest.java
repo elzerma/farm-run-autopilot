@@ -104,6 +104,50 @@ public class PatchActionsTest
 	}
 
 	@Test
+	public void cleanedHerbsAreStillTheStopsToNote()
+	{
+		// elzerma, 2026-10-30: cleaned the irit picked at Catherby, and the visit didn't say to note them
+		final Set<Integer> produce = PatchGuide.withCleanForms(java.util.Collections.singleton(ItemID.UNIDENTIFIED_IRIT));
+		assertTrue(produce.contains(ItemID.UNIDENTIFIED_IRIT));
+		assertTrue(produce.contains(ItemID.IRIT_LEAF));
+		assertEquals(java.util.Collections.singleton(ItemID.WATERMELON),
+			PatchGuide.withCleanForms(java.util.Collections.singleton(ItemID.WATERMELON)));
+	}
+
+	@Test
+	public void onlyHerbsTheHerbloreLevelAllowsAreCleaned()
+	{
+		final Set<Integer> picked = new java.util.LinkedHashSet<>(java.util.Arrays.asList(ItemID.UNIDENTIFIED_IRIT,
+			ItemID.UNIDENTIFIED_SNAPDRAGON, ItemID.WATERMELON));
+		final Map<Integer, Integer> held = new HashMap<>();
+		held.put(ItemID.UNIDENTIFIED_IRIT, 8);
+		held.put(ItemID.UNIDENTIFIED_SNAPDRAGON, 7);
+		held.put(ItemID.WATERMELON, 14);
+		// Irit at 40, snapdragon at 59 Herblore (OSRS Wiki, Herb)
+		assertEquals(java.util.Collections.singleton(ItemID.UNIDENTIFIED_IRIT), PatchGuide.cleanable(picked, held, 58));
+		assertEquals(2, PatchGuide.cleanable(picked, held, 59).size());
+		assertTrue(PatchGuide.cleanable(picked, held, 39).isEmpty());
+		// Cleaned already: nothing left to clean
+		held.remove(ItemID.UNIDENTIFIED_IRIT);
+		assertEquals(java.util.Collections.singleton(ItemID.UNIDENTIFIED_SNAPDRAGON), PatchGuide.cleanable(picked, held, 99));
+	}
+
+	@Test
+	public void everyHerbCropHasItsGrimyHerb()
+	{
+		for (com.farmrunautopilot.data.Crop crop : com.farmrunautopilot.data.Crop.values())
+		{
+			if (crop.getType() == com.farmrunautopilot.data.PatchType.HERB)
+			{
+				assertTrue(crop.name(), java.util.Arrays.stream(com.farmrunautopilot.data.GrimyHerb.values())
+					.anyMatch(herb -> herb.name().equals(crop.name())));
+			}
+		}
+		assertEquals(com.farmrunautopilot.data.GrimyHerb.HUASCA, com.farmrunautopilot.data.GrimyHerb.of(ItemID.UNIDENTIFIED_HUASCA));
+		assertEquals(null, com.farmrunautopilot.data.GrimyHerb.of(ItemID.IRIT_LEAF));
+	}
+
+	@Test
 	public void onlyPatchesThePlayerIsAtTakeAMessage()
 	{
 		// elzerma, 2026-10-30: "You treat the herb patch" at Civitas illa Fortis, with the guide on Troll Stronghold, left the

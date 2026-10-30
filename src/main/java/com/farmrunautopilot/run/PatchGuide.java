@@ -5,6 +5,7 @@ import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Crop;
+import com.farmrunautopilot.data.GrimyHerb;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
@@ -40,6 +41,7 @@ import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Item;
+import net.runelite.api.Skill;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ItemID;
@@ -117,6 +119,8 @@ class PatchGuide
 	private List<Patch> atStopPatches = Collections.emptyList();
 	/** The produce the Note step outlines. */
 	private Set<Integer> produce = Collections.emptySet();
+	/** The grimy herbs the clean step outlines. */
+	private Set<Integer> toClean = Collections.emptySet();
 
 	/** What has happened at a patch during this run. */
 	private static final class Progress
@@ -503,7 +507,7 @@ class PatchGuide
 			// dump buckets/grab ultracompost"). Not once planting or composting has begun here: the player went their own way.
 			if (!visited && advice.getAction() == StepAdvisor.Action.PLANT)
 			{
-				final String visit = plantingBegun(here) ? null : leprechaunVisit(patch, true);
+				final String visit = plantingBegun(here) ? null : cleanThenVisit(patch, true);
 				if (visit != null)
 				{
 					return visit;
@@ -513,7 +517,7 @@ class PatchGuide
 			return step(stop, patch, advice);
 		}
 		// Every patch done: what was picked since is noted before leaving, while still here, with the buckets stored then
-		final String note = navigator.nearAny(here) ? leprechaunVisit(here.get(0), false) : null;
+		final String note = navigator.nearAny(here) ? cleanThenVisit(here.get(0), false) : null;
 		if (note != null)
 		{
 			return note;
@@ -616,12 +620,12 @@ class PatchGuide
 		return action == StepAdvisor.Action.PICK || action == StepAdvisor.Action.CHECK_HEALTH;
 	}
 
-	/** The produce picked at this stop still unnoted in the inventory. */
+	/** The produce picked at this stop still unnoted in the inventory, grimy herbs cleaned since included. */
 	private Set<Integer> unnotedProduce()
 	{
 		final Map<Integer, Integer> held = inventoryAsHeld();
 		final Set<Integer> gained = new LinkedHashSet<>();
-		for (int id : picked)
+		for (int id : withCleanForms(picked))
 		{
 			if (held.getOrDefault(id, 0) > 0)
 			{
@@ -638,6 +642,66 @@ class PatchGuide
 		}
 		gained.removeIf(id -> runService.itemName(id).toLowerCase().endsWith("logs"));
 		return gained;
+	}
+
+	/**
+	 * The produce picked here with the clean form of each grimy herb: herbs cleaned after picking are still the stop's to
+	 * note (elzerma, 2026-10-30: cleaned at Catherby, the visit didn't say to note them).
+	 */
+	static Set<Integer> withCleanForms(Set<Integer> picked)
+	{
+		final Set<Integer> ids = new LinkedHashSet<>(picked);
+		for (int id : picked)
+		{
+			final GrimyHerb herb = GrimyHerb.of(id);
+			if (herb != null)
+			{
+				ids.add(herb.getCleanItemId());
+			}
+		}
+		return ids;
+	}
+
+	/**
+	 * "Clean your grimy irit leaf": the grimy herbs picked here still in the inventory that this Herblore level cleans, with
+	 * Clean herbs on (P2); null otherwise.
+	 */
+	private String cleanStep(Patch at)
+	{
+		if (!settings.getRunConfig().isCleanHerbs())
+		{
+			return null;
+		}
+		toClean = cleanable(picked, inventoryAsHeld(), client.getRealSkillLevel(Skill.HERBLORE));
+		if (toClean.isEmpty())
+		{
+			return null;
+		}
+		currentPatch = at;
+		currentAction = StepAdvisor.Action.CLEAN;
+		return "Clean your " + produceNames(toClean);
+	}
+
+	/** The grimy herbs picked here and held, that this Herblore level can clean. */
+	static Set<Integer> cleanable(Set<Integer> picked, Map<Integer, Integer> held, int herblore)
+	{
+		final Set<Integer> grimy = new LinkedHashSet<>();
+		for (int id : picked)
+		{
+			final GrimyHerb herb = GrimyHerb.of(id);
+			if (herb != null && herb.getHerbloreLevel() <= herblore && held.getOrDefault(id, 0) > 0)
+			{
+				grimy.add(id);
+			}
+		}
+		return grimy;
+	}
+
+	/** Herbs are cleaned at the patch first, then the stop's visit to the tool leprechaun. */
+	private String cleanThenVisit(Patch at, boolean beforePlanting)
+	{
+		final String clean = cleanStep(at);
+		return clean != null ? clean : leprechaunVisit(at, beforePlanting);
 	}
 
 	private String produceNames(Set<Integer> ids)
@@ -844,6 +908,12 @@ class PatchGuide
 		if (currentPatch == null || currentAction == null)
 		{
 			return null;
+		}
+		// The grimy herbs to clean outlined (P2)
+		if (currentAction == StepAdvisor.Action.CLEAN)
+		{
+			return new Highlights(null, false, null, toClean, null, Collections.emptySet(), Collections.emptyList(), null,
+				Collections.emptySet());
 		}
 		// The tool leprechaun outlined, with the produce to use on him (P1)
 		if (currentAction == StepAdvisor.Action.NOTE || currentAction == StepAdvisor.Action.TAKE_COMPOST)

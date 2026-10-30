@@ -2124,6 +2124,10 @@ public class RunSession
 			{
 				return "leprechaun visit";
 			}
+			if (instruction.startsWith("Clean your "))
+			{
+				return "clean herbs";
+			}
 			if (loggedInstruction != null && loggedInstruction.startsWith(LEPRECHAUN_VISIT))
 			{
 				return "leprechaun visit done";

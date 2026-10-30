@@ -33,6 +33,8 @@ public final class StepAdvisor
 		COMPOST,
 		PLANT,
 		PAY,
+		/** Clean the grimy herbs picked here, before noting them (patch actions P2). */
+		CLEAN,
 		/** Note the stop's produce on the tool leprechaun, once everything here is picked (patch actions P1). */
 		NOTE,
 		/** Take the compost this stop's patches need from the tool leprechaun (P1). */

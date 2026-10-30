@@ -122,10 +122,15 @@ public class RunConfig
 	/** During a run, remind the player to drop weeds and empty plant pots. */
 	private boolean remindToDrop = true;
 	/**
-	 * At each stop, once everything is picked, a step to note the produce on the tool leprechaun before treating and
-	 * planting (patch actions P1; on by default, elzerma).
+	 * At each stop, once picked, a step to note the produce on the tool leprechaun before planting (patch actions P1; on by
+	 * default, elzerma).
 	 */
 	private boolean noteProduce = true;
+	/**
+	 * After picking herbs, a step to clean the ones the player's Herblore level allows, before noting them (patch actions
+	 * P2; off by default, as elzerma agreed for the "At the patches" settings, 2026-10-24).
+	 */
+	private boolean cleanHerbs;
 	/** Empty buckets after composting: dropped, kept or stored at the tool leprechaun (P1; dropped by default). */
 	private EmptyBuckets emptyBuckets = EmptyBuckets.DROP;
 	/** Walk instead of teleporting when the walk is only a little slower (saves charges and clicks). */
