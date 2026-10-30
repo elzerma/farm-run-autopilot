@@ -92,7 +92,13 @@ public enum TestItem
 	// Sprint 1c, the special trees
 	GREAT_CONCH_ACCESS(Tab.ACCOUNT, "The Great Conch's calquat patch",
 		"Only if you've started Troubled Tortugans but not finished it: go to the calquat patch on the Summer Shore of the "
-			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2);
+			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2),
+	// Dev checks: elzerma's own, in Settings > Dev checks on the developer client only, never in the players' list
+	PLANT_THEN_COMPOST(Tab.DEV, "Plant moves on to compost at once",
+		"Start the test when the Falador herb patch is ready to pick or plant, with an ultracompost carried or stored with "
+			+ "the tool leprechaun. Do the herb patch as the guide says. Once you plant the seed, the step should change to "
+			+ "\"Use ultracompost on the patch\" within a tick or two, with no \"You aren't carrying\" line for the seed in "
+			+ "between. The test times it itself.");
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter
