@@ -89,6 +89,7 @@ import net.runelite.client.util.ImageUtil;
 @Slf4j
 @PluginDescriptor(
 	name = "Farm Run Autopilot",
+	internalName = "farm-run-autopilot",
 	description = "Plans and guides combined tree, fruit tree and herb farming runs",
 	tags = {"farming", "farm", "run", "herb", "tree", "fruit", "route", "planner"}
 )
@@ -241,6 +242,8 @@ public class FarmRunAutopilotPlugin extends Plugin
 		itemCharges.reload();
 		dailyUses.reload();
 		accessChecker.requestRefresh();
+		// Developer client only: the check screenshots' folder, and old ones cleared
+		injector.getInstance(com.farmrunautopilot.testing.CheckShots.class).startUp(getPluginDirectory());
 		panel = injector.getInstance(FarmRunAutopilotPanel.class);
 		settings.addListener(onSettingsReloaded);
 		settings.addSaveListener(onSettingsSaved);

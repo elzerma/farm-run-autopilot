@@ -67,6 +67,14 @@ public class PatchActionsTest
 	}
 
 	@Test
+	public void checkScreenshotNamesAreSafe()
+	{
+		assertEquals("Civitas illa Fortis (Ortus Farm) - note step",
+			com.farmrunautopilot.testing.CheckShots.safe("Civitas illa Fortis (Ortus Farm) - note step"));
+		assertEquals("Port Phasmatys - ab", com.farmrunautopilot.testing.CheckShots.safe("Port Phasmatys - a/b? ..."));
+	}
+
+	@Test
 	public void compostNotNeededHereIsSpare()
 	{
 		// elzerma, 2026-10-28: 7 supercompost from the bin and ultracompost for the two allotments still to treat

@@ -2036,8 +2036,14 @@ public class RunSession
 			reminders, wear.getText(), highlights, split, missingAsked());
 	}
 
+	/** Screenshots at the moments a check is about (developer client only). */
+	@Inject
+	private com.farmrunautopilot.testing.CheckShots checkShots;
 	/** What the guide shows, as last logged. */
 	private String loggedStep;
+	private String loggedWhere;
+	private String loggedInstruction;
+	private String loggedReminders;
 	/** The inventory as last logged, notes as notes. */
 	private Map<Integer, Integer> loggedInventory = Collections.emptyMap();
 
@@ -2056,7 +2062,54 @@ public class RunSession
 		{
 			loggedStep = shown;
 			log.debug("Guide step: {}", shown);
+			final String moment = checkMoment(where, instruction, reminders);
+			if (moment != null)
+			{
+				checkShots.take(where + " - " + moment);
+			}
+			loggedWhere = where;
+			loggedInstruction = instruction;
+			loggedReminders = reminders;
 		}
+	}
+
+	/** A moment a hand check is about, to screenshot: what newly shows, or the Note step clearing; null for the rest. */
+	private String checkMoment(String where, String instruction, String reminders)
+	{
+		if (!where.equals(loggedWhere))
+		{
+			return "arrived";
+		}
+		if (instruction != null && !instruction.equals(loggedInstruction))
+		{
+			if (instruction.startsWith("Take ") && instruction.endsWith("from the tool leprechaun"))
+			{
+				return "take compost";
+			}
+			if (instruction.startsWith("Note your "))
+			{
+				return "note step";
+			}
+			if (loggedInstruction != null && loggedInstruction.startsWith("Note your "))
+			{
+				return "note step cleared";
+			}
+		}
+		if (newly(reminders, "Inventory full"))
+		{
+			return "inventory full";
+		}
+		if (newly(reminders, "empty bucket"))
+		{
+			return "buckets";
+		}
+		return null;
+	}
+
+	/** The reminder lines now say this and didn't when last logged. */
+	private boolean newly(String reminders, String text)
+	{
+		return reminders != null && reminders.contains(text) && (loggedReminders == null || !loggedReminders.contains(text));
 	}
 
 	/** The step log's inventory line: what came in and went out since the last one, notes as notes. */
