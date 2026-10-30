@@ -60,6 +60,15 @@ class PatchGuide
 	/** Inspecting a treated patch: "This is an allotment. The soil has been treated with ultracompost. ..." */
 	static final Pattern INSPECTED_COMPOSTED = Pattern.compile(
 		"This is an? .+?\\. The soil has been treated with (ultra|super|)compost.*");
+	/** "You plant an irit seed in the herb patch." (seen 2026-10-29; other patches' wording UNVERIFIED) */
+	static final Pattern PLANTED = Pattern.compile("You plant .+ in the .+");
+	/**
+	 * Game ticks a patch counts as planted on the evidence alone (the seed leaving the inventory, the chat message),
+	 * before its reading catches up: the seed goes a tick or so before the patch changes (elzerma, 2026-10-29: the
+	 * guide stayed on Plant, saying the irit seed wasn't carried, until then). If the reading still says empty after
+	 * this, the seed went in another patch, and the reading decides again.
+	 */
+	static final int PLANTED_GRACE_TICKS = 5;
 	private static final int INVENTORY_SLOTS = 28;
 	/** Gained at a patch but never produce to note: weeds, what's left from composting and planting, his own stock. */
 	private static final Set<Integer> NOT_PRODUCE = notProduce();
@@ -118,6 +127,42 @@ class PatchGuide
 		boolean sawUnplanted;
 		/** Payment items in the inventory when paying became the next step; -1 until then. */
 		int paymentBaseline = -1;
+		/** The game tick it was seen planted, before its reading showed it; -1 if not. */
+		int plantedTick = -1;
+	}
+
+	/** Seen planted within the last few ticks, while its reading may still say empty. */
+	private boolean justPlanted(Progress p)
+	{
+		return plantedRecently(p.plantedTick, client.getTickCount());
+	}
+
+	static boolean plantedRecently(int plantedTick, int now)
+	{
+		return plantedTick >= 0 && now - plantedTick <= PLANTED_GRACE_TICKS;
+	}
+
+	/** Fewer of the seed (or sapling) than the step began with: it went into the patch. */
+	static boolean plantUsed(int plantItemId, Map<Integer, Integer> before, Map<Integer, Integer> now)
+	{
+		return now.getOrDefault(plantItemId, 0) < before.getOrDefault(plantItemId, 0);
+	}
+
+	/** An empty patch just planted is read as growing, so its compost is asked for at once. */
+	static PatchPrediction asPlanted(PatchPrediction live)
+	{
+		return new PatchPrediction(live.getPatch(), live.getCrop(), PatchState.GROWING, 0, live.getStages(), 0,
+			live.getObservedAt(), live.getPlantedAt(), live.getSource());
+	}
+
+	private void markPlanted(Patch patch, String evidence)
+	{
+		final Progress p = progress(patch);
+		if (!justPlanted(p))
+		{
+			p.plantedTick = client.getTickCount();
+			log.debug("Planted {}: {}", patch, evidence);
+		}
 	}
 
 	@Inject
@@ -178,7 +223,7 @@ class PatchGuide
 			return true;
 		}
 		final PatchPrediction live = patchTracker.predict(patch);
-		return p.sawUnplanted && live != null && live.getState() == PatchState.GROWING;
+		return p.sawUnplanted && (justPlanted(p) || live != null && live.getState() == PatchState.GROWING);
 	}
 
 	/** Ticked by hand rather than seen done, so it can be unticked. */
@@ -254,6 +299,17 @@ class PatchGuide
 	 */
 	void onChatMessage(String message, List<Patch> here)
 	{
+		if (PLANTED.matcher(message).matches())
+		{
+			// The patch it names, else the one the Plant step is on
+			final Patch named = patchNamed(message, here);
+			final Patch patch = named != null ? named : currentAction == StepAdvisor.Action.PLANT ? currentPatch : null;
+			if (patch != null)
+			{
+				markPlanted(patch, message);
+			}
+			return;
+		}
 		if (!COMPOST_USED.matcher(message).matches() && !ALREADY_COMPOSTED.matcher(message).matches()
 			&& !INSPECTED_COMPOSTED.matcher(message).matches())
 		{
@@ -350,6 +406,15 @@ class PatchGuide
 				log.debug("Picked at {}: {}; produce so far {}", currentPatch, produceNames(gained), produceNames(picked));
 			}
 		}
+		else if (currentAction == StepAdvisor.Action.PLANT && currentPatch != null)
+		{
+			// The seed leaving the inventory at the patch is planting, a tick or so before the patch reads as planted
+			final Crop crop = plan.getSupplies().getPlantings().get(currentPatch);
+			if (crop != null && plantUsed(crop.getPlantItemId(), lastSeen, held) && !navigator.farFrom(currentPatch))
+			{
+				markPlanted(currentPatch, runService.itemName(crop.getPlantItemId()) + " left the inventory");
+			}
+		}
 		lastSeen = held;
 		atStopPatches = here;
 		// On arriving, the compost for the whole stop from the tool leprechaun, then each patch picked, planted and
@@ -376,7 +441,7 @@ class PatchGuide
 			{
 				continue;
 			}
-			final PatchPrediction live = patchTracker.predict(patch);
+			PatchPrediction live = patchTracker.predict(patch);
 			// Only trust a reading taken since arriving: an estimate from the last visit can say a tree is
 			// still growing when it's ready, which would skip the patch
 			if (live == null || live.getObservedAt() < navigator.getArrivedAtSeconds())
@@ -389,6 +454,10 @@ class PatchGuide
 			if (live.getState() != PatchState.GROWING && patchTracker.getPatchesInRange().contains(patch))
 			{
 				p.sawUnplanted = true;
+			}
+			if (live.getState() == PatchState.EMPTY && justPlanted(p))
+			{
+				live = asPlanted(live);
 			}
 			// A flower planted this run still gets its compost, if any
 			if (keepsProtectingFlower(patch, live) && (live.getState() != PatchState.GROWING || !p.sawUnplanted))

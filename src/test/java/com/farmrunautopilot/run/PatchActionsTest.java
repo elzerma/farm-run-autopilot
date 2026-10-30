@@ -101,6 +101,54 @@ public class PatchActionsTest
 	}
 
 	@Test
+	public void plantingIsSeenFromTheSeedLeavingAndTheChatMessage()
+	{
+		final Map<Integer, Integer> before = new HashMap<>();
+		before.put(ItemID.IRIT_SEED, 3);
+		final Map<Integer, Integer> now = new HashMap<>(before);
+		assertFalse(PatchGuide.plantUsed(ItemID.IRIT_SEED, before, now));
+		now.put(ItemID.IRIT_SEED, 2);
+		assertTrue(PatchGuide.plantUsed(ItemID.IRIT_SEED, before, now));
+		// The last one planted leaves none
+		now.remove(ItemID.IRIT_SEED);
+		assertTrue(PatchGuide.plantUsed(ItemID.IRIT_SEED, before, now));
+		// Another item going is not planting
+		assertFalse(PatchGuide.plantUsed(ItemID.RANARR_SEED, before, now));
+
+		assertTrue(PatchGuide.PLANTED.matcher("You plant an irit seed in the herb patch.").matches());
+		assertTrue(PatchGuide.PLANTED.matcher("You plant 3 watermelon seeds in the allotment.").matches());
+		assertFalse(PatchGuide.PLANTED.matcher("You treat the herb patch with ultracompost.").matches());
+		assertEquals(com.farmrunautopilot.data.Patch.FALADOR_HERB, PatchGuide.patchNamed(
+			"You plant an irit seed in the herb patch.", java.util.Arrays.asList(com.farmrunautopilot.data.Patch.FALADOR_HERB,
+				com.farmrunautopilot.data.Patch.FALADOR_ALLOTMENT_NW, com.farmrunautopilot.data.Patch.FALADOR_ALLOTMENT_SE)));
+	}
+
+	@Test
+	public void justPlantedCountsUntilTheReadingCatchesUp()
+	{
+		assertFalse(PatchGuide.plantedRecently(-1, 100));
+		assertTrue(PatchGuide.plantedRecently(100, 100));
+		assertTrue(PatchGuide.plantedRecently(100, 100 + PatchGuide.PLANTED_GRACE_TICKS));
+		// Still read as empty after that: the seed went somewhere else
+		assertFalse(PatchGuide.plantedRecently(100, 101 + PatchGuide.PLANTED_GRACE_TICKS));
+	}
+
+	@Test
+	public void anEmptyPatchJustPlantedAsksForItsCompost()
+	{
+		final com.farmrunautopilot.data.Patch herb = com.farmrunautopilot.data.Patch.FALADOR_HERB;
+		final com.farmrunautopilot.tracking.PatchPrediction empty = new com.farmrunautopilot.tracking.PatchPrediction(herb,
+			null, com.farmrunautopilot.data.PatchState.EMPTY, 0, 0, 0, 1000, 0,
+			com.farmrunautopilot.tracking.PatchPrediction.Source.THIS_PLUGIN);
+		final StepAdvisor.PatchGoal goal = new StepAdvisor.PatchGoal(herb, com.farmrunautopilot.data.Crop.IRIT, "Irit seed",
+			com.farmrunautopilot.settings.Compost.ULTRACOMPOST, false, null, false, false, false, true);
+		assertEquals(StepAdvisor.Action.PLANT, StepAdvisor.advise(goal, empty).getAction());
+		final StepAdvisor.Advice advice = StepAdvisor.advise(goal, PatchGuide.asPlanted(empty));
+		assertEquals(StepAdvisor.Action.COMPOST, advice.getAction());
+		assertEquals("Use ultracompost on the patch", advice.getText());
+	}
+
+	@Test
 	public void settingsDefaults()
 	{
 		final RunConfig config = new RunConfig().sanitise();
