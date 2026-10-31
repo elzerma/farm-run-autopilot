@@ -347,8 +347,13 @@ class Navigator
 
 	boolean farFrom(Patch patch)
 	{
+		return farFrom(scene.locationOf(patch));
+	}
+
+	/** Further than a patch's reach from this point, e.g. the tool leprechaun or a compost bin. */
+	boolean farFrom(WorldPoint point)
+	{
 		final Player player = client.getLocalPlayer();
-		final WorldPoint point = scene.locationOf(patch);
 		return player != null && point != null && player.getWorldLocation().distanceTo(point) > NEAR_PATCH_TILES;
 	}
 

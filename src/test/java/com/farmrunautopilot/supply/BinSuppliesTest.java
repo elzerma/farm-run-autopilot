@@ -56,8 +56,14 @@ public class BinSuppliesTest
 		bins.put(CompostBin.FALADOR, BinState.decode(126, false));
 		bins.put(CompostBin.CATHERBY, BinState.decode(56, false));
 		final List<SupplyLine> lines = SupplyCalculator.binSupplies(making(), ROUTE, bins::get, Holdings.EMPTY, Holdings.EMPTY);
-		assertEquals(50, named(lines, "Volcanic ash").getNeed());
+		// Falador's only: Catherby's has had some taken out, so ash would be used up on what's left
+		assertEquals(25, named(lines, "Volcanic ash").getNeed());
 		assertEquals(15 + 9, named(lines, "Empty bucket").getNeed());
+		// Brought, not optional, once ultracompost is asked for (elzerma, 2026-10-30: "guide to bring volcanic ash")
+		assertEquals(SupplyLine.Group.TOOLS, named(lines, "Volcanic ash").getGroup());
+		bins.put(CompostBin.CATHERBY, BinState.decode(62, false));
+		assertEquals(50, named(SupplyCalculator.binSupplies(making(), ROUTE, bins::get, Holdings.EMPTY, Holdings.EMPTY),
+			"Volcanic ash").getNeed());
 	}
 
 	@Test

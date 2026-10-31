@@ -1774,8 +1774,9 @@ public class RunSession
 		{
 			return navigator.travelTarget(stop, patchesAt(plan, stop.getLocation()));
 		}
-		final Patch current = patches.getCurrentPatch();
-		return current != null && navigator.farFrom(current) ? scene.locationOf(current) : null;
+		// The patch, or the tool leprechaun or compost bin for their steps
+		final WorldPoint point = patches.stepPoint();
+		return navigator.farFrom(point) ? point : null;
 	}
 
 	/**
@@ -2128,7 +2129,8 @@ public class RunSession
 			{
 				return "clean herbs";
 			}
-			if (instruction.contains("compost bin"))
+			// Once per bin step, not again as its count goes up
+			if (instruction.contains("compost bin") && !uncounted(instruction).equals(uncounted(loggedInstruction)))
 			{
 				return "compost bin";
 			}
@@ -2152,6 +2154,12 @@ public class RunSession
 	private boolean newly(String reminders, String text)
 	{
 		return reminders != null && reminders.contains(text) && (loggedReminders == null || !loggedReminders.contains(text));
+	}
+
+	/** A step without its count, e.g. "Put your watermelon in the compost bin" for "... (4/15)"; "" for none. */
+	static String uncounted(String instruction)
+	{
+		return instruction == null ? "" : instruction.replaceFirst(" \\(\\d+/\\d+\\)$", "");
 	}
 
 	/** The step log's inventory line: what came in and went out since the last one, notes as notes. */

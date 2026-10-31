@@ -251,3 +251,19 @@ bin at <area>: <state> (value N)"); the steps above, with the bin outlined; Farm
 (off), Make ultracompost (on) and the crops for the bin (watermelon); the ash and buckets on the supply list, the tool
 leprechaun's empty buckets read too. UNVERIFIED: the big bin's values 97-99 and 127-128 (no object IDs in RuneLite's
 notes), to check from the Farming Guild's log lines.
+
+**First run, Civitas illa Fortis (2026-10-30), from the log:** the bin read right through: rotted supercompost (126),
+opened (62, then down to 48 as each bucket was filled), empty (0), filled with watermelons (33 to 47), closed (95). The
+Farming Guild's big bin read 97, then 98, while rotting: as decoded (supercompost rotting), with 99 and 127-128 still
+unseen. What elzerma asked to change:
+- *"Highlight should go to leprechaun to remove buckets and then open and either a) withdraw or b) guide to bring
+  volcanic ash and add it to the bin before removing it into buckets since when adding to bin saves volcanic ash vs
+  adding it to buckets, also it's faster"*: the bin steps started only once next to a patch, and opened it before the
+  buckets. Now, from arriving: the buckets from the tool leprechaun first (he's outlined and the walking line goes to
+  him, or to the bin until he's loaded), then open, then the ash when carried (none once any compost is out), then
+  take it out, then store it. The ash is no longer optional on the supply list with Make ultracompost on.
+- *"when we've begun adding stuff to bin it should keep you at the bin til the bin is full or you're out of eligible
+  items to add"* and *"it should guide you to close the bin. finish picking and note produce"*: the step went back to
+  picking after the first watermelon went in (the inventory was no longer full) and never said to close it. Now, once
+  the bin's count goes up, the step stays on the bin until it's full or the watermelons run out; a full bin is closed
+  straight away; then picking, and the visit to the tool leprechaun, carry on.

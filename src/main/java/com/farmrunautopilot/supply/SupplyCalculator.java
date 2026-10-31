@@ -67,6 +67,7 @@ public final class SupplyCalculator
 	/** Compost lines: the setting is the compost type, not anything about a bucket. */
 	private static final String COMPOST_TYPE = "Farm > Compost and cures (compost type)";
 	private static final String TRAVEL = "Travel > Ways to travel";
+	private static final String AT_THE_PATCHES = "Farm > At the patches";
 
 	private SupplyCalculator()
 	{
@@ -1509,7 +1510,7 @@ public final class SupplyCalculator
 			{
 				continue;
 			}
-			if (config.isMakeUltracompost() && state.getCompost() == Compost.SUPERCOMPOST)
+			if (config.isMakeUltracompost() && state.takesAsh(bin.capacity()))
 			{
 				ash += bin.ashForUltracompost();
 			}
@@ -1518,8 +1519,12 @@ public final class SupplyCalculator
 		}
 		if (ash > 0)
 		{
-			lines.add(line(SupplyLine.Group.OPTIONAL, "Volcanic ash", ash, holdings, carried,
-				"For ultracompost in the compost bins", 1, ItemID.FOSSIL_VOLCANIC_ASH).usedUp());
+			// Brought, not optional, once ultracompost is asked for: the guide adds it to the bin before any compost is taken
+			// out, which uses less than 2 a bucket after (elzerma, 2026-10-30: "guide to bring volcanic ash and add it to the
+			// bin before removing it into buckets")
+			lines.add(changeIn(line(SupplyLine.Group.TOOLS, "Volcanic ash", ash, holdings, carried,
+				"For ultracompost: 25 a compost bin (50 for the Farming Guild's), added before any compost is taken out", 1,
+				ItemID.FOSSIL_VOLCANIC_ASH).usedUp(), AT_THE_PATCHES));
 		}
 		final boolean bottomless = holdings.countAny(new int[]{ItemID.BOTTOMLESS_COMPOST_BUCKET,
 			ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED}) > 0;
