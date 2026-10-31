@@ -631,7 +631,8 @@ public class SeedVaultSection
 			list.getHeight()));
 		// Its entry in the category list shows with it, so only while the view is on (elzerma)
 		showTab(shownHeight > 0);
-		log.debug("Seed vault: {} in the Farm Run Autopilot section, {} high", section, shownHeight);
+		log.debug("Seed vault: {} in the Farm Run Autopilot section, {} high{}", section, shownHeight, lifted
+			? ", above the Farming Contract's (" + vault.top + " high)" : vault.top > 0 ? ", under the Farming Contract's" : "");
 	}
 
 	/**
