@@ -280,3 +280,15 @@ screenshots show the bin outlined with the ash, and with every watermelon. Two t
 - The timer started only at the first patch, so the bin's 2.5 minutes weren't timed and the walking line (drawn only
   once timing) wasn't there for the walk from the bank. Now a click on the first stop's compost bin or tool leprechaun
   starts it too, as one on a patch or gardener does.
+
+**Third run, Hosidius (2026-10-31), from the log:** by the Hosidius portal, with 15 buckets from the bank: open, the
+ash, 15 ultracompost out (the walking line to the bin, then to the leprechaun to store 13, keeping 2), pick, "Put your
+watermelon in the compost bin (0/15)" as soon as the patch was picked, kept at to 15/15, "Close the compost bin";
+the run finished in 10:31. Two things fixed after it:
+- After closing the bin, the guide sent elzerma from it across the farm to the tool leprechaun to note 2 watermelons
+  before planting, with the stop's ultracompost carried from the bin and 22 slots free (elzerma's screenshot). The
+  visit before planting is now made only when it's needed: compost to take from him, or too little room for what the
+  stop's other patches will bring in (8 a herb patch or allotment, as the inventory-full reminder reckons). Otherwise
+  noting waits for the visit before leaving, and a full inventory while picking makes noting the step.
+- The visit before leaving said "note your watermelon and store 2 empty buckets", but the stop counted as done at the
+  noting, so the run finished with the buckets carried. Now the buckets stay in the visit until stored.

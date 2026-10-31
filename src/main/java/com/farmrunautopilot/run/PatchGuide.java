@@ -142,6 +142,8 @@ class PatchGuide
 	private boolean fillingBin;
 	/** Where the stop's tool leprechaun was first seen, for the walking line: he wanders. */
 	private WorldPoint leprechaunAt;
+	/** A visit to the tool leprechaun here has said to store the empty buckets: it stays until they're stored. */
+	private boolean bucketsDue;
 
 	/** What has happened at a patch during this run. */
 	private static final class Progress
@@ -452,6 +454,12 @@ class PatchGuide
 			binCountSeen = -1;
 			fillingBin = false;
 			leprechaunAt = null;
+			bucketsDue = false;
+		}
+		// The buckets a visit to the tool leprechaun said to store stay in it, but only while it's the step in hand
+		if (currentAction != StepAdvisor.Action.NOTE && currentAction != StepAdvisor.Action.TAKE_COMPOST)
+		{
+			bucketsDue = false;
 		}
 		else if (currentAction == StepAdvisor.Action.EMPTY_BIN)
 		{
@@ -575,10 +583,11 @@ class PatchGuide
 			// Picked and about to plant: the stop's one visit to the tool leprechaun comes first, to note what was picked,
 			// store the empty buckets and take the stop's compost all at once (elzerma, 2026-10-30: "it should tell you to
 			// pick stuff first then when you're already going to note produce on the leprechaun it should then tell you to
-			// dump buckets/grab ultracompost"). Not once planting or composting has begun here: the player went their own way.
+			// dump buckets/grab ultracompost"), when it's needed. Not once planting or composting has begun here: the player
+			// went their own way.
 			if (!visited && advice.getAction() == StepAdvisor.Action.PLANT)
 			{
-				final String visit = plantingBegun(here) ? null : cleanThenVisit(patch, true);
+				final String visit = plantingBegun(here) || !visitNeeded(patch, here) ? null : cleanThenVisit(patch, true);
 				if (visit != null)
 				{
 					return visit;
@@ -617,6 +626,41 @@ class PatchGuide
 		}
 		clearCurrent();
 		return null;
+	}
+
+	/**
+	 * The visit to the tool leprechaun before planting is needed: there's compost to take from him for the stop's patches,
+	 * or too little room left for what its other patches will bring in. Otherwise noting waits for the visit before
+	 * leaving (elzerma, 2026-10-31, at Hosidius: sent from the compost bin across the farm to note 2 watermelons before
+	 * planting, with the stop's ultracompost carried from the bin and 22 slots free).
+	 */
+	private boolean visitNeeded(Patch picked, List<Patch> here)
+	{
+		return compostToTake() != null || freeInventorySlots() < harvestToCome(picked, here);
+	}
+
+	/** Inventory slots the stop's other patches ready to pick will fill, as the inventory-full reminder reckons them. */
+	private int harvestToCome(Patch picked, List<Patch> here)
+	{
+		int slots = 0;
+		for (Patch patch : here)
+		{
+			final Progress p = progress(patch);
+			final PatchPrediction live = patchTracker.predict(patch);
+			if (patch == picked || p.done || p.skipped || live == null)
+			{
+				continue;
+			}
+			if (live.getState() == PatchState.HARVESTABLE)
+			{
+				slots += expectedHarvest(patch, StepAdvisor.Action.PICK, live);
+			}
+			else if (live.getState() == PatchState.CHECK_HEALTH)
+			{
+				slots += expectedHarvest(patch, StepAdvisor.Action.CHECK_HEALTH, live);
+			}
+		}
+		return slots;
 	}
 
 	/** The stop's compost bin while Make compost is on (P3), or null. */
@@ -934,9 +978,12 @@ class PatchGuide
 		}
 		final int buckets = settings.getRunConfig().getEmptyBuckets() == EmptyBuckets.STORE
 			? inventoryAsHeld().getOrDefault(ItemID.BUCKET_EMPTY, 0) : 0;
-		if (buckets > 0 && (beforePlanting || !parts.isEmpty()))
+		// Still to store once the noting's done, as storing is a step of its own with him (elzerma's run of 2026-10-31
+		// finished at the noting, the buckets carried off)
+		if (buckets > 0 && (beforePlanting || !parts.isEmpty() || bucketsDue))
 		{
 			parts.add("store " + buckets + (buckets == 1 ? " empty bucket" : " empty buckets"));
+			bucketsDue = true;
 		}
 		final String compost = beforePlanting ? compostToTake() : null;
 		if (compost != null)
@@ -945,6 +992,7 @@ class PatchGuide
 		}
 		if (parts.isEmpty())
 		{
+			bucketsDue = false;
 			return null;
 		}
 		currentPatch = at;
