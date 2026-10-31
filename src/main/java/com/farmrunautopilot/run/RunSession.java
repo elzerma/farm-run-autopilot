@@ -1,5 +1,6 @@
 package com.farmrunautopilot.run;
 
+import com.farmrunautopilot.data.CompostBin;
 import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
@@ -378,15 +379,17 @@ public class RunSession
 
 	/**
 	 * Start the timer on the first click on a patch in this run, or on its gardener, for players who start
-	 * right next to their first patch.
+	 * right next to their first patch; or on the first stop's compost bin or tool leprechaun, as a ready bin is
+	 * emptied first (P3: elzerma's run of 2026-10-31 timed only from the first patch, after the bin).
 	 */
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
-		if (stage != RunView.State.ARMED)
+		if (stage != RunView.State.ARMED || stopIndex >= plan.getRoute().getStops().size())
 		{
 			return;
 		}
 		final List<Patch> inRun = plan.getSelection().getPatches();
+		final Location first = plan.getRoute().getStops().get(stopIndex).getLocation();
 		switch (event.getMenuAction())
 		{
 			case GAME_OBJECT_FIRST_OPTION:
@@ -396,7 +399,9 @@ public class RunSession
 			case GAME_OBJECT_FIFTH_OPTION:
 			case WIDGET_TARGET_ON_GAME_OBJECT:
 				final Patch patch = scene.patchAt(event.getId(), event.getParam0(), event.getParam1());
-				if (patch != null && inRun.contains(patch))
+				final CompostBin bin = scene.binAt(event.getId(), event.getParam0(), event.getParam1());
+				if (patch != null && inRun.contains(patch)
+					|| bin != null && bin == CompostBin.at(first) && settings.getRunConfig().isMakeCompost())
 				{
 					startClock(System.currentTimeMillis());
 				}
@@ -408,6 +413,12 @@ public class RunSession
 			case NPC_FIFTH_OPTION:
 			case WIDGET_TARGET_ON_NPC:
 				final NPC npc = event.getMenuEntry().getNpc();
+				if (npc != null && PatchGuide.TOOL_LEPRECHAUN.equals(npc.getName())
+					&& navigator.inRange(patchesAt(plan, first)))
+				{
+					startClock(System.currentTimeMillis());
+					break;
+				}
 				for (Patch p : inRun)
 				{
 					if (npc != null && scene.gardener(p) == npc)

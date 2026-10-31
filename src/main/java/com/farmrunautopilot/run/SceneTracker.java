@@ -198,6 +198,20 @@ public class SceneTracker
 		return null;
 	}
 
+	/** The compost bin whose loaded object has this ID and scene position (as in a menu entry), or null (P3). */
+	public CompostBin binAt(int objectId, int sceneX, int sceneY)
+	{
+		for (Map.Entry<CompostBin, GameObject> e : binObjects.entrySet())
+		{
+			final Point min = e.getValue().getSceneMinLocation();
+			if (e.getValue().getId() == objectId && min.getX() == sceneX && min.getY() == sceneY)
+			{
+				return e.getKey();
+			}
+		}
+		return null;
+	}
+
 	/** The loaded NPC with this name that a travel method rides, or null. */
 	public NPC transferNpc(String name)
 	{

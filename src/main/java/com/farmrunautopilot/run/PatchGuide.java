@@ -585,6 +585,22 @@ class PatchGuide
 				}
 				visited = true;
 			}
+			// The inventory full while picking: making room is the step, with what to use outlined, rather than a reminder
+			// under "Pick" with the patch outlined (elzerma, 2026-10-31, at Civitas illa Fortis): the crops for the compost
+			// bin go in it while it has room, else the produce is cleaned and noted with the tool leprechaun
+			if (freeInventorySlots() == 0 && expectedHarvest(patch, advice.getAction(), live) > 0)
+			{
+				final String fill = bin != null ? fillBin(bin, patch, false) : null;
+				if (fill != null)
+				{
+					return fill;
+				}
+				final String note = cleanThenVisit(patch, false);
+				if (note != null)
+				{
+					return note;
+				}
+			}
 			return step(stop, patch, advice);
 		}
 		// Every patch done: the bin filled and closed, then what was picked since noted before leaving, while still here,
@@ -1464,12 +1480,8 @@ class PatchGuide
 		{
 			return null;
 		}
-		// The crops for the compost bin go in it while it has room (P3)
-		final Set<Integer> forBin = binHasRoom() ? binCropsHeld() : Collections.emptySet();
-		if (!forBin.isEmpty())
-		{
-			return "Inventory full: put your " + produceNames(forBin) + " in the compost bin";
-		}
+		// Putting the crops in the compost bin, or noting with the tool leprechaun, is the step itself (nextStep): this is
+		// for the rest, as with noting off
 		final Set<Integer> unnoted = unnotedProduce();
 		logDecision("Inventory full: unnoted produce " + (unnoted.isEmpty() ? "none" : produceNames(unnoted)));
 		if (!unnoted.isEmpty())

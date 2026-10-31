@@ -267,3 +267,16 @@ unseen. What elzerma asked to change:
   picking after the first watermelon went in (the inventory was no longer full) and never said to close it. Now, once
   the bin's count goes up, the step stays on the bin until it's full or the watermelons run out; a full bin is closed
   straight away; then picking, and the visit to the tool leprechaun, carry on.
+
+**Second run, Civitas illa Fortis (2026-10-31), from the log and check screenshots:** the order above ran as built.
+Armed at the Civitas bank, the first step was the buckets (taken from the bank, the step counting down from 15 to 5),
+then open, then the ash, as the game confirmed ("You apply the volcanic ash to the supercompost in the compost bin. The
+supercompost transforms into ultracompost."), 15 ultracompost out and stored; the bin kept at from 1/15 to 15/15, then
+"Close the compost bin", then picking, the leprechaun visit, planting and compost, and the run finished. The
+screenshots show the bin outlined with the ash, and with every watermelon. Two things fixed after it:
+- With the inventory full while picking, the step stayed "Pick the watermelon" for 1:46, the patch outlined, with only
+  a reminder under it (elzerma's screenshot). Now making room is the step: the crops for the bin go in it while it has
+  room, else the produce is cleaned and noted with the tool leprechaun, each with what to use outlined.
+- The timer started only at the first patch, so the bin's 2.5 minutes weren't timed and the walking line (drawn only
+  once timing) wasn't there for the walk from the bank. Now a click on the first stop's compost bin or tool leprechaun
+  starts it too, as one on a patch or gardener does.
