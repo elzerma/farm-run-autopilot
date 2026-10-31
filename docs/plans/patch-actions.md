@@ -210,3 +210,38 @@ bucket or bottomless bucket, and picking everything before planting need no sett
 which compost each patch type gets (say it once).
 
 No questions left; still to check at P3: the ash per bin and the bins' varbits (section 3.3).
+
+## 8. P3 build plan (2026-10-30)
+
+**Checked** (the UNVERIFIED values in section 3.3):
+- **The bins and their varbits** (RuneLite's Time Tracking, `FarmingWorld`): Ardougne (region 10548), Catherby
+  (11062), Civitas illa Fortis (6192), Falador (12083), Hosidius (6967) and Port Phasmatys (14391) on
+  FARMING_TRANSMIT_E; Prifddinas (13151) on FARMING_TRANSMIT_D; the Farming Guild's big bin (4922) on
+  FARMING_TRANSMIT_N. The wiki lists the same eight.
+- **A bin's states** (RuneLite's `PatchImplementation` COMPOST and BIG_COMPOST): 0 empty; 1-15 compost filling (the
+  count); 33-47 supercompost filling; 31-32 and 95-96 rotting; 94 and 126 rotted, still closed; 16-30, 48-62 and
+  176-190 compost, supercompost and ultracompost to take out (buckets left = value - 15, - 47 and - 175); 129-160
+  tomatoes (rotten tomatoes, not used here). The big bin has its own ranges, up to 30.
+- **The wiki:** 15 items to close a bin (30 for the big one), never part-full; it rots in 35-70 minutes; supercompost
+  only if every item is supercompostable (watermelons are); 25 volcanic ash per bin of supercompost (50 for the big
+  one), added before any is taken out (or 2 per bucket in the inventory); taken out with empty buckets or the
+  bottomless bucket, the empty buckets first.
+- **The tool leprechaun's empty buckets** can be read (FARMING_TOOLS_BUCKETS with EXTRABUCKETS and EXTRA2BUCKETS).
+
+**At a stop with a bin**, with Make compost on:
+1. **The bin is ready** (rotted, or opened with compost left): it's emptied before picking, as the buckets need room:
+   at the tool leprechaun, take the empty buckets (none with a bottomless bucket); open the bin; with Make
+   ultracompost and supercompost in it, add 25 volcanic ash (50); take the compost out; at the tool leprechaun, store
+   it, keeping what this stop's patches need. As elzerma's run of 2026-10-24 did.
+2. **Watermelon allotments picked:** "Put your watermelons in the compost bin (N/15)", after each picking and when the
+   inventory fills; they aren't noted while the bin has room, and those past its 15 are.
+3. **Full:** "Close the compost bin".
+4. **Still rotting:** no bin steps; the watermelons are noted.
+
+**Supplies:** 25 volcanic ash (50) for each bin expected ready with supercompost, with Make ultracompost; empty
+buckets for each bin to empty when the tool leprechaun holds too few and there's no bottomless bucket.
+**Tracking:** each bin's value is read like a patch's while in its area and saved with when it was seen; a bin seen
+closed counts as ready 70 minutes after.
+**Settings:** Farm > At the patches > Make compost in the compost bins (off); when on, Make ultracompost (brings
+volcanic ash) and the crops for the bin (watermelon ticked; snape grass never offered).
+**Order of building:** the bins' data and tracking, logged as they change; then the steps; then the supplies.

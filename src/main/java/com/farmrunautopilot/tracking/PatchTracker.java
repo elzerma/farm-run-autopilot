@@ -1,6 +1,8 @@
 package com.farmrunautopilot.tracking;
 
 import com.farmrunautopilot.FarmRunAutopilotConfig;
+import com.farmrunautopilot.data.BinState;
+import com.farmrunautopilot.data.CompostBin;
 import com.farmrunautopilot.data.DecodedPatch;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchState;
@@ -42,6 +44,11 @@ public class PatchTracker
 	private static final String TIME_TRACKING_GROUP = "timetracking";
 	/** Re-save an unchanged observation at most this often, like core Time Tracking. */
 	private static final long RESAVE_SECONDS = 5 * 60;
+	private static final String BIN_PREFIX = "bin.";
+	/** A closed compost bin has rotted this long after it was seen closed (OSRS Wiki: 35 to 70 minutes). */
+	static final long ROT_SECONDS = 70 * 60;
+	/** Each bin's value as last read this session, to log it as it changes. */
+	private final Map<CompostBin, Integer> binValues = new java.util.EnumMap<>(CompostBin.class);
 
 	private static final Map<Integer, List<Patch>> PATCHES_BY_REGION = new HashMap<>();
 
@@ -121,6 +128,7 @@ public class PatchTracker
 		lastPatches = patches;
 
 		final long now = Instant.now().getEpochSecond();
+		changed |= updateBins(patches, now);
 		for (Patch patch : patches)
 		{
 			final int value = client.getVarbitValue(patch.getVarbitId());
@@ -187,6 +195,74 @@ public class PatchTracker
 		}
 		return PatchPredictor.predict(patch, record, plantedAt(patch), source, Instant.now().getEpochSecond(),
 			farmingTick(), isLeaguesWorld());
+	}
+
+	/**
+	 * The compost bins at the farming areas in range (P3): each one's value, logged as it changes and saved only when it
+	 * does, so a closed bin's saved time is when it started rotting (or before).
+	 */
+	private boolean updateBins(Set<Patch> inRange, long now)
+	{
+		boolean changed = false;
+		for (CompostBin bin : CompostBin.values())
+		{
+			if (inRange.stream().noneMatch(patch -> patch.getLocation() == bin.getLocation()))
+			{
+				continue;
+			}
+			final int value = client.getVarbitValue(bin.getVarbitId());
+			final Integer before = binValues.put(bin, value);
+			if (before == null || before != value)
+			{
+				log.debug("Compost bin at {}: {} (value {})", bin.getLocation().getDisplayName(),
+					BinState.decode(value, bin.isBig()), value);
+			}
+			final PatchRecord stored = PatchRecord.parse(getConfig(binKey(bin)));
+			if (stored == null || stored.getValue() != value)
+			{
+				setConfig(binKey(bin), new PatchRecord(value, now).format());
+				changed = true;
+			}
+		}
+		return changed;
+	}
+
+	/** The bin's state now while the player's at its farming area, else {@link #predictBin}. Client thread. */
+	public BinState binState(CompostBin bin)
+	{
+		if (lastPatches.stream().anyMatch(patch -> patch.getLocation() == bin.getLocation()))
+		{
+			return BinState.decode(client.getVarbitValue(bin.getVarbitId()), bin.isBig());
+		}
+		return predictBin(bin);
+	}
+
+	/**
+	 * The bin's state as last seen here, or by RuneLite's Time Tracking, and rotted once {@link #ROT_SECONDS} have passed
+	 * since it was seen rotting; null if it's never been seen.
+	 */
+	public BinState predictBin(CompostBin bin)
+	{
+		PatchRecord record = PatchRecord.parse(getConfig(binKey(bin)));
+		if (record == null)
+		{
+			record = PatchRecord.parse(configManager.getRSProfileConfiguration(TIME_TRACKING_GROUP,
+				bin.getRegionId() + "." + bin.getVarbitId()));
+		}
+		final BinState seen = record != null ? BinState.decode(record.getValue(), bin.isBig()) : null;
+		return seen != null ? rotted(seen, record.getObservedAt(), Instant.now().getEpochSecond()) : null;
+	}
+
+	/** A bin seen rotting at {@code seenAt} has rotted by {@code now} once {@link #ROT_SECONDS} have passed. */
+	static BinState rotted(BinState seen, long seenAt, long now)
+	{
+		return seen.getStage() == BinState.Stage.ROTTING && now - seenAt >= ROT_SECONDS
+			? new BinState(BinState.Stage.ROTTED, seen.getCompost(), 0) : seen;
+	}
+
+	private static String binKey(CompostBin bin)
+	{
+		return BIN_PREFIX + bin.getRegionId() + "." + bin.getVarbitId();
 	}
 
 	private void recordTickOffset(int tickMinutes, long now)
