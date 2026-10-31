@@ -292,3 +292,11 @@ the run finished in 10:31. Two things fixed after it:
   noting waits for the visit before leaving, and a full inventory while picking makes noting the step.
 - The visit before leaving said "note your watermelon and store 2 empty buckets", but the stop counted as done at the
   noting, so the run finished with the buckets carried. Now the buckets stay in the visit until stored.
+
+**Fourth run, Port Phasmatys (2026-10-31), from the log:** the build for the two fixes above broke the guide's
+bookkeeping (the check for the buckets went in the middle of the chain that credits what the last step brought in):
+the compost taken out of the bin went uncounted, so there was no step to store it, and the picking went uncounted
+("Inventory full: unnoted produce none" with an inventory of watermelons). Fixed at once. The run also showed that the
+game takes the volcanic ash after some compost is out: elzerma took 2 supercompost out, then added the ash, and the 13
+left became ultracompost for the full 25. The ash step now stays while the bin's way takes no more ash than the
+buckets' (2 a bucket): 13 or more left, 25 or more in the big bin.

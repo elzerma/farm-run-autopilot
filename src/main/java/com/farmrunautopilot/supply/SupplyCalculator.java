@@ -1510,7 +1510,7 @@ public final class SupplyCalculator
 			{
 				continue;
 			}
-			if (config.isMakeUltracompost() && state.takesAsh(bin.capacity()))
+			if (config.isMakeUltracompost() && state.takesAsh(bin.ashForUltracompost()))
 			{
 				ash += bin.ashForUltracompost();
 			}

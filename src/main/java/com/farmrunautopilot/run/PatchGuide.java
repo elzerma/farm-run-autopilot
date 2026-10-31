@@ -456,11 +456,6 @@ class PatchGuide
 			leprechaunAt = null;
 			bucketsDue = false;
 		}
-		// The buckets a visit to the tool leprechaun said to store stay in it, but only while it's the step in hand
-		if (currentAction != StepAdvisor.Action.NOTE && currentAction != StepAdvisor.Action.TAKE_COMPOST)
-		{
-			bucketsDue = false;
-		}
 		else if (currentAction == StepAdvisor.Action.EMPTY_BIN)
 		{
 			// What came out of the bin (P3): stored with the leprechaun after, but for what this stop's patches need
@@ -492,6 +487,11 @@ class PatchGuide
 			{
 				markPlanted(currentPatch, runService.itemName(crop.getPlantItemId()) + " left the inventory");
 			}
+		}
+		// The buckets a visit to the tool leprechaun said to store stay in it, but only while it's the step in hand
+		if (currentAction != StepAdvisor.Action.NOTE && currentAction != StepAdvisor.Action.TAKE_COMPOST)
+		{
+			bucketsDue = false;
 		}
 		lastSeen = held;
 		atStopPatches = here;
@@ -707,7 +707,7 @@ class PatchGuide
 		{
 			return BinNext.OPEN;
 		}
-		return state.takesAsh(bin.capacity()) && ash >= bin.ashForUltracompost() ? BinNext.ADD_ASH : BinNext.TAKE_OUT;
+		return state.takesAsh(bin.ashForUltracompost()) && ash >= bin.ashForUltracompost() ? BinNext.ADD_ASH : BinNext.TAKE_OUT;
 	}
 
 	/** Buckets of compost in a bin with some: all it holds while it's closed. */

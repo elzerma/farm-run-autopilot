@@ -36,18 +36,25 @@ public class BinStepsTest
 	}
 
 	@Test
-	public void noAshOnceAnyIsTakenOutOrWithTooLittle()
+	public void ashWhileItsNoMoreThanForTheBucketsLeft()
 	{
-		// 9 supercompost left: the ash would be used up for what's left
+		// The bin takes all 25 however many are left (elzerma's run of 2026-10-31: 25 for the 13 left after taking 2
+		// out), against 2 a bucket: worth it with 13 left, not 12 or 9
+		assertEquals(PatchGuide.BinNext.ADD_ASH, next(BinState.decode(60, false), 13, 0, 3, 25));
+		assertEquals(PatchGuide.BinNext.TAKE_OUT, next(BinState.decode(59, false), 12, 0, 3, 25));
 		assertEquals(PatchGuide.BinNext.TAKE_OUT, next(BinState.decode(56, false), 9, 0, 3, 25));
 		assertEquals(PatchGuide.BinNext.TAKE_OUT, next(OPEN_FULL, 15, 0, 3, 24));
-		// The Farming Guild's big bin takes 50
+		// The Farming Guild's big bin takes 50: worth it with 25 left
 		final BinState bigOpen = BinState.decode(114, true);
 		assertEquals(30, PatchGuide.compostIn(bigOpen, CompostBin.FARMING_GUILD));
 		assertEquals(PatchGuide.BinNext.TAKE_OUT,
 			PatchGuide.binNext(bigOpen, CompostBin.FARMING_GUILD, 30, false, 0, 3, 25));
 		assertEquals(PatchGuide.BinNext.ADD_ASH,
 			PatchGuide.binNext(bigOpen, CompostBin.FARMING_GUILD, 30, false, 0, 3, 50));
+		assertEquals(PatchGuide.BinNext.ADD_ASH,
+			PatchGuide.binNext(BinState.decode(109, true), CompostBin.FARMING_GUILD, 25, false, 0, 3, 50));
+		assertEquals(PatchGuide.BinNext.TAKE_OUT,
+			PatchGuide.binNext(BinState.decode(108, true), CompostBin.FARMING_GUILD, 24, false, 0, 3, 50));
 	}
 
 	@Test
@@ -78,14 +85,15 @@ public class BinStepsTest
 	}
 
 	@Test
-	public void ashGoesInARottedOrFullOpenBinOfSupercompost()
+	public void ashGoesInABinOfSupercompost()
 	{
-		assertTrue(ROTTED.takesAsh(15));
-		assertTrue(OPEN_FULL.takesAsh(15));
-		assertFalse(BinState.decode(56, false).takesAsh(15));
-		assertFalse(ULTRA.takesAsh(15));
+		assertTrue(ROTTED.takesAsh(25));
+		assertTrue(OPEN_FULL.takesAsh(25));
+		assertTrue(BinState.decode(60, false).takesAsh(25));
+		assertFalse(BinState.decode(56, false).takesAsh(25));
+		assertFalse(ULTRA.takesAsh(25));
 		// Regular compost doesn't turn into ultracompost
-		assertFalse(BinState.decode(94, false).takesAsh(15));
+		assertFalse(BinState.decode(94, false).takesAsh(25));
 	}
 
 	@Test

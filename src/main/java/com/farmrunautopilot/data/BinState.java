@@ -152,12 +152,15 @@ public class BinState
 	}
 
 	/**
-	 * Volcanic ash would make its supercompost ultracompost: rotted, or open with none taken out yet, as the ash goes in
-	 * before any is (OSRS Wiki, Ultracompost).
+	 * Volcanic ash is worth adding to make its supercompost ultracompost: rotted, or open with enough left that the ash
+	 * for the bin is no more than for its buckets, at 2 a bucket (OSRS Wiki, Ultracompost). The bin takes all of it
+	 * however many are left (elzerma's run of 2026-10-31: 25 for the 13 left after taking 2 out).
+	 *
+	 * @param ash the bin's: 25, or 50 for the big bin
 	 */
-	public boolean takesAsh(int capacity)
+	public boolean takesAsh(int ash)
 	{
-		return compost == Compost.SUPERCOMPOST && (stage == Stage.ROTTED || stage == Stage.READY && count >= capacity);
+		return compost == Compost.SUPERCOMPOST && (stage == Stage.ROTTED || stage == Stage.READY && count * 2 >= ash);
 	}
 
 	/** Crops can go in: empty, or filling with compost, not the player's own tomatoes. */
