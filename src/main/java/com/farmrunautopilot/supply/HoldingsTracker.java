@@ -79,6 +79,9 @@ public class HoldingsTracker
 				WATCHED_VARBITS.add(item.getExtraVarbit());
 			}
 		}
+		WATCHED_VARBITS.add(VarbitID.FARMING_TOOLS_BUCKETS);
+		WATCHED_VARBITS.add(VarbitID.FARMING_TOOLS_EXTRABUCKETS);
+		WATCHED_VARBITS.add(VarbitID.FARMING_TOOLS_EXTRA2BUCKETS);
 		WATCHED_VARBITS.add(VarbitID.FARMING_BLOCKWEEDS);
 		WATCHED_VARBITS.add(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_TYPE);
 		WATCHED_VARBITS.add(VarbitID.FARMING_TOOLS_BOTTOMLESS_BUCKET_QUANTITY);
@@ -301,6 +304,13 @@ public class HoldingsTracker
 			{
 				counts.put(item.getItemId(), total);
 			}
+		}
+		// Empty buckets, for emptying compost bins (P3)
+		final int buckets = LeprechaunItem.buckets(client.getVarbitValue(VarbitID.FARMING_TOOLS_BUCKETS),
+			client.getVarbitValue(VarbitID.FARMING_TOOLS_EXTRABUCKETS), client.getVarbitValue(VarbitID.FARMING_TOOLS_EXTRA2BUCKETS));
+		if (buckets > 0)
+		{
+			counts.put(ItemID.BUCKET_EMPTY, buckets);
 		}
 		// A bottomless compost bucket stored here: type 1 is an empty one, higher a filled one (the game's
 		// farming_tools_getstored script)

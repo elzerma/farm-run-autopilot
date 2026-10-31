@@ -2,6 +2,8 @@ package com.farmrunautopilot.supply;
 
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.AchievementDiary;
+import com.farmrunautopilot.data.BinState;
+import com.farmrunautopilot.data.CompostBin;
 import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
@@ -93,6 +95,20 @@ public final class SupplyCalculator
 	public static SupplyPlan calculate(RunConfig config, AccessSnapshot access, Holdings holdings,
 		RunSelection selection, Route route, Function<Patch, PatchPrediction> predictions,
 		IntFunction<String> itemName, IntToLongFunction price, IntFunction<TravelItem.WearSlot> wearSlot)
+	{
+		return calculate(config, access, holdings, selection, route, predictions, itemName, price, wearSlot, bin -> null);
+	}
+
+	/**
+	 * As above, with what's expected in each compost bin when the run gets there (patch actions P3), for the volcanic ash
+	 * and empty buckets that emptying them takes.
+	 *
+	 * @param bins a bin's expected state, or null if it's never been seen
+	 */
+	public static SupplyPlan calculate(RunConfig config, AccessSnapshot access, Holdings holdings,
+		RunSelection selection, Route route, Function<Patch, PatchPrediction> predictions,
+		IntFunction<String> itemName, IntToLongFunction price, IntFunction<TravelItem.WearSlot> wearSlot,
+		Function<CompostBin, BinState> bins)
 	{
 		final List<SupplyLine> lines = new ArrayList<>();
 		final List<String> notDue = new ArrayList<>(selection.getNotDue());
@@ -629,6 +645,7 @@ public final class SupplyCalculator
 			lines.add(changeIn(line(SupplyLine.Group.OPTIONAL, "Plant cure", config.getPlantCureDoses(), holdings, carried,
 				"Backup for diseased patches", config.getPlantCureDoses(), ItemID.PLANT_CURE).usedUp(), CURES));
 		}
+		lines.addAll(binSupplies(config, route, bins, holdings, carried));
 
 		int slots = 0;
 		for (SupplyLine line : lines)
@@ -1467,6 +1484,52 @@ public final class SupplyCalculator
 			total += shortfall.getOrDefault(rune, 0);
 		}
 		return total;
+	}
+
+	/**
+	 * Making compost (patch actions P3): volcanic ash for each bin on the route expected ready with supercompost, with Make
+	 * ultracompost, and the empty buckets to take the compost out with, unless there's a bottomless bucket; those the tool
+	 * leprechaun holds count, as his compost does.
+	 */
+	static List<SupplyLine> binSupplies(RunConfig config, Route route, Function<CompostBin, BinState> bins,
+		Holdings holdings, Holdings carried)
+	{
+		final List<SupplyLine> lines = new ArrayList<>();
+		if (!config.isMakeCompost())
+		{
+			return lines;
+		}
+		int ash = 0;
+		int buckets = 0;
+		for (RouteStop stop : route.getStops())
+		{
+			final CompostBin bin = CompostBin.at(stop.getLocation());
+			final BinState state = bin != null ? bins.apply(bin) : null;
+			if (state == null || !state.hasCompost())
+			{
+				continue;
+			}
+			if (config.isMakeUltracompost() && state.getCompost() == Compost.SUPERCOMPOST)
+			{
+				ash += bin.ashForUltracompost();
+			}
+			// Each bin's compost is stored with the leprechaun, so its buckets don't come back for the next
+			buckets += state.getStage() == BinState.Stage.READY ? state.getCount() : bin.capacity();
+		}
+		if (ash > 0)
+		{
+			lines.add(line(SupplyLine.Group.OPTIONAL, "Volcanic ash", ash, holdings, carried,
+				"For ultracompost in the compost bins", 1, ItemID.FOSSIL_VOLCANIC_ASH).usedUp());
+		}
+		final boolean bottomless = holdings.countAny(new int[]{ItemID.BOTTOMLESS_COMPOST_BUCKET,
+			ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED}) > 0;
+		if (buckets > 0 && !bottomless)
+		{
+			final int stored = holdings.in(Holdings.Source.LEPRECHAUN).getOrDefault(ItemID.BUCKET_EMPTY, 0);
+			lines.add(line(SupplyLine.Group.OPTIONAL, "Empty bucket", buckets, holdings, carried,
+				"To take the compost out of the compost bins", Math.max(0, buckets - stored), ItemID.BUCKET_EMPTY).usedUp());
+		}
+		return lines;
 	}
 
 	private static void addRunes(Map<Rune, Integer> need, Spell spell)
