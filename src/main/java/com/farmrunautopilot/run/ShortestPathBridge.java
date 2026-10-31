@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.events.PluginMessage;
@@ -21,6 +22,7 @@ import net.runelite.client.plugins.PluginManager;
  * player's own Shortest Path settings back. Nothing happens if Shortest Path isn't installed or the "Walking lines"
  * setting is off. Client thread.
  */
+@Slf4j
 @Singleton
 public class ShortestPathBridge
 {
@@ -56,6 +58,8 @@ public class ShortestPathBridge
 	private final FarmRunAutopilotConfig config;
 	private final PluginManager pluginManager;
 	private WorldPoint target;
+	/** The player was carried somewhere: the next target is sent even if it's the same one. */
+	private boolean sendAgain;
 
 	@Inject
 	ShortestPathBridge(EventBus eventBus, FarmRunAutopilotConfig config, PluginManager pluginManager)
@@ -85,7 +89,10 @@ public class ShortestPathBridge
 		return false;
 	}
 
-	/** Draw the walk to {@code point}, or clear it for null. Only sends a message when the target changes. */
+	/**
+	 * Draw the walk to {@code point}, or clear it for null. Only sends a message when the target changes, or once after the
+	 * player was carried somewhere.
+	 */
 	public void setTarget(WorldPoint point)
 	{
 		if (point == null || !config.shortestPathLines())
@@ -93,15 +100,23 @@ public class ShortestPathBridge
 			clear();
 			return;
 		}
-		if (Objects.equals(point, target))
+		if (!sends(point, target, sendAgain))
 		{
 			return;
 		}
 		target = point;
+		sendAgain = false;
 		final Map<String, Object> data = new HashMap<>();
 		data.put("target", point);
 		data.put("config", WALK_ONLY);
 		eventBus.post(new PluginMessage(NAMESPACE, "path", data));
+		log.debug("Walking line asked for: {} {}", point, LogClock.now());
+	}
+
+	/** Whether to ask Shortest Path for this target: a new one, or the same one again after the player was carried. */
+	static boolean sends(WorldPoint point, WorldPoint current, boolean again)
+	{
+		return again || !Objects.equals(point, current);
 	}
 
 	/** One of our walking lines is drawn, so Shortest Path is set to walking only until it's cleared. */
@@ -111,25 +126,24 @@ public class ShortestPathBridge
 	}
 
 	/**
-	 * The player was carried somewhere (a teleport, a boat): the same target is sent again, as a walk-only line asked
-	 * for from the other side of the sea has no path and isn't drawn once they land (elzerma, 2026-10-26).
+	 * The player was carried somewhere (a teleport, a boat): the next target is sent even if it's the same one, as a
+	 * walk-only line asked for from the other side of the sea has no path and isn't drawn once they land (elzerma,
+	 * 2026-10-26). It waits for the guide's next target, given the same tick: sending the old one straight away started a
+	 * search Shortest Path dropped at once for the new one (elzerma, 2026-10-30).
 	 */
 	public void moved()
 	{
-		final WorldPoint again = target;
-		if (again != null)
-		{
-			target = null;
-			setTarget(again);
-		}
+		sendAgain = target != null;
 	}
 
 	public void clear()
 	{
+		sendAgain = false;
 		if (target != null)
 		{
 			target = null;
 			eventBus.post(new PluginMessage(NAMESPACE, "clear"));
+			log.debug("Walking line cleared {}", LogClock.now());
 		}
 	}
 }

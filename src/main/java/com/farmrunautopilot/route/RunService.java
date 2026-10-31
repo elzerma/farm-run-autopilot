@@ -93,6 +93,8 @@ public class RunService
 	private volatile Searched searched;
 
 	private volatile boolean dirty = true;
+	/** A run is under way: it keeps its own plan, so this one waits for it to end ({@link #setRunUnderWay}). */
+	private boolean runUnderWay;
 	/** Null until the first plan after login, so that one is always published. */
 	private volatile RunPlan plan;
 	/** The Travel tab's families and ways as of the last plan; replaced only when something in them changes. */
@@ -197,6 +199,22 @@ public class RunService
 	}
 
 	/**
+	 * A run is armed or timing, and follows the plan it was armed with, so the live plan isn't worked out again while it
+	 * lasts: it was planned on the client thread as each teleport landed, on the same tick and ahead of the guide's step
+	 * and walking line (elzerma, 2026-10-30: "after teleporting somewhere it takes a second or two for the line to show").
+	 * What's held and where the player stands are still followed, and the plan is made again once the run ends. Client
+	 * thread.
+	 */
+	public void setRunUnderWay(boolean underWay)
+	{
+		if (runUnderWay && !underWay)
+		{
+			dirty = true;
+		}
+		runUnderWay = underWay;
+	}
+
+	/**
 	 * @return whether a new plan was made
 	 */
 	public boolean onGameTick()
@@ -216,6 +234,10 @@ public class RunService
 		if (moved)
 		{
 			log.debug("Route start: at {}, near {} ({} tiles)", here, near, nearTiles);
+		}
+		if (runUnderWay)
+		{
+			return false;
 		}
 		if (!holdingsChanged && !moved && !dirty && ++ticksSinceRefresh < REFRESH_TICKS)
 		{

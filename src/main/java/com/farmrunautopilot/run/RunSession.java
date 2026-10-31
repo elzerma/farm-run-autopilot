@@ -1388,6 +1388,29 @@ public class RunSession
 		}
 	}
 
+	/** A run is armed or timing: it follows the plan it was armed with, not the live one. */
+	public boolean isUnderWay()
+	{
+		return stage == RunView.State.ARMED || stage == RunView.State.RUNNING;
+	}
+
+	/**
+	 * A new area finished loading during a run, as after a teleport: the guide looks again now rather than at the next game
+	 * tick, so the step and its walking line come with the new area (elzerma, 2026-10-30: "after teleporting somewhere it
+	 * takes a second or two for the line to show"). The patches' own readings still come a tick later, as the game sends
+	 * them. Client thread.
+	 */
+	public void onAreaLoaded()
+	{
+		if (!isUnderWay())
+		{
+			return;
+		}
+		areaLoadedAt = System.currentTimeMillis();
+		log.debug("Area loaded {}", when());
+		onGameTick();
+	}
+
 	/** Re-evaluate the run, and start the timer if the player just teleported. Call every game tick. */
 	public void onGameTick()
 	{
@@ -2039,6 +2062,21 @@ public class RunSession
 	/** Screenshots at the moments a check is about (developer client only). */
 	@Inject
 	private com.farmrunautopilot.testing.CheckShots checkShots;
+	/** How the stop's visit to the tool leprechaun starts (PatchGuide), for the check screenshots. */
+	private static final String LEPRECHAUN_VISIT = "At the tool leprechaun";
+	/** The step log says how long after a new area loaded for this long after it. */
+	private static final long AREA_LOADED_LOG_MILLIS = 10_000;
+	/** When a new area last finished loading during a run (epoch millis), for the step log. */
+	private long areaLoadedAt;
+
+	/** The step log's time: to the millisecond, the game tick, and how long after a new area loaded, while that's recent. */
+	private String when()
+	{
+		final long since = System.currentTimeMillis() - areaLoadedAt;
+		return LogClock.now() + " (tick " + client.getTickCount()
+			+ (since < AREA_LOADED_LOG_MILLIS ? ", " + since + " ms after the area loaded" : "") + ")";
+	}
+
 	/** What the guide shows, as last logged. */
 	private String loggedStep;
 	private String loggedWhere;
@@ -2061,7 +2099,7 @@ public class RunSession
 		if (!shown.equals(loggedStep))
 		{
 			loggedStep = shown;
-			log.debug("Guide step: {}", shown);
+			log.debug("Guide step: {} | {}", shown, when());
 			final String moment = checkMoment(where, instruction, reminders);
 			if (moment != null)
 			{
@@ -2082,17 +2120,17 @@ public class RunSession
 		}
 		if (instruction != null && !instruction.equals(loggedInstruction))
 		{
-			if (instruction.startsWith("Take ") && instruction.endsWith("from the tool leprechaun"))
+			if (instruction.startsWith(LEPRECHAUN_VISIT))
 			{
-				return "take compost";
+				return "leprechaun visit";
 			}
-			if (instruction.startsWith("Note your "))
+			if (instruction.startsWith("Clean your "))
 			{
-				return "note step";
+				return "clean herbs";
 			}
-			if (loggedInstruction != null && loggedInstruction.startsWith("Note your "))
+			if (loggedInstruction != null && loggedInstruction.startsWith(LEPRECHAUN_VISIT))
 			{
-				return "note step cleared";
+				return "leprechaun visit done";
 			}
 		}
 		if (newly(reminders, "Inventory full"))
@@ -2776,25 +2814,22 @@ public class RunSession
 		{
 			parts.add(pots + (pots == 1 ? " empty plant pot" : " empty plant pots"));
 		}
-		// Empty buckets as the player chose (patch actions P1): dropped, kept, or stored with the tool leprechaun
-		final EmptyBuckets bucketChoice = settings.getRunConfig().getEmptyBuckets();
-		final String bucketText = buckets + (buckets == 1 ? " empty bucket" : " empty buckets");
-		if (buckets > 0 && bucketChoice == EmptyBuckets.DROP)
+		// Empty buckets as the player chose (patch actions P1): dropped, or kept. Stored ones are part of the stop's visit to
+		// the tool leprechaun, not a line of their own that followed the player between stops (elzerma, 2026-10-30)
+		if (buckets > 0 && settings.getRunConfig().getEmptyBuckets() == EmptyBuckets.DROP)
 		{
-			parts.add(bucketText);
+			parts.add(buckets + (buckets == 1 ? " empty bucket" : " empty buckets"));
 		}
-		final String store = buckets > 0 && bucketChoice == EmptyBuckets.STORE
-			? "Store " + bucketText + " with the tool leprechaun" : null;
 		if (parts.isEmpty())
 		{
-			return store;
+			return null;
 		}
 		String text = parts.get(0);
 		for (int i = 1; i < parts.size(); i++)
 		{
 			text += (i == parts.size() - 1 ? " and " : ", ") + parts.get(i);
 		}
-		return "Drop " + text + (store != null ? "\n" + store : "");
+		return "Drop " + text;
 	}
 
 	/** Reminders shown under the step, one per line, or null when there are none. */

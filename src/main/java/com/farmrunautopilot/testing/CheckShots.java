@@ -1,5 +1,6 @@
 package com.farmrunautopilot.testing;
 
+import com.farmrunautopilot.run.VineFrame;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -21,7 +22,7 @@ import net.runelite.client.util.Filepath;
 import net.runelite.client.util.ImageUtil;
 
 /**
- * Screenshots of the game at the moments a hand check is about (a Take compost or Note step, "Inventory full", a bucket
+ * Screenshots of the game at the moments a hand check is about (a visit to the tool leprechaun, "Inventory full", a bucket
  * line, arriving at a stop), so a run can be checked from the log and these instead of by hand (elzerma, 2026-10-29).
  * Developer client only. Each is named after its log line's time and kept in the plugin's folder under check-shots,
  * at most {@link #PER_SESSION} a session; those older than {@link #KEEP_DAYS} days are deleted at startup.
@@ -59,7 +60,10 @@ public class CheckShots
 		executor.execute(this::deleteOld);
 	}
 
-	/** Capture the next frame, named "time stop - what" (client thread). */
+	/**
+	 * Capture a frame once the outlines' vines are in flower, under 3 s later, named "time stop - what" after the moment
+	 * itself (client thread).
+	 */
 	public void take(String what)
 	{
 		if (folder == null || taken >= PER_SESSION)
@@ -68,11 +72,12 @@ public class CheckShots
 		}
 		taken++;
 		final String name = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()) + " " + safe(what) + ".png";
-		drawManager.requestNextFrameListener(image ->
+		// The draw manager's frame queue takes requests from any thread
+		executor.schedule(() -> drawManager.requestNextFrameListener(image ->
 		{
 			final BufferedImage frame = ImageUtil.bufferedImageFromImage(image);
 			executor.execute(() -> save(frame, name));
-		});
+		}), VineFrame.millisUntilInFlower(System.currentTimeMillis()), TimeUnit.MILLISECONDS);
 	}
 
 	private void save(BufferedImage frame, String name)

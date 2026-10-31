@@ -4,7 +4,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import net.runelite.api.coords.WorldPoint;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
@@ -44,6 +46,18 @@ public class ShortestPathBridgeTest
 		final Object value = ShortestPathBridge.WALK_ONLY.get("useTeleportationItems");
 		assertEquals("None", value);
 		assertTrue(TELEPORTATION_ITEMS.contains(value));
+	}
+
+	@Test
+	public void aLineIsAskedForOnceAfterALanding()
+	{
+		final WorldPoint herb = new WorldPoint(3058, 3311, 0);
+		assertTrue(ShortestPathBridge.sends(herb, null, false));
+		assertFalse(ShortestPathBridge.sends(herb, herb, false));
+		// Carried somewhere: the same target goes once more, as does a new one, but the old one isn't sent first
+		// (elzerma, 2026-10-30)
+		assertTrue(ShortestPathBridge.sends(herb, herb, true));
+		assertTrue(ShortestPathBridge.sends(new WorldPoint(3050, 3307, 0), herb, true));
 	}
 
 	@Test

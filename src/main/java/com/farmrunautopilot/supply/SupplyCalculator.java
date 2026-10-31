@@ -139,8 +139,8 @@ public final class SupplyCalculator
 			}
 			if (!ofType.isEmpty())
 			{
-				plantings.putAll(CropAllocator.allocate(ofType, config.cropChoices(type, farming),
-					crop -> holdings.count(crop.getPlantItemId()),
+				plantings.putAll(CropAllocator.allocate(inVisitOrder(ofType, route.getStops()),
+					config.cropChoices(type, farming), crop -> holdings.count(crop.getPlantItemId()),
 					patch -> isSafe(patch, config, access, faladorElite),
 					type == PatchType.HERB ? reservedHerbs : Collections.emptyList()));
 			}
@@ -1159,6 +1159,23 @@ public final class SupplyCalculator
 			parts.add("disease-free only");
 		}
 		return String.join(", ", parts);
+	}
+
+	/**
+	 * The patches in the order the route visits them (any at a stop it doesn't visit last), so when seeds run short it's
+	 * the run's last patches that go without, not an early one while the seeds for later stops are carried past it
+	 * (elzerma, 2026-10-30: told to skip replanting the Civitas illa Fortis herb patch while carrying three irit seeds).
+	 */
+	static List<Patch> inVisitOrder(List<Patch> patches, List<RouteStop> stops)
+	{
+		final Map<Location, Integer> order = new EnumMap<>(Location.class);
+		for (RouteStop stop : stops)
+		{
+			order.putIfAbsent(stop.getLocation(), order.size());
+		}
+		final List<Patch> sorted = new ArrayList<>(patches);
+		sorted.sort(java.util.Comparator.comparingInt(patch -> order.getOrDefault(patch.getLocation(), Integer.MAX_VALUE)));
+		return sorted;
 	}
 
 	/** The player's herbs for disease-free patches that they can plant, most valuable seed first. */

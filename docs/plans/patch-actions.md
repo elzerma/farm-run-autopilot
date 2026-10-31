@@ -13,15 +13,24 @@ there is still unnoted in the inventory (produce is whatever was gained since ar
 or logs), then a step to take what compost the stop's patches still need from the tool leprechaun (none with a filled
 bottomless bucket), then every patch treated and planted. Both steps outline the Tool Leprechaun and stand aside once
 the player has started treating or planting. Farm tab "At the patches": Note produce (on), Empty buckets (Drop, Keep,
-Store at the tool leprechaun; drop by default). P2 (cleaning herbs) and P3 (making compost) are still to build.
-**Changed after elzerma's P1 runs (2026-10-27 and 28):** picking everything first sent them across the Farming Guild
-and back, and grouping nearby patches was tried and dropped ("kinda shit"). Now, at every stop: on arriving, "Take N
-ultracompost from the tool leprechaun" for the whole stop (until picking or composting begins there); then each patch
-picked, **planted, then composted** (elzerma: "I have always planted then composted"), and paid for, before the next;
-then the Note step before leaving. No "Order at a stop" setting. The Note step counts only what came into the inventory
-while picking, read with notes as notes (it stayed after noting, and asked to note a staff taken off). "Inventory full"
-says what makes room: produce to note, else compost this stop won't use, to store. "You treat the allotment" goes to
-the nearer allotment not yet composted.
+Store at the tool leprechaun; drop by default). P3 (making compost) is still to build.
+**P2 built 2026-10-30** (elzerma, at Catherby: "Cleaning is a step before noting"): Farm > At the patches > Clean herbs
+(off by default, as agreed): after picking herbs, "Clean your grimy irit leaf" for the herbs the player's real Herblore
+level allows (OSRS Wiki levels, huasca 58 included), before the stop's leprechaun visit and before leaving. Herbs
+cleaned after picking count as the stop's produce to note, with the setting on or off (the visit had left them out).
+**Changed after elzerma's P1 runs (2026-10-27 to 30):** picking everything first sent them across the Farming Guild
+and back, and grouping nearby patches was tried and dropped ("kinda shit"). Taking the stop's compost on arriving was
+tried too, but sent them to the leprechaun before picking and again to note (2026-10-30: "it should tell you to pick
+stuff first then when you're already going to note produce on the leprechaun it should then tell you to dump
+buckets/grab ultracompost"). Now, at every stop, each patch is picked, **planted, then composted** (elzerma: "I have
+always planted then composted") and paid for, before the next; between the first patch's picking and its planting comes
+the stop's one visit to the tool leprechaun, "At the tool leprechaun: note your ..., store N empty buckets and take N
+ultracompost", with whichever parts are needed (not once planting or composting has begun there); before leaving, what
+was picked since is noted, with the buckets stored then. With Empty buckets on Store, there's no separate "Store N empty
+buckets" line. No "Order at a stop" setting. Noting counts only what came into the inventory while picking, read with
+notes as notes. "Inventory full" says what makes room: produce to note, else compost this stop won't use, to store.
+"You plant ..." and "You treat the ..." count only for the stop's patches the player is next to, and "You treat the
+allotment" goes to the nearer allotment not yet composted.
 
 ## 1. What the plugin does at a patch today
 

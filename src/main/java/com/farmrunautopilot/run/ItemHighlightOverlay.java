@@ -14,6 +14,7 @@ import java.util.Set;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.Point;
+import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.WidgetItem;
 import net.runelite.api.widgets.WidgetUtil;
@@ -36,6 +37,8 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 	 * by when the step has moved on (elzerma, 2026-10-21: using one bucket of compost, it jumped to the next for a moment).
 	 */
 	static final long MOVE_AFTER_MILLIS = 1200;
+	/** How long a slot clicked to clean goes without its outline, while the clean herb takes its place: four game ticks. */
+	static final long CLICKED_MILLIS = 2400;
 	/** Items to put on: a colour no other highlight uses. */
 	static final Color WEAR_COLOUR = new Color(0x40, 0xC8, 0xFF);
 	private static final String[] WEAR_LABEL = {"Wear"};
@@ -51,6 +54,8 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 	private final Map<String, ItemVine> vines = new HashMap<>();
 	/** Items given their vine in the interface being drawn. */
 	private final Set<Integer> vined = new HashSet<>();
+	/** Slots just clicked, by interface and slot. */
+	private final Map<String, Click> clicked = new HashMap<>();
 	/**
 	 * Outline images, made once per item, stack size and colour rather than every frame; cleared when the colour
 	 * changes.
@@ -120,6 +125,62 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 		vine.frame.drawInside(graphics, widgetItem.getCanvasBounds());
 	}
 
+	/** A vine in this one slot, for an item outlined in every slot holding it (grimy herbs to clean). */
+	private void drawSlotVine(Graphics2D graphics, int itemId, WidgetItem widgetItem, int slot)
+	{
+		final String key = (widgetItem.getWidget() != null ? widgetItem.getWidget().getId() : -1) + ":" + slot + ":" + itemId;
+		if (vines.size() > MAX_CACHED_OUTLINES && !vines.containsKey(key))
+		{
+			vines.clear();
+		}
+		vines.computeIfAbsent(key, k -> new ItemVine()).frame.drawInside(graphics, widgetItem.getCanvasBounds());
+	}
+
+	/** A slot clicked: the item in it then, and when. */
+	private static final class Click
+	{
+		final int itemId;
+		final long at;
+
+		Click(int itemId, long at)
+		{
+			this.itemId = itemId;
+			this.at = at;
+		}
+	}
+
+	/**
+	 * An item clicked in its slot (Clean, Wear, Drop...): for items clicked one by one, that slot's outline goes at once,
+	 * not a tick later when the game takes the item away (elzerma, 2026-10-30: "as soon as the click registers, unhighlight
+	 * vs waiting until it switches to a clean herb", and "if there's a step where we would need to click multiple items I
+	 * want to handle this way, too"). It comes back after {@link #CLICKED_MILLIS} if the item is still there, as after a
+	 * misclick. Client thread.
+	 */
+	public void onMenuOptionClicked(MenuOptionClicked event)
+	{
+		if (event.getItemId() > 0 && takesTheItem(event.getMenuOption()))
+		{
+			clicked.put(slotKey(event.getParam1(), event.getParam0()), new Click(event.getItemId(), System.currentTimeMillis()));
+		}
+	}
+
+	/** An item's option that does something with it there and then: not "Use", which only picks it up, nor "Examine". */
+	static boolean takesTheItem(String option)
+	{
+		return option != null && !option.equals("Use") && !option.equals("Examine") && !option.equals("Cancel");
+	}
+
+	private static String slotKey(int widgetId, int slot)
+	{
+		return widgetId + ":" + slot;
+	}
+
+	/** A slot that held {@code clickedItem} when clicked at {@code clickedAt}, and holds {@code itemId} now: no outline. */
+	static boolean hidden(int clickedItem, long clickedAt, int itemId, long now)
+	{
+		return clickedItem == itemId && now - clickedAt < CLICKED_MILLIS;
+	}
+
 	/**
 	 * Whether the vine, last drawn on slot {@code current} at {@code seen}, goes on {@code slot} now: always on its own
 	 * slot, and on another only once its own has gone {@link #MOVE_AFTER_MILLIS} without the item.
@@ -142,11 +203,26 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 		{
 			return;
 		}
+		// Clicked one by one: herbs to clean, and the pieces of an outfit to put on
+		final boolean everySlot = !wear && highlights.getEverySlotIds().contains(itemId);
+		final int slot = widgetItem.getWidget() != null ? widgetItem.getWidget().getIndex() : -1;
+		final Click click = widgetItem.getWidget() != null ? clicked.get(slotKey(widgetItem.getWidget().getId(), slot)) : null;
+		if ((everySlot || wear) && click != null && hidden(click.itemId, click.at, itemId, System.currentTimeMillis()))
+		{
+			return;
+		}
 		final Color colour = wear ? WEAR_COLOUR : config.itemColour();
 		final Rectangle bounds = widgetItem.getCanvasBounds();
 		if (!wear && config.vineHighlights())
 		{
-			drawVine(graphics, itemId, widgetItem);
+			if (everySlot)
+			{
+				drawSlotVine(graphics, itemId, widgetItem, slot);
+			}
+			else
+			{
+				drawVine(graphics, itemId, widgetItem);
+			}
 		}
 		else
 		{

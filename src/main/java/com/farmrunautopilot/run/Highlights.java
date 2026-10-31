@@ -42,6 +42,11 @@ public class Highlights
 	 * outlined (elzerma, 2026-10-19: tools only when they need clicking), but still checked as carried.
 	 */
 	Set<Integer> neededIds;
+	/**
+	 * Items in {@link #itemIds} outlined in every slot holding them, as each is clicked on its own (grimy herbs to clean),
+	 * rather than in one (elzerma, 2026-10-30: "one was highlighted. Can we highlight all of them").
+	 */
+	Set<Integer> everySlotIds;
 
 	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell)
 	{
@@ -64,6 +69,14 @@ public class Highlights
 	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell,
 		Set<Integer> wearItemIds, List<MenuPick> menuPicks, String teleportOption, Set<Integer> neededIds)
 	{
+		this(patch, gardener, travelNpc, itemIds, spell, wearItemIds, menuPicks, teleportOption, neededIds,
+			Collections.emptySet());
+	}
+
+	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell,
+		Set<Integer> wearItemIds, List<MenuPick> menuPicks, String teleportOption, Set<Integer> neededIds,
+		Set<Integer> everySlotIds)
+	{
 		this.patch = patch;
 		this.gardener = gardener;
 		this.travelNpc = travelNpc;
@@ -73,12 +86,14 @@ public class Highlights
 		this.menuPicks = menuPicks;
 		this.teleportOption = teleportOption;
 		this.neededIds = neededIds;
+		this.everySlotIds = everySlotIds;
 	}
 
 	/** The same, with these items to put on. */
 	public Highlights withWear(Set<Integer> wear)
 	{
-		return new Highlights(patch, gardener, travelNpc, itemIds, spell, wear, menuPicks, teleportOption, neededIds);
+		return new Highlights(patch, gardener, travelNpc, itemIds, spell, wear, menuPicks, teleportOption, neededIds,
+			everySlotIds);
 	}
 
 	/** Everything the step needs, outlined or not, the main item first. */

@@ -114,4 +114,27 @@ public class CropAllocatorTest
 		final Map<Patch, Crop> plan = allocate(TOADFLAX_THEN_GUAM, stock(Crop.TOADFLAX, 5), NONE_RESERVED);
 		assertEquals(HERBS, Arrays.asList(plan.keySet().toArray(new Patch[0])));
 	}
+
+	@Test
+	public void theSeedThatsShortGoesToTheLastPatchVisited()
+	{
+		// elzerma, 2026-10-30: one seed short, the Civitas illa Fortis herb was left for the missing 1st choice while the irit
+		// seeds for the patches after it were carried past
+		final List<com.farmrunautopilot.route.RouteStop> route = Arrays.asList(
+			new com.farmrunautopilot.route.RouteStop(com.farmrunautopilot.data.Location.FARMING_GUILD, null,
+				com.farmrunautopilot.route.Departure.WALK, 10, false),
+			new com.farmrunautopilot.route.RouteStop(com.farmrunautopilot.data.Location.CIVITAS_ILLA_FORTIS, null,
+				com.farmrunautopilot.route.Departure.WALK, 10, false),
+			new com.farmrunautopilot.route.RouteStop(com.farmrunautopilot.data.Location.CATHERBY, null,
+				com.farmrunautopilot.route.Departure.WALK, 10, false));
+		final List<Patch> visited = SupplyCalculator.inVisitOrder(
+			Arrays.asList(Patch.CATHERBY_HERB, Patch.CIVITAS_HERB, Patch.FARMING_GUILD_HERB), route);
+		assertEquals(Arrays.asList(Patch.FARMING_GUILD_HERB, Patch.CIVITAS_HERB, Patch.CATHERBY_HERB), visited);
+		final Map<Crop, Integer> stock = stock(Crop.IRIT, 2);
+		final Map<Patch, Crop> plan = CropAllocator.allocate(visited, Arrays.asList(Crop.KWUARM, Crop.IRIT),
+			c -> stock.getOrDefault(c, 0), patch -> false, NONE_RESERVED);
+		assertEquals(Crop.IRIT, plan.get(Patch.FARMING_GUILD_HERB));
+		assertEquals(Crop.IRIT, plan.get(Patch.CIVITAS_HERB));
+		assertEquals(Crop.KWUARM, plan.get(Patch.CATHERBY_HERB));
+	}
 }
