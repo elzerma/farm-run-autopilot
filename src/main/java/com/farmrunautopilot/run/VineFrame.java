@@ -24,6 +24,15 @@ public final class VineFrame
 	private static final long HOLD_MILLIS = 600;
 	private static final long WILT_MILLIS = 700;
 	private static final long CYCLE_MILLIS = GROW_MILLIS + BLOOM_MILLIS + HOLD_MILLIS + WILT_MILLIS;
+
+	/**
+	 * How long from {@code now} until every vine is grown and in flower (they share one cycle), for a screenshot that shows
+	 * what's outlined: on a step's first frame they hadn't grown yet (elzerma's clean step, 2026-10-30).
+	 */
+	public static long millisUntilInFlower(long now)
+	{
+		return Math.floorMod(GROW_MILLIS + BLOOM_MILLIS + HOLD_MILLIS / 2 - now, CYCLE_MILLIS);
+	}
 	/** Room between the button and the vine, in cells. */
 	private static final int GAP = 3;
 	/** Along the vine, in cells. */

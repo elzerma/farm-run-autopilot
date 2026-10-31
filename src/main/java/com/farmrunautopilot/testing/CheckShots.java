@@ -1,5 +1,6 @@
 package com.farmrunautopilot.testing;
 
+import com.farmrunautopilot.run.VineFrame;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -59,7 +60,10 @@ public class CheckShots
 		executor.execute(this::deleteOld);
 	}
 
-	/** Capture the next frame, named "time stop - what" (client thread). */
+	/**
+	 * Capture a frame once the outlines' vines are in flower, under 3 s later, named "time stop - what" after the moment
+	 * itself (client thread).
+	 */
 	public void take(String what)
 	{
 		if (folder == null || taken >= PER_SESSION)
@@ -68,11 +72,12 @@ public class CheckShots
 		}
 		taken++;
 		final String name = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()) + " " + safe(what) + ".png";
-		drawManager.requestNextFrameListener(image ->
+		// The draw manager's frame queue takes requests from any thread
+		executor.schedule(() -> drawManager.requestNextFrameListener(image ->
 		{
 			final BufferedImage frame = ImageUtil.bufferedImageFromImage(image);
 			executor.execute(() -> save(frame, name));
-		});
+		}), VineFrame.millisUntilInFlower(System.currentTimeMillis()), TimeUnit.MILLISECONDS);
 	}
 
 	private void save(BufferedImage frame, String name)
