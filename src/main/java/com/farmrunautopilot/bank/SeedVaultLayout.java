@@ -226,6 +226,15 @@ final class SeedVaultLayout
 	 */
 	static Placement place(int width, List<List<Integer>> categories, List<Integer> section)
 	{
+		return place(width, categories, section, 0);
+	}
+
+	/**
+	 * As above, with a gap {@code gap} high after the section, for the Farming Contract's own section to sit in when this
+	 * one goes above it; none without a section. The bottom includes it.
+	 */
+	static Placement place(int width, List<List<Integer>> categories, List<Integer> section, int gap)
+	{
 		final int perRow = perRow(width);
 		final Map<Integer, Entry> entries = new HashMap<>();
 		final List<Entry> cells = new ArrayList<>();
@@ -251,7 +260,7 @@ final class SeedVaultLayout
 			}
 			final int lastRow = (rows(section.size(), perRow) - 1) * SECTION_ROW_HEIGHT;
 			sectionHeight = SECTION_ITEMS_Y + lastRow + SECTION_NAME_BELOW + NAME_HEIGHT + AFTER_SECTION;
-			y += sectionHeight;
+			y += sectionHeight + gap;
 		}
 		final int[] headerY = new int[categories.size()];
 		int bottom = y;

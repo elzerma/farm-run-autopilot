@@ -92,7 +92,13 @@ public enum TestItem
 	// Sprint 1c, the special trees
 	GREAT_CONCH_ACCESS(Tab.ACCOUNT, "The Great Conch's calquat patch",
 		"Only if you've started Troubled Tortugans but not finished it: go to the calquat patch on the Summer Shore of the "
-			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2);
+			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2),
+	// Dev checks: elzerma's own, in Settings > Dev checks on the developer client only, never in the players' list
+	SEED_VAULT_ABOVE_CONTRACT(Tab.DEV, "Our seed vault section above the Farming Contract",
+		"With an unfinished Farming Guild contract and a run built, open the Farming Guild's seed vault and press its Farm "
+			+ "Run Autopilot button. The section should come first, with the Farming Contract's section right under it; its "
+			+ "seed should still withdraw, and picking Farming Contract or Herbs in the list on the left should scroll to "
+			+ "each.");
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter

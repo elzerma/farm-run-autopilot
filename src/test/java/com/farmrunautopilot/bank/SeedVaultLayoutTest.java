@@ -374,4 +374,25 @@ public class SeedVaultLayoutTest
 		final Set<Integer> all = new HashSet<>(placed.entries.keySet());
 		assertEquals(new HashSet<>(Arrays.asList(0, 1, 2, ADD_FAVOURITES)), all);
 	}
+
+	@Test
+	public void aboveTheFarmingContractTheCategoriesLeaveRoomForIt()
+	{
+		// elzerma, 2026-10-30: "Can we put our section above the farming contract": the contract's own section, 104 high,
+		// sits in a gap after this one, and the categories follow it
+		final GameVault vault = game(slots(1, 1, 1, 1, 1, 1, 1));
+		final List<List<Integer>> categories = recognised(vault);
+		final Placement under = SeedVaultLayout.place(WIDTH, categories, Collections.singletonList(3));
+		final Placement above = SeedVaultLayout.place(WIDTH, categories, Collections.singletonList(3), 104);
+		assertEquals(under.sectionHeight, above.sectionHeight);
+		assertEquals(under.sectionY, above.sectionY);
+		for (int i = 0; i < under.headerY.length; i++)
+		{
+			assertEquals(under.headerY[i] + 104, above.headerY[i]);
+		}
+		assertEquals(under.bottom + 104, above.bottom);
+		// No section, no gap: the game's own layout
+		assertArrayEquals(SeedVaultLayout.place(WIDTH, categories, Collections.emptyList()).headerY,
+			SeedVaultLayout.place(WIDTH, categories, Collections.emptyList(), 104).headerY);
+	}
 }

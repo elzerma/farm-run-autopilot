@@ -29,6 +29,7 @@ import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.SpriteID;
 import net.runelite.api.gameval.VarClientID;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.ItemQuantityMode;
 import net.runelite.api.widgets.JavaScriptCallback;
 import net.runelite.api.widgets.Widget;
@@ -48,7 +49,9 @@ import net.runelite.client.util.Text;
  * it's off and the vault holds seeds the run still needs. Those the vault holds are its own item widgets moved up, so
  * withdrawing works as usual: nothing is sent to the server and no menu option is changed. Those it doesn't hold (or
  * no longer does) are shown faded, so the section stays put, ticked, once everything's taken. The vault's categories
- * close up below it, and while the view is on the category list on the left has an entry that scrolls to it.
+ * close up below it, and while the view is on the category list on the left has an entry that scrolls to it. With an
+ * unfinished Farming Guild contract, the section goes above the game's own Farming Contract section, which moves down
+ * into a gap after it (elzerma, 2026-10-30), and picking a category in the list scrolls to it as before.
  *
  * <p>Dragging works as in the game's own vault (elzerma). Each item is still the widget of its own vault slot, so a
  * drag reorders exactly the slots the player meant; the server then sends the vault again and it's laid out afresh.
@@ -62,7 +65,8 @@ import net.runelite.client.util.Text;
  *
  * <p>UNVERIFIED: the scripts' IDs and the vault's layout are read from the game's scripts (osrs-dumps). The layout,
  * the counts, dragging, the scroll and the button passed in game (guided test SEED_VAULT_SECTION revisions 2 and 3,
- * and elzerma's own checks); the category list entry that shows with the view is untried.
+ * and elzerma's own checks); the category list entry that shows with the view is untried, and so is going above the
+ * Farming Contract's section (dev check SEED_VAULT_ABOVE_CONTRACT).
  */
 @Slf4j
 @Singleton
@@ -82,6 +86,10 @@ public class SeedVaultSection
 	static final int DROP_SCRIPT = 2827;
 	/** The script that makes the category list on the left (seed_vault_build_category_list), when the vault opens. */
 	static final int CATEGORY_LIST_SCRIPT = 2814;
+	/** The script run when a category is picked in that list (seed_vault_catop), which scrolls to it. */
+	static final int CATEGORY_OP_SCRIPT = 2815;
+	/** The category the Farming Contract's section is picked as (seed_vault_catselect scrolls to the top for it). */
+	static final int CONTRACT_CATEGORY = 12;
 	/** The section's header, the button's name, and the section's entry in the category list. */
 	static final String TITLE = "Farm Run Autopilot";
 	/** The search box is open (the game's seed_vault_searching proc). */
@@ -158,6 +166,8 @@ public class SeedVaultSection
 	private Widget tabBackground;
 	/** The entry shows, and the game's entries from {@link #tabY} down have moved down {@link #tabHeight} for it. */
 	private boolean tabShown;
+	/** The section is above the Farming Contract's, which has moved down into a gap after it. */
+	private boolean lifted;
 	private int tabY;
 	private int tabHeight;
 
@@ -239,6 +249,15 @@ public class SeedVaultSection
 			{
 				scrollTo(list, 0);
 			}
+			else
+			{
+				scrollToPicked();
+			}
+			return;
+		}
+		if (event.getScriptId() == CATEGORY_OP_SCRIPT)
+		{
+			scrollToPicked();
 			return;
 		}
 		if (event.getScriptId() != BUILD_PROC)
@@ -254,9 +273,12 @@ public class SeedVaultSection
 		laidOutFor = Collections.emptyList();
 		vault = null;
 		unrecognised = null;
+		// The game has sized the main list again, but leaves the contract's section wherever this put it
+		lifted = false;
 		final Widget list = client.getWidget(InterfaceID.SeedVault.LIST);
 		if (list == null || searching())
 		{
+			restoreContract();
 			showTab(false);
 			updateButton(Collections.emptyList(), false);
 			return;
@@ -265,6 +287,7 @@ public class SeedVaultSection
 		final List<Seed> all = wanted.get();
 		if (vault == null)
 		{
+			restoreContract();
 			showTab(false);
 			updateButton(Collections.emptyList(), false);
 			if (!all.isEmpty())
@@ -366,7 +389,8 @@ public class SeedVaultSection
 			+ vault.categories.size() + " categories, section " + shownHeight + " high, scrolled to " + list.getScrollY()
 			+ " of " + list.getScrollHeight() + ", view " + (viewOn ? "on" : "off") + ", button "
 			+ (!buttonShown ? "not shown" : calling ? "calling" : "shown") + ", category list entry "
-			+ (tabShown ? "at " + tabY : "not shown");
+			+ (tabShown ? "at " + tabY : "not shown") + (lifted ? ", above the Farming Contract"
+			: vault.top > 0 ? ", under the Farming Contract" : "");
 	}
 
 	private void reset()
@@ -386,6 +410,7 @@ public class SeedVaultSection
 		tab = null;
 		tabBackground = null;
 		tabShown = false;
+		lifted = false;
 	}
 
 	/** The vault is showing search results, as the game's seed_vault_searching proc decides. */
@@ -455,8 +480,84 @@ public class SeedVaultSection
 		final Placement game = SeedVaultLayout.place(width, categories, Collections.emptyList());
 		// The main list sits at the bottom of the scrolling list, as tall as it less the Farming Contract section
 		// above it (the game sets that straight from the contract section's height)
+		final Widget contract = client.getWidget(InterfaceID.SeedVault.CONTRACT_SEEDS);
+		// This section can go above the contract's while they're laid out as seed_vault_build and the interface have them:
+		// the contract's at the top, and the main list at the bottom, its height the list's less the contract's
+		final boolean canLift = contract != null && contract.getYPositionMode() == WidgetPositionMode.ABSOLUTE_TOP
+			&& main.getYPositionMode() == WidgetPositionMode.ABSOLUTE_BOTTOM && main.getHeightMode() == WidgetSizeMode.MINUS;
 		return new Vault(width, categories, indexByItem, stocked, list.getScrollHeight(), main.getOriginalHeight(),
-			game.bottom);
+			game.bottom, canLift);
+	}
+
+	/**
+	 * With the Farming Contract's own section showing, this one goes above it (elzerma, 2026-10-30: "Can we put our section
+	 * above the farming contract"): the main list fills the scrolling list from the top, with a gap the contract's height
+	 * after this section, and the contract's layer moves down into it. With no section here, both go back where the game
+	 * put them.
+	 */
+	private void liftAboveContract(int sectionHeight)
+	{
+		final Widget main = client.getWidget(InterfaceID.SeedVault.MAIN_VAULT);
+		final Widget contract = client.getWidget(InterfaceID.SeedVault.CONTRACT_SEEDS);
+		final boolean lift = sectionHeight > 0 && liftable();
+		if (main == null || contract == null || vault == null || vault.top <= 0 || !vault.canLift)
+		{
+			restoreContract();
+			lifted = false;
+			return;
+		}
+		final int height = lift ? 0 : vault.top;
+		if (main.getOriginalHeight() != height)
+		{
+			main.setOriginalHeight(height);
+			main.revalidate();
+		}
+		final int y = lift ? sectionHeight : 0;
+		if (contract.getOriginalY() != y)
+		{
+			contract.setOriginalY(y);
+			contract.revalidate();
+		}
+		lifted = lift;
+	}
+
+	/**
+	 * A category picked in the list (or the one picked last, as the vault opens), with this section above the Farming
+	 * Contract's: the game scrolls to its header plus the contract section's height, which is now above the header in the
+	 * main list rather than above the main list, and to the top for the contract itself, which is now this section; to the
+	 * header, or the contract's section, instead (seed_vault_catselect).
+	 */
+	private void scrollToPicked()
+	{
+		final Widget list = client.getWidget(InterfaceID.SeedVault.LIST);
+		if (!lifted || list == null || placed == null)
+		{
+			return;
+		}
+		final int category = client.getVarbitValue(VarbitID.SEED_VAULT_CATEGORY);
+		final int y = category == CONTRACT_CATEGORY ? shownHeight
+			: category >= 0 && category < placed.headerY.length ? placed.headerY[category] : -1;
+		if (y >= 0)
+		{
+			scrollTo(list, Math.max(0, Math.min(y, list.getScrollHeight() - list.getHeight())));
+		}
+	}
+
+	/** There's a Farming Contract section this one can go above. */
+	private boolean liftable()
+	{
+		return vault != null && vault.top > 0 && vault.canLift;
+	}
+
+	/** The Farming Contract's section back at the top, where the game put it (the game itself never moves it). */
+	private void restoreContract()
+	{
+		final Widget contract = client.getWidget(InterfaceID.SeedVault.CONTRACT_SEEDS);
+		if (contract != null && contract.getOriginalY() != 0)
+		{
+			contract.setOriginalY(0);
+			contract.revalidate();
+		}
 	}
 
 	/** Each child's y, in order, up to the first gap. */
@@ -498,6 +599,7 @@ public class SeedVaultSection
 		if (section.isEmpty() && shown.isEmpty())
 		{
 			// The game's own layout as it is; after a rebuild, the game's scroll needs the section taken off
+			liftAboveContract(0);
 			if (rebuilt && viewHeight > 0)
 			{
 				scrollTo(list, SeedVaultLayout.scrollY(viewScroll, viewHeight, 0, false, list.getScrollHeight(),
@@ -506,13 +608,17 @@ public class SeedVaultSection
 			showTab(false);
 			return;
 		}
-		final Placement placement = SeedVaultLayout.place(vault.width, vault.categories, section);
+		// Above the Farming Contract's section, with a gap for it after this one
+		final int gap = !section.isEmpty() && liftable() ? vault.top : 0;
+		final Placement placement = SeedVaultLayout.place(vault.width, vault.categories, section, gap);
 		if (!draw(placement, asked))
 		{
 			return;
 		}
-		list.setScrollHeight(SeedVaultLayout.scrollHeight(vault.scrollHeight, vault.top, vault.bottom, placement.bottom,
+		// The gap is the contract's own room, already in the game's scroll height
+		list.setScrollHeight(SeedVaultLayout.scrollHeight(vault.scrollHeight, vault.top, vault.bottom, placement.bottom - gap,
 			list.getHeight()));
+		liftAboveContract(placement.sectionHeight);
 		// The main list is sized from the scroll height, so it grows to hold everything
 		list.revalidateScroll();
 		shownSeeds = asked;
@@ -556,7 +662,8 @@ public class SeedVaultSection
 			return;
 		}
 		tabHeight = first.getOriginalHeight();
-		tabY = vault != null && vault.top > 0 ? first.getOriginalY() + tabHeight : first.getOriginalY();
+		// First, or under the Farming Contract's entry while that section stays above this one
+		tabY = vault != null && vault.top > 0 && !lifted ? first.getOriginalY() + tabHeight : first.getOriginalY();
 		// Its background is the other of the one it pushes down, so they still alternate
 		final Widget under = backgroundAt(backgrounds, tabY);
 		final boolean dark = under == null || under.getOpacity() != DARK;
@@ -604,7 +711,7 @@ public class SeedVaultSection
 		final Widget list = client.getWidget(InterfaceID.SeedVault.LIST);
 		if (event.getOp() == 1 && list != null && vault != null)
 		{
-			scrollTo(list, Math.max(0, Math.min(vault.top, list.getScrollHeight() - list.getHeight())));
+			scrollTo(list, Math.max(0, Math.min(lifted ? 0 : vault.top, list.getScrollHeight() - list.getHeight())));
 		}
 	}
 
@@ -960,9 +1067,11 @@ public class SeedVaultSection
 		/** Where the main list starts: below the Farming Contract section, if there is one. */
 		final int top;
 		final int bottom;
+		/** The vault is laid out so this section can go above the Farming Contract's. */
+		final boolean canLift;
 
 		Vault(int width, List<List<Integer>> categories, Map<Integer, Integer> indexByItem, Set<Integer> stocked,
-			int scrollHeight, int top, int bottom)
+			int scrollHeight, int top, int bottom, boolean canLift)
 		{
 			this.width = width;
 			this.categories = categories;
@@ -971,6 +1080,7 @@ public class SeedVaultSection
 			this.scrollHeight = scrollHeight;
 			this.top = top;
 			this.bottom = bottom;
+			this.canLift = canLift;
 		}
 	}
 }
