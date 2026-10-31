@@ -19,6 +19,7 @@ import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.NPC;
 import net.runelite.api.ObjectComposition;
+import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.Tile;
 import net.runelite.api.TileObject;
@@ -53,6 +54,8 @@ public class SceneTracker
 	/** Renu, the quetzal a Renu leg walks back to first (Navigator); everyone else ridden comes from the atlas. */
 	private static final Set<String> TRANSFER_NPC_NAMES = Set.of("Renu", PatchGuide.TOOL_LEPRECHAUN);
 	private final Map<String, NPC> transfers = new HashMap<>();
+	/** Every tool leprechaun loaded. */
+	private final List<NPC> leprechauns = new ArrayList<>();
 	/** Everyone the travel atlas's journeys are used on (Renu, a ship's crew, a guide), once it's read. */
 	private Set<String> atlasRideNames;
 
@@ -130,6 +133,10 @@ public class SceneTracker
 		if (npc.getName() != null && isRideNpc(npc.getName()))
 		{
 			log.debug("Ride NPC {} #{} at {}", npc.getName(), npc.getId(), npc.getWorldLocation());
+			if (PatchGuide.TOOL_LEPRECHAUN.equals(npc.getName()))
+			{
+				leprechauns.add(npc);
+			}
 			transfers.put(npc.getName(), npc);
 			return;
 		}
@@ -154,6 +161,7 @@ public class SceneTracker
 	{
 		gardeners.values().removeIf(n -> n == npc);
 		transfers.values().removeIf(n -> n == npc);
+		leprechauns.remove(npc);
 	}
 
 	/**
@@ -173,6 +181,7 @@ public class SceneTracker
 		binObjects.clear();
 		gardeners.clear();
 		transfers.clear();
+		leprechauns.clear();
 	}
 
 	public List<GameObject> objectsFor(Patch patch)
@@ -212,10 +221,36 @@ public class SceneTracker
 		return null;
 	}
 
-	/** The loaded NPC with this name that a travel method rides, or null. */
+	/** The loaded NPC with this name that a travel method rides, or null; for the tool leprechaun, the nearest one. */
 	public NPC transferNpc(String name)
 	{
+		if (PatchGuide.TOOL_LEPRECHAUN.equals(name))
+		{
+			final Player player = client.getLocalPlayer();
+			return player != null ? nearestLeprechaun(player.getWorldLocation()) : null;
+		}
 		return transfers.get(name);
+	}
+
+	/**
+	 * The loaded tool leprechaun nearest this point on its floor, or null: the Farming Guild has several in view, and the
+	 * last one loaded may be another's (elzerma's run of 2026-10-31: the line went to the compost bin instead).
+	 */
+	public NPC nearestLeprechaun(WorldPoint to)
+	{
+		NPC nearest = null;
+		int best = Integer.MAX_VALUE;
+		for (NPC npc : leprechauns)
+		{
+			// Integer.MAX_VALUE on another floor
+			final int distance = npc.getWorldLocation().distanceTo(to);
+			if (distance < best)
+			{
+				best = distance;
+				nearest = npc;
+			}
+		}
+		return nearest;
 	}
 
 	/** Tiles around where a journey step starts to look for its object, as the atlas's points are a tile or two off. */

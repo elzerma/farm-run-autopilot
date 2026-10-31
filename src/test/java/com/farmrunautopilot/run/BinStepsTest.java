@@ -72,6 +72,20 @@ public class BinStepsTest
 	}
 
 	@Test
+	public void onceOpenTheBucketsInHandAreUsedBeforeFetchingMore()
+	{
+		// elzerma's run of 2026-10-31 at the Farming Guild: 30 ultracompost, 25 buckets, room for 1 after the ash; it said
+		// to fetch 5, and the 5 taken out meanwhile went uncounted
+		final BinState bigUltra = BinState.decode(205, true);
+		assertEquals(30, bigUltra.getCount());
+		assertEquals(PatchGuide.BinNext.TAKE_OUT,
+			PatchGuide.binNext(bigUltra, CompostBin.FARMING_GUILD, 25, false, 100, 1, 0));
+		assertEquals(PatchGuide.BinNext.TAKE_OUT, next(OPEN_FULL, 5, 20, 10, 0));
+		// None left to take the rest out with: then to him, storing what's out to make room
+		assertEquals(PatchGuide.BinNext.TAKE_BUCKETS, next(BinState.decode(51, false), 0, 20, 0, 0));
+	}
+
+	@Test
 	public void cropsGoInAnEmptyOrFillingBin()
 	{
 		assertEquals(0, PatchGuide.fillCount(BinState.decode(0, false)));

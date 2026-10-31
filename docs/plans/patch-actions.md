@@ -300,3 +300,18 @@ the compost taken out of the bin went uncounted, so there was no step to store i
 game takes the volcanic ash after some compost is out: elzerma took 2 supercompost out, then added the ash, and the 13
 left became ultracompost for the full 25. The ash step now stays while the bin's way takes no more ash than the
 buckets' (2 a bucket): 13 or more left, 25 or more in the big bin.
+
+**Fifth run, the Farming Guild's big bin (2026-10-31), from the log and elzerma's screenshots:** 25 buckets from the
+bank ("take 30" didn't fit), open, 50 ash, ultracompost (205, 30 of it): the big bin's values read as decoded. Fixed
+after it:
+- After the ash, with 25 buckets in hand and room for 1, it said to fetch 5 from the leprechaun. Now, once the bin is
+  open, the buckets in hand are used first, and the rest fetched while storing what's out; and the buckets asked for
+  are no more than fit.
+- The 5 taken out while that step showed went uncounted, so it said to store 21 of 26 with 2 needed. Compost taken out
+  now counts whichever of the bin's steps is showing.
+- The walking line for the leprechaun's steps went to the bin: the guild has three tool leprechauns in view, and only
+  the last one loaded was kept. Every one is kept now; the line goes to the one nearest the bin or patch, the outline
+  to the one nearest the player.
+- After the last 4 came out, it sent elzerma across the guild to store 2 with 22 slots free (who stored all 4, then
+  took 2 back). The bin's spare compost is now stored only when the room's needed for what the stop's patches will
+  bring in; otherwise it's carried on, for later stops.

@@ -140,7 +140,8 @@ class PatchGuide
 	private int binCountSeen = -1;
 	/** The player has begun putting the crops for it in the stop's bin, and still has some (P3). */
 	private boolean fillingBin;
-	/** Where the stop's tool leprechaun was first seen, for the walking line: he wanders. */
+	/** The stop's tool leprechaun for the walking line, and where he was when picked out: he wanders. */
+	private NPC leprechaun;
 	private WorldPoint leprechaunAt;
 	/** A visit to the tool leprechaun here has said to store the empty buckets: it stays until they're stored. */
 	private boolean bucketsDue;
@@ -453,12 +454,15 @@ class PatchGuide
 			binTaken.clear();
 			binCountSeen = -1;
 			fillingBin = false;
+			leprechaun = null;
 			leprechaunAt = null;
 			bucketsDue = false;
 		}
-		else if (currentAction == StepAdvisor.Action.EMPTY_BIN)
+		else if (emptyingBin)
 		{
-			// What came out of the bin (P3): stored with the leprechaun after, but for what this stop's patches need
+			// What came out of the bin (P3): stored with the leprechaun after, but for what this stop's patches need. Taken
+			// whichever of its steps showed, as the player can be ahead of the guide (elzerma's run of 2026-10-31: 5 taken
+			// out while it said to fetch buckets went uncounted, so it said to store 21 of 26 with 2 needed)
 			for (Compost compost : Compost.values())
 			{
 				final int id = compost.getItemId();
@@ -684,18 +688,21 @@ class PatchGuide
 
 	/**
 	 * The next thing to do to empty a bin with compost in it (elzerma, 2026-10-30: "go to leprechaun to remove buckets and
-	 * then open and either a) withdraw or b) ... add it to the bin before removing it into buckets"): the empty buckets for
-	 * all of it first, from the tool leprechaun while he has some and there's room for them; then open it once rotted; add
-	 * the ash for ultracompost when carried and none has been taken out; and take the compost out.
+	 * then open and either a) withdraw or b) ... add it to the bin before removing it into buckets"): the empty buckets
+	 * first, from the tool leprechaun while he has some: before opening, all it holds that there's room for; once open,
+	 * only when none are left to take it out with, as fetching a few more is slower than taking out what can be and
+	 * fetching the rest while storing it (elzerma, 2026-10-31, at the Farming Guild: sent for 5 with room for 1 and 25 in
+	 * hand). Then open it once rotted, add the ash for ultracompost when carried and worth it, and take the compost out.
 	 *
 	 * @param buckets empty buckets carried
 	 * @param stored  empty buckets the tool leprechaun holds
+	 * @param room    inventory slots for buckets: free, and freed by storing what's been taken out
 	 * @param ash     volcanic ash carried, or 0 while ultracompost isn't wanted
 	 */
-	static BinNext binNext(BinState state, CompostBin bin, int buckets, boolean bottomless, int stored, int freeSlots,
-		int ash)
+	static BinNext binNext(BinState state, CompostBin bin, int buckets, boolean bottomless, int stored, int room, int ash)
 	{
-		if (!bottomless && buckets < compostIn(state, bin) && stored > 0 && (buckets == 0 || freeSlots > 0))
+		final boolean closed = state.getStage() == BinState.Stage.ROTTED;
+		if (!bottomless && stored > 0 && buckets < compostIn(state, bin) && (buckets == 0 || closed && room > 0))
 		{
 			return BinNext.TAKE_BUCKETS;
 		}
@@ -735,7 +742,10 @@ class PatchGuide
 				.getOrDefault(ItemID.BUCKET_EMPTY, 0);
 			final int ash = settings.getRunConfig().isMakeUltracompost()
 				? held.getOrDefault(ItemID.FOSSIL_VOLCANIC_ASH, 0) : 0;
-			final BinNext next = binNext(state, bin, buckets, bottomless >= 0, stored, freeInventorySlots(), ash);
+			// What's been taken out is stored to make room for more
+			final Map<Compost, Integer> spare = binCompostSpare(held);
+			final int room = freeInventorySlots() + spare.values().stream().mapToInt(Integer::intValue).sum();
+			final BinNext next = binNext(state, bin, buckets, bottomless >= 0, stored, room, ash);
 			emptyingBin = next != BinNext.NONE;
 			currentPatch = at;
 			binInHand = bin;
@@ -744,9 +754,11 @@ class PatchGuide
 			{
 				case TAKE_BUCKETS:
 				{
-					// With what's been taken out stored to make room
-					final List<String> store = binCompostToStore(held);
-					final int take = Math.min(compostIn(state, bin) - buckets, stored);
+					// No more than fit (elzerma's run of 2026-10-31: "take 30" with room for 25), unless there's no room
+					// at all yet
+					final int wanted = Math.min(compostIn(state, bin) - buckets, stored);
+					final int take = room > 0 ? Math.min(wanted, room) : wanted;
+					final List<String> store = counted(spare);
 					currentAction = StepAdvisor.Action.TAKE_COMPOST;
 					return "At the tool leprechaun: " + (store.isEmpty() ? "" : "store " + join(store) + " and ") + "take "
 						+ take + (take == 1 ? " empty bucket" : " empty buckets");
@@ -767,9 +779,11 @@ class PatchGuide
 					break;
 			}
 		}
-		// Emptied here: what the stop's patches won't use goes to the tool leprechaun before picking
-		final List<String> store = binCompostToStore(held);
-		if (store.isEmpty())
+		// Emptied here: what the stop's patches won't use goes to the tool leprechaun before picking, when its room is needed
+		// for what they'll bring in; otherwise it's carried on, for later stops (elzerma's run of 2026-10-31, at the Farming
+		// Guild: sent across it to store 2 of 4 ultracompost with 22 slots free, then to take 2 back after storing all 4)
+		final List<String> store = counted(binCompostSpare(held));
+		if (store.isEmpty() || freeInventorySlots() >= harvestToCome(null, atStopPatches))
 		{
 			return null;
 		}
@@ -784,20 +798,28 @@ class PatchGuide
 		return "At the tool leprechaun: store " + join(store);
 	}
 
-	/** The compost taken out of this stop's bin that its patches won't use, e.g. "12 ultracompost"; empty for none. */
-	private List<String> binCompostToStore(Map<Integer, Integer> held)
+	/** The compost taken out of this stop's bin that its patches won't use, by type; empty for none. */
+	private Map<Compost, Integer> binCompostSpare(Map<Integer, Integer> held)
 	{
 		final Map<Compost, Integer> need = compostStillNeeded(holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY));
-		final List<String> parts = new ArrayList<>();
+		final Map<Compost, Integer> spare = new EnumMap<>(Compost.class);
 		for (Compost compost : Compost.values())
 		{
-			final int spare = compost == Compost.NONE ? 0 : Math.min(binTaken.getOrDefault(compost.getItemId(), 0),
+			final int count = compost == Compost.NONE ? 0 : Math.min(binTaken.getOrDefault(compost.getItemId(), 0),
 				held.getOrDefault(compost.getItemId(), 0) - need.getOrDefault(compost, 0));
-			if (spare > 0)
+			if (count > 0)
 			{
-				parts.add(spare + " " + compost.getDisplayName().toLowerCase());
+				spare.put(compost, count);
 			}
 		}
+		return spare;
+	}
+
+	/** e.g. "12 ultracompost" for each kind. */
+	private static List<String> counted(Map<Compost, Integer> compost)
+	{
+		final List<String> parts = new ArrayList<>();
+		compost.forEach((kind, count) -> parts.add(count + " " + kind.getDisplayName().toLowerCase()));
 		return parts;
 	}
 
@@ -906,23 +928,24 @@ class PatchGuide
 		{
 			return null;
 		}
-		final WorldPoint patchAt = scene.locationOf(currentPatch);
-		if (currentAction == StepAdvisor.Action.NOTE || currentAction == StepAdvisor.Action.TAKE_COMPOST)
+		final GameObject object = binInHand != null ? scene.binObject(binInHand) : null;
+		final WorldPoint workAt = object != null ? object.getWorldLocation() : scene.locationOf(currentPatch);
+		if ((currentAction == StepAdvisor.Action.NOTE || currentAction == StepAdvisor.Action.TAKE_COMPOST) && workAt != null)
 		{
-			final NPC leprechaun = scene.transferNpc(TOOL_LEPRECHAUN);
-			// Not one still loaded from the stop before
-			if (leprechaunAt == null && leprechaun != null && patchAt != null
-				&& leprechaun.getWorldLocation().distanceTo(patchAt) <= LEPRECHAUN_NEAR_TILES)
+			// The one nearest the bin or patch (the Farming Guild has several), not one still loaded from the stop before
+			final NPC nearest = scene.nearestLeprechaun(workAt);
+			if (nearest != null && nearest != leprechaun
+				&& nearest.getWorldLocation().distanceTo(workAt) <= LEPRECHAUN_NEAR_TILES)
 			{
-				leprechaunAt = leprechaun.getWorldLocation();
+				leprechaun = nearest;
+				leprechaunAt = nearest.getWorldLocation();
 			}
 			if (leprechaunAt != null)
 			{
 				return leprechaunAt;
 			}
 		}
-		final GameObject object = binInHand != null ? scene.binObject(binInHand) : null;
-		return object != null ? object.getWorldLocation() : patchAt;
+		return workAt;
 	}
 
 	/** Planted or treated here this run: the player has started on the stop's planting their own way. */
