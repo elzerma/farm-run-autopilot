@@ -245,3 +245,9 @@ closed counts as ready 70 minutes after.
 **Settings:** Farm > At the patches > Make compost in the compost bins (off); when on, Make ultracompost (brings
 volcanic ash) and the crops for the bin (watermelon ticked; snape grass never offered).
 **Order of building:** the bins' data and tracking, logged as they change; then the steps; then the supplies.
+
+**Built 2026-10-30** (84bf25d, cb29134, c4ef0a6), not yet tried in game: the eight bins tracked and logged ("Compost
+bin at <area>: <state> (value N)"); the steps above, with the bin outlined; Farm > At the patches > Make compost
+(off), Make ultracompost (on) and the crops for the bin (watermelon); the ash and buckets on the supply list, the tool
+leprechaun's empty buckets read too. UNVERIFIED: the big bin's values 97-99 and 127-128 (no object IDs in RuneLite's
+notes), to check from the Farming Guild's log lines.
