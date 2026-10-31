@@ -65,8 +65,8 @@ import net.runelite.client.util.Text;
  *
  * <p>UNVERIFIED: the scripts' IDs and the vault's layout are read from the game's scripts (osrs-dumps). The layout,
  * the counts, dragging, the scroll and the button passed in game (guided test SEED_VAULT_SECTION revisions 2 and 3,
- * and elzerma's own checks); the category list entry that shows with the view is untried, and so is going above the
- * Farming Contract's section (dev check SEED_VAULT_ABOVE_CONTRACT).
+ * and elzerma's own checks), and so did going above the Farming Contract's section with the category list entry first
+ * (dev check SEED_VAULT_ABOVE_CONTRACT, 2026-10-30).
  */
 @Slf4j
 @Singleton

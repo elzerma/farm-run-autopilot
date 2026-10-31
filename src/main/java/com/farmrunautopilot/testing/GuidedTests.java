@@ -86,7 +86,6 @@ final class GuidedTests
 		TESTS.put(TestItem.ETCETERIA_ACCESS, new EtceteriaAccess());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
 		TESTS.put(TestItem.GREAT_CONCH_ACCESS, new GreatConchAccess());
-		TESTS.put(TestItem.SEED_VAULT_ABOVE_CONTRACT, new SeedVaultAboveContract());
 	}
 
 	private GuidedTests()
@@ -1440,75 +1439,6 @@ final class GuidedTests
 					.onAnswer((ctx, yes) -> ctx.problem(yes ? "By the patch, but the plugin didn't see it"
 						: "Couldn't get to the patch")),
 				ask("Can you rake or plant in the calquat patch?"));
-		}
-	}
-
-	/**
-	 * Dev check (elzerma, 2026-10-30: "Can we put our section above the farming contract"): the Farm Run Autopilot section
-	 * above the Farming Contract's in the seed vault, which moves down into a gap after it. UNVERIFIED: moving the
-	 * contract's section, and the list's scrolling to it, from seed_vault_build and seed_vault_catselect (osrs-dumps).
-	 */
-	private static final class SeedVaultAboveContract extends GuidedTest
-	{
-		private static boolean contractUnfinished(TestContext ctx)
-		{
-			return ctx.varbit(VarbitID.FARMGUILD_CONTRACT_TYPE) > 0 && ctx.varbit(VarbitID.FARMGUILD_CONTRACT_COMPLETE) == 0;
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				doThis("Have an unfinished Farming Guild contract from Guildmaster Jane",
-					SeedVaultAboveContract::contractUnfinished)
-					.orAskAfter(SPOT_TICKS, "The plugin doesn't see an unfinished Farming Guild contract. Do you have one?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (yes)
-						{
-							ctx.problem("Had an unfinished contract the plugin didn't see");
-						}
-						else
-						{
-							ctx.cannotTest("an unfinished Farming Guild contract");
-						}
-					}),
-				doThis("On the Run tab, press Build run", ctx -> ctx.runView().getState() != RunView.State.OFF),
-				doThis("Open the Farming Guild's seed vault and press its Farm Run Autopilot button by the close button",
-					ctx -> ctx.seedVault().describe().contains("above the Farming Contract"))
-					.onDone(ctx -> ctx.capture("Seed vault", ctx.seedVault().describe()))
-					.orAskAfter(DO_TICKS, "The section didn't go above the Farming Contract's. Is the vault open with the "
-						+ "section showing?")
-					.onAnswer((ctx, yes) ->
-					{
-						ctx.capture("Seed vault", ctx.seedVault().describe());
-						ctx.problem("The section wasn't put above the Farming Contract's");
-					}),
-				ask("Is the Farm Run Autopilot section first, with the Farming Contract's right under it and nothing overlapping?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (!yes)
-						{
-							ctx.problem("Not laid out right above the contract's section");
-						}
-					}),
-				ask("Can you withdraw the contract's seed from its section?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (!yes)
-						{
-							ctx.problem("The contract's seed couldn't be withdrawn");
-						}
-					}),
-				ask("Pick Farming Contract, then Herbs, in the list on the left: does each scroll to its own section?")
-					.onAnswer((ctx, yes) ->
-					{
-						ctx.capture("Seed vault after", ctx.seedVault().describe());
-						if (!yes)
-						{
-							ctx.problem("Picking a category in the list didn't scroll to it");
-						}
-					}));
 		}
 	}
 }
