@@ -2,6 +2,7 @@ package com.farmrunautopilot.data;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
 
 /**
@@ -37,6 +38,30 @@ public enum CompostBin
 	public int ashForUltracompost()
 	{
 		return big ? 50 : 25;
+	}
+
+	/** The item an allotment crop is picked as, for putting it in a bin; -1 for any other crop. */
+	public static int cropItem(Crop crop)
+	{
+		switch (crop)
+		{
+			case POTATO:
+				return ItemID.POTATO;
+			case ONION:
+				return ItemID.ONION;
+			case CABBAGE:
+				return ItemID.CABBAGE;
+			case TOMATO:
+				return ItemID.TOMATO;
+			case SWEETCORN:
+				return ItemID.SWEETCORN;
+			case STRAWBERRY:
+				return ItemID.STRAWBERRY;
+			case WATERMELON:
+				return ItemID.WATERMELON;
+			default:
+				return -1;
+		}
 	}
 
 	/** The bin at this farming area, or null. */

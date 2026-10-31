@@ -1,5 +1,6 @@
 package com.farmrunautopilot.run;
 
+import com.farmrunautopilot.data.CompostBin;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.travel.JourneyStep;
@@ -47,6 +48,7 @@ public class SceneTracker
 
 	private final Client client;
 	private final Map<Patch, List<GameObject>> patchObjects = new EnumMap<>(Patch.class);
+	private final Map<CompostBin, GameObject> binObjects = new EnumMap<>(CompostBin.class);
 	private final Map<Patch, NPC> gardeners = new EnumMap<>(Patch.class);
 	/** Renu, the quetzal a Renu leg walks back to first (Navigator); everyone else ridden comes from the atlas. */
 	private static final Set<String> TRANSFER_NPC_NAMES = Set.of("Renu", PatchGuide.TOOL_LEPRECHAUN);
@@ -62,6 +64,13 @@ public class SceneTracker
 
 	public void onObjectSpawned(GameObject object)
 	{
+		final CompostBin bin = binFor(object);
+		if (bin != null)
+		{
+			log.debug("Compost bin object for {} at {}", bin, object.getWorldLocation());
+			binObjects.put(bin, object);
+			return;
+		}
 		final Patch patch = patchFor(object);
 		if (patch != null)
 		{
@@ -82,6 +91,34 @@ public class SceneTracker
 		{
 			objects.remove(object);
 		}
+		binObjects.values().removeIf(o -> o == object);
+	}
+
+	/** The compost bin's object while it's loaded, or null (P3). */
+	public GameObject binObject(CompostBin bin)
+	{
+		return binObjects.get(bin);
+	}
+
+	/**
+	 * The compost bin this object is: one in the bin's region that changes with its farming varbit (P3). Bins and patches
+	 * never share a varbit at the same area, as RuneLite's Time Tracking has them. Only objects in a bin's region are looked
+	 * up, so a scene loading elsewhere costs nothing.
+	 */
+	private CompostBin binFor(GameObject object)
+	{
+		final int region = object.getWorldLocation().getRegionID();
+		for (CompostBin bin : CompostBin.values())
+		{
+			if (bin.getRegionId() != region)
+			{
+				continue;
+			}
+			final ObjectComposition composition = client.getObjectDefinition(object.getId());
+			return composition != null && composition.getImpostorIds() != null
+				&& composition.getVarbitId() == bin.getVarbitId() ? bin : null;
+		}
+		return null;
 	}
 
 	/**
@@ -126,12 +163,14 @@ public class SceneTracker
 	public void clearObjects()
 	{
 		patchObjects.clear();
+		binObjects.clear();
 	}
 
 	/** Logged out or hopping: nothing is loaded any more. */
 	public void clear()
 	{
 		patchObjects.clear();
+		binObjects.clear();
 		gardeners.clear();
 		transfers.clear();
 	}

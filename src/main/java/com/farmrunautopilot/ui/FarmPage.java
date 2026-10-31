@@ -445,6 +445,38 @@ class FarmPage extends SetupPanel
 		s.addContent(label("Empty buckets"));
 		s.addContent(combo(enumChoices(EmptyBuckets.values()), config.getEmptyBuckets(),
 			b -> saveRun(() -> config.setEmptyBuckets(b))));
+		// Patch actions P3, in the shape elzerma liked (2026-10-24)
+		s.addContent(checkBox("Make compost in the compost bins", config.isMakeCompost(), true,
+			"At stops with a compost bin: empty it when it's ready, then fill it with the crops below as they're picked",
+			on -> saveRun(() -> config.setMakeCompost(on))));
+		if (config.isMakeCompost())
+		{
+			s.addContent(checkBox("Make ultracompost (brings volcanic ash)", config.isMakeUltracompost(), true,
+				"A bin of supercompost gets 25 volcanic ash (50 in the Farming Guild's big bin) before it's emptied",
+				on -> saveRun(() -> config.setMakeUltracompost(on))));
+			s.addContent(label("Crops for the bin"));
+			for (Crop crop : Crop.values())
+			{
+				// Never snape grass (elzerma: worth more sold or for potions)
+				if (crop.getType() != PatchType.ALLOTMENT || crop == Crop.SNAPE_GRASS)
+				{
+					continue;
+				}
+				s.addContent(checkBox(crop.getDisplayName(), config.getBinCrops().contains(crop), true,
+					crop == Crop.WATERMELON ? "Makes supercompost, as long as nothing else goes in the bin"
+						: "Makes the bin regular compost", on -> saveRun(() ->
+					{
+						if (on)
+						{
+							config.getBinCrops().add(crop);
+						}
+						else
+						{
+							config.getBinCrops().remove(crop);
+						}
+					})));
+			}
+		}
 		return s;
 	}
 

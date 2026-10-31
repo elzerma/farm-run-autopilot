@@ -131,6 +131,18 @@ public class RunConfig
 	 * P2; off by default, as elzerma agreed for the "At the patches" settings, 2026-10-24).
 	 */
 	private boolean cleanHerbs;
+	/**
+	 * At stops with a compost bin, empty it when it's ready and fill it with the crops picked there (patch actions P3; off
+	 * by default, as elzerma agreed, 2026-10-24).
+	 */
+	private boolean makeCompost;
+	/** With Make compost, a bin of supercompost is turned into ultracompost with volcanic ash, which the run brings. */
+	private boolean makeUltracompost = true;
+	/**
+	 * The crops picked on the run that go in the compost bins: watermelons by default, which make supercompost; any other
+	 * makes regular compost. Never snape grass (elzerma: worth more sold or for potions).
+	 */
+	private Set<Crop> binCrops;
 	/** Empty buckets after composting: dropped, kept or stored at the tool leprechaun (P1; dropped by default). */
 	private EmptyBuckets emptyBuckets = EmptyBuckets.DROP;
 	/** Walk instead of teleporting when the walk is only a little slower (saves charges and clicks). */
@@ -235,6 +247,8 @@ public class RunConfig
 		{
 			emptyBuckets = EmptyBuckets.DROP;
 		}
+		binCrops = cleanSet(binCrops, Crop.class, EnumSet.of(Crop.WATERMELON));
+		binCrops.removeIf(crop -> crop.getType() != PatchType.ALLOTMENT || crop == Crop.SNAPE_GRASS);
 		if (routeMode == null)
 		{
 			routeMode = RouteMode.AUTOPILOT;

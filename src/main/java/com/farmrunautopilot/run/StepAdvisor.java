@@ -35,6 +35,16 @@ public final class StepAdvisor
 		PAY,
 		/** Clean the grimy herbs picked here, before noting them (patch actions P2). */
 		CLEAN,
+		/** The stop's compost bin (patch actions P3): open it once rotted. */
+		OPEN_BIN,
+		/** Add volcanic ash to a bin of supercompost, for ultracompost. */
+		ADD_ASH,
+		/** Take the compost out of the bin. */
+		EMPTY_BIN,
+		/** Put the crops picked here in the bin. */
+		FILL_BIN,
+		/** Close the bin once it's full. */
+		CLOSE_BIN,
 		/** Note the stop's produce on the tool leprechaun, once everything here is picked (patch actions P1). */
 		NOTE,
 		/** Take the compost this stop's patches need from the tool leprechaun (P1). */

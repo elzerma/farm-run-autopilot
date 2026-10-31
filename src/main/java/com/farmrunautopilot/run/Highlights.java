@@ -1,5 +1,6 @@
 package com.farmrunautopilot.run;
 
+import com.farmrunautopilot.data.CompostBin;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.route.MenuPick;
@@ -47,6 +48,8 @@ public class Highlights
 	 * rather than in one (elzerma, 2026-10-30: "one was highlighted. Can we highlight all of them").
 	 */
 	Set<Integer> everySlotIds;
+	/** The compost bin to outline, or null (patch actions P3). */
+	CompostBin bin;
 
 	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell)
 	{
@@ -77,6 +80,14 @@ public class Highlights
 		Set<Integer> wearItemIds, List<MenuPick> menuPicks, String teleportOption, Set<Integer> neededIds,
 		Set<Integer> everySlotIds)
 	{
+		this(patch, gardener, travelNpc, itemIds, spell, wearItemIds, menuPicks, teleportOption, neededIds, everySlotIds,
+			null);
+	}
+
+	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell,
+		Set<Integer> wearItemIds, List<MenuPick> menuPicks, String teleportOption, Set<Integer> neededIds,
+		Set<Integer> everySlotIds, CompostBin bin)
+	{
 		this.patch = patch;
 		this.gardener = gardener;
 		this.travelNpc = travelNpc;
@@ -87,13 +98,14 @@ public class Highlights
 		this.teleportOption = teleportOption;
 		this.neededIds = neededIds;
 		this.everySlotIds = everySlotIds;
+		this.bin = bin;
 	}
 
 	/** The same, with these items to put on. */
 	public Highlights withWear(Set<Integer> wear)
 	{
 		return new Highlights(patch, gardener, travelNpc, itemIds, spell, wear, menuPicks, teleportOption, neededIds,
-			everySlotIds);
+			everySlotIds, bin);
 	}
 
 	/** Everything the step needs, outlined or not, the main item first. */

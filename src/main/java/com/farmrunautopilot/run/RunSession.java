@@ -2128,6 +2128,10 @@ public class RunSession
 			{
 				return "clean herbs";
 			}
+			if (instruction.contains("compost bin"))
+			{
+				return "compost bin";
+			}
 			if (loggedInstruction != null && loggedInstruction.startsWith(LEPRECHAUN_VISIT))
 			{
 				return "leprechaun visit done";
@@ -2816,7 +2820,8 @@ public class RunSession
 		}
 		// Empty buckets as the player chose (patch actions P1): dropped, or kept. Stored ones are part of the stop's visit to
 		// the tool leprechaun, not a line of their own that followed the player between stops (elzerma, 2026-10-30)
-		if (buckets > 0 && settings.getRunConfig().getEmptyBuckets() == EmptyBuckets.DROP)
+		// Not the ones taken to empty the compost bin with (P3)
+		if (buckets > 0 && settings.getRunConfig().getEmptyBuckets() == EmptyBuckets.DROP && !patches.isEmptyingBin())
 		{
 			parts.add(buckets + (buckets == 1 ? " empty bucket" : " empty buckets"));
 		}
