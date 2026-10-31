@@ -635,6 +635,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
 		runSession.onMenuOptionClicked(event);
+		itemHighlightOverlay.onMenuOptionClicked(event);
 		bottomlessBucket.onMenuOptionClicked(event);
 		if (itemCharges.onMenuOptionClicked(event))
 		{

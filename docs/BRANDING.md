@@ -59,6 +59,12 @@ the one thing to click next: an item to wear keeps its blue outline and "Wear" l
 tab only when there's nothing to use. Round an item the vine fits inside its slot (inside a worn item's frame), on one
 slot only: the first holding it, staying there until it's used up, so several buckets of compost aren't a tangle.
 
+Items the player clicks one by one (grimy herbs to clean, the pieces of an outfit to wear) are outlined in every slot
+holding them (`Highlights.everySlotIds`, or the wear outline), and a slot's outline goes as soon as it's clicked,
+not a tick later when the game takes the item away; it comes back if the item is still there four ticks on, as after a
+misclick (elzerma, 2026-10-30). Picking "Use" doesn't count, as it only picks the item up to use on something. Any new
+step with several items to click works this way.
+
 ### Bank tab
 
 | Role | Hex |

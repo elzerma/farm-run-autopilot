@@ -909,11 +909,11 @@ class PatchGuide
 		{
 			return null;
 		}
-		// The grimy herbs to clean outlined (P2)
+		// The grimy herbs to clean outlined, every one, as each is clicked (P2)
 		if (currentAction == StepAdvisor.Action.CLEAN)
 		{
 			return new Highlights(null, false, null, toClean, null, Collections.emptySet(), Collections.emptyList(), null,
-				Collections.emptySet());
+				Collections.emptySet(), toClean);
 		}
 		// The tool leprechaun outlined, with the produce to use on him (P1)
 		if (currentAction == StepAdvisor.Action.NOTE || currentAction == StepAdvisor.Action.TAKE_COMPOST)
