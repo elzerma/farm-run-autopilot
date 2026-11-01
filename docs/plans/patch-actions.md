@@ -371,8 +371,18 @@ there was room when there wasn't, and the inventory filled mid-picking instead. 
 watermelons for the room checks, not 8?", elzerma: *"Yes, use 19"*. It's `SupplyCalculator.ALLOTMENT_HARVEST`.
 
 **The tool leprechaun's window** (elzerma, 2026-11-01: *"highlights in leprechaun menu with rt click items
-highlighted?"*): during a visit to him, his window (interfaces 125, his store, and 126, the inventory side) outlines what
-the visit takes in his store and what it stores on the inventory side, labelled "Right-click" when it's more than one;
-right-clicking one colours the option for the amount ("-1", "-5", "-X", "-All"). UNVERIFIED: the options' wording, matched
-by what follows the dash; the dev client logs `Leprechaun window menu on <item>: <options>` and `Leprechaun window opened
-at <stop>: take {...}, store {...}`, and takes a check screenshot as the window opens during a visit.
+highlighted?"*, then *"typing 13 isn't very convenient"*, and on how: *"guide changing the quantity buttons during the
+run. e.g. 13 would change to 5, 2x click bucket remove, change to 1, 3x click bucket remove. change back to 5 ... counts
+shown on top of highlighted button and updated as quickly as possible"*). The plan: `C:\Users\Sean\.claude\plans\
+memoized-leaping-hammock.md`.
+- **His window, researched** from the game's client scripts (github.com/Joshua-F/osrs-dumps): his store (interface 125)
+  has Remove-1/5/X/All, the inventory side (126) Store-1/5/X/All, the selected quantity as the left click. Varbit
+  FARMING_TOOLS_SELECTEDQUANTITY (7792): 0 = 1, 1 = 5, 2 = All, 3 = X, set by the client as the button's clicked, shared
+  with other storage windows. X isn't remembered. Deposit inventory stores tools too.
+- **Exact amounts, guided** (`run/LeprechaunClicks`): fives for every item first, then ones, then back to 5, his
+  default. The quantity button to click is outlined, "Click" (`LeprechaunButtonOverlay`); then each item, "Click 2x"
+  (`ItemHighlightOverlay`). A click counts at once, before the game takes the items a tick later, so the count drops on
+  the click and the outline moves on to the 1 button the moment the last five's clicked; one not seen applied in 3 ticks
+  is dropped. A right-click colours the "-5" or "-1" option; "Exchange" on him is coloured for a visit with window work.
+- **UNVERIFIED in game**: the dev client logs `Leprechaun window menu on <item>: <options>` and `Leprechaun window opened
+  at <stop>: take {...}, store {...}`, and takes a check screenshot as the window opens during a visit.

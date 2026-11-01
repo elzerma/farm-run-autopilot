@@ -68,16 +68,18 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 	private final Map<String, Boolean> rightClickCache = new HashMap<>();
 	private final Client client;
 	private final TeleportMenuHighlighter menuHighlighter;
+	private final LeprechaunClicks leprechaunClicks;
 
 	@Inject
 	ItemHighlightOverlay(RunSession session, FarmRunAutopilotConfig config, ItemManager itemManager, Client client,
-		TeleportMenuHighlighter menuHighlighter)
+		TeleportMenuHighlighter menuHighlighter, LeprechaunClicks leprechaunClicks)
 	{
 		this.session = session;
 		this.config = config;
 		this.itemManager = itemManager;
 		this.client = client;
 		this.menuHighlighter = menuHighlighter;
+		this.leprechaunClicks = leprechaunClicks;
 		showOnInventory();
 		showOnEquipment();
 		showOnInterfaces(InterfaceID.FARMING_TOOLS, InterfaceID.FARMING_TOOLS_SIDE);
@@ -199,12 +201,10 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 			return;
 		}
 		final Highlights highlights = session.getView().getHighlights();
-		final int group = widgetItem.getWidget() != null
-			? WidgetUtil.componentToInterface(widgetItem.getWidget().getId()) : -1;
-		if (group == InterfaceID.FARMING_TOOLS || group == InterfaceID.FARMING_TOOLS_SIDE)
+		final LeprechaunClicks.Side side = LeprechaunClicks.sideOf(widgetItem.getWidget());
+		if (side != null)
 		{
-			drawLeprechaunItem(graphics, itemId, widgetItem, (group == InterfaceID.FARMING_TOOLS
-				? highlights.getLeprechaunTake() : highlights.getLeprechaunStore()).get(itemId));
+			drawLeprechaunItem(graphics, itemId, widgetItem, side);
 			return;
 		}
 		final boolean wear = highlights.getWearItemIds().contains(itemId);
@@ -257,15 +257,16 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 	}
 
 	/**
-	 * In the tool leprechaun's window, what the visit takes from his store and, on the inventory side, what it stores,
-	 * labelled "Right-click" when it's more than one, as his menu has the amounts (elzerma, 2026-11-01: "highlights in
-	 * leprechaun menu with rt click items highlighted?"); the menu then colours the amount (LeprechaunMenuHighlighter).
-	 *
-	 * @param amount how many to take or store, or null when the item isn't the visit's
+	 * In the tool leprechaun's window, the items to click at his quantity, labelled with the clicks left, e.g. "Click 2x"
+	 * (elzerma, 2026-11-01: "it says 'Click 3x' so someone can quickly click 3x and as they click the number goes down
+	 * same tick as when clicked"); none while his quantity button comes first (LeprechaunButtonOverlay).
 	 */
-	private void drawLeprechaunItem(Graphics2D graphics, int itemId, WidgetItem widgetItem, Integer amount)
+	private void drawLeprechaunItem(Graphics2D graphics, int itemId, WidgetItem widgetItem, LeprechaunClicks.Side side)
 	{
-		if (amount == null || amount <= 0)
+		final LeprechaunClicks.Next next = leprechaunClicks.now();
+		final Integer clicks = next.switchFirst ? null
+			: (side == LeprechaunClicks.Side.TAKE ? next.take : next.store).get(itemId);
+		if (clicks == null)
 		{
 			return;
 		}
@@ -286,10 +287,7 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 				k -> itemManager.getItemOutline(itemId, widgetItem.getQuantity(), colour)), (int) bounds.getX(),
 				(int) bounds.getY(), null);
 		}
-		if (amount > 1)
-		{
-			drawLabel(graphics, bounds, RIGHT_CLICK_LABEL, colour);
-		}
+		drawLabel(graphics, bounds, new String[]{LeprechaunClicks.clickLabel(clicks)}, colour);
 	}
 
 	/** Whether the item is in the Worn Equipment tab rather than the inventory. */

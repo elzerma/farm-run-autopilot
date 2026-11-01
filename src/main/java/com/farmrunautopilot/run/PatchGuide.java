@@ -1138,14 +1138,18 @@ class PatchGuide
 		return emptyingBin || nextBinReady();
 	}
 
-	/** The step log's last decision line, so each is logged once when it changes (debug: the developer client only). */
-	private String loggedDecision;
+	/**
+	 * The step log's last decision line of each kind (the text before its colon), so each is logged once when it changes
+	 * (debug: the developer client only). By kind, as "Compost for the stop" and "Compost for the visit" alternated and
+	 * were each logged every tick (elzerma's run of 2026-11-01).
+	 */
+	private final Map<String, String> loggedDecisions = new HashMap<>();
 
 	private void logDecision(String decision)
 	{
-		if (!decision.equals(loggedDecision))
+		final int colon = decision.indexOf(':');
+		if (!decision.equals(loggedDecisions.put(colon > 0 ? decision.substring(0, colon) : decision, decision)))
 		{
-			loggedDecision = decision;
 			log.debug(decision);
 		}
 	}

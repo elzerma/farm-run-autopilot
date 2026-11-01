@@ -1,24 +1,22 @@
 package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.FarmRunAutopilotConfig;
-import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.MenuEntry;
+import net.runelite.api.NPC;
 import net.runelite.api.events.MenuOpened;
-import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
-import net.runelite.api.widgets.WidgetUtil;
 import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.Text;
 
 /**
- * Colours the option in the tool leprechaun's window that takes or stores the amount the visit says (elzerma,
- * 2026-11-01: "highlights in leprechaun menu with rt click items highlighted?"), e.g. "-X" for 13 empty buckets or
- * "-All" for all the ultracompost carried, as the item's outline labels it "Right-click". Matched by the amount after
- * the dash, as the options' first word is UNVERIFIED: each menu's options there are logged, to check it from a run.
- * Only colours options the menu has: adds none, removes none. Client thread.
+ * Colours options for a visit to the tool leprechaun (elzerma, 2026-11-01: "highlights in leprechaun menu with rt click
+ * items highlighted?"): "Exchange" on him, which opens his window, during a visit with things to take or store there;
+ * and in the window, the "-5" or "-1" option for the quantity the clicks are in (LeprechaunClicks), for a right-click
+ * rather than the quantity button. Each menu's options there are logged, to check their wording from a run. Only colours
+ * options the menu has: adds none, removes none. Client thread.
  */
 @Slf4j
 @Singleton
@@ -26,12 +24,14 @@ public class LeprechaunMenuHighlighter
 {
 	private final RunSession session;
 	private final FarmRunAutopilotConfig config;
+	private final LeprechaunClicks clicks;
 
 	@Inject
-	LeprechaunMenuHighlighter(RunSession session, FarmRunAutopilotConfig config)
+	LeprechaunMenuHighlighter(RunSession session, FarmRunAutopilotConfig config, LeprechaunClicks clicks)
 	{
 		this.session = session;
 		this.config = config;
+		this.clicks = clicks;
 	}
 
 	public void onMenuOpened(MenuOpened event)
@@ -42,12 +42,23 @@ public class LeprechaunMenuHighlighter
 			return;
 		}
 		final Highlights highlights = session.getView().getHighlights();
+		final boolean windowWork = !highlights.getLeprechaunTake().isEmpty() || !highlights.getLeprechaunStore().isEmpty();
 		boolean logged = false;
 		for (MenuEntry entry : entries)
 		{
+			final String option = Text.removeTags(entry.getOption());
+			final NPC npc = entry.getNpc();
+			if (npc != null && PatchGuide.TOOL_LEPRECHAUN.equals(npc.getName()))
+			{
+				if (windowWork && option.equalsIgnoreCase("Exchange"))
+				{
+					colour(entry, option);
+				}
+				continue;
+			}
 			final Widget widget = entry.getWidget();
-			final int group = widget != null ? WidgetUtil.componentToInterface(widget.getId()) : -1;
-			if (group != InterfaceID.FARMING_TOOLS && group != InterfaceID.FARMING_TOOLS_SIDE)
+			final LeprechaunClicks.Side side = LeprechaunClicks.sideOf(widget);
+			if (side == null)
 			{
 				continue;
 			}
@@ -56,26 +67,24 @@ public class LeprechaunMenuHighlighter
 				logged = true;
 				log.debug("Leprechaun window menu on {}: {}", Text.removeTags(entry.getTarget()), optionList(entries));
 			}
-			final Map<Integer, Integer> amounts = group == InterfaceID.FARMING_TOOLS ? highlights.getLeprechaunTake()
-				: highlights.getLeprechaunStore();
-			final Integer amount = amounts.get(widget.getItemId());
-			final String option = Text.removeTags(entry.getOption());
-			if (amount != null && amount > 0 && forAmount(option, amount, widget.getItemQuantity()))
+			final LeprechaunClicks.Next next = clicks.now();
+			if ((side == LeprechaunClicks.Side.TAKE ? next.take : next.store).containsKey(widget.getItemId())
+				&& forTarget(option, next.target))
 			{
-				entry.setOption(ColorUtil.wrapWithColorTag(option, config.itemColour()));
+				colour(entry, option);
 			}
 		}
 	}
 
-	/**
-	 * The option takes or stores this amount, of what's there: "-All" for all of it, "-1" and "-5" for those, else "-X";
-	 * e.g. "Remove-X" for 13 of 20.
-	 */
-	static boolean forAmount(String option, int amount, int there)
+	/** The option moves the quantity the clicks are in: "-5" for fives, "-1" for ones. */
+	static boolean forTarget(String option, LeprechaunClicks.Quantity target)
 	{
-		final String wanted = amount >= there ? "all" : amount == 1 ? "1" : amount == 5 ? "5" : "x";
-		final String text = option.toLowerCase();
-		return text.endsWith("-" + wanted) || text.endsWith(" " + wanted);
+		return LeprechaunClicks.moves(option) == (target == LeprechaunClicks.Quantity.FIVE ? 5 : 1);
+	}
+
+	private void colour(MenuEntry entry, String option)
+	{
+		entry.setOption(ColorUtil.wrapWithColorTag(option, config.itemColour()));
 	}
 
 	private static String optionList(MenuEntry[] entries)
