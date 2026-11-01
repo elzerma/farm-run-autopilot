@@ -58,11 +58,11 @@ public class BinStepsTest
 	}
 
 	@Test
-	public void asManyBucketsAsTheLeprechaunHasAndThereIsRoomFor()
+	public void bucketsFromHimOnlyWhenNoneAreCarried()
 	{
-		// Some carried, room for more: the rest from him
-		assertEquals(PatchGuide.BinNext.TAKE_BUCKETS, next(ROTTED, 5, 20, 10, 0));
-		// No room for more: on with the ones carried, and back to him once they're full
+		// Some carried: those first, room for more or not, and the rest fetched with the store of what's out (elzerma,
+		// 2026-10-31: "we want to save trips to the leprechaun")
+		assertEquals(PatchGuide.BinNext.OPEN, next(ROTTED, 5, 20, 10, 0));
 		assertEquals(PatchGuide.BinNext.OPEN, next(ROTTED, 5, 20, 0, 0));
 		// He has none: on with what's carried, and left once those are full
 		assertEquals(PatchGuide.BinNext.OPEN, next(ROTTED, 5, 0, 10, 0));

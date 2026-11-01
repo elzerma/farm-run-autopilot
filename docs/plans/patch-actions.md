@@ -322,3 +322,23 @@ the room check for the spare compost came up mid-picking, as the free slots fell
 "store 1 ultracompost", later "and 1 empty bucket". elzerma: *"Don't need to store compost til we have a second reason
 to go to leprechaun"*. So the bin's spare compost no longer has a step of its own: it's stored on a visit made anyway
 (noting, taking compost, fetching buckets for the bin), or when the inventory is full and storing makes room.
+
+### 8.1 Trips to the tool leprechaun (2026-10-31)
+
+elzerma: *"can check any instances where we would go to tool leprechaun and work through the logic of when it would be
+appropriate? like we want to save trips to the leprechaun because it can be a time waste to run back and forth several
+times if you don't NEED to run back and forth"*. The rule: a trip is made only for something that can't wait (what the
+next steps need, or room to go on picking), and every trip does everything else that's due while there: noting, storing
+the bin's spare compost and the empty buckets (Empty buckets: Store). What's left comes along to the next stop, whose
+own visit, or a full inventory, takes care of it.
+
+| Trip | Made when | Was |
+|---|---|---|
+| Empty buckets for a compost bin | none carried (what's carried is used first, the rest fetched while storing what's out) | also to top up before opening, a trip more when they didn't all fit |
+| Before planting | compost, or the seed dibber or spade, to take for the stop's planting, or too little room for its other patches (8 a herb patch or allotment) | the dibber or spade was a trip of its own as planting began |
+| Inventory full while picking | the compost bin can't take the crops | (2026-10-31) |
+| Before leaving the stop | too little room for what the next stop brings in; never before a bank visit or at the run's end | every stop, to note what was picked |
+
+Still a trip of its own: a step's item that's with the leprechaun but not carried, found only at that step (a rake for
+weeds, a spade for a dead plant, a plant cure), as these can't be known ahead. Not changed, for elzerma to decide:
+taking compost for later stops on a visit made anyway would save their visits, but carries more buckets.

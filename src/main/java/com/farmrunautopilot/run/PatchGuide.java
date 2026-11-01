@@ -442,14 +442,17 @@ class PatchGuide
 	/**
 	 * The first unfinished step at this stop, or null when every patch here is done. While still far from the patch,
 	 * the stop's walking directions (rocks, gates, stairs) come first.
+	 *
+	 * @param next the next stop's patches, for whether to note before leaving; none when a bank visit or the end comes first
 	 */
-	String nextStep(RouteStop stop, List<Patch> here)
+	String nextStep(RouteStop stop, List<Patch> here, List<Patch> next)
 	{
 		final Map<Integer, Integer> held = inventoryAsHeld();
 		if (stop != atStop)
 		{
 			atStop = stop;
-			picked.clear();
+			// Produce not noted at the stop before comes along, to note on a visit here
+			picked.removeIf(id -> !stillHeld(id, held));
 			visited = false;
 			binTaken.clear();
 			binCountSeen = -1;
@@ -616,31 +619,42 @@ class PatchGuide
 			}
 			return step(stop, patch, advice);
 		}
-		// Every patch done: the bin filled and closed, then what was picked since noted before leaving, while still here,
-		// with the buckets stored then
-		final String fill = bin != null && navigator.nearAny(here) ? fillBin(bin, here.get(0), false) : null;
-		if (fill != null)
+		// Every patch done: the bin filled and closed, and the herbs cleaned. What was picked is noted before leaving only when
+		// the room's needed for what the next stop brings in; otherwise it comes along, to note on a visit there made anyway
+		// (elzerma, 2026-10-31: "we want to save trips to the leprechaun because it can be a time waste to run back and forth
+		// several times if you don't NEED to run back and forth")
+		if (navigator.nearAny(here))
 		{
-			return fill;
-		}
-		final String note = navigator.nearAny(here) ? cleanThenVisit(here.get(0), false, false) : null;
-		if (note != null)
-		{
-			return note;
+			final String fill = bin != null ? fillBin(bin, here.get(0), false) : null;
+			if (fill != null)
+			{
+				return fill;
+			}
+			final String clean = cleanStep(here.get(0));
+			if (clean != null)
+			{
+				return clean;
+			}
+			final String note = storeDue || freeInventorySlots() < harvestToCome(null, next)
+				? leprechaunVisit(here.get(0), false, false) : null;
+			if (note != null)
+			{
+				return note;
+			}
 		}
 		clearCurrent();
 		return null;
 	}
 
 	/**
-	 * The visit to the tool leprechaun before planting is needed: there's compost to take from him for the stop's patches,
-	 * or too little room left for what its other patches will bring in. Otherwise noting waits for the visit before
-	 * leaving (elzerma, 2026-10-31, at Hosidius: sent from the compost bin across the farm to note 2 watermelons before
+	 * The visit to the tool leprechaun before planting is needed: there's compost, or the seed dibber or spade, to take from
+	 * him for the stop's planting, or too little room left for what its other patches will bring in. Otherwise noting
+	 * waits (elzerma, 2026-10-31, at Hosidius: sent from the compost bin across the farm to note 2 watermelons before
 	 * planting, with the stop's ultracompost carried from the bin and 22 slots free).
 	 */
 	private boolean visitNeeded(Patch picked, List<Patch> here)
 	{
-		return compostToTake() != null || freeInventorySlots() < harvestToCome(picked, here);
+		return !toTake().isEmpty() || freeInventorySlots() < harvestToCome(picked, here);
 	}
 
 	/** Inventory slots the stop's other patches ready to pick will fill, as the inventory-full reminder reckons them. */
@@ -689,10 +703,10 @@ class PatchGuide
 	/**
 	 * The next thing to do to empty a bin with compost in it (elzerma, 2026-10-30: "go to leprechaun to remove buckets and
 	 * then open and either a) withdraw or b) ... add it to the bin before removing it into buckets"): the empty buckets
-	 * first, from the tool leprechaun while he has some: before opening, all it holds that there's room for; once open,
-	 * only when none are left to take it out with, as fetching a few more is slower than taking out what can be and
-	 * fetching the rest while storing it (elzerma, 2026-10-31, at the Farming Guild: sent for 5 with room for 1 and 25 in
-	 * hand). Then open it once rotted, add the ash for ultracompost when carried and worth it, and take the compost out.
+	 * from the tool leprechaun first when none are carried. With some carried, what they hold is taken out first and the
+	 * rest fetched while storing it: a trip to top them up first is never fewer trips, and one more when they don't all fit
+	 * (elzerma, 2026-10-31: "we want to save trips to the leprechaun"; at the Farming Guild, sent for 5 with room for 1 and
+	 * 25 in hand). Then open it once rotted, add the ash for ultracompost when carried and worth it, and take it out.
 	 *
 	 * @param buckets empty buckets carried
 	 * @param stored  empty buckets the tool leprechaun holds
@@ -701,8 +715,7 @@ class PatchGuide
 	 */
 	static BinNext binNext(BinState state, CompostBin bin, int buckets, boolean bottomless, int stored, int room, int ash)
 	{
-		final boolean closed = state.getStage() == BinState.Stage.ROTTED;
-		if (!bottomless && stored > 0 && buckets < compostIn(state, bin) && (buckets == 0 || closed && room > 0))
+		if (!bottomless && buckets == 0 && stored > 0)
 		{
 			return BinNext.TAKE_BUCKETS;
 		}
@@ -986,10 +999,10 @@ class PatchGuide
 		{
 			parts.add("note your " + produceNames(produce));
 		}
-		final String compost = beforePlanting ? compostToTake() : null;
+		final List<String> take = beforePlanting ? toTake() : Collections.emptyList();
 		// Still to store once the noting's done, as storing is a step of its own with him (elzerma's run of 2026-10-31
 		// finished at the noting, the buckets carried off)
-		final boolean going = !parts.isEmpty() || compost != null || beforePlanting || forRoom || storeDue;
+		final boolean going = !parts.isEmpty() || !take.isEmpty() || beforePlanting || forRoom || storeDue;
 		final List<String> store = going ? counted(binCompostSpare(inventoryAsHeld())) : new ArrayList<>();
 		final int buckets = settings.getRunConfig().getEmptyBuckets() == EmptyBuckets.STORE
 			? inventoryAsHeld().getOrDefault(ItemID.BUCKET_EMPTY, 0) : 0;
@@ -1002,9 +1015,9 @@ class PatchGuide
 		{
 			parts.add(i == 0 ? "store " + store.get(i) : store.get(i));
 		}
-		if (compost != null)
+		for (int i = 0; i < take.size(); i++)
 		{
-			parts.add("take " + compost);
+			parts.add(i == 0 ? "take " + take.get(i) : take.get(i));
 		}
 		if (parts.isEmpty())
 		{
@@ -1065,6 +1078,13 @@ class PatchGuide
 		}
 		gained.removeIf(id -> runService.itemName(id).toLowerCase().endsWith("logs"));
 		return gained;
+	}
+
+	/** Picked produce still in the inventory unnoted, or cleaned, for a grimy herb. */
+	static boolean stillHeld(int id, Map<Integer, Integer> held)
+	{
+		final GrimyHerb herb = GrimyHerb.of(id);
+		return held.getOrDefault(id, 0) > 0 || herb != null && held.getOrDefault(herb.getCleanItemId(), 0) > 0;
 	}
 
 	/**
@@ -1158,10 +1178,56 @@ class PatchGuide
 	}
 
 	/**
-	 * "3 ultracompost": the compost this stop's patches still need, when there's too little in the inventory and enough
-	 * stored with the tool leprechaun (P1: at each stop, for that stop); null otherwise, or with a filled bottomless bucket.
+	 * What to take from the tool leprechaun for the stop's planting and compost, e.g. "3 ultracompost" and "a seed dibber";
+	 * empty when nothing.
 	 */
-	private String compostToTake()
+	private List<String> toTake()
+	{
+		final List<String> take = compostToTake();
+		for (int tool : plantingToolsToTake())
+		{
+			final String name = runService.itemName(tool).toLowerCase();
+			take.add(("aeiou".indexOf(name.charAt(0)) >= 0 ? "an " : "a ") + name);
+		}
+		return take;
+	}
+
+	/**
+	 * The seed dibber or spade the stop's planting needs, when it isn't carried and the tool leprechaun has it: taken on the
+	 * visit before planting rather than a trip of its own as planting starts.
+	 */
+	private Set<Integer> plantingToolsToTake()
+	{
+		final Holdings holdings = holdingsTracker.getHoldings();
+		final Map<Integer, Integer> inventory = holdings.in(Holdings.Source.INVENTORY);
+		final Map<Integer, Integer> stored = holdings.in(Holdings.Source.LEPRECHAUN);
+		final AccessSnapshot access = accessChecker.getSnapshot();
+		final boolean barbarian = access.isKnown() && access.isMet(Requirement.unlock(Unlock.BARBARIAN_PLANTING));
+		final Set<Integer> tools = new LinkedHashSet<>();
+		for (Patch patch : atStopPatches)
+		{
+			final Progress p = progress(patch);
+			final Crop crop = plan.getSupplies().getPlantings().get(patch);
+			if (p.done || p.skipped || crop == null || crop == Crop.SCARECROW || crop.isSeed() && barbarian)
+			{
+				continue;
+			}
+			// Seeds go in with a dibber, saplings with a spade
+			final int tool = crop.isSeed() ? ItemID.DIBBER : ItemID.SPADE;
+			if (inventory.getOrDefault(tool, 0) == 0 && stored.getOrDefault(tool, 0) > 0)
+			{
+				tools.add(tool);
+			}
+		}
+		return tools;
+	}
+
+	/**
+	 * "3 ultracompost": the compost this stop's patches still need, when there's too little in the inventory and enough
+	 * stored with the tool leprechaun (P1: at each stop, for that stop); empty otherwise, or with a filled bottomless
+	 * bucket.
+	 */
+	private List<String> compostToTake()
 	{
 		final Holdings holdings = holdingsTracker.getHoldings();
 		final Map<Integer, Integer> inventory = holdings.in(Holdings.Source.INVENTORY);
@@ -1178,7 +1244,7 @@ class PatchGuide
 				take.add(missing + " " + e.getKey().getDisplayName().toLowerCase());
 			}
 		}
-		return take.isEmpty() ? null : join(take);
+		return take;
 	}
 
 	private static String join(List<String> parts)

@@ -1560,7 +1560,11 @@ public class RunSession
 
 			// The patches are followed first, even while the seed vault reminder shows, so planting is still seen and the
 			// run can finish (elzerma: the reminder stayed up after planting and the run never stopped)
-			instruction = patches.nextStep(stop, here);
+			// What the next stop will bring in, for whether to note before leaving: nothing when a bank visit or the end of the
+			// run comes first
+			final List<Patch> next = stopIndex + 1 < plan.getRoute().getStops().size() && bankAfterStop() == null
+				? patchesAt(plan, plan.getRoute().getStops().get(stopIndex + 1).getLocation()) : Collections.emptyList();
+			instruction = patches.nextStep(stop, here, next);
 			final String vault = instruction != null && stop.getLocation() == Location.FARMING_GUILD && !vaultChecked
 				? fromSeedVault() : null;
 			if (vault != null)

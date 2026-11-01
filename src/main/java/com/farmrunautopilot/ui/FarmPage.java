@@ -434,13 +434,13 @@ class FarmPage extends SetupPanel
 	private JComponent atThePatchesSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("At the patches");
-		s.help("Each patch is harvested, then planted and composted before the next. Between the first harvest and planting, "
-			+ "one visit to the tool leprechaun notes the produce, stores the empty buckets and takes the stop's compost.");
+		s.help("Each patch is harvested, then planted and composted before the next. The tool leprechaun is visited only when "
+			+ "needed, for compost, a tool or room, and each visit also notes the produce and stores the empty buckets.");
 		s.addContent(checkBox("Clean herbs", config.isCleanHerbs(), true,
 			"After picking herbs, a step to clean the ones your Herblore level allows, before noting them",
 			on -> saveRun(() -> config.setCleanHerbs(on))));
 		s.addContent(checkBox("Note produce on the tool leprechaun", config.isNoteProduce(), true,
-			"After picking, the leprechaun notes the produce, saving inventory slots",
+			"The produce is noted on visits to the leprechaun, saving inventory slots",
 			on -> saveRun(() -> config.setNoteProduce(on))));
 		s.addContent(label("Empty buckets"));
 		s.addContent(combo(enumChoices(EmptyBuckets.values()), config.getEmptyBuckets(),
