@@ -239,6 +239,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private NavigationButton navButton;
 
 	private WorldPoint lastTickLocation;
+	/** Ticks a new region's patches go unread after the tick it changed on, so the game has sent them (GitHub #35). */
+	private static final int REGION_SETTLE_TICKS = 1;
+	/** Ticks in the same region after the one it changed on, up to {@link #REGION_SETTLE_TICKS}. */
+	private int ticksInRegion;
 	private boolean lastTickPostLogin;
 	/** The last game state, to tell a new area loading in game (a teleport) from logging in or hopping. */
 	private GameState lastGameState;
@@ -449,9 +453,18 @@ public class FarmRunAutopilotPlugin extends Plugin
 		final Player player = client.getLocalPlayer();
 		lastTickLocation = player == null ? null : player.getWorldLocation();
 
-		// Skip ticks where the player crossed a region boundary
+		// Skip ticks where the player crossed a region boundary, and the next one. Patches in different regions share
+		// varbits, so a reading taken before the game sends the new region's could be the last area's patch (GitHub #35:
+		// after the balloon from the Gnome Stronghold, the guide passed over Taverley's tree, which shares the
+		// Stronghold tree's FARMING_TRANSMIT_A, as if it were the magic tree just planted there)
 		if (location == null || lastTickLocation == null || location.getRegionID() != lastTickLocation.getRegionID())
 		{
+			ticksInRegion = 0;
+			return;
+		}
+		if (ticksInRegion < REGION_SETTLE_TICKS)
+		{
+			ticksInRegion++;
 			return;
 		}
 
