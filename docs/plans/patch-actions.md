@@ -315,3 +315,10 @@ after it:
 - After the last 4 came out, it sent elzerma across the guild to store 2 with 22 slots free (who stored all 4, then
   took 2 back). The bin's spare compost is now stored only when the room's needed for what the stop's patches will
   bring in; otherwise it's carried on, for later stops.
+
+**Sixth run, the Farming Guild again (2026-10-31):** the fixes above held: the 25 buckets in hand used first, then
+"store 23 ultracompost and take 5 empty buckets" (the count right), the walking line to the guild's own leprechaun. But
+the room check for the spare compost came up mid-picking, as the free slots fell below what the patches would bring in:
+"store 1 ultracompost", later "and 1 empty bucket". elzerma: *"Don't need to store compost til we have a second reason
+to go to leprechaun"*. So the bin's spare compost no longer has a step of its own: it's stored on a visit made anyway
+(noting, taking compost, fetching buckets for the bin), or when the inventory is full and storing makes room.

@@ -143,8 +143,8 @@ class PatchGuide
 	/** The stop's tool leprechaun for the walking line, and where he was when picked out: he wanders. */
 	private NPC leprechaun;
 	private WorldPoint leprechaunAt;
-	/** A visit to the tool leprechaun here has said to store the empty buckets: it stays until they're stored. */
-	private boolean bucketsDue;
+	/** A visit to the tool leprechaun here has said to store compost or empty buckets: it stays until they're stored. */
+	private boolean storeDue;
 
 	/** What has happened at a patch during this run. */
 	private static final class Progress
@@ -456,7 +456,7 @@ class PatchGuide
 			fillingBin = false;
 			leprechaun = null;
 			leprechaunAt = null;
-			bucketsDue = false;
+			storeDue = false;
 		}
 		else if (emptyingBin)
 		{
@@ -495,7 +495,7 @@ class PatchGuide
 		// The buckets a visit to the tool leprechaun said to store stay in it, but only while it's the step in hand
 		if (currentAction != StepAdvisor.Action.NOTE && currentAction != StepAdvisor.Action.TAKE_COMPOST)
 		{
-			bucketsDue = false;
+			storeDue = false;
 		}
 		lastSeen = held;
 		atStopPatches = here;
@@ -591,7 +591,7 @@ class PatchGuide
 			// went their own way.
 			if (!visited && advice.getAction() == StepAdvisor.Action.PLANT)
 			{
-				final String visit = plantingBegun(here) || !visitNeeded(patch, here) ? null : cleanThenVisit(patch, true);
+				final String visit = plantingBegun(here) || !visitNeeded(patch, here) ? null : cleanThenVisit(patch, true, false);
 				if (visit != null)
 				{
 					return visit;
@@ -608,7 +608,7 @@ class PatchGuide
 				{
 					return fill;
 				}
-				final String note = cleanThenVisit(patch, false);
+				final String note = cleanThenVisit(patch, false, true);
 				if (note != null)
 				{
 					return note;
@@ -623,7 +623,7 @@ class PatchGuide
 		{
 			return fill;
 		}
-		final String note = navigator.nearAny(here) ? cleanThenVisit(here.get(0), false) : null;
+		final String note = navigator.nearAny(here) ? cleanThenVisit(here.get(0), false, false) : null;
 		if (note != null)
 		{
 			return note;
@@ -725,8 +725,7 @@ class PatchGuide
 
 	/**
 	 * The stop's ready bin emptied first, from arriving (P3, elzerma 2026-10-30: "empty it first", as their 2026-10-24 run
-	 * did), as {@link #binNext} has it; then what this stop's patches won't use stored with the leprechaun, with the empty
-	 * buckets left over when they're stored. Null once there's nothing more to do.
+	 * did), as {@link #binNext} has it. Null once there's nothing more to do.
 	 */
 	private String emptyBin(CompostBin bin, Patch at)
 	{
@@ -779,23 +778,9 @@ class PatchGuide
 					break;
 			}
 		}
-		// Emptied here: what the stop's patches won't use goes to the tool leprechaun before picking, when its room is needed
-		// for what they'll bring in; otherwise it's carried on, for later stops (elzerma's run of 2026-10-31, at the Farming
-		// Guild: sent across it to store 2 of 4 ultracompost with 22 slots free, then to take 2 back after storing all 4)
-		final List<String> store = counted(binCompostSpare(held));
-		if (store.isEmpty() || freeInventorySlots() >= harvestToCome(null, atStopPatches))
-		{
-			return null;
-		}
-		if (buckets > 0 && settings.getRunConfig().getEmptyBuckets() == EmptyBuckets.STORE)
-		{
-			store.add(buckets + (buckets == 1 ? " empty bucket" : " empty buckets"));
-		}
-		currentPatch = at;
-		binInHand = bin;
-		binItems = Collections.emptySet();
-		currentAction = StepAdvisor.Action.TAKE_COMPOST;
-		return "At the tool leprechaun: store " + join(store);
+		// Emptied here: what the stop's patches won't use is stored on the next visit to the tool leprechaun made anyway
+		// (elzerma, 2026-10-31: "Don't need to store compost til we have a second reason to go to leprechaun")
+		return null;
 	}
 
 	/** The compost taken out of this stop's bin that its patches won't use, by type; empty for none. */
@@ -979,14 +964,16 @@ class PatchGuide
 
 	/**
 	 * The stop's visit to the tool leprechaun as one step, for whichever of these are needed: noting what was picked here
-	 * (noting on, as by default), storing the empty buckets (Empty buckets: Store) and taking the compost the stop's patches
-	 * still need, e.g. "At the tool leprechaun: note your grimy irit leaf, store 1 empty bucket and take 1 ultracompost";
-	 * null when none is.
+	 * (noting on, as by default), storing the compost bin's spare compost and the empty buckets (Empty buckets: Store), and
+	 * taking the compost the stop's patches still need, e.g. "At the tool leprechaun: note your watermelon, store 13
+	 * ultracompost, 2 empty buckets and take 1 supercompost"; null when none is. Storing is never a visit's only reason,
+	 * but for room (elzerma, 2026-10-31: "Don't need to store compost til we have a second reason to go to leprechaun").
 	 *
 	 * @param beforePlanting the visit before the stop's planting, which takes the compost; after the last patch, it's only
-	 *                       for noting, with the buckets stored while there
+	 *                       for noting, with what's to store stored while there
+	 * @param forRoom        the inventory is full: storing makes room, so it's reason enough
 	 */
-	private String leprechaunVisit(Patch at, boolean beforePlanting)
+	private String leprechaunVisit(Patch at, boolean beforePlanting, boolean forRoom)
 	{
 		final List<String> parts = new ArrayList<>();
 		produce = settings.getRunConfig().isNoteProduce() ? unnotedProduce() : Collections.emptySet();
@@ -999,23 +986,28 @@ class PatchGuide
 		{
 			parts.add("note your " + produceNames(produce));
 		}
-		final int buckets = settings.getRunConfig().getEmptyBuckets() == EmptyBuckets.STORE
-			? inventoryAsHeld().getOrDefault(ItemID.BUCKET_EMPTY, 0) : 0;
+		final String compost = beforePlanting ? compostToTake() : null;
 		// Still to store once the noting's done, as storing is a step of its own with him (elzerma's run of 2026-10-31
 		// finished at the noting, the buckets carried off)
-		if (buckets > 0 && (beforePlanting || !parts.isEmpty() || bucketsDue))
+		final boolean going = !parts.isEmpty() || compost != null || beforePlanting || forRoom || storeDue;
+		final List<String> store = going ? counted(binCompostSpare(inventoryAsHeld())) : new ArrayList<>();
+		final int buckets = settings.getRunConfig().getEmptyBuckets() == EmptyBuckets.STORE
+			? inventoryAsHeld().getOrDefault(ItemID.BUCKET_EMPTY, 0) : 0;
+		if (going && buckets > 0)
 		{
-			parts.add("store " + buckets + (buckets == 1 ? " empty bucket" : " empty buckets"));
-			bucketsDue = true;
+			store.add(buckets + (buckets == 1 ? " empty bucket" : " empty buckets"));
 		}
-		final String compost = beforePlanting ? compostToTake() : null;
+		storeDue = !store.isEmpty();
+		for (int i = 0; i < store.size(); i++)
+		{
+			parts.add(i == 0 ? "store " + store.get(i) : store.get(i));
+		}
 		if (compost != null)
 		{
 			parts.add("take " + compost);
 		}
 		if (parts.isEmpty())
 		{
-			bucketsDue = false;
 			return null;
 		}
 		currentPatch = at;
@@ -1129,10 +1121,10 @@ class PatchGuide
 	}
 
 	/** Herbs are cleaned at the patch first, then the stop's visit to the tool leprechaun. */
-	private String cleanThenVisit(Patch at, boolean beforePlanting)
+	private String cleanThenVisit(Patch at, boolean beforePlanting, boolean forRoom)
 	{
 		final String clean = cleanStep(at);
-		return clean != null ? clean : leprechaunVisit(at, beforePlanting);
+		return clean != null ? clean : leprechaunVisit(at, beforePlanting, forRoom);
 	}
 
 	private String produceNames(Set<Integer> ids)
