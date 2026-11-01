@@ -379,10 +379,15 @@ memoized-leaping-hammock.md`.
   has Remove-1/5/X/All, the inventory side (126) Store-1/5/X/All, the selected quantity as the left click. Varbit
   FARMING_TOOLS_SELECTEDQUANTITY (7792): 0 = 1, 1 = 5, 2 = All, 3 = X, set by the client as the button's clicked, shared
   with other storage windows. X isn't remembered. Deposit inventory stores tools too.
-- **Exact amounts, guided** (`run/LeprechaunClicks`): fives for every item first, then ones, then back to 5, his
-  default. The quantity button to click is outlined, "Click" (`LeprechaunButtonOverlay`); then each item, "Click 2x"
-  (`ItemHighlightOverlay`). A click counts at once, before the game takes the items a tick later, so the count drops on
-  the click and the outline moves on to the 1 button the moment the last five's clicked; one not seen applied in 3 ticks
+- **Exact amounts, guided** (`run/LeprechaunClicks`): the moves at his quantity first, for every item, then the button
+  for the others, and his quantity left as it ends for the next visit (elzerma, 2026-11-01: *"if it needs to switch
+  between 1/5 can it do that at the next time the interface opens ... e.g. put in 13 compost: 5, 5, 1, 1, 1, then
+  pulling buckets for next bin 1,1,1,5,5. not hardcoded, just do the needed action with currently configured # then
+  leave it til it needs to be switched"*): at 5, the fives then 1 for what's left; at 1, what's past the fives then 5;
+  one switch a visit at most. The quantity button to click is outlined, "Click" (`LeprechaunButtonOverlay`); then each
+  item, "Click 2x" (`ItemHighlightOverlay`). A click counts at once, before the game takes the items a tick later, so the
+  count drops on the click and the outline moves on to the button the moment the last of a kind's clicked; one not seen
+  applied in 3 ticks
   is dropped. A right-click colours the "-5" or "-1" option; "Exchange" on him is coloured for a visit with window work.
 - **Seen in game** (elzerma's run of 2026-11-01, at Hosidius: "i like the leprechaun stuff"): the menus read Remove-All,
   Remove-X, Remove-1, Remove-5 (+ Banknotes) on his side and Store-5, Store-X, Store-1, Store-All on the inventory side;

@@ -20,8 +20,8 @@ import net.runelite.client.util.Text;
  * The clicks in the tool leprechaun's window for a visit's exact amounts, with his quantity buttons rather than typing
  * an amount (elzerma, 2026-11-01: "13 would change to 5, 2x click bucket remove, change to 1, 3x click bucket remove.
  * change back to 5 ... it says 'Click 3x' so someone can quickly click 3x and as they click the number goes down same
- * tick as when clicked"): fives for every item first, then ones, then back to 5, his default. Each click is counted at
- * once, before the game takes the items a tick later. Client thread.
+ * tick as when clicked"): the moves at his quantity first, then the others, and his quantity left as it ends, for the next
+ * visit ({@link #next}). Each click is counted at once, before the game takes the items a tick later. Client thread.
  */
 @Singleton
 public class LeprechaunClicks
@@ -59,7 +59,7 @@ public class LeprechaunClicks
 	/** What to click next in his window. */
 	static final class Next
 	{
-		/** The quantity the clicks go in: 5 while anything has five or more left, then 1, then 5 again to finish. */
+		/** The quantity the clicks go in: his own while it has clicks to do, then the other. */
 		final Quantity target;
 		/** His quantity isn't {@link #target}: its button first. */
 		final boolean switchFirst;
@@ -78,18 +78,29 @@ public class LeprechaunClicks
 
 	/**
 	 * What to click next for these amounts left to take and store, at this quantity: the quantity button, or each item
-	 * with its clicks. Fives for every item before any ones, so the button changes twice a visit at most.
+	 * with its clicks. Whatever his quantity is on goes first, for every item: at 5, the fives, then 1 for what's left;
+	 * at 1, what's past the fives, then 5 for those (13 is 1, 1, 1, 5, 5). It's left as it ends, so the next visit starts
+	 * there, and the button changes once a visit at most (elzerma, 2026-11-01: "not hardcoded, just do the needed action
+	 * with currently configured # then leave it til it needs to be switched").
 	 */
 	static Next next(Map<Integer, Integer> take, Map<Integer, Integer> store, Quantity selected)
 	{
-		final boolean fives = any(take, 5) || any(store, 5);
-		final Quantity target = fives || !any(take, 1) && !any(store, 1) ? Quantity.FIVE : Quantity.ONE;
+		final boolean fives = any(take, Quantity.FIVE) || any(store, Quantity.FIVE);
+		final boolean ones = any(take, Quantity.ONE) || any(store, Quantity.ONE);
+		final Quantity target = selected == Quantity.FIVE && fives || selected == Quantity.ONE && ones ? selected
+			: fives ? Quantity.FIVE : ones ? Quantity.ONE : selected;
 		return new Next(target, selected != target, clicks(take, target), clicks(store, target));
 	}
 
-	private static boolean any(Map<Integer, Integer> amounts, int atLeast)
+	/** Clicks for one item's amount at a quantity: its fives at 5, what's past them at 1. */
+	static int clicks(int amount, Quantity at)
 	{
-		return amounts.values().stream().anyMatch(amount -> amount >= atLeast);
+		return at == Quantity.FIVE ? amount / 5 : at == Quantity.ONE ? amount % 5 : 0;
+	}
+
+	private static boolean any(Map<Integer, Integer> amounts, Quantity at)
+	{
+		return amounts.values().stream().anyMatch(amount -> clicks(amount, at) > 0);
 	}
 
 	private static Map<Integer, Integer> clicks(Map<Integer, Integer> amounts, Quantity at)
@@ -97,7 +108,7 @@ public class LeprechaunClicks
 		final Map<Integer, Integer> clicks = new HashMap<>();
 		amounts.forEach((item, amount) ->
 		{
-			final int n = at == Quantity.FIVE ? amount / 5 : amount;
+			final int n = clicks(amount, at);
 			if (n > 0)
 			{
 				clicks.put(item, n);

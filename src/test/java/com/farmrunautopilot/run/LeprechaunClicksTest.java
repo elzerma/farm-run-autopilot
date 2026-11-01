@@ -3,7 +3,6 @@ package com.farmrunautopilot.run;
 import com.farmrunautopilot.run.LeprechaunClicks.Next;
 import com.farmrunautopilot.run.LeprechaunClicks.Quantity;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import net.runelite.api.gameval.ItemID;
 import static org.junit.Assert.assertEquals;
@@ -12,8 +11,9 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 /**
- * The guided clicks in the tool leprechaun's window (elzerma, 2026-11-01: "13 would change to 5, 2x click bucket remove,
- * change to 1, 3x click bucket remove. change back to 5").
+ * The guided clicks in the tool leprechaun's window (elzerma, 2026-11-01: "put in 13 compost: 5, 5, 1, 1, 1, then pulling
+ * buckets for next bin 1,1,1,5,5. not hardcoded, just do the needed action with currently configured # then leave it
+ * til it needs to be switched").
  */
 public class LeprechaunClicksTest
 {
@@ -24,47 +24,64 @@ public class LeprechaunClicksTest
 		return Collections.singletonMap(ItemID.BUCKET_EMPTY, count);
 	}
 
-	@Test
-	public void thirteenIsTwoFivesThenThreeOnesThenBackToFive()
+	private static Map<Integer, Integer> ultracompost(int count)
 	{
-		// At 1: the 5 button first
-		Next next = LeprechaunClicks.next(buckets(13), NONE, Quantity.ONE);
-		assertEquals(Quantity.FIVE, next.target);
-		assertTrue(next.switchFirst);
-		// At 5: the buckets, twice
-		next = LeprechaunClicks.next(buckets(13), NONE, Quantity.FIVE);
-		assertFalse(next.switchFirst);
-		assertEquals(buckets(2), next.take);
-		// 3 left at 5: the 1 button
-		next = LeprechaunClicks.next(buckets(3), NONE, Quantity.FIVE);
-		assertEquals(Quantity.ONE, next.target);
-		assertTrue(next.switchFirst);
-		// At 1: the buckets, three times
-		next = LeprechaunClicks.next(buckets(3), NONE, Quantity.ONE);
-		assertFalse(next.switchFirst);
-		assertEquals(buckets(3), next.take);
-		// Done at 1: back to 5; done at 5: nothing
-		next = LeprechaunClicks.next(NONE, NONE, Quantity.ONE);
-		assertEquals(Quantity.FIVE, next.target);
-		assertTrue(next.switchFirst);
-		next = LeprechaunClicks.next(buckets(0), NONE, Quantity.FIVE);
-		assertFalse(next.switchFirst);
-		assertTrue(next.take.isEmpty());
+		return Collections.singletonMap(ItemID.BUCKET_ULTRACOMPOST, count);
 	}
 
 	@Test
-	public void fivesForEveryItemBeforeAnyOnes()
+	public void thirteenAtFiveIsFiveFiveThenOneOneOne()
 	{
-		final Map<Integer, Integer> store = Collections.singletonMap(ItemID.BUCKET_ULTRACOMPOST, 13);
-		final Next next = LeprechaunClicks.next(buckets(2), store, Quantity.FIVE);
-		// The buckets' 2 wait for the ones, after the ultracompost's fives
+		// At 5: the ultracompost, twice
+		Next next = LeprechaunClicks.next(NONE, ultracompost(13), Quantity.FIVE);
+		assertFalse(next.switchFirst);
+		assertEquals(ultracompost(2), next.store);
+		// 3 left: the 1 button, then three times
+		next = LeprechaunClicks.next(NONE, ultracompost(3), Quantity.FIVE);
+		assertEquals(Quantity.ONE, next.target);
+		assertTrue(next.switchFirst);
+		next = LeprechaunClicks.next(NONE, ultracompost(3), Quantity.ONE);
+		assertFalse(next.switchFirst);
+		assertEquals(ultracompost(3), next.store);
+		// Done: left at 1, nothing to click
+		next = LeprechaunClicks.next(NONE, NONE, Quantity.ONE);
+		assertFalse(next.switchFirst);
+		assertTrue(next.take.isEmpty() && next.store.isEmpty());
+	}
+
+	@Test
+	public void thirteenAtOneIsOneOneOneThenFiveFive()
+	{
+		// Left at 1 by the store: the 3 past the fives first, with no switch
+		Next next = LeprechaunClicks.next(buckets(13), NONE, Quantity.ONE);
+		assertFalse(next.switchFirst);
+		assertEquals(buckets(3), next.take);
+		// 10 left: the 5 button, then twice
+		next = LeprechaunClicks.next(buckets(10), NONE, Quantity.ONE);
+		assertEquals(Quantity.FIVE, next.target);
+		assertTrue(next.switchFirst);
+		next = LeprechaunClicks.next(buckets(10), NONE, Quantity.FIVE);
+		assertEquals(buckets(2), next.take);
+		// Done: left at 5
+		assertFalse(LeprechaunClicks.next(buckets(0), NONE, Quantity.FIVE).switchFirst);
+	}
+
+	@Test
+	public void whatsAtHisQuantityForEveryItemFirst()
+	{
+		// At 5: the ultracompost's fives; the buckets' 2 wait for the switch to 1
+		Next next = LeprechaunClicks.next(buckets(2), ultracompost(13), Quantity.FIVE);
 		assertEquals(Quantity.FIVE, next.target);
 		assertTrue(next.take.isEmpty());
-		assertEquals(Collections.singletonMap(ItemID.BUCKET_ULTRACOMPOST, 2), next.store);
-		final Map<Integer, Integer> both = new HashMap<>();
-		both.put(ItemID.BUCKET_EMPTY, 2);
-		assertEquals(both, LeprechaunClicks.next(buckets(2), Collections.singletonMap(ItemID.BUCKET_ULTRACOMPOST, 3),
-			Quantity.ONE).take);
+		assertEquals(ultracompost(2), next.store);
+		// At 1: both items' ones first
+		next = LeprechaunClicks.next(buckets(2), ultracompost(13), Quantity.ONE);
+		assertEquals(buckets(2), next.take);
+		assertEquals(ultracompost(3), next.store);
+		// Five at 1 is a switch and one click, not five clicks
+		next = LeprechaunClicks.next(buckets(5), NONE, Quantity.ONE);
+		assertEquals(Quantity.FIVE, next.target);
+		assertTrue(next.switchFirst);
 	}
 
 	@Test

@@ -14,10 +14,10 @@ import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
- * Outlines the quantity button to click in the tool leprechaun's window, "Click": 5 for the fives, 1 for the ones, and 5
- * again to finish, his default (elzerma, 2026-11-01: "13 would change to 5, 2x click bucket remove, change to 1, 3x click
- * bucket remove. change back to 5"). The game sets the quantity the moment the button's clicked, so the outline moves on
- * to the items at once.
+ * Outlines the quantity button to click in the tool leprechaun's window, "Click": 5 or 1, once the moves at his quantity
+ * are done and the others are left (elzerma, 2026-11-01: "just do the needed action with currently configured # then
+ * leave it til it needs to be switched"). The game sets the quantity the moment the button's clicked, so the outline moves
+ * on to the items at once.
  */
 public class LeprechaunButtonOverlay extends Overlay
 {
