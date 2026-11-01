@@ -337,7 +337,8 @@ own visit, or a full inventory, takes care of it.
 | Empty buckets for a compost bin | none carried (what's carried is used first, the rest fetched while storing what's out) | also to top up before opening, a trip more when they didn't all fit |
 | Before planting | compost, or the seed dibber or spade, to take for the stop's planting, or too little room for its other patches (8 a herb patch or allotment) | the dibber or spade was a trip of its own as planting began |
 | Inventory full while picking | the compost bin can't take the crops | (2026-10-31) |
-| Before leaving the stop | too little room for what the next stop brings in; never before a bank visit or at the run's end | every stop, to note what was picked |
+| After emptying a compost bin | its compost past what this stop and the stops ahead in reach use, before picking starts there (elzerma: *"we should do a trip to leprechaun to store the ultracompost before harvesting watermelons and filling the bin"*) | stored only on a visit made anyway, so at Hosidius it waited for the inventory to fill mid-picking |
+| Before leaving the stop | too little room for what the next stop brings in; or empty buckets for the next stop's compost bin when it's expected ready, keeping those carried (elzerma, leaving Hosidius: *"2x ultracompost were used so we should pull 13 out for the next stop"*); never before a bank visit or at the run's end | every stop, to note what was picked; the 2 empty buckets were stored there, then 15 taken at Port Phasmatys |
 
 Still a trip of its own: a step's item that's with the leprechaun but not carried, found only at that step (a rake for
 weeds, a spade for a dead plant, a plant cure), as these can't be known ahead.

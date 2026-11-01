@@ -2855,7 +2855,7 @@ public class RunSession
 		// Empty buckets as the player chose (patch actions P1): dropped, or kept. Stored ones are part of the stop's visit to
 		// the tool leprechaun, not a line of their own that followed the player between stops (elzerma, 2026-10-30)
 		// Not the ones taken to empty the compost bin with (P3)
-		if (buckets > 0 && settings.getRunConfig().getEmptyBuckets() == EmptyBuckets.DROP && !patches.isEmptyingBin())
+		if (buckets > 0 && settings.getRunConfig().getEmptyBuckets() == EmptyBuckets.DROP && !patches.keepsBuckets())
 		{
 			parts.add(buckets + (buckets == 1 ? " empty bucket" : " empty buckets"));
 		}

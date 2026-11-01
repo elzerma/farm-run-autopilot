@@ -435,8 +435,8 @@ class FarmPage extends SetupPanel
 	{
 		final CollapsibleSection s = section("At the patches");
 		s.help("Each patch is harvested, then planted and composted before the next. The tool leprechaun is visited only when "
-			+ "needed, for compost, a tool or room. Each visit also notes the produce, stores the empty buckets and takes "
-			+ "compost for the next stops when there's room.");
+			+ "needed: for compost, a tool or room, to store a compost bin's compost, or for the next bin's buckets. Each visit "
+			+ "also notes the produce, stores the empty buckets and takes compost for the next stops when there's room.");
 		s.addContent(checkBox("Clean herbs", config.isCleanHerbs(), true,
 			"After picking herbs, a step to clean the ones your Herblore level allows, before noting them",
 			on -> saveRun(() -> config.setCleanHerbs(on))));
