@@ -2000,13 +2000,18 @@ class PatchGuide
 		return spare;
 	}
 
-	/** Inventory slots the next harvest here will take (herbs and fruit), 0 if none. */
+	/** Inventory slots the next harvest here will take (herbs, allotments and fruit), 0 if none. */
 	static int expectedHarvest(Patch patch, StepAdvisor.Action action, PatchPrediction live)
 	{
 		if (!patch.getType().isHealthChecked())
 		{
-			// Herbs, allotments and hops: a handful each (flowers are a few)
-			return action == StepAdvisor.Action.PICK ? SupplyCalculator.HERBS_PER_PATCH : 0;
+			// Herbs and hops: a handful each (flowers are a few); an allotment many more
+			if (action != StepAdvisor.Action.PICK)
+			{
+				return 0;
+			}
+			return patch.getType() == PatchType.ALLOTMENT ? SupplyCalculator.ALLOTMENT_HARVEST
+				: SupplyCalculator.HERBS_PER_PATCH;
 		}
 		if (patch.getType().regrows())
 		{

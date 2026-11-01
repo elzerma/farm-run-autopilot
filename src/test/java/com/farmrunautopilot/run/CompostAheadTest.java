@@ -79,6 +79,18 @@ public class CompostAheadTest
 	}
 
 	@Test
+	public void anAllotmentCountsAsNineteenForTheRoomChecks()
+	{
+		// elzerma's watermelon allotments gave 13 to 27, 19 on average ("Yes, use 19"); herbs stay at 8
+		assertEquals(19, PatchGuide.expectedHarvest(com.farmrunautopilot.data.Patch.CIVITAS_ALLOTMENT_N,
+			StepAdvisor.Action.PICK, null));
+		assertEquals(8, PatchGuide.expectedHarvest(com.farmrunautopilot.data.Patch.CIVITAS_HERB,
+			StepAdvisor.Action.PICK, null));
+		assertEquals(0, PatchGuide.expectedHarvest(com.farmrunautopilot.data.Patch.CIVITAS_ALLOTMENT_N,
+			StepAdvisor.Action.PLANT, null));
+	}
+
+	@Test
 	public void whatWasBroughtIsNeverStored()
 	{
 		// 10 brought from the bank for the run: kept, though only 2 are needed here and the stops ahead aren't in reach

@@ -335,7 +335,7 @@ own visit, or a full inventory, takes care of it.
 | Trip | Made when | Was |
 |---|---|---|
 | Empty buckets for a compost bin | none carried (what's carried is used first, the rest fetched while storing what's out) | also to top up before opening, a trip more when they didn't all fit |
-| Before planting | compost, or the seed dibber or spade, to take for the stop's planting, or too little room for its other patches (8 a herb patch or allotment) | the dibber or spade was a trip of its own as planting began |
+| Before planting | compost, or the seed dibber or spade, to take for the stop's planting, or too little room for its other patches (19 an allotment, 8 a herb patch) | the dibber or spade was a trip of its own as planting began |
 | Inventory full while picking | the compost bin can't take the crops | (2026-10-31) |
 | After emptying a compost bin | its compost past what this stop and the stops ahead in reach use, before picking starts there (elzerma: *"we should do a trip to leprechaun to store the ultracompost before harvesting watermelons and filling the bin"*) | stored only on a visit made anyway, so at Hosidius it waited for the inventory to fill mid-picking |
 | Before leaving the stop | too little room for what the next stop brings in; or empty buckets for the next stop's compost bin when it's expected ready, keeping those carried (elzerma, leaving Hosidius: *"2x ultracompost were used so we should pull 13 out for the next stop"*); never before a bank visit or at the run's end | every stop, to note what was picked; the 2 empty buckets were stored there, then 15 taken at Port Phasmatys |
@@ -359,8 +359,13 @@ weeds, a spade for a dead plant, a plant cure), as these can't be known ahead.
 **Compost for later stops** (asked: "On a visit, take compost for the next stops too, when there's room?"; elzerma:
 *"Yes, when there's room"*). Any visit made anyway leaves carried what this stop's patches still need and, stop by stop
 along the route, what the next stops' need, while the free slots left still hold what this stop and those stops will
-bring in (8 a herb patch or allotment, the room check's estimate). It stops at a bank visit, the run's end, or a stop
+bring in (19 an allotment, 8 a herb patch: the room checks' estimate). It stops at a bank visit, the run's end, or a stop
 whose compost bin is expected ready, as that bin supplies the compost from there. Compost that came out of this stop's
 bin is kept for those stops before any is stored; what was brought from the bank is never stored. A stop whose compost
 is carried needs no visit for it, so its visit happens only for room. The log line `Compost for the visit: ...` shows
 each decision.
+
+**The room checks' estimate** (2026-10-31): an allotment counted as 8, as a herb patch does, but elzerma's watermelon
+allotments with ultracompost gave 13 to 27, 19 on average, over the runs of 2026-10-30 and 31, so the checks thought
+there was room when there wasn't, and the inventory filled mid-picking instead. Asked "Count an allotment as about 19
+watermelons for the room checks, not 8?", elzerma: *"Yes, use 19"*. It's `SupplyCalculator.ALLOTMENT_HARVEST`.

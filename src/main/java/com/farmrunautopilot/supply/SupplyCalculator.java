@@ -56,6 +56,11 @@ public final class SupplyCalculator
 	public static final int INVENTORY_SLOTS = 28;
 	/** A typical herb harvest with compost (3 to 18 is possible). */
 	public static final int HERBS_PER_PATCH = 8;
+	/**
+	 * A typical allotment harvest, for the guide's room checks: elzerma's watermelon allotments with ultracompost gave 13 to
+	 * 27, 19 on average, over the runs of 2026-10-30 and 31 ("Yes, use 19").
+	 */
+	public static final int ALLOTMENT_HARVEST = 19;
 	public static final int FRUIT_PER_TREE = 6;
 	private static final String[] ORDINALS = {"1st", "2nd", "3rd"};
 
