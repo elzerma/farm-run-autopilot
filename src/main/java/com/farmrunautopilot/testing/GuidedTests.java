@@ -493,6 +493,11 @@ final class GuidedTests
 		}
 	}
 
+	/**
+	 * Revision 2: the first report (GitHub #32) answered No to the warning, but its warnings and supply list were the
+	 * player's own run (Kastori, Troll Stronghold), captured before the test's run was planned; the first step now waits
+	 * for it. The rest passed: Spellbook Swap highlighted first, its runes on the bank tab, Camelot Teleport after it.
+	 */
 	private static final class SpellbookSwap extends GuidedTest
 	{
 		@Override

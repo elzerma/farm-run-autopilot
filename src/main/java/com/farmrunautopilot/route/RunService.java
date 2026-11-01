@@ -102,6 +102,8 @@ public class RunService
 	/** The Travel tab's families and ways as of the last plan; replaced only when something in them changes. */
 	private volatile TravelWays ways = TravelWays.EMPTY;
 	private int ticksSinceRefresh;
+	/** How many times the plan has been worked out, changed or not (client thread): a guided test waits for the next. */
+	private int planned;
 	/** The stop the player was standing at on the last tick, or null. */
 	private Location here;
 	/** The stop the player is close to but not at, and how far (tiles); null if none. */
@@ -129,6 +131,15 @@ public class RunService
 	{
 		final RunPlan current = plan;
 		return current != null ? current : RunPlan.EMPTY;
+	}
+
+	/**
+	 * How many times the plan has been worked out, changed or not; it goes up once {@link #getPlan} is the one for the
+	 * settings and unlocks as they stand on that tick. Client thread.
+	 */
+	public int getPlanned()
+	{
+		return planned;
 	}
 
 	public SupplyPlan getSupplies()
@@ -252,6 +263,8 @@ public class RunService
 		}
 		dirty = false;
 		ticksSinceRefresh = 0;
+		// Worked out below, on this thread, before anything reads the count
+		planned++;
 
 		final RunConfig config = settings.getRunConfig();
 		final AccessSnapshot access = accessChecker.getSnapshot();
