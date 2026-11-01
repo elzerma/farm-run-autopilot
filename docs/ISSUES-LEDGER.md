@@ -483,3 +483,72 @@ Worked through in the working notes `docs/ISSUES-REVIEW-2026-10-21.md` on branch
 | iieu8827roj | Ask for the rune pouch instead of single runes; runes, not tabs, to the house (an ironman without a construction cape) | as #24 and #27 | Master names an owned pouch on the rune lines and has "Cast from runes, not tablets"; a banked pouch's runes don't count (#24) | **Already done (next update)**, linked to #24 |
 
 **Nothing new** on #8 (reviewed through 2026-10-16 elzerma) or #16 (2026-10-17 elzerma, release reply).
+
+## Review of 2026-11-01 (#32 to #35, #39)
+
+Every report below was made on the released `62f3070`; line numbers are for master `af55118`. elzerma picked each verdict in the picker on 2026-11-01, #33 with a short answer of their own. Replies are drafted (A to C) and posted only once elzerma says so; #35 gets none until the release (elzerma replied on 2026-10-31). Nothing new on the other open issues since the 2026-10-23 replies.
+
+## #32 Test: Spellbook Swap - needs attention
+
+**Kind:** Test report · **Status:** open; the test is fixed (its first step waits for the test's run to be planned; `SPELLBOOK_SWAP` revision 2); reply drafted (draft A), then label `test-report` and close as completed · **Reviewed through:** 2026-10-24 helpimtrappedinawebserver (body)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| helpimtrappedinawebserver | Needs attention: answered No to "Does the Run tab warn that you need Spellbook Swap for Catherby?"; every other step passed | `TestRunner.start`, `begin`, `RunService.onGameTick`, `GuidedTests.SpellbookSwap` (`:527`), `SupplyCalculator.java:1325` | The test was at fault. Its warnings and supply list are the player's own run (Kastori, Troll Stronghold, palm saplings): the first step captured them as the test's settings went in, a tick before its Catherby run was planned. The rest is real evidence: Spellbook Swap detected as the first spell to highlight, its runes on the bank tab (added in the same branch as the warning), Camelot Teleport outlined after the swap | **Fix the test**: a guided test's first step waits until the run is planned again with the test's settings (`RunService.getPlanned`); `SPELLBOOK_SWAP` revision 2 so players are asked again. "Flowers protecting allotments" captured its supply list the same way, but its result is the player's answer, so it isn't asked again. Reply (draft A), label `test-report`, close as completed |
+
+## #33 Add a banking step
+
+**Kind:** Idea · **Status:** open, `idea`; explored (write-up below), waiting on elzerma's choice; reply drafted (draft B) · **Reviewed through:** 2026-10-26 winter-mark (body)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| winter-mark | A bank step they can add, to split a run of all three types into chunks: picking herbs and fruit with no inventory space is annoying | Release `62f3070` `PatchGuide.java:493`; master `RunAssembly.assemble`, `BankPlanner.place`, `SupplyCalculator.java:656-667`, `PatchGuide.spaceReminder`, `BankGuide.toDeposit`, `FarmPage.java:443` | True on both builds. Bank visits are placed only when the supplies alone need more than 28 slots, and nothing keeps room for the harvest. The release says "Inventory full: note produce on the tool leprechaun" once full. Master notes produce at each stop's leprechaun and visits him before a stop whose harvest won't fit, but when the supplies still carried leave no room it can only say "Inventory full: make room for the harvest" | **Explore** (elzerma: "i think maybe its more or less feedback that they didn't have enough inv space when completing fruit and herb run, need at least 6 slots for fruit tree produce + noted fruit, then herbs vary. can we explore a 10 slot minimum? auto-provision bank step if needed? how are bank stops determined today?"): the write-up below |
+
+### #33 write-up: room for the harvest (2026-11-01)
+
+**How bank visits are placed today (master).** `RunAssembly.assemble` counts the run's supplies as one inventory. Only when they need more than 28 slots (`SupplyCalculator.INVENTORY_SLOTS`) does `BankPlanner.place` split the route, with the cheapest set of visits that fits each stretch's supplies in 28 slots. Each visit is the bank by the stop just finished, a bank teleport the player carries, or the Farming Guild's (with "Bank at the Farming Guild"), and costs about 40 s of banking plus the travel. At a visit the guide deposits what the next part doesn't need, produce included. The harvest isn't counted, so a part can be planned with its supplies filling 27 or 28 slots.
+
+**How room is made at the patches today.** The guide notes produce at the stop's tool leprechaun. It visits him before leaving a stop when the next stop's harvest won't fit, using 8 herbs, 6 fruit and 19 for an allotment. When the inventory fills while picking, it says what to note or store. Each kind of noted produce keeps a slot. When nothing can be noted or stored, it says "Inventory full: make room for the harvest" and leaves the rest to the player.
+
+**Options:**
+1. **A fixed reserve of 10 slots** (elzerma's idea). The bank planner fits each part's supplies in 18 slots, adding visits where needed. Small. Every part keeps room for a fruit tree's 6 plus 4 kinds of noted produce, or 8 herbs plus 2. But a run that fits today can get a visit it doesn't need: a herb-only run with 20 slots of supplies notes its herbs fine. Each visit costs about 40 s plus the trip.
+2. **Room for each stop's harvest.** For each stop in a part, the bank planner adds up the supplies still carried there, a slot for each kind of produce noted before it, and its biggest patch's harvest (6 fruit, 8 herbs). If that's more than 28, a visit is added before the stop. Medium; it uses the same estimates as the guide's room checks. It adds fewer visits than option 1, but herb harvests vary (3 to 18), so a big one can still mean noting mid-patch.
+3. **A setting for the reserve** ("Keep N slots free for the harvest"), on top of 1 or 2, for players who'd rather bank than make extra trips to the leprechaun. Small.
+4. **Bank to make room, during the run.** When the inventory is full and nothing can be noted or stored, the guide sends the player to the nearest bank and back to the stop, as it already does for an item that's gone missing (`RunSession.extraBank`). Small to medium; it covers what planning misses.
+5. **A bank step the player adds** (winter-mark's ask): "Bank after this stop" on the Run tab's right-click, kept for that run. Medium; the planner has to take a visit it didn't choose.
+
+**Recommendation:** 2 with 4: room is planned where a stop needs it, and a bank trip makes room if the run gets stuck anyway. Option 1 is the simpler choice if the odd unneeded bank visit doesn't matter.
+
+**Open questions:**
+- Should a run that fits in one inventory get a bank visit just for room?
+- Does each kind of noted produce count as a slot in the room check?
+- Should room planning use 19 for an allotment, or less, since an allotment can be noted mid-patch?
+- Is winter-mark's manual step still worth having after 2 and 4?
+
+## #34 Run times
+
+**Kind:** Idea (shared run times) · **Status:** open; reply drafted (draft C), then label `wontfix` and close as not planned · **Reviewed through:** 2026-10-26 ColdStoneCode (body)
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| ColdStoneCode | Shared their learned legs (17, with 99 Agility, fairy rings, spirit trees and the Kastori landing site) from the release's "Share your run times" | as #25 (7d1f244, 92d4624) | Same as #25: master has no share button, times stay the player's own, and learned times don't choose routes | **Close as not planned**, with a reply like #25's (draft C) |
+
+## #35 Problem:
+
+**Kind:** Bug · **Status:** open, `bug`; fix built, not yet seen in game; no reply until the release (elzerma replied 2026-10-31) · **Reviewed through:** 2026-11-01 Mr2Cookies
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| chins4tw-sketch | After the balloon from the Gnome Stronghold to Taverley, the guide said to teleport to Lumbridge instead of doing Taverley's tree (check its health, remove it, plant a magic tree, pay) | `Patch.java:41-44`, `FarmRunAutopilotPlugin.java:448-458`, `PatchGuide.java:546-591`, `Navigator.travel` | Likely cause, traced but not confirmed. Both tree patches use `FARMING_TRANSMIT_A`. Patches were read one tick after a region change, as RuneLite's farming tracker does. A patch seen done stays done. A reading that still held the Stronghold's newly planted magic tree would make Taverley's tree (also a magic tree) look done, and the guide would move on. No route in the report ("No run built"). Master read patches the same way, so the next update wouldn't have fixed it | **Fix**: a new region's patches go unread for one more tick (`REGION_SETTLE_TICKS`). Each patch reading is logged as it changes, with its tick, to show in elzerma's runs whether one ever changes right after arriving. #23 (the Stronghold's fruit tree passed over) may have the same cause |
+| Mr2Cookies | It happened to them several times | | Fits any run that plants the Stronghold's tree and then takes the balloon | With the row above |
+| elzerma | Should be fixed in the next release | | It wasn't on master; the fix above is | Chatter |
+| Mr2Cookies | Can't wait | | | Chatter |
+
+## #39 Fruit tree related idea.
+
+**Kind:** Idea · **Status:** closed as completed by Mr2Cookies 2026-11-01, after elzerma's reply · **Reviewed through:** 2026-11-01 Mr2Cookies
+
+| Who | What they said | Checked against | Evaluation | Decision |
+|-----|----------------|-----------------|------------|----------|
+| Mr2Cookies | Pick fruit trees and leave them growing, rather than digging them up and replanting (an ironman keeping the fruit for payments) | `FarmPage.java:296`, `RunConfig.keepsGrowing` | Built on master: "Pick grown fruit trees and leave them growing" | **Already done (next update)**; nothing to do |
+| elzerma, Mr2Cookies | Already built in pre-release; thanks | | | Chatter |
