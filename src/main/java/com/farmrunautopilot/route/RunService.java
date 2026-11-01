@@ -2,6 +2,8 @@ package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.data.BinState;
+import com.farmrunautopilot.data.CompostBin;
 import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
@@ -434,6 +436,16 @@ public class RunService
 		}
 		final Map<Integer, String> namesNow = new HashMap<>(names);
 		final Map<Integer, Optional<TravelItem.WearSlot>> slotsNow = new HashMap<>(wearSlots);
+		// What's expected in each compost bin, for the ash and buckets (P3)
+		final Map<CompostBin, BinState> binsNow = new EnumMap<>(CompostBin.class);
+		for (CompostBin bin : CompostBin.values())
+		{
+			final BinState state = patchTracker.predictBin(bin);
+			if (state != null)
+			{
+				binsNow.put(bin, state);
+			}
+		}
 		final RouteAtlas own = atlas.copy();
 		if (searcher == null)
 		{
@@ -444,7 +456,8 @@ public class RunService
 			final long began = System.currentTimeMillis();
 			final TravelSearch.Outcome outcome = TravelSearch.search(own, a -> new RunAssembly(config, access, holdings,
 					poh, a, selection, predictions::get, id -> namesNow.getOrDefault(id, ""),
-					id -> prices.getOrDefault(id, 0L), id -> slotsNow.getOrDefault(id, Optional.empty()).orElse(null)),
+					id -> prices.getOrDefault(id, 0L), id -> slotsNow.getOrDefault(id, Optional.empty()).orElse(null),
+					binsNow::get),
 				start, config, access, holdings, System::currentTimeMillis, began + SEARCH_MILLIS);
 			if (Thread.currentThread().isInterrupted())
 			{
@@ -581,7 +594,7 @@ public class RunService
 		RunSelection selection)
 	{
 		return new RunAssembly(config, access, holdings, settings.getAccount().getPoh(), atlas, selection,
-			patchTracker::predict, this::itemName, itemManager::getItemPrice, this::wearSlot);
+			patchTracker::predict, this::itemName, itemManager::getItemPrice, this::wearSlot, patchTracker::predictBin);
 	}
 
 	/**

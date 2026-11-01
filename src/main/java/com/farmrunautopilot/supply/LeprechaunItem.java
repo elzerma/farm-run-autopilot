@@ -40,4 +40,14 @@ public enum LeprechaunItem
 	{
 		return base + (extra << extraShift);
 	}
+
+	/**
+	 * Empty buckets stored, from FARMING_TOOLS_BUCKETS and its two overflow varbits, as the game's farming_tools_getstored
+	 * script works it out (2^8 times the second overflow, 2^5 times the first, plus the base); for emptying compost bins
+	 * (P3).
+	 */
+	public static int buckets(int base, int extra, int extra2)
+	{
+		return (extra2 << 8) + (extra << 5) + base;
+	}
 }

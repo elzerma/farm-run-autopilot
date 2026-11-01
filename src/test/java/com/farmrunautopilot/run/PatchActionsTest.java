@@ -215,4 +215,21 @@ public class PatchActionsTest
 		config.setEmptyBuckets(null);
 		assertEquals(EmptyBuckets.DROP, config.sanitise().getEmptyBuckets());
 	}
+
+	@Test
+	public void compostBinSettings()
+	{
+		// P3, as elzerma agreed (2026-10-24): off, ultracompost when on, watermelons for the bin, never snape grass
+		final RunConfig config = new RunConfig().sanitise();
+		assertFalse(config.isMakeCompost());
+		assertTrue(config.isMakeUltracompost());
+		assertEquals(java.util.EnumSet.of(com.farmrunautopilot.data.Crop.WATERMELON), config.getBinCrops());
+		config.getBinCrops().add(com.farmrunautopilot.data.Crop.SNAPE_GRASS);
+		config.getBinCrops().add(com.farmrunautopilot.data.Crop.RANARR);
+		config.getBinCrops().add(com.farmrunautopilot.data.Crop.POTATO);
+		assertEquals(java.util.EnumSet.of(com.farmrunautopilot.data.Crop.WATERMELON, com.farmrunautopilot.data.Crop.POTATO),
+			config.sanitise().getBinCrops());
+		assertEquals(ItemID.WATERMELON, com.farmrunautopilot.data.CompostBin.cropItem(com.farmrunautopilot.data.Crop.WATERMELON));
+		assertEquals(-1, com.farmrunautopilot.data.CompostBin.cropItem(com.farmrunautopilot.data.Crop.RANARR));
+	}
 }

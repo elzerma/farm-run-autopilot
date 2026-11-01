@@ -1,11 +1,13 @@
 package com.farmrunautopilot.run;
 
+import com.farmrunautopilot.data.CompostBin;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.route.MenuPick;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.Value;
 
@@ -47,6 +49,12 @@ public class Highlights
 	 * rather than in one (elzerma, 2026-10-30: "one was highlighted. Can we highlight all of them").
 	 */
 	Set<Integer> everySlotIds;
+	/** The compost bin to outline, or null (patch actions P3). */
+	CompostBin bin;
+	/** What to take from the tool leprechaun's store, by item, with how many: outlined in his window. */
+	Map<Integer, Integer> leprechaunTake;
+	/** What to store with him, by item, with how many: outlined in the inventory side of his window. */
+	Map<Integer, Integer> leprechaunStore;
 
 	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell)
 	{
@@ -77,6 +85,23 @@ public class Highlights
 		Set<Integer> wearItemIds, List<MenuPick> menuPicks, String teleportOption, Set<Integer> neededIds,
 		Set<Integer> everySlotIds)
 	{
+		this(patch, gardener, travelNpc, itemIds, spell, wearItemIds, menuPicks, teleportOption, neededIds, everySlotIds,
+			null);
+	}
+
+	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell,
+		Set<Integer> wearItemIds, List<MenuPick> menuPicks, String teleportOption, Set<Integer> neededIds,
+		Set<Integer> everySlotIds, CompostBin bin)
+	{
+		this(patch, gardener, travelNpc, itemIds, spell, wearItemIds, menuPicks, teleportOption, neededIds, everySlotIds,
+			bin, Collections.emptyMap(), Collections.emptyMap());
+	}
+
+	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell,
+		Set<Integer> wearItemIds, List<MenuPick> menuPicks, String teleportOption, Set<Integer> neededIds,
+		Set<Integer> everySlotIds, CompostBin bin, Map<Integer, Integer> leprechaunTake,
+		Map<Integer, Integer> leprechaunStore)
+	{
 		this.patch = patch;
 		this.gardener = gardener;
 		this.travelNpc = travelNpc;
@@ -87,13 +112,23 @@ public class Highlights
 		this.teleportOption = teleportOption;
 		this.neededIds = neededIds;
 		this.everySlotIds = everySlotIds;
+		this.bin = bin;
+		this.leprechaunTake = leprechaunTake;
+		this.leprechaunStore = leprechaunStore;
 	}
 
 	/** The same, with these items to put on. */
 	public Highlights withWear(Set<Integer> wear)
 	{
 		return new Highlights(patch, gardener, travelNpc, itemIds, spell, wear, menuPicks, teleportOption, neededIds,
-			everySlotIds);
+			everySlotIds, bin, leprechaunTake, leprechaunStore);
+	}
+
+	/** The same, with what to take from and store with the tool leprechaun in his window. */
+	public Highlights withLeprechaun(Map<Integer, Integer> take, Map<Integer, Integer> store)
+	{
+		return new Highlights(patch, gardener, travelNpc, itemIds, spell, wearItemIds, menuPicks, teleportOption, neededIds,
+			everySlotIds, bin, take, store);
 	}
 
 	/** Everything the step needs, outlined or not, the main item first. */

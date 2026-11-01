@@ -1,6 +1,8 @@
 package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.data.BinState;
+import com.farmrunautopilot.data.CompostBin;
 import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
@@ -77,11 +79,21 @@ final class RunAssembly
 	private final IntToLongFunction price;
 	/** The equipment slot an item is worn in, or null if none the supply list plans. */
 	private final IntFunction<TravelItem.WearSlot> wearSlot;
+	/** What's expected in each compost bin, for the ash and buckets emptying it takes (P3); null if never seen. */
+	private final Function<CompostBin, BinState> bins;
 
 	RunAssembly(RunConfig config, AccessSnapshot access, Holdings holdings, PohSetup poh, RouteAtlas atlas,
 		RunSelection selection, Function<Patch, PatchPrediction> predict, IntFunction<String> itemName,
 		IntToLongFunction price, IntFunction<TravelItem.WearSlot> wearSlot)
 	{
+		this(config, access, holdings, poh, atlas, selection, predict, itemName, price, wearSlot, bin -> null);
+	}
+
+	RunAssembly(RunConfig config, AccessSnapshot access, Holdings holdings, PohSetup poh, RouteAtlas atlas,
+		RunSelection selection, Function<Patch, PatchPrediction> predict, IntFunction<String> itemName,
+		IntToLongFunction price, IntFunction<TravelItem.WearSlot> wearSlot, Function<CompostBin, BinState> bins)
+	{
+		this.bins = bins;
 		this.config = config;
 		this.access = access;
 		this.holdings = holdings;
@@ -173,7 +185,7 @@ final class RunAssembly
 	private SupplyPlan supplies(Route route)
 	{
 		return SupplyCalculator.calculate(config, access, holdings, selection, route, predict, itemName, price,
-			wearSlot);
+			wearSlot, bins);
 	}
 
 	/** A run with its bank visits: the route, what to bring at the start, and each visit with what it takes. */
@@ -279,7 +291,7 @@ final class RunAssembly
 		final RunSelection part = new RunSelection(patches, selection.getIncludedTypes(),
 			selection.getSkippedTypes(), Collections.emptyList(), selection.getDueCounts());
 		return SupplyCalculator.calculate(config, access, holdings, part,
-			new Route(new ArrayList<>(stops), route.getMode(), 0, 0), predict, itemName, price, wearSlot);
+			new Route(new ArrayList<>(stops), route.getMode(), 0, 0), predict, itemName, price, wearSlot, bins);
 	}
 
 	/**

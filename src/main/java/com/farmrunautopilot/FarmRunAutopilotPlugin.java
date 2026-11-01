@@ -27,6 +27,9 @@ import com.farmrunautopilot.run.HighlightOverlay;
 import com.farmrunautopilot.run.HintArrowController;
 import com.farmrunautopilot.run.InventoryCountOverlay;
 import com.farmrunautopilot.run.ItemHighlightOverlay;
+import com.farmrunautopilot.run.LeprechaunButtonOverlay;
+import com.farmrunautopilot.run.LeprechaunClicks;
+import com.farmrunautopilot.run.LeprechaunMenuHighlighter;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.run.SceneTracker;
@@ -174,6 +177,12 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private TabIconOverlay tabIconOverlay;
 
 	@Inject
+	private LeprechaunButtonOverlay leprechaunButtonOverlay;
+
+	@Inject
+	private LeprechaunClicks leprechaunClicks;
+
+	@Inject
 	private TravelMenuOverlay travelMenuOverlay;
 
 	@Inject
@@ -181,6 +190,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 
 	@Inject
 	private TeleportMenuHighlighter teleportMenuHighlighter;
+
+	@Inject
+	private LeprechaunMenuHighlighter leprechaunMenuHighlighter;
 
 	@Inject
 	private FairyRingLog fairyRingLog;
@@ -259,6 +271,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		overlayManager.add(itemHighlightOverlay);
 		overlayManager.add(spellHighlightOverlay);
 		overlayManager.add(tabIconOverlay);
+		overlayManager.add(leprechaunButtonOverlay);
 		overlayManager.add(travelMenuOverlay);
 		overlayManager.add(inventoryCountOverlay);
 		overlayManager.add(vineOverlay);
@@ -288,6 +301,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		overlayManager.remove(itemHighlightOverlay);
 		overlayManager.remove(spellHighlightOverlay);
 		overlayManager.remove(tabIconOverlay);
+		overlayManager.remove(leprechaunButtonOverlay);
 		overlayManager.remove(travelMenuOverlay);
 		overlayManager.remove(inventoryCountOverlay);
 		overlayManager.remove(vineOverlay);
@@ -459,6 +473,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			lastModalCloseTick = client.getTickCount();
 		}
+		if (event.getGroupId() == InterfaceID.FARMING_TOOLS)
+		{
+			leprechaunClicks.clear();
+		}
 	}
 
 	@Subscribe
@@ -594,6 +612,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			pohDetector.onHouseLoading();
 		}
+		if (event.getGroupId() == InterfaceID.FARMING_TOOLS)
+		{
+			runSession.onLeprechaunWindow();
+		}
 		farmBankTab.onWidgetLoaded(event);
 	}
 
@@ -621,6 +643,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	public void onMenuOpened(MenuOpened event)
 	{
 		teleportMenuHighlighter.onMenuOpened(event);
+		leprechaunMenuHighlighter.onMenuOpened(event);
 	}
 
 	@Subscribe
@@ -636,6 +659,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	{
 		runSession.onMenuOptionClicked(event);
 		itemHighlightOverlay.onMenuOptionClicked(event);
+		leprechaunClicks.onMenuOptionClicked(event);
 		bottomlessBucket.onMenuOptionClicked(event);
 		if (itemCharges.onMenuOptionClicked(event))
 		{

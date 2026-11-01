@@ -1,5 +1,6 @@
 package com.farmrunautopilot.run;
 
+import com.farmrunautopilot.data.CompostBin;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.travel.JourneyStep;
@@ -18,6 +19,7 @@ import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.NPC;
 import net.runelite.api.ObjectComposition;
+import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.Tile;
 import net.runelite.api.TileObject;
@@ -47,10 +49,13 @@ public class SceneTracker
 
 	private final Client client;
 	private final Map<Patch, List<GameObject>> patchObjects = new EnumMap<>(Patch.class);
+	private final Map<CompostBin, GameObject> binObjects = new EnumMap<>(CompostBin.class);
 	private final Map<Patch, NPC> gardeners = new EnumMap<>(Patch.class);
 	/** Renu, the quetzal a Renu leg walks back to first (Navigator); everyone else ridden comes from the atlas. */
 	private static final Set<String> TRANSFER_NPC_NAMES = Set.of("Renu", PatchGuide.TOOL_LEPRECHAUN);
 	private final Map<String, NPC> transfers = new HashMap<>();
+	/** Every tool leprechaun loaded. */
+	private final List<NPC> leprechauns = new ArrayList<>();
 	/** Everyone the travel atlas's journeys are used on (Renu, a ship's crew, a guide), once it's read. */
 	private Set<String> atlasRideNames;
 
@@ -62,6 +67,13 @@ public class SceneTracker
 
 	public void onObjectSpawned(GameObject object)
 	{
+		final CompostBin bin = binFor(object);
+		if (bin != null)
+		{
+			log.debug("Compost bin object for {} at {}", bin, object.getWorldLocation());
+			binObjects.put(bin, object);
+			return;
+		}
 		final Patch patch = patchFor(object);
 		if (patch != null)
 		{
@@ -82,6 +94,34 @@ public class SceneTracker
 		{
 			objects.remove(object);
 		}
+		binObjects.values().removeIf(o -> o == object);
+	}
+
+	/** The compost bin's object while it's loaded, or null (P3). */
+	public GameObject binObject(CompostBin bin)
+	{
+		return binObjects.get(bin);
+	}
+
+	/**
+	 * The compost bin this object is: one in the bin's region that changes with its farming varbit (P3). Bins and patches
+	 * never share a varbit at the same area, as RuneLite's Time Tracking has them. Only objects in a bin's region are looked
+	 * up, so a scene loading elsewhere costs nothing.
+	 */
+	private CompostBin binFor(GameObject object)
+	{
+		final int region = object.getWorldLocation().getRegionID();
+		for (CompostBin bin : CompostBin.values())
+		{
+			if (bin.getRegionId() != region)
+			{
+				continue;
+			}
+			final ObjectComposition composition = client.getObjectDefinition(object.getId());
+			return composition != null && composition.getImpostorIds() != null
+				&& composition.getVarbitId() == bin.getVarbitId() ? bin : null;
+		}
+		return null;
 	}
 
 	/**
@@ -93,6 +133,10 @@ public class SceneTracker
 		if (npc.getName() != null && isRideNpc(npc.getName()))
 		{
 			log.debug("Ride NPC {} #{} at {}", npc.getName(), npc.getId(), npc.getWorldLocation());
+			if (PatchGuide.TOOL_LEPRECHAUN.equals(npc.getName()))
+			{
+				leprechauns.add(npc);
+			}
 			transfers.put(npc.getName(), npc);
 			return;
 		}
@@ -117,6 +161,7 @@ public class SceneTracker
 	{
 		gardeners.values().removeIf(n -> n == npc);
 		transfers.values().removeIf(n -> n == npc);
+		leprechauns.remove(npc);
 	}
 
 	/**
@@ -126,14 +171,17 @@ public class SceneTracker
 	public void clearObjects()
 	{
 		patchObjects.clear();
+		binObjects.clear();
 	}
 
 	/** Logged out or hopping: nothing is loaded any more. */
 	public void clear()
 	{
 		patchObjects.clear();
+		binObjects.clear();
 		gardeners.clear();
 		transfers.clear();
+		leprechauns.clear();
 	}
 
 	public List<GameObject> objectsFor(Patch patch)
@@ -159,10 +207,50 @@ public class SceneTracker
 		return null;
 	}
 
-	/** The loaded NPC with this name that a travel method rides, or null. */
+	/** The compost bin whose loaded object has this ID and scene position (as in a menu entry), or null (P3). */
+	public CompostBin binAt(int objectId, int sceneX, int sceneY)
+	{
+		for (Map.Entry<CompostBin, GameObject> e : binObjects.entrySet())
+		{
+			final Point min = e.getValue().getSceneMinLocation();
+			if (e.getValue().getId() == objectId && min.getX() == sceneX && min.getY() == sceneY)
+			{
+				return e.getKey();
+			}
+		}
+		return null;
+	}
+
+	/** The loaded NPC with this name that a travel method rides, or null; for the tool leprechaun, the nearest one. */
 	public NPC transferNpc(String name)
 	{
+		if (PatchGuide.TOOL_LEPRECHAUN.equals(name))
+		{
+			final Player player = client.getLocalPlayer();
+			return player != null ? nearestLeprechaun(player.getWorldLocation()) : null;
+		}
 		return transfers.get(name);
+	}
+
+	/**
+	 * The loaded tool leprechaun nearest this point on its floor, or null: the Farming Guild has several in view, and the
+	 * last one loaded may be another's (elzerma's run of 2026-10-31: the line went to the compost bin instead).
+	 */
+	public NPC nearestLeprechaun(WorldPoint to)
+	{
+		NPC nearest = null;
+		int best = Integer.MAX_VALUE;
+		for (NPC npc : leprechauns)
+		{
+			// Integer.MAX_VALUE on another floor
+			final int distance = npc.getWorldLocation().distanceTo(to);
+			if (distance < best)
+			{
+				best = distance;
+				nearest = npc;
+			}
+		}
+		return nearest;
 	}
 
 	/** Tiles around where a journey step starts to look for its object, as the atlas's points are a tile or two off. */

@@ -65,6 +65,12 @@ public class HighlightOverlay extends Overlay
 				outlines.drawOutline(object, OUTLINE_WIDTH, config.patchColour(), OUTLINE_FEATHER);
 			}
 		}
+		// The compost bin to open, fill or empty (P3), in the patch colour
+		final GameObject bin = highlights.getBin() != null ? scene.binObject(highlights.getBin()) : null;
+		if (bin != null && config.highlightPatch())
+		{
+			outlines.drawOutline(bin, OUTLINE_WIDTH, config.patchColour(), OUTLINE_FEATHER);
+		}
 		if (highlights.isGardener() && config.highlightGardener())
 		{
 			final NPC gardener = scene.gardener(highlights.getPatch());

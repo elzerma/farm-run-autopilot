@@ -210,3 +210,190 @@ bucket or bottomless bucket, and picking everything before planting need no sett
 which compost each patch type gets (say it once).
 
 No questions left; still to check at P3: the ash per bin and the bins' varbits (section 3.3).
+
+## 8. P3 build plan (2026-10-30)
+
+**Checked** (the UNVERIFIED values in section 3.3):
+- **The bins and their varbits** (RuneLite's Time Tracking, `FarmingWorld`): Ardougne (region 10548), Catherby
+  (11062), Civitas illa Fortis (6192), Falador (12083), Hosidius (6967) and Port Phasmatys (14391) on
+  FARMING_TRANSMIT_E; Prifddinas (13151) on FARMING_TRANSMIT_D; the Farming Guild's big bin (4922) on
+  FARMING_TRANSMIT_N. The wiki lists the same eight.
+- **A bin's states** (RuneLite's `PatchImplementation` COMPOST and BIG_COMPOST): 0 empty; 1-15 compost filling (the
+  count); 33-47 supercompost filling; 31-32 and 95-96 rotting; 94 and 126 rotted, still closed; 16-30, 48-62 and
+  176-190 compost, supercompost and ultracompost to take out (buckets left = value - 15, - 47 and - 175); 129-160
+  tomatoes (rotten tomatoes, not used here). The big bin has its own ranges, up to 30.
+- **The wiki:** 15 items to close a bin (30 for the big one), never part-full; it rots in 35-70 minutes; supercompost
+  only if every item is supercompostable (watermelons are); 25 volcanic ash per bin of supercompost (50 for the big
+  one), added before any is taken out (or 2 per bucket in the inventory); taken out with empty buckets or the
+  bottomless bucket, the empty buckets first.
+- **The tool leprechaun's empty buckets** can be read (FARMING_TOOLS_BUCKETS with EXTRABUCKETS and EXTRA2BUCKETS).
+
+**At a stop with a bin**, with Make compost on:
+1. **The bin is ready** (rotted, or opened with compost left): it's emptied before picking, as the buckets need room:
+   at the tool leprechaun, take the empty buckets (none with a bottomless bucket); open the bin; with Make
+   ultracompost and supercompost in it, add 25 volcanic ash (50); take the compost out; at the tool leprechaun, store
+   it, keeping what this stop's patches need. As elzerma's run of 2026-10-24 did.
+2. **Watermelon allotments picked:** "Put your watermelons in the compost bin (N/15)", after each picking and when the
+   inventory fills; they aren't noted while the bin has room, and those past its 15 are.
+3. **Full:** "Close the compost bin".
+4. **Still rotting:** no bin steps; the watermelons are noted.
+
+**Supplies:** 25 volcanic ash (50) for each bin expected ready with supercompost, with Make ultracompost; empty
+buckets for each bin to empty when the tool leprechaun holds too few and there's no bottomless bucket.
+**Tracking:** each bin's value is read like a patch's while in its area and saved with when it was seen; a bin seen
+closed counts as ready 70 minutes after.
+**Settings:** Farm > At the patches > Make compost in the compost bins (off); when on, Make ultracompost (brings
+volcanic ash) and the crops for the bin (watermelon ticked; snape grass never offered).
+**Order of building:** the bins' data and tracking, logged as they change; then the steps; then the supplies.
+
+**Built 2026-10-30** (84bf25d, cb29134, c4ef0a6), not yet tried in game: the eight bins tracked and logged ("Compost
+bin at <area>: <state> (value N)"); the steps above, with the bin outlined; Farm > At the patches > Make compost
+(off), Make ultracompost (on) and the crops for the bin (watermelon); the ash and buckets on the supply list, the tool
+leprechaun's empty buckets read too. UNVERIFIED: the big bin's values 97-99 and 127-128 (no object IDs in RuneLite's
+notes), to check from the Farming Guild's log lines.
+
+**First run, Civitas illa Fortis (2026-10-30), from the log:** the bin read right through: rotted supercompost (126),
+opened (62, then down to 48 as each bucket was filled), empty (0), filled with watermelons (33 to 47), closed (95). The
+Farming Guild's big bin read 97, then 98, while rotting: as decoded (supercompost rotting), with 99 and 127-128 still
+unseen. What elzerma asked to change:
+- *"Highlight should go to leprechaun to remove buckets and then open and either a) withdraw or b) guide to bring
+  volcanic ash and add it to the bin before removing it into buckets since when adding to bin saves volcanic ash vs
+  adding it to buckets, also it's faster"*: the bin steps started only once next to a patch, and opened it before the
+  buckets. Now, from arriving: the buckets from the tool leprechaun first (he's outlined and the walking line goes to
+  him, or to the bin until he's loaded), then open, then the ash when carried (none once any compost is out), then
+  take it out, then store it. The ash is no longer optional on the supply list with Make ultracompost on.
+- *"when we've begun adding stuff to bin it should keep you at the bin til the bin is full or you're out of eligible
+  items to add"* and *"it should guide you to close the bin. finish picking and note produce"*: the step went back to
+  picking after the first watermelon went in (the inventory was no longer full) and never said to close it. Now, once
+  the bin's count goes up, the step stays on the bin until it's full or the watermelons run out; a full bin is closed
+  straight away; then picking, and the visit to the tool leprechaun, carry on.
+
+**Second run, Civitas illa Fortis (2026-10-31), from the log and check screenshots:** the order above ran as built.
+Armed at the Civitas bank, the first step was the buckets (taken from the bank, the step counting down from 15 to 5),
+then open, then the ash, as the game confirmed ("You apply the volcanic ash to the supercompost in the compost bin. The
+supercompost transforms into ultracompost."), 15 ultracompost out and stored; the bin kept at from 1/15 to 15/15, then
+"Close the compost bin", then picking, the leprechaun visit, planting and compost, and the run finished. The
+screenshots show the bin outlined with the ash, and with every watermelon. Two things fixed after it:
+- With the inventory full while picking, the step stayed "Pick the watermelon" for 1:46, the patch outlined, with only
+  a reminder under it (elzerma's screenshot). Now making room is the step: the crops for the bin go in it while it has
+  room, else the produce is cleaned and noted with the tool leprechaun, each with what to use outlined.
+- The timer started only at the first patch, so the bin's 2.5 minutes weren't timed and the walking line (drawn only
+  once timing) wasn't there for the walk from the bank. Now a click on the first stop's compost bin or tool leprechaun
+  starts it too, as one on a patch or gardener does.
+
+**Third run, Hosidius (2026-10-31), from the log:** by the Hosidius portal, with 15 buckets from the bank: open, the
+ash, 15 ultracompost out (the walking line to the bin, then to the leprechaun to store 13, keeping 2), pick, "Put your
+watermelon in the compost bin (0/15)" as soon as the patch was picked, kept at to 15/15, "Close the compost bin";
+the run finished in 10:31. Two things fixed after it:
+- After closing the bin, the guide sent elzerma from it across the farm to the tool leprechaun to note 2 watermelons
+  before planting, with the stop's ultracompost carried from the bin and 22 slots free (elzerma's screenshot). The
+  visit before planting is now made only when it's needed: compost to take from him, or too little room for what the
+  stop's other patches will bring in (8 a herb patch or allotment, as the inventory-full reminder reckons). Otherwise
+  noting waits for the visit before leaving, and a full inventory while picking makes noting the step.
+- The visit before leaving said "note your watermelon and store 2 empty buckets", but the stop counted as done at the
+  noting, so the run finished with the buckets carried. Now the buckets stay in the visit until stored.
+
+**Fourth run, Port Phasmatys (2026-10-31), from the log:** the build for the two fixes above broke the guide's
+bookkeeping (the check for the buckets went in the middle of the chain that credits what the last step brought in):
+the compost taken out of the bin went uncounted, so there was no step to store it, and the picking went uncounted
+("Inventory full: unnoted produce none" with an inventory of watermelons). Fixed at once. The run also showed that the
+game takes the volcanic ash after some compost is out: elzerma took 2 supercompost out, then added the ash, and the 13
+left became ultracompost for the full 25. The ash step now stays while the bin's way takes no more ash than the
+buckets' (2 a bucket): 13 or more left, 25 or more in the big bin.
+
+**Fifth run, the Farming Guild's big bin (2026-10-31), from the log and elzerma's screenshots:** 25 buckets from the
+bank ("take 30" didn't fit), open, 50 ash, ultracompost (205, 30 of it): the big bin's values read as decoded. Fixed
+after it:
+- After the ash, with 25 buckets in hand and room for 1, it said to fetch 5 from the leprechaun. Now, once the bin is
+  open, the buckets in hand are used first, and the rest fetched while storing what's out; and the buckets asked for
+  are no more than fit.
+- The 5 taken out while that step showed went uncounted, so it said to store 21 of 26 with 2 needed. Compost taken out
+  now counts whichever of the bin's steps is showing.
+- The walking line for the leprechaun's steps went to the bin: the guild has three tool leprechauns in view, and only
+  the last one loaded was kept. Every one is kept now; the line goes to the one nearest the bin or patch, the outline
+  to the one nearest the player.
+- After the last 4 came out, it sent elzerma across the guild to store 2 with 22 slots free (who stored all 4, then
+  took 2 back). The bin's spare compost is now stored only when the room's needed for what the stop's patches will
+  bring in; otherwise it's carried on, for later stops.
+
+**Sixth run, the Farming Guild again (2026-10-31):** the fixes above held: the 25 buckets in hand used first, then
+"store 23 ultracompost and take 5 empty buckets" (the count right), the walking line to the guild's own leprechaun. But
+the room check for the spare compost came up mid-picking, as the free slots fell below what the patches would bring in:
+"store 1 ultracompost", later "and 1 empty bucket". elzerma: *"Don't need to store compost til we have a second reason
+to go to leprechaun"*. So the bin's spare compost no longer has a step of its own: it's stored on a visit made anyway
+(noting, taking compost, fetching buckets for the bin), or when the inventory is full and storing makes room.
+
+### 8.1 Trips to the tool leprechaun (2026-10-31)
+
+elzerma: *"can check any instances where we would go to tool leprechaun and work through the logic of when it would be
+appropriate? like we want to save trips to the leprechaun because it can be a time waste to run back and forth several
+times if you don't NEED to run back and forth"*. The rule: a trip is made only for something that can't wait (what the
+next steps need, or room to go on picking), and every trip does everything else that's due while there: noting, storing
+the bin's spare compost and the empty buckets (Empty buckets: Store). What's left comes along to the next stop, whose
+own visit, or a full inventory, takes care of it.
+
+| Trip | Made when | Was |
+|---|---|---|
+| Empty buckets for a compost bin | none carried (what's carried is used first, the rest fetched while storing what's out) | also to top up before opening, a trip more when they didn't all fit |
+| Before planting | compost, or the seed dibber or spade, to take for the stop's planting, or too little room for its other patches (19 an allotment, 8 a herb patch) | the dibber or spade was a trip of its own as planting began |
+| Inventory full while picking | the compost bin can't take the crops | (2026-10-31) |
+| After emptying a compost bin | its compost past what this stop and the stops ahead in reach use, before picking starts there (elzerma: *"we should do a trip to leprechaun to store the ultracompost before harvesting watermelons and filling the bin"*) | stored only on a visit made anyway, so at Hosidius it waited for the inventory to fill mid-picking |
+| Before leaving the stop | too little room for what the next stop brings in; or empty buckets for the next stop's compost bin when it's expected ready, keeping those carried (elzerma, leaving Hosidius: *"2x ultracompost were used so we should pull 13 out for the next stop"*); never before a bank visit or at the run's end | every stop, to note what was picked; the 2 empty buckets were stored there, then 15 taken at Port Phasmatys |
+
+**The order of the patches at a bin stop** (elzerma, 2026-10-31, at Port Phasmatys: *"we should harvest the allotment
+that is closest to the bin so then we have shorter trips between allotment and bin"*, then *"no it should be patch that
+is closest to leprechaun"*): while the bin is to be filled, the patches whose crops go in it come first, nearest the
+stop's tool leprechaun first (the bin while he isn't loaded). The guide had gone to the north-west allotment, across the
+farm, as the bin's steps had named it, the stop's first patch, and the patch named stays first.
+
+**When the bin is filled** (elzerma, 2026-10-31, at Port Phasmatys, sent to the bin with 12 after the first allotment
+and needing 3 more: *"I think it should have told me to plant and compost before putting in bin, then proceed to pick
+other patch and once the patch is empty or inv is full, dump into bin"*): the crops go in once none are left to pick at
+the stop, or when the inventory is full while picking; each allotment is planted and composted as it's picked. So:
+pick the first, plant and compost it, pick the second, and once it's empty, into the bin (closed once full), then plant
+and compost it.
+
+Still a trip of its own: a step's item that's with the leprechaun but not carried, found only at that step (a rake for
+weeds, a spade for a dead plant, a plant cure), as these can't be known ahead.
+
+**Compost for later stops** (asked: "On a visit, take compost for the next stops too, when there's room?"; elzerma:
+*"Yes, when there's room"*). Any visit made anyway leaves carried what this stop's patches still need and, stop by stop
+along the route, what the next stops' need, while the free slots left still hold what this stop and those stops will
+bring in (19 an allotment, 8 a herb patch: the room checks' estimate). It stops at a bank visit, the run's end, or a stop
+whose compost bin is expected ready, as that bin supplies the compost from there. Compost that came out of this stop's
+bin is kept for those stops before any is stored; what was brought from the bank is never stored. A stop whose compost
+is carried needs no visit for it, so its visit happens only for room. The log line `Compost for the visit: ...` shows
+each decision.
+
+**The room checks' estimate** (2026-10-31): an allotment counted as 8, as a herb patch does, but elzerma's watermelon
+allotments with ultracompost gave 13 to 27, 19 on average, over the runs of 2026-10-30 and 31, so the checks thought
+there was room when there wasn't, and the inventory filled mid-picking instead. Asked "Count an allotment as about 19
+watermelons for the room checks, not 8?", elzerma: *"Yes, use 19"*. It's `SupplyCalculator.ALLOTMENT_HARVEST`.
+
+**The tool leprechaun's window** (elzerma, 2026-11-01: *"highlights in leprechaun menu with rt click items
+highlighted?"*, then *"typing 13 isn't very convenient"*, and on how: *"guide changing the quantity buttons during the
+run. e.g. 13 would change to 5, 2x click bucket remove, change to 1, 3x click bucket remove. change back to 5 ... counts
+shown on top of highlighted button and updated as quickly as possible"*). The plan: `C:\Users\Sean\.claude\plans\
+memoized-leaping-hammock.md`.
+- **His window, researched** from the game's client scripts (github.com/Joshua-F/osrs-dumps): his store (interface 125)
+  has Remove-1/5/X/All, the inventory side (126) Store-1/5/X/All, the selected quantity as the left click. Varbit
+  FARMING_TOOLS_SELECTEDQUANTITY (7792): 0 = 1, 1 = 5, 2 = All, 3 = X, set by the client as the button's clicked, shared
+  with other storage windows. X isn't remembered. Deposit inventory stores tools too.
+- **Exact amounts, guided** (`run/LeprechaunClicks`): the moves at his quantity first, for every item, then the button
+  for the others, and his quantity left as it ends for the next visit (elzerma, 2026-11-01: *"if it needs to switch
+  between 1/5 can it do that at the next time the interface opens ... e.g. put in 13 compost: 5, 5, 1, 1, 1, then
+  pulling buckets for next bin 1,1,1,5,5. not hardcoded, just do the needed action with currently configured # then
+  leave it til it needs to be switched"*): at 5, the fives then 1 for what's left; at 1, what's past the fives then 5;
+  one switch a visit at most. The quantity button to click is outlined, "Click" (`LeprechaunButtonOverlay`); then each
+  item, "Click 2x" (`ItemHighlightOverlay`). A click counts at once, before the game takes the items a tick later, so the
+  count drops on the click and the outline moves on to the button the moment the last of a kind's clicked; one not seen
+  applied in 3 ticks
+  is dropped. A right-click colours the "-5" or "-1" option; "Exchange" on him is coloured for a visit with window work.
+- **Seen in game** (elzerma's run of 2026-11-01, at Hosidius: "i like the leprechaun stuff"): the menus read Remove-All,
+  Remove-X, Remove-1, Remove-5 (+ Banknotes) on his side and Store-5, Store-X, Store-1, Store-All on the inventory side;
+  the check screenshots show the 5 button outlined, "Click", at quantity 1 with 13 to store, and the 1 button with 3
+  left at quantity 5. The dev client still logs `Leprechaun window opened at <stop>: take {...}, store {...}` and takes a
+  check screenshot as the window opens during a visit.
+- **The developer client froze** on that run, three seconds after "note your watermelon" at Civitas: an assertion in
+  RuneLite's own GPU plugin (`ModelUploader.uploadSortedModel`, a model's depth sort), which only the developer client
+  checks (`./gradlew run` passes `-ea`). The run task now leaves assertions off for `net.runelite.client.plugins.gpu`.

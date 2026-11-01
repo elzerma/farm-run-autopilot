@@ -68,18 +68,21 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 	private final Map<String, Boolean> rightClickCache = new HashMap<>();
 	private final Client client;
 	private final TeleportMenuHighlighter menuHighlighter;
+	private final LeprechaunClicks leprechaunClicks;
 
 	@Inject
 	ItemHighlightOverlay(RunSession session, FarmRunAutopilotConfig config, ItemManager itemManager, Client client,
-		TeleportMenuHighlighter menuHighlighter)
+		TeleportMenuHighlighter menuHighlighter, LeprechaunClicks leprechaunClicks)
 	{
 		this.session = session;
 		this.config = config;
 		this.itemManager = itemManager;
 		this.client = client;
 		this.menuHighlighter = menuHighlighter;
+		this.leprechaunClicks = leprechaunClicks;
 		showOnInventory();
 		showOnEquipment();
+		showOnInterfaces(InterfaceID.FARMING_TOOLS, InterfaceID.FARMING_TOOLS_SIDE);
 	}
 
 	/** An item's vine in one interface: the slot it's on and when it was last drawn there. */
@@ -198,6 +201,12 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 			return;
 		}
 		final Highlights highlights = session.getView().getHighlights();
+		final LeprechaunClicks.Side side = LeprechaunClicks.sideOf(widgetItem.getWidget());
+		if (side != null)
+		{
+			drawLeprechaunItem(graphics, itemId, widgetItem, side);
+			return;
+		}
 		final boolean wear = highlights.getWearItemIds().contains(itemId);
 		if (!wear && !highlights.getItemIds().contains(itemId))
 		{
@@ -245,6 +254,40 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 		{
 			drawLabel(graphics, bounds, worn(widgetItem) ? RIGHT_CLICK_WORN_LABEL : RIGHT_CLICK_LABEL, colour);
 		}
+	}
+
+	/**
+	 * In the tool leprechaun's window, the items to click at his quantity, labelled with the clicks left, e.g. "Click 2x"
+	 * (elzerma, 2026-11-01: "it says 'Click 3x' so someone can quickly click 3x and as they click the number goes down
+	 * same tick as when clicked"); none while his quantity button comes first (LeprechaunButtonOverlay).
+	 */
+	private void drawLeprechaunItem(Graphics2D graphics, int itemId, WidgetItem widgetItem, LeprechaunClicks.Side side)
+	{
+		final LeprechaunClicks.Next next = leprechaunClicks.now();
+		final Integer clicks = next.switchFirst ? null
+			: (side == LeprechaunClicks.Side.TAKE ? next.take : next.store).get(itemId);
+		if (clicks == null)
+		{
+			return;
+		}
+		final Color colour = config.itemColour();
+		final Rectangle bounds = widgetItem.getCanvasBounds();
+		if (config.vineHighlights())
+		{
+			drawVine(graphics, itemId, widgetItem);
+		}
+		else
+		{
+			final String key = itemId + ":" + widgetItem.getQuantity() + ":false";
+			if (outlineCache.size() > MAX_CACHED_OUTLINES && !outlineCache.containsKey(key))
+			{
+				outlineCache.clear();
+			}
+			graphics.drawImage(outlineCache.computeIfAbsent(key,
+				k -> itemManager.getItemOutline(itemId, widgetItem.getQuantity(), colour)), (int) bounds.getX(),
+				(int) bounds.getY(), null);
+		}
+		drawLabel(graphics, bounds, new String[]{LeprechaunClicks.clickLabel(clicks)}, colour);
 	}
 
 	/** Whether the item is in the Worn Equipment tab rather than the inventory. */

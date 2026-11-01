@@ -1,5 +1,6 @@
 package com.farmrunautopilot.run;
 
+import com.farmrunautopilot.data.CompostBin;
 import com.farmrunautopilot.data.Crop;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
@@ -378,15 +379,17 @@ public class RunSession
 
 	/**
 	 * Start the timer on the first click on a patch in this run, or on its gardener, for players who start
-	 * right next to their first patch.
+	 * right next to their first patch; or on the first stop's compost bin or tool leprechaun, as a ready bin is
+	 * emptied first (P3: elzerma's run of 2026-10-31 timed only from the first patch, after the bin).
 	 */
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
-		if (stage != RunView.State.ARMED)
+		if (stage != RunView.State.ARMED || stopIndex >= plan.getRoute().getStops().size())
 		{
 			return;
 		}
 		final List<Patch> inRun = plan.getSelection().getPatches();
+		final Location first = plan.getRoute().getStops().get(stopIndex).getLocation();
 		switch (event.getMenuAction())
 		{
 			case GAME_OBJECT_FIRST_OPTION:
@@ -396,7 +399,9 @@ public class RunSession
 			case GAME_OBJECT_FIFTH_OPTION:
 			case WIDGET_TARGET_ON_GAME_OBJECT:
 				final Patch patch = scene.patchAt(event.getId(), event.getParam0(), event.getParam1());
-				if (patch != null && inRun.contains(patch))
+				final CompostBin bin = scene.binAt(event.getId(), event.getParam0(), event.getParam1());
+				if (patch != null && inRun.contains(patch)
+					|| bin != null && bin == CompostBin.at(first) && settings.getRunConfig().isMakeCompost())
 				{
 					startClock(System.currentTimeMillis());
 				}
@@ -408,6 +413,12 @@ public class RunSession
 			case NPC_FIFTH_OPTION:
 			case WIDGET_TARGET_ON_NPC:
 				final NPC npc = event.getMenuEntry().getNpc();
+				if (npc != null && PatchGuide.TOOL_LEPRECHAUN.equals(npc.getName())
+					&& navigator.inRange(patchesAt(plan, first)))
+				{
+					startClock(System.currentTimeMillis());
+					break;
+				}
 				for (Patch p : inRun)
 				{
 					if (npc != null && scene.gardener(p) == npc)
@@ -964,6 +975,21 @@ public class RunSession
 	private BankStop bankAfterStop()
 	{
 		return extraBank != null && !extraNow ? extraBank : plan.bankAfter(stopIndex);
+	}
+
+	/**
+	 * The stops after the current one, by their patches, up to a bank visit or the run's end: for the guide's compost
+	 * for later stops, and whether to note before leaving.
+	 */
+	private List<List<Patch>> laterStops()
+	{
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		final List<List<Patch>> later = new ArrayList<>();
+		for (int i = stopIndex; i + 1 < stops.size() && (i == stopIndex ? bankAfterStop() : plan.bankAfter(i)) == null; i++)
+		{
+			later.add(patchesAt(plan, stops.get(i + 1).getLocation()));
+		}
+		return later;
 	}
 
 	/** The bank visit under way, or null. */
@@ -1549,7 +1575,7 @@ public class RunSession
 
 			// The patches are followed first, even while the seed vault reminder shows, so planting is still seen and the
 			// run can finish (elzerma: the reminder stayed up after planting and the run never stopped)
-			instruction = patches.nextStep(stop, here);
+			instruction = patches.nextStep(stop, here, laterStops());
 			final String vault = instruction != null && stop.getLocation() == Location.FARMING_GUILD && !vaultChecked
 				? fromSeedVault() : null;
 			if (vault != null)
@@ -1774,8 +1800,9 @@ public class RunSession
 		{
 			return navigator.travelTarget(stop, patchesAt(plan, stop.getLocation()));
 		}
-		final Patch current = patches.getCurrentPatch();
-		return current != null && navigator.farFrom(current) ? scene.locationOf(current) : null;
+		// The patch, or the tool leprechaun or compost bin for their steps
+		final WorldPoint point = patches.stepPoint();
+		return navigator.farFrom(point) ? point : null;
 	}
 
 	/**
@@ -2111,6 +2138,23 @@ public class RunSession
 		}
 	}
 
+	/**
+	 * The tool leprechaun's window opened: during a visit to him, a check screenshot of its outlines (developer client
+	 * only), with what the visit takes and stores logged. Client thread.
+	 */
+	public void onLeprechaunWindow()
+	{
+		if (stage != RunView.State.RUNNING && stage != RunView.State.ARMED || loggedInstruction == null
+			|| !loggedInstruction.startsWith(LEPRECHAUN_VISIT))
+		{
+			return;
+		}
+		final Highlights highlights = view.getHighlights();
+		log.debug("Leprechaun window opened at {}: take {}, store {}", loggedWhere, highlights.getLeprechaunTake(),
+			highlights.getLeprechaunStore());
+		checkShots.take(loggedWhere + " - leprechaun window");
+	}
+
 	/** A moment a hand check is about, to screenshot: what newly shows, or the Note step clearing; null for the rest. */
 	private String checkMoment(String where, String instruction, String reminders)
 	{
@@ -2127,6 +2171,11 @@ public class RunSession
 			if (instruction.startsWith("Clean your "))
 			{
 				return "clean herbs";
+			}
+			// Once per bin step, not again as its count goes up
+			if (instruction.contains("compost bin") && !uncounted(instruction).equals(uncounted(loggedInstruction)))
+			{
+				return "compost bin";
 			}
 			if (loggedInstruction != null && loggedInstruction.startsWith(LEPRECHAUN_VISIT))
 			{
@@ -2148,6 +2197,12 @@ public class RunSession
 	private boolean newly(String reminders, String text)
 	{
 		return reminders != null && reminders.contains(text) && (loggedReminders == null || !loggedReminders.contains(text));
+	}
+
+	/** A step without its count, e.g. "Put your watermelon in the compost bin" for "... (4/15)"; "" for none. */
+	static String uncounted(String instruction)
+	{
+		return instruction == null ? "" : instruction.replaceFirst(" \\(\\d+/\\d+\\)$", "");
 	}
 
 	/** The step log's inventory line: what came in and went out since the last one, notes as notes. */
@@ -2816,7 +2871,8 @@ public class RunSession
 		}
 		// Empty buckets as the player chose (patch actions P1): dropped, or kept. Stored ones are part of the stop's visit to
 		// the tool leprechaun, not a line of their own that followed the player between stops (elzerma, 2026-10-30)
-		if (buckets > 0 && settings.getRunConfig().getEmptyBuckets() == EmptyBuckets.DROP)
+		// Not the ones taken to empty the compost bin with (P3)
+		if (buckets > 0 && settings.getRunConfig().getEmptyBuckets() == EmptyBuckets.DROP && !patches.keepsBuckets())
 		{
 			parts.add(buckets + (buckets == 1 ? " empty bucket" : " empty buckets"));
 		}
