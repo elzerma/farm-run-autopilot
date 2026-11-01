@@ -346,6 +346,13 @@ is closest to leprechaun"*): while the bin is to be filled, the patches whose cr
 stop's tool leprechaun first (the bin while he isn't loaded). The guide had gone to the north-west allotment, across the
 farm, as the bin's steps had named it, the stop's first patch, and the patch named stays first.
 
+**When the bin is filled** (elzerma, 2026-10-31, at Port Phasmatys, sent to the bin with 12 after the first allotment
+and needing 3 more: *"I think it should have told me to plant and compost before putting in bin, then proceed to pick
+other patch and once the patch is empty or inv is full, dump into bin"*): the crops go in once none are left to pick at
+the stop, or when the inventory is full while picking; each allotment is planted and composted as it's picked. So:
+pick the first, plant and compost it, pick the second, and once it's empty, into the bin (closed once full), then plant
+and compost it.
+
 Still a trip of its own: a step's item that's with the leprechaun but not carried, found only at that step (a rake for
 weeds, a spade for a dead plant, a plant cure), as these can't be known ahead.
 

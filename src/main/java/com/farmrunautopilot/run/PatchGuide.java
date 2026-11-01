@@ -588,8 +588,11 @@ class PatchGuide
 				p.done = true;
 				continue;
 			}
-			// Picked and about to plant: the crops for the compost bin go in it first, and it's closed once full (P3)
-			if (bin != null && advice.getAction() == StepAdvisor.Action.PLANT)
+			// The crops for the compost bin go in it once there are none left to pick here, the patches before planted and
+			// composted as they're picked, or when the inventory's full (below), and it's closed once full (elzerma,
+			// 2026-10-31, at Port Phasmatys: "it should have told me to plant and compost before putting in bin, then proceed
+			// to pick other patch and once the patch is empty or inv is full, dump into bin")
+			if (bin != null && !binCropsToPick(here))
 			{
 				final String fill = fillBin(bin, patch, false);
 				if (fill != null)
@@ -1614,6 +1617,21 @@ class PatchGuide
 	{
 		final BinState state = patchTracker.binState(bin);
 		return state != null && (state.hasCompost() || fillCount(state) >= 0 && fillCount(state) < bin.capacity());
+	}
+
+	/** A patch here still has crops for the compost bin to pick. */
+	private boolean binCropsToPick(List<Patch> here)
+	{
+		for (Patch patch : here)
+		{
+			final Progress p = progress(patch);
+			final PatchPrediction live = patchTracker.predict(patch);
+			if (!p.done && !p.skipped && live != null && live.getState() == PatchState.HARVESTABLE && cropsForBin(patch))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** The crop growing in the patch is one of those for the compost bin. */
