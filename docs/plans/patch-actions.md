@@ -369,3 +369,10 @@ each decision.
 allotments with ultracompost gave 13 to 27, 19 on average, over the runs of 2026-10-30 and 31, so the checks thought
 there was room when there wasn't, and the inventory filled mid-picking instead. Asked "Count an allotment as about 19
 watermelons for the room checks, not 8?", elzerma: *"Yes, use 19"*. It's `SupplyCalculator.ALLOTMENT_HARVEST`.
+
+**The tool leprechaun's window** (elzerma, 2026-11-01: *"highlights in leprechaun menu with rt click items
+highlighted?"*): during a visit to him, his window (interfaces 125, his store, and 126, the inventory side) outlines what
+the visit takes in his store and what it stores on the inventory side, labelled "Right-click" when it's more than one;
+right-clicking one colours the option for the amount ("-1", "-5", "-X", "-All"). UNVERIFIED: the options' wording, matched
+by what follows the dash; the dev client logs `Leprechaun window menu on <item>: <options>` and `Leprechaun window opened
+at <stop>: take {...}, store {...}`, and takes a check screenshot as the window opens during a visit.

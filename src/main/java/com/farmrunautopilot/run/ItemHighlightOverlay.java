@@ -80,6 +80,7 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 		this.menuHighlighter = menuHighlighter;
 		showOnInventory();
 		showOnEquipment();
+		showOnInterfaces(InterfaceID.FARMING_TOOLS, InterfaceID.FARMING_TOOLS_SIDE);
 	}
 
 	/** An item's vine in one interface: the slot it's on and when it was last drawn there. */
@@ -198,6 +199,14 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 			return;
 		}
 		final Highlights highlights = session.getView().getHighlights();
+		final int group = widgetItem.getWidget() != null
+			? WidgetUtil.componentToInterface(widgetItem.getWidget().getId()) : -1;
+		if (group == InterfaceID.FARMING_TOOLS || group == InterfaceID.FARMING_TOOLS_SIDE)
+		{
+			drawLeprechaunItem(graphics, itemId, widgetItem, (group == InterfaceID.FARMING_TOOLS
+				? highlights.getLeprechaunTake() : highlights.getLeprechaunStore()).get(itemId));
+			return;
+		}
 		final boolean wear = highlights.getWearItemIds().contains(itemId);
 		if (!wear && !highlights.getItemIds().contains(itemId))
 		{
@@ -244,6 +253,42 @@ public class ItemHighlightOverlay extends WidgetItemOverlay
 		else if (needsRightClick(itemId, widgetItem, highlights.getTeleportOption()))
 		{
 			drawLabel(graphics, bounds, worn(widgetItem) ? RIGHT_CLICK_WORN_LABEL : RIGHT_CLICK_LABEL, colour);
+		}
+	}
+
+	/**
+	 * In the tool leprechaun's window, what the visit takes from his store and, on the inventory side, what it stores,
+	 * labelled "Right-click" when it's more than one, as his menu has the amounts (elzerma, 2026-11-01: "highlights in
+	 * leprechaun menu with rt click items highlighted?"); the menu then colours the amount (LeprechaunMenuHighlighter).
+	 *
+	 * @param amount how many to take or store, or null when the item isn't the visit's
+	 */
+	private void drawLeprechaunItem(Graphics2D graphics, int itemId, WidgetItem widgetItem, Integer amount)
+	{
+		if (amount == null || amount <= 0)
+		{
+			return;
+		}
+		final Color colour = config.itemColour();
+		final Rectangle bounds = widgetItem.getCanvasBounds();
+		if (config.vineHighlights())
+		{
+			drawVine(graphics, itemId, widgetItem);
+		}
+		else
+		{
+			final String key = itemId + ":" + widgetItem.getQuantity() + ":false";
+			if (outlineCache.size() > MAX_CACHED_OUTLINES && !outlineCache.containsKey(key))
+			{
+				outlineCache.clear();
+			}
+			graphics.drawImage(outlineCache.computeIfAbsent(key,
+				k -> itemManager.getItemOutline(itemId, widgetItem.getQuantity(), colour)), (int) bounds.getX(),
+				(int) bounds.getY(), null);
+		}
+		if (amount > 1)
+		{
+			drawLabel(graphics, bounds, RIGHT_CLICK_LABEL, colour);
 		}
 	}
 

@@ -148,6 +148,9 @@ class PatchGuide
 	private boolean storeDue;
 	/** Something has been picked at this stop. */
 	private boolean pickedHere;
+	/** What the visit to the tool leprechaun in hand takes from and stores with him, by item, for his window. */
+	private Map<Integer, Integer> visitTake = Collections.emptyMap();
+	private Map<Integer, Integer> visitStore = Collections.emptyMap();
 	/** The stops after this one, by their patches, up to a bank visit or the run's end. */
 	private List<List<Patch>> laterStops = Collections.emptyList();
 
@@ -784,6 +787,8 @@ class PatchGuide
 					final int wanted = Math.min(compostIn(state, bin) - buckets, stored);
 					final int take = room > 0 ? Math.min(wanted, room) : wanted;
 					final List<String> store = counted(spare);
+					visitTake = Collections.singletonMap(ItemID.BUCKET_EMPTY, take);
+					visitStore = byItem(spare);
 					currentAction = StepAdvisor.Action.TAKE_COMPOST;
 					return "At the tool leprechaun: " + (store.isEmpty() ? "" : "store " + join(store) + " and ") + "take "
 						+ take + (take == 1 ? " empty bucket" : " empty buckets");
@@ -1061,9 +1066,31 @@ class PatchGuide
 		{
 			return null;
 		}
+		// For his window's outlines
+		final Map<Integer, Integer> taking = byItem(compost.take);
+		tools.forEach(tool -> taking.put(tool, 1));
+		if (emptyBuckets > 0)
+		{
+			taking.put(ItemID.BUCKET_EMPTY, emptyBuckets);
+		}
+		final Map<Integer, Integer> storing = byItem(compost.store);
+		if (buckets > 0)
+		{
+			storing.put(ItemID.BUCKET_EMPTY, buckets);
+		}
+		visitTake = taking;
+		visitStore = storing;
 		currentPatch = at;
 		currentAction = !produce.isEmpty() ? StepAdvisor.Action.NOTE : StepAdvisor.Action.TAKE_COMPOST;
 		return "At the tool leprechaun: " + join(parts);
+	}
+
+	/** Compost counts by item, for the outlines in the tool leprechaun's window. */
+	private static Map<Integer, Integer> byItem(Map<Compost, Integer> compost)
+	{
+		final Map<Integer, Integer> items = new HashMap<>();
+		compost.forEach((kind, count) -> items.put(kind.getItemId(), count));
+		return items;
 	}
 
 	/** What a visit to the tool leprechaun is made for (docs/plans/patch-actions.md 8.1). */
@@ -1743,12 +1770,12 @@ class PatchGuide
 			return new Highlights(null, false, null, binItems, null, Collections.emptySet(), Collections.emptyList(), null,
 				Collections.emptySet(), Collections.emptySet(), binInHand);
 		}
-		// The tool leprechaun outlined, with the produce to use on him (P1)
+		// The tool leprechaun outlined, with the produce to use on him (P1), and in his window what to take and store
 		if (currentAction == StepAdvisor.Action.NOTE || currentAction == StepAdvisor.Action.TAKE_COMPOST)
 		{
 			return new Highlights(null, false, TOOL_LEPRECHAUN, currentAction == StepAdvisor.Action.NOTE ? produce
 				: Collections.emptySet(), null, Collections.emptySet(), Collections.emptyList(), null,
-				Collections.emptySet());
+				Collections.emptySet()).withLeprechaun(visitTake, visitStore);
 		}
 		// Main item first: reminders name it. Only what gets clicked is outlined (elzerma, 2026-10-19: the rake and
 		// spades were outlined, though raking and clearing click the patch); the rest is still checked as carried.

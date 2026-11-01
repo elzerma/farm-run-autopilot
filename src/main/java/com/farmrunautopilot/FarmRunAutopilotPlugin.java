@@ -27,6 +27,7 @@ import com.farmrunautopilot.run.HighlightOverlay;
 import com.farmrunautopilot.run.HintArrowController;
 import com.farmrunautopilot.run.InventoryCountOverlay;
 import com.farmrunautopilot.run.ItemHighlightOverlay;
+import com.farmrunautopilot.run.LeprechaunMenuHighlighter;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.run.SceneTracker;
@@ -181,6 +182,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 
 	@Inject
 	private TeleportMenuHighlighter teleportMenuHighlighter;
+
+	@Inject
+	private LeprechaunMenuHighlighter leprechaunMenuHighlighter;
 
 	@Inject
 	private FairyRingLog fairyRingLog;
@@ -594,6 +598,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 		{
 			pohDetector.onHouseLoading();
 		}
+		if (event.getGroupId() == InterfaceID.FARMING_TOOLS)
+		{
+			runSession.onLeprechaunWindow();
+		}
 		farmBankTab.onWidgetLoaded(event);
 	}
 
@@ -621,6 +629,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	public void onMenuOpened(MenuOpened event)
 	{
 		teleportMenuHighlighter.onMenuOpened(event);
+		leprechaunMenuHighlighter.onMenuOpened(event);
 	}
 
 	@Subscribe

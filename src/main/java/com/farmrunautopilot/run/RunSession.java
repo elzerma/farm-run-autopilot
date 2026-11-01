@@ -2138,6 +2138,23 @@ public class RunSession
 		}
 	}
 
+	/**
+	 * The tool leprechaun's window opened: during a visit to him, a check screenshot of its outlines (developer client
+	 * only), with what the visit takes and stores logged. Client thread.
+	 */
+	public void onLeprechaunWindow()
+	{
+		if (stage != RunView.State.RUNNING && stage != RunView.State.ARMED || loggedInstruction == null
+			|| !loggedInstruction.startsWith(LEPRECHAUN_VISIT))
+		{
+			return;
+		}
+		final Highlights highlights = view.getHighlights();
+		log.debug("Leprechaun window opened at {}: take {}, store {}", loggedWhere, highlights.getLeprechaunTake(),
+			highlights.getLeprechaunStore());
+		checkShots.take(loggedWhere + " - leprechaun window");
+	}
+
 	/** A moment a hand check is about, to screenshot: what newly shows, or the Note step clearing; null for the rest. */
 	private String checkMoment(String where, String instruction, String reminders)
 	{
