@@ -340,6 +340,12 @@ own visit, or a full inventory, takes care of it.
 | After emptying a compost bin | its compost past what this stop and the stops ahead in reach use, before picking starts there (elzerma: *"we should do a trip to leprechaun to store the ultracompost before harvesting watermelons and filling the bin"*) | stored only on a visit made anyway, so at Hosidius it waited for the inventory to fill mid-picking |
 | Before leaving the stop | too little room for what the next stop brings in; or empty buckets for the next stop's compost bin when it's expected ready, keeping those carried (elzerma, leaving Hosidius: *"2x ultracompost were used so we should pull 13 out for the next stop"*); never before a bank visit or at the run's end | every stop, to note what was picked; the 2 empty buckets were stored there, then 15 taken at Port Phasmatys |
 
+**The order of the patches at a bin stop** (elzerma, 2026-10-31, at Port Phasmatys: *"we should harvest the allotment
+that is closest to the bin so then we have shorter trips between allotment and bin"*, then *"no it should be patch that
+is closest to leprechaun"*): while the bin is to be filled, the patches whose crops go in it come first, nearest the
+stop's tool leprechaun first (the bin while he isn't loaded). The guide had gone to the north-west allotment, across the
+farm, as the bin's steps had named it, the stop's first patch, and the patch named stays first.
+
 Still a trip of its own: a step's item that's with the leprechaun but not carried, found only at that step (a rake for
 weeds, a spade for a dead plant, a plant cure), as these can't be known ahead.
 

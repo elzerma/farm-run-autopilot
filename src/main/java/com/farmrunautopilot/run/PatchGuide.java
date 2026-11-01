@@ -31,6 +31,7 @@ import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -534,7 +535,7 @@ class PatchGuide
 				return empty;
 			}
 		}
-		for (Patch patch : protectingFlowersFirst(navigator.nearestFirst(here, currentPatch)))
+		for (Patch patch : inOrder(here))
 		{
 			final Progress p = progress(patch);
 			if (p.skipped)
@@ -1552,8 +1553,75 @@ class PatchGuide
 				ordered.add(patch);
 			}
 		}
-		ordered.addAll(protectingFlowersFirst(navigator.nearestFirst(rest, currentPatch)));
+		ordered.addAll(inOrder(rest));
 		return ordered;
+	}
+
+	/**
+	 * The stop's patches in the order the guide takes them: nearest the player first, the one being worked on staying first
+	 * so the step doesn't flip between patches while walking. While the compost bin is to be filled, the patches whose crops
+	 * go in it come first, nearest the tool leprechaun first (elzerma, 2026-10-31, at Port Phasmatys: "we should harvest
+	 * the allotment that is closest to the bin so then we have shorter trips", then "no it should be patch that is closest
+	 * to leprechaun"). A protecting flower comes before all.
+	 */
+	private List<Patch> inOrder(List<Patch> here)
+	{
+		// The patch a bin or leprechaun step names isn't one being worked on: it's only the stop's first
+		final Patch working = currentAction == null || atBinOrLeprechaun(currentAction) ? null : currentPatch;
+		final List<Patch> ordered = navigator.nearestFirst(here, null);
+		final CompostBin bin = binAt(here);
+		final GameObject object = bin != null && binToFill(bin) ? scene.binObject(bin) : null;
+		if (object != null)
+		{
+			// The stop's leprechaun, the one by the bin, or the bin while he isn't loaded
+			final NPC nearest = scene.nearestLeprechaun(object.getWorldLocation());
+			final WorldPoint from = leprechaunAt != null ? leprechaunAt
+				: nearest != null ? nearest.getWorldLocation() : object.getWorldLocation();
+			ordered.sort(Comparator.comparing((Patch patch) -> !cropsForBin(patch)).thenComparingInt(patch ->
+			{
+				final WorldPoint point = scene.locationOf(patch);
+				return cropsForBin(patch) && point != null ? point.distanceTo2D(from) : 0;
+			}));
+		}
+		if (working != null && ordered.remove(working))
+		{
+			ordered.add(0, working);
+		}
+		return protectingFlowersFirst(ordered);
+	}
+
+	/** Steps done at the compost bin or the tool leprechaun, or with the inventory, rather than at a patch. */
+	private static boolean atBinOrLeprechaun(StepAdvisor.Action action)
+	{
+		switch (action)
+		{
+			case OPEN_BIN:
+			case ADD_ASH:
+			case EMPTY_BIN:
+			case FILL_BIN:
+			case CLOSE_BIN:
+			case NOTE:
+			case TAKE_COMPOST:
+			case CLEAN:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	/** The stop's bin will take crops this stop: it has room, or is to be emptied first. */
+	private boolean binToFill(CompostBin bin)
+	{
+		final BinState state = patchTracker.binState(bin);
+		return state != null && (state.hasCompost() || fillCount(state) >= 0 && fillCount(state) < bin.capacity());
+	}
+
+	/** The crop growing in the patch is one of those for the compost bin. */
+	private boolean cropsForBin(Patch patch)
+	{
+		final PatchPrediction live = patchTracker.predict(patch);
+		final Crop crop = live != null ? live.getCrop() : null;
+		return crop != null && settings.getRunConfig().getBinCrops().contains(crop);
 	}
 
 	/**
