@@ -486,11 +486,11 @@ Worked through in the working notes `docs/ISSUES-REVIEW-2026-10-21.md` on branch
 
 ## Review of 2026-11-01 (#32 to #35, #39)
 
-Every report below was made on the released `62f3070`; line numbers are for master `af55118`. elzerma picked each verdict in the picker on 2026-11-01, #33 with a short answer of their own. Replies are drafted (A to C) and posted only once elzerma says so; #35 gets none until the release (elzerma replied on 2026-10-31). Nothing new on the other open issues since the 2026-10-23 replies.
+Every report below was made on the released `62f3070`; line numbers are for master `af55118`. elzerma picked each verdict in the picker on 2026-11-01, #33 with a short answer of their own, then said to post drafts A to C as written; they went up on 2026-11-01 (GitHub time), with the labels and closes. #35 gets no reply until the release (elzerma replied on 2026-10-31). Nothing new on the other open issues since the 2026-10-23 replies.
 
 ## #32 Test: Spellbook Swap - needs attention
 
-**Kind:** Test report · **Status:** open; the test is fixed (its first step waits for the test's run to be planned; `SPELLBOOK_SWAP` revision 2); reply drafted (draft A), then label `test-report` and close as completed · **Reviewed through:** 2026-10-24 helpimtrappedinawebserver (body)
+**Kind:** Test report · **Status:** closed as completed 2026-11-01, `test-report`; the test is fixed (its first step waits for the test's run to be planned; `SPELLBOOK_SWAP` revision 2); reply posted (draft A) · **Reviewed through:** 2026-11-01 elzerma (draft A)
 
 | Who | What they said | Checked against | Evaluation | Decision |
 |-----|----------------|-----------------|------------|----------|
@@ -498,7 +498,7 @@ Every report below was made on the released `62f3070`; line numbers are for mast
 
 ## #33 Add a banking step
 
-**Kind:** Idea · **Status:** open, `idea`; explored (write-up below), waiting on elzerma's choice; reply drafted (draft B) · **Reviewed through:** 2026-10-26 winter-mark (body)
+**Kind:** Idea · **Status:** open, `idea`; explored (write-up below), waiting on elzerma's choice; reply posted (draft B) · **Reviewed through:** 2026-11-01 elzerma (draft B)
 
 | Who | What they said | Checked against | Evaluation | Decision |
 |-----|----------------|-----------------|------------|----------|
@@ -527,7 +527,7 @@ Every report below was made on the released `62f3070`; line numbers are for mast
 
 ## #34 Run times
 
-**Kind:** Idea (shared run times) · **Status:** open; reply drafted (draft C), then label `wontfix` and close as not planned · **Reviewed through:** 2026-10-26 ColdStoneCode (body)
+**Kind:** Idea (shared run times) · **Status:** closed as not planned 2026-11-01, `wontfix`; reply posted (draft C) · **Reviewed through:** 2026-11-01 elzerma (draft C)
 
 | Who | What they said | Checked against | Evaluation | Decision |
 |-----|----------------|-----------------|------------|----------|
