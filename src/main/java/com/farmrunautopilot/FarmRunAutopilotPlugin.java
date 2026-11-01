@@ -534,6 +534,13 @@ public class FarmRunAutopilotPlugin extends Plugin
 			{
 				accessChecker.requestRefresh();
 				runService.reset();
+				// A run timing carries on after relogging, with the plan it was armed with, so no new plan comes to show the
+				// Run tab again after the login screen (elzerma, 2026-11-01: back in after the connection dropped mid-run, it
+				// still said "Log in to see your next run.")
+				if (runSession.isUnderWay())
+				{
+					showPlanLater(runService.getPlan(), true);
+				}
 			}
 		}
 		else if (event.getGameState() == GameState.LOADING)
