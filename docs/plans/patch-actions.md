@@ -384,5 +384,11 @@ memoized-leaping-hammock.md`.
   (`ItemHighlightOverlay`). A click counts at once, before the game takes the items a tick later, so the count drops on
   the click and the outline moves on to the 1 button the moment the last five's clicked; one not seen applied in 3 ticks
   is dropped. A right-click colours the "-5" or "-1" option; "Exchange" on him is coloured for a visit with window work.
-- **UNVERIFIED in game**: the dev client logs `Leprechaun window menu on <item>: <options>` and `Leprechaun window opened
-  at <stop>: take {...}, store {...}`, and takes a check screenshot as the window opens during a visit.
+- **Seen in game** (elzerma's run of 2026-11-01, at Hosidius: "i like the leprechaun stuff"): the menus read Remove-All,
+  Remove-X, Remove-1, Remove-5 (+ Banknotes) on his side and Store-5, Store-X, Store-1, Store-All on the inventory side;
+  the check screenshots show the 5 button outlined, "Click", at quantity 1 with 13 to store, and the 1 button with 3
+  left at quantity 5. The dev client still logs `Leprechaun window opened at <stop>: take {...}, store {...}` and takes a
+  check screenshot as the window opens during a visit.
+- **The developer client froze** on that run, three seconds after "note your watermelon" at Civitas: an assertion in
+  RuneLite's own GPU plugin (`ModelUploader.uploadSortedModel`, a model's depth sort), which only the developer client
+  checks (`./gradlew run` passes `-ea`). The run task now leaves assertions off for `net.runelite.client.plugins.gpu`.

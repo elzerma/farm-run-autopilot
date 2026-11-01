@@ -3,7 +3,6 @@ package com.farmrunautopilot.run;
 import com.farmrunautopilot.FarmRunAutopilotConfig;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.NPC;
 import net.runelite.api.events.MenuOpened;
@@ -15,10 +14,9 @@ import net.runelite.client.util.Text;
  * Colours options for a visit to the tool leprechaun (elzerma, 2026-11-01: "highlights in leprechaun menu with rt click
  * items highlighted?"): "Exchange" on him, which opens his window, during a visit with things to take or store there;
  * and in the window, the "-5" or "-1" option for the quantity the clicks are in (LeprechaunClicks), for a right-click
- * rather than the quantity button. Each menu's options there are logged, to check their wording from a run. Only colours
- * options the menu has: adds none, removes none. Client thread.
+ * rather than the quantity button: Remove-1/5/X/All on his side, Store-1/5/X/All on the inventory side, as elzerma's run
+ * of 2026-11-01 showed. Only colours options the menu has: adds none, removes none. Client thread.
  */
-@Slf4j
 @Singleton
 public class LeprechaunMenuHighlighter
 {
@@ -43,7 +41,6 @@ public class LeprechaunMenuHighlighter
 		}
 		final Highlights highlights = session.getView().getHighlights();
 		final boolean windowWork = !highlights.getLeprechaunTake().isEmpty() || !highlights.getLeprechaunStore().isEmpty();
-		boolean logged = false;
 		for (MenuEntry entry : entries)
 		{
 			final String option = Text.removeTags(entry.getOption());
@@ -61,11 +58,6 @@ public class LeprechaunMenuHighlighter
 			if (side == null)
 			{
 				continue;
-			}
-			if (!logged)
-			{
-				logged = true;
-				log.debug("Leprechaun window menu on {}: {}", Text.removeTags(entry.getTarget()), optionList(entries));
 			}
 			final LeprechaunClicks.Next next = clicks.now();
 			if ((side == LeprechaunClicks.Side.TAKE ? next.take : next.store).containsKey(widget.getItemId())
@@ -85,15 +77,5 @@ public class LeprechaunMenuHighlighter
 	private void colour(MenuEntry entry, String option)
 	{
 		entry.setOption(ColorUtil.wrapWithColorTag(option, config.itemColour()));
-	}
-
-	private static String optionList(MenuEntry[] entries)
-	{
-		final StringBuilder s = new StringBuilder();
-		for (MenuEntry entry : entries)
-		{
-			s.append(s.length() > 0 ? ", " : "").append(Text.removeTags(entry.getOption()));
-		}
-		return s.toString();
 	}
 }

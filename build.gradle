@@ -38,7 +38,9 @@ tasks.register('run', JavaExec) {
 	classpath = sourceSets.test.runtimeClasspath
 	mainClass = pluginMainClass
 
-	jvmArgs "-ea"
+	// Not in RuneLite's GPU plugin: its model depth sort asserts on an edge case and froze the developer client
+	// (2026-11-01, ModelUploader.uploadSortedModel); players' RuneLite runs without assertions
+	jvmArgs "-ea", "-da:net.runelite.client.plugins.gpu..."
 	args "--developer-mode", "--debug"
 }
 
