@@ -977,6 +977,21 @@ public class RunSession
 		return extraBank != null && !extraNow ? extraBank : plan.bankAfter(stopIndex);
 	}
 
+	/**
+	 * The stops after the current one, by their patches, up to a bank visit or the run's end: for the guide's compost
+	 * for later stops, and whether to note before leaving.
+	 */
+	private List<List<Patch>> laterStops()
+	{
+		final List<RouteStop> stops = plan.getRoute().getStops();
+		final List<List<Patch>> later = new ArrayList<>();
+		for (int i = stopIndex; i + 1 < stops.size() && (i == stopIndex ? bankAfterStop() : plan.bankAfter(i)) == null; i++)
+		{
+			later.add(patchesAt(plan, stops.get(i + 1).getLocation()));
+		}
+		return later;
+	}
+
 	/** The bank visit under way, or null. */
 	private BankStop activeBank()
 	{
@@ -1560,11 +1575,7 @@ public class RunSession
 
 			// The patches are followed first, even while the seed vault reminder shows, so planting is still seen and the
 			// run can finish (elzerma: the reminder stayed up after planting and the run never stopped)
-			// What the next stop will bring in, for whether to note before leaving: nothing when a bank visit or the end of the
-			// run comes first
-			final List<Patch> next = stopIndex + 1 < plan.getRoute().getStops().size() && bankAfterStop() == null
-				? patchesAt(plan, plan.getRoute().getStops().get(stopIndex + 1).getLocation()) : Collections.emptyList();
-			instruction = patches.nextStep(stop, here, next);
+			instruction = patches.nextStep(stop, here, laterStops());
 			final String vault = instruction != null && stop.getLocation() == Location.FARMING_GUILD && !vaultChecked
 				? fromSeedVault() : null;
 			if (vault != null)

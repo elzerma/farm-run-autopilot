@@ -145,6 +145,8 @@ class PatchGuide
 	private WorldPoint leprechaunAt;
 	/** A visit to the tool leprechaun here has said to store compost or empty buckets: it stays until they're stored. */
 	private boolean storeDue;
+	/** The stops after this one, by their patches, up to a bank visit or the run's end. */
+	private List<List<Patch>> laterStops = Collections.emptyList();
 
 	/** What has happened at a patch during this run. */
 	private static final class Progress
@@ -443,10 +445,13 @@ class PatchGuide
 	 * The first unfinished step at this stop, or null when every patch here is done. While still far from the patch,
 	 * the stop's walking directions (rocks, gates, stairs) come first.
 	 *
-	 * @param next the next stop's patches, for whether to note before leaving; none when a bank visit or the end comes first
+	 * @param later the stops after this one, by their patches, up to a bank visit or the run's end: for compost for them,
+	 *              and whether to note before leaving
 	 */
-	String nextStep(RouteStop stop, List<Patch> here, List<Patch> next)
+	String nextStep(RouteStop stop, List<Patch> here, List<List<Patch>> later)
 	{
+		laterStops = later;
+		final List<Patch> next = later.isEmpty() ? Collections.emptyList() : later.get(0);
 		final Map<Integer, Integer> held = inventoryAsHeld();
 		if (stop != atStop)
 		{
@@ -999,14 +1004,21 @@ class PatchGuide
 		{
 			parts.add("note your " + produceNames(produce));
 		}
-		final List<String> take = beforePlanting ? toTake() : Collections.emptyList();
+		final List<String> needed = beforePlanting ? toTake() : Collections.emptyList();
 		// Still to store once the noting's done, as storing is a step of its own with him (elzerma's run of 2026-10-31
 		// finished at the noting, the buckets carried off)
-		final boolean going = !parts.isEmpty() || !take.isEmpty() || beforePlanting || forRoom || storeDue;
-		final List<String> store = going ? counted(binCompostSpare(inventoryAsHeld())) : new ArrayList<>();
+		if (parts.isEmpty() && needed.isEmpty() && !beforePlanting && !forRoom && !storeDue)
+		{
+			return null;
+		}
+		final Map<Integer, Integer> held = inventoryAsHeld();
 		final int buckets = settings.getRunConfig().getEmptyBuckets() == EmptyBuckets.STORE
-			? inventoryAsHeld().getOrDefault(ItemID.BUCKET_EMPTY, 0) : 0;
-		if (going && buckets > 0)
+			? held.getOrDefault(ItemID.BUCKET_EMPTY, 0) : 0;
+		final Set<Integer> tools = beforePlanting ? plantingToolsToTake() : Collections.emptySet();
+		final CompostTrade compost = compostTradeHere(at, beforePlanting,
+			freeInventorySlots() + freedByNoting(held) + buckets - tools.size());
+		final List<String> store = counted(compost.store);
+		if (buckets > 0)
 		{
 			store.add(buckets + (buckets == 1 ? " empty bucket" : " empty buckets"));
 		}
@@ -1014,6 +1026,11 @@ class PatchGuide
 		for (int i = 0; i < store.size(); i++)
 		{
 			parts.add(i == 0 ? "store " + store.get(i) : store.get(i));
+		}
+		final List<String> take = counted(compost.take);
+		for (int tool : tools)
+		{
+			take.add(withArticle(runService.itemName(tool).toLowerCase()));
 		}
 		for (int i = 0; i < take.size(); i++)
 		{
@@ -1183,13 +1200,181 @@ class PatchGuide
 	 */
 	private List<String> toTake()
 	{
-		final List<String> take = compostToTake();
+		final List<String> take = counted(compostToTake());
 		for (int tool : plantingToolsToTake())
 		{
-			final String name = runService.itemName(tool).toLowerCase();
-			take.add(("aeiou".indexOf(name.charAt(0)) >= 0 ? "an " : "a ") + name);
+			take.add(withArticle(runService.itemName(tool).toLowerCase()));
 		}
 		return take;
+	}
+
+	private static String withArticle(String name)
+	{
+		return ("aeiou".indexOf(name.charAt(0)) >= 0 ? "an " : "a ") + name;
+	}
+
+	/** Inventory slots noting the produce frees: all but one of a kind, or all of it where its notes are carried. */
+	private int freedByNoting(Map<Integer, Integer> held)
+	{
+		int freed = 0;
+		for (int id : produce)
+		{
+			freed += held.getOrDefault(id, 0) - (held.getOrDefault(runService.notedId(id), 0) > 0 ? 0 : 1);
+		}
+		return Math.max(0, freed);
+	}
+
+	/** What a visit to the tool leprechaun takes and stores of compost (P1, P3). */
+	static final class CompostTrade
+	{
+		final Map<Compost, Integer> take = new EnumMap<>(Compost.class);
+		final Map<Compost, Integer> store = new EnumMap<>(Compost.class);
+
+		/** Inventory slots it uses: taken, less stored. */
+		int slots()
+		{
+			return take.values().stream().mapToInt(Integer::intValue).sum()
+				- store.values().stream().mapToInt(Integer::intValue).sum();
+		}
+	}
+
+	/**
+	 * The compost a visit to the tool leprechaun leaves carried: what this stop's patches still need, and the next stops'
+	 * too, stop by stop, while the room left still holds what this stop and those stops will bring in (elzerma,
+	 * 2026-10-31, asked whether to take compost for later stops on a visit made anyway: "Yes, when there's room"); up to
+	 * a stop whose compost bin will supply it. What's missing is taken, when he has it; what came out of this stop's bin
+	 * past that is stored, but never what was brought, which is for later.
+	 *
+	 * @param carried  compost carried, by type
+	 * @param fromBin  of it, what came out of this stop's compost bin
+	 * @param stock    what the tool leprechaun holds
+	 * @param needHere what this stop's patches still need
+	 * @param later    each later stop's need in route order, up to a bank visit or the run's end; null for one whose
+	 *                 compost bin will supply it
+	 * @param harvests each later stop's expected harvest, in inventory slots
+	 * @param room     free slots once the visit's noting and storing of buckets are done
+	 * @param toCome   slots this stop's patches still to pick will fill
+	 */
+	static CompostTrade compostTrade(Map<Compost, Integer> carried, Map<Compost, Integer> fromBin,
+		Map<Compost, Integer> stock, Map<Compost, Integer> needHere, List<Map<Compost, Integer>> later,
+		List<Integer> harvests, int room, int toCome)
+	{
+		// This stop's whatever the room, as its patches need it
+		Map<Compost, Integer> target = new EnumMap<>(Compost.class);
+		target.putAll(needHere);
+		CompostTrade trade = trade(target, carried, fromBin, stock, false);
+		int coming = toCome;
+		for (int i = 0; i < later.size() && i < harvests.size(); i++)
+		{
+			final Map<Compost, Integer> need = later.get(i);
+			if (need == null)
+			{
+				break;
+			}
+			final Map<Compost, Integer> more = new EnumMap<>(Compost.class);
+			more.putAll(target);
+			need.forEach((compost, count) -> more.merge(compost, count, Integer::sum));
+			final CompostTrade next = trade(more, carried, fromBin, stock, true);
+			coming += harvests.get(i);
+			if (next == null || room - next.slots() < coming)
+			{
+				break;
+			}
+			target = more;
+			trade = next;
+		}
+		return trade;
+	}
+
+	/** What to take and store to carry this much compost; null when he's short of some and {@code strict}. */
+	private static CompostTrade trade(Map<Compost, Integer> target, Map<Compost, Integer> carried,
+		Map<Compost, Integer> fromBin, Map<Compost, Integer> stock, boolean strict)
+	{
+		final CompostTrade trade = new CompostTrade();
+		for (Compost compost : Compost.values())
+		{
+			final int want = target.getOrDefault(compost, 0);
+			final int have = carried.getOrDefault(compost, 0);
+			if (compost == Compost.NONE)
+			{
+				continue;
+			}
+			if (want > have)
+			{
+				if (stock.getOrDefault(compost, 0) >= want - have)
+				{
+					trade.take.put(compost, want - have);
+				}
+				else if (strict)
+				{
+					return null;
+				}
+			}
+			else if (Math.min(have - want, fromBin.getOrDefault(compost, 0)) > 0)
+			{
+				trade.store.put(compost, Math.min(have - want, fromBin.getOrDefault(compost, 0)));
+			}
+		}
+		return trade;
+	}
+
+	/** {@link #compostTrade} for a visit here, with the stops ahead as RunSession gave them. */
+	private CompostTrade compostTradeHere(Patch at, boolean beforePlanting, int room)
+	{
+		final Holdings holdings = holdingsTracker.getHoldings();
+		final Map<Integer, Integer> inventory = holdings.in(Holdings.Source.INVENTORY);
+		final Map<Integer, Integer> leprechaun = holdings.in(Holdings.Source.LEPRECHAUN);
+		final Map<Compost, Integer> carried = new EnumMap<>(Compost.class);
+		final Map<Compost, Integer> fromBin = new EnumMap<>(Compost.class);
+		final Map<Compost, Integer> stock = new EnumMap<>(Compost.class);
+		for (Compost compost : Compost.values())
+		{
+			if (compost != Compost.NONE)
+			{
+				final int id = compost.getItemId();
+				carried.put(compost, inventory.getOrDefault(id, 0));
+				fromBin.put(compost, Math.min(binTaken.getOrDefault(id, 0), inventory.getOrDefault(id, 0)));
+				stock.put(compost, leprechaun.getOrDefault(id, 0));
+			}
+		}
+		final Map<Compost, Integer> needHere = compostStillNeeded(inventory);
+		final List<Map<Compost, Integer>> later = new ArrayList<>();
+		final List<Integer> harvests = new ArrayList<>();
+		// A filled bottomless bucket does for every patch
+		if (inventory.getOrDefault(ItemID.BOTTOMLESS_COMPOST_BUCKET_FILLED, 0) == 0)
+		{
+			for (List<Patch> stop : laterStops)
+			{
+				later.add(compostAt(stop));
+				harvests.add(harvestToCome(null, stop));
+			}
+		}
+		final CompostTrade trade = compostTrade(carried, fromBin, stock, needHere, later, harvests, room,
+			harvestToCome(beforePlanting ? at : null, atStopPatches));
+		logDecision("Compost for the visit: need here " + needHere + ", carried " + carried + ", stops ahead " + later
+			+ "; take " + trade.take + ", store " + trade.store);
+		return trade;
+	}
+
+	/** A later stop's compost by type, as the supplies were worked out; null when its compost bin will supply it. */
+	private Map<Compost, Integer> compostAt(List<Patch> stop)
+	{
+		final CompostBin bin = binAt(stop);
+		final BinState state = bin != null ? patchTracker.predictBin(bin) : null;
+		if (state != null && state.hasCompost())
+		{
+			return null;
+		}
+		final Map<Compost, Integer> need = new EnumMap<>(Compost.class);
+		for (Patch patch : stop)
+		{
+			final PatchCare care = plan.getSupplies().getCare().get(patch);
+			if (care != null && care.getCompost() != null && care.getCompost() != Compost.NONE)
+			{
+				need.merge(care.getCompost(), 1, Integer::sum);
+			}
+		}
+		return need;
 	}
 
 	/**
@@ -1223,11 +1408,11 @@ class PatchGuide
 	}
 
 	/**
-	 * "3 ultracompost": the compost this stop's patches still need, when there's too little in the inventory and enough
-	 * stored with the tool leprechaun (P1: at each stop, for that stop); empty otherwise, or with a filled bottomless
-	 * bucket.
+	 * The compost this stop's patches still need, e.g. 3 ultracompost, when there's too little in the inventory and enough
+	 * stored with the tool leprechaun (P1: at each stop, for that stop); none otherwise, or with a filled bottomless bucket.
+	 * Whether it makes the visit before planting needed; the visit itself may take more, for later stops.
 	 */
-	private List<String> compostToTake()
+	private Map<Compost, Integer> compostToTake()
 	{
 		final Holdings holdings = holdingsTracker.getHoldings();
 		final Map<Integer, Integer> inventory = holdings.in(Holdings.Source.INVENTORY);
@@ -1235,13 +1420,13 @@ class PatchGuide
 		final Map<Compost, Integer> need = compostStillNeeded(inventory);
 		logDecision("Compost for the stop: need " + need + ", carried " + countsOf(need.keySet(), inventory) + ", stored "
 			+ countsOf(need.keySet(), stored));
-		final List<String> take = new ArrayList<>();
+		final Map<Compost, Integer> take = new EnumMap<>(Compost.class);
 		for (Map.Entry<Compost, Integer> e : need.entrySet())
 		{
 			final int missing = e.getValue() - inventory.getOrDefault(e.getKey().getItemId(), 0);
 			if (missing > 0 && stored.getOrDefault(e.getKey().getItemId(), 0) >= missing)
 			{
-				take.add(missing + " " + e.getKey().getDisplayName().toLowerCase());
+				take.put(e.getKey(), missing);
 			}
 		}
 		return take;

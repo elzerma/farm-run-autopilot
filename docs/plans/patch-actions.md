@@ -340,5 +340,13 @@ own visit, or a full inventory, takes care of it.
 | Before leaving the stop | too little room for what the next stop brings in; never before a bank visit or at the run's end | every stop, to note what was picked |
 
 Still a trip of its own: a step's item that's with the leprechaun but not carried, found only at that step (a rake for
-weeds, a spade for a dead plant, a plant cure), as these can't be known ahead. Not changed, for elzerma to decide:
-taking compost for later stops on a visit made anyway would save their visits, but carries more buckets.
+weeds, a spade for a dead plant, a plant cure), as these can't be known ahead.
+
+**Compost for later stops** (asked: "On a visit, take compost for the next stops too, when there's room?"; elzerma:
+*"Yes, when there's room"*). Any visit made anyway leaves carried what this stop's patches still need and, stop by stop
+along the route, what the next stops' need, while the free slots left still hold what this stop and those stops will
+bring in (8 a herb patch or allotment, the room check's estimate). It stops at a bank visit, the run's end, or a stop
+whose compost bin is expected ready, as that bin supplies the compost from there. Compost that came out of this stop's
+bin is kept for those stops before any is stored; what was brought from the bank is never stored. A stop whose compost
+is carried needs no visit for it, so its visit happens only for room. The log line `Compost for the visit: ...` shows
+each decision.
