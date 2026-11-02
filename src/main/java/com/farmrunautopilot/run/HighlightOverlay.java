@@ -64,6 +64,12 @@ public class HighlightOverlay extends Overlay
 			{
 				outlines.drawOutline(object, OUTLINE_WIDTH, config.patchColour(), OUTLINE_FEATHER);
 			}
+			// And the tile the walking line and arrow go to, its nearest to the player (elzerma, 2026-11-01: "clickbox
+			// highlighting for nearest tile of the patch?")
+			if (!objects.isEmpty())
+			{
+				markTile(graphics, highlights.getPatchTile());
+			}
 		}
 		// The compost bin to open, fill or empty (P3), in the patch colour
 		final GameObject bin = highlights.getBin() != null ? scene.binObject(highlights.getBin()) : null;

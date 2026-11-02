@@ -46,6 +46,7 @@ import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.Item;
 import net.runelite.api.NPC;
+import net.runelite.api.Player;
 import net.runelite.api.Skill;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.coords.WorldPoint;
@@ -144,6 +145,13 @@ class PatchGuide
 	/** The stop's tool leprechaun for the walking line, and where he was when picked out: he wanders. */
 	private NPC leprechaun;
 	private WorldPoint leprechaunAt;
+	/**
+	 * The current patch's tile for the walking line, hint arrow and tile mark ({@link #patchTile}): its nearest to the
+	 * player when the step began, kept for the step so the line isn't asked for again at every step taken.
+	 */
+	private WorldPoint patchTile;
+	private Patch patchTileOf;
+	private StepAdvisor.Action patchTileFor;
 	/** A visit to the tool leprechaun here has said to store compost or empty buckets: it stays until they're stored. */
 	private boolean storeDue;
 	/** Something has been picked at this stop. */
@@ -963,7 +971,29 @@ class PatchGuide
 				return leprechaunAt;
 			}
 		}
-		return workAt;
+		// The patch's tile nearest the player, not its middle (elzerma, 2026-11-01)
+		return object != null ? workAt : patchTile();
+	}
+
+	/**
+	 * The current patch's tile nearest where the player was when the step began, worked out again for a new patch or
+	 * action (back from the leprechaun, the patch's nearest end may be another) and until its object loads; its map
+	 * point before that. Null with no patch in hand.
+	 */
+	WorldPoint patchTile()
+	{
+		if (currentPatch == null)
+		{
+			return null;
+		}
+		if (patchTile == null || patchTileOf != currentPatch || patchTileFor != currentAction)
+		{
+			final Player player = client.getLocalPlayer();
+			patchTile = player != null ? scene.nearestTileOf(currentPatch, player.getWorldLocation()) : null;
+			patchTileOf = currentPatch;
+			patchTileFor = currentAction;
+		}
+		return patchTile != null ? patchTile : scene.locationOf(currentPatch);
 	}
 
 	/** Planted or treated here this run: the player has started on the stop's planting their own way. */
@@ -1849,7 +1879,7 @@ class PatchGuide
 				break;
 		}
 		return new Highlights(currentPatch, gardener && currentPatch.hasGardener(), null, items, spell,
-			Collections.emptySet(), Collections.emptyList(), null, needed);
+			Collections.emptySet(), Collections.emptyList(), null, needed).withPatchTile(patchTile());
 	}
 
 	/** The spell if it can be cast from the spellbook the player is on right now, otherwise null. */

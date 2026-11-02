@@ -345,9 +345,15 @@ class Navigator
 		return false;
 	}
 
+	/**
+	 * Further than a patch's reach from its nearest tile, not its middle: at the end of one of Catherby's long allotments
+	 * the step still said "Follow the line to the ... patch, then plant" (elzerma's run of 2026-11-01).
+	 */
 	boolean farFrom(Patch patch)
 	{
-		return farFrom(scene.locationOf(patch));
+		final Player player = client.getLocalPlayer();
+		final WorldPoint tile = player != null ? scene.nearestTileOf(patch, player.getWorldLocation()) : null;
+		return farFrom(tile != null ? tile : scene.locationOf(patch));
 	}
 
 	/** Further than a patch's reach from this point, e.g. the tool leprechaun or a compost bin. */
