@@ -112,6 +112,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Shortest Path
 -------------
 Source: https://github.com/Skretzo/shortest-path (commit 7e81a40d0312e767fd7833637e57caae80a80253)
+Commits: 37abff3a3345185fc11fccecae04d8170de25a11 (1.21.3): walk-grid.bin, rebuilt 2026-11-01 with every stop
+         but the underwater one
 Used in: src/main/java/com/farmrunautopilot/data/travel/atlas/AtlasLinks.java (where the plugin's own ways
          land), AtlasBanks.java (the one bank the atlas can't reach), WalkGrid.java and walk-grid.bin, and the
          travel data that names this notice
