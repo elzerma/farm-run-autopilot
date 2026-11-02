@@ -66,7 +66,8 @@ public final class PatchPoints
 		set(new WorldPoint(2667, 3526, 0), Patch.SEERS_VILLAGE_HOPS);
 		set(new WorldPoint(2576, 3105, 0), Patch.YANILLE_HOPS);
 		set(new WorldPoint(1365, 2939, 0), Patch.ALDARIN_HOPS);
-		// Sprint 1b: from the travel atlas's patch places (Farming-Helper's points), to correct from the game log
+		// Sprint 1b: from the travel atlas's patch places (the patch objects' tiles in mejrs' OSRS cache dump,
+		// tools/atlas/patches.tsv), to correct from the game log
 		set(new WorldPoint(3181, 3357, 0), Patch.CHAMPIONS_GUILD_BUSH);
 		set(new WorldPoint(2940, 3221, 0), Patch.RIMMINGTON_BUSH);
 		set(new WorldPoint(2591, 3863, 0), Patch.ETCETERIA_BUSH);

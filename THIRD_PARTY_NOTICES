@@ -11,17 +11,25 @@ Source: https://github.com/runelite/runelite
 Used in: src/main/java/com/farmrunautopilot/data/Patch.java,
          src/main/java/com/farmrunautopilot/data/Crop.java,
          src/main/java/com/farmrunautopilot/data/PatchStateDecoder.java,
-         src/main/java/com/farmrunautopilot/run/RunSession.java
+         src/main/java/com/farmrunautopilot/data/CompostBin.java,
+         src/main/java/com/farmrunautopilot/data/BinState.java,
+         src/main/java/com/farmrunautopilot/tracking/FarmingTick.java,
+         src/main/java/com/farmrunautopilot/tracking/PatchPredictor.java,
+         src/main/java/com/farmrunautopilot/run/PatchGuide.java,
+         src/main/java/com/farmrunautopilot/supply/BottomlessBucketTracker.java
 
-Patch region IDs, extra region IDs, varbit assignments, gardener NPCs and the
-Catherby / Falador bounds rules were copied from
-runelite-client/.../timetracking/farming/FarmingWorld.java. Patch-state value
-ranges were copied from PatchImplementation.java, and crop growth tick rates and
-stage counts from Produce.java. The compost chat message patterns in
-RunSession follow CompostTracker.java.
+Patch and compost bin region IDs, extra region IDs, varbit assignments, gardener
+NPCs and the Catherby / Falador bounds rules were copied from
+runelite-client/.../timetracking/farming/FarmingWorld.java, for every patch type
+the plugin runs. Patch-state and compost bin value ranges were copied from
+PatchImplementation.java, and crop growth tick rates and stage counts from
+Produce.java. The farming tick timing and growth prediction follow
+FarmingTracker.java, and the compost chat message patterns in PatchGuide and
+BottomlessBucketTracker follow CompostTracker.java.
 
 Copyright (c) 2018, NotFoxtrot <https://github.com/NotFoxtrot>
 Copyright (c) 2018, 2019 Abex
+Copyright (c) 2022 LlemonDuck
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -83,8 +91,11 @@ Farming-Helper
 Source: https://github.com/Speaax/Farming-Helper
 Used in: src/main/java/com/farmrunautopilot/data/PatchPoints.java
 
-Patch map coordinates (one WorldPoint per patch) were taken from
-Farming-Helper's location data classes.
+The tree, fruit tree and herb patch coordinates were taken from Farming-Helper's
+location data classes; all but Weiss's and Harmony Island's were later moved to
+the patch objects' positions logged in game. The other patch types' points are
+not from Farming-Helper: they're set centres from the OSRS Wiki's maps, and patch
+object tiles from mejrs' OSRS cache dump (game data, tools/atlas/patches.tsv).
 
 Copyright (c) 2025, JThomasDevs
 All rights reserved.
@@ -111,22 +122,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Shortest Path
 -------------
-Source: https://github.com/Skretzo/shortest-path (commit 7e81a40d0312e767fd7833637e57caae80a80253)
-Used in: src/main/java/com/farmrunautopilot/data/travel/atlas/AtlasLinks.java (where the plugin's own ways
-         land), AtlasBanks.java (the one bank the atlas can't reach), WalkGrid.java and walk-grid.bin, and the
-         travel data that names this notice
+Source: https://github.com/Skretzo/shortest-path
+Commits: 37abff3a3345185fc11fccecae04d8170de25a11 (1.21.3): the travel atlas, built 2026-10-25;
+         c7a4937 (2026-10-17): walk-grid.bin, rebuilt with the allotment and hops stops;
+         7e81a40d0312e767fd7833637e57caae80a80253: where the plugin's own ways land (AtlasLinks) and the
+         one bank the atlas can't reach (AtlasBanks)
+Used in: src/main/resources/com/farmrunautopilot/atlas/ and data/travel/atlas/ (which reads it),
+         walk-grid.bin and data/travel/WalkGrid.java, data/poh/HousePortal.java, run/FairyRingLog.java,
+         and the travel data that names this notice
 
-Facts only, no code: teleport landing tiles, bank locations, hot air balloon routes and their unlock values,
-and walking distances measured on its collision map (collision-map.zip) with a one-off tool outside the
-plugin. Nothing from Shortest Path is downloaded or loaded at runtime. Its licence names no copyright holder,
-so it is credited to Skretzo and the Shortest Path contributors. (The hand-copied walks that were in
-TravelTimes.java went in 2026-10, replaced by the travel atlas below.)
+Facts: teleport landing tiles, bank locations, transports and hops with their ticks, menu text and object and NPC
+ids, the levels, quests, items and game values each needs, where Teleport to House lands for each house location,
+and walking distances, worked out with its own pathfinder and collision map by tools outside the plugin (tools/walk,
+tools/atlas). One routine follows its code: FairyRingLog finds the leg's code in the fairy ring travel log and
+scrolls to it as ShortestPathPlugin.scrollFairyRingPanel does. Nothing from Shortest Path is downloaded or loaded at
+runtime. Its licence names no copyright holder, so it is credited to Skretzo and the Shortest Path contributors.
 
-tools/atlas (dev only, not part of the plugin) compiles Shortest Path's own code, unchanged, from a local clone
-(commit 37abff3a3345185fc11fccecae04d8170de25a11) to run its pathfinder with pretend accounts. That code is not in
-this repository, and the plugin ships none of it. Its answers are shipped as data in
-src/main/resources/com/farmrunautopilot/atlas/ (places, ways, teleports, hops, transports and requirements:
-tiles, ticks, menu text, object and NPC ids, and the requirement values from Shortest Path's transport files).
+tools/atlas (dev only, not part of the plugin) compiles Shortest Path's own code, unchanged, from a local clone to
+run its pathfinder with pretend accounts. That code is not in this repository, and the plugin ships none of it.
+Its answers are shipped as data in src/main/resources/com/farmrunautopilot/atlas/ (places, ways, teleports, hops,
+transports and requirements: tiles, ticks, menu text, object and NPC ids, and the requirement values from Shortest
+Path's transport files).
 
 Copyright (c) Skretzo and Shortest Path contributors
 All rights reserved.
