@@ -98,6 +98,8 @@ class PatchGuide
 	static final String TOOL_LEPRECHAUN = "Tool Leprechaun";
 	/** A tool leprechaun this close to the stop's patch is the stop's. */
 	private static final int LEPRECHAUN_NEAR_TILES = 40;
+	/** How much nearer the player another of the patch's tiles must be before the walking line and its mark move there. */
+	static final int RETARGET_TILES = 3;
 
 	private final Client client;
 	private final RunService runService;
@@ -145,13 +147,9 @@ class PatchGuide
 	/** The stop's tool leprechaun for the walking line, and where he was when picked out: he wanders. */
 	private NPC leprechaun;
 	private WorldPoint leprechaunAt;
-	/**
-	 * The current patch's tile for the walking line, hint arrow and tile mark ({@link #patchTile}): its nearest to the
-	 * player when the step began, kept for the step so the line isn't asked for again at every step taken.
-	 */
+	/** The current patch's tile for the walking line, hint arrow and its mark ({@link #patchTile}), and its patch. */
 	private WorldPoint patchTile;
 	private Patch patchTileOf;
-	private StepAdvisor.Action patchTileFor;
 	/** A visit to the tool leprechaun here has said to store compost or empty buckets: it stays until they're stored. */
 	private boolean storeDue;
 	/** Something has been picked at this stop. */
@@ -976,9 +974,10 @@ class PatchGuide
 	}
 
 	/**
-	 * The current patch's tile nearest where the player was when the step began, worked out again for a new patch or
-	 * action (back from the leprechaun, the patch's nearest end may be another) and until its object loads; its map
-	 * point before that. Null with no patch in hand.
+	 * The current patch's tile nearest the player, following them: it moves to another of the patch's tiles once that one
+	 * is {@link #RETARGET_TILES} nearer, so the walking line isn't asked for again at every step taken (elzerma's run of
+	 * 2026-11-01: worked out as the step began at the north allotment, it stayed at the south one's far tip after they
+	 * filled the compost bin on its other side). Its map point until its object loads; null with no patch in hand.
 	 */
 	WorldPoint patchTile()
 	{
@@ -986,14 +985,22 @@ class PatchGuide
 		{
 			return null;
 		}
-		if (patchTile == null || patchTileOf != currentPatch || patchTileFor != currentAction)
+		final Player player = client.getLocalPlayer();
+		final WorldPoint at = player != null ? player.getWorldLocation() : null;
+		final WorldPoint nearest = scene.nearestTileOf(currentPatch, at);
+		if (nearest != null && (patchTileOf != currentPatch || retarget(patchTile, nearest, at)))
 		{
-			final Player player = client.getLocalPlayer();
-			patchTile = player != null ? scene.nearestTileOf(currentPatch, player.getWorldLocation()) : null;
+			log.debug("Patch tile for {}: {}, {} tiles from {}", currentPatch, nearest, nearest.distanceTo2D(at), at);
+			patchTile = nearest;
 			patchTileOf = currentPatch;
-			patchTileFor = currentAction;
 		}
-		return patchTile != null ? patchTile : scene.locationOf(currentPatch);
+		return patchTileOf == currentPatch && patchTile != null ? patchTile : scene.locationOf(currentPatch);
+	}
+
+	/** Move the patch's tile from the one shown to the nearest: none shown, or the nearest is enough nearer the player. */
+	static boolean retarget(WorldPoint shown, WorldPoint nearest, WorldPoint at)
+	{
+		return shown == null || nearest.distanceTo2D(at) + RETARGET_TILES <= shown.distanceTo2D(at);
 	}
 
 	/** Planted or treated here this run: the player has started on the stop's planting their own way. */

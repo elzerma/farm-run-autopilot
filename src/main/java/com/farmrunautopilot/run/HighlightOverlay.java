@@ -5,11 +5,14 @@ import com.farmrunautopilot.data.PatchPoints;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
+import java.awt.Shape;
+import java.awt.geom.Area;
 import java.util.List;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.NPC;
+import net.runelite.api.Renderable;
 import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
@@ -64,11 +67,11 @@ public class HighlightOverlay extends Overlay
 			{
 				outlines.drawOutline(object, OUTLINE_WIDTH, config.patchColour(), OUTLINE_FEATHER);
 			}
-			// And the tile the walking line and arrow go to, its nearest to the player (elzerma, 2026-11-01: "clickbox
-			// highlighting for nearest tile of the patch?")
+			// And its clickbox over the tile the walking line and arrow go to, its nearest to the player (elzerma,
+			// 2026-11-01: "clickbox highlighting for nearest tile of the patch?")
 			if (!objects.isEmpty())
 			{
-				markTile(graphics, highlights.getPatchTile());
+				markPatchTile(graphics, objects, highlights.getPatchTile());
 			}
 		}
 		// The compost bin to open, fill or empty (P3), in the patch colour
@@ -101,6 +104,56 @@ public class HighlightOverlay extends Overlay
 			outlines.drawOutline(rideObject, OUTLINE_WIDTH, config.npcColour(), OUTLINE_FEATHER);
 		}
 		return null;
+	}
+
+	/**
+	 * The patch's clickbox over one of its tiles, filled in the patch colour: the part of it to click. The ground tile
+	 * instead while the clickbox isn't on screen.
+	 */
+	private void markPatchTile(Graphics2D graphics, List<GameObject> objects, WorldPoint tile)
+	{
+		final LocalPoint local = tile != null ? LocalPoint.fromWorld(client.getTopLevelWorldView(), tile) : null;
+		final Polygon ground = local != null ? Perspective.getCanvasTilePoly(client, local) : null;
+		if (ground == null)
+		{
+			return;
+		}
+		final Area clickbox = new Area();
+		int height = 0;
+		for (GameObject object : objects)
+		{
+			final Shape shape = object.getClickbox();
+			if (shape != null)
+			{
+				clickbox.add(new Area(shape));
+			}
+			final Renderable model = object.getRenderable();
+			if (model != null)
+			{
+				height = Math.max(height, model.getModelHeight());
+			}
+		}
+		clickbox.intersect(column(ground, Perspective.getCanvasTilePoly(client, local, height)));
+		OverlayUtil.renderPolygon(graphics, clickbox.isEmpty() ? ground : clickbox, config.patchColour());
+	}
+
+	/** On screen, the box standing on a tile's ground up to the same tile raised: the ground, the top and the four sides. */
+	private static Area column(Polygon ground, Polygon top)
+	{
+		final Area column = new Area(ground);
+		if (top == null || top.npoints != ground.npoints)
+		{
+			return column;
+		}
+		column.add(new Area(top));
+		for (int i = 0; i < ground.npoints; i++)
+		{
+			final int j = (i + 1) % ground.npoints;
+			column.add(new Area(new Polygon(
+				new int[]{ground.xpoints[i], ground.xpoints[j], top.xpoints[j], top.xpoints[i]},
+				new int[]{ground.ypoints[i], ground.ypoints[j], top.ypoints[j], top.ypoints[i]}, 4)));
+		}
+		return column;
 	}
 
 	private void markTile(Graphics2D graphics, WorldPoint point)

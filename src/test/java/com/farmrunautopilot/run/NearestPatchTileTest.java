@@ -2,6 +2,7 @@ package com.farmrunautopilot.run;
 
 import net.runelite.api.coords.WorldPoint;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
@@ -28,6 +29,18 @@ public class NearestPatchTileTest
 		assertEquals(new WorldPoint(106, 201, 0), SceneTracker.nearestTile(LOW, HIGH, new WorldPoint(106, 204, 0)));
 		// Standing in it (as a 1x1 corner of the rectangle can be), its own tile
 		assertEquals(new WorldPoint(105, 200, 0), SceneTracker.nearestTile(LOW, HIGH, new WorldPoint(105, 200, 0)));
+	}
+
+	@Test
+	public void theTileFollowsThePlayerAlongThePatch()
+	{
+		final WorldPoint shown = new WorldPoint(100, 200, 0);
+		// A step or two along it: not enough nearer to move, so the walking line isn't asked for again
+		assertFalse(PatchGuide.retarget(shown, new WorldPoint(102, 200, 0), new WorldPoint(102, 199, 0)));
+		// Round at its far end (by the compost bin, say): it moves there
+		assertTrue(PatchGuide.retarget(shown, new WorldPoint(112, 201, 0), new WorldPoint(113, 202, 0)));
+		// Nothing shown yet
+		assertTrue(PatchGuide.retarget(null, shown, new WorldPoint(98, 199, 0)));
 	}
 
 	@Test
