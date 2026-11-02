@@ -123,8 +123,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Shortest Path
 -------------
 Source: https://github.com/Skretzo/shortest-path
-Commits: 37abff3a3345185fc11fccecae04d8170de25a11 (1.21.3): the travel atlas, built 2026-10-25;
-         c7a4937 (2026-10-17): walk-grid.bin, rebuilt with the allotment and hops stops;
+Commits: 37abff3a3345185fc11fccecae04d8170de25a11 (1.21.3): the travel atlas, built 2026-10-25, and
+         walk-grid.bin, rebuilt 2026-11-01 with every stop but the underwater one;
          7e81a40d0312e767fd7833637e57caae80a80253: where the plugin's own ways land (AtlasLinks) and the
          one bank the atlas can't reach (AtlasBanks)
 Used in: src/main/resources/com/farmrunautopilot/atlas/ and data/travel/atlas/ (which reads it),
