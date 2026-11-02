@@ -535,7 +535,9 @@ Every report below was made on the released `62f3070`; line numbers are for mast
 
 ## #35 Problem:
 
-**Kind:** Bug · **Status:** open, `bug`; fix built, not yet seen in game; no reply until the release (elzerma replied 2026-10-31) · **Reviewed through:** 2026-11-01 Mr2Cookies
+**Kind:** Bug · **Status:** open, `bug`; cause confirmed in elzerma's test of 2026-11-02, second fix built, not yet seen in game; no reply until the release (elzerma replied 2026-10-31) · **Reviewed through:** 2026-11-01 Mr2Cookies
+
+**Confirmed (elzerma's test, 2026-11-02):** with the first fix in, the balloon from Castle Wars landed at tick 4185 and the area finished loading at 4186. Taverley's tree read as weeds (value 0, the varbit as it was at Castle Wars) at 4187, and as the maple needing its health checked (value 32) at 4188. The step said "rake the patch" for one tick, then corrected itself. From the Gnome Stronghold the left-over value is the magic tree just planted there, which reads as done, so the patch is passed over. The first fix counted its wait from the landing, which comes before the load with a balloon. Patches are now read only from two ticks after a new area loads (`AREA_SETTLE_TICKS`). By teleport the load comes as the player lands, so nothing changes there (Lumbridge in the same run: loaded at 4236, its first reading at 4238 was right).
 
 | Who | What they said | Checked against | Evaluation | Decision |
 |-----|----------------|-----------------|------------|----------|

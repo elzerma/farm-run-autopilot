@@ -243,6 +243,13 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private static final int REGION_SETTLE_TICKS = 1;
 	/** Ticks in the same region after the one it changed on, up to {@link #REGION_SETTLE_TICKS}. */
 	private int ticksInRegion;
+	/**
+	 * Ticks after a new area finishes loading before its patches are read: the game sends them about two ticks after
+	 * the load, which a balloon finishes after the player has already landed (GitHub #35).
+	 */
+	private static final int AREA_SETTLE_TICKS = 2;
+	/** The game tick a new area last finished loading on, or -1. */
+	private int areaLoadedTick = -1;
 	private boolean lastTickPostLogin;
 	/** The last game state, to tell a new area loading in game (a teleport) from logging in or hopping. */
 	private GameState lastGameState;
@@ -467,6 +474,14 @@ public class FarmRunAutopilotPlugin extends Plugin
 			ticksInRegion++;
 			return;
 		}
+		// And until two ticks after a new area loads, counted from the load, not the landing: from Castle Wars by balloon
+		// the player landed at tick 4185, the area loaded at 4186, and Taverley's tree read as weeds (the value from
+		// Castle Wars) at 4187 and as the maple to check at 4188 (elzerma's test, 2026-11-02). By teleport the load is
+		// as the player lands, so the wait above already covers it (Lumbridge: loaded at 4236, read right at 4238)
+		if (areaLoadedTick >= 0 && client.getTickCount() - areaLoadedTick < AREA_SETTLE_TICKS)
+		{
+			return;
+		}
 
 		if (patchTracker.update(location, client.getTickCount() - lastModalCloseTick))
 		{
@@ -522,6 +537,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 		if (event.getGameState() == GameState.LOGGED_IN)
 		{
 			holdingsTracker.markDirty();
+			if (previous == GameState.LOADING)
+			{
+				areaLoadedTick = client.getTickCount();
+			}
 			// A new area loading in game during a run (a teleport) isn't a fresh start: the run keeps its plan, so quests
 			// aren't read again and the route isn't planned from nothing there, and the guide looks again straight away
 			// rather than at the next game tick (elzerma, 2026-10-30: "after teleporting somewhere it takes a second or two

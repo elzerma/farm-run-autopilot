@@ -43,8 +43,9 @@
 - A run under way shows on the Run tab again after you log back in.
 
 ### Fixes
-- Taverley's tree passed over after the balloon from the Gnome Stronghold (#35): patches are now read a tick later
-  after arriving somewhere, which should stop it. Please say on the issue if it happens again.
+- Taverley's tree passed over after the balloon from the Gnome Stronghold (#35): for a moment after a balloon lands,
+  the game still reports the patch where you set off. Patches are now read only once the new area has loaded, which
+  should stop it. Please say on the issue if it happens again.
 - The Spellbook Swap guided test read the Run tab a moment too early; it's fixed and asked again (#32).
 - Planting your last seed of a kind you chose to do without no longer skips composting that patch.
 
