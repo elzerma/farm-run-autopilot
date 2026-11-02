@@ -1292,10 +1292,14 @@ public class RunSession
 		final List<RouteStop> stops = plan.getRoute().getStops();
 		final int end = partEnd();
 
-		// Needed now: the step in hand can't be done; a moment's grace, as the inventory changes mid-step
-		if (patches.currentItemMissing(view.getHighlights()))
+		// Needed now: the step in hand can't be done; a moment's grace, as the inventory changes mid-step. The step the
+		// guide is on now, not the one the view still shows: planting the last seed (done without for the rest of the run)
+		// read as the plant step's seed missing, and the compost step after it was skipped, so its ultracompost was stored
+		// (elzerma's run of 2026-11-01, Civitas illa Fortis)
+		final Highlights step = patches.highlights();
+		if (patches.currentItemMissing(step))
 		{
-			if (view.getHighlights().getStepItemIds().stream().anyMatch(skippedItems::contains))
+			if (step.getStepItemIds().stream().anyMatch(skippedItems::contains))
 			{
 				log.debug("Step skipped: its item was skipped");
 				patches.skipCurrentStep();
