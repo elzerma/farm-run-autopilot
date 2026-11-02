@@ -44,10 +44,6 @@ public enum TestItem
 			+ "patches to Pay gardener and run just that farm's allotments. After planting each allotment the step should "
 			+ "say \"Pay Elstan for the north-west allotment: 2 x Compost\" (then the south-east one), and move on once "
 			+ "you've paid for it."),
-	NEW_PATCH_POINTS(Tab.RUN, "Where the new patches are",
-		"Tick Allotments, Flowers or Hops on the Run tab and stand by any allotment set or hops patch you can use. "
-			+ "The patch should be outlined when it's the next step, and the hint arrow should point at it, not a few "
-			+ "tiles away."),
 	ALLOTMENT_FLOWER_PROTECTION(Tab.FARM, "Flowers protecting allotments",
 		"At the farm south of Falador, with a marigold seed and potato seeds, leave Farm > Protection > Allotment "
 			+ "patches on Flower and run just that farm's allotments. The steps should start at the flower patch with "

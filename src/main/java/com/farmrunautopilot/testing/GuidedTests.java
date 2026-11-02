@@ -73,7 +73,6 @@ final class GuidedTests
 		TESTS.put(TestItem.VAULT_SEEDS_FOR_LATER, new VaultSeedsForLater());
 		TESTS.put(TestItem.VAULT_BANK_AT_GUILD, new VaultBankAtGuild());
 		TESTS.put(TestItem.ALLOTMENT_PAYMENT, new AllotmentPayment());
-		TESTS.put(TestItem.NEW_PATCH_POINTS, new NewPatchPoints());
 		TESTS.put(TestItem.ALLOTMENT_FLOWER_PROTECTION, new AllotmentFlowerProtection());
 		TESTS.put(TestItem.FORTIS_CHAMPION, new FortisChampion());
 		TESTS.put(TestItem.ICY_BASALT, new IcyBasalt());
@@ -449,47 +448,6 @@ final class GuidedTests
 							ctx.problem("Paying didn't let them pick the allotment the step named");
 						}
 					}));
-		}
-	}
-
-	/** The wiki's map points for the new patches. UNVERIFIED until the objects' real places are logged. */
-	private static final class NewPatchPoints extends GuidedTest
-	{
-		@Override
-		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
-		{
-			for (Patch patch : Patch.values())
-			{
-				if ((patch.getType() == PatchType.ALLOTMENT || patch.getType() == PatchType.HOPS)
-					&& access.missingFor(patch).isEmpty())
-				{
-					return Collections.emptyList();
-				}
-			}
-			return Collections.singletonList("Unlock an allotment or hops patch");
-		}
-
-		private static Step visit(String text)
-		{
-			return doThis(text, ctx -> !"none".equals(newPatchObjects(ctx)))
-				.onDone(ctx -> ctx.capture("Patches at " + ctx.location(), newPatchObjects(ctx)))
-				.orAskAfter(DO_TICKS, "The plugin hasn't seen an allotment, flower or hops patch yet. Are you by one?")
-				.onAnswer((ctx, yes) ->
-				{
-					if (yes)
-					{
-						ctx.problem("By a patch at " + ctx.location() + " but its object wasn't matched");
-					}
-				});
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				visit("Go to any allotment set or hops patch and stand by it"),
-				visit("Now another one (a different place)").optional(),
-				visit("And one more, if you can").optional());
 		}
 	}
 

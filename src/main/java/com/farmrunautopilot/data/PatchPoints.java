@@ -46,8 +46,9 @@ public final class PatchPoints
 		POINTS.put(Patch.CIVITAS_HERB, new WorldPoint(1581, 3094, 0));
 
 		// Allotment sets and hops: the centre of each set on the wiki's patch maps (Allotment patch/Patches, Flower patch,
-		// Hops patch/Patches). UNVERIFIED: not yet logged in game (guided test NEW_PATCH_POINTS); patch objects are told
-		// apart by varbit, so a few tiles off is fine.
+		// Hops patch/Patches). elzerma's runs logged every one's objects 1 to 7 tiles from these (up to 2026-11-01; the
+		// guide goes to the objects' own tiles once they're loaded), except Prifddinas's: UNVERIFIED. Patch objects are
+		// told apart by varbit, so a few tiles off is fine.
 		set(new WorldPoint(3055, 3308, 0), Patch.FALADOR_ALLOTMENT_NW, Patch.FALADOR_ALLOTMENT_SE, Patch.FALADOR_FLOWER);
 		set(new WorldPoint(2810, 3464, 0), Patch.CATHERBY_ALLOTMENT_N, Patch.CATHERBY_ALLOTMENT_S, Patch.CATHERBY_FLOWER);
 		set(new WorldPoint(2667, 3375, 0), Patch.ARDOUGNE_ALLOTMENT_N, Patch.ARDOUGNE_ALLOTMENT_S, Patch.ARDOUGNE_FLOWER);
