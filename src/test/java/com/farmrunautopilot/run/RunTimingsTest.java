@@ -32,7 +32,7 @@ public class RunTimingsTest
 	@Test
 	public void rankText()
 	{
-		assertEquals(" - new best for 6 herbs!", RunSession.rank(Arrays.asList(300.0, 320.0), 300, "6 herbs"));
+		assertEquals(" - new best for 6 herbs", RunSession.rank(Arrays.asList(300.0, 320.0), 300, "6 herbs"));
 		assertEquals(" - 2nd best for 6 herbs", RunSession.rank(Arrays.asList(300.0, 320.0), 320, "6 herbs"));
 		assertEquals(" - first time for 6 herbs", RunSession.rank(Arrays.asList(300.0), 300, "6 herbs"));
 		assertEquals("", RunSession.rank(Arrays.asList(1.0, 2.0, 3.0), 400, "6 herbs"));

@@ -70,7 +70,7 @@ public class RunView
 	String instruction;
 	/** The player is already at the first stop, so there's no travelling to it. */
 	boolean atFirstStop;
-	/** e.g. "Run finished in 12:30 - new best for 9 herbs!", or null. */
+	/** e.g. "Run finished in 12:30 - new best for 9 herbs", or null. */
 	String lastRun;
 	/**
 	 * Best times, one line per patch type after a first summary line ("Best: 9 herbs 6:05"); just after a run, that
