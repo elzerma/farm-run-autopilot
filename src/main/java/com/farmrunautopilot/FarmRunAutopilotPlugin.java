@@ -521,7 +521,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 	public void onRuneScapeProfileChanged(RuneScapeProfileChanged event)
 	{
 		// A guided test belongs to the account it started on
-		testRunner.onLoggedOut();
+		testRunner.onLoginChanged(false);
 		patchTracker.reset();
 		contractTracker.reset();
 		accessChecker.reset();
@@ -569,6 +569,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 				// still said "Log in to see your next run.")
 				if (runSession.isUnderWay())
 				{
+					log.debug("Logged in during a run: the Run tab shows it again");
 					showPlanLater(runService.getPlan(), true);
 				}
 			}
@@ -592,7 +593,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 			// Give the player their own Shortest Path settings back while logged out; a run carrying on sends its walk
 			// again after relogging
 			shortestPath.clear();
-			testRunner.onLoggedOut();
+			testRunner.onLoginChanged(true);
 			sceneTracker.clear();
 			pohDetector.reset();
 			showPlanLater(RunPlan.EMPTY, false);

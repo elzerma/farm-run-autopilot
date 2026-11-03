@@ -2,6 +2,7 @@ package com.farmrunautopilot.testing;
 
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.PohDetector;
+import com.farmrunautopilot.bank.FarmBankTab;
 import com.farmrunautopilot.bank.SeedVaultSection;
 import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.run.RunSession;
@@ -53,6 +54,8 @@ public class TestRunner
 	private final SceneTracker scene;
 	private final PohDetector pohDetector;
 	private final SeedVaultSection seedVault;
+	private final FarmBankTab farmBankTab;
+	private final CheckShots checkShots;
 	/** The dev client: the whole report also goes to the log, to be read back without submitting it. */
 	private final boolean developerMode;
 
@@ -70,6 +73,8 @@ public class TestRunner
 	 */
 	private int plannedAtStart;
 	private TestContext context;
+	/** The account the test began on: one that carries on through logging back in does so only for it. */
+	private long accountHash;
 	/** Each finished step's text and how it went. */
 	private final List<String[]> results = new ArrayList<>();
 
@@ -80,7 +85,8 @@ public class TestRunner
 	@Inject
 	TestRunner(Client client, ClientThread clientThread, SettingsStore settings, AccessChecker accessChecker,
 		HoldingsTracker holdingsTracker, RunSession runSession, RunService runService, SceneTracker scene,
-		PohDetector pohDetector, SeedVaultSection seedVault, @Named("developerMode") boolean developerMode)
+		PohDetector pohDetector, SeedVaultSection seedVault, FarmBankTab farmBankTab, CheckShots checkShots,
+		@Named("developerMode") boolean developerMode)
 	{
 		this.client = client;
 		this.clientThread = clientThread;
@@ -92,6 +98,8 @@ public class TestRunner
 		this.scene = scene;
 		this.pohDetector = pohDetector;
 		this.seedVault = seedVault;
+		this.farmBankTab = farmBankTab;
+		this.checkShots = checkShots;
 		this.developerMode = developerMode;
 	}
 
@@ -191,7 +199,8 @@ public class TestRunner
 		this.stepIndex = -1;
 		this.asking = false;
 		this.context = new TestContext(client, accessChecker, holdingsTracker, runSession, runService, scene,
-			pohDetector, settings, seedVault);
+			pohDetector, settings, seedVault, farmBankTab, checkShots);
+		this.accountHash = client.getAccountHash();
 		results.clear();
 		// The settings went in on the Swing thread: the run is planned with them on the next game tick, even if a tick
 		// since then planned it already
@@ -287,6 +296,31 @@ public class TestRunner
 		if (item != null)
 		{
 			finish(false, false);
+		}
+	}
+
+	/**
+	 * At the login screen, or the account's profile changed: as {@link #onLoggedOut}, unless the test carries on through
+	 * logging back in ({@link GuidedTest#keepsAcrossLogin}) and it's still its account (none while logged out).
+	 *
+	 * @param loggedOut at the login screen, so it counts as a logout
+	 */
+	public void onLoginChanged(boolean loggedOut)
+	{
+		if (item == null)
+		{
+			return;
+		}
+		final long account = client.getAccountHash();
+		if (!test.keepsAcrossLogin() || account != -1 && account != accountHash)
+		{
+			finish(false, false);
+			return;
+		}
+		if (loggedOut)
+		{
+			context.loggedOut();
+			log.debug("Guided test {}: logged out, carrying on once back in", item.name());
 		}
 	}
 

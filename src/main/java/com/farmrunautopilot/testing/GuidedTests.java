@@ -5,6 +5,7 @@ import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.access.UnlockSpotter;
 import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Crop;
+import com.farmrunautopilot.data.FarmingContract;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
@@ -21,6 +22,7 @@ import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.route.BankStop;
+import com.farmrunautopilot.route.ContractPlanner;
 import com.farmrunautopilot.route.RouteStop;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
@@ -85,6 +87,7 @@ final class GuidedTests
 		TESTS.put(TestItem.ETCETERIA_ACCESS, new EtceteriaAccess());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
 		TESTS.put(TestItem.GREAT_CONCH_ACCESS, new GreatConchAccess());
+		TESTS.put(TestItem.RELEASE_RUN, new ReleaseRun());
 	}
 
 	private GuidedTests()
@@ -1402,6 +1405,183 @@ final class GuidedTests
 					.onAnswer((ctx, yes) -> ctx.problem(yes ? "By the patch, but the plugin didn't see it"
 						: "Couldn't get to the patch")),
 				ask("Can you rake or plant in the calquat patch?"));
+		}
+	}
+
+	/**
+	 * One run before the release (elzerma, 2026-11-02: "I will do 1 run. Can you build me a test of what is needed at a
+	 * minimum for that run so we can capture screenshots?"): what's still unseen in game, watched through the whole run
+	 * in whatever order it comes, with the moments the README shows screenshotted for it. The farming contract handed in
+	 * to Guildmaster Jane and the next one taken (done on the spot if its crop is grown already), the spade asked for when
+	 * an allotment is picked with it left with the tool leprechaun, and the run carrying on after logging out and back in
+	 * (the log says "Logged in during a run"). It keeps the player's own settings, so it carries on through the relogin.
+	 */
+	private static final class ReleaseRun extends GuidedTest
+	{
+		@Override
+		public boolean keepsAcrossLogin()
+		{
+			return true;
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				doThis("Build your run on the Run tab, with the Farming Guild in it", ctx -> watch(ctx)
+					&& ctx.plan().getRoute().getStops().stream().anyMatch(stop -> stop.getLocation() == Location.FARMING_GUILD))
+					.onDone(ReleaseRun::planned),
+				doThis("At the bank, open the Farm run tab and take what it lists", ctx -> watch(ctx) && ctx.farmTabOpen())
+					.onDone(ctx -> ctx.screenshot("README bank tab"))
+					.optional(),
+				doThis("Start the run. Partway through it, log out and back in",
+					ctx -> watch(ctx) && ctx.logouts() > 0 && ctx.runView().getState() == RunView.State.RUNNING)
+					.onDone(ctx -> ctx.capture("Back in after logging out", ctx.runView().getInstruction()))
+					.optional(),
+				doThis("Play the rest of the run to its end, handing in your contract to Guildmaster Jane",
+					ctx -> watch(ctx) && Boolean.TRUE.equals(ctx.recall("running"))
+						&& ctx.runView().getState() == RunView.State.OFF)
+					.onDone(ReleaseRun::report));
+		}
+
+		/** The run as built: its stops, and the contract, which this run has to hand in. */
+		private static void planned(TestContext ctx)
+		{
+			final List<String> stops = new ArrayList<>();
+			for (RouteStop stop : ctx.plan().getRoute().getStops())
+			{
+				stops.add(stop.getLocation().getDisplayName());
+			}
+			ctx.capture("Stops", String.join(", ", stops));
+			final ContractPlanner.Plan contract = ctx.plan().getSelection().getContract();
+			ctx.capture("Contract", contract.getLine());
+			if (!contract.isOn())
+			{
+				ctx.cannotTest("Farm > Farming contracts > \"Build farming contracts into runs\" ticked");
+			}
+			else if (contract.getJane() != ContractPlanner.Jane.HAND_IN
+				&& (contract.getLine() == null || !contract.getLine().contains(" is grown")))
+			{
+				ctx.cannotTest("your farming contract's crop grown, so this run hands it in (its patch timer says when)");
+			}
+		}
+
+		/**
+		 * Each tick, whatever the step: the README's moments, screenshotted the first time each shows, Guildmaster Jane's
+		 * steps, the spade at an allotment, and the contract as it changes. Always true, to come first in each check.
+		 */
+		private static boolean watch(TestContext ctx)
+		{
+			final RunView view = ctx.runView();
+			final String step = view.getInstruction();
+			if (view.getState() == RunView.State.RUNNING && step != null)
+			{
+				ctx.remember("running", true);
+				final Patch patch = view.getHighlights() != null ? view.getHighlights().getPatch() : null;
+				moment(ctx, step.startsWith("Follow the line"), "walking line");
+				moment(ctx, patch != null && startsWithAny(step, "Pick the", "Plant:", "Rake the", "Check the health"),
+					"patch step");
+				moment(ctx, step.startsWith("Use ") && step.contains("compost"), "composting");
+				moment(ctx, step.startsWith("Pay "), "paying a gardener");
+				moment(ctx, step.startsWith("Talk to Guildmaster Jane"), "Guildmaster Jane");
+				if (step.startsWith("Talk to Guildmaster Jane") && !list(ctx, "jane").contains(step))
+				{
+					list(ctx, "jane").add(step);
+				}
+				// The spade, asked for at an allotment while it's with the tool leprechaun
+				final String reminder = view.getReminder();
+				if (patch != null && patch.getType() == PatchType.ALLOTMENT && step.startsWith("Pick the")
+					&& reminder != null && reminder.contains("spade") && ctx.recall("spade") == null)
+				{
+					ctx.remember("spade", patch.getDisplayName() + ": " + reminder.replace('\n', ';'));
+					ctx.screenshot("Release run - spade reminder");
+				}
+			}
+			for (String message : ctx.chat())
+			{
+				if (message.contains("You need a spade to do that") && ctx.recall("noSpade") == null)
+				{
+					ctx.remember("noSpade", String.valueOf(step));
+				}
+			}
+			// The contract as it changes: its crop, and COMPLETE (0 growing, 1 grown, 2 handed in). TYPE keeps the last crop
+			// until the next contract, so 0 is only the values not in yet, e.g. on the welcome screen after logging back in
+			final int type = ctx.varbit(VarbitID.FARMGUILD_CONTRACT_TYPE);
+			final Crop crop = FarmingContract.crop(type);
+			final String state = (crop != null ? crop.getDisplayName() : "value " + type) + " "
+				+ ctx.varbit(VarbitID.FARMGUILD_CONTRACT_COMPLETE);
+			if (type != 0 && !state.equals(ctx.recall("contractNow")))
+			{
+				ctx.remember("contractNow", state);
+				list(ctx, "contractStates").add(state);
+				list(ctx, "contract").add(state + (step != null ? " (" + step + ")" : ""));
+			}
+			return true;
+		}
+
+		/** What the run showed. The contract not handed in, or a spade the guide didn't ask for, needs attention. */
+		private static void report(TestContext ctx)
+		{
+			ctx.capture("README screenshots", String.join(", ", list(ctx, "moments")));
+			ctx.capture("Contract as it changed", String.join(" > ", list(ctx, "contract")));
+			ctx.capture("Guildmaster Jane's steps", list(ctx, "jane").isEmpty() ? "none"
+				: String.join(" | ", list(ctx, "jane")));
+			final String spade = ctx.recall("spade");
+			ctx.capture("Spade at an allotment", spade != null ? spade
+				: "not asked for: no allotment picked, or the spade was carried");
+			final List<String> states = list(ctx, "contractStates");
+			final boolean handedIn = states.stream().anyMatch(state -> state.endsWith(" 2"))
+				|| !cropOf(states.get(0)).equals(cropOf(states.get(states.size() - 1)));
+			if (!handedIn)
+			{
+				ctx.problem("The contract wasn't handed in");
+			}
+			final String noSpade = ctx.recall("noSpade");
+			if (noSpade != null)
+			{
+				ctx.problem("\"You need a spade to do that.\" at: " + noSpade);
+			}
+		}
+
+		/** "Jangerberry 2" to "Jangerberry". */
+		private static String cropOf(String state)
+		{
+			return state.substring(0, state.lastIndexOf(' '));
+		}
+
+		/** The first time a README moment shows, a screenshot of it. */
+		private static void moment(TestContext ctx, boolean showing, String name)
+		{
+			final List<String> taken = list(ctx, "moments");
+			if (showing && !taken.contains(name))
+			{
+				taken.add(name);
+				ctx.screenshot("README " + name);
+			}
+		}
+
+		private static boolean startsWithAny(String text, String... starts)
+		{
+			for (String start : starts)
+			{
+				if (text.startsWith(start))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/** A list kept from tick to tick under this key. */
+		private static List<String> list(TestContext ctx, String key)
+		{
+			List<String> list = ctx.recall(key);
+			if (list == null)
+			{
+				list = new ArrayList<>();
+				ctx.remember(key, list);
+			}
+			return list;
 		}
 	}
 }

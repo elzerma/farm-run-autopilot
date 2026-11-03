@@ -88,7 +88,14 @@ public enum TestItem
 	// Sprint 1c, the special trees
 	GREAT_CONCH_ACCESS(Tab.ACCOUNT, "The Great Conch's calquat patch",
 		"Only if you've started Troubled Tortugans but not finished it: go to the calquat patch on the Summer Shore of the "
-			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2);
+			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2),
+	// Before the release (elzerma, 2026-11-02: "I will do 1 run"): what's still unseen in game, and the README's screenshots
+	RELEASE_RUN(Tab.DEV, "One run before the release",
+		"Once your farming contract's crop is grown (its patch timer on the Run tab says when), start this and build your "
+			+ "usual run with the Farming Guild in it. If it picks an allotment, leave your spade with the tool leprechaun. "
+			+ "Take your supplies with the bank's Farm run tab open, log out and back in once partway through, and play "
+			+ "the run to its end, handing in your contract to Guildmaster Jane. The test screenshots the moments the "
+			+ "README shows; the log has the rest.");
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter

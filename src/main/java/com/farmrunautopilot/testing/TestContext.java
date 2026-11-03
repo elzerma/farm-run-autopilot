@@ -3,6 +3,7 @@ package com.farmrunautopilot.testing;
 import com.farmrunautopilot.access.AccessChecker;
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.access.PohDetector;
+import com.farmrunautopilot.bank.FarmBankTab;
 import com.farmrunautopilot.bank.SeedVaultSection;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.route.RunPlan;
@@ -48,6 +49,10 @@ public class TestContext
 	private final PohDetector pohDetector;
 	private final SettingsStore settings;
 	private final SeedVaultSection seedVault;
+	private final FarmBankTab farmBankTab;
+	private final CheckShots checkShots;
+	/** Times the player has logged out since the test began (one that carries on through logging back in). */
+	private int logouts;
 
 	/** Game messages since the last check. */
 	private final List<String> chat = new ArrayList<>();
@@ -63,7 +68,7 @@ public class TestContext
 
 	TestContext(Client client, AccessChecker accessChecker, HoldingsTracker holdingsTracker,
 		RunSession runSession, RunService runService, SceneTracker scene, PohDetector pohDetector,
-		SettingsStore settings, SeedVaultSection seedVault)
+		SettingsStore settings, SeedVaultSection seedVault, FarmBankTab farmBankTab, CheckShots checkShots)
 	{
 		this.client = client;
 		this.accessChecker = accessChecker;
@@ -74,6 +79,31 @@ public class TestContext
 		this.pohDetector = pohDetector;
 		this.settings = settings;
 		this.seedVault = seedVault;
+		this.farmBankTab = farmBankTab;
+		this.checkShots = checkShots;
+	}
+
+	void loggedOut()
+	{
+		logouts++;
+	}
+
+	/** Times the player has logged out since the test began, and come back to carry on with it. */
+	public int logouts()
+	{
+		return logouts;
+	}
+
+	/** A screenshot of the game as it is now, saved with the check screenshots (developer client only). */
+	public void screenshot(String what)
+	{
+		checkShots.takeForTest(what);
+	}
+
+	/** The bank is open on its Farm run tab. */
+	public boolean farmTabOpen()
+	{
+		return farmBankTab.isTabOpen();
 	}
 
 	void addChat(String message)

@@ -71,6 +71,23 @@ public class CheckShots
 			return;
 		}
 		taken++;
+		capture(what);
+	}
+
+	/**
+	 * As {@link #take}, for a guided test's own moments ({@link TestContext#screenshot}): not counted against
+	 * {@link #PER_SESSION}, so a long run's check screenshots can't use them up.
+	 */
+	public void takeForTest(String what)
+	{
+		if (folder != null)
+		{
+			capture(what);
+		}
+	}
+
+	private void capture(String what)
+	{
 		final String name = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()) + " " + safe(what) + ".png";
 		// The draw manager's frame queue takes requests from any thread
 		executor.schedule(() -> drawManager.requestNextFrameListener(image ->

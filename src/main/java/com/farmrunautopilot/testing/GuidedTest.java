@@ -122,6 +122,15 @@ public abstract class GuidedTest
 	}
 
 	/**
+	 * The test carries on when the player logs out and back in on its account, rather than ending unreported: only for
+	 * one that changes no settings, as the player's own are in use while logged out.
+	 */
+	public boolean keepsAcrossLogin()
+	{
+		return false;
+	}
+
+	/**
 	 * After the settings are put back: keep anything the test found, e.g. an unlock it saw.
 	 *
 	 * @param kept the player's own settings, about to be saved
