@@ -1,6 +1,7 @@
 # Fresh-eyes audit: settings, tabs and help text
 
-**Status:** proposal, waiting on elzerma's decisions (2026-11-03).
+**Status:** every group approved by elzerma (2026-11-03, see [Decisions](#decisions)); built on
+`claude/fresh-eyes-audit-a7eeca`.
 
 An outside read of every place the plugin explains itself or asks for a choice: the five sidebar tabs, every hover and
 help line, RuneLite's config panel and the "Help improve this plugin" list. It was done from the code,
@@ -160,4 +161,15 @@ Not proposed for building here; each changes what the plugin does.
 
 ## Decisions
 
-To be filled in from elzerma's answers.
+elzerma's answers in the picker, 2026-11-03:
+
+| Group | Answer |
+|---|---|
+| 1. Run tab | All of it (R1–R4) |
+| 2. Farm tab | All of it (F1–F7) |
+| 3. Travel tab | All of it (T1–T7), the Order renaming included |
+| 4. Account tab | All of it (A1–A5), cutting Pool included |
+| 5. Settings tab | All of it (S1–S6) |
+| 6. Config panel | All of it (C1–C3), the Hub description included |
+| 7. Help list | All of it (H1–H4) |
+| 8. Sidebar renderer | Keep it in `src/test` |
