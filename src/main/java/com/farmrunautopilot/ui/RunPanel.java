@@ -243,7 +243,13 @@ class RunPanel extends JPanel
 		{
 			add(presets);
 		}
-		add(runTypeToggles());
+		// A run armed or under way follows the plan it was armed with, so ticking a run type does nothing until it ends:
+		// hidden then, as the preset picker is (docs/plans/fresh-eyes-audit.md, R1)
+		final RunView.State state = controls.view().getState();
+		if (state != RunView.State.ARMED && state != RunView.State.RUNNING)
+		{
+			add(runTypeToggles());
+		}
 
 		if (!loggedIn)
 		{
@@ -425,8 +431,9 @@ class RunPanel extends JPanel
 			return;
 		}
 		// Which ones, and how they get ticked, is in Account > Unlocks: only the count here (said once, elzerma)
-		final JLabel label = tipped(note("Check your unlocks: " + review.size() + " not seen yet"),
-			"Click to open Account > Unlocks");
+		final JLabel label = tipped(note("Check " + review.size() + (review.size() == 1 ? " unlock" : " unlocks")
+			+ " in Account"), "Your run may need these, and the plugin can't read them from the game. Click to open "
+			+ "Account > Unlocks.");
 		label.setForeground(ColorScheme.BRAND_ORANGE);
 		label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		label.addMouseListener(new MouseAdapter()
@@ -523,7 +530,7 @@ class RunPanel extends JPanel
 		final JButton build = Style.primary(new JButton("Build run"));
 		build.setEnabled(!plan.getRoute().getStops().isEmpty());
 		build.setFocusPainted(false);
-		build.setToolTipText("Show the farm run bank tab and gather supplies. The run starts itself once you have them.");
+		build.setToolTipText("Shows what to take on the bank's Farm run tab. The run starts by itself once you have it all.");
 		build.addActionListener(e -> controls.build());
 		build.setAlignmentX(LEFT_ALIGNMENT);
 		build.setMaximumSize(new Dimension(Integer.MAX_VALUE, build.getPreferredSize().height));
@@ -1202,7 +1209,7 @@ class RunPanel extends JPanel
 		// The order is always said, under the heading (elzerma): a drag had switched it to their own without them noticing
 		if (route.getMode() != RouteMode.OFF)
 		{
-			add(tipped(note(route.getMode() == RouteMode.META ? "Order: the wiki's" : "Order: auto (fastest)"),
+			add(tipped(note(route.getMode() == RouteMode.META ? "Order: the wiki's" : "Order: fastest"),
 				"Change it in Travel > Route"));
 		}
 		else
