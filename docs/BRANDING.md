@@ -125,7 +125,7 @@ Keep to these numbers; if something looks cramped, change it here and in the cod
 - **One-line row** (`ExpandableRow`): name left, short value right, full value on hover, controls when opened.
 - **One-line setting** (`SetupPanel.labeled(name, control, width)`): the name on the left in a column as wide as the
   section's longest name (`SetupPanel.labelWidth`), its drop-down filling the rest, e.g. "Trees [Magic (75)]". Used
-  wherever the values fit beside the name (Farm > Crops, Compost and cures, Protection); a setting
+  wherever the values fit beside the name (Farm > Crops, Compost and cures, Protection; Travel > Route); a setting
   whose values are long (a place, "Store them at the tool leprechaun") keeps its name above a full-width drop-down. Run
   types are named as on the Run tab, plural ("Fruit trees"), but "Hardwood" and "Celastrus" without "trees", so every
   crop fits beside them.
