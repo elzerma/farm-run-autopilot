@@ -44,7 +44,7 @@ public class ContractPlannerTest
 		{
 			if (FarmingContract.crop(value) == crop)
 			{
-				return new Contract(value, crop, false, level, 0);
+				return new Contract(value, crop, 0, level, 0);
 			}
 		}
 		throw new IllegalArgumentException(crop.name());
@@ -96,9 +96,15 @@ public class ContractPlannerTest
 	public void janeHandsInTakesAnotherOrGivesOne()
 	{
 		prePlanted();
-		final Plan done = plan(new Contract(9, Crop.MAPLE, true, 3, 5), 90);
+		final Plan done = plan(new Contract(9, Crop.MAPLE, 1, 3, 5), 90);
 		assertEquals(Jane.HAND_IN, done.getJane());
 		assertEquals(Role.LEAVE, done.role(Patch.FARMING_GUILD_TREE));
+		// Handed in, none taken since (COMPLETE 2, TYPE still the maple's, as elzerma's dev check saw it): ask for one,
+		// the maple left alone
+		final Plan handedIn = plan(new Contract(9, Crop.MAPLE, 2, 3, 6), 90);
+		assertEquals(Jane.NEW, handedIn.getJane());
+		assertEquals(Role.LEAVE, handedIn.role(Patch.FARMING_GUILD_TREE));
+		assertEquals("No farming contract: ask Guildmaster Jane for a Hard one", handedIn.getLine());
 		final Plan none = plan(Contract.NONE, 90);
 		assertEquals(Jane.NEW, none.getJane());
 		assertEquals(Tier.HARD, none.getAsk());

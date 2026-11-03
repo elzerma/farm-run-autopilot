@@ -1,6 +1,8 @@
 # Explore: Farming Guild contracts
 
-**Status:** option (c) built on 2026-11-02 (section 8), not yet seen in game; the tier tip (d) comes after the release.
+**Status:** option (c) built on 2026-11-02 (section 8), its game values confirmed and a first run done that day; the
+hand-in and a new contract's crop done on the spot are still to be seen in a run. The tier tip (d) comes after the
+release.
 The explore write-up below is from 2026-10-17.
 **From:** issue #7, elzerma: "the other feature I want to manage now as well is farming contracts ... where it
 wouldn't touch farming guild patches that are used with wiki tables for managing the farming guild's contracts
@@ -75,7 +77,8 @@ pre-plant. That is the clash elzerma described.
   an infobox with that tooltip while you're in the guild, and highlights the contract patch in its farming tabs.
 - **Doesn't**: say which tier to ask for, plan supplies, fit the contract into a run, or protect pre-plants.
   It doesn't read `FARMGUILD_CONTRACT_LEVEL` (7962, probably the tier) or `FARMGUILD_CONTRACT_COUNT` (7964,
-  probably contracts done). Both meanings are **UNVERIFIED**.
+  probably contracts done). Both meanings are **UNVERIFIED**. (Confirmed by elzerma's dev check, 2026-11-02: LEVEL is
+  the tier, COUNT the contracts completed; see section 8.)
 
 ### Plugin Hub plugins
 
@@ -141,7 +144,7 @@ When the contract's patch type is in the run:
 
 Needs new game values to test: the Jane NPC and a way to see the turn-in happened (the COMPLETE varbit
 dropping, the contract type changing, or a chat message), all **UNVERIFIED**, so a guided test per piece. Needs
-(a) and (b) first.
+(a) and (b) first. (Confirmed 2026-11-02, section 8: Jane is NPC 8587, and COMPLETE goes to 2 at the turn-in.)
 
 ### (d) Suggest which tier to ask for (M)
 
@@ -212,27 +215,36 @@ one gets its patch cleared; the tier tip (d) after the release. The crop types a
 
 - **Setting:** Farm > Farming contracts > "Build farming contracts into runs" (`RunConfig.farmingContracts`, off by
   default, kept whichever preset is applied).
-- **The contract:** `tracking/ContractTracker` reads FARMGUILD_CONTRACT_TYPE and _COMPLETE each tick, as Time
-  Tracking's FarmingContractManager does (no region check), and logs `Farming contract: <crop> (value N), complete N,
-  level N, count N at tick N` as it changes. LEVEL and COUNT are logged only, to learn their meaning.
+- **The contract:** `tracking/ContractTracker` reads FARMGUILD_CONTRACT_TYPE, _COMPLETE, _LEVEL and _COUNT each tick,
+  as Time Tracking's FarmingContractManager does (no region check), and logs `Farming contract: <crop> (value N),
+  complete N, level N, count N at tick N` as it changes. A contract is held while COMPLETE is 0 and grown at 1; at 2
+  (handed in, none taken since) Jane is asked for another. LEVEL gives its tier.
 - **The tables:** `data/FarmingContract`: each crop's contract value (RuneLite's `Produce`), the tiers each crop can
   come in (wiki: 31 Easy, 22 Medium, 18 Hard), the wiki's Hard and Medium pre-plants per guild patch (the first one the
-  player has seeds for), Guildmaster Jane's name and spot (1249, 3727), and the completion message.
+  player has seeds for), and Guildmaster Jane's name and spot (1246, 3729).
 - **The plan:** `route/ContractPlanner` gives each guild contract patch a role from what it holds: LEAVE (a crop
   waiting for its contract, or the contract's still growing), TAKE (the contract's crop grown: check or pick it, then
   replant; or a diseased crop to cure), PLANT (empty, weeds, dead, a stump or a tree already checked), or
   CLEAR_FOR_CONTRACT (an Easy or quick contract blocked by another crop: dig it up, plant the contract's). And Jane's
   part: HAND_IN, NEW or EASIER. `RunSelector` runs the guild's contract patches by role, whatever types are ticked, with
   one anchoring the stop when only Jane is to see; `SupplyCalculator` plants them with the planner's crop.
-- **The guide:** at the guild stop every contract patch is looked at, by its role as it reads at the time, unless this
-  run is planting it; when the contract changes, the patches passed over are looked at again, so a new contract whose
-  crop is grown already is done on the spot. The stop ends at Jane, outlined, with the walking line to her: "Talk to
+- **The guide:** at the guild stop the planned contract patches are worked by their role as they read at the time,
+  unless this run is planting them; when the contract changes, those passed over are looked at again. A guild patch
+  outside the plan joins the stop only when, read since arriving, it holds the contract's crop to take, so a new
+  contract whose crop is grown already is done on the spot; its replanting waits for the next run, whose seeds it
+  wasn't planned with. (Until elzerma's first run with contracts on, 2026-11-02, every guild patch joined, and the stop
+  began at the north allotment, its watermelons kept for a contract, until the guild's patches were read.) The stop
+  ends at Jane, outlined, with the walking line to her: "Talk to
   Guildmaster Jane: hand in your contract, then take another Hard contract", "ask for a Hard contract" or "ask for an
   easier contract (magic takes 8 h to grow)". The step clears once the contract's values show nothing to see her about.
 - **Run tab:** one line, e.g. "Contract: Maple is grown: checked at the guild this run", "No farming contract: ask
   Guildmaster Jane for a Hard one"; the guild stop's hover names Jane's part.
-- **Dev check:** `CONTRACT_VALUES` (Settings > Dev checks) reads the values away from the guild, at it and after Jane,
-  and finds Jane: whether TYPE is there away from the guild, what LEVEL and COUNT hold, and how they change at the
-  hand-in. UNVERIFIED until it's run: LEVEL as the tier (1 Easy, 2 Medium, 3 Hard), COMPLETE going back to 0 at the
-  hand-in, and when the completion message shows.
+- **Dev check:** `CONTRACT_VALUES`, passed on elzerma's run of 2026-11-02 and removed. All four values read the same
+  away from the guild as at it. COMPLETE went to 1 the tick the marrentill was fully picked, with the completion
+  message, and COUNT from 2 to 3; Jane's seed pack set it to 2, TYPE still the marrentill's, and the next contract
+  (jangerberry) set it back to 0. LEVEL was 1 for the marrentill (Easy only) and 2 for the jangerberry (Medium, the
+  only other tier open at Farming 69), so 3 is Hard. Jane is NPC 8587, seen at (1246, 3729).
+- **First run** (elzerma, 2026-11-02, Farming 69 so the Medium table, the jangerberry contract held): the guild stop
+  planted the jangerberry in the bush patch and paid Alan for it, and the Medium pre-plants (cactus, irit) in the
+  patches found empty; the trees, flower and allotments were left alone, and there was nothing to see Jane about.
 - **Tests:** `ContractPlannerTest` (roles, Jane, crops, the tables), `RunSelectorTest.contractsRunTheGuildsPatchesForThem`.

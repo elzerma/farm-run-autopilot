@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 import lombok.Getter;
 import net.runelite.api.coords.WorldPoint;
 
@@ -21,15 +20,10 @@ import net.runelite.api.coords.WorldPoint;
  */
 public final class FarmingContract
 {
-	/** Guildmaster Jane's name in game, to outline her (wiki: Guildmaster Jane, NPC ids 8586 and 8587). */
+	/** Guildmaster Jane's name in game, to outline her (NPC id 8587 in elzerma's dev check, 2026-11-02). */
 	public static final String JANE = "Guildmaster Jane";
-	/** Where she stands, in the guild's central area (wiki: Guildmaster Jane). */
-	public static final WorldPoint JANE_POINT = new WorldPoint(1249, 3727, 0);
-	/**
-	 * The game's message once the crop is checked or picked (other plugins match it; when exactly it shows is
-	 * UNVERIFIED): "You've completed a Farming Guild Contract. You should return to Guildmaster Jane."
-	 */
-	public static final Pattern COMPLETED = Pattern.compile("You've completed a Farming Guild Contract\\..*");
+	/** Where she stood in elzerma's dev check, in the guild's central area, for the walking line until she's loaded. */
+	public static final WorldPoint JANE_POINT = new WorldPoint(1246, 3729, 0);
 
 	/** A crop that grows longer than a bush (2 h 40 min) is slow: rather than clear a pre-plant for it, ask for another. */
 	public static final int QUICK_MINUTES = 160;
@@ -56,8 +50,8 @@ public final class FarmingContract
 		}
 
 		/**
-		 * The tier as FARMGUILD_CONTRACT_LEVEL has it, or null. UNVERIFIED: 1 Easy, 2 Medium, 3 Hard is a guess the dev
-		 * check is to confirm (TestItem.CONTRACT_VALUES).
+		 * The tier as FARMGUILD_CONTRACT_LEVEL has it, or null: 1 Easy and 2 Medium in elzerma's dev check (2026-11-02:
+		 * a marrentill contract, Easy only, then a jangerberry one), 3 Hard in the same order.
 		 */
 		public static Tier fromVarbit(int value)
 		{

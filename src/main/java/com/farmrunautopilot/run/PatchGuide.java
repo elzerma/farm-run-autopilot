@@ -747,9 +747,12 @@ class PatchGuide
 	}
 
 	/**
-	 * With contracts on, every contract patch at the guild stop is looked at, not only those planned: a new contract whose
-	 * crop is grown already is done on the spot, then handed in (elzerma, 2026-11-02). When the contract changes, the
-	 * patches passed over as waiting for one are looked at again.
+	 * With contracts on, a guild contract patch outside the plan joins the guild stop when, read since arriving, it holds
+	 * the contract's crop to take: a new contract whose crop is grown already is done on the spot, then handed in (elzerma,
+	 * 2026-11-02). Only then: on elzerma's run of 2026-11-02 every one joined, and the stop began at the north allotment,
+	 * its watermelons kept for a contract, until the guild's patches were read. Its seed to replant wasn't brought, so
+	 * once taken it drops out again. When the contract changes, the planned patches passed over as waiting for one are
+	 * looked at again.
 	 */
 	private List<Patch> contractStop(RouteStop stop, List<Patch> here)
 	{
@@ -775,7 +778,10 @@ class PatchGuide
 		final List<Patch> all = new ArrayList<>(here);
 		for (Patch patch : guild)
 		{
-			if (!all.contains(patch))
+			final PatchPrediction live = patchTracker.predict(patch);
+			if (!all.contains(patch) && contract.held() && live != null && live.getCrop() == contract.getCrop()
+				&& live.getObservedAt() >= navigator.getArrivedAtSeconds()
+				&& ContractPlanner.role(patch, contract, guild, patchTracker::predict) == ContractPlanner.Role.TAKE)
 			{
 				all.add(patch);
 			}

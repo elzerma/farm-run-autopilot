@@ -125,14 +125,17 @@ public final class ContractPlanner
 		return Role.LEAVE;
 	}
 
-	/** Jane's part: hand in a grown contract, ask for one when there's none, or for an easier one when it's blocked. */
+	/**
+	 * Jane's part: hand in a grown contract, ask for one when there's none (or the last was handed in with none taken
+	 * since, as elzerma's dev check saw it), or for an easier one when it's blocked.
+	 */
 	public static Jane jane(Contract contract, List<Patch> usable, Function<Patch, PatchPrediction> predictions)
 	{
-		if (contract.isComplete())
+		if (contract.grown())
 		{
 			return Jane.HAND_IN;
 		}
-		if (contract.getValue() == 0)
+		if (!contract.held())
 		{
 			return Jane.NEW;
 		}
@@ -259,7 +262,7 @@ public final class ContractPlanner
 		return !FarmingContract.quick(contract.getCrop()) && tier(contract) != Tier.EASY;
 	}
 
-	/** The contract's tier: from its LEVEL varbit (UNVERIFIED), else Easy for a crop only Easy contracts ask for. */
+	/** The contract's tier: from its LEVEL varbit, else Easy for a crop only Easy contracts ask for. */
 	static Tier tier(Contract contract)
 	{
 		final Tier read = Tier.fromVarbit(contract.getLevel());

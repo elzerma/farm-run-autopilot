@@ -88,12 +88,7 @@ public enum TestItem
 	// Sprint 1c, the special trees
 	GREAT_CONCH_ACCESS(Tab.ACCOUNT, "The Great Conch's calquat patch",
 		"Only if you've started Troubled Tortugans but not finished it: go to the calquat patch on the Summer Shore of the "
-			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2),
-	// Farming contracts (docs/plans/farming-contracts.md): the contract's values and Guildmaster Jane, elzerma's check
-	CONTRACT_VALUES(Tab.DEV, "Farming contract values",
-		"Start this anywhere, go into the Farming Guild, then see Guildmaster Jane: hand in your contract if it's grown, ask "
-			+ "for one if you have none, or ask for an easier one. The test reads the contract's values away from the guild, "
-			+ "at it and after Jane, and finds Jane herself, so the plugin knows when a contract is handed in and its tier.");
+			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2);
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter

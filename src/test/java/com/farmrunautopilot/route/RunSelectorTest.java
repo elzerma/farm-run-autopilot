@@ -142,7 +142,7 @@ public class RunSelectorTest
 		// A maple contract: the guild's grown maple (the Hard table's first tree) is taken, though trees aren't ticked;
 		// its herb, a pre-plant waiting, isn't, though herbs are; the other herb patches as usual
 		final RunSelection maple = RunSelector.select(config, AccessSnapshot.UNKNOWN, guild, NOW, false,
-			Collections.emptyMap(), new Contract(9, Crop.MAPLE, false, 3, 0));
+			Collections.emptyMap(), new Contract(9, Crop.MAPLE, 0, 3, 0));
 		assertTrue(maple.getPatches().contains(Patch.FARMING_GUILD_TREE));
 		assertFalse(maple.getPatches().contains(Patch.FARMING_GUILD_HERB));
 		assertTrue(maple.getNotDue().contains(Patch.FARMING_GUILD_HERB.getDisplayName() + ": kept for a farming contract"));
@@ -150,13 +150,13 @@ public class RunSelectorTest
 		assertEquals(ContractPlanner.Jane.NONE, maple.getContract().getJane());
 		// Handed in, everything else waiting: the guild's first patch anchors the stop for Guildmaster Jane
 		final RunSelection handIn = RunSelector.select(config, AccessSnapshot.UNKNOWN, guild, NOW, false,
-			Collections.emptyMap(), new Contract(9, Crop.MAPLE, true, 3, 1));
+			Collections.emptyMap(), new Contract(9, Crop.MAPLE, 1, 3, 1));
 		assertEquals(ContractPlanner.Jane.HAND_IN, handIn.getContract().getJane());
 		assertTrue(handIn.getPatches().contains(FarmingContract.PATCHES.get(0)));
 		// Off: the guild's herb is an ordinary due herb patch
 		config.setFarmingContracts(false);
 		final RunSelection off = RunSelector.select(config, AccessSnapshot.UNKNOWN, guild, NOW, false,
-			Collections.emptyMap(), new Contract(9, Crop.MAPLE, false, 3, 0));
+			Collections.emptyMap(), new Contract(9, Crop.MAPLE, 0, 3, 0));
 		assertTrue(off.getPatches().contains(Patch.FARMING_GUILD_HERB));
 		assertFalse(off.getContract().isOn());
 	}
