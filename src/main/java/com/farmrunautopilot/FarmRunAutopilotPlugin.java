@@ -41,6 +41,7 @@ import com.farmrunautopilot.run.ChatOptions;
 import com.farmrunautopilot.run.FairyRingLog;
 import com.farmrunautopilot.run.TeleportMenuHighlighter;
 import com.farmrunautopilot.run.TravelMenuOverlay;
+import com.farmrunautopilot.tracking.ContractTracker;
 import com.farmrunautopilot.tracking.PatchTracker;
 import com.farmrunautopilot.ui.FarmRunAutopilotPanel;
 import com.google.inject.Provides;
@@ -106,6 +107,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 
 	@Inject
 	private PatchTracker patchTracker;
+
+	@Inject
+	private ContractTracker contractTracker;
 
 	@Inject
 	private SettingsStore settings;
@@ -239,6 +243,17 @@ public class FarmRunAutopilotPlugin extends Plugin
 	private NavigationButton navButton;
 
 	private WorldPoint lastTickLocation;
+	/** Ticks a new region's patches go unread after the tick it changed on, so the game has sent them (GitHub #35). */
+	private static final int REGION_SETTLE_TICKS = 1;
+	/** Ticks in the same region after the one it changed on, up to {@link #REGION_SETTLE_TICKS}. */
+	private int ticksInRegion;
+	/**
+	 * Ticks after a new area finishes loading before its patches are read: the game sends them about two ticks after
+	 * the load, which a balloon finishes after the player has already landed (GitHub #35).
+	 */
+	private static final int AREA_SETTLE_TICKS = 2;
+	/** The game tick a new area last finished loading on, or -1. */
+	private int areaLoadedTick = -1;
 	private boolean lastTickPostLogin;
 	/** The last game state, to tell a new area loading in game (a teleport) from logging in or hopping. */
 	private GameState lastGameState;
@@ -325,6 +340,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		lastTickLocation = null;
 		lastTickPostLogin = false;
 		patchTracker.reset();
+		contractTracker.reset();
 		accessChecker.reset();
 		runService.reset();
 		runOverrides.clear();
@@ -444,13 +460,35 @@ public class FarmRunAutopilotPlugin extends Plugin
 			lastTickPostLogin = false;
 			return;
 		}
+		// The Farming Guild contract, read anywhere (docs/plans/farming-contracts.md); a change plans the run again
+		if (contractTracker.update())
+		{
+			runService.markDirty();
+		}
 
 		final WorldPoint location = lastTickLocation;
 		final Player player = client.getLocalPlayer();
 		lastTickLocation = player == null ? null : player.getWorldLocation();
 
-		// Skip ticks where the player crossed a region boundary
+		// Skip ticks where the player crossed a region boundary, and the next one. Patches in different regions share
+		// varbits, so a reading taken before the game sends the new region's could be the last area's patch (GitHub #35:
+		// after the balloon from the Gnome Stronghold, the guide passed over Taverley's tree, which shares the
+		// Stronghold tree's FARMING_TRANSMIT_A, as if it were the magic tree just planted there)
 		if (location == null || lastTickLocation == null || location.getRegionID() != lastTickLocation.getRegionID())
+		{
+			ticksInRegion = 0;
+			return;
+		}
+		if (ticksInRegion < REGION_SETTLE_TICKS)
+		{
+			ticksInRegion++;
+			return;
+		}
+		// And until two ticks after a new area loads, counted from the load, not the landing: from Castle Wars by balloon
+		// the player landed at tick 4185, the area loaded at 4186, and Taverley's tree read as weeds (the value from
+		// Castle Wars) at 4187 and as the maple to check at 4188 (elzerma's test, 2026-11-02). By teleport the load is
+		// as the player lands, so the wait above already covers it (Lumbridge: loaded at 4236, read right at 4238)
+		if (areaLoadedTick >= 0 && client.getTickCount() - areaLoadedTick < AREA_SETTLE_TICKS)
 		{
 			return;
 		}
@@ -485,6 +523,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		// A guided test belongs to the account it started on
 		testRunner.onLoggedOut();
 		patchTracker.reset();
+		contractTracker.reset();
 		accessChecker.reset();
 		holdingsTracker.loadCaches();
 		runService.reset();
@@ -509,6 +548,10 @@ public class FarmRunAutopilotPlugin extends Plugin
 		if (event.getGameState() == GameState.LOGGED_IN)
 		{
 			holdingsTracker.markDirty();
+			if (previous == GameState.LOADING)
+			{
+				areaLoadedTick = client.getTickCount();
+			}
 			// A new area loading in game during a run (a teleport) isn't a fresh start: the run keeps its plan, so quests
 			// aren't read again and the route isn't planned from nothing there, and the guide looks again straight away
 			// rather than at the next game tick (elzerma, 2026-10-30: "after teleporting somewhere it takes a second or two
@@ -521,6 +564,13 @@ public class FarmRunAutopilotPlugin extends Plugin
 			{
 				accessChecker.requestRefresh();
 				runService.reset();
+				// A run timing carries on after relogging, with the plan it was armed with, so no new plan comes to show the
+				// Run tab again after the login screen (elzerma, 2026-11-01: back in after the connection dropped mid-run, it
+				// still said "Log in to see your next run.")
+				if (runSession.isUnderWay())
+				{
+					showPlanLater(runService.getPlan(), true);
+				}
 			}
 		}
 		else if (event.getGameState() == GameState.LOADING)

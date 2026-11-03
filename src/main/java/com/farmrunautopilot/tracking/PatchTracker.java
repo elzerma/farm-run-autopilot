@@ -49,6 +49,11 @@ public class PatchTracker
 	static final long ROT_SECONDS = 70 * 60;
 	/** Each bin's value as last read this session, to log it as it changes. */
 	private final Map<CompostBin, Integer> binValues = new java.util.EnumMap<>(CompostBin.class);
+	/**
+	 * Each patch's value as last read this session, to log it as it changes, with the tick: a reading that changes just
+	 * after arriving, with nothing done to the patch, was the last area's patch on the same varbit (GitHub #35).
+	 */
+	private final Map<Patch, Integer> patchValues = new java.util.EnumMap<>(Patch.class);
 
 	private static final Map<Integer, List<Patch>> PATCHES_BY_REGION = new HashMap<>();
 
@@ -92,6 +97,7 @@ public class PatchTracker
 	{
 		lastPatches = Collections.emptySet();
 		lastSeen.clear();
+		patchValues.clear();
 	}
 
 	/**
@@ -133,6 +139,12 @@ public class PatchTracker
 		{
 			final int value = client.getVarbitValue(patch.getVarbitId());
 			final DecodedPatch current = PatchStateDecoder.decode(patch.getType(), value);
+			final Integer before = patchValues.put(patch, value);
+			if (before == null || before != value)
+			{
+				log.debug("Patch {}: {} {} stage {} (value {}) at tick {}", patch, current.getState(), current.getCrop(),
+					current.getStage(), value, client.getTickCount());
+			}
 			if (current.getState() == PatchState.UNKNOWN)
 			{
 				continue;

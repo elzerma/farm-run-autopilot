@@ -296,6 +296,12 @@ class RunPanel extends JPanel
 			label.setForeground(ColorScheme.BRAND_ORANGE);
 			add(label);
 		}
+		// The Farming Guild contract, with contracts on (docs/plans/farming-contracts.md)
+		final String contract = plan.getSelection().getContract().getLine();
+		if (contract != null)
+		{
+			add(note(contract));
+		}
 		addUnlocksToCheck();
 		addSeedVaultNote();
 

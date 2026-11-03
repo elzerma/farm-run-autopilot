@@ -1,6 +1,7 @@
 package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.data.CompostBin;
+import com.farmrunautopilot.data.FarmingContract;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.travel.JourneyStep;
@@ -52,7 +53,7 @@ public class SceneTracker
 	private final Map<CompostBin, GameObject> binObjects = new EnumMap<>(CompostBin.class);
 	private final Map<Patch, NPC> gardeners = new EnumMap<>(Patch.class);
 	/** Renu, the quetzal a Renu leg walks back to first (Navigator); everyone else ridden comes from the atlas. */
-	private static final Set<String> TRANSFER_NPC_NAMES = Set.of("Renu", PatchGuide.TOOL_LEPRECHAUN);
+	private static final Set<String> TRANSFER_NPC_NAMES = Set.of("Renu", PatchGuide.TOOL_LEPRECHAUN, FarmingContract.JANE);
 	private final Map<String, NPC> transfers = new HashMap<>();
 	/** Every tool leprechaun loaded. */
 	private final List<NPC> leprechauns = new ArrayList<>();
@@ -389,5 +390,39 @@ public class SceneTracker
 	{
 		final List<GameObject> objects = objectsFor(patch);
 		return objects.isEmpty() ? PatchPoints.of(patch) : objects.get(0).getWorldLocation();
+	}
+
+	/**
+	 * The patch's tile nearest this point, of its loaded objects' tiles; null while none is loaded. A long allotment spans
+	 * a dozen tiles and some are L-shaped, so its middle can be well away from the end the player is at (elzerma,
+	 * 2026-11-01: "Can we have the path/arrow show at the closest tile to where we are of allotments?").
+	 */
+	public WorldPoint nearestTileOf(Patch patch, WorldPoint from)
+	{
+		if (from == null)
+		{
+			return null;
+		}
+		WorldPoint best = null;
+		for (GameObject object : objectsFor(patch))
+		{
+			final Point min = object.getSceneMinLocation();
+			final Point max = object.getSceneMaxLocation();
+			final WorldPoint tile = nearestTile(
+				WorldPoint.fromScene(client.getTopLevelWorldView(), min.getX(), min.getY(), object.getPlane()),
+				WorldPoint.fromScene(client.getTopLevelWorldView(), max.getX(), max.getY(), object.getPlane()), from);
+			if (best == null || tile.distanceTo2D(from) < best.distanceTo2D(from))
+			{
+				best = tile;
+			}
+		}
+		return best;
+	}
+
+	/** The tile of the rectangle with these corners (both in it) nearest this point. */
+	static WorldPoint nearestTile(WorldPoint low, WorldPoint high, WorldPoint from)
+	{
+		return new WorldPoint(Math.max(low.getX(), Math.min(high.getX(), from.getX())),
+			Math.max(low.getY(), Math.min(high.getY(), from.getY())), low.getPlane());
 	}
 }

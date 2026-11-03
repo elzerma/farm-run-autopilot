@@ -419,7 +419,7 @@ class SettingsPage extends SetupPanel
 		final Object[] options = {runOnly, all, "Cancel"};
 		final int choice = JOptionPane.showOptionDialog(this,
 			"<html>Run settings: the Farm and Travel tabs and the highlights.<br>"
-				+ "Everything: also your house, unlocks, presets, tracked charges and learned run times.<br><br>"
+				+ "Everything: also your house, unlocks, presets, tracked charges and run times.<br><br>"
 				+ "This can't be undone.</html>",
 			"Reset Farm Run Autopilot", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options,
 			options[2]);
@@ -442,7 +442,8 @@ class SettingsPage extends SetupPanel
 		s.addContent(checkBox("Hint arrow to the patch", c.hintArrow(), true,
 			"The game's hint arrow over the patch, also shown on the minimap", on -> guidance.set("hintArrow", on)));
 		s.addContent(checkBox("Highlight NPCs", c.highlightGardener(), true,
-			"Outline the gardener when paying them, and the quetzal after the Civitas teleport",
+			"Outline the gardener when paying them, the tool leprechaun when he's needed, and the NPC or object to use on "
+				+ "the way (Renu, a quetzal, a boat, a portal)",
 			on -> guidance.set("highlightGardener", on)));
 		s.addContent(checkBox("Highlight items to use", c.highlightItems(), true,
 			"Outline the seed, compost, tool or teleport to use next in your inventory and equipment, and the teleport's "

@@ -28,3 +28,22 @@ SEERS_VILLAGE_HOPS	SEERS_VILLAGE_HOPS	2667	3526	0	2663 3521 0	wiki Hops patch/Pa
 YANILLE_HOPS	YANILLE_HOPS	2576	3105	0	2573 3108 0	wiki Hops patch/Patches map	medium	Map centre; nearby = SP Tool Lep - Yanille
 ALDARIN_HOPS	ALDARIN_HOPS	1365	2939	0	1364 2943 0	wiki Hops patch/Patches map	medium	Map centre; nearby = SP Tool Lep - Aldarin
 PRIFDDINAS_ALLOTMENT	PRIFDDINAS	3291	6100	0	3295 6105 0	wiki Allotment patch/Patches map	medium	Map centre of the allotment set; nearby = SP Tool Lep - Prifddinas
+CHAMPIONS_GUILD_BUSH	CHAMPIONS_GUILD	3181	3357	0	3182 3355 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = SP Tool Lep - Champions Guild
+RIMMINGTON_BUSH	RIMMINGTON	2940	3221	0	2939 3219 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = SP Tool Lep - Rimmington
+ETCETERIA_BUSH	ETCETERIA	2591	3863	0	2596 3860 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = SP Tool Lep - Etceteria
+ARDOUGNE_MONASTERY_BUSH	ARDOUGNE_MONASTERY	2617	3225	0	2619 3221 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = SP Tool Lep - Ardougne Monastery
+AL_KHARID_CACTUS	AL_KHARID	3315	3202	0	3319 3204 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = SP Tool Lep - Al Kharid
+CANIFIS_MUSHROOM	CANIFIS	3451	3472	0	3454 3468 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = SP Tool Lep - West of Canifis
+DRAYNOR_MANOR_BELLADONNA	DRAYNOR_MANOR	3086	3354	0	3087 3357 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = SP Tool Lep - Draynor Manor
+AUBURNVALE_BELLADONNA	AUBURNVALE	1450	3354	0	1448 3354 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = SP Tool Lep - Auburnvale
+FOSSIL_ISLAND_SEAWEED_NORTH	FOSSIL_ISLAND_UNDERWATER	3733	10273	1		PatchPoints (tools/atlas: cache object tile)	medium	Left out of the grid (Grid skips rows off plane 0): underwater, reached by the Dive from the rowboat off Fossil Island's north tip, which lands 8 tiles from the patches, so it's never a walk; within 25 tiles of a patch counts as at the stop (RunService.standingAt)
+FOSSIL_ISLAND_SEAWEED_SOUTH	FOSSIL_ISLAND_UNDERWATER	3733	10267	1		PatchPoints (tools/atlas: cache object tile)	medium	Left out of the grid, as the north patch
+FOSSIL_ISLAND_HARDWOOD_EAST	FOSSIL_ISLAND	3715	3835	0	3710 3838 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = SP Tool Lep - Fossil Island
+FOSSIL_ISLAND_HARDWOOD_MIDDLE	FOSSIL_ISLAND	3708	3833	0	3710 3838 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = SP Tool Lep - Fossil Island
+FOSSIL_ISLAND_HARDWOOD_WEST	FOSSIL_ISLAND	3702	3837	0	3710 3838 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = SP Tool Lep - Fossil Island
+LOCUS_OASIS_HARDWOOD	LOCUS_OASIS	1687	2972	0	1683 2971 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = SP Tool Lep - Locus Oasis
+ANGLERS_RETREAT_HARDWOOD	ANGLERS_RETREAT	2471	2703	0	2473 2703 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = the walkable tile east of it on SP's collision map (SP has no Tool Lep here)
+TAI_BWO_WANNAI_CALQUAT	TAI_BWO_WANNAI	2796	3101	0	2797 3104 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = SP Tool Lep - Tai Bwo Wannai
+THE_GREAT_CONCH_CALQUAT	THE_GREAT_CONCH	3128	2405	0	3130 2405 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = the walkable tile east of it on SP's collision map (SP has no Tool Lep here)
+PORT_SARIM_SPIRIT_TREE	PORT_SARIM	3060	3258	0	3064 3255 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = SP Tool Lep - Port Sarim
+ETCETERIA_SPIRIT_TREE	ETCETERIA	2613	3858	0	2615 3858 0	PatchPoints (tools/atlas: cache object tile)	medium	Not logged in game; nearby = the walkable tile east of it on SP's collision map (SP Tool Lep - Etceteria is by the bush, 18 tiles' walk)

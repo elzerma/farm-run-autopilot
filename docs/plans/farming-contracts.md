@@ -1,6 +1,9 @@
 # Explore: Farming Guild contracts
 
-**Status:** explore write-up, no code (2026-10-17). Nothing here is planned until elzerma picks an option.
+**Status:** option (c) built on 2026-11-02 (section 8), its game values confirmed and a first run done that day; the
+hand-in and a new contract's crop done on the spot are still to be seen in a run. The tier tip (d) comes after the
+release.
+The explore write-up below is from 2026-10-17.
 **From:** issue #7, elzerma: "the other feature I want to manage now as well is farming contracts ... where it
 wouldn't touch farming guild patches that are used with wiki tables for managing the farming guild's contracts
 best optimizations ... adding farming contracts will lead to more seeds that can be used for more farm runs".
@@ -74,7 +77,8 @@ pre-plant. That is the clash elzerma described.
   an infobox with that tooltip while you're in the guild, and highlights the contract patch in its farming tabs.
 - **Doesn't**: say which tier to ask for, plan supplies, fit the contract into a run, or protect pre-plants.
   It doesn't read `FARMGUILD_CONTRACT_LEVEL` (7962, probably the tier) or `FARMGUILD_CONTRACT_COUNT` (7964,
-  probably contracts done). Both meanings are **UNVERIFIED**.
+  probably contracts done). Both meanings are **UNVERIFIED**. (Confirmed by elzerma's dev check, 2026-11-02: LEVEL is
+  the tier, COUNT the contracts completed; see section 8.)
 
 ### Plugin Hub plugins
 
@@ -140,7 +144,7 @@ When the contract's patch type is in the run:
 
 Needs new game values to test: the Jane NPC and a way to see the turn-in happened (the COMPLETE varbit
 dropping, the contract type changing, or a chat message), all **UNVERIFIED**, so a guided test per piece. Needs
-(a) and (b) first.
+(a) and (b) first. (Confirmed 2026-11-02, section 8: Jane is NPC 8587, and COMPLETE goes to 2 at the turn-in.)
 
 ### (d) Suggest which tier to ask for (M)
 
@@ -200,3 +204,65 @@ cactus, celastrus and redwood join the runs. For contracts:
 Still open: questions 3 and 5 in section 6 (whether the run takes a new contract on its own, and whether
 contracts start with herb/tree/fruit tree or wait for the crop types work). Nothing is built until elzerma
 asks for the build plan.
+
+## 8. Built (2026-11-02)
+
+elzerma, 2026-11-02: "plan and build before release ... handling farming contracts". Settled in the picker that day:
+the guild stop ends at Guildmaster Jane every time there's something to see her about (question 3: yes, the run
+takes contracts); every guild contract patch is kept for contracts, the allotments too; ask for the highest tier the
+Farming level allows; a blocked contract whose crop is slower than a bush is swapped ("ask for an easier one"), a quick
+one gets its patch cleared; the tier tip (d) after the release. The crop types are built (question 5 is moot).
+
+- **Setting:** Farm > Farming contracts > "Build farming contracts into runs" (`RunConfig.farmingContracts`, off by
+  default, kept whichever preset is applied).
+- **The contract:** `tracking/ContractTracker` reads FARMGUILD_CONTRACT_TYPE, _COMPLETE, _LEVEL and _COUNT each tick,
+  as Time Tracking's FarmingContractManager does (no region check), and logs `Farming contract: <crop> (value N),
+  complete N, level N, count N at tick N` as it changes. A contract is held while COMPLETE is 0 and grown at 1; at 2
+  (handed in, none taken since) Jane is asked for another. LEVEL gives its tier.
+- **The tables:** `data/FarmingContract`: each crop's contract value (RuneLite's `Produce`), the tiers each crop can
+  come in (wiki: 31 Easy, 22 Medium, 18 Hard), the wiki's Hard and Medium pre-plants per guild patch (the first one the
+  player has seeds for), and Guildmaster Jane's name and spot (1246, 3729).
+- **The plan:** `route/ContractPlanner` gives each guild contract patch a role from what it holds: LEAVE (a crop
+  waiting for its contract, or the contract's still growing), TAKE (the contract's crop grown: check or pick it, then
+  replant; or a diseased crop to cure), PLANT (empty, weeds, dead, a stump or a tree already checked), or
+  CLEAR_FOR_CONTRACT (an Easy or quick contract blocked by another crop: dig it up, plant the contract's). And Jane's
+  part: HAND_IN, NEW or EASIER. `RunSelector` runs the guild's contract patches by role, whatever types are ticked, with
+  one anchoring the stop when only Jane is to see; `SupplyCalculator` plants them with the planner's crop.
+- **Crops off the plan** (elzerma, 2026-11-02: "We just want to pick anything that isn't in alignment with the
+  pre-planting plan"): a crop that isn't one of its patch's pre-plants at the player's level (`ContractPlanner.offPlan`)
+  is a TAKE once grown, picked or checked like any harvest and the pre-plant planted in its place, as long as the player
+  has a seed or sapling of one (`ContractPlanner.hasPrePlant`: picking it only to leave the patch empty gains nothing,
+  and on elzerma's second run, with no white lily seed, the step to pick the nasturtiums was ticked off); without one,
+  the Run tab says "kept until you have white lily seeds to plant there". Still growing, it waits, on the Run tab with
+  its usual status rather than "kept for a farming contract". A patch emptied that way takes the
+  contract's crop first, slow or not, and one holding a crop off the plan makes way for a quick contract before a
+  pre-plant does. At elzerma's guild that means the south allotment's watermelons (the Medium table has strawberries
+  there) and the flower patch's nasturtiums (white lilies).
+- **The guide:** at the guild stop the planned contract patches are worked by their role as they read at the time,
+  unless this run is planting them; when the contract changes, those passed over are looked at again. A guild patch
+  outside the plan joins the stop only when, read since arriving, it holds the contract's crop to take, so a new
+  contract whose crop is grown already is done on the spot; its replanting waits for the next run, whose seeds it
+  wasn't planned with. (Until elzerma's first run with contracts on, 2026-11-02, every guild patch joined, and the stop
+  began at the north allotment, its watermelons kept for a contract, until the guild's patches were read.) A crop
+  cleared for a contract is checked or picked first when grown, and dug up only while still growing. A guild patch run
+  for contracts is always replanted, whatever its type's "pick and leave growing" setting, as the plan has it. The stop
+  ends at Jane, outlined, with the walking line to her: "Talk to
+  Guildmaster Jane: hand in your contract, then take another Hard contract", "ask for a Hard contract" or "ask for an
+  easier contract (magic takes 8 h to grow)". The step clears once the contract's values show nothing to see her about.
+- **Run tab:** one line, e.g. "Contract: Maple is grown: checked at the guild this run", "No farming contract: ask
+  Guildmaster Jane for a Hard one"; the guild stop's hover names Jane's part.
+- **Dev check:** `CONTRACT_VALUES`, passed on elzerma's run of 2026-11-02 and removed. All four values read the same
+  away from the guild as at it. COMPLETE went to 1 the tick the marrentill was fully picked, with the completion
+  message, and COUNT from 2 to 3; Jane's seed pack set it to 2, TYPE still the marrentill's, and the next contract
+  (jangerberry) set it back to 0. LEVEL was 1 for the marrentill (Easy only) and 2 for the jangerberry (Medium, the
+  only other tier open at Farming 69), so 3 is Hard. Jane is NPC 8587, seen at (1246, 3729).
+- **First run** (elzerma, 2026-11-02, Farming 69 so the Medium table, the jangerberry contract held): the guild stop
+  planted the jangerberry in the bush patch and paid Alan for it, and the Medium pre-plants (cactus, irit) in the
+  patches found empty; the trees, flower and allotments were left alone, and there was nothing to see Jane about.
+- **Second run** (elzerma, 2026-11-02, with crops off the plan picked): the south allotment's watermelons were picked,
+  9 went in the compost bin to fill it and the rest were noted, and strawberries were planted with ultracompost; the
+  north allotment, the maple and the growing jangerberry were left alone. The flower step (pick the nasturtiums, then
+  a white lily) was ticked off, as there was no white lily seed, hence the seed check. Picking the allotment met "You
+  need a spade to do that." with the spade stored with the tool leprechaun: the pick step now needs a spade for an
+  allotment, so the guide says to take it from him first.
+- **Tests:** `ContractPlannerTest` (roles, Jane, crops, the tables), `RunSelectorTest.contractsRunTheGuildsPatchesForThem`.

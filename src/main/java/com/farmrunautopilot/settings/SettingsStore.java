@@ -430,6 +430,7 @@ public class SettingsStore
 		result.getWaysOff().addAll(runConfig.getWaysOff());
 		result.setAvoidWilderness(runConfig.isAvoidWilderness());
 		result.setSwitchSpellbooks(runConfig.isSwitchSpellbooks());
+		result.setFarmingContracts(runConfig.isFarmingContracts());
 		return result;
 	}
 

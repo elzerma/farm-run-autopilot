@@ -145,6 +145,13 @@ public class RunConfig
 	private Set<Crop> binCrops;
 	/** Empty buckets after composting: dropped, kept or stored at the tool leprechaun (P1; dropped by default). */
 	private EmptyBuckets emptyBuckets = EmptyBuckets.DROP;
+	/**
+	 * Farming Guild contracts (docs/plans/farming-contracts.md; elzerma, 2026-10-17: "a toggle-able setting for if user
+	 * would like the plugin to build that into a run"): the guild's patches hold the wiki's pre-plants and are left alone
+	 * until a contract asks for them, and the guild stop ends at Guildmaster Jane. Off by default; kept whichever preset
+	 * is applied.
+	 */
+	private boolean farmingContracts;
 	/** Walk instead of teleporting when the walk is only a little slower (saves charges and clicks). */
 	private boolean preferWalking = true;
 

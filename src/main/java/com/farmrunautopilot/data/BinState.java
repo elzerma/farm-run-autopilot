@@ -123,8 +123,9 @@ public class BinState
 		{
 			return new BinState(Stage.FILLING, Compost.NONE, value - 222 + 15);
 		}
-		// UNVERIFIED: 97 to 99 and 127 to 128 have no object IDs in RuneLite's notes, unlike the others; the run log's
-		// "Compost bin at Farming Guild" lines will show them
+		// 97 to 99 and 127 to 128 have no object IDs in RuneLite's notes, unlike the others. 97 to 99 are seen in elzerma's
+		// runs: 97 on closing it with 30 watermelons, 98 later, 99 when it opened to 30 supercompost (2026-11-01).
+		// UNVERIFIED: 127 to 128, plain compost rotting; the run log's "Compost bin at Farming Guild" lines will show them
 		switch (value)
 		{
 			case 93:

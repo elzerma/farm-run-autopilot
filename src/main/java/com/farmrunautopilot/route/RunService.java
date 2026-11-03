@@ -26,6 +26,7 @@ import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.supply.SupplyLine;
 import com.farmrunautopilot.supply.SupplyPlan;
+import com.farmrunautopilot.tracking.ContractTracker;
 import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.time.Instant;
@@ -74,6 +75,8 @@ public class RunService
 	private final SettingsStore settings;
 	private final AccessChecker accessChecker;
 	private final PatchTracker patchTracker;
+	/** The Farming Guild contract, for runs with contracts on. */
+	private final ContractTracker contractTracker;
 	private final HoldingsTracker holdingsTracker;
 	private final RunOverrides overrides;
 	/** RuneLite's shared background executor, for reading the travel atlas. */
@@ -102,6 +105,8 @@ public class RunService
 	/** The Travel tab's families and ways as of the last plan; replaced only when something in them changes. */
 	private volatile TravelWays ways = TravelWays.EMPTY;
 	private int ticksSinceRefresh;
+	/** How many times the plan has been worked out, changed or not (client thread): a guided test waits for the next. */
+	private int planned;
 	/** The stop the player was standing at on the last tick, or null. */
 	private Location here;
 	/** The stop the player is close to but not at, and how far (tiles); null if none. */
@@ -113,7 +118,7 @@ public class RunService
 	@Inject
 	RunService(Client client, ItemManager itemManager, SettingsStore settings, AccessChecker accessChecker,
 		PatchTracker patchTracker, HoldingsTracker holdingsTracker, RunOverrides overrides,
-		ScheduledExecutorService executor)
+		ScheduledExecutorService executor, ContractTracker contractTracker)
 	{
 		this.executor = executor;
 		this.client = client;
@@ -123,12 +128,22 @@ public class RunService
 		this.patchTracker = patchTracker;
 		this.holdingsTracker = holdingsTracker;
 		this.overrides = overrides;
+		this.contractTracker = contractTracker;
 	}
 
 	public RunPlan getPlan()
 	{
 		final RunPlan current = plan;
 		return current != null ? current : RunPlan.EMPTY;
+	}
+
+	/**
+	 * How many times the plan has been worked out, changed or not; it goes up once {@link #getPlan} is the one for the
+	 * settings and unlocks as they stand on that tick. Client thread.
+	 */
+	public int getPlanned()
+	{
+		return planned;
 	}
 
 	public SupplyPlan getSupplies()
@@ -252,12 +267,15 @@ public class RunService
 		}
 		dirty = false;
 		ticksSinceRefresh = 0;
+		// Worked out below, on this thread, before anything reads the count
+		planned++;
 
 		final RunConfig config = settings.getRunConfig();
 		final AccessSnapshot access = accessChecker.getSnapshot();
 		final Holdings holdings = holdingsTracker.getHoldings();
 		final RunSelection selection = RunSelector.select(config, access, patchTracker::predict,
-			Instant.now().getEpochSecond(), config.isSupplyFullRun(), overrides.get());
+			Instant.now().getEpochSecond(), config.isSupplyFullRun(), overrides.get(), contractTracker.getContract(),
+			crop -> holdings.count(crop.getPlantItemId()));
 		final RouteAtlas atlas = routeAtlas(config, access, holdings);
 		final TravelWays nowWays = TravelWays.of(atlas, config, access, holdings, settings.getAccount().getPoh(),
 			this::itemName);
@@ -289,11 +307,23 @@ public class RunService
 		final List<BankStop> bankStops = run.getBankStops();
 
 		final Map<Location, List<String>> objectives = new EnumMap<>(Location.class);
+		final ContractPlanner.Plan contract = selection.getContract();
 		for (Patch patch : selection.getPatches())
 		{
+			// A contract patch only anchoring the guild stop has nothing to do: Guildmaster Jane is the stop's reason
+			if (contract.role(patch) == ContractPlanner.Role.LEAVE)
+			{
+				continue;
+			}
 			objectives.computeIfAbsent(patch.getLocation(), k -> new ArrayList<>()).add(StepAdvisor.objectives(
 				patch, patchTracker.predict(patch), supplies.getPlantings().get(patch),
-				config.keepsGrowing(patch.getType())));
+				contract.role(patch) == null && config.keepsGrowing(patch.getType())));
+		}
+		if (contract.getJane() != ContractPlanner.Jane.NONE)
+		{
+			objectives.computeIfAbsent(Location.FARMING_GUILD, k -> new ArrayList<>()).add("Guildmaster Jane: "
+				+ (contract.getJane() == ContractPlanner.Jane.HAND_IN ? "hand in your contract, take another"
+				: contract.getJane() == ContractPlanner.Jane.NEW ? "ask for a contract" : "ask for an easier contract"));
 		}
 
 		final RunPlan next = new RunPlan(selection, route, supplies, objectives,

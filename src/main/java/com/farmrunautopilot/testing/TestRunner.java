@@ -60,9 +60,15 @@ public class TestRunner
 	private TestItem item;
 	private GuidedTest test;
 	private List<GuidedTest.Step> steps;
+	/** -1 until the first step starts, once the run is planned with the test's settings ({@link #plannedAtStart}). */
 	private int stepIndex;
 	private int stepTicks;
 	private boolean asking;
+	/**
+	 * {@link RunService#getPlanned} as the test began: its first step waits for the plan to be worked out again, with
+	 * the test's settings (GitHub #32: the Spellbook Swap test captured the warnings of the player's own run).
+	 */
+	private int plannedAtStart;
 	private TestContext context;
 	/** Each finished step's text and how it went. */
 	private final List<String[]> results = new ArrayList<>();
@@ -183,10 +189,14 @@ public class TestRunner
 		this.test = test;
 		this.steps = test.steps();
 		this.stepIndex = -1;
+		this.asking = false;
 		this.context = new TestContext(client, accessChecker, holdingsTracker, runSession, runService, scene,
 			pohDetector, settings, seedVault);
 		results.clear();
-		nextStep();
+		// The settings went in on the Swing thread: the run is planned with them on the next game tick, even if a tick
+		// since then planned it already
+		plannedAtStart = runService.getPlanned();
+		runService.markDirty();
 	}
 
 	/** Stop without reporting. Swing thread. */
@@ -228,7 +238,7 @@ public class TestRunner
 	{
 		clientThread.invoke(() ->
 		{
-			if (item != null && steps.get(stepIndex).optional)
+			if (item != null && stepIndex >= 0 && steps.get(stepIndex).optional)
 			{
 				results.add(new String[]{steps.get(stepIndex).text, "Skipped"});
 				nextStep();
@@ -238,7 +248,7 @@ public class TestRunner
 
 	public void onChatMessage(String message)
 	{
-		if (item != null)
+		if (item != null && stepIndex >= 0)
 		{
 			context.addChat(message);
 			check();
@@ -249,6 +259,16 @@ public class TestRunner
 	{
 		if (item == null)
 		{
+			return;
+		}
+		if (stepIndex < 0)
+		{
+			// What the first step captures and asks about is the test's run, not the one before its settings went in
+			if (runService.getPlanned() != plannedAtStart)
+			{
+				log.debug("Guided test {}: run planned with its settings, first step", item.name());
+				nextStep();
+			}
 			return;
 		}
 		stepTicks++;

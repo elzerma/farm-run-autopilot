@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.Value;
+import net.runelite.api.coords.WorldPoint;
 
 /**
  * What the current step points at in the game (SPEC 13.4): the patch, the gardener, the items to use, the spell to
@@ -55,6 +56,11 @@ public class Highlights
 	Map<Integer, Integer> leprechaunTake;
 	/** What to store with him, by item, with how many: outlined in the inventory side of his window. */
 	Map<Integer, Integer> leprechaunStore;
+	/**
+	 * The tile of {@link #patch} that the walking line and hint arrow go to, marked on its own: the one nearest the player
+	 * as the step began (elzerma, 2026-11-01: "show at the closest tile to where we are of allotments"); null if none.
+	 */
+	WorldPoint patchTile;
 
 	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell)
 	{
@@ -102,6 +108,15 @@ public class Highlights
 		Set<Integer> everySlotIds, CompostBin bin, Map<Integer, Integer> leprechaunTake,
 		Map<Integer, Integer> leprechaunStore)
 	{
+		this(patch, gardener, travelNpc, itemIds, spell, wearItemIds, menuPicks, teleportOption, neededIds, everySlotIds,
+			bin, leprechaunTake, leprechaunStore, null);
+	}
+
+	public Highlights(Patch patch, boolean gardener, String travelNpc, Set<Integer> itemIds, Spell spell,
+		Set<Integer> wearItemIds, List<MenuPick> menuPicks, String teleportOption, Set<Integer> neededIds,
+		Set<Integer> everySlotIds, CompostBin bin, Map<Integer, Integer> leprechaunTake,
+		Map<Integer, Integer> leprechaunStore, WorldPoint patchTile)
+	{
 		this.patch = patch;
 		this.gardener = gardener;
 		this.travelNpc = travelNpc;
@@ -115,20 +130,28 @@ public class Highlights
 		this.bin = bin;
 		this.leprechaunTake = leprechaunTake;
 		this.leprechaunStore = leprechaunStore;
+		this.patchTile = patchTile;
 	}
 
 	/** The same, with these items to put on. */
 	public Highlights withWear(Set<Integer> wear)
 	{
 		return new Highlights(patch, gardener, travelNpc, itemIds, spell, wear, menuPicks, teleportOption, neededIds,
-			everySlotIds, bin, leprechaunTake, leprechaunStore);
+			everySlotIds, bin, leprechaunTake, leprechaunStore, patchTile);
 	}
 
 	/** The same, with what to take from and store with the tool leprechaun in his window. */
 	public Highlights withLeprechaun(Map<Integer, Integer> take, Map<Integer, Integer> store)
 	{
 		return new Highlights(patch, gardener, travelNpc, itemIds, spell, wearItemIds, menuPicks, teleportOption, neededIds,
-			everySlotIds, bin, take, store);
+			everySlotIds, bin, take, store, patchTile);
+	}
+
+	/** The same, with the patch's tile to go to. */
+	public Highlights withPatchTile(WorldPoint tile)
+	{
+		return new Highlights(patch, gardener, travelNpc, itemIds, spell, wearItemIds, menuPicks, teleportOption, neededIds,
+			everySlotIds, bin, leprechaunTake, leprechaunStore, tile);
 	}
 
 	/** Everything the step needs, outlined or not, the main item first. */

@@ -537,7 +537,7 @@ public class RunSession
 	}
 
 	/**
-	 * A finished run's time per patch type: " - new best for 9 herbs!" (or "first time for ...") for the line, and one
+	 * A finished run's time per patch type: " - new best for 9 herbs" (or "first time for ...") for the line, and one
 	 * line per type with its best and median, plus the banking, for hovering it. Null parts when it couldn't be split
 	 * (a stop skipped without reaching it).
 	 */
@@ -565,7 +565,7 @@ public class RunSession
 			}
 			else if (part.getSeconds() < previous)
 			{
-				news.add("new best for " + name + "!");
+				news.add("new best for " + name);
 			}
 			lines.add(TypeTimes.line(e.getKey(), part, TypeTimes.best(history, e.getKey(), part.getPatches()),
 				TypeTimes.medianPerPatch(history, e.getKey())));
@@ -577,7 +577,7 @@ public class RunSession
 		return new String[]{news.isEmpty() ? "" : " - " + String.join(", ", news), String.join("\n", lines)};
 	}
 
-	/** e.g. " - new best for 6 herbs!" or " - 2nd best for 6 herbs"; empty outside the top times. */
+	/** e.g. " - new best for 6 herbs" or " - 2nd best for 6 herbs"; empty outside the top times. */
 	static String rank(List<Double> best, double seconds, String makeupName)
 	{
 		final int place = best.indexOf(seconds);
@@ -591,7 +591,7 @@ public class RunSession
 		}
 		if (place == 0)
 		{
-			return " - new best for " + makeupName + "!";
+			return " - new best for " + makeupName;
 		}
 		return " - " + (place == 1 ? "2nd" : "3rd") + " best for " + makeupName;
 	}
@@ -1292,10 +1292,14 @@ public class RunSession
 		final List<RouteStop> stops = plan.getRoute().getStops();
 		final int end = partEnd();
 
-		// Needed now: the step in hand can't be done; a moment's grace, as the inventory changes mid-step
-		if (patches.currentItemMissing(view.getHighlights()))
+		// Needed now: the step in hand can't be done; a moment's grace, as the inventory changes mid-step. The step the
+		// guide is on now, not the one the view still shows: planting the last seed (done without for the rest of the run)
+		// read as the plant step's seed missing, and the compost step after it was skipped, so its ultracompost was stored
+		// (elzerma's run of 2026-11-01, Civitas illa Fortis)
+		final Highlights step = patches.highlights();
+		if (patches.currentItemMissing(step))
 		{
-			if (view.getHighlights().getStepItemIds().stream().anyMatch(skippedItems::contains))
+			if (step.getStepItemIds().stream().anyMatch(skippedItems::contains))
 			{
 				log.debug("Step skipped: its item was skipped");
 				patches.skipCurrentStep();

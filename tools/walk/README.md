@@ -13,7 +13,14 @@ list (BSD-2, see `THIRD_PARTY_NOTICES`) from a local clone and write numbers the
 - `Walk.java`: loads the collision map; the shared walking rules (8 directions, the game's diagonal rule).
 
 The `.tsv` files are the coordinates used (Shortest Path commit 7e81a40, plus `PatchPoints`). The allotment and hops
-stops (Sprint 1a) were added and measured on Shortest Path c7a4937 (2026-10-17), which also rebuilt the grid.
+stops (Sprint 1a) were added and measured on Shortest Path c7a4937 (2026-10-17), which also rebuilt the grid. The
+bush, cactus, mushroom, belladonna and special tree stops (Sprints 1b and 1c) were added on 2026-11-01 and the grid
+rebuilt on 37abff3a3345185fc11fccecae04d8170de25a11, the travel atlas's commit (`tools/atlas/README.md`); the 25
+stops before them came out byte for byte the same. Fossil Island's underwater seaweed patches are listed but left out
+(`Grid` skips rows off plane 0): they're reached by a dive, never walked to.
+
+A new stop's patches go in `patches.tsv`, then rebuild the grid: `WalkGridTest` fails while a stop on the ground has
+none, and the plugin can't start a run at it on foot.
 
 To refresh after a Shortest Path update (clone it next to this folder first):
 

@@ -38,8 +38,9 @@ public class HintArrowController
 	/** Call every game tick, after the run session has updated. */
 	public void update()
 	{
-		final Patch patch = session.getView().getHighlights().getPatch();
-		final LocalPoint target = patch != null && config.hintArrow() ? pointFor(patch) : null;
+		final Highlights highlights = session.getView().getHighlights();
+		final Patch patch = highlights.getPatch();
+		final LocalPoint target = patch != null && config.hintArrow() ? pointFor(patch, highlights.getPatchTile()) : null;
 		if (Objects.equals(target, shown))
 		{
 			return;
@@ -66,9 +67,16 @@ public class HintArrowController
 		}
 	}
 
-	/** The middle of the patch: a game object's location is its centre, so a 2x2 herb patch gets the middle of 4 tiles. */
-	private LocalPoint pointFor(Patch patch)
+	/**
+	 * The patch's tile the step goes to, its nearest to the player (a long allotment's middle can be far off); else the
+	 * middle of the patch: a game object's location is its centre, so a 2x2 herb patch gets the middle of 4 tiles.
+	 */
+	private LocalPoint pointFor(Patch patch, WorldPoint tile)
 	{
+		if (tile != null)
+		{
+			return LocalPoint.fromWorld(client.getTopLevelWorldView(), tile);
+		}
 		final List<GameObject> objects = scene.objectsFor(patch);
 		if (!objects.isEmpty())
 		{

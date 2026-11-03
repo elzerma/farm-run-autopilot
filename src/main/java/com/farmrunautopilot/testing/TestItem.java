@@ -15,7 +15,7 @@ public enum TestItem
 		"On the Lunar spellbook (96 Magic, Dream Mentor done) with no house altar for the standard spellbook, start "
 			+ "this test: it plans Catherby by Camelot Teleport, cast from runes. The Run tab should warn that you need "
 			+ "Spellbook Swap, its runes should be on the bank's Farm run tab, and the spell should be outlined in your "
-			+ "spellbook on that step."),
+			+ "spellbook on that step.", 2),
 	SEED_VAULT_SECTION(Tab.RUN, "Farm run section in the seed vault",
 		"Build a run needing seeds your bank doesn't have but the Farming Guild's seed vault does, and open the vault: "
 			+ "the button by its close button should flash, with the same outline round it as the bank's Farm run "
@@ -44,10 +44,6 @@ public enum TestItem
 			+ "patches to Pay gardener and run just that farm's allotments. After planting each allotment the step should "
 			+ "say \"Pay Elstan for the north-west allotment: 2 x Compost\" (then the south-east one), and move on once "
 			+ "you've paid for it."),
-	NEW_PATCH_POINTS(Tab.RUN, "Where the new patches are",
-		"Tick Allotments, Flowers or Hops on the Run tab and stand by any allotment set or hops patch you can use. "
-			+ "The patch should be outlined when it's the next step, and the hint arrow should point at it, not a few "
-			+ "tiles away."),
 	ALLOTMENT_FLOWER_PROTECTION(Tab.FARM, "Flowers protecting allotments",
 		"At the farm south of Falador, with a marigold seed and potato seeds, leave Farm > Protection > Allotment "
 			+ "patches on Flower and run just that farm's allotments. The steps should start at the flower patch with "
