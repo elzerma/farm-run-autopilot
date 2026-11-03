@@ -16,19 +16,24 @@ Used in: src/main/java/com/farmrunautopilot/data/Patch.java,
          src/main/java/com/farmrunautopilot/tracking/FarmingTick.java,
          src/main/java/com/farmrunautopilot/tracking/PatchPredictor.java,
          src/main/java/com/farmrunautopilot/run/PatchGuide.java,
-         src/main/java/com/farmrunautopilot/supply/BottomlessBucketTracker.java
+         src/main/java/com/farmrunautopilot/supply/BottomlessBucketTracker.java,
+         src/main/java/com/farmrunautopilot/data/FarmingContract.java,
+         src/main/java/com/farmrunautopilot/tracking/ContractTracker.java
 
 Patch and compost bin region IDs, extra region IDs, varbit assignments, gardener
 NPCs and the Catherby / Falador bounds rules were copied from
 runelite-client/.../timetracking/farming/FarmingWorld.java, for every patch type
 the plugin runs. Patch-state and compost bin value ranges were copied from
-PatchImplementation.java, and crop growth tick rates and stage counts from
-Produce.java. The farming tick timing and growth prediction follow
-FarmingTracker.java, and the compost chat message patterns in PatchGuide and
-BottomlessBucketTracker follow CompostTracker.java.
+PatchImplementation.java, and crop growth tick rates, stage counts and farming
+contract values from Produce.java. The farming tick timing and growth prediction
+follow FarmingTracker.java, reading the Farming Guild contract follows
+FarmingContractManager.java, and the compost chat message patterns in PatchGuide
+and BottomlessBucketTracker follow CompostTracker.java.
 
 Copyright (c) 2018, NotFoxtrot <https://github.com/NotFoxtrot>
 Copyright (c) 2018, 2019 Abex
+Copyright (c) 2019, Koekkruimels <https://github.com/koekkruimels>
+Copyright (c) 2020, melky <https://github.com/melkypie>
 Copyright (c) 2022 LlemonDuck
 All rights reserved.
 

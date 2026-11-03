@@ -30,4 +30,23 @@ public class RunSelection
 	List<String> notDue;
 	/** How many of each ticked type's usable patches are due right now. */
 	Map<PatchType, Integer> dueCounts;
+	/** The Farming Guild's contract work, {@link ContractPlanner.Plan#OFF} with contracts off. */
+	ContractPlanner.Plan contract;
+
+	public RunSelection(List<Patch> patches, Set<PatchType> includedTypes, Map<PatchType, Long> skippedTypes,
+		List<String> notDue, Map<PatchType, Integer> dueCounts)
+	{
+		this(patches, includedTypes, skippedTypes, notDue, dueCounts, ContractPlanner.Plan.OFF);
+	}
+
+	public RunSelection(List<Patch> patches, Set<PatchType> includedTypes, Map<PatchType, Long> skippedTypes,
+		List<String> notDue, Map<PatchType, Integer> dueCounts, ContractPlanner.Plan contract)
+	{
+		this.patches = patches;
+		this.includedTypes = includedTypes;
+		this.skippedTypes = skippedTypes;
+		this.notDue = notDue;
+		this.dueCounts = dueCounts;
+		this.contract = contract;
+	}
 }

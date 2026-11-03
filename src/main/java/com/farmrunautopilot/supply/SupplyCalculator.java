@@ -22,6 +22,7 @@ import com.farmrunautopilot.data.travel.TravelKind;
 import com.farmrunautopilot.data.travel.TravelMethod;
 import com.farmrunautopilot.route.AtlasLeg;
 import com.farmrunautopilot.route.ChargeBudget;
+import com.farmrunautopilot.route.ContractPlanner;
 import com.farmrunautopilot.route.Departure;
 import com.farmrunautopilot.route.Route;
 import com.farmrunautopilot.route.RouteStop;
@@ -123,9 +124,15 @@ public final class SupplyCalculator
 		final Map<PatchType, Integer> patchCounts = new EnumMap<>(PatchType.class);
 
 		final List<Patch> patches = selection.getPatches();
+		// The Farming Guild's contract patches (docs/plans/farming-contracts.md): a waiting one only anchors the guild stop
+		// for Guildmaster Jane, so it isn't a patch done, and needs nothing
+		final ContractPlanner.Plan contract = selection.getContract();
 		for (Patch patch : patches)
 		{
-			patchCounts.merge(patch.getType(), 1, Integer::sum);
+			if (contract.role(patch) != ContractPlanner.Role.LEAVE)
+			{
+				patchCounts.merge(patch.getType(), 1, Integer::sum);
+			}
 		}
 		if (patches.isEmpty())
 		{
@@ -153,8 +160,8 @@ public final class SupplyCalculator
 			{
 				// Flowers kept for protecting allotments get the flower that suits them, below; a crop picked and left
 				// growing isn't replanted
-				if (patch.getType() == type && !FlowerProtection.isProtecting(patch, config, access)
-					&& !keptGrowing(patch, config, predictions))
+				if (patch.getType() == type && contract.role(patch) == null
+					&& !FlowerProtection.isProtecting(patch, config, access) && !keptGrowing(patch, config, predictions))
 				{
 					ofType.add(patch);
 				}
@@ -168,6 +175,22 @@ public final class SupplyCalculator
 			}
 		}
 		plantings.putAll(protectingFlowers(patches, plantings, config, access, farming, holdings, predictions));
+		// A contract patch gets the contract's crop where it's missing, else the wiki's pre-plant
+		if (contract.isOn())
+		{
+			final List<Patch> guild = new ArrayList<>(contract.getRoles().keySet());
+			for (Patch patch : patches)
+			{
+				final ContractPlanner.Role role = contract.role(patch);
+				final Crop crop = role == null || role == ContractPlanner.Role.LEAVE ? null : ContractPlanner.crop(patch,
+					contract.getContract(), farming, guild, predictions, c -> holdings.count(c.getPlantItemId()),
+					t -> config.cropFor(t, farming));
+				if (crop != null)
+				{
+					plantings.put(patch, crop);
+				}
+			}
+		}
 
 		// How each patch is looked after (elzerma, 2026-10-18): its type's choices first; when the gardener's payment or
 		// that compost can't be had, down Pay -> ultracompost -> supercompost -> compost to the best the player has. Only
@@ -183,8 +206,10 @@ public final class SupplyCalculator
 			final PatchPrediction prediction = predictions.apply(patch);
 			final PatchState state = prediction != null ? prediction.getState() : PatchState.UNKNOWN;
 			anyWeeds |= state == PatchState.WEEDS;
-			// Picked and left growing (elzerma, 2026-10-24): nothing to clear, plant, pay or compost
-			if (keptGrowing(patch, config, predictions))
+			// Picked and left growing (elzerma, 2026-10-24): nothing to clear, plant, pay or compost; nor a contract patch
+			// only anchoring the guild stop. The contract decides for its patches, not keeping them growing
+			final ContractPlanner.Role role = contract.role(patch);
+			if (role == ContractPlanner.Role.LEAVE || role == null && keptGrowing(patch, config, predictions))
 			{
 				continue;
 			}

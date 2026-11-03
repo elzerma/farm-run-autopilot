@@ -5,6 +5,7 @@ import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.access.UnlockSpotter;
 import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.Crop;
+import com.farmrunautopilot.data.FarmingContract;
 import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
@@ -85,6 +86,7 @@ final class GuidedTests
 		TESTS.put(TestItem.ETCETERIA_ACCESS, new EtceteriaAccess());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
 		TESTS.put(TestItem.GREAT_CONCH_ACCESS, new GreatConchAccess());
+		TESTS.put(TestItem.CONTRACT_VALUES, new ContractValues());
 	}
 
 	private GuidedTests()
@@ -869,6 +871,79 @@ final class GuidedTests
 	 * itself rather than Shortest Path's MY2ARM_STATUS = 207 (AtlasAccount). elzerma doesn't have the quest. The report
 	 * has what that varbit reads with the quest finished, and where the basalt lands.
 	 */
+	/**
+	 * The Farming Guild contract's varbits (docs/plans/farming-contracts.md): TYPE and COMPLETE as RuneLite's Time Tracking
+	 * reads them (COMPLETE above 0: grown, to hand in), whether they're there away from the guild, what LEVEL and COUNT
+	 * hold (UNVERIFIED: the tier, and how many done?), how they change when Guildmaster Jane takes or gives one, her NPC id,
+	 * and the game's lines. elzerma's dev check.
+	 */
+	private static final class ContractValues extends GuidedTest
+	{
+		private static int[] read(TestContext ctx)
+		{
+			return new int[]{ctx.varbit(VarbitID.FARMGUILD_CONTRACT_TYPE), ctx.varbit(VarbitID.FARMGUILD_CONTRACT_COMPLETE),
+				ctx.varbit(VarbitID.FARMGUILD_CONTRACT_LEVEL), ctx.varbit(VarbitID.FARMGUILD_CONTRACT_COUNT)};
+		}
+
+		private static String values(TestContext ctx)
+		{
+			final int[] v = read(ctx);
+			final Crop crop = FarmingContract.crop(v[0]);
+			return "type " + v[0] + (crop != null ? " (" + crop.getDisplayName() + ")" : "") + ", complete " + v[1]
+				+ ", level " + v[2] + ", count " + v[3];
+		}
+
+		/** The contract's values aren't as they were at the guild: Jane took or gave one. */
+		private static boolean changed(TestContext ctx)
+		{
+			final List<String> seen = ctx.recall("chat");
+			seen.addAll(ctx.chat());
+			final int[] then = ctx.recall("atGuild");
+			return then != null && !Arrays.equals(then, read(ctx));
+		}
+
+		@Override
+		public List<Step> steps()
+		{
+			return Arrays.asList(
+				ask("Is your Farming level 45 or more, so Guildmaster Jane gives you contracts?")
+					.onStart(ctx -> ctx.capture("Away from the guild", values(ctx)))
+					.onAnswer((ctx, yes) ->
+					{
+						if (!yes)
+						{
+							ctx.cannotTest("45 Farming, for a farming contract");
+						}
+					}),
+				doThis("Go into the Farming Guild", ctx -> ctx.inRegion(4922))
+					.onDone(ctx ->
+					{
+						ctx.capture("At the guild", values(ctx));
+						ctx.remember("atGuild", read(ctx));
+						ctx.remember("chat", new ArrayList<String>());
+					}),
+				doThis("Talk to Guildmaster Jane: hand in your contract if it's grown, ask for one if you have none, or ask "
+					+ "for an easier one", ContractValues::changed)
+					.onDone(ctx ->
+					{
+						ctx.capture("After Jane", values(ctx));
+						ctx.capture("Jane", ctx.npcsNamed(FarmingContract.JANE));
+						final List<String> seen = ctx.recall("chat");
+						ctx.capture("Game messages", seen.isEmpty() ? "none" : String.join(" | ", seen));
+					})
+					.orAskAfter(DO_TICKS, "The contract's values haven't changed. Did Jane hand in or give you a contract?")
+					.onAnswer((ctx, yes) ->
+					{
+						ctx.capture("After Jane", values(ctx));
+						ctx.capture("Jane", ctx.npcsNamed(FarmingContract.JANE));
+						if (yes)
+						{
+							ctx.problem("Jane took or gave a contract, but its values didn't change");
+						}
+					}));
+		}
+	}
+
 	private static final class IcyBasalt extends GuidedTest
 	{
 		@Override

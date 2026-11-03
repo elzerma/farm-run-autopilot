@@ -1,6 +1,7 @@
 package com.farmrunautopilot.run;
 
 import com.farmrunautopilot.data.CompostBin;
+import com.farmrunautopilot.data.FarmingContract;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.travel.JourneyStep;
@@ -52,7 +53,7 @@ public class SceneTracker
 	private final Map<CompostBin, GameObject> binObjects = new EnumMap<>(CompostBin.class);
 	private final Map<Patch, NPC> gardeners = new EnumMap<>(Patch.class);
 	/** Renu, the quetzal a Renu leg walks back to first (Navigator); everyone else ridden comes from the atlas. */
-	private static final Set<String> TRANSFER_NPC_NAMES = Set.of("Renu", PatchGuide.TOOL_LEPRECHAUN);
+	private static final Set<String> TRANSFER_NPC_NAMES = Set.of("Renu", PatchGuide.TOOL_LEPRECHAUN, FarmingContract.JANE);
 	private final Map<String, NPC> transfers = new HashMap<>();
 	/** Every tool leprechaun loaded. */
 	private final List<NPC> leprechauns = new ArrayList<>();

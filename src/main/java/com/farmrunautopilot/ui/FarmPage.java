@@ -42,6 +42,7 @@ class FarmPage extends SetupPanel
 		add(protectionSection(config));
 		add(compostSection(config));
 		add(atThePatchesSection(config));
+		add(contractsSection(config));
 		add(extrasSection(config));
 		add(advancedFarmSection(config));
 	}
@@ -431,6 +432,21 @@ class FarmPage extends SetupPanel
 	 * What's done at each stop besides planting (patch actions P1, the section elzerma liked): noting the produce on the tool
 	 * leprechaun and what happens to empty buckets. Cleaning herbs and making compost join it in P2 and P3.
 	 */
+	/** Farming Guild contracts (docs/plans/farming-contracts.md; elzerma, 2026-10-17 and 2026-11-02). */
+	private JComponent contractsSection(RunConfig config)
+	{
+		final CollapsibleSection s = section("Farming contracts");
+		s.help("The Farming Guild's patches hold the wiki's pre-plants for Guildmaster Jane's contracts, left alone until a "
+			+ "contract asks for one. Its crop is checked or picked once grown and the patch replanted, a contract's crop "
+			+ "that isn't growing is planted, and the guild stop ends at Jane: hand one in, take another (the highest tier "
+			+ "your level allows), or ask for an easier one when a slow crop's patch is taken.");
+		s.addContent(checkBox("Build farming contracts into runs", config.isFarmingContracts(), true,
+			"The guild's patches are kept for contracts instead of your usual crops, and a run stops at the guild whenever "
+				+ "a contract needs it",
+			on -> saveRun(() -> config.setFarmingContracts(on))));
+		return s;
+	}
+
 	private JComponent atThePatchesSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("At the patches");

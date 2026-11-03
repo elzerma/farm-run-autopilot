@@ -1,6 +1,7 @@
 # Explore: Farming Guild contracts
 
-**Status:** explore write-up, no code (2026-10-17). Nothing here is planned until elzerma picks an option.
+**Status:** option (c) built on 2026-11-02 (section 8), not yet seen in game; the tier tip (d) comes after the release.
+The explore write-up below is from 2026-10-17.
 **From:** issue #7, elzerma: "the other feature I want to manage now as well is farming contracts ... where it
 wouldn't touch farming guild patches that are used with wiki tables for managing the farming guild's contracts
 best optimizations ... adding farming contracts will lead to more seeds that can be used for more farm runs".
@@ -200,3 +201,38 @@ cactus, celastrus and redwood join the runs. For contracts:
 Still open: questions 3 and 5 in section 6 (whether the run takes a new contract on its own, and whether
 contracts start with herb/tree/fruit tree or wait for the crop types work). Nothing is built until elzerma
 asks for the build plan.
+
+## 8. Built (2026-11-02)
+
+elzerma, 2026-11-02: "plan and build before release ... handling farming contracts". Settled in the picker that day:
+the guild stop ends at Guildmaster Jane every time there's something to see her about (question 3: yes, the run
+takes contracts); every guild contract patch is kept for contracts, the allotments too; ask for the highest tier the
+Farming level allows; a blocked contract whose crop is slower than a bush is swapped ("ask for an easier one"), a quick
+one gets its patch cleared; the tier tip (d) after the release. The crop types are built (question 5 is moot).
+
+- **Setting:** Farm > Farming contracts > "Build farming contracts into runs" (`RunConfig.farmingContracts`, off by
+  default, kept whichever preset is applied).
+- **The contract:** `tracking/ContractTracker` reads FARMGUILD_CONTRACT_TYPE and _COMPLETE each tick, as Time
+  Tracking's FarmingContractManager does (no region check), and logs `Farming contract: <crop> (value N), complete N,
+  level N, count N at tick N` as it changes. LEVEL and COUNT are logged only, to learn their meaning.
+- **The tables:** `data/FarmingContract`: each crop's contract value (RuneLite's `Produce`), the tiers each crop can
+  come in (wiki: 31 Easy, 22 Medium, 18 Hard), the wiki's Hard and Medium pre-plants per guild patch (the first one the
+  player has seeds for), Guildmaster Jane's name and spot (1249, 3727), and the completion message.
+- **The plan:** `route/ContractPlanner` gives each guild contract patch a role from what it holds: LEAVE (a crop
+  waiting for its contract, or the contract's still growing), TAKE (the contract's crop grown: check or pick it, then
+  replant; or a diseased crop to cure), PLANT (empty, weeds, dead, a stump or a tree already checked), or
+  CLEAR_FOR_CONTRACT (an Easy or quick contract blocked by another crop: dig it up, plant the contract's). And Jane's
+  part: HAND_IN, NEW or EASIER. `RunSelector` runs the guild's contract patches by role, whatever types are ticked, with
+  one anchoring the stop when only Jane is to see; `SupplyCalculator` plants them with the planner's crop.
+- **The guide:** at the guild stop every contract patch is looked at, by its role as it reads at the time, unless this
+  run is planting it; when the contract changes, the patches passed over are looked at again, so a new contract whose
+  crop is grown already is done on the spot. The stop ends at Jane, outlined, with the walking line to her: "Talk to
+  Guildmaster Jane: hand in your contract, then take another Hard contract", "ask for a Hard contract" or "ask for an
+  easier contract (magic takes 8 h to grow)". The step clears once the contract's values show nothing to see her about.
+- **Run tab:** one line, e.g. "Contract: Maple is grown: checked at the guild this run", "No farming contract: ask
+  Guildmaster Jane for a Hard one"; the guild stop's hover names Jane's part.
+- **Dev check:** `CONTRACT_VALUES` (Settings > Dev checks) reads the values away from the guild, at it and after Jane,
+  and finds Jane: whether TYPE is there away from the guild, what LEVEL and COUNT hold, and how they change at the
+  hand-in. UNVERIFIED until it's run: LEVEL as the tier (1 Easy, 2 Medium, 3 Hard), COMPLETE going back to 0 at the
+  hand-in, and when the completion message shows.
+- **Tests:** `ContractPlannerTest` (roles, Jane, crops, the tables), `RunSelectorTest.contractsRunTheGuildsPatchesForThem`.

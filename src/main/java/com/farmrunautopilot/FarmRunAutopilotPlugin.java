@@ -41,6 +41,7 @@ import com.farmrunautopilot.run.ChatOptions;
 import com.farmrunautopilot.run.FairyRingLog;
 import com.farmrunautopilot.run.TeleportMenuHighlighter;
 import com.farmrunautopilot.run.TravelMenuOverlay;
+import com.farmrunautopilot.tracking.ContractTracker;
 import com.farmrunautopilot.tracking.PatchTracker;
 import com.farmrunautopilot.ui.FarmRunAutopilotPanel;
 import com.google.inject.Provides;
@@ -106,6 +107,9 @@ public class FarmRunAutopilotPlugin extends Plugin
 
 	@Inject
 	private PatchTracker patchTracker;
+
+	@Inject
+	private ContractTracker contractTracker;
 
 	@Inject
 	private SettingsStore settings;
@@ -336,6 +340,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		lastTickLocation = null;
 		lastTickPostLogin = false;
 		patchTracker.reset();
+		contractTracker.reset();
 		accessChecker.reset();
 		runService.reset();
 		runOverrides.clear();
@@ -455,6 +460,11 @@ public class FarmRunAutopilotPlugin extends Plugin
 			lastTickPostLogin = false;
 			return;
 		}
+		// The Farming Guild contract, read anywhere (docs/plans/farming-contracts.md); a change plans the run again
+		if (contractTracker.update())
+		{
+			runService.markDirty();
+		}
 
 		final WorldPoint location = lastTickLocation;
 		final Player player = client.getLocalPlayer();
@@ -513,6 +523,7 @@ public class FarmRunAutopilotPlugin extends Plugin
 		// A guided test belongs to the account it started on
 		testRunner.onLoggedOut();
 		patchTracker.reset();
+		contractTracker.reset();
 		accessChecker.reset();
 		holdingsTracker.loadCaches();
 		runService.reset();

@@ -49,6 +49,8 @@ public final class StepAdvisor
 		NOTE,
 		/** Take the compost this stop's patches need from the tool leprechaun (P1). */
 		TAKE_COMPOST,
+		/** See Guildmaster Jane at the end of the guild stop: hand in a farming contract, or take one (contracts). */
+		JANE,
 		DONE
 	}
 

@@ -289,7 +289,7 @@ final class RunAssembly
 		final List<Patch> patches = patchesAt(stops);
 		patches.removeAll(leaveOut);
 		final RunSelection part = new RunSelection(patches, selection.getIncludedTypes(),
-			selection.getSkippedTypes(), Collections.emptyList(), selection.getDueCounts());
+			selection.getSkippedTypes(), Collections.emptyList(), selection.getDueCounts(), selection.getContract());
 		return SupplyCalculator.calculate(config, access, holdings, part,
 			new Route(new ArrayList<>(stops), route.getMode(), 0, 0), predict, itemName, price, wearSlot, bins);
 	}

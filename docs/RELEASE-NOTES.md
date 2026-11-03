@@ -12,6 +12,15 @@
 - Not covered yet: anima, Hespori, grapes, coral, the Entrana and Keldagrim hops patches and the Anglers' Retreat flax
   patches.
 
+### Farming contracts
+- Turn on Farm > Farming contracts > "Build farming contracts into runs". The Farming Guild's patches then hold the
+  wiki's pre-plants and are left alone until Guildmaster Jane's contract asks for one.
+- The contract's crop is checked or picked once grown and the patch replanted. A contract whose crop isn't growing gets
+  it planted; if its patch holds another crop, a quick one (herbs, flowers, bushes) takes its place, and for a slow one
+  the guide says to ask Jane for an easier contract.
+- The guild stop ends at Jane, outlined: hand in your contract and take another (the highest tier your level allows),
+  or ask for one. If the new crop is already grown, it's done on the spot. The Run tab says where the contract stands.
+
 ### Travel
 - Every leg is planned from a travel map worked out ahead of time with Shortest Path's data. It covers teleports,
   fairy rings, spirit trees, boats and ships, gliders, balloons, carts, magic carpets and Agility shortcuts, checked

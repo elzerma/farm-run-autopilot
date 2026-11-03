@@ -4,10 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import com.farmrunautopilot.access.AccessSnapshot;
+import com.farmrunautopilot.data.Crop;
+import com.farmrunautopilot.data.FarmingContract;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.settings.RunConfig;
+import com.farmrunautopilot.tracking.ContractTracker.Contract;
 import com.farmrunautopilot.tracking.PatchPrediction;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -120,5 +123,41 @@ public class RunSelectorTest
 		assertEquals(7, RunSelector.neededDue(7, 100));
 		assertEquals(4, RunSelector.neededDue(7, 50));
 		assertEquals(1, RunSelector.neededDue(7, 1));
+	}
+
+	/** Every guild contract patch holds a pre-plant: grown and waiting (herbs and allotments picked, the rest checked). */
+	private static PatchPrediction prePlant(Patch patch)
+	{
+		final Crop crop = FarmingContract.prePlants(patch, 99).get(0);
+		return new PatchPrediction(patch, crop, patch.getType().isHealthChecked() ? PatchState.CHECK_HEALTH
+			: PatchState.HARVESTABLE, 0, crop.getStages(), 0, NOW, 0, PatchPrediction.Source.THIS_PLUGIN);
+	}
+
+	@Test
+	public void contractsRunTheGuildsPatchesForThem()
+	{
+		final RunConfig config = config(PatchType.HERB);
+		config.setFarmingContracts(true);
+		final Function<Patch, PatchPrediction> guild = p -> FarmingContract.PATCHES.contains(p) ? prePlant(p) : MIXED.apply(p);
+		// A maple contract: the guild's grown maple (the Hard table's first tree) is taken, though trees aren't ticked;
+		// its herb, a pre-plant waiting, isn't, though herbs are; the other herb patches as usual
+		final RunSelection maple = RunSelector.select(config, AccessSnapshot.UNKNOWN, guild, NOW, false,
+			Collections.emptyMap(), new Contract(9, Crop.MAPLE, false, 3, 0));
+		assertTrue(maple.getPatches().contains(Patch.FARMING_GUILD_TREE));
+		assertFalse(maple.getPatches().contains(Patch.FARMING_GUILD_HERB));
+		assertTrue(maple.getNotDue().contains(Patch.FARMING_GUILD_HERB.getDisplayName() + ": kept for a farming contract"));
+		assertTrue(maple.getPatches().contains(Patch.CATHERBY_HERB));
+		assertEquals(ContractPlanner.Jane.NONE, maple.getContract().getJane());
+		// Handed in, everything else waiting: the guild's first patch anchors the stop for Guildmaster Jane
+		final RunSelection handIn = RunSelector.select(config, AccessSnapshot.UNKNOWN, guild, NOW, false,
+			Collections.emptyMap(), new Contract(9, Crop.MAPLE, true, 3, 1));
+		assertEquals(ContractPlanner.Jane.HAND_IN, handIn.getContract().getJane());
+		assertTrue(handIn.getPatches().contains(FarmingContract.PATCHES.get(0)));
+		// Off: the guild's herb is an ordinary due herb patch
+		config.setFarmingContracts(false);
+		final RunSelection off = RunSelector.select(config, AccessSnapshot.UNKNOWN, guild, NOW, false,
+			Collections.emptyMap(), new Contract(9, Crop.MAPLE, false, 3, 0));
+		assertTrue(off.getPatches().contains(Patch.FARMING_GUILD_HERB));
+		assertFalse(off.getContract().isOn());
 	}
 }

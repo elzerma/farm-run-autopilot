@@ -2,11 +2,13 @@ package com.farmrunautopilot.route;
 
 import com.farmrunautopilot.access.AccessSnapshot;
 import com.farmrunautopilot.data.Crop;
+import com.farmrunautopilot.data.FarmingContract;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
 import com.farmrunautopilot.settings.RunConfig;
 import com.farmrunautopilot.supply.FlowerProtection;
+import com.farmrunautopilot.tracking.ContractTracker.Contract;
 import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchStatusText;
 import net.runelite.api.Skill;
@@ -44,6 +46,18 @@ public final class RunSelector
 	public static RunSelection select(RunConfig config, AccessSnapshot access,
 		Function<Patch, PatchPrediction> predictions, long now, boolean fullRun, Map<PatchType, TypeOverride> overrides)
 	{
+		return select(config, access, predictions, now, fullRun, overrides, Contract.NONE);
+	}
+
+	/**
+	 * As above, with the player's Farming Guild contract: with contracts on, the guild's contract patches are run for
+	 * them (docs/plans/farming-contracts.md), whatever run types are ticked.
+	 */
+	public static RunSelection select(RunConfig config, AccessSnapshot access,
+		Function<Patch, PatchPrediction> predictions, long now, boolean fullRun, Map<PatchType, TypeOverride> overrides,
+		Contract contract)
+	{
+		final List<Patch> guild = contractPatches(config, access);
 		final List<Patch> patches = new ArrayList<>();
 		final Set<PatchType> included = EnumSet.noneOf(PatchType.class);
 		final Map<PatchType, Long> skipped = new EnumMap<>(PatchType.class);
@@ -60,7 +74,7 @@ public final class RunSelector
 			for (Patch patch : Patch.values())
 			{
 				if (patch.getType() == type && config.isPatchSelected(patch) && access.missingFor(patch).isEmpty()
-					&& !FlowerProtection.isProtecting(patch, config, access))
+					&& !FlowerProtection.isProtecting(patch, config, access) && !guild.contains(patch))
 				{
 					usable.add(patch);
 				}
@@ -120,13 +134,45 @@ public final class RunSelector
 			limitSpiritTrees(patches, notDue, predictions, access);
 		}
 
+		// The guild's patches for contracts: those with something to do join, a waiting pre-plant doesn't, and when only
+		// Guildmaster Jane is to see, the first patch anchors the guild stop with nothing done there
+		ContractPlanner.Plan contractPlan = ContractPlanner.Plan.OFF;
+		if (!guild.isEmpty())
+		{
+			final int farming = access.isKnown() ? access.level(Skill.FARMING) : 99;
+			contractPlan = ContractPlanner.plan(contract, farming, guild, predictions);
+			boolean any = false;
+			for (Patch patch : guild)
+			{
+				final ContractPlanner.Role role = contractPlan.role(patch);
+				if (role == ContractPlanner.Role.LEAVE)
+				{
+					notDue.add(patch.getDisplayName() + ": kept for a farming contract");
+					continue;
+				}
+				// Nothing to plant (no pre-plant at this level, no crop chosen for the type): left alone
+				if (role == ContractPlanner.Role.PLANT && ContractPlanner.crop(patch, contract, farming, guild, predictions,
+					crop -> 0, type -> config.cropFor(type, farming)) == null)
+				{
+					continue;
+				}
+				patches.add(patch);
+				included.add(patch.getType());
+				any = true;
+			}
+			if (!any && contractPlan.getJane() != ContractPlanner.Jane.NONE)
+			{
+				patches.add(guild.get(0));
+			}
+		}
+
 		if (included.contains(PatchType.ALLOTMENT))
 		{
 			final int farming = access.isKnown() ? access.level(Skill.FARMING) : 99;
 			final Crop allotmentCrop = config.cropFor(PatchType.ALLOTMENT, farming);
 			for (Patch patch : Patch.values())
 			{
-				if (FlowerProtection.isProtecting(patch, config, access)
+				if (FlowerProtection.isProtecting(patch, config, access) && !guild.contains(patch)
 					&& (fullRun || FlowerProtection.isDue(predictions.apply(patch), allotmentCrop)))
 				{
 					patches.add(patch);
@@ -134,7 +180,28 @@ public final class RunSelector
 				}
 			}
 		}
-		return new RunSelection(patches, included, skipped, notDue, dueCounts);
+		return new RunSelection(patches, included, skipped, notDue, dueCounts, contractPlan);
+	}
+
+	/**
+	 * The guild's contract patches the run uses for contracts: with Build farming contracts into runs on, those the
+	 * player can use and hasn't unticked on the Farm tab; none with it off.
+	 */
+	public static List<Patch> contractPatches(RunConfig config, AccessSnapshot access)
+	{
+		final List<Patch> guild = new ArrayList<>();
+		if (!config.isFarmingContracts())
+		{
+			return guild;
+		}
+		for (Patch patch : FarmingContract.PATCHES)
+		{
+			if (!config.getDisabledPatches().contains(patch) && access.missingFor(patch).isEmpty())
+			{
+				guild.add(patch);
+			}
+		}
+		return guild;
 	}
 
 	/** A patch is due unless it is still growing (SPEC 10). Never-seen patches count as due. */

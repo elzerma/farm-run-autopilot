@@ -7,7 +7,9 @@ import com.farmrunautopilot.data.AchievementDiary;
 import com.farmrunautopilot.data.BinState;
 import com.farmrunautopilot.data.CompostBin;
 import com.farmrunautopilot.data.Crop;
+import com.farmrunautopilot.data.FarmingContract;
 import com.farmrunautopilot.data.GrimyHerb;
+import com.farmrunautopilot.data.Location;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchState;
 import com.farmrunautopilot.data.PatchType;
@@ -15,7 +17,9 @@ import com.farmrunautopilot.data.Requirement;
 import com.farmrunautopilot.data.SupplyItems;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.travel.Spell;
+import com.farmrunautopilot.route.ContractPlanner;
 import com.farmrunautopilot.route.RunPlan;
+import com.farmrunautopilot.route.RunSelector;
 import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.settings.Compost;
 import com.farmrunautopilot.settings.EmptyBuckets;
@@ -27,6 +31,7 @@ import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
 import com.farmrunautopilot.supply.PatchCare;
 import com.farmrunautopilot.supply.SupplyCalculator;
+import com.farmrunautopilot.tracking.ContractTracker;
 import com.farmrunautopilot.tracking.PatchPrediction;
 import com.farmrunautopilot.tracking.PatchTracker;
 import java.util.ArrayList;
@@ -109,6 +114,10 @@ class PatchGuide
 	private final SettingsStore settings;
 	private final Navigator navigator;
 	private final SceneTracker scene;
+	/** The Farming Guild contract, for runs with contracts on (docs/plans/farming-contracts.md). */
+	private final ContractTracker contractTracker;
+	/** The contract as last seen at the guild stop: when it changes, the patches left for one are looked at again. */
+	private ContractTracker.Contract contractSeen;
 
 	private RunPlan plan;
 	private Patch currentPatch;
@@ -174,6 +183,10 @@ class PatchGuide
 		int paymentBaseline = -1;
 		/** The game tick it was seen planted, before its reading showed it; -1 if not. */
 		int plantedTick = -1;
+		/** Seen with nothing growing (empty, weeds, dead or a stump) this run: it's this run's to plant (contracts). */
+		boolean sawEmpty;
+		/** Passed over as a crop waiting for a farming contract: looked at again when the contract changes. */
+		boolean leftForContract;
 	}
 
 	/** Seen planted within the last few ticks, while its reading may still say empty. */
@@ -212,7 +225,8 @@ class PatchGuide
 
 	@Inject
 	PatchGuide(Client client, RunService runService, PatchTracker patchTracker, HoldingsTracker holdingsTracker,
-		AccessChecker accessChecker, SettingsStore settings, Navigator navigator, SceneTracker scene)
+		AccessChecker accessChecker, SettingsStore settings, Navigator navigator, SceneTracker scene,
+		ContractTracker contractTracker)
 	{
 		this.client = client;
 		this.runService = runService;
@@ -222,6 +236,7 @@ class PatchGuide
 		this.settings = settings;
 		this.navigator = navigator;
 		this.scene = scene;
+		this.contractTracker = contractTracker;
 	}
 
 	/** A new run with this (frozen) plan, or null when there's none. */
@@ -463,6 +478,7 @@ class PatchGuide
 	String nextStep(RouteStop stop, List<Patch> here, List<List<Patch>> later)
 	{
 		laterStops = later;
+		here = contractStop(stop, here);
 		final List<Patch> next = later.isEmpty() ? Collections.emptyList() : later.get(0);
 		final Map<Integer, Integer> held = inventoryAsHeld();
 		if (stop != atStop)
@@ -508,7 +524,7 @@ class PatchGuide
 		else if (currentAction == StepAdvisor.Action.PLANT && currentPatch != null)
 		{
 			// The seed leaving the inventory at the patch is planting, a tick or so before the patch reads as planted
-			final Crop crop = plan.getSupplies().getPlantings().get(currentPatch);
+			final Crop crop = plantingFor(currentPatch);
 			if (crop != null && plantUsed(crop.getPlantItemId(), lastSeen, held) && !navigator.farFrom(currentPatch))
 			{
 				markPlanted(currentPatch, runService.itemName(crop.getPlantItemId()) + " left the inventory");
@@ -571,9 +587,32 @@ class PatchGuide
 			{
 				p.sawUnplanted = true;
 			}
+			if (live.getCrop() == null || live.getState() == PatchState.DEAD || live.getState() == PatchState.STUMP)
+			{
+				p.sawEmpty = true;
+			}
 			if (live.getState() == PatchState.EMPTY && justPlanted(p))
 			{
 				live = asPlanted(live);
+			}
+			// Farming contracts (docs/plans/farming-contracts.md): a guild patch's part as it stands, unless this run is
+			// planting it (then its compost and payment follow as usual)
+			final ContractPlanner.Role role = p.plantedTick < 0 && !p.sawEmpty ? contractRole(patch) : null;
+			if (role == ContractPlanner.Role.LEAVE)
+			{
+				// A pre-plant waiting for its contract, or the contract's own crop still growing
+				p.done = true;
+				p.leftForContract = true;
+				continue;
+			}
+			if (role == ContractPlanner.Role.CLEAR_FOR_CONTRACT)
+			{
+				currentPatch = patch;
+				currentAction = StepAdvisor.Action.CLEAR_DEAD;
+				final Crop wanted = contractTracker.getContract().getCrop();
+				final String dig = "Dig up the " + live.getCrop().getDisplayName().toLowerCase() + " with your spade, for the "
+					+ "contract's " + wanted.getDisplayName().toLowerCase();
+				return navigator.farFrom(patch) ? navigator.walkTo(stop, patch, "Walk", dig) : dig;
 			}
 			// A flower planted this run still gets its compost, if any
 			if (keepsProtectingFlower(patch, live) && (live.getState() != PatchState.GROWING || !p.sawUnplanted))
@@ -664,8 +703,123 @@ class PatchGuide
 				return note;
 			}
 		}
+		// Last at the guild: Guildmaster Jane, to hand in a contract, take another or ask for an easier one
+		final String jane = janeStep(stop, here);
+		if (jane != null)
+		{
+			return jane;
+		}
 		clearCurrent();
 		return null;
+	}
+
+	/** The guild's contract patches the run looks after, with contracts on; none with them off. */
+	private List<Patch> contractPatches()
+	{
+		return RunSelector.contractPatches(settings.getRunConfig(), accessChecker.getSnapshot());
+	}
+
+	/**
+	 * The crop a patch is planted with: a guild contract patch's as the contract stands now (a new one mid-stop can want
+	 * another), else the plan's.
+	 */
+	private Crop plantingFor(Patch patch)
+	{
+		final List<Patch> guild = contractPatches();
+		if (!guild.contains(patch))
+		{
+			return plan.getSupplies().getPlantings().get(patch);
+		}
+		final AccessSnapshot access = accessChecker.getSnapshot();
+		final int farming = access.isKnown() ? access.level(Skill.FARMING) : 99;
+		final RunConfig config = settings.getRunConfig();
+		final Holdings holdings = holdingsTracker.getHoldings();
+		return ContractPlanner.crop(patch, contractTracker.getContract(), farming, guild, patchTracker::predict,
+			c -> holdings.count(c.getPlantItemId()), t -> config.cropFor(t, farming));
+	}
+
+	/** A guild contract patch's part as it reads now (ContractPlanner), or null for another patch or contracts off. */
+	private ContractPlanner.Role contractRole(Patch patch)
+	{
+		final List<Patch> guild = contractPatches();
+		return guild.contains(patch) ? ContractPlanner.role(patch, contractTracker.getContract(), guild,
+			patchTracker::predict) : null;
+	}
+
+	/**
+	 * With contracts on, every contract patch at the guild stop is looked at, not only those planned: a new contract whose
+	 * crop is grown already is done on the spot, then handed in (elzerma, 2026-11-02). When the contract changes, the
+	 * patches passed over as waiting for one are looked at again.
+	 */
+	private List<Patch> contractStop(RouteStop stop, List<Patch> here)
+	{
+		final List<Patch> guild = contractPatches();
+		if (guild.isEmpty() || stop.getLocation() != Location.FARMING_GUILD)
+		{
+			return here;
+		}
+		final ContractTracker.Contract contract = contractTracker.getContract();
+		if (!contract.equals(contractSeen))
+		{
+			contractSeen = contract;
+			for (Patch patch : guild)
+			{
+				final Progress p = progress.get(patch);
+				if (p != null && p.leftForContract)
+				{
+					p.done = false;
+					p.leftForContract = false;
+				}
+			}
+		}
+		final List<Patch> all = new ArrayList<>(here);
+		for (Patch patch : guild)
+		{
+			if (!all.contains(patch))
+			{
+				all.add(patch);
+			}
+		}
+		return all;
+	}
+
+	/**
+	 * Guildmaster Jane at the end of the guild stop (contracts on): hand in a grown contract and take another, ask for one
+	 * when there's none, or for an easier one when a slow crop's patches are all taken; the highest tier the level allows
+	 * (elzerma, 2026-11-02). Null when there's nothing to see her about, which the contract's varbits show once she's
+	 * been seen.
+	 */
+	private String janeStep(RouteStop stop, List<Patch> here)
+	{
+		final List<Patch> guild = contractPatches();
+		if (guild.isEmpty() || stop.getLocation() != Location.FARMING_GUILD)
+		{
+			return null;
+		}
+		final ContractTracker.Contract contract = contractTracker.getContract();
+		final ContractPlanner.Jane jane = ContractPlanner.jane(contract, guild, patchTracker::predict);
+		if (jane == ContractPlanner.Jane.NONE)
+		{
+			return null;
+		}
+		final AccessSnapshot access = accessChecker.getSnapshot();
+		final FarmingContract.Tier ask = FarmingContract.Tier.highest(access.isKnown() ? access.level(Skill.FARMING) : 99);
+		final String tier = ask != null ? ask.getDisplayName() + " " : "";
+		currentPatch = here.get(0);
+		currentAction = StepAdvisor.Action.JANE;
+		switch (jane)
+		{
+			case HAND_IN:
+				// She keeps the seed pack until there's room for it (wiki: Guildmaster Jane)
+				return "Talk to Guildmaster Jane: hand in your contract, then take another " + tier + "contract"
+					+ (freeInventorySlots() == 0 ? " (make room for the seed pack first)" : "");
+			case NEW:
+				return "Talk to Guildmaster Jane: ask for a " + tier + "contract";
+			default:
+				final Crop crop = contract.getCrop();
+				return "Talk to Guildmaster Jane: ask for an easier contract (" + crop.getDisplayName().toLowerCase()
+					+ " takes " + ContractPlanner.clock(crop.getGrowthMinutes()) + " to grow)";
+		}
 	}
 
 	/**
@@ -951,6 +1105,12 @@ class PatchGuide
 		if (currentPatch == null || currentAction == null)
 		{
 			return null;
+		}
+		// Guildmaster Jane, where she's seen, else where she stands (contracts)
+		if (currentAction == StepAdvisor.Action.JANE)
+		{
+			final NPC jane = scene.transferNpc(FarmingContract.JANE);
+			return jane != null ? jane.getWorldLocation() : FarmingContract.JANE_POINT;
 		}
 		final GameObject object = binInHand != null ? scene.binObject(binInHand) : null;
 		final WorldPoint workAt = object != null ? object.getWorldLocation() : scene.locationOf(currentPatch);
@@ -1526,7 +1686,7 @@ class PatchGuide
 		for (Patch patch : atStopPatches)
 		{
 			final Progress p = progress(patch);
-			final Crop crop = plan.getSupplies().getPlantings().get(patch);
+			final Crop crop = plantingFor(patch);
 			if (p.done || p.skipped || crop == null || crop == Crop.SCARECROW || crop.isSeed() && barbarian)
 			{
 				continue;
@@ -1579,7 +1739,7 @@ class PatchGuide
 	/** Paid once the payment items leave the inventory after paying became the next step. */
 	private void watchPayment(Patch patch, Progress p)
 	{
-		final Crop crop = plan.getSupplies().getPlantings().get(patch);
+		final Crop crop = plantingFor(patch);
 		if (crop == null || !crop.hasPayment())
 		{
 			return;
@@ -1754,7 +1914,7 @@ class PatchGuide
 	{
 		final RunConfig config = settings.getRunConfig();
 		final AccessSnapshot access = accessChecker.getSnapshot();
-		final Crop crop = plan.getSupplies().getPlantings().get(patch);
+		final Crop crop = plantingFor(patch);
 		final boolean faladorElite = patch == Patch.FALADOR_TREE && access.isKnown()
 			&& access.isMet(Requirement.diary(AchievementDiary.FALADOR, AchievementDiary.Tier.ELITE));
 		// As the supplies were worked out: paid, or protected with compost when the payment couldn't be had
@@ -1811,6 +1971,11 @@ class PatchGuide
 			return new Highlights(null, false, null, binItems, null, Collections.emptySet(), Collections.emptyList(), null,
 				Collections.emptySet(), Collections.emptySet(), binInHand);
 		}
+		// Guildmaster Jane outlined for her step (contracts)
+		if (currentAction == StepAdvisor.Action.JANE)
+		{
+			return new Highlights(null, false, FarmingContract.JANE, Collections.emptySet(), null);
+		}
 		// The tool leprechaun outlined, with the produce to use on him (P1), and in his window what to take and store
 		if (currentAction == StepAdvisor.Action.NOTE || currentAction == StepAdvisor.Action.TAKE_COMPOST)
 		{
@@ -1824,7 +1989,7 @@ class PatchGuide
 		final Set<Integer> needed = new LinkedHashSet<>();
 		boolean gardener = false;
 		Spell spell = null;
-		final Crop crop = plan.getSupplies().getPlantings().get(currentPatch);
+		final Crop crop = plantingFor(currentPatch);
 		switch (currentAction)
 		{
 			case PLANT:
@@ -1970,7 +2135,7 @@ class PatchGuide
 		{
 			return null;
 		}
-		final Crop crop = plan.getSupplies().getPlantings().get(currentPatch);
+		final Crop crop = plantingFor(currentPatch);
 		if (crop == Crop.SCARECROW)
 		{
 			return null;
