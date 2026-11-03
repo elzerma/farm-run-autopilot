@@ -15,7 +15,7 @@
 ### Farming contracts
 - Turn on Farm > Farming contracts > "Build farming contracts into runs". The Farming Guild's patches then hold the
   wiki's pre-plants and are left alone until Guildmaster Jane's contract asks for one. Anything else growing there is
-  picked once grown, and the pre-plant planted in its place.
+  picked once grown, and the pre-plant planted in its place once you have its seed.
 - The contract's crop is checked or picked once grown and the patch replanted. A contract whose crop isn't growing gets
   it planted; if its patch holds another crop, a quick one (herbs, flowers, bushes) takes its place, picked first if
   it's grown, and for a slow one the guide says to ask Jane for an easier contract.
@@ -58,6 +58,7 @@
   should stop it. Please say on the issue if it happens again.
 - The Spellbook Swap guided test read the Run tab a moment too early; it's fixed and asked again (#32).
 - Planting your last seed of a kind you chose to do without no longer skips composting that patch.
+- Picking an allotment needs a spade: with yours stored with the tool leprechaun, the guide now says to take it first.
 
 ### Help improve this plugin
 - New guided tests in Settings > Help improve this plugin, among them the seed vault, staves, allotment protection,

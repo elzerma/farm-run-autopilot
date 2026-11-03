@@ -230,8 +230,11 @@ one gets its patch cleared; the tier tip (d) after the release. The crop types a
   one anchoring the stop when only Jane is to see; `SupplyCalculator` plants them with the planner's crop.
 - **Crops off the plan** (elzerma, 2026-11-02: "We just want to pick anything that isn't in alignment with the
   pre-planting plan"): a crop that isn't one of its patch's pre-plants at the player's level (`ContractPlanner.offPlan`)
-  is a TAKE once grown, picked or checked like any harvest and the pre-plant planted in its place; still growing, it
-  waits (on the Run tab with its usual status, not "kept for a farming contract"). A patch emptied that way takes the
+  is a TAKE once grown, picked or checked like any harvest and the pre-plant planted in its place, as long as the player
+  has a seed or sapling of one (`ContractPlanner.hasPrePlant`: picking it only to leave the patch empty gains nothing,
+  and on elzerma's second run, with no white lily seed, the step to pick the nasturtiums was ticked off); without one,
+  the Run tab says "kept until you have white lily seeds to plant there". Still growing, it waits, on the Run tab with
+  its usual status rather than "kept for a farming contract". A patch emptied that way takes the
   contract's crop first, slow or not, and one holding a crop off the plan makes way for a quick contract before a
   pre-plant does. At elzerma's guild that means the south allotment's watermelons (the Medium table has strawberries
   there) and the flower patch's nasturtiums (white lilies).
@@ -256,4 +259,10 @@ one gets its patch cleared; the tier tip (d) after the release. The crop types a
 - **First run** (elzerma, 2026-11-02, Farming 69 so the Medium table, the jangerberry contract held): the guild stop
   planted the jangerberry in the bush patch and paid Alan for it, and the Medium pre-plants (cactus, irit) in the
   patches found empty; the trees, flower and allotments were left alone, and there was nothing to see Jane about.
+- **Second run** (elzerma, 2026-11-02, with crops off the plan picked): the south allotment's watermelons were picked,
+  9 went in the compost bin to fill it and the rest were noted, and strawberries were planted with ultracompost; the
+  north allotment, the maple and the growing jangerberry were left alone. The flower step (pick the nasturtiums, then
+  a white lily) was ticked off, as there was no white lily seed, hence the seed check. Picking the allotment met "You
+  need a spade to do that." with the spade stored with the tool leprechaun: the pick step now needs a spade for an
+  allotment, so the guide says to take it from him first.
 - **Tests:** `ContractPlannerTest` (roles, Jane, crops, the tables), `RunSelectorTest.contractsRunTheGuildsPatchesForThem`.

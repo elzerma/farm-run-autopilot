@@ -87,14 +87,15 @@ public final class ContractPlanner
 	 * The guild's contract work: each usable patch's role, Jane's part and the Run tab's line.
 	 *
 	 * @param usable the guild contract patches the player can use and has ticked
+	 * @param stock  how many of a crop's seed or sapling the player has, wherever it's kept
 	 */
 	public static Plan plan(Contract contract, int farming, List<Patch> usable,
-		Function<Patch, PatchPrediction> predictions)
+		Function<Patch, PatchPrediction> predictions, ToIntFunction<Crop> stock)
 	{
 		final Map<Patch, Role> roles = new EnumMap<>(Patch.class);
 		for (Patch patch : usable)
 		{
-			roles.put(patch, role(patch, contract, farming, usable, predictions));
+			roles.put(patch, role(patch, contract, farming, usable, predictions, stock));
 		}
 		final Jane jane = jane(contract, farming, usable, predictions);
 		final Tier ask = Tier.highest(farming);
@@ -104,7 +105,7 @@ public final class ContractPlanner
 
 	/** A guild contract patch's role, from what it holds now. */
 	public static Role role(Patch patch, Contract contract, int farming, List<Patch> usable,
-		Function<Patch, PatchPrediction> predictions)
+		Function<Patch, PatchPrediction> predictions, ToIntFunction<Crop> stock)
 	{
 		final PatchPrediction live = predictions.apply(patch);
 		// Never seen: looked at, and planted if there's nothing there
@@ -121,14 +122,30 @@ public final class ContractPlanner
 		{
 			return ready(patch, live) ? Role.TAKE : Role.LEAVE;
 		}
-		if (wanted != null && patch == contractPatch(contract, farming, usable, predictions)
-			&& blocked(contract, farming, usable, predictions) && !askEasier(contract))
+		final Patch forContract = wanted != null ? contractPatch(contract, farming, usable, predictions) : null;
+		if (patch == forContract && blocked(contract, farming, usable, predictions) && !askEasier(contract))
 		{
 			return Role.CLEAR_FOR_CONTRACT;
 		}
 		// A crop off the pre-planting plan is picked once grown, and the patch planted to plan (elzerma, 2026-11-02: "We
-		// just want to pick anything that isn't in alignment with the pre-planting plan")
-		return clearing(patch, live, farming) ? Role.TAKE : Role.LEAVE;
+		// just want to pick anything that isn't in alignment with the pre-planting plan"): with the contract's crop when
+		// it goes there, else once there's a pre-plant to put in (elzerma's run that day had no white lily seed for the
+		// flower patch, and the step to pick its nasturtiums was ticked off)
+		return clearing(patch, live, farming) && (patch == forContract || hasPrePlant(patch, farming, stock))
+			? Role.TAKE : Role.LEAVE;
+	}
+
+	/** The player has a seed or sapling of one of the patch's pre-plants, to plant in place of a crop off the plan. */
+	static boolean hasPrePlant(Patch patch, int farming, ToIntFunction<Crop> stock)
+	{
+		for (Crop crop : FarmingContract.prePlants(patch, farming))
+		{
+			if (stock.applyAsInt(crop) > 0)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

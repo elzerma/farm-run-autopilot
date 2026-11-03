@@ -13,6 +13,7 @@ import com.farmrunautopilot.tracking.PatchPrediction;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.ToIntFunction;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -26,6 +27,8 @@ public class ContractPlannerTest
 {
 	private static final List<Patch> GUILD = FarmingContract.PATCHES;
 	private final Map<Patch, PatchPrediction> held = new EnumMap<>(Patch.class);
+	/** The seeds and saplings the player has: one of everything, unless a test says otherwise. */
+	private ToIntFunction<Crop> stock = crop -> 1;
 
 	private void grow(Patch patch, Crop crop, PatchState state)
 	{
@@ -35,7 +38,7 @@ public class ContractPlannerTest
 
 	private Plan plan(Contract contract, int farming)
 	{
-		return ContractPlanner.plan(contract, farming, GUILD, held::get);
+		return ContractPlanner.plan(contract, farming, GUILD, held::get, stock);
 	}
 
 	private static Contract contract(Crop crop, int level)
@@ -196,6 +199,11 @@ public class ContractPlannerTest
 		grow(Patch.FARMING_GUILD_HERB, Crop.LANTADYME, PatchState.HARVESTABLE);
 		assertEquals(Role.LEAVE, plan(jangerberry, 90).role(Patch.FARMING_GUILD_HERB));
 		assertEquals(Role.TAKE, plan(jangerberry, 69).role(Patch.FARMING_GUILD_HERB));
+		// With no white lily seed (elzerma's run that day), the nasturtiums wait: picking them would leave it empty
+		stock = crop -> crop == Crop.STRAWBERRY ? 3 : 0;
+		final Plan noLily = plan(jangerberry, 69);
+		assertEquals(Role.LEAVE, noLily.role(Patch.FARMING_GUILD_FLOWER));
+		assertEquals(Role.TAKE, noLily.role(Patch.FARMING_GUILD_ALLOTMENT_S));
 	}
 
 	@Test
@@ -210,8 +218,10 @@ public class ContractPlannerTest
 		assertEquals(Role.CLEAR_FOR_CONTRACT, strawberries.role(Patch.FARMING_GUILD_ALLOTMENT_S));
 		assertEquals(Crop.STRAWBERRY, crop(Patch.FARMING_GUILD_ALLOTMENT_S, strawberry, 69));
 		// A slow one where a grown crop off the plan is picked this run: planted there, with no easier contract to ask for
+		// (and no maple sapling needed, as the yew goes in)
 		grow(Patch.FARMING_GUILD_TREE, Crop.WILLOW, PatchState.CHECK_HEALTH);
 		final Contract yew = contract(Crop.YEW, 2);
+		stock = crop -> crop == Crop.YEW ? 1 : 0;
 		final Plan yews = plan(yew, 69);
 		assertEquals(Role.TAKE, yews.role(Patch.FARMING_GUILD_TREE));
 		assertEquals(Jane.NONE, yews.getJane());

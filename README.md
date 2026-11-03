@@ -105,7 +105,8 @@ The plugin never clicks, types or acts for you. It only shows information.
 - At the patches: clean herbs after picking, note your produce with the tool leprechaun, drop, keep or store empty
   buckets, and make compost in the compost bins.
 - Farming contracts: the Farming Guild's patches hold the wiki's pre-plants and are left alone until Guildmaster Jane's
-  contract asks for one; anything else growing there is picked once grown and the pre-plant planted. The contract's crop
+  contract asks for one; anything else growing there is picked once grown and the pre-plant planted, once you have its
+  seed. The contract's crop
   is checked or picked once grown and the patch replanted, and the guild stop ends at Jane, outlined: hand in, take
   another (the highest tier your level allows), or ask for an easier one when a slow crop's patch is taken.
 

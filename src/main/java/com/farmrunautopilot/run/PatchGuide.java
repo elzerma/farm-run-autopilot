@@ -43,6 +43,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.ToIntFunction;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -752,7 +753,14 @@ class PatchGuide
 	{
 		final List<Patch> guild = contractPatches();
 		return guild.contains(patch) ? ContractPlanner.role(patch, contractTracker.getContract(), farming(), guild,
-			patchTracker::predict) : null;
+			patchTracker::predict, stock()) : null;
+	}
+
+	/** How many of a crop's seed or sapling the player has, wherever it's kept: for the guild's pre-plants. */
+	private ToIntFunction<Crop> stock()
+	{
+		final Holdings holdings = holdingsTracker.getHoldings();
+		return crop -> holdings.count(crop.getPlantItemId());
 	}
 
 	/**
@@ -790,7 +798,8 @@ class PatchGuide
 			final PatchPrediction live = patchTracker.predict(patch);
 			if (!all.contains(patch) && contract.held() && live != null && live.getCrop() == contract.getCrop()
 				&& live.getObservedAt() >= navigator.getArrivedAtSeconds()
-				&& ContractPlanner.role(patch, contract, farming(), guild, patchTracker::predict) == ContractPlanner.Role.TAKE)
+				&& ContractPlanner.role(patch, contract, farming(), guild, patchTracker::predict, stock())
+				== ContractPlanner.Role.TAKE)
 			{
 				all.add(patch);
 			}
@@ -2023,6 +2032,14 @@ class PatchGuide
 				break;
 			case RAKE:
 				needed.add(ItemID.RAKE);
+				break;
+			case PICK:
+				// Allotments are picked with a spade ("You need a spade to do that.", elzerma's run of 2026-11-02 at the
+				// guild with the spade left with the tool leprechaun)
+				if (currentPatch.getType() == PatchType.ALLOTMENT)
+				{
+					needed.add(ItemID.SPADE);
+				}
 				break;
 			case CLEAR_DEAD:
 			case DIG_STUMP:

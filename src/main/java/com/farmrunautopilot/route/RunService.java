@@ -274,7 +274,8 @@ public class RunService
 		final AccessSnapshot access = accessChecker.getSnapshot();
 		final Holdings holdings = holdingsTracker.getHoldings();
 		final RunSelection selection = RunSelector.select(config, access, patchTracker::predict,
-			Instant.now().getEpochSecond(), config.isSupplyFullRun(), overrides.get(), contractTracker.getContract());
+			Instant.now().getEpochSecond(), config.isSupplyFullRun(), overrides.get(), contractTracker.getContract(),
+			crop -> holdings.count(crop.getPlantItemId()));
 		final RouteAtlas atlas = routeAtlas(config, access, holdings);
 		final TravelWays nowWays = TravelWays.of(atlas, config, access, holdings, settings.getAccount().getPoh(),
 			this::itemName);

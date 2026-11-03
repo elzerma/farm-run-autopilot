@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 /**
  * Decides which patches the next run covers (SPEC 10).
@@ -46,16 +47,18 @@ public final class RunSelector
 	public static RunSelection select(RunConfig config, AccessSnapshot access,
 		Function<Patch, PatchPrediction> predictions, long now, boolean fullRun, Map<PatchType, TypeOverride> overrides)
 	{
-		return select(config, access, predictions, now, fullRun, overrides, Contract.NONE);
+		return select(config, access, predictions, now, fullRun, overrides, Contract.NONE, crop -> 0);
 	}
 
 	/**
 	 * As above, with the player's Farming Guild contract: with contracts on, the guild's contract patches are run for
 	 * them (docs/plans/farming-contracts.md), whatever run types are ticked.
+	 *
+	 * @param stock how many of a crop's seed or sapling the player has, for the guild's pre-plants
 	 */
 	public static RunSelection select(RunConfig config, AccessSnapshot access,
 		Function<Patch, PatchPrediction> predictions, long now, boolean fullRun, Map<PatchType, TypeOverride> overrides,
-		Contract contract)
+		Contract contract, ToIntFunction<Crop> stock)
 	{
 		final List<Patch> guild = contractPatches(config, access);
 		final List<Patch> patches = new ArrayList<>();
@@ -140,18 +143,14 @@ public final class RunSelector
 		if (!guild.isEmpty())
 		{
 			final int farming = access.isKnown() ? access.level(Skill.FARMING) : 99;
-			contractPlan = ContractPlanner.plan(contract, farming, guild, predictions);
+			contractPlan = ContractPlanner.plan(contract, farming, guild, predictions, stock);
 			boolean any = false;
 			for (Patch patch : guild)
 			{
 				final ContractPlanner.Role role = contractPlan.role(patch);
 				if (role == ContractPlanner.Role.LEAVE)
 				{
-					// A crop off the pre-planting plan, still growing, waits to be picked like any other
-					final PatchPrediction live = predictions.apply(patch);
-					notDue.add(patch.getDisplayName() + ": " + (live != null
-						&& ContractPlanner.offPlan(patch, live.getCrop(), farming) ? PatchStatusText.describe(live, now)
-						: "kept for a farming contract"));
+					notDue.add(patch.getDisplayName() + ": " + leftFor(patch, predictions.apply(patch), farming, now));
 					continue;
 				}
 				// Nothing to plant (no pre-plant at this level, no crop chosen for the type): left alone
@@ -185,6 +184,25 @@ public final class RunSelector
 			}
 		}
 		return new RunSelection(patches, included, skipped, notDue, dueCounts, contractPlan);
+	}
+
+	/**
+	 * Why a guild contract patch is left out: a crop waiting for its contract, or one off the pre-planting plan, either
+	 * still growing (it's picked once grown) or grown with nothing of the plan's to plant in its place.
+	 */
+	private static String leftFor(Patch patch, PatchPrediction live, int farming, long now)
+	{
+		if (live == null || !ContractPlanner.offPlan(patch, live.getCrop(), farming))
+		{
+			return "kept for a farming contract";
+		}
+		if (!ContractPlanner.ready(patch, live))
+		{
+			return PatchStatusText.describe(live, now);
+		}
+		final Crop prePlant = FarmingContract.prePlants(patch, farming).get(0);
+		return "kept until you have " + prePlant.getDisplayName().toLowerCase() + (prePlant.isSeed() ? " seeds"
+			: " saplings") + " to plant there";
 	}
 
 	/**
