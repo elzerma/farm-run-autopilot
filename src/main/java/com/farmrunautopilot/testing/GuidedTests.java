@@ -1411,10 +1411,11 @@ final class GuidedTests
 	/**
 	 * One run before the release (elzerma, 2026-11-02: "I will do 1 run. Can you build me a test of what is needed at a
 	 * minimum for that run so we can capture screenshots?"): what's still unseen in game, watched through the whole run
-	 * in whatever order it comes, with the moments the README shows screenshotted for it. The farming contract handed in
-	 * to Guildmaster Jane and the next one taken (done on the spot if its crop is grown already), the spade asked for when
-	 * an allotment is picked with it left with the tool leprechaun, and the run carrying on after logging out and back in
-	 * (the log says "Logged in during a run"). It keeps the player's own settings, so it carries on through the relogin.
+	 * in whatever order it comes, with the moments the README shows screenshotted for it. The spade asked for when an
+	 * allotment is picked with it left with the tool leprechaun, and the run carrying on after logging out and back in (the
+	 * log says "Logged in during a run"); a farming contract handed in, if the run has one, is watched too (seen on
+	 * elzerma's run of 2026-11-03: the jangerberry handed in, a snapdragon contract taken). It keeps the player's own
+	 * settings, so it carries on through the relogin.
 	 */
 	private static final class ReleaseRun extends GuidedTest
 	{
@@ -1437,7 +1438,7 @@ final class GuidedTests
 					ctx -> watch(ctx) && ctx.logouts() > 0 && ctx.runView().getState() == RunView.State.RUNNING)
 					.onDone(ctx -> ctx.capture("Back in after logging out", ctx.runView().getInstruction()))
 					.optional(),
-				doThis("Play the rest of the run to its end, handing in your contract to Guildmaster Jane",
+				doThis("Play the rest of the run to its end",
 					ctx -> watch(ctx) && Boolean.TRUE.equals(ctx.recall("running"))
 						&& ctx.runView().getState() == RunView.State.OFF)
 					.onDone(ReleaseRun::report));
@@ -1455,7 +1456,7 @@ final class GuidedTests
 				&& contract.getContract().getComplete() == ctx.varbit(VarbitID.FARMGUILD_CONTRACT_COMPLETE);
 		}
 
-		/** The run as built: its stops, and the contract, which this run has to hand in. */
+		/** The run as built: its stops, and the contract's part, a hand-in to look for when its crop is grown. */
 		private static void planned(TestContext ctx)
 		{
 			final List<String> stops = new ArrayList<>();
@@ -1465,16 +1466,9 @@ final class GuidedTests
 			}
 			ctx.capture("Stops", String.join(", ", stops));
 			final ContractPlanner.Plan contract = ctx.plan().getSelection().getContract();
-			ctx.capture("Contract", contract.getLine());
-			if (!contract.isOn())
-			{
-				ctx.cannotTest("Farm > Farming contracts > \"Build farming contracts into runs\" ticked");
-			}
-			else if (contract.getJane() != ContractPlanner.Jane.HAND_IN
-				&& (contract.getLine() == null || !contract.getLine().contains(" is grown")))
-			{
-				ctx.cannotTest("your farming contract's crop grown, so this run hands it in (its patch timer says when)");
-			}
+			ctx.capture("Contract", contract.isOn() ? contract.getLine() : "contracts off");
+			ctx.remember("handIn", contract.isOn() && (contract.getJane() == ContractPlanner.Jane.HAND_IN
+				|| contract.getLine() != null && contract.getLine().contains(" is grown")));
 		}
 
 		/**
@@ -1530,7 +1524,7 @@ final class GuidedTests
 			return true;
 		}
 
-		/** What the run showed. The contract not handed in, or a spade the guide didn't ask for, needs attention. */
+		/** What the run showed. A grown contract not handed in, or a spade the guide didn't ask for, needs attention. */
 		private static void report(TestContext ctx)
 		{
 			ctx.capture("README screenshots", String.join(", ", list(ctx, "moments")));
@@ -1543,9 +1537,9 @@ final class GuidedTests
 			final List<String> states = list(ctx, "contractStates");
 			final boolean handedIn = states.stream().anyMatch(state -> state.endsWith(" 2"))
 				|| !cropOf(states.get(0)).equals(cropOf(states.get(states.size() - 1)));
-			if (!handedIn)
+			if (Boolean.TRUE.equals(ctx.recall("handIn")) && !handedIn)
 			{
-				ctx.problem("The contract wasn't handed in");
+				ctx.problem("The contract was grown but wasn't handed in");
 			}
 			final String noSpade = ctx.recall("noSpade");
 			if (noSpade != null)

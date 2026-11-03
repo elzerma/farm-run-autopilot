@@ -56,8 +56,10 @@ import net.runelite.api.Player;
 import net.runelite.api.Skill;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ItemID;
+import net.runelite.api.widgets.Widget;
 
 /**
  * The work at a stop's patches (docs/REBUILD.md, Sprint 4): the next step at each patch from its live state
@@ -150,6 +152,8 @@ class PatchGuide
 	private Set<Integer> binItems = Collections.emptySet();
 	/** The stop's bin has compost to take out. */
 	private boolean emptyingBin;
+	/** The tool leprechaun is being visited for the bin's empty buckets: it stays the step while his window is open. */
+	private boolean bucketVisit;
 	/** The stop's bin's fill count as last read in range, -1 when not read or not filling (P3). */
 	private int binCountSeen = -1;
 	/** The player has begun putting the crops for it in the stop's bin, and still has some (P3). */
@@ -491,6 +495,7 @@ class PatchGuide
 			binTaken.clear();
 			binCountSeen = -1;
 			fillingBin = false;
+			bucketVisit = false;
 			leprechaun = null;
 			leprechaunAt = null;
 			storeDue = false;
@@ -956,7 +961,14 @@ class PatchGuide
 			// What's been taken out is stored to make room for more
 			final Map<Compost, Integer> spare = binCompostSpare(held);
 			final int room = freeInventorySlots() + spare.values().stream().mapToInt(Integer::intValue).sum();
-			final BinNext next = binNext(state, bin, buckets, bottomless >= 0, stored, room, ash);
+			final int wanted = Math.min(compostIn(state, bin) - buckets, stored);
+			final int take = room > 0 ? Math.min(wanted, room) : wanted;
+			// A visit for empty buckets stays the step while his window's open, until all it says is taken and stored, rather
+			// than sending the player back to the bin with the first bucket (elzerma's run of 2026-11-03 at the Farming Guild:
+			// back to the bin with 1 of 6, 20 ultracompost still to store)
+			bucketVisit = bucketVisit && leprechaunWindowOpen() && (take > 0 || !spare.isEmpty());
+			final BinNext next = bucketVisit ? BinNext.TAKE_BUCKETS
+				: binNext(state, bin, buckets, bottomless >= 0, stored, room, ash);
 			emptyingBin = next != BinNext.NONE;
 			currentPatch = at;
 			binInHand = bin;
@@ -966,15 +978,15 @@ class PatchGuide
 				case TAKE_BUCKETS:
 				{
 					// No more than fit (elzerma's run of 2026-10-31: "take 30" with room for 25), unless there's no room
-					// at all yet
-					final int wanted = Math.min(compostIn(state, bin) - buckets, stored);
-					final int take = room > 0 ? Math.min(wanted, room) : wanted;
+					// at all yet; what's left of it while his window stays open
 					final List<String> store = counted(spare);
-					visitTake = Collections.singletonMap(ItemID.BUCKET_EMPTY, take);
+					bucketVisit = true;
+					visitTake = take > 0 ? Collections.singletonMap(ItemID.BUCKET_EMPTY, take) : Collections.emptyMap();
 					visitStore = byItem(spare);
 					currentAction = StepAdvisor.Action.TAKE_COMPOST;
-					return "At the tool leprechaun: " + (store.isEmpty() ? "" : "store " + join(store) + " and ") + "take "
-						+ take + (take == 1 ? " empty bucket" : " empty buckets");
+					return "At the tool leprechaun: " + (store.isEmpty() ? "" : "store " + join(store))
+						+ (store.isEmpty() || take <= 0 ? "" : " and ")
+						+ (take > 0 ? "take " + take + (take == 1 ? " empty bucket" : " empty buckets") : "");
 				}
 				case OPEN:
 					currentAction = StepAdvisor.Action.OPEN_BIN;
@@ -996,7 +1008,15 @@ class PatchGuide
 		// him by the bin, so the harvest and the crops for the bin have the room (elzerma, 2026-10-31: "we should do a trip to
 		// leprechaun to store the ultracompost before harvesting watermelons and filling the bin"). Once picking's begun here,
 		// it waits for a visit made anyway, rather than breaking into it
+		bucketVisit = false;
 		return binTaken.isEmpty() || pickedHere ? null : leprechaunVisit(at, Visit.AFTER_BIN);
+	}
+
+	/** The tool leprechaun's window is open. Client thread. */
+	private boolean leprechaunWindowOpen()
+	{
+		final Widget window = client.getWidget(InterfaceID.FarmingTools.UNIVERSE);
+		return window != null && !window.isHidden();
 	}
 
 	/** The compost taken out of this stop's bin that its patches won't use, by type; empty for none. */
