@@ -1428,8 +1428,7 @@ final class GuidedTests
 		public List<Step> steps()
 		{
 			return Arrays.asList(
-				doThis("Build your run on the Run tab, with the Farming Guild in it", ctx -> watch(ctx)
-					&& ctx.plan().getRoute().getStops().stream().anyMatch(stop -> stop.getLocation() == Location.FARMING_GUILD))
+				doThis("Build your run on the Run tab", ctx -> watch(ctx) && built(ctx))
 					.onDone(ReleaseRun::planned),
 				doThis("At the bank, open the Farm run tab and take what it lists", ctx -> watch(ctx) && ctx.farmTabOpen())
 					.onDone(ctx -> ctx.screenshot("README bank tab"))
@@ -1442,6 +1441,18 @@ final class GuidedTests
 					ctx -> watch(ctx) && Boolean.TRUE.equals(ctx.recall("running"))
 						&& ctx.runView().getState() == RunView.State.OFF)
 					.onDone(ReleaseRun::report));
+		}
+
+		/**
+		 * The run is planned with the contract as the game has it: not before its values are in after logging in
+		 * (elzerma's first try, 2026-11-02, began on the welcome screen, planned with none). With contracts off, at once.
+		 */
+		private static boolean built(TestContext ctx)
+		{
+			final ContractPlanner.Plan contract = ctx.plan().getSelection().getContract();
+			final int type = ctx.varbit(VarbitID.FARMGUILD_CONTRACT_TYPE);
+			return !contract.isOn() || type != 0 && contract.getContract().getValue() == type
+				&& contract.getContract().getComplete() == ctx.varbit(VarbitID.FARMGUILD_CONTRACT_COMPLETE);
 		}
 
 		/** The run as built: its stops, and the contract, which this run has to hand in. */
