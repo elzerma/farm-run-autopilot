@@ -20,7 +20,9 @@
   it planted; if its patch holds another crop, a quick one (herbs, flowers, bushes) takes its place, picked first if
   it's grown, and for a slow one the guide says to ask Jane for an easier contract.
 - The guild stop ends at Jane, outlined: hand in your contract and take another (the highest tier your level allows),
-  or ask for one. If the new crop is already grown, it's done on the spot. The Run tab says where the contract stands.
+  or ask for one. The guide then carries on: a new contract's crop already grown is done on the spot and handed in,
+  and one that isn't is planted there and then, with its seed from the seed vault, until there's nothing more to do
+  for contracts. The Run tab says where the contract stands.
 
 ### Travel
 - Every leg is planned from a travel map worked out ahead of time with Shortest Path's data. It covers teleports,

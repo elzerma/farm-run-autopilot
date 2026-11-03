@@ -240,10 +240,16 @@ one gets its patch cleared; the tier tip (d) after the release. The crop types a
   there) and the flower patch's nasturtiums (white lilies).
 - **The guide:** at the guild stop the planned contract patches are worked by their role as they read at the time,
   unless this run is planting them; when the contract changes, those passed over are looked at again. A guild patch
-  outside the plan joins the stop only when, read since arriving, it holds the contract's crop to take, so a new
-  contract whose crop is grown already is done on the spot; its replanting waits for the next run, whose seeds it
-  wasn't planned with. (Until elzerma's first run with contracts on, 2026-11-02, every guild patch joined, and the stop
-  began at the north allotment, its watermelons kept for a contract, until the guild's patches were read.) A crop
+  outside the plan joins the stop for the contract in hand, read since arriving: one holding its crop to take, or the
+  patch its crop is to be planted in, cleared first if need be. It stays to the stop's end, so a crop taken is replanted
+  with its pre-plant and a contract's crop planted, a seed only in the seed vault asked for there ("Take a snapdragon
+  seed from the seed vault"), and the stop goes from contract to contract until there's nothing to do for one (elzerma,
+  2026-11-03: "contract helper should guide you to clear/plant next without having to gen a new run ... and if you're
+  chaining contracts bc you have preplanted it should keep going until you're in idle again"; that morning the
+  snapdragon contract took a second run, to pick the irit and plant it). A pre-plant waiting for its contract never
+  joins: until elzerma's first run with contracts on, 2026-11-02, every guild patch did, and the stop began at the north
+  allotment, its watermelons kept for a contract, until the guild's patches were read. A patch already worked this
+  stop isn't taken up again, so a pre-plant just planted isn't dug up for the next contract. A crop
   cleared for a contract is checked or picked first when grown, and dug up only while still growing. A guild patch run
   for contracts is always replanted, whatever its type's "pick and leave growing" setting, as the plan has it. The stop
   ends at Jane, outlined, with the walking line to her: "Talk to

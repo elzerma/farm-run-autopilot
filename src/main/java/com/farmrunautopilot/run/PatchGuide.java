@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -154,6 +155,8 @@ class PatchGuide
 	private boolean emptyingBin;
 	/** The tool leprechaun is being visited for the bin's empty buckets: it stays the step while his window is open. */
 	private boolean bucketVisit;
+	/** Guild patches outside the plan a farming contract brought into the guild stop: kept to its end. */
+	private final Set<Patch> contractExtras = EnumSet.noneOf(Patch.class);
 	/** The stop's bin's fill count as last read in range, -1 when not read or not filling (P3). */
 	private int binCountSeen = -1;
 	/** The player has begun putting the crops for it in the stop's bin, and still has some (P3). */
@@ -496,6 +499,7 @@ class PatchGuide
 			binCountSeen = -1;
 			fillingBin = false;
 			bucketVisit = false;
+			contractExtras.clear();
 			leprechaun = null;
 			leprechaunAt = null;
 			storeDue = false;
@@ -769,12 +773,15 @@ class PatchGuide
 	}
 
 	/**
-	 * With contracts on, a guild contract patch outside the plan joins the guild stop when, read since arriving, it holds
-	 * the contract's crop to take: a new contract whose crop is grown already is done on the spot, then handed in (elzerma,
-	 * 2026-11-02). Only then: on elzerma's run of 2026-11-02 every one joined, and the stop began at the north allotment,
-	 * its watermelons kept for a contract, until the guild's patches were read. Its seed to replant wasn't brought, so
-	 * once taken it drops out again. When the contract changes, the planned patches passed over as waiting for one are
-	 * looked at again.
+	 * With contracts on, a guild contract patch outside the plan joins the guild stop for the contract in hand, read since
+	 * arriving: one holding its crop to take, or the patch its crop is to be planted in, cleared first if need be. Once in,
+	 * it stays to the stop's end, so a crop taken is replanted with its pre-plant and a contract's crop planted, their
+	 * seeds from the seed vault there, and the stop goes on from contract to contract until there's nothing to do for one
+	 * (elzerma, 2026-11-03: "contract helper should guide you to clear/plant next without having to gen a new run ... and
+	 * if you're chaining contracts bc you have preplanted it should keep going until you're in idle again"; that morning
+	 * the snapdragon contract took a second run). A pre-plant waiting for its contract never joins: on elzerma's run of
+	 * 2026-11-02 every guild patch did, and the stop began at the north allotment until the patches were read. When the
+	 * contract changes, the planned patches passed over as waiting for one are looked at again.
 	 */
 	private List<Patch> contractStop(RouteStop stop, List<Patch> here)
 	{
@@ -797,14 +804,32 @@ class PatchGuide
 				}
 			}
 		}
+		final int farming = farming();
+		final ToIntFunction<Crop> stock = stock();
+		final Patch forContract = contract.held() && contract.getCrop() != null
+			? ContractPlanner.contractPatch(contract, farming, guild, patchTracker::predict) : null;
 		final List<Patch> all = new ArrayList<>(here);
 		for (Patch patch : guild)
 		{
+			if (all.contains(patch))
+			{
+				continue;
+			}
 			final PatchPrediction live = patchTracker.predict(patch);
-			if (!all.contains(patch) && contract.held() && live != null && live.getCrop() == contract.getCrop()
-				&& live.getObservedAt() >= navigator.getArrivedAtSeconds()
-				&& ContractPlanner.role(patch, contract, farming(), guild, patchTracker::predict, stock())
-				== ContractPlanner.Role.TAKE)
+			if (!contractExtras.contains(patch) && contract.held() && live != null
+				&& live.getObservedAt() >= navigator.getArrivedAtSeconds())
+			{
+				final ContractPlanner.Role role = ContractPlanner.role(patch, contract, farming, guild,
+					patchTracker::predict, stock);
+				if (role == ContractPlanner.Role.TAKE && live.getCrop() == contract.getCrop()
+					|| patch == forContract && role != ContractPlanner.Role.LEAVE)
+				{
+					contractExtras.add(patch);
+					log.debug("Farming contract: {} joins the guild stop for the {} contract ({})", patch.getDisplayName(),
+						contract.getCrop().getDisplayName().toLowerCase(), role);
+				}
+			}
+			if (contractExtras.contains(patch))
 			{
 				all.add(patch);
 			}
@@ -2148,7 +2173,9 @@ class PatchGuide
 		final Map<Integer, Integer> inventory = holdings.in(Holdings.Source.INVENTORY);
 		final Map<Integer, Integer> worn = holdings.in(Holdings.Source.WORN);
 		final Map<Integer, Integer> leprechaun = holdings.in(Holdings.Source.LEPRECHAUN);
+		final Map<Integer, Integer> vault = holdings.in(Holdings.Source.SEED_VAULT);
 		Integer stored = null;
+		Integer inVault = null;
 		for (int id : needed)
 		{
 			if (inventory.getOrDefault(id, 0) > 0 || worn.getOrDefault(id, 0) > 0)
@@ -2159,6 +2186,20 @@ class PatchGuide
 			{
 				stored = id;
 			}
+			if (inVault == null && vault.getOrDefault(id, 0) > 0)
+			{
+				inVault = id;
+			}
+		}
+		// At the Farming Guild, a seed or sapling only in its seed vault: one a farming contract taken there plants, or a
+		// pre-plant to put back (elzerma, 2026-11-03), so it's taken there rather than banked for
+		if (stored == null && inVault != null && atStop != null && atStop.getLocation() == Location.FARMING_GUILD)
+		{
+			final Crop crop = plantingFor(currentPatch);
+			final int count = crop != null && crop.getPlantItemId() == inVault ? crop.getSeedsPerPatch() : 1;
+			final String name = runService.itemName(inVault).toLowerCase();
+			return "Take " + (count > 1 ? count + " " + name + "s" : ("aeiou".indexOf(name.charAt(0)) >= 0 ? "an " : "a ")
+				+ name) + " from the seed vault";
 		}
 		if (stored != null)
 		{

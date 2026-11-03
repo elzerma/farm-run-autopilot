@@ -231,7 +231,7 @@ public final class ContractPlanner
 	 * The patch the contract's crop grows in: one holding it, else an empty one (or one emptied this run), else (blocked)
 	 * one holding a crop off the plan, else the first of its type.
 	 */
-	static Patch contractPatch(Contract contract, int farming, List<Patch> usable,
+	public static Patch contractPatch(Contract contract, int farming, List<Patch> usable,
 		Function<Patch, PatchPrediction> predictions)
 	{
 		Patch first = null;
