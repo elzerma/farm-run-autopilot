@@ -171,6 +171,53 @@ public class ContractPlannerTest
 		assertEquals("Contract: Torstol, growing at the guild", growing.getLine());
 	}
 
+	/**
+	 * elzerma's guild on 2026-11-02 at Farming 69, the Medium table (watermelon in the north allotment, strawberries in the
+	 * south, white lilies in the flower patch): "We just want to pick anything that isn't in alignment with the
+	 * pre-planting plan".
+	 */
+	@Test
+	public void cropsOffThePlanArePickedOnceGrownAndThePatchPlantedToPlan()
+	{
+		grow(Patch.FARMING_GUILD_ALLOTMENT_N, Crop.WATERMELON, PatchState.HARVESTABLE);
+		grow(Patch.FARMING_GUILD_ALLOTMENT_S, Crop.WATERMELON, PatchState.HARVESTABLE);
+		grow(Patch.FARMING_GUILD_FLOWER, Crop.NASTURTIUM, PatchState.HARVESTABLE);
+		grow(Patch.FARMING_GUILD_HERB, Crop.RANARR, PatchState.GROWING);
+		final Contract jangerberry = contract(Crop.JANGERBERRY, 2);
+		final Plan plan = plan(jangerberry, 69);
+		assertEquals(Role.LEAVE, plan.role(Patch.FARMING_GUILD_ALLOTMENT_N));
+		assertEquals(Role.TAKE, plan.role(Patch.FARMING_GUILD_ALLOTMENT_S));
+		assertEquals(Role.TAKE, plan.role(Patch.FARMING_GUILD_FLOWER));
+		assertEquals(Crop.STRAWBERRY, crop(Patch.FARMING_GUILD_ALLOTMENT_S, jangerberry, 69));
+		assertEquals(Crop.WHITE_LILY, crop(Patch.FARMING_GUILD_FLOWER, jangerberry, 69));
+		// Picked once grown, not dug up
+		assertEquals(Role.LEAVE, plan.role(Patch.FARMING_GUILD_HERB));
+		// Any of the table's choices is on the plan: at 85 the Hard table, lantadyme the second of its herbs
+		grow(Patch.FARMING_GUILD_HERB, Crop.LANTADYME, PatchState.HARVESTABLE);
+		assertEquals(Role.LEAVE, plan(jangerberry, 90).role(Patch.FARMING_GUILD_HERB));
+		assertEquals(Role.TAKE, plan(jangerberry, 69).role(Patch.FARMING_GUILD_HERB));
+	}
+
+	@Test
+	public void aContractsCropGoesWhereACropOffThePlanMakesWay()
+	{
+		grow(Patch.FARMING_GUILD_ALLOTMENT_N, Crop.WATERMELON, PatchState.HARVESTABLE);
+		grow(Patch.FARMING_GUILD_ALLOTMENT_S, Crop.WATERMELON, PatchState.GROWING);
+		// A quick crop with no room: the south allotment's watermelons, off the plan, make way, not the north's pre-plant
+		final Contract strawberry = contract(Crop.STRAWBERRY, 2);
+		final Plan strawberries = plan(strawberry, 69);
+		assertEquals(Role.LEAVE, strawberries.role(Patch.FARMING_GUILD_ALLOTMENT_N));
+		assertEquals(Role.CLEAR_FOR_CONTRACT, strawberries.role(Patch.FARMING_GUILD_ALLOTMENT_S));
+		assertEquals(Crop.STRAWBERRY, crop(Patch.FARMING_GUILD_ALLOTMENT_S, strawberry, 69));
+		// A slow one where a grown crop off the plan is picked this run: planted there, with no easier contract to ask for
+		grow(Patch.FARMING_GUILD_TREE, Crop.WILLOW, PatchState.CHECK_HEALTH);
+		final Contract yew = contract(Crop.YEW, 2);
+		final Plan yews = plan(yew, 69);
+		assertEquals(Role.TAKE, yews.role(Patch.FARMING_GUILD_TREE));
+		assertEquals(Jane.NONE, yews.getJane());
+		assertEquals(Crop.YEW, crop(Patch.FARMING_GUILD_TREE, yew, 69));
+	}
+
 	@Test
 	public void theTables()
 	{

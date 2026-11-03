@@ -19,7 +19,8 @@ import lombok.Value;
 /**
  * What a run does at the Farming Guild with contracts on (docs/plans/farming-contracts.md, option (c); elzerma,
  * 2026-11-02): every contract patch holds a pre-plant from the wiki's table and is left alone until a contract asks for
- * its crop; the contract's crop is checked or picked once grown, and the patch replanted; a contract whose crop isn't
+ * its crop, while a crop off the table is picked once grown and the pre-plant planted in its place; the contract's crop is
+ * checked or picked once grown, and the patch replanted; a contract whose crop isn't
  * growing gets it planted, in a patch cleared for it if it's quick (or Easy, which can't be swapped); and the guild stop
  * ends at Guildmaster Jane to hand one in, take the next (the highest tier the level allows) or ask for an easier one.
  * Pure: the planner and the guide both ask it, from the patches as they're read.
@@ -31,7 +32,10 @@ public final class ContractPlanner
 	{
 		/** A crop no contract asks for yet (a pre-plant waiting, or the contract's still growing): not touched. */
 		LEAVE,
-		/** The contract's crop, grown: check its health or pick it, then clear and replant. Or a diseased crop to cure. */
+		/**
+		 * The contract's crop, grown: check its health or pick it, then clear and replant. Or a diseased crop to cure, or a
+		 * grown crop off the pre-planting plan, picked like any harvest and the patch planted to plan.
+		 */
 		TAKE,
 		/** Nothing waiting there (empty, weeds, dead, a stump or a tree already checked): clear if need be, and plant. */
 		PLANT,
@@ -90,16 +94,16 @@ public final class ContractPlanner
 		final Map<Patch, Role> roles = new EnumMap<>(Patch.class);
 		for (Patch patch : usable)
 		{
-			roles.put(patch, role(patch, contract, usable, predictions));
+			roles.put(patch, role(patch, contract, farming, usable, predictions));
 		}
-		final Jane jane = jane(contract, usable, predictions);
+		final Jane jane = jane(contract, farming, usable, predictions);
 		final Tier ask = Tier.highest(farming);
 		return new Plan(true, contract, Collections.unmodifiableMap(roles), jane, ask,
-			line(contract, jane, ask, roles, usable, predictions));
+			line(contract, farming, jane, ask, roles, usable, predictions));
 	}
 
 	/** A guild contract patch's role, from what it holds now. */
-	public static Role role(Patch patch, Contract contract, List<Patch> usable,
+	public static Role role(Patch patch, Contract contract, int farming, List<Patch> usable,
 		Function<Patch, PatchPrediction> predictions)
 	{
 		final PatchPrediction live = predictions.apply(patch);
@@ -117,19 +121,22 @@ public final class ContractPlanner
 		{
 			return ready(patch, live) ? Role.TAKE : Role.LEAVE;
 		}
-		if (wanted != null && patch == contractPatch(contract, usable, predictions) && blocked(contract, usable, predictions)
-			&& !askEasier(contract))
+		if (wanted != null && patch == contractPatch(contract, farming, usable, predictions)
+			&& blocked(contract, farming, usable, predictions) && !askEasier(contract))
 		{
 			return Role.CLEAR_FOR_CONTRACT;
 		}
-		return Role.LEAVE;
+		// A crop off the pre-planting plan is picked once grown, and the patch planted to plan (elzerma, 2026-11-02: "We
+		// just want to pick anything that isn't in alignment with the pre-planting plan")
+		return clearing(patch, live, farming) ? Role.TAKE : Role.LEAVE;
 	}
 
 	/**
 	 * Jane's part: hand in a grown contract, ask for one when there's none (or the last was handed in with none taken
 	 * since, as elzerma's dev check saw it), or for an easier one when it's blocked.
 	 */
-	public static Jane jane(Contract contract, List<Patch> usable, Function<Patch, PatchPrediction> predictions)
+	public static Jane jane(Contract contract, int farming, List<Patch> usable,
+		Function<Patch, PatchPrediction> predictions)
 	{
 		if (contract.grown())
 		{
@@ -139,8 +146,8 @@ public final class ContractPlanner
 		{
 			return Jane.NEW;
 		}
-		return contract.getCrop() != null && blocked(contract, usable, predictions) && askEasier(contract) ? Jane.EASIER
-			: Jane.NONE;
+		return contract.getCrop() != null && blocked(contract, farming, usable, predictions) && askEasier(contract)
+			? Jane.EASIER : Jane.NONE;
 	}
 
 	/**
@@ -150,7 +157,7 @@ public final class ContractPlanner
 	public static Crop crop(Patch patch, Contract contract, int farming, List<Patch> usable,
 		Function<Patch, PatchPrediction> predictions, ToIntFunction<Crop> stock, Function<PatchType, Crop> own)
 	{
-		if (contract.held() && contract.getCrop() != null && patch == contractPatch(contract, usable, predictions)
+		if (contract.held() && contract.getCrop() != null && patch == contractPatch(contract, farming, usable, predictions)
 			&& !growing(contract.getCrop(), usable, predictions))
 		{
 			return contract.getCrop();
@@ -167,10 +174,10 @@ public final class ContractPlanner
 	}
 
 	/**
-	 * The contract's crop is grown enough to count: its health to check, or (crops without a health check) ready to pick
-	 * (wiki: Farming contracts).
+	 * Grown: its health to check, or (crops without a health check) ready to pick. For the contract's crop, grown enough to
+	 * count (wiki: Farming contracts).
 	 */
-	static boolean ready(Patch patch, PatchPrediction live)
+	public static boolean ready(Patch patch, PatchPrediction live)
 	{
 		return patch.getType().isHealthChecked() ? live.getState() == PatchState.CHECK_HEALTH
 			: live.getState() == PatchState.HARVESTABLE;
@@ -187,11 +194,32 @@ public final class ContractPlanner
 			|| state == PatchState.STUMP || patch.getType().isHealthChecked() && state == PatchState.HARVESTABLE;
 	}
 
-	/** The patch the contract's crop grows in: one holding it, else an empty one, else (blocked) the first of its type. */
-	static Patch contractPatch(Contract contract, List<Patch> usable, Function<Patch, PatchPrediction> predictions)
+	/**
+	 * Off the pre-planting plan: a crop that isn't one of the patch's pre-plants at this Farming level. Never where the
+	 * table has none, as the player's own choice for the type goes there.
+	 */
+	public static boolean offPlan(Patch patch, Crop crop, int farming)
+	{
+		final List<Crop> plan = FarmingContract.prePlants(patch, farming);
+		return crop != null && !plan.isEmpty() && !plan.contains(crop);
+	}
+
+	/** Emptied this run: a grown crop off the pre-planting plan, picked or checked like any harvest. */
+	static boolean clearing(Patch patch, PatchPrediction live, int farming)
+	{
+		return offPlan(patch, live.getCrop(), farming) && ready(patch, live);
+	}
+
+	/**
+	 * The patch the contract's crop grows in: one holding it, else an empty one (or one emptied this run), else (blocked)
+	 * one holding a crop off the plan, else the first of its type.
+	 */
+	static Patch contractPatch(Contract contract, int farming, List<Patch> usable,
+		Function<Patch, PatchPrediction> predictions)
 	{
 		Patch first = null;
 		Patch free = null;
+		Patch spare = null;
 		for (Patch patch : usable)
 		{
 			if (!FarmingContract.patchTakes(patch, contract.getCrop()))
@@ -203,16 +231,21 @@ public final class ContractPlanner
 			{
 				return patch;
 			}
-			if (free == null && (live == null || live.getCrop() == null || spent(patch, live)))
+			if (free == null && (live == null || live.getCrop() == null || spent(patch, live)
+				|| clearing(patch, live, farming)))
 			{
 				free = patch;
+			}
+			if (spare == null && live != null && offPlan(patch, live.getCrop(), farming))
+			{
+				spare = patch;
 			}
 			if (first == null)
 			{
 				first = patch;
 			}
 		}
-		return free != null ? free : first;
+		return free != null ? free : spare != null ? spare : first;
 	}
 
 	/** The contract's crop is growing or grown (not yet counted) in one of the guild's patches for it. */
@@ -229,8 +262,12 @@ public final class ContractPlanner
 		return false;
 	}
 
-	/** Every guild patch for the contract's crop holds another crop, waiting for its own contract. */
-	static boolean blocked(Contract contract, List<Patch> usable, Function<Patch, PatchPrediction> predictions)
+	/**
+	 * Every guild patch for the contract's crop holds another crop, waiting for its own contract (or still growing, off the
+	 * plan): none is empty or emptied this run.
+	 */
+	static boolean blocked(Contract contract, int farming, List<Patch> usable,
+		Function<Patch, PatchPrediction> predictions)
 	{
 		if (!contract.held() || contract.getCrop() == null || growing(contract.getCrop(), usable, predictions))
 		{
@@ -245,7 +282,7 @@ public final class ContractPlanner
 			}
 			any = true;
 			final PatchPrediction live = predictions.apply(patch);
-			if (live == null || live.getCrop() == null || spent(patch, live))
+			if (live == null || live.getCrop() == null || spent(patch, live) || clearing(patch, live, farming))
 			{
 				return false;
 			}
@@ -273,8 +310,8 @@ public final class ContractPlanner
 		return FarmingContract.tiers(contract.getCrop()).equals(Collections.singleton(Tier.EASY)) ? Tier.EASY : null;
 	}
 
-	private static String line(Contract contract, Jane jane, Tier ask, Map<Patch, Role> roles, List<Patch> usable,
-		Function<Patch, PatchPrediction> predictions)
+	private static String line(Contract contract, int farming, Jane jane, Tier ask, Map<Patch, Role> roles,
+		List<Patch> usable, Function<Patch, PatchPrediction> predictions)
 	{
 		final String asked = ask != null ? "a " + ask.getDisplayName() + " one" : "one";
 		final Crop crop = contract.getCrop();
@@ -295,7 +332,7 @@ public final class ContractPlanner
 		{
 			return null;
 		}
-		final Patch where = contractPatch(contract, usable, predictions);
+		final Patch where = contractPatch(contract, farming, usable, predictions);
 		final Role role = where != null ? roles.get(where) : null;
 		if (role == Role.TAKE)
 		{

@@ -437,9 +437,10 @@ class FarmPage extends SetupPanel
 	{
 		final CollapsibleSection s = section("Farming contracts");
 		s.help("The Farming Guild's patches hold the wiki's pre-plants for Guildmaster Jane's contracts, left alone until a "
-			+ "contract asks for one. Its crop is checked or picked once grown and the patch replanted, a contract's crop "
-			+ "that isn't growing is planted, and the guild stop ends at Jane: hand one in, take another (the highest tier "
-			+ "your level allows), or ask for an easier one when a slow crop's patch is taken.");
+			+ "contract asks for one, and anything else there is picked once grown and the pre-plant planted. A contract's "
+			+ "crop is checked or picked once grown and the patch replanted, one that isn't growing is planted, and the "
+			+ "guild stop ends at Jane: hand one in, take another (the highest tier your level allows), or ask for an "
+			+ "easier one when a slow crop's patch is taken.");
 		s.addContent(checkBox("Build farming contracts into runs", config.isFarmingContracts(), true,
 			"The guild's patches are kept for contracts instead of your usual crops, and a run stops at the guild whenever "
 				+ "a contract needs it",

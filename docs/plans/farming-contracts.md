@@ -228,12 +228,21 @@ one gets its patch cleared; the tier tip (d) after the release. The crop types a
   CLEAR_FOR_CONTRACT (an Easy or quick contract blocked by another crop: dig it up, plant the contract's). And Jane's
   part: HAND_IN, NEW or EASIER. `RunSelector` runs the guild's contract patches by role, whatever types are ticked, with
   one anchoring the stop when only Jane is to see; `SupplyCalculator` plants them with the planner's crop.
+- **Crops off the plan** (elzerma, 2026-11-02: "We just want to pick anything that isn't in alignment with the
+  pre-planting plan"): a crop that isn't one of its patch's pre-plants at the player's level (`ContractPlanner.offPlan`)
+  is a TAKE once grown, picked or checked like any harvest and the pre-plant planted in its place; still growing, it
+  waits (on the Run tab with its usual status, not "kept for a farming contract"). A patch emptied that way takes the
+  contract's crop first, slow or not, and one holding a crop off the plan makes way for a quick contract before a
+  pre-plant does. At elzerma's guild that means the south allotment's watermelons (the Medium table has strawberries
+  there) and the flower patch's nasturtiums (white lilies).
 - **The guide:** at the guild stop the planned contract patches are worked by their role as they read at the time,
   unless this run is planting them; when the contract changes, those passed over are looked at again. A guild patch
   outside the plan joins the stop only when, read since arriving, it holds the contract's crop to take, so a new
   contract whose crop is grown already is done on the spot; its replanting waits for the next run, whose seeds it
   wasn't planned with. (Until elzerma's first run with contracts on, 2026-11-02, every guild patch joined, and the stop
-  began at the north allotment, its watermelons kept for a contract, until the guild's patches were read.) The stop
+  began at the north allotment, its watermelons kept for a contract, until the guild's patches were read.) A crop
+  cleared for a contract is checked or picked first when grown, and dug up only while still growing. A guild patch run
+  for contracts is always replanted, whatever its type's "pick and leave growing" setting, as the plan has it. The stop
   ends at Jane, outlined, with the walking line to her: "Talk to
   Guildmaster Jane: hand in your contract, then take another Hard contract", "ask for a Hard contract" or "ask for an
   easier contract (magic takes 8 h to grow)". The step clears once the contract's values show nothing to see her about.

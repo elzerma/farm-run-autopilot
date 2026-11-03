@@ -14,10 +14,11 @@
 
 ### Farming contracts
 - Turn on Farm > Farming contracts > "Build farming contracts into runs". The Farming Guild's patches then hold the
-  wiki's pre-plants and are left alone until Guildmaster Jane's contract asks for one.
+  wiki's pre-plants and are left alone until Guildmaster Jane's contract asks for one. Anything else growing there is
+  picked once grown, and the pre-plant planted in its place.
 - The contract's crop is checked or picked once grown and the patch replanted. A contract whose crop isn't growing gets
-  it planted; if its patch holds another crop, a quick one (herbs, flowers, bushes) takes its place, and for a slow one
-  the guide says to ask Jane for an easier contract.
+  it planted; if its patch holds another crop, a quick one (herbs, flowers, bushes) takes its place, picked first if
+  it's grown, and for a slow one the guide says to ask Jane for an easier contract.
 - The guild stop ends at Jane, outlined: hand in your contract and take another (the highest tier your level allows),
   or ask for one. If the new crop is already grown, it's done on the spot. The Run tab says where the contract stands.
 

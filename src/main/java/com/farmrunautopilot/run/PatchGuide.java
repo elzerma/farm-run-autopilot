@@ -600,12 +600,14 @@ class PatchGuide
 			final ContractPlanner.Role role = p.plantedTick < 0 && !p.sawEmpty ? contractRole(patch) : null;
 			if (role == ContractPlanner.Role.LEAVE)
 			{
-				// A pre-plant waiting for its contract, or the contract's own crop still growing
+				// A pre-plant waiting for its contract, the contract's own crop still growing, or a crop off the plan to pick
+				// once grown
 				p.done = true;
 				p.leftForContract = true;
 				continue;
 			}
-			if (role == ContractPlanner.Role.CLEAR_FOR_CONTRACT)
+			// A crop still growing is dug up to make way; a grown one is checked or picked first, like any harvest
+			if (role == ContractPlanner.Role.CLEAR_FOR_CONTRACT && !ContractPlanner.ready(patch, live))
 			{
 				currentPatch = patch;
 				currentAction = StepAdvisor.Action.CLEAR_DEAD;
@@ -614,8 +616,9 @@ class PatchGuide
 					+ "contract's " + wanted.getDisplayName().toLowerCase();
 				return navigator.farFrom(patch) ? navigator.walkTo(stop, patch, "Walk", dig) : dig;
 			}
-			// A flower planted this run still gets its compost, if any
-			if (keepsProtectingFlower(patch, live) && (live.getState() != PatchState.GROWING || !p.sawUnplanted))
+			// A flower planted this run still gets its compost, if any. The guild's is the contracts' with them on, as planned
+			if (!contractPatches().contains(patch) && keepsProtectingFlower(patch, live)
+				&& (live.getState() != PatchState.GROWING || !p.sawUnplanted))
 			{
 				// Picking it would end the allotments' protection
 				p.done = true;
@@ -730,19 +733,25 @@ class PatchGuide
 		{
 			return plan.getSupplies().getPlantings().get(patch);
 		}
-		final AccessSnapshot access = accessChecker.getSnapshot();
-		final int farming = access.isKnown() ? access.level(Skill.FARMING) : 99;
+		final int farming = farming();
 		final RunConfig config = settings.getRunConfig();
 		final Holdings holdings = holdingsTracker.getHoldings();
 		return ContractPlanner.crop(patch, contractTracker.getContract(), farming, guild, patchTracker::predict,
 			c -> holdings.count(c.getPlantItemId()), t -> config.cropFor(t, farming));
 	}
 
+	/** The Farming level, for the contract's tier and the pre-planting plan; 99 until it's known, as the planner has it. */
+	private int farming()
+	{
+		final AccessSnapshot access = accessChecker.getSnapshot();
+		return access.isKnown() ? access.level(Skill.FARMING) : 99;
+	}
+
 	/** A guild contract patch's part as it reads now (ContractPlanner), or null for another patch or contracts off. */
 	private ContractPlanner.Role contractRole(Patch patch)
 	{
 		final List<Patch> guild = contractPatches();
-		return guild.contains(patch) ? ContractPlanner.role(patch, contractTracker.getContract(), guild,
+		return guild.contains(patch) ? ContractPlanner.role(patch, contractTracker.getContract(), farming(), guild,
 			patchTracker::predict) : null;
 	}
 
@@ -781,7 +790,7 @@ class PatchGuide
 			final PatchPrediction live = patchTracker.predict(patch);
 			if (!all.contains(patch) && contract.held() && live != null && live.getCrop() == contract.getCrop()
 				&& live.getObservedAt() >= navigator.getArrivedAtSeconds()
-				&& ContractPlanner.role(patch, contract, guild, patchTracker::predict) == ContractPlanner.Role.TAKE)
+				&& ContractPlanner.role(patch, contract, farming(), guild, patchTracker::predict) == ContractPlanner.Role.TAKE)
 			{
 				all.add(patch);
 			}
@@ -803,13 +812,12 @@ class PatchGuide
 			return null;
 		}
 		final ContractTracker.Contract contract = contractTracker.getContract();
-		final ContractPlanner.Jane jane = ContractPlanner.jane(contract, guild, patchTracker::predict);
+		final ContractPlanner.Jane jane = ContractPlanner.jane(contract, farming(), guild, patchTracker::predict);
 		if (jane == ContractPlanner.Jane.NONE)
 		{
 			return null;
 		}
-		final AccessSnapshot access = accessChecker.getSnapshot();
-		final FarmingContract.Tier ask = FarmingContract.Tier.highest(access.isKnown() ? access.level(Skill.FARMING) : 99);
+		final FarmingContract.Tier ask = FarmingContract.Tier.highest(farming());
 		final String tier = ask != null ? ask.getDisplayName() + " " : "";
 		currentPatch = here.get(0);
 		currentAction = StepAdvisor.Action.JANE;
@@ -1933,9 +1941,10 @@ class PatchGuide
 			? crop.getPaymentQuantity() + " x " + runService.itemName(crop.getPaymentItemId()) + extras(crop)
 			+ (config.isPayWithNotes() ? " (noted is fine)" : "")
 			: null;
+		// A guild patch run for contracts is replanted, as planned: a crop checked or picked can't count for one
 		return new StepAdvisor.PatchGoal(patch, crop, plantName, compostFor(patch),
 			protectionNeeded, payment, config.paysToClear(patch.getType()), p.composted, p.paid,
-			p.sawUnplanted, config.keepsGrowing(patch.getType()));
+			p.sawUnplanted, config.keepsGrowing(patch.getType()) && !contractPatches().contains(patch));
 	}
 
 	/** The rest of a payment after its main item, e.g. ", 1 x Monkey bar, 1 x Ground tooth" for a spirit tree. */

@@ -147,7 +147,11 @@ public final class RunSelector
 				final ContractPlanner.Role role = contractPlan.role(patch);
 				if (role == ContractPlanner.Role.LEAVE)
 				{
-					notDue.add(patch.getDisplayName() + ": kept for a farming contract");
+					// A crop off the pre-planting plan, still growing, waits to be picked like any other
+					final PatchPrediction live = predictions.apply(patch);
+					notDue.add(patch.getDisplayName() + ": " + (live != null
+						&& ContractPlanner.offPlan(patch, live.getCrop(), farming) ? PatchStatusText.describe(live, now)
+						: "kept for a farming contract"));
 					continue;
 				}
 				// Nothing to plant (no pre-plant at this level, no crop chosen for the type): left alone
