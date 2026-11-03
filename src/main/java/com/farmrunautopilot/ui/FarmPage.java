@@ -16,6 +16,7 @@ import com.farmrunautopilot.settings.SettingsStore;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -47,13 +48,31 @@ class FarmPage extends SetupPanel
 		add(advancedFarmSection(config));
 	}
 
+	/**
+	 * A run type's name on its one-line rows and in lists, as on the Run tab ("Trees", "Fruit trees"); "Hardwood" and
+	 * "Celastrus" without "trees", so every crop's name fits beside them (docs/plans/fresh-eyes-audit.md, F1).
+	 */
+	private static String rowName(PatchType type)
+	{
+		switch (type)
+		{
+			case HARDWOOD:
+				return "Hardwood";
+			case CELASTRUS:
+				return "Celastrus";
+			default:
+				return type.getPluralName();
+		}
+	}
+
 	private JComponent patchesSection(RunConfig config, AccessSnapshot access)
 	{
+		// Counted over the run types in your runs (docs/plans/fresh-eyes-audit.md, F5)
 		int usable = 0;
 		int ticked = 0;
 		for (Patch patch : Patch.values())
 		{
-			if (access.missingFor(patch).isEmpty())
+			if (config.getEnabledTypes().contains(patch.getType()) && access.missingFor(patch).isEmpty())
 			{
 				usable++;
 				ticked += config.getDisabledPatches().contains(patch) ? 0 : 1;
@@ -96,8 +115,14 @@ class FarmPage extends SetupPanel
 						}
 					})));
 			}
+			final boolean inRuns = config.getEnabledTypes().contains(type);
 			final CollapsibleSection group = section(type.getDisplayName() + " patches",
-				typeTicked + " of " + typeUsable);
+				inRuns ? typeTicked + " of " + typeUsable : "not in runs");
+			if (!inRuns)
+			{
+				// The Run tab's box and this one look like one switch and aren't (docs/plans/fresh-eyes-audit.md, F5)
+				group.help("Tick " + RunPanel.runTypeBox(type) + " at the top of the Run tab to put them in your runs.");
+			}
 			// Ticks or unticks the whole type, as a Travel tab family's box does (elzerma, 2026-10-22); locked patches
 			// too, so one unlocked later follows the rest of its type
 			final JCheckBox all = groupBox(GroupTick.of(typeUsable, typeTicked),
@@ -133,16 +158,22 @@ class FarmPage extends SetupPanel
 				rebuild();
 			}));
 
-		// One line per choice (elzerma): "1st [drop-down]"; the 3rd only once the 2nd is set
+		// Nothing to choose where the type grows one crop (mushroom, belladonna, seaweed, calquat, celastrus, redwood,
+		// spirit and crystal trees: elzerma, 2026-10-26)
+		final List<PatchType> types = new ArrayList<>();
+		final List<String> names = new ArrayList<>();
 		for (PatchType type : PatchType.values())
 		{
-			// Nothing to choose where the type grows one crop (mushroom, belladonna, seaweed, calquat, celastrus, redwood,
-			// spirit and crystal trees: elzerma, 2026-10-26)
-			if (Arrays.stream(Crop.values()).filter(c -> c.getType() == type && c.isChoosable()).count() < 2)
+			if (Arrays.stream(Crop.values()).filter(c -> c.getType() == type && c.isChoosable()).count() >= 2)
 			{
-				continue;
+				types.add(type);
+				names.add(rowName(type));
 			}
-			s.addContent(subheader(type.getDisplayName()));
+		}
+		final int width = labelWidth(names);
+		// One line per choice (elzerma): "1st [drop-down]"; the 3rd only once the 2nd is set
+		for (PatchType type : types)
+		{
 			final Crop firstCrop = config.cropFor(type, farming);
 			final JComponent first = combo(cropChoices(type, farming, false, Collections.emptyList()), firstCrop,
 				crop ->
@@ -157,9 +188,11 @@ class FarmPage extends SetupPanel
 				});
 			if (!config.isUseBackupCrops())
 			{
-				s.addContent(first);
+				// The type and its crop on one line (docs/plans/fresh-eyes-audit.md, F1)
+				s.addContent(labeled(rowName(type), first, width));
 				continue;
 			}
+			s.addContent(subheader(rowName(type)));
 			s.addContent(labeled("1st", first));
 
 			final List<Crop> backups = config.getBackupCrops().getOrDefault(type, new ArrayList<>());
@@ -189,8 +222,10 @@ class FarmPage extends SetupPanel
 		final CollapsibleSection s = section("Disease-free herbs",
 			config.isPrioritiseDiseaseFreeHerbs() ? config.getDiseaseFreeHerbs().size() + " picked" : "off");
 		final int farming = access.isKnown() ? access.level(Skill.FARMING) : 99;
-		s.addContent(checkBox("Prioritise herbs for disease-free patches", config.isPrioritiseDiseaseFreeHerbs(), true,
-			"Pick herbs that only go in disease-free patches",
+		// Reserved for those patches rather than put first (CropAllocator; docs/plans/fresh-eyes-audit.md, F4)
+		s.addContent(checkBox("Save herbs for disease-free patches", config.isPrioritiseDiseaseFreeHerbs(), true,
+			"The herbs you tick go only in disease-free herb patches, most valuable first; your other herb patches never "
+				+ "get them.",
 			on ->
 			{
 				saveRun(() -> config.setPrioritiseDiseaseFreeHerbs(on));
@@ -202,6 +237,7 @@ class FarmPage extends SetupPanel
 		}
 		s.help("Troll Stronghold, Weiss and Harmony Island, plus Hosidius and Civitas once their "
 			+ "unlock is done. They get these herbs first, most valuable first (by GE price); other patches never do.");
+		final List<JComponent> herbs = new ArrayList<>();
 		for (Crop crop : Crop.values())
 		{
 			if (crop.getType() != PatchType.HERB)
@@ -209,7 +245,7 @@ class FarmPage extends SetupPanel
 				continue;
 			}
 			final boolean canPlant = crop.getFarmingLevel() <= farming;
-			s.addContent(checkBox(crop.getDisplayName() + " (" + crop.getFarmingLevel() + ")",
+			herbs.add(halfCheckBox(crop.getDisplayName() + " (" + crop.getFarmingLevel() + ")",
 				config.getDiseaseFreeHerbs().contains(crop), canPlant,
 				canPlant ? null : "Needs " + crop.getFarmingLevel() + " Farming",
 				on -> saveRun(() ->
@@ -224,6 +260,7 @@ class FarmPage extends SetupPanel
 					}
 				})));
 		}
+		s.addContent(twoPerRow(herbs));
 		return s;
 	}
 
@@ -274,69 +311,109 @@ class FarmPage extends SetupPanel
 			"Gardeners accept noted payment; one inventory slot per item type",
 			on -> saveRun(() -> config.setPayWithNotes(on))));
 
+		final List<String> names = new ArrayList<>();
+		for (PatchType type : PatchType.values())
+		{
+			if (type.isProtectable())
+			{
+				names.add(rowName(type));
+			}
+		}
+		final int width = labelWidth(names);
+		// What's done to a grown crop (leaving it growing, paying to clear it) is under At the patches
+		// (docs/plans/fresh-eyes-audit.md, F2)
 		for (PatchType type : PatchType.values())
 		{
 			if (!type.isProtectable())
 			{
 				continue;
 			}
-			s.addContent(subheader(type.getDisplayName() + " patches"));
-			s.addContent(combo(protectionChoices(type), config.getProtection().get(type), p ->
+			// The type and its protection on one line (docs/plans/fresh-eyes-audit.md, F1)
+			s.addContent(labeled(rowName(type), combo(protectionChoices(type), config.getProtection().get(type), p ->
 			{
 				saveRun(() -> config.getProtection().put(type, p));
 				rebuild();
-			}));
+			}), width));
 			if (type == PatchType.ALLOTMENT)
 			{
 				s.addContent(allotmentSets(config));
 			}
-			if (type.keepable())
+		}
+		singlePatches(config, s);
+		return s;
+	}
+
+	/**
+	 * Another protection for single patches than their type's (allotments are chosen per set above): all protection in one
+	 * place (docs/plans/fresh-eyes-audit.md, F3, from Advanced).
+	 */
+	private void singlePatches(RunConfig config, CollapsibleSection s)
+	{
+		// Rarely used, so behind a tick box (elzerma); ticking it off keeps the choices but ignores them
+		final boolean perPatch = config.isUsingProtectionOverrides();
+		s.addContent(checkBox("Different protection for single patches", perPatch, true,
+			"Choose another protection for a patch than its type has above. Ticking this off keeps your choices but "
+				+ "ignores them.",
+			on ->
 			{
-				final String plural = type.getPluralName().toLowerCase();
-				final boolean spirit = type == PatchType.SPIRIT_TREE;
-				s.addContent(checkBox(spirit ? "Keep grown spirit trees for travel"
-					: "Pick grown " + plural + " and leave them growing", config.keepsGrowing(type), true,
-					spirit ? "Check their health once grown, then leave them standing rather than digging them up to replant"
-					: "Check health and pick each run, without clearing and replanting; a dead one is replanted",
-					on -> saveRun(() ->
-					{
-						if (on)
-						{
-							config.getKeepGrowing().add(type);
-						}
-						else
-						{
-							config.getKeepGrowing().remove(type);
-						}
-					})));
-			}
-			// Bushes, cacti and spirit trees are dug up with the spade every run brings; only Alexandra clears a redwood
-			if (type == PatchType.REDWOOD)
+				saveRun(() -> config.setUseProtectionOverrides(on));
+				rebuild();
+			}));
+		if (!perPatch)
+		{
+			return;
+		}
+		// Only the patches that differ, then a way to add another
+		final List<Choice<Protection>> choices = new ArrayList<>();
+		choices.add(Choice.of(null, "Same as its type"));
+		choices.addAll(protectionChoices(PatchType.TREE));
+		final List<Choice<Patch>> addable = new ArrayList<>();
+		addable.add(Choice.of(null, "Add a patch..."));
+		for (Patch patch : Patch.values())
+		{
+			// Allotments are chosen per set
+			if (!patch.getType().isProtectable() || patch.getType() == PatchType.ALLOTMENT)
 			{
-				s.addContent(label("A grown redwood is cleared by paying Alexandra 2,000 coins: nobody else can"));
 				continue;
 			}
-			if (type != PatchType.TREE && type != PatchType.FRUIT_TREE && type != PatchType.HARDWOOD
-				&& type != PatchType.CALQUAT && type != PatchType.CELASTRUS)
+			final Protection override = config.getProtectionOverrides().get(patch);
+			if (override == null)
 			{
+				addable.add(Choice.of(patch, patch.getDisplayName()));
 				continue;
 			}
-			s.addContent(checkBox("Pay 200 coins to clear grown " + type.getPluralName().toLowerCase(),
-				config.getPayToClear().contains(type), true,
-				"The gardener removes the old tree, so no axe is needed",
-				on -> saveRun(() ->
+			s.addContent(label(patch.getDisplayName()));
+			s.addContent(combo(choices, override, p ->
+			{
+				saveRun(() ->
 				{
-					if (on)
+					if (p == null)
 					{
-						config.getPayToClear().add(type);
+						config.getProtectionOverrides().remove(patch);
 					}
 					else
 					{
-						config.getPayToClear().remove(type);
+						config.getProtectionOverrides().put(patch, p);
 					}
-				})));
+				});
+				rebuild();
+			}));
 		}
-		return s;
+		if (addable.size() > 1)
+		{
+			s.addContent(combo(addable, null, patch ->
+			{
+				if (patch == null)
+				{
+					return;
+				}
+				// Starts as the other choice from its type's, so adding it changes something
+				final Protection type = config.getProtection().get(patch.getType());
+				saveRun(() -> config.getProtectionOverrides().put(patch,
+					type == Protection.PAY_GARDENER ? Protection.COMPOST_ONLY : Protection.PAY_GARDENER));
+				rebuild();
+			}));
+		}
 	}
 
 	/** Flower protection is for allotments only. */
@@ -414,17 +491,26 @@ class FarmPage extends SetupPanel
 	private JComponent compostSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("Compost and cures");
+		final List<String> names = new ArrayList<>();
 		for (PatchType type : PatchType.values())
 		{
-			s.addContent(label(type.getDisplayName() + " patches"));
-			s.addContent(combo(enumChoices(Compost.values()), config.getCompost().get(type),
-				c -> saveRun(() -> config.getCompost().put(type, c))));
+			names.add(rowName(type));
+		}
+		final int width = labelWidth(names);
+		for (PatchType type : PatchType.values())
+		{
+			// The type and its compost on one line (docs/plans/fresh-eyes-audit.md, F1)
+			s.addContent(labeled(rowName(type), combo(enumChoices(Compost.values()), config.getCompost().get(type),
+				c -> saveRun(() -> config.getCompost().put(type, c))), width));
 		}
 		s.addContent(subheader("Disease"));
-		s.addContent(checkBox("Use Cure Plant (Lunar)", config.isUseCurePlant(), true, null,
+		s.addContent(checkBox("Use Cure Plant (Lunar)", config.isUseCurePlant(), true,
+			"On a diseased patch, cast Cure Plant (on the Lunar spellbook) instead of using a plant cure. A run with herbs "
+				+ "brings runes for one cast.",
 			on -> saveRun(() -> config.setUseCurePlant(on))));
-		s.addContent(spinnerRow("Plant cures to bring (backup)", spinner(config.getPlantCureDoses(), 0, 40, 1,
-			v -> saveRunQuietly(() -> config.setPlantCureDoses(v)))));
+		s.addContent(tip(spinnerRow("Plant cures to bring", spinner(config.getPlantCureDoses(), 0, 40, 1,
+			v -> saveRunQuietly(() -> config.setPlantCureDoses(v)))),
+			"In case a patch is diseased. None are brought when every patch on the run is disease-free or protected."));
 		return s;
 	}
 
@@ -496,84 +582,74 @@ class FarmPage extends SetupPanel
 					})));
 			}
 		}
+		grownCrops(config, s);
 		return s;
 	}
 
-	/** Settings most players never need to change. */
-	private JComponent advancedFarmSection(RunConfig config)
+	/**
+	 * What's done to a grown crop, two lists two to a row (docs/plans/fresh-eyes-audit.md, F2, from Protection): picked and
+	 * left growing (fruit trees, bushes, cacti: elzerma, 2026-10-24) or kept for travel (spirit trees), and paying the
+	 * gardener to clear a grown tree.
+	 */
+	private void grownCrops(RunConfig config, CollapsibleSection s)
 	{
-		final boolean perPatch = config.isUsingProtectionOverrides();
-		final CollapsibleSection s = section("Advanced",
-			perPatch ? overrides((int) config.getProtectionOverrides().keySet().stream()
-				.filter(p -> p.getType() != PatchType.ALLOTMENT).count()) : null);
-		s.addContent(spinnerRow("Include a run type when this % of its patches are due",
-			spinner(config.getDueThresholdPercent(), 1, 100, 5,
-				v -> saveRunQuietly(() -> config.setDueThresholdPercent(v)))));
-
-		// Rarely used, so behind a tick box (elzerma); ticking it off keeps the choices but ignores them
-		s.addContent(checkBox("Different protection for single patches", perPatch, true,
-			"Choose another protection for a patch than its type has in Protection. Ticking this off keeps your "
-				+ "choices but ignores them.",
-			on ->
-			{
-				saveRun(() -> config.setUseProtectionOverrides(on));
-				rebuild();
-			}));
-		if (!perPatch)
+		s.addContent(subheader("Leave growing after picking"));
+		final List<JComponent> keep = new ArrayList<>();
+		for (PatchType type : PatchType.values())
 		{
-			return s;
-		}
-		// Only the patches that differ, then a way to add another
-		final List<Choice<Protection>> choices = new ArrayList<>();
-		choices.add(Choice.of(null, "Same as its type"));
-		choices.addAll(protectionChoices(PatchType.TREE));
-		final List<Choice<Patch>> addable = new ArrayList<>();
-		addable.add(Choice.of(null, "Add a patch..."));
-		for (Patch patch : Patch.values())
-		{
-			// Allotments are chosen per set under Protection
-			if (!patch.getType().isProtectable() || patch.getType() == PatchType.ALLOTMENT)
+			if (!type.keepable())
 			{
 				continue;
 			}
-			final Protection override = config.getProtectionOverrides().get(patch);
-			if (override == null)
-			{
-				addable.add(Choice.of(patch, patch.getDisplayName()));
-				continue;
-			}
-			s.addContent(label(patch.getDisplayName()));
-			s.addContent(combo(choices, override, p ->
-			{
-				saveRun(() ->
+			keep.add(halfCheckBox(rowName(type), config.keepsGrowing(type), true, type == PatchType.SPIRIT_TREE
+				? "Check their health once grown, then leave them standing for travel rather than digging them up to replant"
+				: "Check health and pick each run, without clearing and replanting; a dead one is replanted",
+				on -> saveRun(() ->
 				{
-					if (p == null)
+					if (on)
 					{
-						config.getProtectionOverrides().remove(patch);
+						config.getKeepGrowing().add(type);
 					}
 					else
 					{
-						config.getProtectionOverrides().put(patch, p);
+						config.getKeepGrowing().remove(type);
 					}
-				});
-				rebuild();
-			}));
+				})));
 		}
-		if (addable.size() > 1)
+		s.addContent(twoPerRow(keep));
+
+		// Bushes, cacti and spirit trees are dug up with the spade every run brings; only Alexandra clears a redwood
+		s.addContent(subheader("Pay 200 coins to clear grown",
+			"A grown redwood is always cleared by paying Alexandra 2,000 coins: nobody else can."));
+		final List<JComponent> clear = new ArrayList<>();
+		for (PatchType type : EnumSet.of(PatchType.TREE, PatchType.FRUIT_TREE, PatchType.HARDWOOD, PatchType.CALQUAT,
+			PatchType.CELASTRUS))
 		{
-			s.addContent(combo(addable, null, patch ->
-			{
-				if (patch == null)
+			clear.add(halfCheckBox(rowName(type), config.getPayToClear().contains(type), true,
+				"The gardener removes the old tree, so no axe is needed",
+				on -> saveRun(() ->
 				{
-					return;
-				}
-				// Starts as the other choice from its type's, so adding it changes something
-				final Protection type = config.getProtection().get(patch.getType());
-				saveRun(() -> config.getProtectionOverrides().put(patch,
-					type == Protection.PAY_GARDENER ? Protection.COMPOST_ONLY : Protection.PAY_GARDENER));
-				rebuild();
-			}));
+					if (on)
+					{
+						config.getPayToClear().add(type);
+					}
+					else
+					{
+						config.getPayToClear().remove(type);
+					}
+				})));
 		}
+		s.addContent(twoPerRow(clear));
+	}
+
+	/** Settings most players never need to change. Different protection for single patches is under Protection. */
+	private JComponent advancedFarmSection(RunConfig config)
+	{
+		final CollapsibleSection s = section("Advanced");
+		s.addContent(tip(spinnerRow("Include a run type when this % of its patches are due",
+			spinner(config.getDueThresholdPercent(), 1, 100, 5,
+				v -> saveRunQuietly(() -> config.setDueThresholdPercent(v)))),
+			"A run type joins your run once this share of its patches is due. 100: only when all of them are."));
 		return s;
 	}
 
@@ -581,8 +657,9 @@ class FarmPage extends SetupPanel
 	private JComponent extrasSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("Extras to bring");
-		s.addContent(label("Outfit"));
-		s.addContent(combo(enumChoices(Outfit.values()), config.getOutfit(), o -> saveRun(() -> config.setOutfit(o))));
+		// On one line (docs/plans/fresh-eyes-audit.md, F1)
+		s.addContent(labeled("Outfit", combo(enumChoices(Outfit.values()), config.getOutfit(),
+			o -> saveRun(() -> config.setOutfit(o))), labelWidth(Collections.singletonList("Outfit"))));
 		s.addContent(checkBox("Suggest yield boosts", config.isRecommendEquipmentBoosts(), true,
 			"Magic secateurs (+10% herb, allotment and hops yield) as an optional item; worn when nothing else needs "
 				+ "the weapon slot",

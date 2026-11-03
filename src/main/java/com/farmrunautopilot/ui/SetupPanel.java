@@ -10,6 +10,7 @@ import java.awt.Color;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.util.ArrayList;
@@ -238,20 +239,41 @@ abstract class SetupPanel extends JPanel
 	/** A short label and its control on one line, e.g. "1st" and a drop-down. */
 	static JComponent labeled(String text, JComponent control)
 	{
+		return labeled(text, control, LABEL_WIDTH);
+	}
+
+	/**
+	 * A setting on one line, its name on the left in a column this wide and its control filling the rest (docs/BRANDING.md:
+	 * one line where possible), e.g. "Trees" and its crop. The section's rows share one width, from {@link #labelWidth}.
+	 */
+	static JComponent labeled(String text, JComponent control, int labelWidth)
+	{
 		final JPanel row = new JPanel(new BorderLayout(8, 0));
 		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		row.setBorder(new EmptyBorder(1, 0, 1, 0));
 		final JLabel label = new JLabel(text);
 		label.setForeground(Color.WHITE);
 		label.setFont(FontManager.getRunescapeSmallFont());
-		label.setPreferredSize(new Dimension(LABEL_WIDTH, label.getPreferredSize().height));
-		control.setPreferredSize(new Dimension(CONTROL_WIDTH - LABEL_WIDTH - 8, control.getPreferredSize().height));
+		label.setPreferredSize(new Dimension(labelWidth, label.getPreferredSize().height));
+		control.setPreferredSize(new Dimension(CONTROL_WIDTH - labelWidth - 8, control.getPreferredSize().height));
 		control.setMaximumSize(control.getPreferredSize());
 		row.add(label, BorderLayout.WEST);
 		row.add(control, BorderLayout.CENTER);
 		row.setMaximumSize(new Dimension(CONTROL_WIDTH, row.getPreferredSize().height));
 		row.setAlignmentX(LEFT_ALIGNMENT);
 		return row;
+	}
+
+	/** The name column for {@link #labeled(String, JComponent, int)}: as wide as the longest of these names. */
+	static int labelWidth(Iterable<String> names)
+	{
+		final FontMetrics metrics = new JLabel().getFontMetrics(FontManager.getRunescapeSmallFont());
+		int widest = 0;
+		for (String name : names)
+		{
+			widest = Math.max(widest, metrics.stringWidth(name));
+		}
+		return widest;
 	}
 
 	static JCheckBox checkBox(String text, boolean selected, boolean enabled, String tooltip,
@@ -262,7 +284,8 @@ abstract class SetupPanel extends JPanel
 		// HTML text ignores the disabled state, so grey it by hand (before setting the text).
 		box.setForeground(enabled ? ColorScheme.TEXT_COLOR : ColorScheme.MEDIUM_GRAY_COLOR);
 		box.setText(wrap(text, CONTROL_WIDTH - 30));
-		box.setToolTipText(tooltip);
+		// Wrapped to about the sidebar's width (docs/BRANDING.md), unless the caller wrapped it already
+		box.setToolTipText(tooltip == null || tooltip.startsWith("<html>") ? tooltip : UiText.tooltip(tooltip, 250));
 		box.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		box.setFont(FontManager.getRunescapeSmallFont());
 		box.addActionListener(e -> onChange.accept(box.isSelected()));
@@ -382,6 +405,15 @@ abstract class SetupPanel extends JPanel
 		return label;
 	}
 
+	/** A subheader explained on hover, marked with a faint "(?)" as a section's title is. */
+	static JLabel subheader(String text, String help)
+	{
+		final JLabel label = subheader(text);
+		label.setText("<html>" + UiText.escape(text) + Style.HELP_MARK + "</html>");
+		label.setToolTipText(UiText.tooltip(help, 250));
+		return label;
+	}
+
 	static JLabel note(String text)
 	{
 		final JLabel label = new JLabel(wrap(text));
@@ -425,7 +457,7 @@ abstract class SetupPanel extends JPanel
 					c.setBackground(list.getBackground());
 					c.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
 				}
-				setToolTipText(choice.getTooltip());
+				setToolTipText(choice.getTooltip() == null ? null : UiText.tooltip(choice.getTooltip(), 250));
 			}
 			return c;
 		}

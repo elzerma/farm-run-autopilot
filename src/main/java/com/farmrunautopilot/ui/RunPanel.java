@@ -97,6 +97,12 @@ class RunPanel extends JPanel
 	{
 		return type == PatchType.FRUIT_TREE ? "Fruit" : type.getPluralName();
 	}
+
+	/** The Run tab box a run type is ticked with, e.g. "Fruit" or "Specials" (the Farm tab names it too). */
+	static String runTypeBox(PatchType type)
+	{
+		return SPECIALS.contains(type) ? "Specials" : SPECIAL_TREES.contains(type) ? "Sp. trees" : shortName(type);
+	}
 	/** Shown in the preset picker when the settings no longer match any preset. */
 	private static final String EDITED_PRESET = "Custom (changed)";
 
@@ -1078,9 +1084,7 @@ class RunPanel extends JPanel
 		final Map<String, Set<PatchType>> families = new LinkedHashMap<>();
 		for (PatchType type : PatchType.values())
 		{
-			families.computeIfAbsent(SPECIALS.contains(type) ? "Specials"
-				: SPECIAL_TREES.contains(type) ? "Sp. trees" : shortName(type),
-				k -> EnumSet.noneOf(PatchType.class)).add(type);
+			families.computeIfAbsent(runTypeBox(type), k -> EnumSet.noneOf(PatchType.class)).add(type);
 		}
 		for (Map.Entry<String, Set<PatchType>> family : families.entrySet())
 		{

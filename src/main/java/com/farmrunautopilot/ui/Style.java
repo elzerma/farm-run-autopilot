@@ -36,6 +36,8 @@ final class Style
 	private static final Color DANGER = new Color(0x8A, 0x33, 0x33);
 	/** FlatLaf's per-component style property (FlatClientProperties.STYLE). */
 	private static final String STYLE = "FlatLaf.style";
+	/** After a title explained on hover: a faint "(?)", in a label's HTML. */
+	static final String HELP_MARK = " <font color='#6f6f6f'>(?)</font>";
 
 	private Style()
 	{

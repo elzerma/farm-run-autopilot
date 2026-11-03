@@ -123,6 +123,16 @@ Keep to these numbers; if something looks cramped, change it here and in the cod
 - **Section** (`CollapsibleSection`): the same header style with a faint "(?)" when it has an explanation on
   hover. It can lead with a group's tick box (`lead`), as a Farm tab patch type does.
 - **One-line row** (`ExpandableRow`): name left, short value right, full value on hover, controls when opened.
+- **One-line setting** (`SetupPanel.labeled(name, control, width)`): the name on the left in a column as wide as the
+  section's longest name (`SetupPanel.labelWidth`), its drop-down filling the rest, e.g. "Trees [Magic (75)]". Used
+  wherever the values fit beside the name (Farm > Crops, Compost and cures, Protection); a setting
+  whose values are long (a place, "Store them at the tool leprechaun") keeps its name above a full-width drop-down. Run
+  types are named as on the Run tab, plural ("Fruit trees"), but "Hardwood" and "Celastrus" without "trees", so every
+  crop fits beside them.
+- **Short lists** (`SetupPanel.twoPerRow`, `halfCheckBox`): tick boxes two to a row, each row as tall as its own
+  text: patches, herbs, the grown-crop choices.
+- **Subheader** (`SetupPanel.subheader`): a heading inside a section, in the normal font; with an explanation, the
+  same faint "(?)" as a section (`Style.HELP_MARK`) and the explanation on hover.
 - **Buttons** (`Style`): plain (darker grey, lighter on hover), primary (orange, dark text, slim; the main
   action on screen: Build run, Start now, Start test), danger (muted red, white text: Stop).
 - **Drop-downs and number boxes** (`Style.combo`, `Style.spinner`): darker grey, medium grey outline, orange
@@ -143,7 +153,8 @@ Keep to these numbers; if something looks cramped, change it here and in the cod
   with an icon (play, sprout, map pin, person, solid gear), grey; the selected one's icon orange with an orange
   line along its bottom; the tab's name on hover, looking like a tooltip but shown whichever window is active
   (RuneLite shows its tooltips only while its window is the active one).
-- **Tooltips**: wrapped to about the sidebar's width (`UiText.wrap(text, 250)`, route tooltips 190).
+- **Tooltips**: wrapped to about the sidebar's width (`UiText.wrap(text, 250)`, route tooltips 190). The kit wraps
+  tick boxes' and drop-down choices' hovers itself (`SetupPanel.checkBox`, `ChoiceRenderer`), so pass them plain text.
 
 ## 6. Words
 

@@ -96,8 +96,7 @@ class CollapsibleSection extends JPanel
 	private void setExpanded(boolean expanded)
 	{
 		this.expanded = expanded;
-		final String text = UiText.escape(title)
-			+ (help != null ? " <font color='#6f6f6f'>(?)</font>" : "");
+		final String text = UiText.escape(title) + (help != null ? Style.HELP_MARK : "");
 		header.setText(summary == null ? "<html>" + text + "</html>"
 			: "<html>" + text + " <font color='#ffffff'>" + UiText.escape(summary) + "</font></html>");
 		header.setIcon(Card.chevron(expanded, ColorScheme.LIGHT_GRAY_COLOR));
