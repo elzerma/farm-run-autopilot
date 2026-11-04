@@ -68,6 +68,19 @@ public class StepAdvisorTest
 			live(Patch.CATHERBY_FRUIT_TREE, Crop.PAPAYA, PatchState.HARVESTABLE, 3), Crop.PAPAYA, true));
 	}
 
+	/** elzerma's run of 2026-11-03 said "Check the health of the cactus cactus". */
+	@Test
+	public void aCactusIsNamedOnce()
+	{
+		final Patch p = Patch.FARMING_GUILD_CACTUS;
+		final StepAdvisor.PatchGoal replant = new StepAdvisor.PatchGoal(p, Crop.POTATO_CACTUS, "Potato cactus seed",
+			Compost.NONE, false, null, false, false, false, false, false);
+		assertEquals("Check the health of the cactus (replanting: Potato cactus seed)",
+			StepAdvisor.advise(replant, live(p, Crop.CACTUS, PatchState.CHECK_HEALTH, 3)).getText());
+		assertEquals("Dig up the potato cactus with your spade to replant",
+			StepAdvisor.advise(replant, live(p, Crop.POTATO_CACTUS, PatchState.HARVESTABLE, 0)).getText());
+	}
+
 	@Test
 	public void compostAfterPlantingIsStillAskedFor()
 	{

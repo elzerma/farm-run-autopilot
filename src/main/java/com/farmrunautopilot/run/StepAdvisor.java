@@ -335,7 +335,10 @@ public final class StepAdvisor
 	/** A grown crop with what it is: "papaya tree", "redberry bush", but "spirit tree" as it is. */
 	private static String named(PatchType type, String what)
 	{
-		return what.endsWith("tree") ? what : what + " " + grown(type);
+		// "maple tree", "redberry bush", but "cactus" and "potato cactus" as they are (elzerma's run of 2026-11-03 said
+		// "Check the health of the cactus cactus")
+		final String noun = grown(type);
+		return what.endsWith("tree") || what.endsWith(noun) ? what : what + " " + noun;
 	}
 
 	/** What the gardener charges to clear a grown tree, as written in a step: "200", "2,000" for a redwood. */
