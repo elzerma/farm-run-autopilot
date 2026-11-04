@@ -81,11 +81,11 @@ final class HelpWanted
 	static void refresh(JButton button, SettingsStore settings, boolean developer)
 	{
 		final int count = toTry(settings);
-		// Says it's easy (elzerma: no coding or heavy lifting, just run a couple of scenarios)
-		button.setText("<html><body style='width:146px'>Help improve this plugin: try a few quick things in game, "
-			+ "no coding needed. <u>Show me</u></body></html>");
-		button.setToolTipText(count == 0 ? "Every test is done" : count + (count == 1 ? " feature" : " features")
-			+ " I couldn't test, with steps to try them");
+		// Says it's easy (elzerma: no coding or heavy lifting, just run a couple of scenarios), on one line; where it goes
+		// is on hover (docs/plans/fresh-eyes-audit.md, H1)
+		button.setText("<html>Quick tests in game, no coding: <u>Show me</u></html>");
+		button.setToolTipText(count == 0 ? "Every test is done" : "Help improve this plugin: " + count
+			+ (count == 1 ? " feature" : " features") + " I couldn't test, with steps to try them");
 		button.setVisible(count > 0 || developer);
 	}
 
