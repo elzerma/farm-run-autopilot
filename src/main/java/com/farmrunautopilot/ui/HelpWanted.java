@@ -81,11 +81,11 @@ final class HelpWanted
 	static void refresh(JButton button, SettingsStore settings, boolean developer)
 	{
 		final int count = toTry(settings);
-		// Says it's easy (elzerma: no coding or heavy lifting, just run a couple of scenarios)
-		button.setText("<html><body style='width:146px'>Help improve this plugin: try a few quick things in game, "
-			+ "no coding needed. <u>Show me</u></body></html>");
-		button.setToolTipText(count == 0 ? "Every test is done" : count + (count == 1 ? " feature" : " features")
-			+ " I couldn't test, with steps to try them");
+		// Says it's easy (elzerma: no coding or heavy lifting, just run a couple of scenarios), on one line; where it goes
+		// is on hover (docs/plans/fresh-eyes-audit.md, H1)
+		button.setText("<html>Quick tests in game, no coding: <u>Show me</u></html>");
+		button.setToolTipText(count == 0 ? "Every test is done" : "Help improve this plugin: " + count
+			+ (count == 1 ? " feature" : " features") + " I couldn't test, with steps to try them");
 		button.setVisible(count > 0 || developer);
 	}
 
@@ -200,10 +200,12 @@ final class HelpWanted
 	private static JComponent testRow(TestItem item, TestRunner runner, Runnable showRun, String startLabel)
 	{
 		final List<String> missing = runner.missing(item);
-		final ExpandableRow row = new ExpandableRow(item.getTitle(),
+		// The steps are read by opening the row, so the hover only says what's still needed
+		// (docs/plans/fresh-eyes-audit.md, X13)
+		final ExpandableRow row = new ExpandableRow(null, item.getTitle(),
 			// Short on the line (elzerma: the whole need wrapped into a tall column); what's needed is inside
 			missing.isEmpty() ? "Ready" : "Not yet",
-			item.getHowToTry() + (missing.isEmpty() ? "" : " Needs: " + String.join("; ", missing) + "."),
+			missing.isEmpty() ? null : "Needs: " + String.join("; ", missing) + ".",
 			false, TEXT_WIDTH + 40, OPEN_ROWS.contains(item), open ->
 			{
 				if (open)

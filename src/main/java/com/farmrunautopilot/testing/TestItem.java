@@ -36,17 +36,18 @@ public enum TestItem
 			+ "Farm Run Autopilot section should show only the seeds for the rest of the run."),
 	STAFF_SWAPS(Tab.RUN, "Swapping staves on the way",
 		"With two staves in your bank (e.g. a dramen staff and a lava battlestaff) and a run that casts teleports from "
-			+ "runes, press Build run: when a second staff saves an inventory slot, the list has one staff to wield at the "
-			+ "bank and another to carry. During the run, before the stop that needs the other staff, the step should say "
+			+ "runes, press Build run: when a second staff saves an inventory slot, the bank's Farm run tab lists both "
+			+ "staves. During the run, before the stop that needs the other staff, the step should say "
 			+ "\"Wield your ...\" with that staff outlined in blue, and move on once it's wielded."),
-	ALLOTMENT_PAYMENT(Tab.RUN, "Paying for one allotment",
-		"At the farm south of Falador, with potato seeds and 4 buckets of compost, set Farm > Protection > Allotment "
-			+ "patches to Pay gardener and run just that farm's allotments. After planting each allotment the step should "
+	// On the Farm tab's list with the flowers, both set in Farm > Protection (docs/plans/fresh-eyes-audit.md, H2)
+	ALLOTMENT_PAYMENT(Tab.FARM, "Paying for one allotment",
+		"At the farm south of Falador, with potato seeds and 4 buckets of compost, set Farm > Protection > Allotments "
+			+ "to Pay gardener and run just that farm's allotments. After planting each allotment the step should "
 			+ "say \"Pay Elstan for the north-west allotment: 2 x Compost\" (then the south-east one), and move on once "
 			+ "you've paid for it."),
 	ALLOTMENT_FLOWER_PROTECTION(Tab.FARM, "Flowers protecting allotments",
-		"At the farm south of Falador, with a marigold seed and potato seeds, leave Farm > Protection > Allotment "
-			+ "patches on Flower and run just that farm's allotments. The steps should start at the flower patch with "
+		"At the farm south of Falador, with a marigold seed and potato seeds, leave Farm > Protection > Allotments "
+			+ "on Flower and run just that farm's allotments. The steps should start at the flower patch with "
 			+ "the marigold, never ask you to pay Elstan, and leave the grown marigold alone on your next run."),
 	FORTIS_CHAMPION(Tab.FARM, "Civitas herbs and the Colosseum",
 		"With \"Champion rank at the Fortis Colosseum\" ticked in Account > Unlocks, the Civitas herb patch "
@@ -74,8 +75,8 @@ public enum TestItem
 			+ "Farming Guild). It should tick itself once the grown tree is in view.", 2),
 	HOUSE_SCAN(Tab.ACCOUNT, "House scanning (beta)",
 		"Tick \"Detect furniture when I enter my house\" in Account > My house, then enter your house: your "
-			+ "jewellery box, pool, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned), and My house should say when it was last "
-			+ "scanned, even if your house has none of them. "
+			+ "jewellery box, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned), and My house "
+			+ "should say when it was last scanned, even if your house has none of them. "
 			+ "Then visit someone else's house: nothing of yours should change.", 4),
 	SEAWEED_DIVE(Tab.TRAVEL, "Diving to the seaweed patches",
 		"With Bone Voyage done, build a run with only the Fossil Island seaweed patches and follow the guide: the "

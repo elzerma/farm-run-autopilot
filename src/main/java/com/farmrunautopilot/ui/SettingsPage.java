@@ -26,6 +26,7 @@ import com.farmrunautopilot.tracking.PatchTracker;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -54,6 +56,8 @@ class SettingsPage extends SetupPanel
 	/** Section titles, also how other tabs open them. */
 	static final String DEBUG = "Debug";
 	static final String TESTING = "Help improve this plugin";
+	/** A highlight colour's swatch, at the right of its tick box's row. */
+	private static final int SWATCH_WIDTH = 40;
 
 	private final PatchDebugPanel patchDebugPanel;
 	/** The Detected lines, refilled without rebuilding the page. */
@@ -79,7 +83,7 @@ class SettingsPage extends SetupPanel
 		super(settings, accessChecker, changed);
 		this.guidance = guidance;
 		this.presets = presets;
-		this.patchDebugPanel = new PatchDebugPanel(patchTracker);
+		this.patchDebugPanel = new PatchDebugPanel(patchTracker, settings);
 		detected.setLayout(new BoxLayout(detected, BoxLayout.Y_AXIS));
 		detected.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		rebuild();
@@ -171,7 +175,8 @@ class SettingsPage extends SetupPanel
 		else
 		{
 			addDetected("Spellbook", access.getSpellbook() != null ? title(access.getSpellbook().name()) : "Unknown",
-				"Read from the game; teleports on another spellbook are used as tablets");
+				"Read from the game. Teleports on another spellbook use tablets, or are cast after a switch with Travel > "
+					+ "Switch spellbook to cast on.");
 
 			final boolean rings = access.getUnlocks().contains(Unlock.FAIRY_RINGS);
 			final boolean elite = access.isMet(Requirement.diary(AchievementDiary.LUMBRIDGE_DRAYNOR,
@@ -259,12 +264,15 @@ class SettingsPage extends SetupPanel
 		final JPanel row = new JPanel(new BorderLayout(6, 0));
 		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		row.setBorder(new EmptyBorder(1, 0, 1, 0));
-		// Both columns wrap: the value column is CONTROL_WIDTH - 90 wide, so the name gets the rest
-		final JLabel name = new JLabel(wrap(what, 80));
+		// The value is as wide as its text, up to half the row, and the name gets the rest, so long names wrap less
+		// (docs/plans/fresh-eyes-audit.md, S6)
+		final FontMetrics metrics = new JLabel().getFontMetrics(FontManager.getRunescapeSmallFont());
+		final int valueWidth = Math.min(metrics.stringWidth(value), CONTROL_WIDTH / 2);
+		final JLabel name = new JLabel(wrap(what, CONTROL_WIDTH - valueWidth - 12));
 		name.setVerticalAlignment(JLabel.TOP);
 		name.setForeground(Color.WHITE);
 		name.setFont(FontManager.getRunescapeSmallFont());
-		final JLabel shown = new JLabel(wrap(value, CONTROL_WIDTH - 90));
+		final JLabel shown = new JLabel(metrics.stringWidth(value) <= valueWidth ? value : wrap(value, valueWidth));
 		shown.setVerticalAlignment(JLabel.TOP);
 		shown.setForeground(ColorScheme.TEXT_COLOR);
 		shown.setFont(FontManager.getRunescapeSmallFont());
@@ -318,9 +326,8 @@ class SettingsPage extends SetupPanel
 	 */
 	private JComponent debugSection(RunConfig config)
 	{
+		// No section hover: its headings say what's in it (docs/plans/fresh-eyes-audit.md, X11)
 		final CollapsibleSection s = section(DEBUG);
-		s.help("What the plugin worked out by itself, and tools for checking it. Hover a line to see how it was "
-			+ "worked out.");
 		s.addContent(subheader("Detected"));
 		s.addContent(detected);
 		refreshDetected();
@@ -351,17 +358,16 @@ class SettingsPage extends SetupPanel
 	{
 		final CollapsibleSection s = section(TESTING);
 		// Said here, where people come to read it (elzerma): what everything in this section has in common, then each
-		// part under its own heading with its own explanation
-		s.addContent(note("Everything here ends the same way: a GitHub issue opens in your browser with the details "
-			+ "filled in. You read it, and nothing is sent unless you submit it (a free GitHub account is needed). It "
-			+ "never includes your name or account."));
+		// part with its own explanation, the guided tests under their heading; shorter, same facts, and the report named
+		// once, by its button (docs/plans/fresh-eyes-audit.md, S3 and X12)
+		s.addContent(note("Each opens a GitHub issue in your browser with the details filled in. Nothing is sent until "
+			+ "you submit it (a free GitHub account is needed), and it never has your name or account in it."));
 
 		// Reporting a problem (issue #17): the Bug form with the plan filled in. Run times aren't shared: they're the
 		// player's own, for the estimate and their personal best (elzerma, 2026-10-17)
 		s.addContent(divider());
-		s.addContent(subheader("Report a problem"));
-		s.addContent(note("Something wrong with a run? The report includes your current plan: the stops, how you "
-			+ "travel, and what you need and carry. You describe what happened."));
+		s.addContent(note("Something wrong with a run? The report has your current plan (stops, travel, supplies); you "
+			+ "add what happened."));
 		final JButton report = smallButton("Report a problem");
 		report.setToolTipText(UiText.tooltip("Opens GitHub's bug form with the plugin version and your current plan "
 			+ "filled in. No bank counts, levels or location. Nothing is sent unless you submit it.", 250));
@@ -376,10 +382,9 @@ class SettingsPage extends SetupPanel
 			s.addContent(note(testRunner.asDeveloper()
 				? "Start a test: the Run tab walks you through it and your settings are put back afterwards. The "
 					+ "result is copied to your clipboard to paste to Claude."
-				: "Features I couldn't try myself. Each test walks you through it on the Run tab: it sets what it needs "
-					+ "(your settings come back after), says what to bring, and asks Yes or No as you go. If you don't "
-					+ "have what a test needs, it says so and stops, and nothing is reported. A few minutes each, no "
-					+ "coding."));
+				: "Features I couldn't try myself, a few minutes each. The Run tab walks you through: it sets what it "
+					+ "needs (your settings come back after), says what to bring and asks Yes or No. If you're missing "
+					+ "something, it stops and nothing is reported."));
 			if (testRunner.isDeveloperMode())
 			{
 				// Dev client only: see the help list and the end of a test the way players do
@@ -437,51 +442,59 @@ class SettingsPage extends SetupPanel
 	private void addGuidance(CollapsibleSection s)
 	{
 		final FarmRunAutopilotConfig c = guidance.get();
-		s.addContent(checkBox("Highlight the patch", c.highlightPatch(), true,
-			"Outline the patch the current step is about", on -> guidance.set("highlightPatch", on)));
+		// Each colour on the row of the highlight it colours (docs/plans/fresh-eyes-audit.md, S1)
+		s.addContent(withColour("Highlight the patch", c.highlightPatch(),
+			"Outline the patch the current step is about", "highlightPatch",
+			"Patch colour", c.patchColour(), "patchColour", "Patch colour: the patch, its tile and the compost bin"));
 		s.addContent(checkBox("Hint arrow to the patch", c.hintArrow(), true,
 			"The game's hint arrow over the patch, also shown on the minimap", on -> guidance.set("hintArrow", on)));
-		s.addContent(checkBox("Highlight NPCs", c.highlightGardener(), true,
+		s.addContent(withColour("Highlight NPCs", c.highlightGardener(),
 			"Outline the gardener when paying them, the tool leprechaun when he's needed, and the NPC or object to use on "
-				+ "the way (Renu, a quetzal, a boat, a portal)",
-			on -> guidance.set("highlightGardener", on)));
-		s.addContent(checkBox("Highlight items to use", c.highlightItems(), true,
+				+ "the way (Renu, a quetzal, a boat, a portal)", "highlightGardener",
+			"NPC colour", c.npcColour(), "npcColour", "NPC colour: gardeners, the tool leprechaun and what to use on the way"));
+		s.addContent(withColour("Highlight items to use", c.highlightItems(),
 			"Outline the seed, compost, tool or teleport to use next in your inventory and equipment, and the teleport's "
-				+ "option to pick in its right-click menu or list of places", on -> guidance.set("highlightItems", on)));
+				+ "option to pick in its right-click menu or list of places", "highlightItems",
+			"Item colour", c.itemColour(), "itemColour", "Item colour: items, spells, menu options and places on a travel map"));
 		s.addContent(checkBox("Highlight the spell or place to pick", c.highlightSpell(), true,
 			"Outline the teleport (or Cure Plant) to cast next in your spellbook, and where to go on Renu's, the quetzal "
-				+ "whistle's or a hot air balloon's map", on -> guidance.set("highlightSpell", on)));
+				+ "whistle's or a hot air balloon's map. In the item colour.", on -> guidance.set("highlightSpell", on)));
+		// The other highlights' hovers say what's outlined (docs/plans/fresh-eyes-audit.md, X10)
 		s.addContent(checkBox("Growing vine highlights", c.vineHighlights(), true,
-			"A vine that grows, flowers and wilts round the spell to cast or item to use (and round its tab's icon while "
-				+ "you're on another tab), the place to pick on a travel map, the bank's Farm run button and its Deposit "
-				+ "inventory button. Untick for a plain outline.", on -> guidance.set("vineHighlights", on)));
+			"A growing vine instead of a plain outline round the next thing to click.",
+			on -> guidance.set("vineHighlights", on)));
 		s.addContent(checkBox("Walking lines (Shortest Path)", c.shortestPathLines(), true,
 			"If the Shortest Path plugin is installed, it draws the walk for each \"walk to\" step: walking only, no "
 				+ "teleports. Your own Shortest Path settings come back when the step changes.",
 			on -> guidance.set("shortestPathLines", on)));
-		s.addContent(colourRow("Patch colour", c.patchColour(), "patchColour"));
-		s.addContent(colourRow("NPC colour", c.npcColour(), "npcColour"));
-		s.addContent(colourRow("Item colour", c.itemColour(), "itemColour"));
 	}
 
-	/** A label with a colour swatch that opens RuneLite's colour picker. */
-	private JComponent colourRow(String text, Color colour, String key)
+	/**
+	 * A highlight's tick box with its colour's swatch at the right of the row, which opens RuneLite's colour picker.
+	 *
+	 * @param key the highlight's config item; {@code colourKey} its colour's
+	 */
+	private JComponent withColour(String text, boolean on, String tooltip, String key, String colourName, Color colour,
+		String colourKey, String colourTooltip)
 	{
 		final JPanel row = new JPanel(new BorderLayout(6, 0));
 		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		row.setBorder(new EmptyBorder(1, 0, 1, 0));
-		final JLabel label = new JLabel(text);
-		label.setForeground(Color.WHITE);
-		label.setFont(FontManager.getRunescapeSmallFont());
+		final JCheckBox box = checkBox(text, on, true, tooltip, ticked -> guidance.set(key, ticked));
+		// Wrapped short of the swatch
+		box.setText(wrap(text, CONTROL_WIDTH - 30 - SWATCH_WIDTH - 6));
 		final JButton swatch = new JButton();
 		swatch.setFocusPainted(false);
 		swatch.setBackground(colour);
-		swatch.setPreferredSize(new Dimension(40, 20));
-		swatch.setToolTipText("Change the " + text.toLowerCase());
-		swatch.addActionListener(e -> guidance.pickColour(this, text, swatch.getBackground(), key,
+		swatch.setPreferredSize(new Dimension(SWATCH_WIDTH, 20));
+		swatch.setToolTipText(UiText.tooltip(colourTooltip, 250));
+		swatch.addActionListener(e -> guidance.pickColour(this, colourName, swatch.getBackground(), colourKey,
 			swatch::setBackground));
-		row.add(label, BorderLayout.CENTER);
-		row.add(swatch, BorderLayout.EAST);
+		final JPanel right = new JPanel(new BorderLayout());
+		right.setOpaque(false);
+		right.add(swatch, BorderLayout.CENTER);
+		right.setBorder(new EmptyBorder(1, 0, 1, 0));
+		row.add(box, BorderLayout.CENTER);
+		row.add(right, BorderLayout.EAST);
 		row.setMaximumSize(new Dimension(CONTROL_WIDTH, row.getPreferredSize().height));
 		row.setAlignmentX(LEFT_ALIGNMENT);
 		return row;

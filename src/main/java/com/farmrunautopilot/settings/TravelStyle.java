@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * How each stop's way is chosen when ways are close (Travel > Ways to travel > Travel style). "Fewest items to bring"
+ * How each stop's way is chosen when ways are close (Travel > Route > Travel style). "Fewest items to bring"
  * went in T4 (elzerma, 2026-10-23), as Fastest weighs a slot against the bank visit it saves; a save naming it loads as
  * null, which {@link RunConfig#sanitise()} makes Fastest.
  */

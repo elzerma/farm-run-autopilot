@@ -6,7 +6,6 @@ import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.poh.JewelleryBoxTier;
 import com.farmrunautopilot.data.poh.PohAltar;
-import com.farmrunautopilot.data.poh.PoolTier;
 import com.farmrunautopilot.data.poh.PortalNexus;
 import com.farmrunautopilot.settings.AccountSettings;
 import com.farmrunautopilot.settings.PohSetup;
@@ -16,6 +15,7 @@ import com.farmrunautopilot.settings.VaultBanking;
 import java.awt.Rectangle;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -23,7 +23,6 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
-import net.runelite.client.util.LinkBrowser;
 
 /**
  * The Account tab: what you have that the plugin can't read by itself (elzerma: Account is what you have): your
@@ -71,31 +70,31 @@ class AccountPage extends SetupPanel
 		final PohSetup poh = account.getPoh();
 		final CollapsibleSection s = section("My house");
 		s.addContent(checkBox("Detect furniture when I enter my house (beta)", account.isAutoDetectHouse(), true,
-			"Fills in the jewellery box, pool, altar, fairy ring and spirit tree below from your house. Beta: it skips "
-				+ "other players' houses by how you got in, which can't be fully checked yet; if it gets your house wrong, "
-				+ "please report it.",
+			"Fills in the jewellery box, altar, fairy ring and spirit tree below when you enter your house. Beta: it tells "
+				+ "your house from someone else's by how you got in, which can't be fully checked yet. If it gets yours "
+				+ "wrong, use Report a problem in Settings > Help improve this plugin.",
 			on -> saveAccount(() -> account.setAutoDetectHouse(on), false)));
 		if (account.isAutoDetectHouse())
 		{
-			final JButton report = smallButton("Report a problem");
-			report.setToolTipText("Opens the plugin's GitHub issues page");
-			report.addActionListener(e -> LinkBrowser.browse(HelpWanted.ISSUES_URL));
-			s.addContent(report);
-			s.addContent(note(poh.getLastDetected() > 0
-				? "Last scanned " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
-				.format(new Date(poh.getLastDetected() * 1000))
-				: "Enter your house to scan it"));
-			final JButton rescan = smallButton("Rescan house");
-			rescan.setToolTipText("<html>Detection only adds furniture. If you removed or downgraded something, "
-				+ "rescan:<br>this clears the detected furniture and your next house visit fills it in again.<br>"
-				+ "The nexus destinations are kept.</html>");
-			rescan.addActionListener(e ->
+			// When it last scanned and a Rescan link on one line; the plugin's one Report a problem button is in Settings
+			// (docs/plans/fresh-eyes-audit.md, A3)
+			if (poh.getLastDetected() > 0)
 			{
-				PohDetector.clearDetected(poh);
-				settings.saveAccount(true);
-				accessChecker.requestRefresh();
-			});
-			s.addContent(rescan);
+				s.addContent(lineWithLink("Last scanned " + DateFormat.getDateTimeInstance(DateFormat.SHORT,
+					DateFormat.SHORT).format(new Date(poh.getLastDetected() * 1000)), link("Rescan",
+					"Detection only adds furniture. If you removed or downgraded something, rescan: this clears the "
+						+ "detected furniture and your next house visit fills it in again. The nexus destinations are kept.",
+					() ->
+					{
+						PohDetector.clearDetected(poh);
+						settings.saveAccount(true);
+						accessChecker.requestRefresh();
+					})));
+			}
+			else
+			{
+				s.addContent(note("Enter your house to scan it"));
+			}
 		}
 		s.help("Where your house is comes from the game (Settings > Debug > Detected). Set the nexus destinations by "
 			+ "hand.");
@@ -109,14 +108,8 @@ class AccountPage extends SetupPanel
 		s.addContent(label("Jewellery box"));
 		s.addContent(combo(boxes, poh.getJewelleryBox(), b -> saveAccount(() -> poh.setJewelleryBox(b), false)));
 
-		final List<Choice<PoolTier>> pools = new ArrayList<>();
-		pools.add(Choice.of(null, "None"));
-		for (PoolTier tier : PoolTier.values())
-		{
-			pools.add(Choice.of(tier, title(tier.name()) + (tier.isRestoresRunEnergy() ? "" : " (no run energy)")));
-		}
-		s.addContent(label("Pool"));
-		s.addContent(combo(pools, poh.getPool(), p -> saveAccount(() -> poh.setPool(p), false)));
+		// No pool: nothing plans with it (docs/plans/fresh-eyes-audit.md, A2). The scan still fills in its saved value, so
+		// it can come back when something does
 
 		final List<Choice<PohAltar>> altars = new ArrayList<>();
 		altars.add(Choice.of(null, "None"));
@@ -126,16 +119,19 @@ class AccountPage extends SetupPanel
 		}
 		s.addContent(label("Spellbook altar"));
 		s.addContent(combo(altars, poh.getAltar(), a -> saveAccount(() -> poh.setAltar(a), true)));
-		s.addContent(checkBox("Fairy ring", poh.isFairyRing(), true, null,
-			on -> saveAccount(() -> poh.setFairyRing(on), false)));
-		s.addContent(checkBox("Spirit tree", poh.isSpiritTree(), true, null,
-			on -> saveAccount(() -> poh.setSpiritTree(on), false)));
+		// Two to a row, as the Farm tab's patches (docs/plans/fresh-eyes-audit.md, A1)
+		s.addContent(twoPerRow(Arrays.asList(
+			halfCheckBox("Fairy ring", poh.isFairyRing(), true, null,
+				on -> saveAccount(() -> poh.setFairyRing(on), false)),
+			halfCheckBox("Spirit tree", poh.isSpiritTree(), true, null,
+				on -> saveAccount(() -> poh.setSpiritTree(on), false)))));
 
 		s.addContent(subheader("Portal nexus destinations"));
+		final List<JComponent> destinations = new ArrayList<>();
 		for (PortalNexus.Destination destination : PortalNexus.Destination.values())
 		{
-			s.addContent(checkBox(destination.getDisplayName(), poh.getNexusDestinations().contains(destination), true, null,
-				on -> saveAccount(() ->
+			destinations.add(halfCheckBox(destination.getDisplayName(), poh.getNexusDestinations().contains(destination),
+				true, null, on -> saveAccount(() ->
 				{
 					if (on)
 					{
@@ -147,6 +143,7 @@ class AccountPage extends SetupPanel
 					}
 				}, false)));
 		}
+		s.addContent(twoPerRow(destinations));
 		return s;
 	}
 
@@ -204,9 +201,11 @@ class AccountPage extends SetupPanel
 	{
 		final CollapsibleSection s = section("Storage sources");
 		s.help("Bank, inventory, equipment and the tool leprechaun are always counted.");
-		s.addContent(checkBox("Group storage (GIM)", config.isUseGroupStorage(), true, null,
+		s.addContent(checkBox("Group storage (GIM)", config.isUseGroupStorage(), true,
+			"Counts what's in your group's shared storage, once you've opened it.",
 			on -> saveRun(() -> config.setUseGroupStorage(on))));
-		s.addContent(checkBox("Seed vault", config.isUseSeedVault(), true, null,
+		s.addContent(checkBox("Seed vault", config.isUseSeedVault(), true,
+			"Counts what's in the Farming Guild's seed vault, once you've opened it.",
 			on -> saveRun(() -> config.setUseSeedVault(on))));
 		if (config.isUseSeedVault())
 		{

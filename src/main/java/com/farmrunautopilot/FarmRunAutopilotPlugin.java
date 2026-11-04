@@ -94,8 +94,8 @@ import net.runelite.client.util.ImageUtil;
 @PluginDescriptor(
 	name = "Farm Run Autopilot",
 	internalName = "farm-run-autopilot",
-	description = "Plans and guides combined tree, fruit tree and herb farming runs",
-	tags = {"farming", "farm", "run", "herb", "tree", "fruit", "route", "planner"}
+	description = "Plans and guides your farm runs: every patch type, the route, what to bring and each step",
+	tags = {"farming", "farm", "run", "herb", "tree", "fruit", "allotment", "route", "planner", "guide"}
 )
 public class FarmRunAutopilotPlugin extends Plugin
 {

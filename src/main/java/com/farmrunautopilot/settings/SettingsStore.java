@@ -36,7 +36,7 @@ public class SettingsStore
 	private static final String TEST_BACKUP_RUN = "test.backup.runConfig";
 	private static final String TEST_BACKUP_ACCOUNT = "test.backup.account";
 	/** Open the first time: the ones changed most often. */
-	private static final List<String> DEFAULT_OPEN_SECTIONS = Arrays.asList("Crops", "Ways to travel", "Detected");
+	private static final List<String> DEFAULT_OPEN_SECTIONS = Arrays.asList("Crops", "Ways to travel");
 
 	private final ConfigManager configManager;
 	private final Gson gson;

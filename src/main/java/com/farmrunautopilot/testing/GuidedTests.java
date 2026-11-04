@@ -297,8 +297,8 @@ final class GuidedTests
 								+ "or leave your rune pouch in the bank)");
 						}
 					}),
-				ask("Does the Run tab's list have one staff to wield at the bank and another to carry, \"wield it when "
-					+ "the guide says\"?"),
+				// The supply list is on the bank's Farm run tab (docs/plans/fresh-eyes-audit.md, H4)
+				ask("Does the bank's Farm run tab list both staves?"),
 				startRun(),
 				doThis("Follow the guide until it says to wield a staff",
 					ctx -> instruction(ctx).startsWith("Wield your"))
@@ -357,7 +357,8 @@ final class GuidedTests
 		public List<Step> steps()
 		{
 			return Arrays.asList(
-				ask("Does the Run tab's list have a Marigold seed \"protects allotments\", and no compost for paying Elstan?")
+				ask("Does the bank's Farm run tab list a marigold seed (its Details say \"protects allotments\"), and no "
+					+ "compost for paying Elstan?")
 					.onStart(ctx -> ctx.capture("Supply list", supplyNames(ctx))),
 				startRun(),
 				doThis("Go to the farm south of Falador: the first patch step should be the flower patch",
@@ -1244,8 +1245,8 @@ final class GuidedTests
 						ctx.remember("scans", ctx.houseScans());
 						ctx.capture("My house before (cleared)", ctx.houseSummary());
 					}),
-				ask("Look at Account > My house. Do the jewellery box, pool, altar, fairy ring and spirit tree match your "
-					+ "house, all empty if it has none of them? (The portal nexus isn't scanned: it stays as you set it.)")
+				ask("Look at Account > My house. Do the jewellery box, altar, fairy ring and spirit tree match your house, "
+					+ "all empty if it has none of them? (The portal nexus isn't scanned: it stays as you set it.)")
 					.onAnswer((ctx, yes) ->
 					{
 						ctx.capture("My house after", ctx.houseSummary());

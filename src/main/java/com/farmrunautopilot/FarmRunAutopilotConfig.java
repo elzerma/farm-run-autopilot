@@ -8,7 +8,8 @@ import net.runelite.client.config.ConfigItem;
 
 /**
  * Global settings. The run guidance highlights and colours (SPEC 13.4) are hidden here and edited in the sidebar's
- * Account tab with everything else; the only visible item opens the sidebar.
+ * Settings > Display with everything else, so each is in one place; the only visible item opens the sidebar. The hidden
+ * items' names and descriptions are the sidebar's (docs/plans/fresh-eyes-audit.md, C3).
  */
 @ConfigGroup(FarmRunAutopilotConfig.GROUP)
 public interface FarmRunAutopilotConfig extends Config
@@ -20,7 +21,8 @@ public interface FarmRunAutopilotConfig extends Config
 	@ConfigItem(
 		keyName = OPEN_SIDEBAR_KEY,
 		name = "Click to open the sidebar",
-		description = "All Farm Run Autopilot settings are in its sidebar panel. Each click here opens it.",
+		description = "Every setting is in the Farm Run Autopilot panel. Click here, or its icon in RuneLite's sidebar, to "
+			+ "open it.",
 		position = 0
 	)
 	default boolean openSidebar()
@@ -43,7 +45,7 @@ public interface FarmRunAutopilotConfig extends Config
 	@ConfigItem(
 		keyName = "hintArrow",
 		name = "Hint arrow to the patch",
-		description = "Point the game's hint arrow (also on the minimap) at the patch",
+		description = "The game's hint arrow over the patch, also shown on the minimap",
 		hidden = true,
 		position = 2
 	)
@@ -55,7 +57,8 @@ public interface FarmRunAutopilotConfig extends Config
 	@ConfigItem(
 		keyName = "highlightGardener",
 		name = "Highlight NPCs",
-		description = "Outline the gardener when paying them, and the quetzal after the Civitas teleport",
+		description = "Outline the gardener when paying them, the tool leprechaun when he's needed, and the NPC or object to "
+			+ "use on the way (Renu, a quetzal, a boat, a portal)",
 		hidden = true,
 		position = 3
 	)
@@ -80,7 +83,8 @@ public interface FarmRunAutopilotConfig extends Config
 	@ConfigItem(
 		keyName = "highlightSpell",
 		name = "Highlight the spell or place to pick",
-		description = "Outline the teleport (or Cure Plant) to cast next in your spellbook, and where to go on a travel map",
+		description = "Outline the teleport (or Cure Plant) to cast next in your spellbook, and where to go on Renu's, the "
+			+ "quetzal whistle's or a hot air balloon's map. In the item colour.",
 		hidden = true,
 		position = 5
 	)
@@ -91,10 +95,8 @@ public interface FarmRunAutopilotConfig extends Config
 
 	@ConfigItem(
 		keyName = "vineHighlights",
-		name = "Vine highlights",
-		description = "A growing vine round the spell to cast or item to use (and round its tab's icon while another tab "
-			+ "is open), the place to pick on a travel map, the bank's Farm run button and its Deposit inventory button, "
-			+ "instead of a plain outline",
+		name = "Growing vine highlights",
+		description = "A growing vine instead of a plain outline round the next thing to click.",
 		hidden = true,
 		position = 10
 	)
@@ -106,7 +108,8 @@ public interface FarmRunAutopilotConfig extends Config
 	@ConfigItem(
 		keyName = "shortestPathLines",
 		name = "Walking lines (Shortest Path)",
-		description = "Ask the Shortest Path plugin, if installed, to draw the walk for each \"walk to\" step",
+		description = "If the Shortest Path plugin is installed, it draws the walk for each \"walk to\" step: walking only, no "
+			+ "teleports. Your own Shortest Path settings come back when the step changes.",
 		hidden = true,
 		position = 9
 	)
@@ -119,7 +122,7 @@ public interface FarmRunAutopilotConfig extends Config
 	@ConfigItem(
 		keyName = "patchColour",
 		name = "Patch colour",
-		description = "Outline colour for the patch",
+		description = "The patch, its tile and the compost bin",
 		hidden = true,
 		position = 6
 	)
@@ -131,8 +134,8 @@ public interface FarmRunAutopilotConfig extends Config
 	@Alpha
 	@ConfigItem(
 		keyName = "npcColour",
-		name = "Gardener colour",
-		description = "Outline colour for the gardener",
+		name = "NPC colour",
+		description = "Gardeners, the tool leprechaun and what to use on the way",
 		hidden = true,
 		position = 7
 	)
@@ -145,7 +148,7 @@ public interface FarmRunAutopilotConfig extends Config
 	@ConfigItem(
 		keyName = "itemColour",
 		name = "Item colour",
-		description = "Outline colour for items to use",
+		description = "Items, spells, menu options and places on a travel map",
 		hidden = true,
 		position = 8
 	)

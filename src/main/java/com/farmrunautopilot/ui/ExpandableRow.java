@@ -45,7 +45,7 @@ class ExpandableRow extends JPanel
 
 	/**
 	 * @param lead a control before the name (a tick box), which takes its own clicks; or null
-	 * @param tooltip the whole hover text
+	 * @param tooltip the whole hover text, or null for none
 	 */
 	ExpandableRow(JComponent lead, String name, String shortSummary, String tooltip, boolean overridden, int width,
 		boolean expanded, Consumer<Boolean> onToggle)
@@ -77,7 +77,7 @@ class ExpandableRow extends JPanel
 		}
 		headCard.add(this.name, BorderLayout.CENTER);
 		headCard.add(summary, BorderLayout.EAST);
-		headCard.setToolTipText(UiText.tooltip(tooltip, 250));
+		headCard.setToolTipText(tooltip == null ? null : UiText.tooltip(tooltip, 250));
 		headCard.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		headCard.addMouseListener(new MouseAdapter()
 		{

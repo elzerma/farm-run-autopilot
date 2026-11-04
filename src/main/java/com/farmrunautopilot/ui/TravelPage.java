@@ -17,6 +17,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -92,9 +93,9 @@ class TravelPage extends SetupPanel
 	/** What the route may use, family by family, and how it chooses between ways. */
 	private JComponent waysToTravelSection(RunConfig config)
 	{
-		final CollapsibleSection s = section("Ways to travel").help("Every stop's way is the quickest the route can "
-			+ "use. Untick a family, or open one and untick a way you can't or won't use: the route is planned again "
-			+ "without it. Kept for your account, whichever preset is in use.");
+		final CollapsibleSection s = section("Ways to travel").help("Each stop uses the quickest way you allow. Untick a "
+			+ "family, or open one and untick a way you can't or won't use: the route is planned again without it. The "
+			+ "families and ways you untick stay the same whichever preset you use.");
 		for (TravelFamily family : TravelFamily.values())
 		{
 			s.addContent(familyRow(config, family));
@@ -107,17 +108,7 @@ class TravelPage extends SetupPanel
 			"On: a spell from another spellbook can be cast after Spellbook Swap (on Lunar) or a trip to your house "
 				+ "altar, when that's quicker. Off: only spells on the spellbook you're on are cast",
 			on -> saveRun(() -> config.setSwitchSpellbooks(on))));
-		final List<Choice<TravelStyle>> styles = new ArrayList<>();
-		for (TravelStyle style : TravelStyle.values())
-		{
-			styles.add(new Choice<>(style, style.getDisplayName(), true, style.getDescription()));
-		}
-		s.addContent(label("Travel style"));
-		s.addContent(combo(styles, config.getTravelStyle(), st -> saveRun(() -> config.setTravelStyle(st))));
-		s.addContent(checkBox("Walk when it's nearly as quick as teleporting", config.isPreferWalking(), true,
-			"A walk up to about 20 seconds slower is used instead of a teleport, saving charges and clicks "
-				+ "(e.g. one Falador Teleport for Falador Park and Taverley)",
-			on -> saveRun(() -> config.setPreferWalking(on))));
+		// Travel style and walking choose between the ways, so they're under Route (docs/plans/fresh-eyes-audit.md, T2)
 		return s;
 	}
 
@@ -129,8 +120,8 @@ class TravelPage extends SetupPanel
 			// Nothing to open: the house is set up on the Account tab, shortcuts go by Agility level
 			final JCheckBox tick = leadBox(config.isOn(family), family.getDescription(),
 				on -> saveRun(() -> config.setOn(family, on)));
-			return plainRow(tick, family.getDisplayName(), family == TravelFamily.HOUSE ? "set in Account > My house"
-				: "by your level", family.getDescription());
+			return plainRow(tick, family.getDisplayName(), family == TravelFamily.HOUSE ? houseValue() : "by your level",
+				family.getDescription());
 		}
 		final TravelWays.Family listed = ways.get(family);
 		final JCheckBox tick = familyBox(config, family, listed);
@@ -181,6 +172,24 @@ class TravelPage extends SetupPanel
 			row.addContent(wayRow(config, family, listed, way));
 		}
 		return row;
+	}
+
+	/**
+	 * Where your house is, read from the game, on House's row (docs/plans/fresh-eyes-audit.md, T1): "set in Account > My
+	 * house" there cut the name to "H..." at the sidebar's width, and the pointer is in the row's hover.
+	 */
+	private String houseValue()
+	{
+		final AccessSnapshot access = accessChecker.getSnapshot();
+		if (!access.isKnown())
+		{
+			return "";
+		}
+		if (!access.hasHouse())
+		{
+			return "No house";
+		}
+		return access.getHousePortal() != null ? access.getHousePortal().getDisplayName() : "Unknown place";
 	}
 
 	/** Off while the family is turned off, whatever its ways are set to; partly on with a usable way turned off. */
@@ -272,24 +281,40 @@ class TravelPage extends SetupPanel
 	private JComponent routeSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("Route");
-		final String orderHelp = "Autopilot finds the quickest order; Meta follows the wiki's order; Off keeps your "
-			+ "own: drag the stops in the route list on the Run tab.";
-		s.addContent(tip(label("Order"), orderHelp));
-		s.addContent(tip(combo(enumChoices(RouteMode.values()), config.getRouteMode(),
-			m -> saveRun(() -> config.setRouteMode(m))), orderHelp));
+		// Order and Travel style on one line each; Start at keeps its full width, as places' names are long
+		// (docs/plans/fresh-eyes-audit.md, T4)
+		final int width = labelWidth(Arrays.asList("Order", "Travel style"));
+		final String orderHelp = "Fastest: the quickest order from where you are. The wiki's order: the OSRS Wiki's. My "
+			+ "own order: drag the stops in the route list on the Run tab.";
+		final JComponent order = tip(combo(enumChoices(RouteMode.values()), config.getRouteMode(),
+			m -> saveRun(() -> config.setRouteMode(m))), orderHelp);
+		s.addContent(tip(labeled("Order", order, width), orderHelp));
 		final List<Choice<Location>> starts = new ArrayList<>();
 		starts.add(Choice.of(null, "Anywhere (quickest)"));
 		for (Location location : Location.values())
 		{
 			starts.add(Choice.of(location, location.getDisplayName()));
 		}
-		final String startHelp = "Where the run starts. Anywhere lets the plugin choose; if you're standing at or near "
-			+ "one of the run's stops, the run starts there either way.";
+		final String startHelp = "Anywhere lets the plugin choose; if you're standing at or near one of the run's stops, "
+			+ "the run starts there either way.";
 		s.addContent(tip(label("Start at"), startHelp));
 		s.addContent(tip(combo(starts, config.getStartLocation(), l -> saveRun(() -> config.setStartLocation(l))),
 			startHelp));
-		s.addContent(checkBox("Finish near a bank", config.isEndNearBank(), true, null,
+		s.addContent(checkBox("Finish near a bank", config.isEndNearBank(), true,
+			"Counts the trip from the last stop to a bank when choosing the order, so the run ends near one.",
 			on -> saveRun(() -> config.setEndNearBank(on))));
+		// How the route chooses between ways, from Ways to travel (docs/plans/fresh-eyes-audit.md, T2)
+		final List<Choice<TravelStyle>> styles = new ArrayList<>();
+		for (TravelStyle style : TravelStyle.values())
+		{
+			styles.add(new Choice<>(style, style.getDisplayName(), true, style.getDescription()));
+		}
+		s.addContent(labeled("Travel style", combo(styles, config.getTravelStyle(),
+			st -> saveRun(() -> config.setTravelStyle(st))), width));
+		s.addContent(checkBox("Walk when nearly as quick", config.isPreferWalking(), true,
+			"A walk up to about 20 seconds slower is used instead of a teleport, saving charges and clicks "
+				+ "(e.g. one Falador Teleport for Falador Park and Taverley)",
+			on -> saveRun(() -> config.setPreferWalking(on))));
 		return s;
 	}
 }

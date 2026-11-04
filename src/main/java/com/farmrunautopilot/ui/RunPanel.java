@@ -97,6 +97,12 @@ class RunPanel extends JPanel
 	{
 		return type == PatchType.FRUIT_TREE ? "Fruit" : type.getPluralName();
 	}
+
+	/** The Run tab box a run type is ticked with, e.g. "Fruit" or "Specials" (the Farm tab names it too). */
+	static String runTypeBox(PatchType type)
+	{
+		return SPECIALS.contains(type) ? "Specials" : SPECIAL_TREES.contains(type) ? "Sp. trees" : shortName(type);
+	}
 	/** Shown in the preset picker when the settings no longer match any preset. */
 	private static final String EDITED_PRESET = "Custom (changed)";
 
@@ -243,7 +249,13 @@ class RunPanel extends JPanel
 		{
 			add(presets);
 		}
-		add(runTypeToggles());
+		// A run armed or under way follows the plan it was armed with, so ticking a run type does nothing until it ends:
+		// hidden then, as the preset picker is (docs/plans/fresh-eyes-audit.md, R1)
+		final RunView.State state = controls.view().getState();
+		if (state != RunView.State.ARMED && state != RunView.State.RUNNING)
+		{
+			add(runTypeToggles());
+		}
 
 		if (!loggedIn)
 		{
@@ -425,8 +437,9 @@ class RunPanel extends JPanel
 			return;
 		}
 		// Which ones, and how they get ticked, is in Account > Unlocks: only the count here (said once, elzerma)
-		final JLabel label = tipped(note("Check your unlocks: " + review.size() + " not seen yet"),
-			"Click to open Account > Unlocks");
+		final JLabel label = tipped(note("Check " + review.size() + (review.size() == 1 ? " unlock" : " unlocks")
+			+ " in Account"), "Your run may need these, and the plugin can't read them from the game. Click to open "
+			+ "Account > Unlocks.");
 		label.setForeground(ColorScheme.BRAND_ORANGE);
 		label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		label.addMouseListener(new MouseAdapter()
@@ -523,7 +536,7 @@ class RunPanel extends JPanel
 		final JButton build = Style.primary(new JButton("Build run"));
 		build.setEnabled(!plan.getRoute().getStops().isEmpty());
 		build.setFocusPainted(false);
-		build.setToolTipText("Show the farm run bank tab and gather supplies. The run starts itself once you have them.");
+		build.setToolTipText("Shows what to take on the bank's Farm run tab. The run starts by itself once you have it all.");
 		build.addActionListener(e -> controls.build());
 		build.setAlignmentX(LEFT_ALIGNMENT);
 		build.setMaximumSize(new Dimension(Integer.MAX_VALUE, build.getPreferredSize().height));
@@ -657,9 +670,10 @@ class RunPanel extends JPanel
 
 	/**
 	 * A shorter name for the timers only (elzerma), so it fits beside the state: each list is one patch type, so
-	 * "Falador" is the herb patch there and "Falador Park" the tree.
+	 * "Falador" is the herb patch there and "Falador Park" the tree. Settings > Debug's patch details, listed the same
+	 * way, use it too.
 	 */
-	private static String timerName(Location location)
+	static String timerName(Location location)
 	{
 		switch (location)
 		{
@@ -1023,7 +1037,7 @@ class RunPanel extends JPanel
 		combo.setSelectedItem(active != null ? active : EDITED_PRESET);
 		Style.combo(combo);
 		combo.setFont(FontManager.getRunescapeSmallFont());
-		combo.setToolTipText("Switch to a saved preset");
+		// No hover: the "Preset" label and the drop-down say it (docs/plans/fresh-eyes-audit.md, X1)
 		combo.addActionListener(e ->
 		{
 			final Object picked = combo.getSelectedItem();
@@ -1071,9 +1085,7 @@ class RunPanel extends JPanel
 		final Map<String, Set<PatchType>> families = new LinkedHashMap<>();
 		for (PatchType type : PatchType.values())
 		{
-			families.computeIfAbsent(SPECIALS.contains(type) ? "Specials"
-				: SPECIAL_TREES.contains(type) ? "Sp. trees" : shortName(type),
-				k -> EnumSet.noneOf(PatchType.class)).add(type);
+			families.computeIfAbsent(runTypeBox(type), k -> EnumSet.noneOf(PatchType.class)).add(type);
 		}
 		for (Map.Entry<String, Set<PatchType>> family : families.entrySet())
 		{
@@ -1081,12 +1093,12 @@ class RunPanel extends JPanel
 			final PatchType type = members.iterator().next();
 			final JCheckBox box = new JCheckBox(family.getKey(),
 				members.stream().anyMatch(settings.editRunConfig().getEnabledTypes()::contains));
+			// A hover only where it adds to the label (docs/plans/fresh-eyes-audit.md, X2)
 			box.setToolTipText(type == PatchType.FLOWER
 				? "Include flower patches in this run. Flowers that protect your allotments come with them anyway"
 				: SPECIAL_TREES.contains(type) ? "Include hardwood, calquat, celastrus, redwood, spirit and crystal trees in this "
 					+ "run; which ones is set on the Farm tab"
-				: members.size() > 1 ? "Include cactus, mushroom, belladonna and seaweed patches in this run"
-				: "Include " + type.getDisplayName().toLowerCase() + " patches in this run");
+				: members.size() > 1 ? "Include cactus, mushroom, belladonna and seaweed patches in this run" : null);
 			box.setBackground(ColorScheme.DARK_GRAY_COLOR);
 			Style.checkBox(box);
 			// Centred in its third of the row (elzerma)
@@ -1202,7 +1214,7 @@ class RunPanel extends JPanel
 		// The order is always said, under the heading (elzerma): a drag had switched it to their own without them noticing
 		if (route.getMode() != RouteMode.OFF)
 		{
-			add(tipped(note(route.getMode() == RouteMode.META ? "Order: the wiki's" : "Order: auto (fastest)"),
+			add(tipped(note(route.getMode() == RouteMode.META ? "Order: the wiki's" : "Order: fastest"),
 				"Change it in Travel > Route"));
 		}
 		else
