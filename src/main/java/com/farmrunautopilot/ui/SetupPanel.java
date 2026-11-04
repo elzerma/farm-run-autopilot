@@ -9,10 +9,13 @@ import com.farmrunautopilot.supply.Holdings;
 import java.awt.Color;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -386,6 +389,41 @@ abstract class SetupPanel extends JPanel
 		spinner.setMaximumSize(new Dimension(70, 24));
 		spinner.addChangeListener(e -> onChange.accept((Integer) spinner.getValue()));
 		return Style.spinner(spinner);
+	}
+
+	/** A link (docs/BRANDING.md): small, white and underlined with a hand cursor, explained on hover. */
+	static JLabel link(String text, String tooltip, Runnable onClick)
+	{
+		final JLabel link = new JLabel("<html><u>" + UiText.escape(text) + "</u></html>");
+		link.setForeground(Color.WHITE);
+		link.setFont(FontManager.getRunescapeSmallFont());
+		link.setToolTipText(tooltip == null ? null : UiText.tooltip(tooltip, 250));
+		link.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		link.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				onClick.run();
+			}
+		});
+		return link;
+	}
+
+	/** A line of text with a link at its right, e.g. when the house was last scanned and "Rescan". */
+	static JComponent lineWithLink(String text, JComponent link)
+	{
+		final JPanel row = new JPanel(new BorderLayout(6, 0));
+		row.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		row.setBorder(new EmptyBorder(1, 0, 3, 0));
+		final JLabel label = new JLabel(text);
+		label.setForeground(Color.WHITE);
+		label.setFont(FontManager.getRunescapeSmallFont());
+		row.add(label, BorderLayout.CENTER);
+		row.add(link, BorderLayout.EAST);
+		row.setMaximumSize(new Dimension(CONTROL_WIDTH, row.getPreferredSize().height));
+		row.setAlignmentX(LEFT_ALIGNMENT);
+		return row;
 	}
 
 	static JLabel label(String text)

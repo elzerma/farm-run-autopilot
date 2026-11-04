@@ -130,7 +130,7 @@ Keep to these numbers; if something looks cramped, change it here and in the cod
   types are named as on the Run tab, plural ("Fruit trees"), but "Hardwood" and "Celastrus" without "trees", so every
   crop fits beside them.
 - **Short lists** (`SetupPanel.twoPerRow`, `halfCheckBox`): tick boxes two to a row, each row as tall as its own
-  text: patches, herbs, the grown-crop choices.
+  text: patches, herbs, the grown-crop choices, your house's fairy ring and spirit tree, nexus destinations.
 - **Subheader** (`SetupPanel.subheader`): a heading inside a section, in the normal font; with an explanation, the
   same faint "(?)" as a section (`Style.HELP_MARK`) and the explanation on hover.
 - **Buttons** (`Style`): plain (darker grey, lighter on hover), primary (orange, dark text, slim; the main
@@ -148,7 +148,8 @@ Keep to these numbers; if something looks cramped, change it here and in the cod
   | Locked: seen done or read from the game | green fill, dark tick |
   | Not possible yet | dark grey, faint outline |
 
-- **Links** ("Manage", "Show me", "See every report on GitHub"): small font, white, underlined, hand cursor.
+- **Links** ("Manage", "Show me", "See every report on GitHub", "Rescan"): small font, white, underlined, hand cursor
+  (`SetupPanel.link`); one at the end of a line of text with `SetupPanel.lineWithLink` ("Last scanned … Rescan").
 - **Tab bar** (`TabBar`, `TabIcon`): five boxed buttons sharing the width (darker grey, lighter on hover), each
   with an icon (play, sprout, map pin, person, solid gear), grey; the selected one's icon orange with an orange
   line along its bottom; the tab's name on hover, looking like a tooltip but shown whichever window is active
