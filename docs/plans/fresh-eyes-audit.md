@@ -220,3 +220,6 @@ differs from the wording above:
   link. docs/BRANDING.md says how to use them.
 - **C3 and X10:** the vine's config description is the sidebar's new one-line hover.
 - **Issue #18:** its table lists only each test's name and what it needs, none of which changed, so it needs no edit.
+- **In game (2026-11-04):** the dev check for what the renders couldn't show passed on elzerma's dev client, with no
+  errors from the plugin in its log. A tick box's and a drop-down choice's hovers wrap to about the sidebar's width,
+  and each Display colour sits on its highlight's row and opens RuneLite's colour picker. The check was then removed.

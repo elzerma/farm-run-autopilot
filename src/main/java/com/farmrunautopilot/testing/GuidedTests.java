@@ -85,7 +85,6 @@ final class GuidedTests
 		TESTS.put(TestItem.ETCETERIA_ACCESS, new EtceteriaAccess());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
 		TESTS.put(TestItem.GREAT_CONCH_ACCESS, new GreatConchAccess());
-		TESTS.put(TestItem.AUDIT_HOVERS, new AuditHovers());
 	}
 
 	private GuidedTests()
@@ -1367,25 +1366,6 @@ final class GuidedTests
 						: "The boat didn't take you to Etceteria"))
 					.onDone(ctx -> ctx.capture("Arrived at", ctx.location())),
 				ask("Can you rake or plant in the bush patch?"));
-		}
-	}
-
-	/**
-	 * Dev check (docs/plans/fresh-eyes-audit.md): the kit now wraps tick boxes' and drop-down choices' hovers, and Settings >
-	 * Display's colours sit on their highlights' rows. The renders the audit was judged from can't show either.
-	 */
-	private static final class AuditHovers extends GuidedTest
-	{
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				ask("Open Farm > Compost and cures and hover \"Use Cure Plant (Lunar)\". Does its explanation wrap onto a few "
-					+ "lines, about as wide as the sidebar?"),
-				ask("Open Travel > Route, open the Travel style drop-down and hover \"Prefer free\". Does its explanation "
-					+ "wrap the same way?"),
-				ask("Open Settings > Display. Is each colour at the right of its highlight's row, with no text cut off, and "
-					+ "does clicking one open RuneLite's colour picker?"));
 		}
 	}
 
