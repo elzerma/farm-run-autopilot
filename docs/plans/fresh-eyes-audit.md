@@ -148,6 +148,28 @@ The renders here came from a small program that builds each tab from stub data a
 with a text inventory of every label, hover and height. Kept in `src/test` (not run by the build), it can make the
 after renders and check a layout without a game client. Proposed: keep it there.
 
+### Group 9: Removals
+
+Added to the brief by elzerma (2026-11-02): "things can be removed if they're overly verbose or redundant". A second
+pass over every surface for text, hovers and sections that are overly long or repeat what a label or another place
+already says. No setting is removed, so no saved value is touched.
+
+| # | Where | Now | Proposed | Why |
+|---|---|---|---|---|
+| X1 | Run > the preset drop-down's hover | "Switch to a saved preset" | removed | The "Preset" label and the drop-down say it. |
+| X2 | Run > the hovers of Trees, Fruit, Herbs, Allotments, Hops and Bushes | "Include tree patches in this run" | removed; Flowers, Specials and Sp. trees keep theirs, which add something | They repeat the label, and "in this run" wasn't quite right: a type joins once its patches are due, which the "ready in …  [Include]" rows show. |
+| X3 | Farm > Patches' hover, second sentence | "…Choose the run types at the top of the Run tab: each joins a run once its patches are due." | removed | Said where it matters now: an unticked type's "not in runs" hover (F5) and the due %'s hover (F7). |
+| X4 | Farm > Disease-free herbs' hover | "Troll Stronghold, Weiss and Harmony Island, plus Hosidius and Civitas once their unlock is done. They get these herbs first, most valuable first (by GE price); other patches never do." | "Disease-free herb patches: Troll Stronghold, Weiss and Harmony Island, plus Hosidius and Civitas once their unlock is done." | The rest repeats the tick box's hover. |
+| X5 | Farm > At the patches' hover | three sentences on the order of work and when the tool leprechaun is visited | removed; Note produce's hover gains the one fact a setting needs: "The produce is noted when you visit the tool leprechaun, which is only when a stop needs him (compost, a tool or room), saving inventory slots." | It described the guide rather than the settings; each setting's hover says what it does. |
+| X6 | Farm > Farming contracts' hover (seven lines) | pre-plants, what's picked, the contract's crop, Jane, tiers | removed; the tick box's hover says it in two lines: "The Farming Guild's patches grow the wiki's pre-plants for Guildmaster Jane's contracts instead of your usual crops, and a run stops at the guild to plant, pick and hand in whenever a contract needs it." | One setting had two explanations, one of them seven lines. |
+| X7 | Farm > Advanced | a section for one setting (with F3 done) | the section goes; "Include a run type when this % of its patches are due" goes at the top of Patches | It decides when a type's patches join a run, which is what Patches is about; one heading fewer (27 px). |
+| X8 | Farm > Protection's hover | "…the best compost you have instead (ultracompost, then supercompost, then compost)…" | the parenthesis goes | "The best compost you have" says it. |
+| X9 | Travel > Route > Start at's hover | "Where the run starts. Anywhere lets the plugin choose; …" | "Anywhere lets the plugin choose; if you're standing at or near one of the run's stops, the run starts there either way." | The first sentence repeats the label. |
+| X10 | Settings > Display > Growing vine highlights' hover | four lines listing everywhere the vine grows | "A growing vine instead of a plain outline round the next thing to click." | The other highlights' hovers say what's outlined. |
+| X11 | Settings > Debug's hover | "What the plugin worked out by itself, and tools for checking it. Hover a line to see how it was worked out." | removed | Its headings (Detected, Tools, Patch details) say it. |
+| X12 | Settings > Help improve this plugin > the "Report a problem" heading | a heading over a button with the same words | removed; the note and the button stay between the dividers | The same words twice, 22 px apart. The code says "(elzerma): what everything in this section has in common, then each part under its own heading with its own explanation", so this one is your call. |
+| X13 | The help list's rows, closed | the hover repeats the steps the row shows when opened | the hover says only what's still needed ("Needs: …"), or nothing | In the help list explanations are visible (BRANDING principle 4), so the hover said them twice. |
+
 ## Ideas beyond organisation
 
 Not proposed for building here; each changes what the plugin does.
@@ -173,3 +195,4 @@ elzerma's answers in the picker, 2026-11-03:
 | 6. Config panel | All of it (C1–C3), the Hub description included |
 | 7. Help list | All of it (H1–H4) |
 | 8. Sidebar renderer | Keep it in `src/test` |
+| 9. Removals | All of it (X1–X13), folding Advanced into Patches and the "Report a problem" heading included |
