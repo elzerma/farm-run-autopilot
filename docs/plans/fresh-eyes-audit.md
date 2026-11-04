@@ -29,18 +29,22 @@ Each tab mostly does this already. The proposals below are about wording, placin
 ## Heights
 
 Pixels at the sidebar's width. "First opened" is a new player's view (Crops and Ways to travel open, everything else
-closed). After figures are estimates until the build.
+closed). The proposal's estimates, then as built (every group, removals included), measured by
+`ui/SidebarRenderTest` on the same account. Renders: [`before/`](fresh-eyes-audit/before/) and
+[`after/`](fresh-eyes-audit/after/), with the same file names.
 
-| Tab, state | Before | After (est.) | Mostly from |
-|---|---|---|---|
-| Run, off | 458 | ~430 | H1 |
-| Run, run built | 886 | ~855 | H1 |
-| Run, run under way | 685 | ~595 | R1, H1 |
-| Farm, first opened | 769 | ~560 | F1, H1 |
-| Farm, every section open | 4,711 | ~3,860 | F1–F3, H1 |
-| Travel, first opened | 602 | ~505 | T2, H1 |
-| Account, every section open | 797 | ~660 | A1, A2, H1 |
-| Settings, every section open | 5,314 | ~2,600 | S1, S2, S3, S6 |
+| Tab, state | Before | Estimated | Built | Mostly from |
+|---|---|---|---|---|
+| Run, off | 458 | ~430 | 434 | H1 |
+| Run, run built | 886 | ~855 | 862 | H1 |
+| Run, run under way | 685 | ~595 | 602 | R1, H1 |
+| Farm, first opened | 769 | ~560 | 538 | F1, X7, H1 |
+| Farm, every section open | 4,711 | ~3,860 | 3,803 | F1–F3, X3–X8, H1 |
+| Travel, first opened | 602 | ~505 | 509 | T2, H1 |
+| Account, every section open | 797 | ~660 | 656 | A1–A3, H1 |
+| Settings, every section open | 5,314 | ~2,600 | 3,579 | S1–S3, S6, X10–X12 |
+
+Settings' built figure has every patch details group open as well; they start closed (S2), each 27 px.
 
 ## The change groups
 
@@ -148,6 +152,9 @@ The renders here came from a small program that builds each tab from stub data a
 with a text inventory of every label, hover and height. Kept in `src/test` (not run by the build), it can make the
 after renders and check a layout without a game client. Proposed: keep it there.
 
+Built as `ui/SidebarRenderTest`, skipped unless `SIDEBAR_RENDERS` names a folder for the renders:
+`SIDEBAR_RENDERS=build/sidebar-renders ./gradlew test --tests com.farmrunautopilot.ui.SidebarRenderTest --rerun`.
+
 ### Group 9: Removals
 
 Added to the brief by elzerma (2026-11-02): "things can be removed if they're overly verbose or redundant". A second
@@ -196,3 +203,20 @@ elzerma's answers in the picker, 2026-11-03:
 | 7. Help list | All of it (H1–H4) |
 | 8. Sidebar renderer | Keep it in `src/test` |
 | 9. Removals | All of it (X1–X13), folding Advanced into Patches and the "Report a problem" heading included |
+
+### As built
+
+Built on `claude/fresh-eyes-audit-a7eeca`, one commit per group, with `./gradlew build` passing. Where the build
+differs from the wording above:
+
+- **F1:** the one-line rows name hardwood and celastrus "Hardwood" and "Celastrus": with "Hardwood trees" the name
+  column left "Potato cactus (64)" cut short. Every other type is named as on the Run tab.
+- **A3:** the Rescan link shows once the house has been scanned; before that the line says "Enter your house to scan
+  it".
+- **H4:** the staff test asks whether the bank's Farm run tab "lists both staves", and the flower test points at the
+  marigold's Details for "protects allotments": a supply line's own explanation is no longer shown anywhere.
+- **The kit:** tick boxes' and drop-down choices' hovers are now wrapped to the sidebar's width by the kit, as
+  docs/BRANDING.md asks (most were one long line); and the kit gains a one-line setting, an explained subheader and a
+  link. docs/BRANDING.md says how to use them.
+- **C3 and X10:** the vine's config description is the sidebar's new one-line hover.
+- **Issue #18:** its table lists only each test's name and what it needs, none of which changed, so it needs no edit.

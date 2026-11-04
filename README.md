@@ -15,8 +15,8 @@ The plugin never clicks, types or acts for you. It only shows information.
 **Run tab**
 - Patch timers for every run type, with what's due now and what's ready soon.
 - One route across every due patch, using the teleports, items and unlocks you actually have. The route starts
-  at the stop nearest you on foot and can end near a bank. Choose the order: **Autopilot** (fastest, the
-  default), **Meta** (the wiki's order), or your own (drag a stop to move it).
+  at the stop nearest you on foot and can end near a bank. Choose the order in Travel > Route: **Fastest** (the
+  default), **The wiki's order**, or **My own order** (drag a stop to move it).
 - The route shows each stop's way there, the whole run's time and where you'll stop at a bank when everything
   doesn't fit in one inventory. For a run that banks partway, a way a few seconds slower can be taken when leaving
   its item in the bank makes the whole run quicker; hover the stop to see why.
@@ -99,11 +99,11 @@ The plugin never clicks, types or acts for you. It only shows information.
   plant cures. Each set of allotments can be protected by the flower beside it instead.
 - Each type of patch has a tick box of its own: ticked with all its patches on, a dash with some off. Click it to
   tick or untick them all at once.
-- Fruit trees, bushes, cacti and calquats can be picked and left growing, and spirit trees kept for travel. Grown
-  trees can be cleared by their gardener for 200 coins instead of chopped; a redwood is always cleared by Alexandra,
-  for 2,000 coins.
 - At the patches: clean herbs after picking, note your produce with the tool leprechaun, drop, keep or store empty
-  buckets, and make compost in the compost bins.
+  buckets, and make compost in the compost bins. Fruit trees, bushes, cacti and calquats can be picked and left
+  growing, and spirit trees kept for travel (Leave growing after picking). Grown trees can be cleared by their
+  gardener for 200 coins instead of chopped (Pay 200 coins to clear grown); a redwood is always cleared by Alexandra,
+  for 2,000 coins.
 - Farming contracts: the Farming Guild's patches hold the wiki's pre-plants and are left alone until Guildmaster Jane's
   contract asks for one; anything else growing there is picked once grown and the pre-plant planted, once you have its
   seed. The contract's crop
@@ -127,7 +127,7 @@ The plugin never clicks, types or acts for you. It only shows information.
   cooldown is over. "Avoid the Wilderness" is on to start with (the Ferox Enclave counts as safe). "Switch spellbook to
   cast" is off to start with: tick it to let the route cast a spell from another spellbook after Spellbook Swap or at
   your house altar.
-- Choose a travel style: Fastest, Prefer free or Save charges.
+- In Route, choose the order, where the run starts, and a travel style: Fastest, Prefer free or Save charges.
 - Tablets come first; tick "Cast from runes, not tablets" (under Tablets and scrolls) to keep yours.
 - Charges are tracked across the whole run: jewellery charges, daily-limited teleports (Ardougne cloak,
   Explorer's ring) and items charged by hand (quetzal whistle, Xeric's talisman, pendant of Ates, counted from
@@ -136,7 +136,7 @@ The plugin never clicks, types or acts for you. It only shows information.
   jewellery box or fairy ring.
 
 **Account tab**
-- Your house (nexus, jewellery box, pool, altar, spirit tree, fairy ring), with an optional scan that fills it in
+- Your house (nexus, jewellery box, altar, spirit tree, fairy ring), with an optional scan that fills it in
   when you go home. Where it is, and where Teleport to House lands, are read from the game.
 - Unlocks the game doesn't show, and the storage the plugin counts from (seed vault, group storage, tool
   leprechaun, bottomless bucket).
@@ -145,7 +145,8 @@ The plugin never clicks, types or acts for you. It only shows information.
 - Presets (e.g. "Quick herbs"), display options, and what the plugin has detected: quests, diaries, levels,
   spellbook, your house, charges and unlocks.
 - **Help improve this plugin:** try a guided test of a feature the author couldn't test. A test walks you through it
-  on the Run tab and puts your settings back afterwards. The small "Help improve this plugin" line at the bottom of each tab opens this section.
+  on the Run tab and puts your settings back afterwards. The "Quick tests in game" line at the bottom of each tab
+  opens this section.
   "Report a problem" there opens GitHub's bug form with the plugin version and your current plan filled in.
 
 ## How to use

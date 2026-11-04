@@ -52,6 +52,28 @@
 - Anything that goes missing mid-run shows on the Run tab, with Bank for them or Skip.
 - A run under way shows on the Run tab again after you log back in.
 
+### Settings that moved or were renamed
+The sidebar was tidied to be shorter and clearer. Every setting keeps what you saved; here's where to find the ones
+that moved:
+- Farm > Protection's "Pick grown … and leave them growing", "Keep grown spirit trees for travel" and "Pay 200 coins to
+  clear grown …" are now two short lists in Farm > At the patches: "Leave growing after picking" and "Pay 200 coins to
+  clear grown".
+- Farm > Advanced is gone. "Different protection for single patches" is under Farm > Protection, and "Include a run
+  type when this % of its patches are due" is at the top of Farm > Patches.
+- Crops, compost and protection are one line per type ("Trees  [Magic (75)]"). "Prioritise herbs for disease-free
+  patches" is now "Save herbs for disease-free patches", which is what it does: the herbs you tick only go in
+  disease-free patches.
+- Travel > Ways to travel's "Travel style" and "Walk when it's nearly as quick as teleporting" (now "Walk when nearly
+  as quick") are in Travel > Route. The route order's choices are "Fastest (default)", "The wiki's order" and "My own
+  order" (were "On - Autopilot", "On - Meta" and "Off").
+- Travel > Ways to travel's House row shows where your house is.
+- Account > My house: Pool is gone, as nothing used it; to report a scanning problem, use Settings > Help improve this
+  plugin > Report a problem.
+- Settings > Display: each colour is on the row of the highlight it colours. Settings > Debug lists the patches by
+  type, closed to start with.
+- The Run tab's run type boxes hide while a run is under way, as ticking them then did nothing.
+- The line at the bottom of each tab reads "Quick tests in game, no coding: Show me".
+
 ### Fixes
 - Taverley's tree passed over after the balloon from the Gnome Stronghold (#35): for a moment after a balloon lands,
   the game still reports the patch where you set off. Patches are now read only once the new area has loaded, which
