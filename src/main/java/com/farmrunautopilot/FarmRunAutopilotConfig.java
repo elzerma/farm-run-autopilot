@@ -96,9 +96,7 @@ public interface FarmRunAutopilotConfig extends Config
 	@ConfigItem(
 		keyName = "vineHighlights",
 		name = "Growing vine highlights",
-		description = "A vine that grows, flowers and wilts round the spell to cast or item to use (and round its tab's icon "
-			+ "while you're on another tab), the place to pick on a travel map, the bank's Farm run button and its Deposit "
-			+ "inventory button. Untick for a plain outline.",
+		description = "A growing vine instead of a plain outline round the next thing to click.",
 		hidden = true,
 		position = 10
 	)

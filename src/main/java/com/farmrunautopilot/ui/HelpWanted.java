@@ -200,10 +200,12 @@ final class HelpWanted
 	private static JComponent testRow(TestItem item, TestRunner runner, Runnable showRun, String startLabel)
 	{
 		final List<String> missing = runner.missing(item);
-		final ExpandableRow row = new ExpandableRow(item.getTitle(),
+		// The steps are read by opening the row, so the hover only says what's still needed
+		// (docs/plans/fresh-eyes-audit.md, X13)
+		final ExpandableRow row = new ExpandableRow(null, item.getTitle(),
 			// Short on the line (elzerma: the whole need wrapped into a tall column); what's needed is inside
 			missing.isEmpty() ? "Ready" : "Not yet",
-			item.getHowToTry() + (missing.isEmpty() ? "" : " Needs: " + String.join("; ", missing) + "."),
+			missing.isEmpty() ? null : "Needs: " + String.join("; ", missing) + ".",
 			false, TEXT_WIDTH + 40, OPEN_ROWS.contains(item), open ->
 			{
 				if (open)

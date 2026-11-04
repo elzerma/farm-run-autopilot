@@ -326,9 +326,8 @@ class SettingsPage extends SetupPanel
 	 */
 	private JComponent debugSection(RunConfig config)
 	{
+		// No section hover: its headings say what's in it (docs/plans/fresh-eyes-audit.md, X11)
 		final CollapsibleSection s = section(DEBUG);
-		s.help("What the plugin worked out by itself, and tools for checking it. Hover a line to see how it was "
-			+ "worked out.");
 		s.addContent(subheader("Detected"));
 		s.addContent(detected);
 		refreshDetected();
@@ -359,15 +358,14 @@ class SettingsPage extends SetupPanel
 	{
 		final CollapsibleSection s = section(TESTING);
 		// Said here, where people come to read it (elzerma): what everything in this section has in common, then each
-		// part under its own heading with its own explanation
-		// Shorter, same facts (docs/plans/fresh-eyes-audit.md, S3)
+		// part with its own explanation, the guided tests under their heading; shorter, same facts, and the report named
+		// once, by its button (docs/plans/fresh-eyes-audit.md, S3 and X12)
 		s.addContent(note("Each opens a GitHub issue in your browser with the details filled in. Nothing is sent until "
 			+ "you submit it (a free GitHub account is needed), and it never has your name or account in it."));
 
 		// Reporting a problem (issue #17): the Bug form with the plan filled in. Run times aren't shared: they're the
 		// player's own, for the estimate and their personal best (elzerma, 2026-10-17)
 		s.addContent(divider());
-		s.addContent(subheader("Report a problem"));
 		s.addContent(note("Something wrong with a run? The report has your current plan (stops, travel, supplies); you "
 			+ "add what happened."));
 		final JButton report = smallButton("Report a problem");
@@ -461,10 +459,10 @@ class SettingsPage extends SetupPanel
 		s.addContent(checkBox("Highlight the spell or place to pick", c.highlightSpell(), true,
 			"Outline the teleport (or Cure Plant) to cast next in your spellbook, and where to go on Renu's, the quetzal "
 				+ "whistle's or a hot air balloon's map. In the item colour.", on -> guidance.set("highlightSpell", on)));
+		// The other highlights' hovers say what's outlined (docs/plans/fresh-eyes-audit.md, X10)
 		s.addContent(checkBox("Growing vine highlights", c.vineHighlights(), true,
-			"A vine that grows, flowers and wilts round the spell to cast or item to use (and round its tab's icon while "
-				+ "you're on another tab), the place to pick on a travel map, the bank's Farm run button and its Deposit "
-				+ "inventory button. Untick for a plain outline.", on -> guidance.set("vineHighlights", on)));
+			"A growing vine instead of a plain outline round the next thing to click.",
+			on -> guidance.set("vineHighlights", on)));
 		s.addContent(checkBox("Walking lines (Shortest Path)", c.shortestPathLines(), true,
 			"If the Shortest Path plugin is installed, it draws the walk for each \"walk to\" step: walking only, no "
 				+ "teleports. Your own Shortest Path settings come back when the step changes.",

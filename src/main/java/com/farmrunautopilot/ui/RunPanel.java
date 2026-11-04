@@ -1037,7 +1037,7 @@ class RunPanel extends JPanel
 		combo.setSelectedItem(active != null ? active : EDITED_PRESET);
 		Style.combo(combo);
 		combo.setFont(FontManager.getRunescapeSmallFont());
-		combo.setToolTipText("Switch to a saved preset");
+		// No hover: the "Preset" label and the drop-down say it (docs/plans/fresh-eyes-audit.md, X1)
 		combo.addActionListener(e ->
 		{
 			final Object picked = combo.getSelectedItem();
@@ -1093,12 +1093,12 @@ class RunPanel extends JPanel
 			final PatchType type = members.iterator().next();
 			final JCheckBox box = new JCheckBox(family.getKey(),
 				members.stream().anyMatch(settings.editRunConfig().getEnabledTypes()::contains));
+			// A hover only where it adds to the label (docs/plans/fresh-eyes-audit.md, X2)
 			box.setToolTipText(type == PatchType.FLOWER
 				? "Include flower patches in this run. Flowers that protect your allotments come with them anyway"
 				: SPECIAL_TREES.contains(type) ? "Include hardwood, calquat, celastrus, redwood, spirit and crystal trees in this "
 					+ "run; which ones is set on the Farm tab"
-				: members.size() > 1 ? "Include cactus, mushroom, belladonna and seaweed patches in this run"
-				: "Include " + type.getDisplayName().toLowerCase() + " patches in this run");
+				: members.size() > 1 ? "Include cactus, mushroom, belladonna and seaweed patches in this run" : null);
 			box.setBackground(ColorScheme.DARK_GRAY_COLOR);
 			Style.checkBox(box);
 			// Centred in its third of the row (elzerma)

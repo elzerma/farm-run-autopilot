@@ -45,7 +45,6 @@ class FarmPage extends SetupPanel
 		add(atThePatchesSection(config));
 		add(contractsSection(config));
 		add(extrasSection(config));
-		add(advancedFarmSection(config));
 	}
 
 	/**
@@ -79,8 +78,14 @@ class FarmPage extends SetupPanel
 			}
 		}
 		final CollapsibleSection s = section("Patches", ticked + " of " + usable + " ticked");
-		s.help("Untick patches you don't want in your runs; locked ones show what they need on hover. Choose the run "
-			+ "types at the top of the Run tab: each joins a run once its patches are due.");
+		// Where the run types are ticked is said on an unticked type's group, and when they join on the due % below
+		// (docs/plans/fresh-eyes-audit.md, X3)
+		s.help("Untick patches you don't want in your runs; locked ones show what they need on hover.");
+		// When a type's patches join a run, from the Advanced section it had to itself (docs/plans/fresh-eyes-audit.md, X7)
+		s.addContent(tip(spinnerRow("Include a run type when this % of its patches are due",
+			spinner(config.getDueThresholdPercent(), 1, 100, 5,
+				v -> saveRunQuietly(() -> config.setDueThresholdPercent(v)))),
+			"A run type joins your run once this share of its patches is due. 100: only when all of them are."));
 		// One group per type that opens and closes, two tick boxes to a row (elzerma)
 		for (PatchType type : PatchType.values())
 		{
@@ -235,8 +240,9 @@ class FarmPage extends SetupPanel
 		{
 			return s;
 		}
-		s.help("Troll Stronghold, Weiss and Harmony Island, plus Hosidius and Civitas once their "
-			+ "unlock is done. They get these herbs first, most valuable first (by GE price); other patches never do.");
+		// Which patches; the tick box's hover says what's done with the herbs (docs/plans/fresh-eyes-audit.md, X4)
+		s.help("Disease-free herb patches: Troll Stronghold, Weiss and Harmony Island, plus Hosidius and Civitas once their "
+			+ "unlock is done.");
 		final List<JComponent> herbs = new ArrayList<>();
 		for (Crop crop : Crop.values())
 		{
@@ -304,8 +310,8 @@ class FarmPage extends SetupPanel
 	private JComponent protectionSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("Protection", overrides(config.getProtectionOverrides().size()));
-		s.help("Pay gardener: when there's not enough of the payment, the patch gets the best compost you have instead "
-			+ "(ultracompost, then supercompost, then compost). Paid trees and fruit trees get no compost; paid "
+		s.help("Pay gardener: when there's not enough of the payment, the patch gets the best compost you have instead. "
+			+ "Paid trees and fruit trees get no compost; paid "
 			+ "allotments and hops still do, as it raises the harvest.");
 		s.addContent(checkBox("Bring gardener payments noted", config.isPayWithNotes(), true,
 			"Gardeners accept noted payment; one inventory slot per item type",
@@ -522,15 +528,10 @@ class FarmPage extends SetupPanel
 	private JComponent contractsSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("Farming contracts");
-		s.help("The Farming Guild's patches hold the wiki's pre-plants for Guildmaster Jane's contracts, left alone until a "
-			+ "contract asks for one, and anything else there is picked once grown and the pre-plant planted, once you have "
-			+ "its seed. A contract's "
-			+ "crop is checked or picked once grown and the patch replanted, one that isn't growing is planted, and the "
-			+ "guild stop ends at Jane: hand one in, take another (the highest tier your level allows), or ask for an "
-			+ "easier one when a slow crop's patch is taken.");
+		// One explanation, on the tick box, where the section had two (docs/plans/fresh-eyes-audit.md, X6)
 		s.addContent(checkBox("Build farming contracts into runs", config.isFarmingContracts(), true,
-			"The guild's patches are kept for contracts instead of your usual crops, and a run stops at the guild whenever "
-				+ "a contract needs it",
+			"The Farming Guild's patches grow the wiki's pre-plants for Guildmaster Jane's contracts instead of your usual "
+				+ "crops, and a run stops at the guild to plant, pick and hand in whenever a contract needs it.",
 			on -> saveRun(() -> config.setFarmingContracts(on))));
 		return s;
 	}
@@ -538,14 +539,14 @@ class FarmPage extends SetupPanel
 	private JComponent atThePatchesSection(RunConfig config)
 	{
 		final CollapsibleSection s = section("At the patches");
-		s.help("Each patch is harvested, then planted and composted before the next. The tool leprechaun is visited only when "
-			+ "needed: for compost, a tool or room, to store a compost bin's compost, or for the next bin's buckets. Each visit "
-			+ "also notes the produce, stores the empty buckets and takes compost for the next stops when there's room.");
+		// No section hover: each setting says what it does, and the one fact they need is on Note produce
+		// (docs/plans/fresh-eyes-audit.md, X5)
 		s.addContent(checkBox("Clean herbs", config.isCleanHerbs(), true,
 			"After picking herbs, a step to clean the ones your Herblore level allows, before noting them",
 			on -> saveRun(() -> config.setCleanHerbs(on))));
 		s.addContent(checkBox("Note produce on the tool leprechaun", config.isNoteProduce(), true,
-			"The produce is noted on visits to the leprechaun, saving inventory slots",
+			"The produce is noted when you visit the tool leprechaun, which is only when a stop needs him (compost, a tool "
+				+ "or room), saving inventory slots.",
 			on -> saveRun(() -> config.setNoteProduce(on))));
 		s.addContent(label("Empty buckets"));
 		s.addContent(combo(enumChoices(EmptyBuckets.values()), config.getEmptyBuckets(),
@@ -640,17 +641,6 @@ class FarmPage extends SetupPanel
 				})));
 		}
 		s.addContent(twoPerRow(clear));
-	}
-
-	/** Settings most players never need to change. Different protection for single patches is under Protection. */
-	private JComponent advancedFarmSection(RunConfig config)
-	{
-		final CollapsibleSection s = section("Advanced");
-		s.addContent(tip(spinnerRow("Include a run type when this % of its patches are due",
-			spinner(config.getDueThresholdPercent(), 1, 100, 5,
-				v -> saveRunQuietly(() -> config.setDueThresholdPercent(v)))),
-			"A run type joins your run once this share of its patches is due. 100: only when all of them are."));
-		return s;
 	}
 
 	/** Optional things to bring that help but aren't needed. */

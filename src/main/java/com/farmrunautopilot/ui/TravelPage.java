@@ -295,8 +295,8 @@ class TravelPage extends SetupPanel
 		{
 			starts.add(Choice.of(location, location.getDisplayName()));
 		}
-		final String startHelp = "Where the run starts. Anywhere lets the plugin choose; if you're standing at or near "
-			+ "one of the run's stops, the run starts there either way.";
+		final String startHelp = "Anywhere lets the plugin choose; if you're standing at or near one of the run's stops, "
+			+ "the run starts there either way.";
 		s.addContent(tip(label("Start at"), startHelp));
 		s.addContent(tip(combo(starts, config.getStartLocation(), l -> saveRun(() -> config.setStartLocation(l))),
 			startHelp));
