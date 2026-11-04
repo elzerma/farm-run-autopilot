@@ -97,7 +97,7 @@ public final class ContractPlanner
 		{
 			roles.put(patch, role(patch, contract, farming, usable, predictions, stock));
 		}
-		final Jane jane = jane(contract, farming, usable, predictions);
+		final Jane jane = jane(contract, farming, usable, predictions, stock);
 		final Tier ask = Tier.highest(farming);
 		return new Plan(true, contract, Collections.unmodifiableMap(roles), jane, ask,
 			line(contract, farming, jane, ask, roles, usable, predictions, stock));
@@ -153,10 +153,12 @@ public final class ContractPlanner
 
 	/**
 	 * Jane's part: hand in a grown contract, ask for one when there's none (or the last was handed in with none taken
-	 * since, as elzerma's dev check saw it), or for an easier one when it's blocked.
+	 * since, as elzerma's dev check saw it), or for an easier one when it's blocked, or when there's no seed for its crop
+	 * (elzerma, 2026-11-03, the wiki's way out of a contract that can't be done; an Easy one can't be swapped, so it
+	 * waits for a seed).
 	 */
 	public static Jane jane(Contract contract, int farming, List<Patch> usable,
-		Function<Patch, PatchPrediction> predictions)
+		Function<Patch, PatchPrediction> predictions, ToIntFunction<Crop> stock)
 	{
 		if (contract.grown())
 		{
@@ -166,8 +168,23 @@ public final class ContractPlanner
 		{
 			return Jane.NEW;
 		}
-		return contract.getCrop() != null && blocked(contract, farming, usable, predictions) && askEasier(contract)
-			? Jane.EASIER : Jane.NONE;
+		if (contract.getCrop() == null)
+		{
+			return Jane.NONE;
+		}
+		if (blocked(contract, farming, usable, predictions) && askEasier(contract))
+		{
+			return Jane.EASIER;
+		}
+		return noSeed(contract, usable, predictions, stock) && tier(contract) != Tier.EASY ? Jane.EASIER : Jane.NONE;
+	}
+
+	/** The contract's crop isn't growing in the guild, and the player has no seed or sapling to plant it with. */
+	public static boolean noSeed(Contract contract, List<Patch> usable, Function<Patch, PatchPrediction> predictions,
+		ToIntFunction<Crop> stock)
+	{
+		final Crop crop = contract.getCrop();
+		return crop != null && !growing(crop, usable, predictions) && stock.applyAsInt(crop) <= 0;
 	}
 
 	/**
@@ -344,7 +361,9 @@ public final class ContractPlanner
 			case NEW:
 				return "No farming contract: ask Guildmaster Jane for " + asked;
 			case EASIER:
-				return "Contract: " + name + " (" + clock(crop.getGrowthMinutes()) + "). Its patch holds another crop, so ask"
+				return noSeed(contract, usable, predictions, stock)
+					? "Contract: " + name + ": you have no seed for it, so ask Guildmaster Jane for an easier one"
+					: "Contract: " + name + " (" + clock(crop.getGrowthMinutes()) + "). Its patch holds another crop, so ask"
 					+ " Guildmaster Jane for an easier one";
 			default:
 				break;
@@ -360,10 +379,10 @@ public final class ContractPlanner
 			return "Contract: " + name + " is grown: " + (where.getType().isHealthChecked() ? "checked" : "picked")
 				+ " at the guild this run";
 		}
-		// Not growing and nothing to plant it with: it waits for a seed (elzerma's potato cactus contract, 2026-11-03)
-		if (!growing(crop, usable, predictions) && stock.applyAsInt(crop) <= 0)
+		// Not growing and nothing to plant it with, and Easy, so it can't be swapped: it waits for a seed
+		if (noSeed(contract, usable, predictions, stock))
 		{
-			return "Contract: " + name + ": you have no seed for it";
+			return "Contract: " + name + ": you have no seed for it, and an Easy one can't be swapped";
 		}
 		if (role == Role.PLANT)
 		{

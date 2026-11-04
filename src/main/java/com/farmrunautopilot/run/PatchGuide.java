@@ -878,7 +878,7 @@ class PatchGuide
 			return null;
 		}
 		final ContractTracker.Contract contract = contractTracker.getContract();
-		final ContractPlanner.Jane jane = ContractPlanner.jane(contract, farming(), guild, patchTracker::predict);
+		final ContractPlanner.Jane jane = ContractPlanner.jane(contract, farming(), guild, patchTracker::predict, stock());
 		if (jane == ContractPlanner.Jane.NONE)
 		{
 			return null;
@@ -897,8 +897,11 @@ class PatchGuide
 				return "Talk to Guildmaster Jane: ask for a " + tier + "contract";
 			default:
 				final Crop crop = contract.getCrop();
-				return "Talk to Guildmaster Jane: ask for an easier contract (" + crop.getDisplayName().toLowerCase()
-					+ " takes " + ContractPlanner.clock(crop.getGrowthMinutes()) + " to grow)";
+				// No seed for it (elzerma, 2026-11-03), or slow with its patch taken
+				return "Talk to Guildmaster Jane: ask for an easier contract (" + (ContractPlanner.noSeed(contract, guild,
+					patchTracker::predict, stock()) ? "you have no " + runService.itemName(crop.getPlantItemId()).toLowerCase()
+					: crop.getDisplayName().toLowerCase() + " takes " + ContractPlanner.clock(crop.getGrowthMinutes())
+					+ " to grow") + ")";
 		}
 	}
 

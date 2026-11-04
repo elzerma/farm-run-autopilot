@@ -18,7 +18,8 @@
   picked once grown, and the pre-plant planted in its place once you have its seed.
 - The contract's crop is checked or picked once grown and the patch replanted. A contract whose crop isn't growing gets
   it planted; if its patch holds another crop, a quick one (herbs, flowers, bushes) takes its place, picked first if
-  it's grown, and for a slow one the guide says to ask Jane for an easier contract.
+  it's grown, and for a slow one the guide says to ask Jane for an easier contract. It says so too when you have no
+  seed for a Medium or Hard contract's crop; an Easy one can't be swapped, so it waits for a seed.
 - The guild stop ends at Jane, outlined: hand in your contract and take another (the highest tier your level allows),
   or ask for one. The guide then carries on: a new contract's crop already grown is done on the spot and handed in,
   and one that isn't is planted there and then if you have a seed for it (from the seed vault there), until there's

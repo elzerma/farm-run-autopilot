@@ -273,6 +273,10 @@ one gets its patch cleared; the tier tip (d) after the release. The crop types a
   Since then: a patch the contract took up is paid for only with the payment carried, a step on one whose item isn't to
   hand is left out after a moment, a contract's crop is planted (or a pre-plant cleared for it) only with a seed for it
   (the Run tab says "you have no seed for it"), and ticking the guild stop ends its contract work and Jane's step too.
+  With no seed, a Medium or Hard contract is swapped, the wiki's way out of a contract that can't be done (Farming
+  contracts: Jane's "anything easier?"; the Ironman Guide's advice is to keep 3–4 seeds of each common contract crop in
+  the vault so it isn't needed): Jane's step says "ask for an easier contract (you have no potato cactus seed)". An Easy
+  one can't be swapped, so it waits, the Run tab saying so (elzerma, 2026-11-03: "Yes, add it").
 - **Second run** (elzerma, 2026-11-02, with crops off the plan picked): the south allotment's watermelons were picked,
   9 went in the compost bin to fill it and the rest were noted, and strawberries were planted with ultracompost; the
   north allotment, the maple and the growing jangerberry were left alone. The flower step (pick the nasturtiums, then

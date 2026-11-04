@@ -108,7 +108,8 @@ The plugin never clicks, types or acts for you. It only shows information.
   contract asks for one; anything else growing there is picked once grown and the pre-plant planted, once you have its
   seed. The contract's crop
   is checked or picked once grown and the patch replanted, and the guild stop ends at Jane, outlined: hand in, take
-  another (the highest tier your level allows), or ask for an easier one when a slow crop's patch is taken. A new
+  another (the highest tier your level allows), or ask for an easier one when a slow crop's patch is taken or you have
+  no seed for it. A new
   contract's crop is then taken on the spot if it's grown, or planted there and then, until there's nothing more to do.
 
 <img src="docs/farm-tab.png" alt="Farm tab: patches, crops, disease-free herbs, protection and compost" width="300">

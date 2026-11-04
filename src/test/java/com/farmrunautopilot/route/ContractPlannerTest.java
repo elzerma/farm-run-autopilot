@@ -268,10 +268,21 @@ public class ContractPlannerTest
 		stock = crop -> crop == Crop.POTATO_CACTUS ? 0 : 1;
 		final Plan none = plan(potatoCactus, 69);
 		assertEquals(Role.LEAVE, none.role(Patch.FARMING_GUILD_CACTUS));
-		assertEquals("Contract: Potato cactus: you have no seed for it", none.getLine());
-		// With one, the cactus makes way
+		// Medium, so swapped for an easier one, the wiki's way out of a contract that can't be done (elzerma: "Yes, add it")
+		assertEquals(Jane.EASIER, none.getJane());
+		assertEquals("Contract: Potato cactus: you have no seed for it, so ask Guildmaster Jane for an easier one",
+			none.getLine());
+		// An Easy one can't be swapped: it waits for a seed
+		final Plan easy = plan(contract(Crop.MARIGOLD, 1), 69);
+		stock = crop -> 0;
+		final Plan noMarigold = plan(contract(Crop.MARIGOLD, 1), 69);
+		assertEquals(Jane.NONE, noMarigold.getJane());
+		assertEquals("Contract: Marigold: you have no seed for it, and an Easy one can't be swapped", noMarigold.getLine());
+		assertEquals(Jane.NONE, easy.getJane());
+		// With a seed, the cactus makes way
 		stock = crop -> 1;
 		assertEquals(Role.CLEAR_FOR_CONTRACT, plan(potatoCactus, 69).role(Patch.FARMING_GUILD_CACTUS));
+		assertEquals(Jane.NONE, plan(potatoCactus, 69).getJane());
 		assertEquals(Crop.POTATO_CACTUS, crop(Patch.FARMING_GUILD_CACTUS, potatoCactus, 69));
 	}
 }
