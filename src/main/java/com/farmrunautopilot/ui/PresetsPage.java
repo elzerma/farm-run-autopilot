@@ -37,8 +37,10 @@ class PresetsPage extends SetupPanel
 	private JComponent presetsSection()
 	{
 		final CollapsibleSection s = section(TITLE);
-		s.help("Save these settings under a name (e.g. \"Quick herbs\") and switch between them at the "
-			+ "top of the Run tab. Presets cover the Farm and Travel tabs; your house and unlocks are shared.");
+		// What a preset covers and what it never changes (SettingsStore.farmAndTravel; docs/plans/fresh-eyes-audit.md, S4)
+		s.help("Save your run types and the Farm and Travel tabs under a name (e.g. \"Quick herbs\") and switch at the top "
+			+ "of the Run tab. A preset never changes the ways you turned off, Avoid the Wilderness, Switch spellbook, "
+			+ "farming contracts or the Account tab.");
 		final JButton save = smallButton("Save current settings as...");
 		save.addActionListener(e ->
 		{

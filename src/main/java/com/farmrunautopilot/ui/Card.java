@@ -91,7 +91,7 @@ class Card extends JPanel
 
 	/**
 	 * A group's heading that opens and closes it: a card with a chevron, the title, and a count on the right
-	 * (e.g. "3 of 7 due"). Used for the patch timers and the guided tests.
+	 * (e.g. "3 of 7 due"). Used for the patch timers, Settings > Debug's patch details and the guided tests.
 	 */
 	static javax.swing.JComponent groupHeader(String title, String summary, boolean open, Runnable toggle)
 	{

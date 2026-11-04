@@ -670,9 +670,10 @@ class RunPanel extends JPanel
 
 	/**
 	 * A shorter name for the timers only (elzerma), so it fits beside the state: each list is one patch type, so
-	 * "Falador" is the herb patch there and "Falador Park" the tree.
+	 * "Falador" is the herb patch there and "Falador Park" the tree. Settings > Debug's patch details, listed the same
+	 * way, use it too.
 	 */
-	private static String timerName(Location location)
+	static String timerName(Location location)
 	{
 		switch (location)
 		{

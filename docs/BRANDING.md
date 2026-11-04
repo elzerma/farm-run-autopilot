@@ -137,6 +137,8 @@ Keep to these numbers; if something looks cramped, change it here and in the cod
   action on screen: Build run, Start now, Start test), danger (muted red, white text: Stop).
 - **Drop-downs and number boxes** (`Style.combo`, `Style.spinner`): darker grey, medium grey outline, orange
   outline while focused, plain arrow.
+- **Colour swatches** (Settings > Display): at the right of the row of the highlight they colour, opening RuneLite's
+  colour picker; the swatch's hover says everything that colour is used for.
 - **Tick boxes** (`Style.checkBox`, 12 px, drawn by us):
 
   | State | Look |
