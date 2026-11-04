@@ -89,7 +89,13 @@ public enum TestItem
 	// Sprint 1c, the special trees
 	GREAT_CONCH_ACCESS(Tab.ACCOUNT, "The Great Conch's calquat patch",
 		"Only if you've started Troubled Tortugans but not finished it: go to the calquat patch on the Summer Shore of the "
-			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2);
+			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2),
+	// Dev check: what the fresh-eyes audit's renders couldn't show, hovers and the colour picker in the real client
+	// (docs/plans/fresh-eyes-audit.md). Remove once it passes
+	AUDIT_HOVERS(Tab.DEV, "Sidebar hovers and colours",
+		"The fresh-eyes audit was checked from renders, which can't show hovers or the colour picker. Hover two "
+			+ "explanations and click a colour: each hover should wrap to about the sidebar's width, and each colour should "
+			+ "sit at the right of its highlight's row.");
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter
