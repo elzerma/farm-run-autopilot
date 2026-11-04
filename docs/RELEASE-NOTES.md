@@ -21,8 +21,8 @@
   it's grown, and for a slow one the guide says to ask Jane for an easier contract.
 - The guild stop ends at Jane, outlined: hand in your contract and take another (the highest tier your level allows),
   or ask for one. The guide then carries on: a new contract's crop already grown is done on the spot and handed in,
-  and one that isn't is planted there and then, with its seed from the seed vault, until there's nothing more to do
-  for contracts. The Run tab says where the contract stands.
+  and one that isn't is planted there and then if you have a seed for it (from the seed vault there), until there's
+  nothing more to do for contracts. The Run tab says where the contract stands, and when you have no seed for it.
 
 ### Travel
 - Every leg is planned from a travel map worked out ahead of time with Shortest Path's data. It covers teleports,

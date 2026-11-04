@@ -100,7 +100,7 @@ public final class ContractPlanner
 		final Jane jane = jane(contract, farming, usable, predictions);
 		final Tier ask = Tier.highest(farming);
 		return new Plan(true, contract, Collections.unmodifiableMap(roles), jane, ask,
-			line(contract, farming, jane, ask, roles, usable, predictions));
+			line(contract, farming, jane, ask, roles, usable, predictions, stock));
 	}
 
 	/** A guild contract patch's role, from what it holds now. */
@@ -123,7 +123,10 @@ public final class ContractPlanner
 			return ready(patch, live) ? Role.TAKE : Role.LEAVE;
 		}
 		final Patch forContract = wanted != null ? contractPatch(contract, farming, usable, predictions) : null;
-		if (patch == forContract && blocked(contract, farming, usable, predictions) && !askEasier(contract))
+		// The contract's crop goes in only with a seed for it (elzerma's run of 2026-11-03: a potato cactus contract with
+		// none took up the cactus patch, "I don't have potato cactus seed, either")
+		final boolean seed = wanted != null && stock.applyAsInt(wanted) > 0;
+		if (patch == forContract && seed && blocked(contract, farming, usable, predictions) && !askEasier(contract))
 		{
 			return Role.CLEAR_FOR_CONTRACT;
 		}
@@ -131,7 +134,7 @@ public final class ContractPlanner
 		// just want to pick anything that isn't in alignment with the pre-planting plan"): with the contract's crop when
 		// it goes there, else once there's a pre-plant to put in (elzerma's run that day had no white lily seed for the
 		// flower patch, and the step to pick its nasturtiums was ticked off)
-		return clearing(patch, live, farming) && (patch == forContract || hasPrePlant(patch, farming, stock))
+		return clearing(patch, live, farming) && (patch == forContract && seed || hasPrePlant(patch, farming, stock))
 			? Role.TAKE : Role.LEAVE;
 	}
 
@@ -168,14 +171,15 @@ public final class ContractPlanner
 	}
 
 	/**
-	 * The crop a guild contract patch gets planted with: the contract's in the patch it goes to, else the patch's
-	 * pre-plant, the first of the wiki's choices the player has (or its first), else their own choice for the type.
+	 * The crop a guild contract patch gets planted with: the contract's in the patch it goes to, when there's a seed for
+	 * it, else the patch's pre-plant, the first of the wiki's choices the player has (or its first), else their own
+	 * choice for the type.
 	 */
 	public static Crop crop(Patch patch, Contract contract, int farming, List<Patch> usable,
 		Function<Patch, PatchPrediction> predictions, ToIntFunction<Crop> stock, Function<PatchType, Crop> own)
 	{
-		if (contract.held() && contract.getCrop() != null && patch == contractPatch(contract, farming, usable, predictions)
-			&& !growing(contract.getCrop(), usable, predictions))
+		if (contract.held() && contract.getCrop() != null && stock.applyAsInt(contract.getCrop()) > 0
+			&& patch == contractPatch(contract, farming, usable, predictions) && !growing(contract.getCrop(), usable, predictions))
 		{
 			return contract.getCrop();
 		}
@@ -328,7 +332,7 @@ public final class ContractPlanner
 	}
 
 	private static String line(Contract contract, int farming, Jane jane, Tier ask, Map<Patch, Role> roles,
-		List<Patch> usable, Function<Patch, PatchPrediction> predictions)
+		List<Patch> usable, Function<Patch, PatchPrediction> predictions, ToIntFunction<Crop> stock)
 	{
 		final String asked = ask != null ? "a " + ask.getDisplayName() + " one" : "one";
 		final Crop crop = contract.getCrop();
@@ -355,6 +359,11 @@ public final class ContractPlanner
 		{
 			return "Contract: " + name + " is grown: " + (where.getType().isHealthChecked() ? "checked" : "picked")
 				+ " at the guild this run";
+		}
+		// Not growing and nothing to plant it with: it waits for a seed (elzerma's potato cactus contract, 2026-11-03)
+		if (!growing(crop, usable, predictions) && stock.applyAsInt(crop) <= 0)
+		{
+			return "Contract: " + name + ": you have no seed for it";
 		}
 		if (role == Role.PLANT)
 		{

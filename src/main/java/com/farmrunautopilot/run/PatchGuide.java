@@ -157,6 +157,8 @@ class PatchGuide
 	private boolean bucketVisit;
 	/** Guild patches outside the plan a farming contract brought into the guild stop: kept to its end. */
 	private final Set<Patch> contractExtras = EnumSet.noneOf(Patch.class);
+	/** The guild stop was ticked by hand: no more contract work there, Guildmaster Jane included. */
+	private boolean contractSkipped;
 	/** The stop's bin's fill count as last read in range, -1 when not read or not filling (P3). */
 	private int binCountSeen = -1;
 	/** The player has begun putting the crops for it in the stop's bin, and still has some (P3). */
@@ -350,6 +352,29 @@ class PatchGuide
 		}
 	}
 
+	/**
+	 * The guild stop ticked by hand: the contract work a contract took up outside the plan, and Guildmaster Jane, are left
+	 * too, so the guide moves on (elzerma, 2026-11-03: stuck on "Pay Alan" for a bush a contract took up, "no way to skip,
+	 * either", as ticking the stop left them).
+	 */
+	void skipContractWork()
+	{
+		contractSkipped = true;
+		clearCurrent();
+	}
+
+	/** The guild stop unticked: its contract work is looked at again. */
+	void resumeContractWork()
+	{
+		contractSkipped = false;
+	}
+
+	/** The step in hand is at a guild patch a farming contract took up, outside the plan. */
+	boolean onContractExtra()
+	{
+		return currentPatch != null && contractExtras.contains(currentPatch);
+	}
+
 	/** Untick a patch ticked by hand: the guide looks at it again. */
 	void unskip(Patch patch)
 	{
@@ -500,6 +525,7 @@ class PatchGuide
 			fillingBin = false;
 			bucketVisit = false;
 			contractExtras.clear();
+			contractSkipped = false;
 			leprechaun = null;
 			leprechaunAt = null;
 			storeDue = false;
@@ -786,7 +812,7 @@ class PatchGuide
 	private List<Patch> contractStop(RouteStop stop, List<Patch> here)
 	{
 		final List<Patch> guild = contractPatches();
-		if (guild.isEmpty() || stop.getLocation() != Location.FARMING_GUILD)
+		if (guild.isEmpty() || stop.getLocation() != Location.FARMING_GUILD || contractSkipped)
 		{
 			return here;
 		}
@@ -821,8 +847,9 @@ class PatchGuide
 			{
 				final ContractPlanner.Role role = ContractPlanner.role(patch, contract, farming, guild,
 					patchTracker::predict, stock);
+				// Planting the contract's crop only with a seed for it (elzerma's potato cactus contract, 2026-11-03)
 				if (role == ContractPlanner.Role.TAKE && live.getCrop() == contract.getCrop()
-					|| patch == forContract && role != ContractPlanner.Role.LEAVE)
+					|| patch == forContract && role != ContractPlanner.Role.LEAVE && stock.applyAsInt(contract.getCrop()) > 0)
 				{
 					contractExtras.add(patch);
 					log.debug("Farming contract: {} joins the guild stop for the {} contract ({})", patch.getDisplayName(),
@@ -846,7 +873,7 @@ class PatchGuide
 	private String janeStep(RouteStop stop, List<Patch> here)
 	{
 		final List<Patch> guild = contractPatches();
-		if (guild.isEmpty() || stop.getLocation() != Location.FARMING_GUILD)
+		if (guild.isEmpty() || stop.getLocation() != Location.FARMING_GUILD || contractSkipped)
 		{
 			return null;
 		}
@@ -1985,11 +2012,13 @@ class PatchGuide
 		final Crop crop = plantingFor(patch);
 		final boolean faladorElite = patch == Patch.FALADOR_TREE && access.isKnown()
 			&& access.isMet(Requirement.diary(AchievementDiary.FALADOR, AchievementDiary.Tier.ELITE));
-		// As the supplies were worked out: paid, or protected with compost when the payment couldn't be had
+		// As the supplies were worked out: paid, or protected with compost when the payment couldn't be had. Outside them (a
+		// patch a farming contract took up at the guild), paid only with the payment carried (elzerma, 2026-11-03: "Pay
+		// Alan: 8 x Mushroom" for the whiteberry, "I don't even have mushrooms")
 		final PatchCare care = plan.getSupplies().getCare().get(patch);
 		final boolean protectionNeeded = care != null ? care.isPaid() : patch.getType().isProtectable() && crop != null
 			&& crop.hasPayment() && FlowerProtection.effective(patch, config, access, plan.getSupplies().getPlantings(),
-			patchTracker::predict) == Protection.PAY_GARDENER && !faladorElite;
+			patchTracker::predict) == Protection.PAY_GARDENER && !faladorElite && carriesPayment(crop);
 		final String plantName = crop != null ? runService.itemName(crop.getPlantItemId()) : "your seed";
 		final String payment = protectionNeeded
 			? crop.getPaymentQuantity() + " x " + runService.itemName(crop.getPaymentItemId()) + extras(crop)
@@ -1999,6 +2028,29 @@ class PatchGuide
 		return new StepAdvisor.PatchGoal(patch, crop, plantName, compostFor(patch),
 			protectionNeeded, payment, config.paysToClear(patch.getType()), p.composted, p.paid,
 			p.sawUnplanted, config.keepsGrowing(patch.getType()) && !contractPatches().contains(patch));
+	}
+
+	/** A crop's payment for its protection, extras and all, carried in the inventory, notes counting. */
+	private boolean carriesPayment(Crop crop)
+	{
+		final Map<Integer, Integer> inventory = holdingsTracker.getHoldings().in(Holdings.Source.INVENTORY);
+		if (carriedCount(inventory, crop.getPaymentItemId()) < crop.getPaymentQuantity())
+		{
+			return false;
+		}
+		for (Map.Entry<Integer, Integer> extra : crop.getExtraPayments().entrySet())
+		{
+			if (carriedCount(inventory, extra.getKey()) < extra.getValue())
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private int carriedCount(Map<Integer, Integer> inventory, int itemId)
+	{
+		return inventory.getOrDefault(itemId, 0) + inventory.getOrDefault(runService.notedId(itemId), 0);
 	}
 
 	/** The rest of a payment after its main item, e.g. ", 1 x Monkey bar, 1 x Ground tooth" for a spirit tree. */

@@ -841,6 +841,7 @@ public class RunSession
 		if (stop.getLocation() == Location.FARMING_GUILD)
 		{
 			vaultChecked = true;
+			patches.skipContractWork();
 		}
 		patches.skipAll(patchesAt(plan, stop.getLocation()));
 		evaluate();
@@ -871,6 +872,7 @@ public class RunSession
 		if (location == Location.FARMING_GUILD)
 		{
 			vaultChecked = false;
+			patches.resumeContractWork();
 		}
 		if (index <= stopIndex)
 		{
@@ -1282,6 +1284,23 @@ public class RunSession
 			{
 				log.debug("Missing items carried after all");
 				missingAsk = null;
+			}
+			return;
+		}
+		// A patch a farming contract took up at the guild, outside the plan: what its step needs isn't to hand (carried,
+		// with the tool leprechaun or in the seed vault), so after a moment's grace that part's left out, as for an item
+		// done without, rather than banked for (elzerma, 2026-11-03: "Pay Alan" with no mushrooms, "no way to skip, either")
+		if (patches.onContractExtra() && patches.currentItemMissing(patches.highlights()))
+		{
+			if (missingSince == 0)
+			{
+				missingSince = now;
+			}
+			else if (now - missingSince >= MISSING_GRACE_MILLIS)
+			{
+				log.debug("Step skipped: a farming contract's patch outside the plan, its item not to hand");
+				patches.skipCurrentStep();
+				missingSince = 0;
 			}
 			return;
 		}

@@ -256,6 +256,22 @@ public class ContractPlannerTest
 
 	private Crop crop(Patch patch, Contract contract, int farming)
 	{
-		return ContractPlanner.crop(patch, contract, farming, GUILD, held::get, c -> 0, type -> null);
+		return ContractPlanner.crop(patch, contract, farming, GUILD, held::get, stock, type -> null);
+	}
+
+	/** elzerma's run of 2026-11-03: a potato cactus contract with no seed for it took up the guild's cactus patch. */
+	@Test
+	public void aContractWithNoSeedLeavesThePreplantAlone()
+	{
+		grow(Patch.FARMING_GUILD_CACTUS, Crop.CACTUS, PatchState.CHECK_HEALTH);
+		final Contract potatoCactus = contract(Crop.POTATO_CACTUS, 2);
+		stock = crop -> crop == Crop.POTATO_CACTUS ? 0 : 1;
+		final Plan none = plan(potatoCactus, 69);
+		assertEquals(Role.LEAVE, none.role(Patch.FARMING_GUILD_CACTUS));
+		assertEquals("Contract: Potato cactus: you have no seed for it", none.getLine());
+		// With one, the cactus makes way
+		stock = crop -> 1;
+		assertEquals(Role.CLEAR_FOR_CONTRACT, plan(potatoCactus, 69).role(Patch.FARMING_GUILD_CACTUS));
+		assertEquals(Crop.POTATO_CACTUS, crop(Patch.FARMING_GUILD_CACTUS, potatoCactus, 69));
 	}
 }

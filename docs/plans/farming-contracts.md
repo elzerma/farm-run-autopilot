@@ -265,6 +265,14 @@ one gets its patch cleared; the tier tip (d) after the release. The crop types a
 - **First run** (elzerma, 2026-11-02, Farming 69 so the Medium table, the jangerberry contract held): the guild stop
   planted the jangerberry in the bush patch and paid Alan for it, and the Medium pre-plants (cactus, irit) in the
   patches found empty; the trees, flower and allotments were left alone, and there was nothing to see Jane about.
+- **Carrying on, first try** (elzerma, 2026-11-03 evening): the snapdragon was picked and handed in, the herb patch
+  replanted with irit, a whiteberry contract taken and done on the spot (the bush checked, picked, dug up and planted
+  again with a whiteberry seed "from the seed vault"), and a potato cactus contract taken. Two dead ends with no way
+  out: "Pay Alan: 8 x Mushroom" for the replanted bush, with none (the plan works out payment only for its own
+  patches), and planting the potato cactus with no seed for it; ticking the guild stop left both, and Jane's step.
+  Since then: a patch the contract took up is paid for only with the payment carried, a step on one whose item isn't to
+  hand is left out after a moment, a contract's crop is planted (or a pre-plant cleared for it) only with a seed for it
+  (the Run tab says "you have no seed for it"), and ticking the guild stop ends its contract work and Jane's step too.
 - **Second run** (elzerma, 2026-11-02, with crops off the plan picked): the south allotment's watermelons were picked,
   9 went in the compost bin to fill it and the rest were noted, and strawberries were planted with ultracompost; the
   north allotment, the maple and the growing jangerberry were left alone. The flower step (pick the nasturtiums, then
