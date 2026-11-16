@@ -11,6 +11,7 @@ import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.Unlock;
 import com.farmrunautopilot.data.poh.HousePortal;
 import com.farmrunautopilot.data.poh.PortalNexus;
+import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.supply.Holdings;
 import java.util.Arrays;
@@ -20,9 +21,11 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
 import net.runelite.api.Skill;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarbitID;
 import org.junit.Test;
@@ -138,6 +141,40 @@ public class TravelAtlasTest
 		assertTrue(unplaced.getExits().stream().anyMatch(e -> e.getName().equals("nexus: Catherby Portal")));
 		assertNull(unplaced.getPortal());
 		assertNull(AtlasHouse.of(ATLAS, account(99, held), poh, 10.0, false));
+	}
+
+	@Test
+	public void theMountedXericsTalismanIsAWayOutToHosidius()
+	{
+		// A Rimmington house teleported into by tablet, with a Xeric's talisman mounted in its portal nexus room
+		final Map<Integer, Integer> held = items(ItemID.POH_TABLET_TELEPORTTOHOUSE, 10);
+		final AtlasAccount account = new AtlasAccount(access(99, HousePortal.RIMMINGTON.getGameValue()), holdings(held),
+			Map.of(VarbitID.POH_HOUSE_LOCATION, 1, VarbitID.POH_TELE_TOGGLE, 1), Map.of());
+		final PohSetup poh = new PohSetup();
+		assertTrue(talismanExits(AtlasHouse.of(ATLAS, account, poh)).isEmpty());
+
+		poh.setXericsTalisman(true);
+		final AtlasHouse house = AtlasHouse.of(ATLAS, account, poh);
+		final List<AtlasHouse.Exit> exits = talismanExits(house);
+		// Where the talisman carried goes, named as it is, but Xeric's Honour: its ancient tablet can't be told
+		assertEquals(List.of("Xeric's talisman: Xeric's Lookout", "Xeric's talisman: Xeric's Glade",
+			"Xeric's talisman: Xeric's Inferno", "Xeric's talisman: Xeric's Heart"),
+			exits.stream().map(AtlasHouse.Exit::getName).collect(Collectors.toList()));
+		assertEquals(new WorldPoint(1752, 3566, 0), ATLAS.place(exits.get(1).getLanding()).getPoint());
+
+		// Hosidius by it: in by the tablet and to the exits, as for the nexus, the talisman's teleport, then 22 tiles
+		final AtlasLegs.Leg leg = new AtlasLegs(ATLAS, account, house).quickest(-1, places("HOSIDIUS_HERB"));
+		assertNotNull(leg);
+		assertEquals("House > Xeric's talisman: Xeric's Glade > walk 22 tiles", leg.getHow());
+		assertEquals(4 * 0.6 + TravelTimes.HOUSE_WALK + TravelTimes.TELEPORT + 22 * 0.3, leg.getSeconds(), 1e-9);
+		final AtlasLegs.Leg without = new AtlasLegs(ATLAS, account).quickest(-1, places("HOSIDIUS_HERB"));
+		assertTrue(without == null || without.getSeconds() > leg.getSeconds());
+	}
+
+	private static List<AtlasHouse.Exit> talismanExits(AtlasHouse house)
+	{
+		return house.getExits().stream().filter(e -> e.getKind() == AtlasHouse.ExitKind.XERICS_TALISMAN)
+			.collect(Collectors.toList());
 	}
 
 	@Test

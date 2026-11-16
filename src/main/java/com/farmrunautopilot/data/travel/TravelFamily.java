@@ -17,7 +17,7 @@ public enum TravelFamily
 	TABLETS("Tablets and scrolls", true, true, "Teleport tablets, scrolls and spheres you own. Off: none is broken, and "
 		+ "teleports you can cast are cast from runes"),
 	HOUSE("House", true, false, "Teleport to House by spell, tablet or cape, then your house's portals, jewellery box, "
-		+ "fairy ring and spirit tree, as set in Account > My house. Off: your house isn't used"),
+		+ "Xeric's talisman, fairy ring and spirit tree, as set in Account > My house. Off: your house isn't used"),
 	FAIRY_RINGS("Fairy rings", true, true, "Fairy rings, reached on foot or after a teleport. Off: no ring is used, your "
 		+ "house's included"),
 	SPIRIT_TREES("Spirit trees", true, true, "Spirit trees, reached on foot or after a teleport. Off: no spirit tree is "

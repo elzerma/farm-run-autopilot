@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import com.farmrunautopilot.data.poh.JewelleryBoxTier;
 import com.farmrunautopilot.data.poh.PoolTier;
+import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.google.gson.Gson;
 import net.runelite.api.gameval.ObjectID;
@@ -22,6 +23,35 @@ public class PohDetectorTest
 		assertEquals(PoolTier.ORNATE_REJUVENATION, PohDetector.poolFor(ObjectID.POH_POOL_REGENERATION));
 		assertNull(PohDetector.jewelleryBoxFor(ObjectID.POH_FAIRY_RING));
 		assertNull(PohDetector.poolFor(ObjectID.POH_JEWELLERY_BOX_2));
+	}
+
+	@Test
+	public void theMountedXericsTalismanIsFoundInTheHouse()
+	{
+		// Its object and one for each place its left-click can be set to; not the digsite pendant's beside it
+		for (int id : new int[]{ObjectID.POH_AMULET_XERIC, ObjectID.POH_AMULET_XERIC_LOOKOUT,
+			ObjectID.POH_AMULET_XERIC_GLADE, ObjectID.POH_AMULET_XERIC_INFERNO, ObjectID.POH_AMULET_XERIC_HEART,
+			ObjectID.POH_AMULET_XERIC_HONOUR})
+		{
+			assertTrue(String.valueOf(id), PohDetector.isXericsTalisman(id));
+		}
+		assertFalse(PohDetector.isXericsTalisman(ObjectID.POH_AMULET_DIGSITE));
+		assertFalse(PohDetector.isXericsTalisman(ObjectID.POH_AMULET_DIG_FOSSIL));
+		assertFalse(PohDetector.isXericsTalisman(ObjectID.POH_NEXUS_PORTAL_1));
+
+		final SettingsStore settings = new SettingsStore(null, new Gson());
+		settings.getAccount().setAutoDetectHouse(true);
+		final PohDetector detector = new PohDetector(null, settings, null);
+		detector.onHouseLoading();
+		detector.onSceneLoading(true);
+		detector.onObjectSpawned(ObjectID.POH_AMULET_XERIC_GLADE);
+		assertTrue(detector.hasFoundXericsTalisman());
+
+		// Rescan clears it with the rest of the detected furniture
+		final PohSetup poh = new PohSetup();
+		poh.setXericsTalisman(true);
+		PohDetector.clearDetected(poh);
+		assertFalse(poh.isXericsTalisman());
 	}
 
 	@Test

@@ -75,8 +75,8 @@ public enum TestItem
 			+ "Farming Guild). It should tick itself once the grown tree is in view.", 2),
 	HOUSE_SCAN(Tab.ACCOUNT, "House scanning (beta)",
 		"Tick \"Detect furniture when I enter my house\" in Account > My house, then enter your house: your "
-			+ "jewellery box, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned), and My house "
-			+ "should say when it was last scanned, even if your house has none of them. "
+			+ "jewellery box, altar, fairy ring, spirit tree and Xeric's talisman should fill in (the portal nexus isn't "
+			+ "scanned), and My house should say when it was last scanned, even if your house has none of them. "
 			+ "Then visit someone else's house: nothing of yours should change.", 4),
 	SEAWEED_DIVE(Tab.TRAVEL, "Diving to the seaweed patches",
 		"With Bone Voyage done, build a run with only the Fossil Island seaweed patches and follow the guide: the "
@@ -89,7 +89,13 @@ public enum TestItem
 	// Sprint 1c, the special trees
 	GREAT_CONCH_ACCESS(Tab.ACCOUNT, "The Great Conch's calquat patch",
 		"Only if you've started Troubled Tortugans but not finished it: go to the calquat patch on the Summer Shore of the "
-			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2);
+			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2),
+	// Dev check: the mounted Xeric's talisman as a way out of the house (docs/plans/travel-rework.md, "The mounted Xeric's
+	// talisman"). Remove once it passes
+	XERICS_TALISMAN_HOUSE(Tab.DEV, "Xeric's talisman in your house",
+		"With a Xeric's talisman mounted in your portal nexus room, enter your house: the scan should tick Xeric's "
+			+ "talisman in Account > My house. Then leave, somewhere away from Kourend, and start the test's run, just "
+			+ "Hosidius: its stop should say \"House Xeric's talisman: Xeric's Glade\". Follow the guide to the patches.");
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter

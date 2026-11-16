@@ -217,6 +217,37 @@ public class RouteChainTest
 	}
 
 	@Test
+	public void hosidiusByTheHousesXericsTalismanRatherThanTheBookOfTheDead()
+	{
+		// elzerma's account, its house away from Kourend (2026-11-15): Hosidius by the Book of the Dead's Lunch by the
+		// Lancalliums, while a Xeric's talisman is mounted in the house. Ticked in My house, the route goes in by Teleport
+		// to House and out by the talisman to Xeric's Glade, 22 tiles from the herb patch
+		final AccessSnapshot base = ElzermaAccount.access();
+		final AccessSnapshot access = new AccessSnapshot(true, base.getQuests(), base.getRealLevels(),
+			base.getCompletedDiaries(), base.getUnlocks(), HousePortal.RIMMINGTON.getGameValue(), false, Spellbook.STANDARD,
+			Collections.emptySet(), 0, 0, false);
+		final Holdings holdings = ElzermaAccount.holdings();
+		final RunConfig config = new RunConfig().sanitise();
+		config.setEndNearBank(false);
+		final List<Patch> hosidius = Collections.singletonList(Patch.HOSIDIUS_HERB);
+		final PohSetup poh = new PohSetup();
+		final List<RouteStop> book = plan(hosidius, config, access, holdings, poh, null, 0);
+		assertTrue(describe(book), book.get(0).describeTravel().contains("Lunch by the Lancalliums"));
+
+		poh.setXericsTalisman(true);
+		final List<RouteStop> talisman = plan(hosidius, config, access, holdings, poh, null, 0);
+		final RouteStop stop = talisman.get(0);
+		assertEquals(describe(talisman), "House Xeric's talisman: Xeric's Glade", stop.describeTravel());
+		assertEquals(describe(talisman), Departure.ATLAS, stop.getDeparture());
+		assertTrue(describe(talisman), stop.getAtlas().isViaHouse());
+		// Nothing to carry for it, and "Don't use your house" turns it off
+		assertEquals(describe(talisman), null, stop.travelItem());
+		assertTrue(describe(talisman), stop.getWays().contains(AtlasWays.familyKey(TravelFamily.HOUSE)));
+		// 23 s against 34 s (2026-11-15): house 5 + Xeric's talisman 3 + walk 22 tiles 7 + overhead 8
+		assertTrue(describe(book) + describe(talisman), stop.getLegSeconds() < book.get(0).getLegSeconds());
+	}
+
+	@Test
 	public void treeGnomeVillageChainsFromTheStronghold()
 	{
 		// The CIQ fairy ring walk is long; the Stronghold's spirit tree is the way in

@@ -9,9 +9,9 @@ import java.util.Set;
 import lombok.Data;
 
 /**
- * The player's house (SPEC 5 PohSetup, 13.2 "My POH"). Jewellery box, pool, fairy ring and spirit tree
- * are detected when the player is in their house; everything can be edited by hand. Where the house is and how
- * Teleport to House lands are read from the game instead (AccessSnapshot): saves from before 2026-10-21 still
+ * The player's house (SPEC 5 PohSetup, 13.2 "My POH"). Jewellery box, pool, fairy ring, spirit tree and the mounted
+ * Xeric's talisman are detected when the player is in their house; everything can be edited by hand. Where the house is
+ * and how Teleport to House lands are read from the game instead (AccessSnapshot): saves from before 2026-10-21 still
  * load, and their picked location and "teleport outside" are dropped.
  */
 @Data
@@ -26,6 +26,11 @@ public class PohSetup
 	private PohAltar altar;
 	private boolean fairyRing;
 	private boolean spiritTree;
+	/**
+	 * A Xeric's talisman mounted in the portal nexus room's amulet space (72 Construction): the talisman's teleports
+	 * with no charges. Saves from before 2026-11-15 load without one.
+	 */
+	private boolean xericsTalisman;
 	/** Epoch seconds of the last automatic detection, 0 if never. */
 	private long lastDetected;
 

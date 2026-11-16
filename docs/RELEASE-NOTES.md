@@ -33,6 +33,8 @@
 - Journeys are spelled out step by step, with the boat, NPC or object to use outlined and its option coloured. A fairy
   ring's code is coloured in its travel log, and a teleport item's option in its right-click menu.
 - Where your house is, and where Teleport to House lands, are read from the game.
+- A Xeric's talisman mounted in your house is a way out of it: tick it in Account > My house (the house scan ticks it
+  too). With it, Hosidius can be Teleport to House, then the talisman's Xeric's Glade.
 - A second staff can come along when it saves inventory slots, and the rune pouch counts as one slot (#31).
 
 ### At the patches

@@ -19,10 +19,10 @@ import lombok.Value;
 
 /**
  * The player's house as a way out (docs/plans/travel-rework.md, section 4): in by Teleport to House, or by "Your house"
- * on any spirit tree once one grows in the house (issue #16), then a nexus portal, the jewellery box, the house's fairy
- * ring or spirit tree, or (in by a tree) out through the front door; each lands at an atlas place. Built from the house
- * the player set up (PohSetup), and where the game says it is (AccessSnapshot); the atlas's house rows don't know which
- * portals a house has.
+ * on any spirit tree once one grows in the house (issue #16), then a nexus portal, the jewellery box, the mounted Xeric's
+ * talisman, the house's fairy ring or spirit tree, or (in by a tree) out through the front door; each lands at an atlas
+ * place. Built from the house the player set up (PohSetup), and where the game says it is (AccessSnapshot); the atlas's
+ * house rows don't know which portals a house has.
  */
 public final class AtlasHouse
 {
@@ -48,6 +48,8 @@ public final class AtlasHouse
 		PORTAL,
 		NEXUS,
 		JEWELLERY_BOX,
+		/** The Xeric's talisman mounted in the portal nexus room: the talisman's teleports, with no charges. */
+		XERICS_TALISMAN,
 		FAIRY_RING,
 		SPIRIT_TREE
 	}
@@ -90,7 +92,7 @@ public final class AtlasHouse
 		return treeIn;
 	}
 
-	/** The nexus, jewellery box, fairy ring and spirit tree exits. */
+	/** The nexus, jewellery box, Xeric's talisman, fairy ring and spirit tree exits. */
 	public List<Exit> getExits()
 	{
 		return Collections.unmodifiableList(exits);
@@ -140,14 +142,20 @@ public final class AtlasHouse
 		{
 			nexus.add(d.getDisplayName() + " Portal");
 		}
-		// The jewellery box's rows land where the item's own teleport does: that item says which tier they need
+		// The jewellery box's rows land where the item's own teleport does: that item says which tier they need. So do the
+		// mounted talisman's, whose places the talisman's own teleports name, and say what each needs besides the talisman
 		final Map<Integer, JewelleryBoxTier> boxTierAt = new HashMap<>();
+		final Map<Integer, TravelAtlas.Jump> talismanAt = new HashMap<>();
 		for (TravelAtlas.Jump t : atlas.getTeleports())
 		{
 			final TravelItem item = t.getType().equals("TELEPORTATION_ITEM") ? AtlasLinks.item(atlas, t) : null;
 			if (item != null && BOX_TIER.containsKey(item))
 			{
 				boxTierAt.merge(t.getTo(), BOX_TIER.get(item), (a, b) -> a.ordinal() <= b.ordinal() ? a : b);
+			}
+			if (item == TravelItem.XERICS_TALISMAN)
+			{
+				talismanAt.putIfAbsent(t.getTo(), t);
 			}
 		}
 		final HousePortal place = access.getHousePortal();
@@ -158,6 +166,18 @@ public final class AtlasHouse
 			if (t.getType().equals("TELEPORTATION_PORTAL_POH") && nexus.contains(t.getName()))
 			{
 				exits.add(new Exit(ExitKind.NEXUS, t.getTo(), TravelTimes.TELEPORT, "nexus: " + t.getName()));
+			}
+			else if (t.getType().equals("TELEPORTATION_BOX") && talismanAt.containsKey(t.getTo()))
+			{
+				// In the portal nexus room with the nexus, so timed as it is: the walk to the exits, then the teleport. Xeric's
+				// Honour needs its ancient tablet used on the talisman, which the plugin can't tell (AtlasAccount), as for the
+				// one carried; Shortest Path leaves it out without that too
+				final TravelAtlas.Jump own = talismanAt.get(t.getTo());
+				if (poh.isXericsTalisman() && meetsAllBut(atlas, account, own, TravelItem.XERICS_TALISMAN))
+				{
+					exits.add(new Exit(ExitKind.XERICS_TALISMAN, t.getTo(), TravelTimes.TELEPORT,
+						AtlasWays.teleportName(own.getName())));
+				}
 			}
 			else if (t.getType().equals("TELEPORTATION_BOX") && poh.getJewelleryBox() != null)
 			{
@@ -202,6 +222,42 @@ public final class AtlasHouse
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * The player meets a teleport's needs but for the item itself, which is mounted in the house: Xeric's Honour's unlock
+	 * on the talisman's.
+	 */
+	private static boolean meetsAllBut(TravelAtlas atlas, AtlasAccount account, TravelAtlas.Jump teleport, TravelItem item)
+	{
+		for (int id : teleport.getNeeds())
+		{
+			final AtlasNeed need = atlas.need(id);
+			if (!names(need, item) && !account.meets(need))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/** One of the need's branches is this item. */
+	private static boolean names(AtlasNeed need, TravelItem item)
+	{
+		for (AtlasNeed.Branch branch : need.getBranches())
+		{
+			for (int id : branch.getItems())
+			{
+				for (int itemId : item.getItemIds())
+				{
+					if (id == itemId)
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	/**
