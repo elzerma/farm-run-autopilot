@@ -36,7 +36,7 @@
 - A Xeric's talisman mounted in your house is a way out of it: tick it in Account > My house (the house scan ticks it
   too). With it, Hosidius can be Teleport to House, then the talisman's Xeric's Glade.
 - In your house, the way out the route takes (the nexus, jewellery box, Xeric's talisman, fairy ring or spirit tree) is
-  outlined with the hint arrow over it, which also shows on the minimap, and the talisman's option is coloured in its
+  outlined, with the growing vine round it and the hint arrow over it, and the talisman's option is coloured in its
   right-click menu.
 - A second staff can come along when it saves inventory slots, and the rune pouch counts as one slot (#31).
 

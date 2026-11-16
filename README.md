@@ -71,8 +71,8 @@ The plugin never clicks, types or acts for you. It only shows information.
 - Journeys are spelled out step by step: boats and ships, quetzals, gliders, balloons, carts, ladders, Elkoy, the
   dive to the seaweed patches, and Agility shortcuts when you have the level (the way round when you don't). The
   boat, NPC or object to use is outlined, with its option coloured in its right-click menu. In your house, its way
-  out (the nexus, jewellery box, Xeric's talisman, fairy ring or spirit tree) is outlined with the hint arrow over it,
-  and the talisman's option is coloured.
+  out (the nexus, jewellery box, Xeric's talisman, fairy ring or spirit tree) is outlined, with the growing vine round
+  it and the hint arrow over it, and the talisman's option is coloured.
 - With [Shortest Path](https://github.com/Skretzo/shortest-path) installed, a walking line to the next patch, tool
   leprechaun, compost bin or bank. Your Shortest Path settings are put back afterwards.
 - The tool leprechaun is visited only when a stop needs it: for compost, a tool or room. Each visit also notes your

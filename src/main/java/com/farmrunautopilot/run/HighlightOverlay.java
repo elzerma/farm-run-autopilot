@@ -24,8 +24,9 @@ import net.runelite.client.ui.overlay.OverlayUtil;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
 /**
- * Outlines the patch the current step is about and, when paying, the gardener (SPEC 13.4). Reads only the
- * session's precomputed highlights and the tracked objects, so each frame is cheap.
+ * Outlines the patch the current step is about and, when paying, the gardener (SPEC 13.4); in the house, its way out,
+ * with the growing vine round it. Reads only the session's precomputed highlights and the tracked objects, so each frame
+ * is cheap.
  */
 public class HighlightOverlay extends Overlay
 {
@@ -37,6 +38,8 @@ public class HighlightOverlay extends Overlay
 	private final SceneTracker scene;
 	private final FarmRunAutopilotConfig config;
 	private final ModelOutlineRenderer outlines;
+	/** Round the house's way out (its falling petals are state, so it's kept). */
+	private final VineFrame vine = new VineFrame();
 
 	@Inject
 	HighlightOverlay(Client client, RunSession session, SceneTracker scene, FarmRunAutopilotConfig config,
@@ -103,11 +106,22 @@ public class HighlightOverlay extends Overlay
 		{
 			outlines.drawOutline(rideObject, OUTLINE_WIDTH, config.npcColour(), OUTLINE_FEATHER);
 		}
-		// In the house, its way out the leg takes: the Xeric's talisman, the nexus, the jewellery box...
-		final TileObject houseExit = scene.getHouseExit();
-		if (houseExit != null && config.highlightGardener())
+		// In the house, its way out the leg takes: the Xeric's talisman, the nexus, the jewellery box... With the growing vine
+		// round it too, as the one thing to click next: a talisman on the wall is small and easy to miss (elzerma,
+		// 2026-11-16: "maybe some other way to make the talisman more obvious?")
+		final TileObject houseExit = config.highlightGardener() ? scene.getHouseExit() : null;
+		if (houseExit != null)
 		{
 			outlines.drawOutline(houseExit, OUTLINE_WIDTH, config.npcColour(), OUTLINE_FEATHER);
+		}
+		final Shape clickbox = houseExit != null && config.vineHighlights() ? houseExit.getClickbox() : null;
+		if (clickbox != null)
+		{
+			vine.draw(graphics, clickbox.getBounds());
+		}
+		else
+		{
+			vine.clear();
 		}
 		return null;
 	}

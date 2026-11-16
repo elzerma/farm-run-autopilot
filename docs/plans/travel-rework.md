@@ -917,6 +917,11 @@ the Lancalliums, 32 s planned, 41 s timed): the plugin knew no mounted items. Bu
   colours the place's own option when the left-click is set to it ("Glade"), else "Teleport menu", and "Xeric's Glade"
   in a chatbox list of places if that's what the menu opens. The first sighting on a leg is logged (`House way out:
   ...`) with a check screenshot ("<stop> - house way out"), so the outline and arrow are judged from a normal run.
+- **elzerma's first run with it (2026-11-16):** the outline and the coloured "Glade" worked ("looks good but maybe some
+  other way to make the talisman more obvious?"), but no hint arrow showed, with it on. RuneLite's `setHintArrow` puts
+  a coordinate arrow at height 0 on the talisman's tile, which is a wall's. So the growing vine now goes round the way
+  out's on-screen box too (vines on), the arrow is put back if something clears it, and the log says when it's set
+  (`Hint arrow on the house's way out at ...`) or cleared, for the next run to show which.
 - **The mounted digsite pendant would fit the same way** (not built, waiting on elzerma): its rows are in the atlas
   ("2: Fossil Island" lands where the carried pendant does, the House on the Hill, 29 tiles and a mushtree from
   Fossil Island's hardwoods). It would be a second tick box, its objects in the scan (`POH_AMULET_DIGSITE` and
