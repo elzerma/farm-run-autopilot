@@ -446,11 +446,12 @@ class SettingsPage extends SetupPanel
 		s.addContent(withColour("Highlight the patch", c.highlightPatch(),
 			"Outline the patch the current step is about", "highlightPatch",
 			"Patch colour", c.patchColour(), "patchColour", "Patch colour: the patch, its tile and the compost bin"));
-		s.addContent(checkBox("Hint arrow to the patch", c.hintArrow(), true,
-			"The game's hint arrow over the patch, also shown on the minimap", on -> guidance.set("hintArrow", on)));
+		s.addContent(checkBox("Hint arrow", c.hintArrow(), true,
+			"The game's hint arrow over the patch, or in your house over its way out, also shown on the minimap",
+			on -> guidance.set("hintArrow", on)));
 		s.addContent(withColour("Highlight NPCs", c.highlightGardener(),
 			"Outline the gardener when paying them, the tool leprechaun when he's needed, and the NPC or object to use on "
-				+ "the way (Renu, a quetzal, a boat, a portal)", "highlightGardener",
+				+ "the way (Renu, a quetzal, a boat, a portal, your house's talisman or nexus)", "highlightGardener",
 			"NPC colour", c.npcColour(), "npcColour", "NPC colour: gardeners, the tool leprechaun and what to use on the way"));
 		s.addContent(withColour("Highlight items to use", c.highlightItems(),
 			"Outline the seed, compost, tool or teleport to use next in your inventory and equipment, and the teleport's "

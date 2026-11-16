@@ -103,6 +103,12 @@ public class HighlightOverlay extends Overlay
 		{
 			outlines.drawOutline(rideObject, OUTLINE_WIDTH, config.npcColour(), OUTLINE_FEATHER);
 		}
+		// In the house, its way out the leg takes: the Xeric's talisman, the nexus, the jewellery box...
+		final TileObject houseExit = scene.getHouseExit();
+		if (houseExit != null && config.highlightGardener())
+		{
+			outlines.drawOutline(houseExit, OUTLINE_WIDTH, config.npcColour(), OUTLINE_FEATHER);
+		}
 		return null;
 	}
 

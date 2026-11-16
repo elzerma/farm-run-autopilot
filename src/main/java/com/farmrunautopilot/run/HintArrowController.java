@@ -9,12 +9,14 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
+import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 
 /**
- * Points the game's hint arrow (which also shows on the minimap) at the current patch. Only touches the
- * arrow when the target changes, and only clears an arrow it set itself. Client thread only.
+ * Points the game's hint arrow (which also shows on the minimap) at the current patch, or in the house at its way out the
+ * leg takes, where Shortest Path draws no line. Only touches the arrow when the target changes, and only clears an arrow
+ * it set itself. Client thread only.
  */
 @Singleton
 public class HintArrowController
@@ -40,7 +42,9 @@ public class HintArrowController
 	{
 		final Highlights highlights = session.getView().getHighlights();
 		final Patch patch = highlights.getPatch();
-		final LocalPoint target = patch != null && config.hintArrow() ? pointFor(patch, highlights.getPatchTile()) : null;
+		final TileObject houseExit = scene.getHouseExit();
+		final LocalPoint target = !config.hintArrow() ? null : patch != null ? pointFor(patch, highlights.getPatchTile())
+			: houseExit != null ? houseExit.getLocalLocation() : null;
 		if (Objects.equals(target, shown))
 		{
 			return;

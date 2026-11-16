@@ -1,10 +1,12 @@
 package com.farmrunautopilot.run;
 
+import com.farmrunautopilot.access.PohDetector;
 import com.farmrunautopilot.data.CompostBin;
 import com.farmrunautopilot.data.FarmingContract;
 import com.farmrunautopilot.data.Patch;
 import com.farmrunautopilot.data.PatchPoints;
 import com.farmrunautopilot.data.travel.JourneyStep;
+import com.farmrunautopilot.data.travel.atlas.AtlasHouse;
 import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +19,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
+import net.runelite.api.DecorativeObject;
 import net.runelite.api.GameObject;
 import net.runelite.api.NPC;
 import net.runelite.api.ObjectComposition;
@@ -57,6 +60,10 @@ public class SceneTracker
 	private final Map<String, NPC> transfers = new HashMap<>();
 	/** Every tool leprechaun loaded. */
 	private final List<NPC> leprechauns = new ArrayList<>();
+	/** The house's ways out that are loaded (its nexus, jewellery box, Xeric's talisman...): only ever in a house. */
+	private final List<TileObject> houseWaysOut = new ArrayList<>();
+	/** The way out of the house the leg in hand takes, while it's loaded on the player's floor; null otherwise. */
+	private TileObject houseExit;
 	/** Everyone the travel atlas's journeys are used on (Renu, a ship's crew, a guide), once it's read. */
 	private Set<String> atlasRideNames;
 
@@ -68,6 +75,11 @@ public class SceneTracker
 
 	public void onObjectSpawned(GameObject object)
 	{
+		if (PohDetector.isAnyWayOut(object.getId()))
+		{
+			houseWaysOut.add(object);
+			return;
+		}
 		final CompostBin bin = binFor(object);
 		if (bin != null)
 		{
@@ -96,6 +108,21 @@ public class SceneTracker
 			objects.remove(object);
 		}
 		binObjects.values().removeIf(o -> o == object);
+		houseWaysOut.remove(object);
+	}
+
+	/** A wall decoration spawned: the house's mounted Xeric's talisman is one. */
+	public void onDecorationSpawned(DecorativeObject object)
+	{
+		if (PohDetector.isAnyWayOut(object.getId()))
+		{
+			houseWaysOut.add(object);
+		}
+	}
+
+	public void onDecorationDespawned(DecorativeObject object)
+	{
+		houseWaysOut.remove(object);
 	}
 
 	/** The compost bin's object while it's loaded, or null (P3). */
@@ -173,6 +200,8 @@ public class SceneTracker
 	{
 		patchObjects.clear();
 		binObjects.clear();
+		houseWaysOut.clear();
+		houseExit = null;
 	}
 
 	/** Logged out or hopping: nothing is loaded any more. */
@@ -183,6 +212,8 @@ public class SceneTracker
 		gardeners.clear();
 		transfers.clear();
 		leprechauns.clear();
+		houseWaysOut.clear();
+		houseExit = null;
 	}
 
 	public List<GameObject> objectsFor(Patch patch)
@@ -302,6 +333,40 @@ public class SceneTracker
 	public TileObject getRideObject()
 	{
 		return rideObject;
+	}
+
+	/**
+	 * Look for the house's way out the leg in hand takes (null for none) among those loaded on the player's floor: the
+	 * nearest, as a spirit ring is both the ring and the tree. Shortest Path draws nothing in a house, so the guide
+	 * outlines it and points the hint arrow at it (elzerma, 2026-11-15: "Can we highlight the talisman?"). Once a tick
+	 * while travelling. Client thread.
+	 */
+	void findHouseExit(AtlasHouse.ExitKind kind)
+	{
+		houseExit = null;
+		final Player player = client.getLocalPlayer();
+		if (kind == null || houseWaysOut.isEmpty() || player == null)
+		{
+			return;
+		}
+		final WorldPoint at = player.getWorldLocation();
+		int best = Integer.MAX_VALUE;
+		for (TileObject object : houseWaysOut)
+		{
+			// Integer.MAX_VALUE on another floor
+			final int distance = object.getWorldLocation().distanceTo(at);
+			if (PohDetector.isWayOut(kind, object.getId()) && distance < best)
+			{
+				houseExit = object;
+				best = distance;
+			}
+		}
+	}
+
+	/** The house's way out the leg in hand takes, for outlining and the hint arrow; null if it isn't loaded. */
+	public TileObject getHouseExit()
+	{
+		return houseExit;
 	}
 
 	/** The object with this id on a tile (a game object, a wall, a ground or decorative object), or null. */

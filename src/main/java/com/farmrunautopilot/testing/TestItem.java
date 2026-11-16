@@ -89,13 +89,7 @@ public enum TestItem
 	// Sprint 1c, the special trees
 	GREAT_CONCH_ACCESS(Tab.ACCOUNT, "The Great Conch's calquat patch",
 		"Only if you've started Troubled Tortugans but not finished it: go to the calquat patch on the Summer Shore of the "
-			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2),
-	// Dev check: the mounted Xeric's talisman as a way out of the house (docs/plans/travel-rework.md, "The mounted Xeric's
-	// talisman"). Remove once it passes
-	XERICS_TALISMAN_HOUSE(Tab.DEV, "Xeric's talisman in your house",
-		"With a Xeric's talisman mounted in your portal nexus room, enter your house: the scan should tick Xeric's "
-			+ "talisman in Account > My house. Then leave, somewhere away from Kourend, and start the test's run, just "
-			+ "Hosidius: its stop should say \"House Xeric's talisman: Xeric's Glade\". Follow the guide to the patches.");
+			+ "Great Conch. If you can rake or plant it, the plugin is right to need only the quest started.", 2);
 
 	/** The sidebar tab a feature belongs to. */
 	@Getter

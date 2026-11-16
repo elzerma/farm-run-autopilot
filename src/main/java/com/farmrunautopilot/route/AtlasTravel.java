@@ -334,7 +334,7 @@ final class AtlasTravel
 		return new AtlasLeg(way, landing, start, item, spell, option.getKind() == AtlasOption.Kind.HOUSE,
 			option.getKind() == AtlasOption.Kind.TREE_HOUSE, fairyRing, balloons, items, rides,
 			teleport == null ? null : daily(atlas, teleport), teleport != null && teleport.isConsumable() && item == null
-			&& spell == null, picks(teleport, hop), option(teleport));
+			&& spell == null, picks(teleport, hop), option(teleport), exit);
 	}
 
 	/**

@@ -44,8 +44,8 @@ public interface FarmRunAutopilotConfig extends Config
 
 	@ConfigItem(
 		keyName = "hintArrow",
-		name = "Hint arrow to the patch",
-		description = "The game's hint arrow over the patch, also shown on the minimap",
+		name = "Hint arrow",
+		description = "The game's hint arrow over the patch, or in your house over its way out, also shown on the minimap",
 		hidden = true,
 		position = 2
 	)
@@ -58,7 +58,7 @@ public interface FarmRunAutopilotConfig extends Config
 		keyName = "highlightGardener",
 		name = "Highlight NPCs",
 		description = "Outline the gardener when paying them, the tool leprechaun when he's needed, and the NPC or object to "
-			+ "use on the way (Renu, a quetzal, a boat, a portal)",
+			+ "use on the way (Renu, a quetzal, a boat, a portal, your house's talisman or nexus)",
 		hidden = true,
 		position = 3
 	)

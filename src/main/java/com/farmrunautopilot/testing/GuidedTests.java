@@ -18,7 +18,6 @@ import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
-import com.farmrunautopilot.data.travel.TravelTimes;
 import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.data.travel.atlas.TravelAtlas;
 import com.farmrunautopilot.route.BankStop;
@@ -86,7 +85,6 @@ final class GuidedTests
 		TESTS.put(TestItem.ETCETERIA_ACCESS, new EtceteriaAccess());
 		TESTS.put(TestItem.STAFF_SWAPS, new StaffSwapGuide());
 		TESTS.put(TestItem.GREAT_CONCH_ACCESS, new GreatConchAccess());
-		TESTS.put(TestItem.XERICS_TALISMAN_HOUSE, new XericsTalismanHouse());
 	}
 
 	private GuidedTests()
@@ -104,19 +102,11 @@ final class GuidedTests
 	private static void onlyPatchesAt(RunConfig config, Location... locations)
 	{
 		final List<Location> wanted = Arrays.asList(locations);
-		onlyPatches(config, Arrays.stream(Patch.values()).filter(p -> wanted.contains(p.getLocation()))
-			.toArray(Patch[]::new));
-	}
-
-	/** Plan a run of just these patches, every one counted whether due or not. */
-	private static void onlyPatches(RunConfig config, Patch... patches)
-	{
-		final List<Patch> wanted = Arrays.asList(patches);
 		config.getEnabledTypes().clear();
 		config.getDisabledPatches().clear();
 		for (Patch patch : Patch.values())
 		{
-			if (wanted.contains(patch))
+			if (wanted.contains(patch.getLocation()))
 			{
 				config.getEnabledTypes().add(patch.getType());
 			}
@@ -1415,149 +1405,6 @@ final class GuidedTests
 					.onAnswer((ctx, yes) -> ctx.problem(yes ? "By the patch, but the plugin didn't see it"
 						: "Couldn't get to the patch")),
 				ask("Can you rake or plant in the calquat patch?"));
-		}
-	}
-
-	/**
-	 * Dev check: the Xeric's talisman mounted in the house's portal nexus room as a way out (docs/plans/travel-rework.md,
-	 * "The mounted Xeric's talisman"). Captured, as UNVERIFIED: which of its objects the house shows, as what kind of
-	 * object and with what right-click options (PohDetector reads POH_AMULET_XERIC and its five places' objects, as game
-	 * objects or wall decorations); and the time from the house's loading screen to landing at Xeric's Glade, planned
-	 * as the nexus's (2 s to the exits and 3 s for the teleport, after Teleport to House). The guide's steps on the way
-	 * and the whole leg's time are in the dev client's log ("Guide step: ...", "Leg timed: Hosidius ...").
-	 */
-	private static final class XericsTalismanHouse extends GuidedTest
-	{
-		/** Where the talisman's Xeric's Glade lands (Shortest Path's data, as for the talisman carried). */
-		private static final WorldPoint GLADE = new WorldPoint(1752, 3566, 0);
-		/** Landed this close to it counts. */
-		private static final int LANDED_TILES = 5;
-
-		@Override
-		public List<String> missing(AccessSnapshot access, Holdings holdings, AccountSettings account)
-		{
-			final List<String> missing = new ArrayList<>(patchesUsable(access, Location.HOSIDIUS));
-			if (!access.hasHouse())
-			{
-				missing.add("Have a house");
-			}
-			return missing;
-		}
-
-		@Override
-		public void setUp(RunConfig config, AccountSettings account)
-		{
-			// Unticked, so only the scan can tick it (what it finds is kept: see keep); a run of one herb patch, from
-			// anywhere, so its one leg is planned with nothing else in the way
-			account.setAutoDetectHouse(true);
-			account.getPoh().setXericsTalisman(false);
-			onlyPatches(config, Patch.HOSIDIUS_HERB);
-			config.setOn(TravelFamily.HOUSE, true);
-		}
-
-		@Override
-		public boolean usesRun()
-		{
-			return true;
-		}
-
-		/** The Hosidius stop's way as the Run tab says it, and how its seconds add up; or "none". */
-		private static String hosidiusStop(TestContext ctx)
-		{
-			return ctx.plan().getRoute().getStops().stream().filter(s -> s.getLocation() == Location.HOSIDIUS)
-				.map(s -> s.describeTravel() + ", " + Math.round(s.getLegSeconds()) + " s = " + s.getBreakdown())
-				.findFirst().orElse("none");
-		}
-
-		private static boolean byTalisman(TestContext ctx)
-		{
-			return ctx.plan().getRoute().getStops().stream().anyMatch(s -> s.getLocation() == Location.HOSIDIUS
-				&& s.getAtlas() != null && s.getAtlas().isViaHouse()
-				&& s.describeTravel().contains("Xeric's talisman: Xeric's Glade"));
-		}
-
-		/** Landed at Xeric's Glade; notes the tick the house's loading screen came up on the way. */
-		private static boolean landed(TestContext ctx)
-		{
-			if (ctx.inOwnHouse() && ctx.recall("entered") == null)
-			{
-				ctx.remember("entered", ctx.getClient().getTickCount());
-			}
-			final WorldPoint at = ctx.location();
-			return at != null && at.getPlane() == GLADE.getPlane() && at.distanceTo2D(GLADE) <= LANDED_TILES;
-		}
-
-		/** From the house's loading screen to landing, against the plan's walk to the exits and teleport. */
-		private static String houseTime(TestContext ctx)
-		{
-			final Integer entered = ctx.recall("entered");
-			return entered == null ? "not seen" : String.format(Locale.ROOT,
-				"%.1f s (planned %.0f s after Teleport to House)", (ctx.getClient().getTickCount() - entered) * 0.6,
-				TravelTimes.HOUSE_WALK + TravelTimes.TELEPORT);
-		}
-
-		@Override
-		public List<Step> steps()
-		{
-			return Arrays.asList(
-				// Without one, the plan never offers it, which proves nothing
-				ask("Is a Xeric's talisman mounted in your house's portal nexus room?")
-					.onAnswer((ctx, yes) ->
-					{
-						if (!yes)
-						{
-							ctx.cannotTest("a Xeric's talisman mounted in your house");
-						}
-					}),
-				// Waits for a scan after the test starts: being inside already proves nothing (as HouseScan)
-				doThis("Enter your house (if you're in it now, leave and come back in)",
-					ctx -> ctx.houseScans() > ctx.<Integer>recall("scans") && ctx.poh().isXericsTalisman())
-					.onStart(ctx -> ctx.remember("scans", ctx.houseScans()))
-					.orAskAfter(DO_TICKS, "Xeric's talisman still isn't ticked in Account > My house. Tick it there by "
-						+ "hand, then carry on?")
-					.onAnswer((ctx, yes) ->
-					{
-						ctx.capture("Xeric's talisman in the house", ctx.objectsNamed("Xeric"));
-						ctx.capture("My house", ctx.houseSummary());
-						ctx.problem("The house scan didn't tick the mounted talisman");
-					})
-					.onDone(ctx -> ctx.capture("Xeric's talisman in the house", ctx.objectsNamed("Xeric"))),
-				doThis("Look at the Run tab: the Hosidius stop should say \"House Xeric's talisman: Xeric's Glade\"",
-					XericsTalismanHouse::byTalisman)
-					.orAskAfter(SPOT_TICKS, "The Hosidius stop doesn't go by your house's talisman. Carry on?")
-					.onAnswer((ctx, yes) ->
-					{
-						ctx.capture("Hosidius stop", hosidiusStop(ctx));
-						ctx.capture("My house", ctx.houseSummary());
-						ctx.problem("The Hosidius stop didn't go by the talisman");
-					})
-					.onDone(ctx -> ctx.capture("Hosidius stop", hosidiusStop(ctx))),
-				doThis("Leave your house for somewhere away from Kourend. On the Run tab press Build run, take what the "
-					+ "bank's Farm run tab lists, then start the run",
-					ctx -> ctx.runView().getState() == RunView.State.RUNNING && !ctx.inOwnHouse()),
-				doThis("Follow the guide: Teleport to House, then the talisman's Xeric's Glade", XericsTalismanHouse::landed)
-					.orAskAfter(DO_TICKS, "Did the talisman take you to Xeric's Glade?")
-					.onAnswer((ctx, yes) ->
-					{
-						ctx.capture("Standing at", ctx.location());
-						ctx.problem(yes ? "At Xeric's Glade, but the plugin didn't see it"
-							: "The talisman didn't take you to Xeric's Glade");
-					})
-					.onDone(ctx ->
-					{
-						ctx.capture("Landed at", ctx.location());
-						ctx.capture("House loading screen to Xeric's Glade", houseTime(ctx));
-					}));
-		}
-
-		@Override
-		public void keep(AccountSettings kept, AccountSettings during)
-		{
-			// The scan's tick (or the player's) is the player's own
-			if (during.getPoh().isXericsTalisman())
-			{
-				kept.getPoh().setXericsTalisman(true);
-			}
 		}
 	}
 }

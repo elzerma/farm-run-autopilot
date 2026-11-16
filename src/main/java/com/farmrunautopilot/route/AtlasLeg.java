@@ -4,6 +4,7 @@ import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.data.travel.atlas.AtlasHouse;
 import java.util.List;
 import lombok.Value;
 import net.runelite.api.coords.WorldPoint;
@@ -58,4 +59,6 @@ public class AtlasLeg
 	List<MenuPick> picks;
 	/** The teleport item's option or list entry to pick, e.g. "Crafting Guild" for a skills necklace; null if none. */
 	String option;
+	/** The house's way out it takes after getting in (the Xeric's talisman to Xeric's Glade...); null if none. */
+	AtlasHouse.Exit houseExit;
 }

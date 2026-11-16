@@ -904,9 +904,19 @@ the Lancalliums, 32 s planned, 41 s timed): the plugin knew no mounted items. Bu
   talisman: Xeric's Glade"), with Teleport to House's runes or tablet on the supply list, and "Don't use your house"
   turns it off. For an account like elzerma's with its house away from Kourend, Hosidius is 23 s against the book's 34 s
   (house 5 + talisman 3 + walk 22 tiles 7 + overhead 8; `RouteChainTest`).
-- **Dev check:** `XERICS_TALISMAN_HOUSE` (Settings > Dev checks): the scan, the planned stop and the trip to Xeric's
-  Glade. It captures the talisman's object id, kind and right-click options, and the time from the house's loading
-  screen to landing. Remove it once it passes.
+- **Dev check `XERICS_TALISMAN_HOUSE`, passed and removed (elzerma, 2026-11-15):** the scan ticked the talisman, seen
+  as `Xeric's Talisman #33412` (the object for the place its left-click is set to, Glade) and a wall decoration, with
+  the right-click "Glade, Teleport menu, Configuration, Remove". The Hosidius stop was "House Xeric's talisman: Xeric's
+  Glade, 23 s", landing at (1754, 3569). Not measured: the time through the house, as the run was started inside it; a
+  normal run's `Leg timed: Hosidius ...` line has it.
+- **Guidance in the house** (elzerma, 2026-11-15: "Can we highlight the talisman? ... is there another way to guide you
+  through the house?", "also highlighting menu options"): Shortest Path draws nothing in a house, so on the way out the
+  guide outlines the leg's way out (`SceneTracker.findHouseExit`, from spawned game objects and wall decorations:
+  `PohDetector.isWayOut` for the nexus, jewellery box, talisman, fairy ring, spirit tree and spirit ring), points the
+  hint arrow at it (on the minimap too), and drops Teleport to House's highlights. On the talisman's right-click it
+  colours the place's own option when the left-click is set to it ("Glade"), else "Teleport menu", and "Xeric's Glade"
+  in a chatbox list of places if that's what the menu opens. The first sighting on a leg is logged (`House way out:
+  ...`) with a check screenshot ("<stop> - house way out"), so the outline and arrow are judged from a normal run.
 - **The mounted digsite pendant would fit the same way** (not built, waiting on elzerma): its rows are in the atlas
   ("2: Fossil Island" lands where the carried pendant does, the House on the Hill, 29 tiles and a mushtree from
   Fossil Island's hardwoods). It would be a second tick box, its objects in the scan (`POH_AMULET_DIGSITE` and

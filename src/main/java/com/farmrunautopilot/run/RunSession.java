@@ -56,6 +56,7 @@ import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.NPC;
 import net.runelite.api.Player;
+import net.runelite.api.TileObject;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.gameval.InventoryID;
@@ -1488,6 +1489,8 @@ public class RunSession
 		vaultCounts = Collections.emptyList();
 		bankCounts = Collections.emptyList();
 		depositAllStep = false;
+		// The house's way out is outlined only while the guide is on the way there (set again by the navigator)
+		scene.findHouseExit(null);
 		if (stage == RunView.State.OFF)
 		{
 			view = offView();
@@ -1551,6 +1554,7 @@ public class RunSession
 				legRecorded = true;
 			}
 			instruction = navigator.travel(stop, here, now);
+			logHouseExit(stop);
 			if (instruction != null)
 			{
 				// Swapping staves (issue #7): the one this leg needs goes on before setting off. Ticking the way there
@@ -2607,7 +2611,47 @@ public class RunSession
 			return wear.getItemIds().isEmpty() ? atPatch : atPatch.withWear(wear.getItemIds());
 		}
 		final RouteStop stop = plan.getRoute().getStops().get(stopIndex);
+		if (scene.getHouseExit() != null)
+		{
+			// In the house, getting in is done with: its way out is outlined instead, and the place to pick on it is the
+			// option a chatbox list of places has coloured
+			return new Highlights(null, false, null, Collections.emptySet(), null, wear.getItemIds(),
+				Collections.emptyList(), stop.houseExitPlace());
+		}
 		return travelHighlights(stop, wear, navigator.travelNpc(stop), navigator.isTeleported());
+	}
+
+	/** The house's way out the leg takes, as last logged, so each sighting is logged once. */
+	private TileObject loggedHouseExit;
+
+	/**
+	 * The house's way out, outlined for the first time on this leg: logged, with a check screenshot of the outline and the
+	 * hint arrow (developer client only), as Shortest Path draws nothing in the house.
+	 */
+	private void logHouseExit(RouteStop stop)
+	{
+		final TileObject exit = scene.getHouseExit();
+		if (exit != null && exit != loggedHouseExit)
+		{
+			log.debug("House way out: {} #{} at {}, to pick: {}", stop.houseExit(), exit.getId(), exit.getWorldLocation(),
+				stop.houseExitPlace());
+			checkShots.take(stop.getLocation().getDisplayName() + " - house way out");
+		}
+		loggedHouseExit = exit;
+	}
+
+	/**
+	 * In the house on the way out: the place to pick on its way out, e.g. "Xeric's Glade" on the Xeric's talisman, for
+	 * colouring its right-click option; null otherwise. Client thread.
+	 */
+	String houseExitPlace()
+	{
+		if (stage != RunView.State.RUNNING || banking || plan == null || stopIndex >= plan.getRoute().getStops().size()
+			|| scene.getHouseExit() == null)
+		{
+			return null;
+		}
+		return plan.getRoute().getStops().get(stopIndex).houseExitPlace();
 	}
 
 	/** The fairy ring code on the way to the stop in hand (e.g. "CIP"), for the travel log; null if none. Client thread. */

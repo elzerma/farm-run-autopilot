@@ -11,6 +11,7 @@ import com.farmrunautopilot.data.travel.Spellbook;
 import com.farmrunautopilot.data.travel.TravelFamily;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.data.travel.atlas.AtlasHouse;
 import com.farmrunautopilot.data.travel.atlas.AtlasWays;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.RunConfig;
@@ -193,6 +194,8 @@ public class RouteChainTest
 			final List<RouteStop> teleport = plan(catherby, config, access(house), holdings(), poh, null, 0);
 			assertEquals(describe(teleport), Departure.POH_NEXUS, teleport.get(0).getDeparture());
 			assertEquals(describe(teleport), TravelMethod.CATHERBY_TELEPORT, teleport.get(0).getMethod());
+			// What the guide outlines in the house
+			assertEquals(AtlasHouse.ExitKind.NEXUS, teleport.get(0).houseExit());
 		}
 		final List<RouteStop> none = plan(catherby, config, access(), holdings(), poh, null, 0);
 		assertFalse(describe(none), none.get(0).getWays().contains(AtlasWays.familyKey(TravelFamily.HOUSE)));
@@ -243,6 +246,10 @@ public class RouteChainTest
 		// Nothing to carry for it, and "Don't use your house" turns it off
 		assertEquals(describe(talisman), null, stop.travelItem());
 		assertTrue(describe(talisman), stop.getWays().contains(AtlasWays.familyKey(TravelFamily.HOUSE)));
+		// In the house the guide outlines the talisman, and colours its option for the Glade
+		assertEquals(AtlasHouse.ExitKind.XERICS_TALISMAN, stop.houseExit());
+		assertEquals("Xeric's Glade", stop.houseExitPlace());
+		assertEquals(null, book.get(0).houseExit());
 		// 23 s against 34 s (2026-11-15): house 5 + Xeric's talisman 3 + walk 22 tiles 7 + overhead 8
 		assertTrue(describe(book) + describe(talisman), stop.getLegSeconds() < book.get(0).getLegSeconds());
 	}

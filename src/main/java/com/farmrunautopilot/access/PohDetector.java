@@ -3,6 +3,7 @@ package com.farmrunautopilot.access;
 import com.farmrunautopilot.data.poh.JewelleryBoxTier;
 import com.farmrunautopilot.data.poh.PohAltar;
 import com.farmrunautopilot.data.poh.PoolTier;
+import com.farmrunautopilot.data.travel.atlas.AtlasHouse;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.SettingsStore;
 import java.time.Instant;
@@ -190,8 +191,8 @@ public class PohDetector
 		}
 		final JewelleryBoxTier box = jewelleryBoxFor(objectId);
 		final PoolTier pool = poolFor(objectId);
-		final boolean fairyRing = objectId == ObjectID.POH_FAIRY_RING || objectId == ObjectID.POH_SPIRIT_RING;
-		final boolean spiritTree = objectId == ObjectID.POH_SPIRIT_TREE || objectId == ObjectID.POH_SPIRIT_RING;
+		final boolean fairyRing = isWayOut(AtlasHouse.ExitKind.FAIRY_RING, objectId);
+		final boolean spiritTree = isWayOut(AtlasHouse.ExitKind.SPIRIT_TREE, objectId);
 		final PohAltar altar = altarFor(objectId);
 		final boolean talisman = isXericsTalisman(objectId);
 		if (box == null && pool == null && altar == null && !fairyRing && !spiritTree && !talisman)
@@ -200,7 +201,6 @@ public class PohDetector
 		}
 		if (talisman)
 		{
-			// Which of its objects the house has is the dev check's to see (TestItem.XERICS_TALISMAN_HOUSE)
 			log.debug("Xeric's talisman in the house: object {}", objectId);
 		}
 
@@ -347,10 +347,48 @@ public class PohDetector
 	}
 
 	/**
+	 * Whether this object is the house's way out of this kind, for the guide to outline and point at in the house: the
+	 * furniture the scan reads (its jewellery box, fairy ring, spirit tree, spirit ring and Xeric's talisman), and the
+	 * portal nexus, as RuneLite's gamevals and its POH plugin have it. None for the front door.
+	 */
+	public static boolean isWayOut(AtlasHouse.ExitKind kind, int objectId)
+	{
+		switch (kind)
+		{
+			case NEXUS:
+				return objectId == ObjectID.POH_NEXUS_PORTAL_1 || objectId == ObjectID.POH_NEXUS_PORTAL_2
+					|| objectId == ObjectID.POH_NEXUS_PORTAL_3;
+			case JEWELLERY_BOX:
+				return jewelleryBoxFor(objectId) != null;
+			case XERICS_TALISMAN:
+				return isXericsTalisman(objectId);
+			case FAIRY_RING:
+				return objectId == ObjectID.POH_FAIRY_RING || objectId == ObjectID.POH_SPIRIT_RING;
+			case SPIRIT_TREE:
+				return objectId == ObjectID.POH_SPIRIT_TREE || objectId == ObjectID.POH_SPIRIT_RING;
+			default:
+				return false;
+		}
+	}
+
+	/** Whether this object is one of the house's ways out of any kind. */
+	public static boolean isAnyWayOut(int objectId)
+	{
+		for (AtlasHouse.ExitKind kind : AtlasHouse.ExitKind.values())
+		{
+			if (isWayOut(kind, objectId))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * The Xeric's talisman mounted in the portal nexus room's amulet space: its object and one for each place its left-click
 	 * can be set to (POH_AMULET_XERIC_GLADE...), as RuneLite's gamevals name them, the six RuneLite's own POH plugin draws
-	 * the talisman's map icon on, and the wiki's object ids for it. UNVERIFIED: which of them a house shows, and whether as
-	 * a game object or a wall decoration (both are passed in, as RuneLite's POH plugin reads both).
+	 * the talisman's map icon on, and the wiki's object ids for it. A house shows the one for its left-click, as a wall
+	 * decoration (elzerma's dev check, 2026-11-15: #33412, "Glade").
 	 */
 	static boolean isXericsTalisman(int objectId)
 	{

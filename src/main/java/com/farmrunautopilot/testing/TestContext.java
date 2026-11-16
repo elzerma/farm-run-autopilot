@@ -10,7 +10,6 @@ import com.farmrunautopilot.route.RunService;
 import com.farmrunautopilot.run.RunSession;
 import com.farmrunautopilot.run.RunView;
 import com.farmrunautopilot.run.SceneTracker;
-import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.SettingsStore;
 import com.farmrunautopilot.supply.Holdings;
 import com.farmrunautopilot.supply.HoldingsTracker;
@@ -205,12 +204,6 @@ public class TestContext
 	public boolean houseScanned()
 	{
 		return settings.getAccount().getPoh().getLastDetected() > 0;
-	}
-
-	/** My house as saved right now, by the player or the scan. */
-	public PohSetup poh()
-	{
-		return settings.getAccount().getPoh();
 	}
 
 	public WorldPoint location()
