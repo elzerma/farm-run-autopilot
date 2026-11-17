@@ -923,7 +923,8 @@ the Lancalliums, 32 s planned, 41 s timed): the plugin knew no mounted items. Bu
   clears it, and the log says when it's set (`Hint arrow on the house's way out at ...`) or cleared. On the next run
   it was set and stayed, and showed: "hint arrow is plenty". A growing vine round the talisman, tried on that run, went
   again ("don't use the vine in this case"); its clickbox is marked instead, as the patch's is ("I would maybe mark the
-  clickbox, too").
+  clickbox, too"). Seen on elzerma's run of 2026-11-16 (22:43, check screenshot and log): the talisman outlined, its
+  clickbox marked, the arrow on it, "Glade" coloured. "gtg".
 - **The tablet, not the Farming Guild's spirit tree, into the house (elzerma, 2026-11-16):** on purpose under the
   Fastest style. From the guild's herb patch it's 15 s by tablet against 30 s by its spirit tree: 31 tiles to the tree
   (9 s), the tree (4.5), the garden indoors (`HOUSE_DOOR` 5 + `HOUSE_WALK` 2), then as the tablet. From the spirit tree
