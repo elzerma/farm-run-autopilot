@@ -55,6 +55,8 @@ import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.DecorativeObjectDespawned;
+import net.runelite.api.events.DecorativeObjectSpawned;
 import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
@@ -732,6 +734,20 @@ public class FarmRunAutopilotPlugin extends Plugin
 	public void onGameObjectDespawned(GameObjectDespawned event)
 	{
 		sceneTracker.onObjectDespawned(event.getGameObject());
+	}
+
+	@Subscribe
+	public void onDecorativeObjectSpawned(DecorativeObjectSpawned event)
+	{
+		// The house's mounted Xeric's talisman is a wall decoration (elzerma's dev check, 2026-11-15)
+		pohDetector.onObjectSpawned(event.getDecorativeObject().getId());
+		sceneTracker.onDecorationSpawned(event.getDecorativeObject());
+	}
+
+	@Subscribe
+	public void onDecorativeObjectDespawned(DecorativeObjectDespawned event)
+	{
+		sceneTracker.onDecorationDespawned(event.getDecorativeObject());
 	}
 
 	@Subscribe

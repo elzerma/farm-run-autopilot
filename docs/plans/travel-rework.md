@@ -884,6 +884,61 @@ the crossing), Harmony Island, the Troll Stronghold by Trollheim Teleport and th
 come up: the run was armed again inside the hedge maze, where the fruit tree is in range, so the stop counted as reached
 (the old hand step did the same). Fixed in c969ddb (a ride still ahead within 25 tiles comes first); elzerma's re-check passed (Elkoy led them out and the stop ticked). T5 is done and merged to master.
 
+### The mounted Xeric's talisman (2026-11-15)
+
+elzerma has a Xeric's talisman mounted in their house, but their route reached Hosidius by the Book of the Dead (Lunch by
+the Lancalliums, 32 s planned, 41 s timed): the plugin knew no mounted items. Built on `claude/keen-lamarr-f53303`:
+
+- **Where it is:** the portal nexus room's amulet space (72 Construction), not the Achievement Gallery (the wiki's
+  Portal Nexus room and Xeric's talisman pages). The mounted digsite pendant has a slot of its own beside it.
+- **The setting:** "Xeric's talisman" in Account > My house (`PohSetup.xericsTalisman`, off in older saves). The house
+  scan ticks it on seeing `POH_AMULET_XERIC` or one of its five places' objects (`POH_AMULET_XERIC_LOOKOUT` to
+  `_HONOUR`; 33411-33415 and 33419, the ids RuneLite's gamevals, RuneLite's own POH plugin and the wiki give). It now
+  reads wall decorations as well as game objects, as RuneLite's POH plugin does; Rescan clears it with the rest.
+- **The exits:** Shortest Path's data already had the mounted talisman's rows (`TELEPORTATION_BOX`, 4 ticks, "Glade
+  Xeric's Talisman 33412"), in the atlas since T1 and unused. `AtlasHouse` makes a `XERICS_TALISMAN` exit of each row that
+  lands where the carried talisman's teleport does, named as that teleport ("Xeric's talisman: Xeric's Glade") and
+  needing what it needs besides the talisman. So Xeric's Honour stays out, as it does for the carried one, until the
+  plugin can tell its ancient tablet. Timed as the nexus: Teleport to House, 2 s to the exits, 3 s for the teleport.
+- **Routes:** nothing else changed. A house exit with no plugin method is a `Departure.ATLAS` leg ("House Xeric's
+  talisman: Xeric's Glade"), with Teleport to House's runes or tablet on the supply list, and "Don't use your house"
+  turns it off. For an account like elzerma's with its house away from Kourend, Hosidius is 23 s against the book's 34 s
+  (house 5 + talisman 3 + walk 22 tiles 7 + overhead 8; `RouteChainTest`).
+- **Dev check `XERICS_TALISMAN_HOUSE`, passed and removed (elzerma, 2026-11-15):** the scan ticked the talisman, seen
+  as `Xeric's Talisman #33412` (the object for the place its left-click is set to, Glade) and a wall decoration, with
+  the right-click "Glade, Teleport menu, Configuration, Remove". The Hosidius stop was "House Xeric's talisman: Xeric's
+  Glade, 23 s", landing at (1754, 3569). Not measured: the time through the house, as the run was started inside it; a
+  normal run's `Leg timed: Hosidius ...` line has it.
+- **Guidance in the house** (elzerma, 2026-11-15: "Can we highlight the talisman? ... is there another way to guide you
+  through the house?", "also highlighting menu options"): Shortest Path draws nothing in a house, so on the way out the
+  guide outlines the leg's way out (`SceneTracker.findHouseExit`, from spawned game objects and wall decorations:
+  `PohDetector.isWayOut` for the nexus, jewellery box, talisman, fairy ring, spirit tree and spirit ring), points the
+  hint arrow at it (on the minimap too), and drops Teleport to House's highlights. On the talisman's right-click it
+  colours the place's own option when the left-click is set to it ("Glade"), else "Teleport menu", and "Xeric's Glade"
+  in a chatbox list of places if that's what the menu opens. The first sighting on a leg is logged (`House way out:
+  ...`) with a check screenshot ("<stop> - house way out"), so the outline and arrow are judged from a normal run.
+- **elzerma's first run with it (2026-11-16):** the outline and the coloured "Glade" worked ("looks good but maybe some
+  other way to make the talisman more obvious?"), but no hint arrow showed, with it on. RuneLite's `setHintArrow` puts
+  a coordinate arrow at height 0 on the talisman's tile, which is a wall's. So the arrow is now put back if something
+  clears it, and the log says when it's set (`Hint arrow on the house's way out at ...`) or cleared. On the next run
+  it was set and stayed, and showed: "hint arrow is plenty". A growing vine round the talisman, tried on that run, went
+  again ("don't use the vine in this case"); its clickbox is marked instead, as the patch's is ("I would maybe mark the
+  clickbox, too"). Seen on elzerma's run of 2026-11-16 (22:43, check screenshot and log): the talisman outlined, its
+  clickbox marked, the arrow on it, "Glade" coloured. "gtg".
+- **The tablet, not the Farming Guild's spirit tree, into the house (elzerma, 2026-11-16):** on purpose under the
+  Fastest style. From the guild's herb patch it's 15 s by tablet against 30 s by its spirit tree: 31 tiles to the tree
+  (9 s), the tree (4.5), the garden indoors (`HOUSE_DOOR` 5 + `HOUSE_WALK` 2), then as the tablet. From the spirit tree
+  itself it's still 15 against 21. Prefer free (15 s on what costs a tablet or runes) takes the tree from most of the
+  guild. The 5 s from the garden is issue #16's guess; elzerma's house has its spirit ring next to the talisman. Even
+  without it, the tablet is the quicker way unless the guild visit ends at its tree (16 s against 15). The dev log's
+  breakdown for this way now shows the garden's 7 s, so its parts add up.
+- **The mounted digsite pendant would fit the same way** (not built, waiting on elzerma): its rows are in the atlas
+  ("2: Fossil Island" lands where the carried pendant does, the House on the Hill, 29 tiles and a mushtree from
+  Fossil Island's hardwoods). It would be a second tick box, its objects in the scan (`POH_AMULET_DIGSITE` and
+  `POH_AMULET_DIG_*`, 33416-33418 and 33420; Shortest Path's rows say 33417-33419, one off), and an exit kind needing
+  what the carried pendant's teleports need besides it (Bone Voyage, Dragon Slayer II for Lithkren). The one new piece:
+  the plugin has no `TravelItem` for the pendant to find those teleports by.
+
 ## 10. Risks
 
 - **Shortest Path changes its internals:** pinned commit; a small harness; fallback E.

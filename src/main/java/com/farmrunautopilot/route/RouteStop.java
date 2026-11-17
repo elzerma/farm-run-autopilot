@@ -5,6 +5,7 @@ import com.farmrunautopilot.data.travel.JourneyStep;
 import com.farmrunautopilot.data.travel.Spell;
 import com.farmrunautopilot.data.travel.TravelItem;
 import com.farmrunautopilot.data.travel.TravelMethod;
+import com.farmrunautopilot.data.travel.atlas.AtlasHouse;
 import java.util.Collections;
 import java.util.List;
 import lombok.Value;
@@ -262,6 +263,51 @@ public class RouteStop
 		final int open = name.indexOf('(');
 		final int close = name.indexOf(')', open + 1);
 		return open < 0 || close < 0 ? null : name.substring(open + 1, close);
+	}
+
+	/**
+	 * The house's way out this leg takes once in (the nexus, the jewellery box, the Xeric's talisman, the house's fairy
+	 * ring or spirit tree), for the guide to point at in the house; null if it doesn't go through the house, or leaves by
+	 * the front door, a journey step of its own.
+	 */
+	public AtlasHouse.ExitKind houseExit()
+	{
+		if (atlas != null)
+		{
+			final AtlasHouse.Exit exit = atlas.getHouseExit();
+			return exit == null || exit.getKind() == AtlasHouse.ExitKind.PORTAL ? null : exit.getKind();
+		}
+		switch (departure)
+		{
+			case POH_NEXUS:
+			case TREE_HOUSE_NEXUS:
+				return AtlasHouse.ExitKind.NEXUS;
+			case POH_JEWELLERY_BOX:
+			case TREE_HOUSE_JEWELLERY_BOX:
+				return AtlasHouse.ExitKind.JEWELLERY_BOX;
+			case POH_FAIRY_RING:
+			case TREE_HOUSE_FAIRY_RING:
+				return AtlasHouse.ExitKind.FAIRY_RING;
+			case POH_SPIRIT_TREE:
+				return AtlasHouse.ExitKind.SPIRIT_TREE;
+			default:
+				return null;
+		}
+	}
+
+	/**
+	 * Where to go on the house's way out, as its menu names it: "Xeric's Glade" on the Xeric's talisman, whose right-click
+	 * has that place's own option when it's the left-click (elzerma, 2026-11-15: "Glade"). Null for the other ways out.
+	 */
+	public String houseExitPlace()
+	{
+		final AtlasHouse.Exit exit = atlas != null ? atlas.getHouseExit() : null;
+		if (exit == null || exit.getKind() != AtlasHouse.ExitKind.XERICS_TALISMAN)
+		{
+			return null;
+		}
+		final String name = exit.getName();
+		return name.substring(name.indexOf(": ") + 2);
 	}
 
 	/** The teleport item this leg uses (the method's, or the atlas leg's), or null. */

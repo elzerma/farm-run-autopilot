@@ -11,6 +11,7 @@ import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Menu;
 import net.runelite.api.MenuEntry;
+import net.runelite.api.TileObject;
 import net.runelite.api.events.MenuOpened;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.util.ColorUtil;
@@ -31,12 +32,15 @@ public class TeleportMenuHighlighter
 {
 	/** Options that open an item's list of places. */
 	private static final Set<String> OPENERS = Set.of("rub", "teleport", "teleports", "reminisce", "commune", "travel");
+	/** The option that opens the house's Xeric's talisman's list of places (elzerma, 2026-11-15). */
+	private static final String TELEPORT_MENU = "Teleport menu";
 	/** Stands for the spell's own menu entries, which have no item: those whose target is the spell's name. */
 	static final int SPELL_ENTRY = -2;
 
 	private final RunSession session;
 	private final FarmRunAutopilotConfig config;
 	private final ItemManager itemManager;
+	private final SceneTracker scene;
 	/**
 	 * The teleport items' names, for the items they were worked out for, as the item highlight asks every frame while
 	 * the mouse is over the teleport.
@@ -68,11 +72,13 @@ public class TeleportMenuHighlighter
 	}
 
 	@Inject
-	TeleportMenuHighlighter(RunSession session, FarmRunAutopilotConfig config, ItemManager itemManager)
+	TeleportMenuHighlighter(RunSession session, FarmRunAutopilotConfig config, ItemManager itemManager,
+		SceneTracker scene)
 	{
 		this.session = session;
 		this.config = config;
 		this.itemManager = itemManager;
+		this.scene = scene;
 	}
 
 	public void onMenuOpened(MenuOpened event)
@@ -83,6 +89,7 @@ public class TeleportMenuHighlighter
 		}
 		final MenuEntry[] entries = event.getMenuEntries();
 		colourRide(entries);
+		colourHouseExit(entries);
 		final String option = session.getView().getHighlights().getTeleportOption();
 		if (option == null)
 		{
@@ -129,6 +136,68 @@ public class TeleportMenuHighlighter
 				colour(entry);
 			}
 		}
+	}
+
+	/**
+	 * In the house, its way out's option on its right-click (elzerma, 2026-11-15: "also highlighting menu options"): the
+	 * Xeric's talisman's place when its left-click is set to go there ("Glade"), else its "Teleport menu".
+	 */
+	private void colourHouseExit(MenuEntry[] entries)
+	{
+		final TileObject exit = scene.getHouseExit();
+		final String place = exit != null ? session.houseExitPlace() : null;
+		if (place == null || entries == null)
+		{
+			return;
+		}
+		final String[] options = new String[entries.length];
+		final boolean[] onIt = new boolean[entries.length];
+		for (int i = 0; i < entries.length; i++)
+		{
+			options[i] = entries[i].getOption();
+			onIt[i] = entries[i].getIdentifier() == exit.getId();
+		}
+		final int pick = housePick(options, onIt, place);
+		if (pick >= 0)
+		{
+			colour(entries[pick]);
+		}
+	}
+
+	/**
+	 * Which of the house's way out's options to colour (its index), or -1: the one naming the place, as the Xeric's
+	 * talisman shortens it ("Glade" for Xeric's Glade, "Look out" for Xeric's Lookout), else "Teleport menu", which lists
+	 * every place.
+	 *
+	 * @param onIt whether each option is on the way out's object, not another one under the mouse
+	 */
+	static int housePick(String[] options, boolean[] onIt, String place)
+	{
+		final String wanted = squash(place);
+		int menu = -1;
+		for (int i = 0; i < options.length; i++)
+		{
+			if (!onIt[i] || options[i] == null)
+			{
+				continue;
+			}
+			final String text = Text.removeTags(options[i]);
+			if (!text.trim().isEmpty() && wanted.endsWith(squash(text)))
+			{
+				return i;
+			}
+			if (menu < 0 && text.equalsIgnoreCase(TELEPORT_MENU))
+			{
+				menu = i;
+			}
+		}
+		return menu;
+	}
+
+	/** Lower case without spaces: "Look out" and "Lookout" are the same. */
+	private static String squash(String text)
+	{
+		return text.toLowerCase(Locale.ROOT).replace(" ", "");
 	}
 
 	/**

@@ -34,6 +34,25 @@ public class TeleportMenuHighlighterTest
 	}
 
 	@Test
+	public void theHousesTalismanByItsPlaceOrItsTeleportMenu()
+	{
+		// The talisman's right-click, set to Xeric's Glade (elzerma's screenshot, 2026-11-15), bottom first as the menu has
+		// them; "Walk here" and "Cancel" aren't on it
+		final String[] glade = {"Cancel", "Remove", "Examine", "Walk here", "Configuration", "Teleport menu",
+			"<col=ffffff>Glade"};
+		final boolean[] onIt = {false, true, true, false, true, true, true};
+		assertEquals(6, TeleportMenuHighlighter.housePick(glade, onIt, "Xeric's Glade"));
+		// Set to another place: its Teleport menu, which lists them all
+		final String[] heart = {"Cancel", "Remove", "Examine", "Walk here", "Configuration", "Teleport menu", "Heart"};
+		assertEquals(5, TeleportMenuHighlighter.housePick(heart, onIt, "Xeric's Glade"));
+		// Shortest Path's "Look out" for Xeric's Lookout
+		final String[] lookout = {"Cancel", "Remove", "Examine", "Walk here", "Configuration", "Teleport menu", "Look out"};
+		assertEquals(6, TeleportMenuHighlighter.housePick(lookout, onIt, "Xeric's Lookout"));
+		// Nothing on another object under the mouse
+		assertEquals(-1, TeleportMenuHighlighter.housePick(glade, new boolean[glade.length], "Xeric's Glade"));
+	}
+
+	@Test
 	public void rubWhenThePlacesAreInAList()
 	{
 		assertEquals(1, TeleportMenuHighlighter.pick(new String[]{"Drop", "Rub"}, new int[]{NECKLACE, NECKLACE},

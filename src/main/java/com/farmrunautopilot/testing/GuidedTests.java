@@ -1116,7 +1116,8 @@ final class GuidedTests
 				doThis("Build a run whose route goes through your house: a stop says \"House ...\" or \"Spirit tree to "
 					+ "your house\" (e.g. one by your house portal)", ctx -> throughHouse(ctx) > 0)
 					.orAskAfter(DO_TICKS, "No stop goes through your house yet. Does your house have a way out (its "
-						+ "portal, the nexus, the jewellery box, its fairy ring) that's quickest to one of the run's stops?")
+						+ "portal, the nexus, the jewellery box, a Xeric's talisman, its fairy ring) that's quickest to one of the "
+						+ "run's stops?")
 					.onAnswer((ctx, yes) ->
 					{
 						// Without such a run, unticking House shows nothing
@@ -1245,8 +1246,9 @@ final class GuidedTests
 						ctx.remember("scans", ctx.houseScans());
 						ctx.capture("My house before (cleared)", ctx.houseSummary());
 					}),
-				ask("Look at Account > My house. Do the jewellery box, altar, fairy ring and spirit tree match your house, "
-					+ "all empty if it has none of them? (The portal nexus isn't scanned: it stays as you set it.)")
+				ask("Look at Account > My house. Do the jewellery box, altar, fairy ring, spirit tree and Xeric's talisman "
+					+ "match your house, all empty if it has none of them? (The portal nexus isn't scanned: it stays as you set "
+					+ "it.)")
 					.onAnswer((ctx, yes) ->
 					{
 						ctx.capture("My house after", ctx.houseSummary());

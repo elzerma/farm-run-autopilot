@@ -70,7 +70,9 @@ The plugin never clicks, types or acts for you. It only shows information.
   Untick "Growing vine highlights" in Settings for plain outlines.
 - Journeys are spelled out step by step: boats and ships, quetzals, gliders, balloons, carts, ladders, Elkoy, the
   dive to the seaweed patches, and Agility shortcuts when you have the level (the way round when you don't). The
-  boat, NPC or object to use is outlined, with its option coloured in its right-click menu.
+  boat, NPC or object to use is outlined, with its option coloured in its right-click menu. In your house, its way
+  out (the nexus, jewellery box, Xeric's talisman, fairy ring or spirit tree) is outlined and its clickbox marked, with
+  the hint arrow over it, and the talisman's option is coloured.
 - With [Shortest Path](https://github.com/Skretzo/shortest-path) installed, a walking line to the next patch, tool
   leprechaun, compost bin or bank. Your Shortest Path settings are put back afterwards.
 - The tool leprechaun is visited only when a stop needs it: for compost, a tool or room. Each visit also notes your
@@ -133,11 +135,11 @@ The plugin never clicks, types or acts for you. It only shows information.
   Explorer's ring) and items charged by hand (quetzal whistle, Xeric's talisman, pendant of Ates, counted from
   your teleports). When one runs out partway, the next best way is used.
 - A spirit tree near your last stop can be the way into your house, then out through its portal, nexus,
-  jewellery box or fairy ring.
+  jewellery box, Xeric's talisman or fairy ring.
 
 **Account tab**
-- Your house (nexus, jewellery box, altar, spirit tree, fairy ring), with an optional scan that fills it in
-  when you go home. Where it is, and where Teleport to House lands, are read from the game.
+- Your house (nexus, jewellery box, Xeric's talisman, altar, spirit tree, fairy ring), with an optional scan
+  that fills it in when you go home. Where it is, and where Teleport to House lands, are read from the game.
 - Unlocks the game doesn't show, and the storage the plugin counts from (seed vault, group storage, tool
   leprechaun, bottomless bucket).
 

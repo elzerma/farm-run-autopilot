@@ -24,8 +24,9 @@ import net.runelite.client.ui.overlay.OverlayUtil;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
 /**
- * Outlines the patch the current step is about and, when paying, the gardener (SPEC 13.4). Reads only the
- * session's precomputed highlights and the tracked objects, so each frame is cheap.
+ * Outlines the patch the current step is about and, when paying, the gardener (SPEC 13.4); in the house, its way out,
+ * with its clickbox marked. Reads only the session's precomputed highlights and the tracked objects, so each frame is
+ * cheap.
  */
 public class HighlightOverlay extends Overlay
 {
@@ -102,6 +103,19 @@ public class HighlightOverlay extends Overlay
 		if (rideObject != null && config.highlightGardener())
 		{
 			outlines.drawOutline(rideObject, OUTLINE_WIDTH, config.npcColour(), OUTLINE_FEATHER);
+		}
+		// In the house, its way out the leg takes: the Xeric's talisman, the nexus, the jewellery box... outlined, and its
+		// clickbox marked as the patch's is, with the hint arrow over it (elzerma, 2026-11-16: "hint arrow is plenty",
+		// "don't use the vine in this case", "I would maybe mark the clickbox, too")
+		final TileObject houseExit = config.highlightGardener() ? scene.getHouseExit() : null;
+		if (houseExit != null)
+		{
+			outlines.drawOutline(houseExit, OUTLINE_WIDTH, config.npcColour(), OUTLINE_FEATHER);
+			final Shape clickbox = houseExit.getClickbox();
+			if (clickbox != null)
+			{
+				OverlayUtil.renderPolygon(graphics, clickbox, config.npcColour());
+			}
 		}
 		return null;
 	}

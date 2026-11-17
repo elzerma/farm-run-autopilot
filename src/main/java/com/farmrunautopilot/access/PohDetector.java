@@ -3,6 +3,7 @@ package com.farmrunautopilot.access;
 import com.farmrunautopilot.data.poh.JewelleryBoxTier;
 import com.farmrunautopilot.data.poh.PohAltar;
 import com.farmrunautopilot.data.poh.PoolTier;
+import com.farmrunautopilot.data.travel.atlas.AtlasHouse;
 import com.farmrunautopilot.settings.PohSetup;
 import com.farmrunautopilot.settings.SettingsStore;
 import java.time.Instant;
@@ -20,7 +21,7 @@ import net.runelite.client.util.Text;
 
 /**
  * Fills in My house from house furniture as it loads (SPEC 2 "auto-detect on visit"). Driven by object
- * spawn events, never by scanning the scene.
+ * spawn events (game objects and wall decorations), never by scanning the scene.
  *
  * <p>Detection only ever adds or upgrades, because objects in another player's house look the same
  * and a partly loaded house would otherwise wipe settings. Removed furniture is picked up with Rescan
@@ -62,6 +63,7 @@ public class PohDetector
 	private PohAltar foundAltar;
 	private boolean foundFairyRing;
 	private boolean foundSpiritTree;
+	private boolean foundXericsTalisman;
 
 	@Inject
 	PohDetector(Client client, SettingsStore settings, AccessChecker accessChecker)
@@ -180,7 +182,7 @@ public class PohDetector
 		}
 	}
 
-	/** Call for every spawned game object. Does nothing outside a house. */
+	/** Call for every spawned game object and wall decoration. Does nothing outside a house. */
 	public void onObjectSpawned(int objectId)
 	{
 		if (!inHouse)
@@ -189,12 +191,17 @@ public class PohDetector
 		}
 		final JewelleryBoxTier box = jewelleryBoxFor(objectId);
 		final PoolTier pool = poolFor(objectId);
-		final boolean fairyRing = objectId == ObjectID.POH_FAIRY_RING || objectId == ObjectID.POH_SPIRIT_RING;
-		final boolean spiritTree = objectId == ObjectID.POH_SPIRIT_TREE || objectId == ObjectID.POH_SPIRIT_RING;
+		final boolean fairyRing = isWayOut(AtlasHouse.ExitKind.FAIRY_RING, objectId);
+		final boolean spiritTree = isWayOut(AtlasHouse.ExitKind.SPIRIT_TREE, objectId);
 		final PohAltar altar = altarFor(objectId);
-		if (box == null && pool == null && altar == null && !fairyRing && !spiritTree)
+		final boolean talisman = isXericsTalisman(objectId);
+		if (box == null && pool == null && altar == null && !fairyRing && !spiritTree && !talisman)
 		{
 			return;
+		}
+		if (talisman)
+		{
+			log.debug("Xeric's talisman in the house: object {}", objectId);
 		}
 
 		// Also furniture built while in the house, after its scene loaded
@@ -213,6 +220,7 @@ public class PohDetector
 		}
 		foundFairyRing |= fairyRing;
 		foundSpiritTree |= spiritTree;
+		foundXericsTalisman |= talisman;
 	}
 
 	/** Save what the house that just loaded had. Call every game tick. */
@@ -229,9 +237,10 @@ public class PohDetector
 		final PohAltar altar = foundAltar;
 		final boolean fairyRing = foundFairyRing;
 		final boolean spiritTree = foundSpiritTree;
+		final boolean talisman = foundXericsTalisman;
 		clearFound();
 		// Settings are only changed on the Swing thread.
-		SwingUtilities.invokeLater(() -> apply(box, pool, altar, fairyRing, spiritTree));
+		SwingUtilities.invokeLater(() -> apply(box, pool, altar, fairyRing, spiritTree, talisman));
 	}
 
 	/** Forget anything found but not yet saved, and that the player was in a house. */
@@ -251,7 +260,14 @@ public class PohDetector
 	/** Furniture was found and not yet saved (for tests). */
 	boolean hasFound()
 	{
-		return foundBox != null || foundPool != null || foundAltar != null || foundFairyRing || foundSpiritTree;
+		return foundBox != null || foundPool != null || foundAltar != null || foundFairyRing || foundSpiritTree
+			|| foundXericsTalisman;
+	}
+
+	/** The mounted Xeric's talisman was found and not yet saved (for tests). */
+	boolean hasFoundXericsTalisman()
+	{
+		return foundXericsTalisman;
 	}
 
 	private void clearFound()
@@ -262,6 +278,7 @@ public class PohDetector
 		foundAltar = null;
 		foundFairyRing = false;
 		foundSpiritTree = false;
+		foundXericsTalisman = false;
 	}
 
 	/**
@@ -275,10 +292,12 @@ public class PohDetector
 		poh.setAltar(null);
 		poh.setFairyRing(false);
 		poh.setSpiritTree(false);
+		poh.setXericsTalisman(false);
 		poh.setLastDetected(0);
 	}
 
-	private void apply(JewelleryBoxTier box, PoolTier pool, PohAltar altar, boolean fairyRing, boolean spiritTree)
+	private void apply(JewelleryBoxTier box, PoolTier pool, PohAltar altar, boolean fairyRing, boolean spiritTree,
+		boolean talisman)
 	{
 		final PohSetup poh = settings.editAccount().getPoh();
 		final boolean firstScan = poh.getLastDetected() == 0;
@@ -309,16 +328,81 @@ public class PohDetector
 			poh.setSpiritTree(true);
 			changed = true;
 		}
+		if (talisman && !poh.isXericsTalisman())
+		{
+			poh.setXericsTalisman(true);
+			changed = true;
+		}
 
 		poh.setLastDetected(Instant.now().getEpochSecond());
-		log.debug("Scanned the house: box={} pool={} altar={} fairyRing={} spiritTree={} (changed={})", box, pool, altar,
-			fairyRing, spiritTree, changed);
+		log.debug("Scanned the house: box={} pool={} altar={} fairyRing={} spiritTree={} xericsTalisman={} (changed={})",
+			box, pool, altar, fairyRing, spiritTree, talisman, changed);
 		// Always save so "last scanned" updates; refresh the tab when something new was found, or so My house stops
 		// saying the house hasn't been scanned
 		settings.saveAccount(changed || firstScan);
 		if (changed)
 		{
 			accessChecker.requestRefresh();
+		}
+	}
+
+	/**
+	 * Whether this object is the house's way out of this kind, for the guide to outline and point at in the house: the
+	 * furniture the scan reads (its jewellery box, fairy ring, spirit tree, spirit ring and Xeric's talisman), and the
+	 * portal nexus, as RuneLite's gamevals and its POH plugin have it. None for the front door.
+	 */
+	public static boolean isWayOut(AtlasHouse.ExitKind kind, int objectId)
+	{
+		switch (kind)
+		{
+			case NEXUS:
+				return objectId == ObjectID.POH_NEXUS_PORTAL_1 || objectId == ObjectID.POH_NEXUS_PORTAL_2
+					|| objectId == ObjectID.POH_NEXUS_PORTAL_3;
+			case JEWELLERY_BOX:
+				return jewelleryBoxFor(objectId) != null;
+			case XERICS_TALISMAN:
+				return isXericsTalisman(objectId);
+			case FAIRY_RING:
+				return objectId == ObjectID.POH_FAIRY_RING || objectId == ObjectID.POH_SPIRIT_RING;
+			case SPIRIT_TREE:
+				return objectId == ObjectID.POH_SPIRIT_TREE || objectId == ObjectID.POH_SPIRIT_RING;
+			default:
+				return false;
+		}
+	}
+
+	/** Whether this object is one of the house's ways out of any kind. */
+	public static boolean isAnyWayOut(int objectId)
+	{
+		for (AtlasHouse.ExitKind kind : AtlasHouse.ExitKind.values())
+		{
+			if (isWayOut(kind, objectId))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The Xeric's talisman mounted in the portal nexus room's amulet space: its object and one for each place its left-click
+	 * can be set to (POH_AMULET_XERIC_GLADE...), as RuneLite's gamevals name them, the six RuneLite's own POH plugin draws
+	 * the talisman's map icon on, and the wiki's object ids for it. A house shows the one for its left-click, as a wall
+	 * decoration (elzerma's dev check, 2026-11-15: #33412, "Glade").
+	 */
+	static boolean isXericsTalisman(int objectId)
+	{
+		switch (objectId)
+		{
+			case ObjectID.POH_AMULET_XERIC:
+			case ObjectID.POH_AMULET_XERIC_LOOKOUT:
+			case ObjectID.POH_AMULET_XERIC_GLADE:
+			case ObjectID.POH_AMULET_XERIC_INFERNO:
+			case ObjectID.POH_AMULET_XERIC_HEART:
+			case ObjectID.POH_AMULET_XERIC_HONOUR:
+				return true;
+			default:
+				return false;
 		}
 	}
 

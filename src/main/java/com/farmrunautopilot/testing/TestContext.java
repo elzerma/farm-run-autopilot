@@ -22,12 +22,14 @@ import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import net.runelite.api.Client;
-import net.runelite.api.GameObject;
+import net.runelite.api.DecorativeObject;
 import net.runelite.api.NPC;
 import net.runelite.api.ObjectComposition;
 import net.runelite.api.Player;
 import net.runelite.api.Scene;
 import net.runelite.api.Tile;
+import net.runelite.api.TileObject;
+import net.runelite.api.WallObject;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.VarbitID;
 
@@ -222,8 +224,9 @@ public class TestContext
 	}
 
 	/**
-	 * Loaded objects whose name contains this, with their ID, place and options. Looks at the whole scene, so
-	 * only call it once, when a step needs it for the report.
+	 * Loaded objects whose name contains this, with their ID (and the ID they show as, if another), place and options;
+	 * wall decorations and walls are marked so. Looks at the whole scene, so only call it once, when a step needs it for
+	 * the report.
 	 */
 	public String objectsNamed(String name)
 	{
@@ -235,11 +238,18 @@ public class TestContext
 		{
 			for (Tile tile : column)
 			{
-				if (tile == null || tile.getGameObjects() == null)
+				if (tile == null)
 				{
 					continue;
 				}
-				for (GameObject object : tile.getGameObjects())
+				final List<TileObject> objects = new ArrayList<>();
+				if (tile.getGameObjects() != null)
+				{
+					objects.addAll(Arrays.asList(tile.getGameObjects()));
+				}
+				objects.add(tile.getDecorativeObject());
+				objects.add(tile.getWallObject());
+				for (TileObject object : objects)
 				{
 					if (object == null || found.size() >= 10)
 					{
@@ -253,8 +263,11 @@ public class TestContext
 					if (composition != null && composition.getName() != null
 						&& composition.getName().toLowerCase().contains(name.toLowerCase()))
 					{
-						found.add(composition.getName() + " #" + object.getId() + " at " + object.getWorldLocation()
-							+ " " + Arrays.toString(composition.getActions()));
+						final String kind = object instanceof DecorativeObject ? " (wall decoration)"
+							: object instanceof WallObject ? " (wall)" : "";
+						final String shows = composition.getId() != object.getId() ? ", shown as #" + composition.getId() : "";
+						found.add(composition.getName() + " #" + object.getId() + shows + kind + " at "
+							+ object.getWorldLocation() + " " + Arrays.toString(composition.getActions()));
 					}
 				}
 			}

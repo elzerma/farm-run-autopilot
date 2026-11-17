@@ -7,15 +7,19 @@ import java.util.List;
 import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
+import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 
 /**
- * Points the game's hint arrow (which also shows on the minimap) at the current patch. Only touches the
- * arrow when the target changes, and only clears an arrow it set itself. Client thread only.
+ * Points the game's hint arrow (which also shows on the minimap) at the current patch, or in the house at its way out the
+ * leg takes, where Shortest Path draws no line. Only touches the arrow when the target changes, and only clears an arrow
+ * it set itself, putting it back if something else clears it. Client thread only.
  */
+@Slf4j
 @Singleton
 public class HintArrowController
 {
@@ -40,7 +44,15 @@ public class HintArrowController
 	{
 		final Highlights highlights = session.getView().getHighlights();
 		final Patch patch = highlights.getPatch();
-		final LocalPoint target = patch != null && config.hintArrow() ? pointFor(patch, highlights.getPatchTile()) : null;
+		final TileObject houseExit = scene.getHouseExit();
+		final LocalPoint target = !config.hintArrow() ? null : patch != null ? pointFor(patch, highlights.getPatchTile())
+			: houseExit != null ? houseExit.getLocalLocation() : null;
+		if (shown != null && !client.hasHintArrow())
+		{
+			// Cleared by something else since, with no arrow of its own put up: ours goes back
+			log.debug("Hint arrow at {} was cleared", shown);
+			shown = null;
+		}
 		if (Objects.equals(target, shown))
 		{
 			return;
@@ -52,6 +64,12 @@ public class HintArrowController
 		}
 		client.setHintArrow(target);
 		shown = target;
+		if (patch == null)
+		{
+			// The house's way out, where the arrow is new (elzerma's run of 2026-11-16 showed none)
+			log.debug("Hint arrow on the house's way out at {}: arrow {} at {}", houseExit.getWorldLocation(),
+				client.hasHintArrow(), client.getHintArrowPoint());
+		}
 	}
 
 	/** Remove our arrow, if it's still up and nothing else has replaced it with an NPC or player arrow. */

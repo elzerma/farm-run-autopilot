@@ -75,8 +75,8 @@ public enum TestItem
 			+ "Farming Guild). It should tick itself once the grown tree is in view.", 2),
 	HOUSE_SCAN(Tab.ACCOUNT, "House scanning (beta)",
 		"Tick \"Detect furniture when I enter my house\" in Account > My house, then enter your house: your "
-			+ "jewellery box, altar, fairy ring and spirit tree should fill in (the portal nexus isn't scanned), and My house "
-			+ "should say when it was last scanned, even if your house has none of them. "
+			+ "jewellery box, altar, fairy ring, spirit tree and Xeric's talisman should fill in (the portal nexus isn't "
+			+ "scanned), and My house should say when it was last scanned, even if your house has none of them. "
 			+ "Then visit someone else's house: nothing of yours should change.", 4),
 	SEAWEED_DIVE(Tab.TRAVEL, "Diving to the seaweed patches",
 		"With Bone Voyage done, build a run with only the Fossil Island seaweed patches and follow the guide: the "

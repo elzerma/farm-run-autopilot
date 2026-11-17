@@ -171,6 +171,7 @@ class Navigator
 		lastPosition = position;
 		// No object outlined unless the step in hand is taken on one (set again below while travelling)
 		scene.findRideObject(null);
+		scene.findHouseExit(null);
 		if (arrived)
 		{
 			return null;
@@ -211,6 +212,8 @@ class Navigator
 		final JourneyStep step = journeyStep(stop);
 		// A step taken on an object (a portal, a lever, a ladder) has it outlined once it's near (sprint T5)
 		scene.findRideObject(teleported ? step : null);
+		// In the house, its way out the leg takes (the talisman, the nexus...), until it's used
+		scene.findHouseExit(teleported ? null : stop.houseExit());
 		return !teleported ? stop.describeWay() + " to " + stop.getLocation().getDisplayName()
 			: step != null ? step.getText()
 			: walkTo(stop, here.get(0), "Walk", null);

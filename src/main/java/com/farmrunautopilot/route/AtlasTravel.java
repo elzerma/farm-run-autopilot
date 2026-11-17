@@ -334,7 +334,7 @@ final class AtlasTravel
 		return new AtlasLeg(way, landing, start, item, spell, option.getKind() == AtlasOption.Kind.HOUSE,
 			option.getKind() == AtlasOption.Kind.TREE_HOUSE, fairyRing, balloons, items, rides,
 			teleport == null ? null : daily(atlas, teleport), teleport != null && teleport.isConsumable() && item == null
-			&& spell == null, picks(teleport, hop), option(teleport));
+			&& spell == null, picks(teleport, hop), option(teleport), exit);
 	}
 
 	/**
@@ -623,7 +623,10 @@ final class AtlasTravel
 		}
 	}
 
-	/** e.g. "portal nexus: Kourend Castle", "jewellery box: Ranging Guild", "fairy ring CKR". */
+	/**
+	 * e.g. "portal nexus: Kourend Castle", "jewellery box: Ranging Guild", "Xeric's talisman: Xeric's Glade", "fairy ring
+	 * CKR".
+	 */
 	private static String exitName(AtlasHouse.Exit exit)
 	{
 		final String name = exit.getName().substring(exit.getName().indexOf(": ") + 2);
@@ -634,6 +637,9 @@ final class AtlasTravel
 					: name);
 			case JEWELLERY_BOX:
 				return "jewellery box: " + name;
+			case XERICS_TALISMAN:
+				// Named as the carried talisman's teleport there is
+				return "Xeric's talisman: " + name;
 			case FAIRY_RING:
 				return "fairy ring " + name.replace(" ", "");
 			case SPIRIT_TREE:

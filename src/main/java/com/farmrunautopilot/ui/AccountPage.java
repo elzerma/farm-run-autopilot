@@ -70,9 +70,9 @@ class AccountPage extends SetupPanel
 		final PohSetup poh = account.getPoh();
 		final CollapsibleSection s = section("My house");
 		s.addContent(checkBox("Detect furniture when I enter my house (beta)", account.isAutoDetectHouse(), true,
-			"Fills in the jewellery box, altar, fairy ring and spirit tree below when you enter your house. Beta: it tells "
-				+ "your house from someone else's by how you got in, which can't be fully checked yet. If it gets yours "
-				+ "wrong, use Report a problem in Settings > Help improve this plugin.",
+			"Fills in the jewellery box, altar, fairy ring, spirit tree and Xeric's talisman below when you enter your "
+				+ "house. Beta: it tells your house from someone else's by how you got in, which can't be fully checked yet. "
+				+ "If it gets yours wrong, use Report a problem in Settings > Help improve this plugin.",
 			on -> saveAccount(() -> account.setAutoDetectHouse(on), false)));
 		if (account.isAutoDetectHouse())
 		{
@@ -124,7 +124,9 @@ class AccountPage extends SetupPanel
 			halfCheckBox("Fairy ring", poh.isFairyRing(), true, null,
 				on -> saveAccount(() -> poh.setFairyRing(on), false)),
 			halfCheckBox("Spirit tree", poh.isSpiritTree(), true, null,
-				on -> saveAccount(() -> poh.setSpiritTree(on), false)))));
+				on -> saveAccount(() -> poh.setSpiritTree(on), false)),
+			halfCheckBox("Xeric's talisman", poh.isXericsTalisman(), true, "Mounted in your portal nexus room",
+				on -> saveAccount(() -> poh.setXericsTalisman(on), false)))));
 
 		s.addContent(subheader("Portal nexus destinations"));
 		final List<JComponent> destinations = new ArrayList<>();
