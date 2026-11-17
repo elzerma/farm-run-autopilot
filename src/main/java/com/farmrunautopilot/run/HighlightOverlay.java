@@ -25,8 +25,8 @@ import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
 /**
  * Outlines the patch the current step is about and, when paying, the gardener (SPEC 13.4); in the house, its way out,
- * with the growing vine round it. Reads only the session's precomputed highlights and the tracked objects, so each frame
- * is cheap.
+ * with its clickbox marked. Reads only the session's precomputed highlights and the tracked objects, so each frame is
+ * cheap.
  */
 public class HighlightOverlay extends Overlay
 {
@@ -38,8 +38,6 @@ public class HighlightOverlay extends Overlay
 	private final SceneTracker scene;
 	private final FarmRunAutopilotConfig config;
 	private final ModelOutlineRenderer outlines;
-	/** Round the house's way out (its falling petals are state, so it's kept). */
-	private final VineFrame vine = new VineFrame();
 
 	@Inject
 	HighlightOverlay(Client client, RunSession session, SceneTracker scene, FarmRunAutopilotConfig config,
@@ -106,22 +104,18 @@ public class HighlightOverlay extends Overlay
 		{
 			outlines.drawOutline(rideObject, OUTLINE_WIDTH, config.npcColour(), OUTLINE_FEATHER);
 		}
-		// In the house, its way out the leg takes: the Xeric's talisman, the nexus, the jewellery box... With the growing vine
-		// round it too, as the one thing to click next: a talisman on the wall is small and easy to miss (elzerma,
-		// 2026-11-16: "maybe some other way to make the talisman more obvious?")
+		// In the house, its way out the leg takes: the Xeric's talisman, the nexus, the jewellery box... outlined, and its
+		// clickbox marked as the patch's is, with the hint arrow over it (elzerma, 2026-11-16: "hint arrow is plenty",
+		// "don't use the vine in this case", "I would maybe mark the clickbox, too")
 		final TileObject houseExit = config.highlightGardener() ? scene.getHouseExit() : null;
 		if (houseExit != null)
 		{
 			outlines.drawOutline(houseExit, OUTLINE_WIDTH, config.npcColour(), OUTLINE_FEATHER);
-		}
-		final Shape clickbox = houseExit != null && config.vineHighlights() ? houseExit.getClickbox() : null;
-		if (clickbox != null)
-		{
-			vine.draw(graphics, clickbox.getBounds());
-		}
-		else
-		{
-			vine.clear();
+			final Shape clickbox = houseExit.getClickbox();
+			if (clickbox != null)
+			{
+				OverlayUtil.renderPolygon(graphics, clickbox, config.npcColour());
+			}
 		}
 		return null;
 	}

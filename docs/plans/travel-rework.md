@@ -919,9 +919,18 @@ the Lancalliums, 32 s planned, 41 s timed): the plugin knew no mounted items. Bu
   ...`) with a check screenshot ("<stop> - house way out"), so the outline and arrow are judged from a normal run.
 - **elzerma's first run with it (2026-11-16):** the outline and the coloured "Glade" worked ("looks good but maybe some
   other way to make the talisman more obvious?"), but no hint arrow showed, with it on. RuneLite's `setHintArrow` puts
-  a coordinate arrow at height 0 on the talisman's tile, which is a wall's. So the growing vine now goes round the way
-  out's on-screen box too (vines on), the arrow is put back if something clears it, and the log says when it's set
-  (`Hint arrow on the house's way out at ...`) or cleared, for the next run to show which.
+  a coordinate arrow at height 0 on the talisman's tile, which is a wall's. So the arrow is now put back if something
+  clears it, and the log says when it's set (`Hint arrow on the house's way out at ...`) or cleared. On the next run
+  it was set and stayed, and showed: "hint arrow is plenty". A growing vine round the talisman, tried on that run, went
+  again ("don't use the vine in this case"); its clickbox is marked instead, as the patch's is ("I would maybe mark the
+  clickbox, too").
+- **The tablet, not the Farming Guild's spirit tree, into the house (elzerma, 2026-11-16):** on purpose under the
+  Fastest style. From the guild's herb patch it's 15 s by tablet against 30 s by its spirit tree: 31 tiles to the tree
+  (9 s), the tree (4.5), the garden indoors (`HOUSE_DOOR` 5 + `HOUSE_WALK` 2), then as the tablet. From the spirit tree
+  itself it's still 15 against 21. Prefer free (15 s on what costs a tablet or runes) takes the tree from most of the
+  guild. The 5 s from the garden is issue #16's guess; elzerma's house has its spirit ring next to the talisman. Even
+  without it, the tablet is the quicker way unless the guild visit ends at its tree (16 s against 15). The dev log's
+  breakdown for this way now shows the garden's 7 s, so its parts add up.
 - **The mounted digsite pendant would fit the same way** (not built, waiting on elzerma): its rows are in the atlas
   ("2: Fossil Island" lands where the carried pendant does, the House on the Hill, 29 tiles and a mushtree from
   Fossil Island's hardwoods). It would be a second tick box, its objects in the scan (`POH_AMULET_DIGSITE` and

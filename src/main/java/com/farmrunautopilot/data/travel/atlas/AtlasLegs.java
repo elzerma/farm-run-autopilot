@@ -497,8 +497,12 @@ public final class AtlasLegs
 		}
 		if (option.getKind() == AtlasOption.Kind.TREE_HOUSE)
 		{
+			// The garden's walk too, as treeHouseOptions counts it, so the parts add up to the total
+			final boolean portal = option.getHouseExit().getKind() == AtlasHouse.ExitKind.PORTAL;
 			s.append("to a spirit tree, ").append(describe(option.getToHub())).append(' ').append(round(seconds(option.getToHub())))
-				.append(" + tree to the house ").append(round(TravelTimes.SPIRIT_TREE)).append(" + ");
+				.append(" + tree to the house ").append(round(TravelTimes.SPIRIT_TREE)).append(" + garden to ")
+				.append(portal ? "the portal " : "indoors ")
+				.append(round(portal ? TravelTimes.HOUSE_WALK : TravelTimes.HOUSE_DOOR + TravelTimes.HOUSE_WALK)).append(" + ");
 		}
 		if (option.getHouseExit() != null)
 		{
